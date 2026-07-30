@@ -1,0 +1,124 @@
+{
+  "properties": [
+    {
+      "name": "version",
+      "type": "java.lang.String",
+      "description": "Application version"
+    },
+    {
+      "name": "sk.security.url-token-authentication.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable URL token authentication"
+    },
+    {
+      "name": "flowable.async-executor-activate",
+      "type": "java.lang.Boolean",
+      "description": "Activate flowable async executor"
+    },
+    {
+      "name": "flowable.database-schema-update",
+      "type": "java.lang.Boolean",
+      "description": "Enable flowable database schema auto-update"
+    },
+    {
+      "name": "aj.captcha.jigsaw",
+      "type": "java.lang.String",
+      "description": "Jigsaw captcha base image path"
+    },
+    {
+      "name": "aj.captcha.pic-click",
+      "type": "java.lang.String",
+      "description": "Picture-click captcha base image path"
+    },
+    {
+      "name": "aj.captcha.cache-type",
+      "type": "java.lang.String",
+      "description": "Cache type: local or redis"
+    },
+    {
+      "name": "aj.captcha.cache-number",
+      "type": "java.lang.Integer",
+      "description": "Local cache threshold"
+    },
+    {
+      "name": "aj.captcha.timing-clear",
+      "type": "java.lang.Integer",
+      "description": "Local cache expiry clear interval in seconds"
+    },
+    {
+      "name": "aj.captcha.type",
+      "type": "java.lang.String",
+      "description": "Captcha type: blockPuzzle or clickWord"
+    },
+    {
+      "name": "aj.captcha.water-mark",
+      "type": "java.lang.String",
+      "description": "Watermark text"
+    },
+    {
+      "name": "aj.captcha.interference-options",
+      "type": "java.lang.Integer",
+      "description": "Interference options count (0/1/2)"
+    },
+    {
+      "name": "aj.captcha.req-frequency-limit-enable",
+      "type": "java.lang.Boolean",
+      "description": "Enable request frequency limit per minute"
+    },
+    {
+      "name": "aj.captcha.req-get-lock-limit",
+      "type": "java.lang.Integer",
+      "description": "Max GET failures before lock"
+    },
+    {
+      "name": "aj.captcha.req-get-lock-seconds",
+      "type": "java.lang.Integer",
+      "description": "Lock duration in seconds after exceeding failures"
+    },
+    {
+      "name": "aj.captcha.req-get-minute-limit",
+      "type": "java.lang.Integer",
+      "description": "GET request limit per minute"
+    },
+    {
+      "name": "aj.captcha.req-check-minute-limit",
+      "type": "java.lang.Integer",
+      "description": "Check request limit per minute"
+    },
+    {
+      "name": "aj.captcha.req-verify-minute-limit",
+      "type": "java.lang.Integer",
+      "description": "Verify request limit per minute"
+    },
+    {
+      "name": "api.prefix",
+      "type": "java.lang.String",
+      "description": "API URL prefix"
+    },
+    {
+      "name": "wisestar.ai.siliconflow.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable SiliconFlow AI service"
+    },
+    {
+      "name": "wisestar.ai.siliconflow.base-url",
+      "type": "java.lang.String",
+      "description": "SiliconFlow API base URL"
+    },
+    {
+      "name": "wisestar.ai.siliconflow.token",
+      "type": "java.lang.String",
+      "description": "SiliconFlow API token"
+    },
+    {
+      "name": "wisestar.ai.siliconflow.model-id",
+      "type": "java.lang.String",
+      "description": "Default model ID for SiliconFlow"
+    },
+    {
+      "name": "wisestar.ai.siliconflow.model-types",
+      "type": "java.util.List<cn.wisestar.server.ai.domain.ModelType>",
+      "description": "Available AI model types"
+    }
+  ]
+}
