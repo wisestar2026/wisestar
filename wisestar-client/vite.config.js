@@ -42,7 +42,7 @@ export default defineConfig({
       // 匹配所有 /api 开头的请求
       '/api': {
         // 转发目标：后端 Spring Boot 服务地址
-        target: 'http://localhost:1991',
+        target: 'http://localhost:7007',
         // 修改请求头中的 Host 为目标地址（避免后端校验 Host 失败）
         changeOrigin: true,
         // 注意: 不设置 rewrite，保留 /api 前缀，后端接口路径本身就是 /api/xxx

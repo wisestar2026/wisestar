@@ -5,7 +5,7 @@ spring:
   application:
     name: survey
   profiles:
-    active: @activeProfile@ # maven 配置
+    active: dev # maven 配置   原来是 @activeProfile@，改成 dev
 #    active: ${activeProfile} # gradle 配置
   mvc:
     async:
@@ -53,6 +53,10 @@ aj:
 
 api:
   prefix: /api
+
+logging:
+  level:
+    org.springframework.boot.web.embedded.undertow: DEBUG
 
 wisestar:
   ai:

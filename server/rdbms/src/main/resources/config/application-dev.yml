@@ -10,9 +10,9 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   sql:
     init:
-      mode: always
+      mode: never
       schema-locations: classpath:scripts/init-mysql.sql
-      continue-on-error: true
+      continue-on-error: false
 
 mybatis-plus:
   configuration:
