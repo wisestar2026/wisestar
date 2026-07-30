@@ -1,0 +1,466 @@
+/**
+ * ProjectEditPage.jsx - 问卷编辑器页面
+ *
+ * 功能:
+ *   1. 左侧：问题列表（拖拽排序区域 + 新建/删除问题按钮）
+ *   2. 中间：问题编辑区（标题、类型、选项配置、必填开关）
+ *   3. 右侧：问卷设置区（标题、描述、提交按钮文案、后缀文案）
+ *
+ * 数据流:
+ *   加载问卷 JSON → 解析为可编辑状态 → 用户修改 → 序列化回 JSON → POST 保存
+ *
+ * URL: /projects/:id/edit
+ */
+
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Card, Row, Col, Button, Input, Select, Switch, Form,
+  Space, Popconfirm, Empty, message, Spin, Typography, Divider,
+} from 'antd';
+import {
+  PlusOutlined, DeleteOutlined, ArrowLeftOutlined,
+  SaveOutlined, UnorderedListOutlined, QuestionCircleOutlined,
+} from '@ant-design/icons';
+import { getProject, updateProject } from '../../../api/project';
+import {
+  QUESTION_TYPES, TYPES_WITH_OPTIONS,
+  createEmptySurvey, createQuestion, createOption, cloneSurvey,
+} from '../../../utils/surveyHelpers';
+
+const { TextArea } = Input;
+const { Title, Text } = Typography;
+
+export default function ProjectEditPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [form] = Form.useForm(); // 问卷设置的 Ant Design 表单
+
+  // ---- 状态 ----
+  const [loading, setLoading] = useState(true);  // 页面加载中
+  const [saving, setSaving] = useState(false);   // 保存中
+  const [projectName, setProjectName] = useState(''); // 项目名称（列表显示用）
+  const [survey, setSurvey] = useState(null);    // 问卷 JSON（完整结构）
+  const [selectedQid, setSelectedQid] = useState(null); // 当前选中的问题 ID
+
+  // ---- 加载问卷数据 ----
+  const loadProject = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getProject(id);
+      const data = res.data; // 响应拦截器已返回 response.data，data 即为项目对象
+      setProjectName(data.name || '未命名问卷');
+
+      // 如果问卷已有 survey 数据就用它，否则创建空白骨架
+      if (data.survey) {
+        // 后端可能返回 JSON 字符串或对象，统一解析
+        const parsed = typeof data.survey === 'string'
+          ? JSON.parse(data.survey)
+          : data.survey;
+        setSurvey(parsed);
+        // 默认选中第一个问题
+        if (parsed.children && parsed.children.length > 0) {
+          setSelectedQid(parsed.children[0].id);
+        }
+      } else {
+        const empty = createEmptySurvey(data.name);
+        setSurvey(empty);
+      }
+    } catch {
+      message.error('加载问卷失败，请检查网络或权限');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    loadProject();
+  }, [loadProject]);
+
+  // ---- 保存问卷 ----
+  const handleSave = async () => {
+    if (!survey) return;
+
+    // 从表单读取问卷级别设置
+    const formValues = form.getFieldsValue();
+    const toSave = {
+      ...survey,
+      title: formValues.title || survey.title,
+      description: formValues.description || survey.description,
+      attribute: {
+        ...survey.attribute,
+        suffix: formValues.suffix || survey.attribute?.suffix,
+        submitButton: formValues.submitButton || survey.attribute?.submitButton,
+      },
+    };
+
+    setSaving(true);
+    try {
+      await updateProject({
+        id,
+        name: projectName,
+        survey: toSave,
+      });
+      message.success('问卷已保存');
+    } catch {
+      message.error('保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ---- 问题操作 ----
+  // 更新某个问题的某个字段
+  const updateQuestion = (qid, field, value) => {
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      const q = next.children.find((c) => c.id === qid);
+      if (q) q[field] = value;
+      return next;
+    });
+  };
+
+  // 添加新问题
+  const addQuestion = (type) => {
+    const newQ = createQuestion(type); // 提前创建以获取稳定的 ID
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      next.children.push(newQ);
+      return next;
+    });
+    // 选中新问题
+    setSelectedQid(newQ.id);
+  };
+
+  // 删除问题
+  const deleteQuestion = (qid) => {
+    // 记录要删除问题在原数组中的位置，用于确定下一个选中
+    const oldIdx = survey?.children?.findIndex((c) => c.id === qid) ?? -1;
+
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      next.children = next.children.filter((c) => c.id !== qid);
+      return next;
+    });
+
+    // 如果删除的是当前选中的问题，自动选中相邻的
+    if (selectedQid === qid && oldIdx >= 0) {
+      setSelectedQid(() => {
+        // survey 是旧值，children 还包含被删的问题
+        const children = survey?.children || [];
+        const before = children[oldIdx - 1];
+        const after = children[oldIdx + 1];
+        return before?.id || after?.id || null;
+      });
+    }
+  };
+
+  // ---- 选项操作 ----
+  // 添加选项
+  const addOption = (qid) => {
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      const q = next.children.find((c) => c.id === qid);
+      if (q) q.children.push(createOption());
+      return next;
+    });
+  };
+
+  // 删除选项
+  const deleteOption = (qid, optId) => {
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      const q = next.children.find((c) => c.id === qid);
+      if (q) q.children = q.children.filter((c) => c.id !== optId);
+      return next;
+    });
+  };
+
+  // 更新选项文本
+  const updateOption = (qid, optId, value) => {
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      const q = next.children.find((c) => c.id === qid);
+      if (q) {
+        const opt = q.children.find((c) => c.id === optId);
+        if (opt) opt.title = value;
+      }
+      return next;
+    });
+  };
+
+  // ---- 计算 ----
+  const questions = survey?.children || [];
+  const selectedQ = questions.find((q) => q.id === selectedQid);
+  const selectedTypeLabel = QUESTION_TYPES.find((t) => t.value === selectedQ?.type)?.label;
+
+  // ---- 渲染 ----
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: 100 }}>
+        <Spin size="large" tip="加载问卷中..." />
+      </div>
+    );
+  }
+
+  if (!survey) {
+    return <Empty description="问卷数据加载失败" />;
+  }
+
+  return (
+    <div style={{ padding: '0 0 24px' }}>
+      {/* ---- 顶部工具栏 ---- */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col>
+          <Space>
+            {/* 返回按钮：回到问卷列表 */}
+            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/projects')}>
+              返回列表
+            </Button>
+            <Title level={4} style={{ margin: 0 }}>
+              编辑：{projectName}
+            </Title>
+          </Space>
+        </Col>
+        <Col>
+          <Space>
+            {/* 保存按钮 */}
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              loading={saving}
+              onClick={handleSave}
+            >
+              保存问卷
+            </Button>
+          </Space>
+        </Col>
+      </Row>
+
+      {/* ---- 三栏布局 ---- */}
+      <Row gutter={16}>
+        {/* ---- 左栏：问题列表 ---- */}
+        <Col span={5}>
+          <Card
+            title="问题列表"
+            size="small"
+            extra={
+              <Select
+                size="small"
+                value=""
+                placeholder="+ 添加"
+                style={{ width: 100 }}
+                onChange={addQuestion}
+                options={QUESTION_TYPES.map((t) => ({
+                  value: t.value,
+                  label: t.label,
+                }))}
+              />
+            }
+          >
+            {questions.length === 0 ? (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="暂无问题，请点击 + 添加"
+              />
+            ) : (
+              <div style={{ maxHeight: 'calc(100vh - 220px)', overflow: 'auto' }}>
+                {questions.map((q, idx) => (
+                  <div
+                    key={q.id}
+                    onClick={() => setSelectedQid(q.id)}
+                    style={{
+                      padding: '8px 12px',
+                      marginBottom: 4,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      background: selectedQid === q.id ? '#e6f4ff' : '#fafafa',
+                      border: selectedQid === q.id ? '1px solid #1677ff' : '1px solid #f0f0f0',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Space size={4}>
+                      <UnorderedListOutlined style={{ color: '#999', fontSize: 12 }} />
+                      <Text ellipsis={{ tooltip: q.title || '(未命名)' }} style={{ maxWidth: 120 }}>
+                        {q.title || '(未命名)'}
+                      </Text>
+                    </Space>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
+                      {QUESTION_TYPES.find((t) => t.value === q.type)?.label}
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </Col>
+
+        {/* ---- 中栏：问题编辑区 ---- */}
+        <Col span={12}>
+          {selectedQ ? (
+            <Card
+              title={
+                <Space>
+                  <QuestionCircleOutlined />
+                  <span>问题编辑</span>
+                </Space>
+              }
+              extra={
+                <Popconfirm
+                  title="确定删除此问题？"
+                  onConfirm={() => deleteQuestion(selectedQ.id)}
+                  okText="删除"
+                  cancelText="取消"
+                >
+                  <Button size="small" danger icon={<DeleteOutlined />}>
+                    删除
+                  </Button>
+                </Popconfirm>
+              }
+              size="small"
+            >
+              <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+                {/* 问题类型选择 */}
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
+                    问题类型
+                  </Text>
+                  <Select
+                    value={selectedQ.type}
+                    onChange={(val) => updateQuestion(selectedQ.id, 'type', val)}
+                    options={QUESTION_TYPES}
+                    style={{ width: 160 }}
+                  />
+                  <Text type="secondary" style={{ marginLeft: 12, fontSize: 12 }}>
+                    当前：{selectedTypeLabel}
+                  </Text>
+                </div>
+
+                {/* 问题标题 */}
+                <div>
+                  <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
+                    问题标题
+                  </Text>
+                  <Input
+                    value={selectedQ.title}
+                    onChange={(e) => updateQuestion(selectedQ.id, 'title', e.target.value)}
+                    placeholder={selectedQ.type === 'Remark' ? '备注内容...' : '请输入问题标题'}
+                  />
+                </div>
+
+                {/* 必填开关 */}
+                <div>
+                  <Space>
+                    <Switch
+                      checked={selectedQ.attribute?.required || false}
+                      onChange={(checked) => {
+                        setSurvey((prev) => {
+                          const next = cloneSurvey(prev);
+                          const q = next.children.find((c) => c.id === selectedQ.id);
+                          if (q) q.attribute = { ...q.attribute, required: checked };
+                          return next;
+                        });
+                      }}
+                      size="small"
+                    />
+                    <Text type="secondary" style={{ fontSize: 12 }}>此题必填</Text>
+                  </Space>
+                </div>
+
+                {/* 选项编辑区（仅选择题型显示） */}
+                {TYPES_WITH_OPTIONS.includes(selectedQ.type) && (
+                  <>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+                      选项列表
+                    </Text>
+                    {selectedQ.children.map((opt, idx) => (
+                      <Row key={opt.id} gutter={8} align="middle" style={{ marginBottom: 8 }}>
+                        <Col flex="auto">
+                          <Input
+                            value={opt.title}
+                            onChange={(e) => updateOption(selectedQ.id, opt.id, e.target.value)}
+                            placeholder={`选项 ${idx + 1}`}
+                            addonBefore={<Text type="secondary" style={{ fontSize: 12 }}>{String.fromCharCode(65 + idx)}</Text>}
+                          />
+                        </Col>
+                        <Col>
+                          {/* 至少保留 2 个选项才能删除 */}
+                          {selectedQ.children.length > 2 && (
+                            <Button
+                              size="small"
+                              danger
+                              type="text"
+                              icon={<DeleteOutlined />}
+                              onClick={() => deleteOption(selectedQ.id, opt.id)}
+                            />
+                          )}
+                        </Col>
+                      </Row>
+                    ))}
+                    {/* 添加选项按钮 */}
+                    <Button
+                      type="dashed"
+                      block
+                      size="small"
+                      icon={<PlusOutlined />}
+                      onClick={() => addOption(selectedQ.id)}
+                    >
+                      添加选项
+                    </Button>
+                  </>
+                )}
+              </Space>
+            </Card>
+          ) : (
+            <Card size="small">
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={questions.length === 0 ? '请点击左上角 + 添加问题' : '请从左侧列表选择一个问题'}
+              />
+            </Card>
+          )}
+        </Col>
+
+        {/* ---- 右栏：问卷设置 ---- */}
+        <Col span={7}>
+          <Card title="问卷设置" size="small">
+            <Form
+              form={form}
+              layout="vertical"
+              size="small"
+              initialValues={{
+                title: survey.title,
+                description: survey.description,
+                suffix: survey.attribute?.suffix || '感谢您的参与！',
+                submitButton: survey.attribute?.submitButton || '提交',
+              }}
+            >
+              {/* 问卷标题 */}
+              <Form.Item name="title" label="问卷标题">
+                <Input placeholder="请输入问卷标题" />
+              </Form.Item>
+
+              {/* 问卷描述 */}
+              <Form.Item name="description" label="问卷说明">
+                <TextArea rows={3} placeholder="请输入问卷说明/引导语" />
+              </Form.Item>
+
+              {/* 提交按钮文案 */}
+              <Form.Item name="submitButton" label="提交按钮文案">
+                <Input placeholder="提交" />
+              </Form.Item>
+
+              {/* 提交后提示 */}
+              <Form.Item name="suffix" label="提交后提示">
+                <Input placeholder="感谢您的参与！" />
+              </Form.Item>
+            </Form>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}

@@ -1,0 +1,23 @@
+# 配置文件不能放在根目录下面，否则会被 api 的 application-dev.yml 覆盖
+# 数据库配置：MySQL 8.0（本地开发环境）
+# 使用前请确保已创建数据库: CREATE DATABASE wisestar CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
+spring:
+  datasource:
+    username: root
+    password: root
+    url: jdbc:mysql://localhost:3306/wisestar?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:scripts/init-mysql.sql
+      continue-on-error: true
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    call-setters-on-nulls: false
+  global-config:
+    db-config:
+      logic-delete-field: deleted

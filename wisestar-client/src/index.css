@@ -1,0 +1,29 @@
+/**
+ * index.css - 全局基础样式
+ *
+ * 本文件定义最基础的全局样式规则:
+ *   - 移除所有元素的默认外边距和内边距
+ *   - 统一使用 border-box 盒模型（宽高包含边框和内边距）
+ *   - 设置全局字体
+ *   - 确保 #root 容器至少占满整个视口高度
+ *
+ * 注: 页面级别的样式在各自的组件中使用内联 style 或 CSS Modules 定义
+ */
+
+/* 重置所有元素的盒模型 */
+* {
+  margin: 0;
+  padding: 0;
+  /* border-box: 元素宽高 = content + padding + border，更直观 */
+  box-sizing: border-box;
+}
+
+/* 全局字体栈（优先使用系统字体，无需额外下载） */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* React 应用根容器，至少占满全屏 */
+#root {
+  min-height: 100vh;
+}

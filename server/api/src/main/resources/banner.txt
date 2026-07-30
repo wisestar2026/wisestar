@@ -1,0 +1,3 @@
+智慧星AI自习室
+Application Version: ${version}
+Spring Boot Version: ${spring-boot.version}

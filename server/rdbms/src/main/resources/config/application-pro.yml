@@ -1,0 +1,25 @@
+# 配置文件不能放在根目录下面，否则会被 api 的 application-pro.yml 覆盖
+# 数据库配置：MySQL 8.0（生产环境）
+# 生产环境建议通过环境变量或外部配置文件覆盖用户名密码和连接地址
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 以下配置作为默认值，生产部署时建议通过环境变量覆盖:
+    #   SPRING_DATASOURCE_URL=jdbc:mysql://your-host:3306/wisestar?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai
+    #   SPRING_DATASOURCE_USERNAME=your-username
+    #   SPRING_DATASOURCE_PASSWORD=your-password
+    username: root
+    password: root
+    url: jdbc:mysql://localhost:3306/wisestar?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=Asia/Shanghai
+  sql:
+    init:
+      continue-on-error: true
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    call-setters-on-nulls: false
+  global-config:
+    db-config:
+      logic-delete-field: deleted

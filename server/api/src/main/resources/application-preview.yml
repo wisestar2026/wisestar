@@ -1,0 +1,23 @@
+# 预览环境配置（在线预览，端口 1991）
+server:
+  port: 1991
+  servlet:
+    session:
+      timeout: 1h
+  compression:
+    enabled: true
+    min-response-size: 1024
+file-storage:
+  local:
+    root-path: ./files
+    pathStrategy: byId
+    dateFormat: yyyyMM/dd
+    nameStrategy: seqAndOriginalName
+custom-cache:
+  entries:
+    projectCache: 1d
+    fileCache: 1h
+    userCache: 1h
+    deptCache: 1d
+    projectPermissionCache: 1d
+    commonCache: 30d

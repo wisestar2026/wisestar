@@ -1,0 +1,23 @@
+package cn.wisestar.server.domain.mapper;
+
+import cn.wisestar.server.domain.dto.UpdateUserRequest;
+import cn.wisestar.server.domain.model.User;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.MappingTarget;
+
+import static org.mapstruct.NullValueCheckStrategy.ALWAYS;
+import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
+
+/**
+ * @author javahuang
+ * @date 2021/8/24
+ */
+@Mapper
+public interface UserEditMapper {
+
+	@BeanMapping(nullValueCheckStrategy = ALWAYS, nullValuePropertyMappingStrategy = IGNORE)
+	// @Mapping(target = "authorities", ignore = true)
+	void update(UpdateUserRequest request, @MappingTarget User user);
+
+}
