@@ -1,4 +1,6 @@
 version: 1.10.0
+server:
+  port: 1991
 spring:
   application:
     name: survey
