@@ -103,3 +103,40 @@ export function createOption() {
 export function cloneSurvey(survey) {
   return JSON.parse(JSON.stringify(survey));
 }
+
+// ============================================================
+// 系统题目（模板）转换为问卷问题节点
+// ============================================================
+// 输入: 题目管理中的一条记录（TemplateView，见 /api/template/list）
+//   { id, name, questionType, template: SurveySchema, tag, repoName }
+// 输出: 问卷 children 中的问题节点
+//   { id: "q_xxx", type, title, attribute, children: [Option...] }
+export function templateToQuestion(templateView) {
+  const schema = templateView.template || {};
+  const schemaAttr = schema.attribute || {};
+
+  // 问题节点：重新生成 ID 避免与问卷现有问题冲突
+  const question = {
+    id: uuid(),
+    type: templateView.questionType || schema.type || 'Radio',
+    title: templateView.name || schema.title || '',
+    attribute: {
+      required: false,
+      // 保留题目原有答案、解析、分值等考试属性
+      ...(schemaAttr.examCorrectAnswer !== undefined ? { examCorrectAnswer: schemaAttr.examCorrectAnswer } : {}),
+      ...(schemaAttr.examAnalysis !== undefined ? { examAnalysis: schemaAttr.examAnalysis } : {}),
+      ...(schemaAttr.examScore !== undefined ? { examScore: schemaAttr.examScore } : {}),
+      ...(schemaAttr.examScoreMode !== undefined ? { examScoreMode: schemaAttr.examScoreMode } : {}),
+      ...(schemaAttr.examImages !== undefined ? { examImages: schemaAttr.examImages } : {}),
+    },
+    // 选项保留，重新生成 ID
+    children: (schema.children || []).map((c) => ({
+      id: uuid(),
+      type: c.type || 'Option',
+      title: c.title || '',
+      attribute: c.attribute ? { ...c.attribute } : {},
+    })),
+  };
+
+  return question;
+}

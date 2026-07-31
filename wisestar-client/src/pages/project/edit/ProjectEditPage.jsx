@@ -20,16 +20,23 @@ import {
 } from 'antd';
 import {
   PlusOutlined, DeleteOutlined, ArrowLeftOutlined,
-  SaveOutlined, UnorderedListOutlined, QuestionCircleOutlined,
+  SaveOutlined, UnorderedListOutlined, QuestionCircleOutlined, DatabaseOutlined,
 } from '@ant-design/icons';
 import { getProject, updateProject } from '../../../api/project';
 import {
   QUESTION_TYPES, TYPES_WITH_OPTIONS,
   createEmptySurvey, createQuestion, createOption, cloneSurvey,
 } from '../../../utils/surveyHelpers';
+import TemplatePickerModal from '../../../components/question/TemplatePickerModal';
 
 const { TextArea } = Input;
 const { Title, Text } = Typography;
+
+// 编辑器题型列表（在标准题型基础上补充判断题）
+const EDITOR_TYPES = [
+  ...QUESTION_TYPES,
+  { label: '判断题', value: 'Judge' },
+];
 
 export default function ProjectEditPage() {
   const { id } = useParams();
@@ -42,6 +49,7 @@ export default function ProjectEditPage() {
   const [projectName, setProjectName] = useState(''); // 项目名称（列表显示用）
   const [survey, setSurvey] = useState(null);    // 问卷 JSON（完整结构）
   const [selectedQid, setSelectedQid] = useState(null); // 当前选中的问题 ID
+  const [pickerOpen, setPickerOpen] = useState(false); // 系统题目选择弹窗
 
   // ---- 加载问卷数据 ----
   const loadProject = useCallback(async () => {
@@ -132,6 +140,18 @@ export default function ProjectEditPage() {
     setSelectedQid(newQ.id);
   };
 
+  // 从系统题目库添加问题（TemplatePickerModal 已转换为问卷问题节点）
+  const addTemplateQuestions = (questions) => {
+    if (!questions || questions.length === 0) return;
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      next.children.push(...questions);
+      return next;
+    });
+    // 选中最后添加的一道题
+    setSelectedQid(questions[questions.length - 1].id);
+  };
+
   // 删除问题
   const deleteQuestion = (qid) => {
     // 记录要删除问题在原数组中的位置，用于确定下一个选中
@@ -192,7 +212,7 @@ export default function ProjectEditPage() {
   // ---- 计算 ----
   const questions = survey?.children || [];
   const selectedQ = questions.find((q) => q.id === selectedQid);
-  const selectedTypeLabel = QUESTION_TYPES.find((t) => t.value === selectedQ?.type)?.label;
+  const selectedTypeLabel = EDITOR_TYPES.find((t) => t.value === selectedQ?.type)?.label;
 
   // ---- 渲染 ----
   if (loading) {
@@ -247,8 +267,26 @@ export default function ProjectEditPage() {
             extra={
               <Dropdown
                 menu={{
-                  items: QUESTION_TYPES.map((t) => ({ key: t.value, label: t.label })),
-                  onClick: ({ key }) => addQuestion(key),
+                  items: [
+                    {
+                      type: 'group',
+                      label: '新建题目',
+                      children: EDITOR_TYPES.map((t) => ({ key: t.value, label: t.label })),
+                    },
+                    { type: 'divider' },
+                    {
+                      key: '__pick__',
+                      label: '从系统题目选择',
+                      icon: <DatabaseOutlined />,
+                    },
+                  ],
+                  onClick: ({ key }) => {
+                    if (key === '__pick__') {
+                      setPickerOpen(true);
+                    } else {
+                      addQuestion(key);
+                    }
+                  },
                 }}
               >
                 <Button size="small" type="primary" icon={<PlusOutlined />}>
@@ -287,7 +325,7 @@ export default function ProjectEditPage() {
                       </Text>
                     </Space>
                     <Text type="secondary" style={{ fontSize: 11 }}>
-                      {QUESTION_TYPES.find((t) => t.value === q.type)?.label}
+                      {EDITOR_TYPES.find((t) => t.value === q.type)?.label}
                     </Text>
                   </div>
                 ))}
@@ -329,7 +367,7 @@ export default function ProjectEditPage() {
                   <Select
                     value={selectedQ.type}
                     onChange={(val) => updateQuestion(selectedQ.id, 'type', val)}
-                    options={QUESTION_TYPES}
+                    options={EDITOR_TYPES}
                     style={{ width: 160 }}
                   />
                   <Text type="secondary" style={{ marginLeft: 12, fontSize: 12 }}>
@@ -460,6 +498,13 @@ export default function ProjectEditPage() {
           </Card>
         </Col>
       </Row>
+
+      {/* ---- 从系统题目选择弹窗 ---- */}
+      <TemplatePickerModal
+        open={pickerOpen}
+        onCancel={() => setPickerOpen(false)}
+        onAdd={addTemplateQuestions}
+      />
     </div>
   );
 }
