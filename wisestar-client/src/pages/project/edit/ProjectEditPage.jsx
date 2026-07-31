@@ -16,7 +16,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card, Row, Col, Button, Input, Select, Switch, Form,
-  Space, Popconfirm, Empty, message, Spin, Typography, Divider,
+  Space, Popconfirm, Empty, message, Spin, Typography, Divider, Dropdown,
 } from 'antd';
 import {
   PlusOutlined, DeleteOutlined, ArrowLeftOutlined,
@@ -245,17 +245,16 @@ export default function ProjectEditPage() {
             title="问题列表"
             size="small"
             extra={
-              <Select
-                size="small"
-                value=""
-                placeholder="+ 添加"
-                style={{ width: 100 }}
-                onChange={addQuestion}
-                options={QUESTION_TYPES.map((t) => ({
-                  value: t.value,
-                  label: t.label,
-                }))}
-              />
+              <Dropdown
+                menu={{
+                  items: QUESTION_TYPES.map((t) => ({ key: t.value, label: t.label })),
+                  onClick: ({ key }) => addQuestion(key),
+                }}
+              >
+                <Button size="small" type="primary" icon={<PlusOutlined />}>
+                  添加问题
+                </Button>
+              </Dropdown>
             }
           >
             {questions.length === 0 ? (
