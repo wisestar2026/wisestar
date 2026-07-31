@@ -360,16 +360,28 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         ContextHelper.getCurrentHttpResponse().setHeader("Content-Disposition", "attachment; filename=" +
                 java.net.URLEncoder.encode(fileName, "UTF-8"));
 
-        // 查询题库中的各种题型
-        List<Template> questions = templateService.list(Wrappers.<Template>lambdaQuery()
-                .eq(Template::getRepoId, request.getId())
-                .in(Template::getQuestionType, Arrays.asList(
-                        SurveySchema.QuestionType.Radio,
-                        SurveySchema.QuestionType.Checkbox,
-                        SurveySchema.QuestionType.Judge,
-                        SurveySchema.QuestionType.FillBlank,
-                        SurveySchema.QuestionType.Textarea))
-                .orderByAsc(Template::getQuestionType, Template::getCreateAt));
+        // 查询题库中的各种题型（未指定题库时导出全部题目）
+        List<Template> questions;
+        if (request.getId() != null) {
+            questions = templateService.list(Wrappers.<Template>lambdaQuery()
+                    .eq(Template::getRepoId, request.getId())
+                    .in(Template::getQuestionType, Arrays.asList(
+                            SurveySchema.QuestionType.Radio,
+                            SurveySchema.QuestionType.Checkbox,
+                            SurveySchema.QuestionType.Judge,
+                            SurveySchema.QuestionType.FillBlank,
+                            SurveySchema.QuestionType.Textarea))
+                    .orderByAsc(Template::getQuestionType, Template::getCreateAt));
+        } else {
+            questions = templateService.list(Wrappers.<Template>lambdaQuery()
+                    .in(Template::getQuestionType, Arrays.asList(
+                            SurveySchema.QuestionType.Radio,
+                            SurveySchema.QuestionType.Checkbox,
+                            SurveySchema.QuestionType.Judge,
+                            SurveySchema.QuestionType.FillBlank,
+                            SurveySchema.QuestionType.Textarea))
+                    .orderByAsc(Template::getQuestionType, Template::getCreateAt));
+        }
 
         // 准备导出数据 - 按题型分组
         Map<SurveySchema.QuestionType, List<Template>> questionsByType = questions.stream()
