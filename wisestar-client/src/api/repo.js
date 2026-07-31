@@ -67,7 +67,7 @@ export async function importTemplate({ file, repoId }) {
  */
 export async function exportTemplate({ repoId }) {
   const params = new URLSearchParams();
-  if (repoId) params.append('repoId', repoId);
+  if (repoId) params.append('id', repoId);
   // 通过创建隐藏的 a 标签触发浏览器下载
   const a = document.createElement('a');
   a.href = `/api/repo/export?${params.toString()}`;
