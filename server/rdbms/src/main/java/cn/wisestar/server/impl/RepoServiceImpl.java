@@ -707,6 +707,12 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
             org.dhatim.fastexcel.Workbook workbook = new org.dhatim.fastexcel.Workbook(baos, RepoTemplateI18n.workbookName(), "1.0");
 
+            // 兜底：没有任何题型数据时创建空白 sheet，避免空工作簿导致 finish 抛异常
+            if (radioRows.isEmpty() && checkboxRows.isEmpty() && judgeRows.isEmpty()
+                    && fillBlankRows.isEmpty() && textareaRows.isEmpty()) {
+                workbook.newWorksheet(RepoTemplateI18n.SheetType.SINGLE_CHOICE.displayName());
+            }
+
             // 创建单选题sheet
             if (!radioRows.isEmpty()) {
                 org.dhatim.fastexcel.Worksheet radioSheet = workbook.newWorksheet(RepoTemplateI18n.SheetType.SINGLE_CHOICE.displayName());
