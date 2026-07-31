@@ -209,6 +209,16 @@ export default function ProjectEditPage() {
     });
   };
 
+  // 更新当前选中问题的正确答案（存于 attribute.examCorrectAnswer）
+  const updateAnswer = (value) => {
+    setSurvey((prev) => {
+      const next = cloneSurvey(prev);
+      const q = next.children.find((c) => c.id === selectedQ.id);
+      if (q) q.attribute = { ...q.attribute, examCorrectAnswer: value || undefined };
+      return next;
+    });
+  };
+
   // ---- 计算 ----
   const questions = survey?.children || [];
   const selectedQ = questions.find((q) => q.id === selectedQid);
@@ -447,6 +457,52 @@ export default function ProjectEditPage() {
                     >
                       添加选项
                     </Button>
+                  </>
+                )}
+
+                {/* 答案编辑区（填空题自由输入，判断题/选择题从选项中选择） */}
+                {(selectedQ.type === 'FillBlank' || selectedQ.type === 'Judge' || TYPES_WITH_OPTIONS.includes(selectedQ.type)) && (
+                  <>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div>
+                      <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
+                        正确答案
+                      </Text>
+                      {selectedQ.type === 'FillBlank' ? (
+                        <Input
+                          value={selectedQ.attribute?.examCorrectAnswer || ''}
+                          onChange={(e) => updateAnswer(e.target.value)}
+                          placeholder="请输入正确答案"
+                          allowClear
+                        />
+                      ) : selectedQ.type === 'Judge' ? (
+                        <Select
+                          value={selectedQ.attribute?.examCorrectAnswer || undefined}
+                          onChange={updateAnswer}
+                          placeholder="请选择正确答案"
+                          style={{ width: 200 }}
+                          allowClear
+                          options={[
+                            { label: '正确', value: '正确' },
+                            { label: '错误', value: '错误' },
+                          ]}
+                        />
+                      ) : (
+                        <Select
+                          value={selectedQ.attribute?.examCorrectAnswer || undefined}
+                          onChange={updateAnswer}
+                          placeholder="请选择正确答案"
+                          style={{ width: 240 }}
+                          allowClear
+                          options={selectedQ.children
+                            .filter((o) => o.title && o.title.trim())
+                            .map((o, idx) => ({
+                              label: `${String.fromCharCode(65 + idx)}. ${o.title}`,
+                              value: o.title,
+                            }))}
+                        />
+                      )}
+                    </div>
                   </>
                 )}
               </Space>
