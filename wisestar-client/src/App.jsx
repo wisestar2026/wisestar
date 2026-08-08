@@ -6,6 +6,13 @@
  *   2. 配置 React Router 路由表
  *   3. 应用初始化时恢复登录态（fetchCurrentUser）
  *
+ * 被谁引用: main.jsx（ReactDOM.createRoot 挂载）
+ * 依赖:
+ *   - react-router-dom: BrowserRouter / Routes / Route
+ *   - antd ConfigProvider: 全局组件文案中文化
+ *   - useUserStore: 登录态全局状态
+ *   - AuthGuard / MainLayout: 受保护路由的守卫与布局骨架
+ *
  * 路由结构:
  *   /login                  → LoginPage（公开，无需登录）
  *   /survey/:id             → SurveyViewPage（公开，填写问卷无需登录）
@@ -17,8 +24,9 @@
  *   /answers/:id            → AnswerDetailPage（答卷详情，受保护）
  *   /repos                  → RepoListPage（题库列表，受保护）
  *   /repos/:id              → RepoDetailPage（题库详情&题目管理，受保护）
- *   /templates              → 模板管理（待实现）
- *   /system                 → 系统管理（待实现）
+ *   /questions              → QuestionListPage（题目管理，受保护）
+ *   /register               → RegisterPage（注册，公开）
+ *   /system                 → SystemPage（系统管理占位，受保护）
  *
  * 认证流程:
  *   1. App 组件挂载 → useEffect 调用 fetchCurrentUser()
@@ -35,6 +43,7 @@ import useUserStore from './stores/useUserStore';
 import AuthGuard from './components/common/AuthGuard';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/login/LoginPage';
+import RegisterPage from './pages/login/RegisterPage';
 import SurveyViewPage from './pages/survey/SurveyViewPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProjectListPage from './pages/project/list/ProjectListPage';
@@ -44,7 +53,13 @@ import AnswerListPage from './pages/answer/AnswerListPage';
 import AnswerDetailPage from './pages/answer/AnswerDetailPage';
 import RepoListPage from './pages/repo/RepoListPage';
 import RepoDetailPage from './pages/repo/RepoDetailPage';
+import RepoAssignPage from './pages/repo/RepoAssignPage';
 import QuestionListPage from './pages/question/QuestionListPage';
+import PracticeHomePage from './pages/practice/PracticeHomePage';
+import PracticeSessionPage from './pages/practice/PracticeSessionPage';
+import WrongQuestionPage from './pages/practice/WrongQuestionPage';
+import StudentHomePage from './pages/student/StudentHomePage';
+import SystemPage from './pages/system/SystemPage';
 
 export default function App() {
   const { fetchCurrentUser, isLoggedIn } = useUserStore();
@@ -68,8 +83,21 @@ export default function App() {
           {/* 登录页 */}
           <Route path="/login" element={<LoginPage />} />
 
+          {/* 注册页（POST /api/public/register，是否开放由后端配置） */}
+          <Route path="/register" element={<RegisterPage />} />
+
           {/* 公开问卷填写页（任何人可访问） */}
           <Route path="/survey/:id" element={<SurveyViewPage />} />
+
+          {/* 学生端主界面（海底AI自习室，纯前端原型，独立全屏路由） */}
+          <Route
+            path="/student"
+            element={
+              <AuthGuard>
+                <StudentHomePage />
+              </AuthGuard>
+            }
+          />
 
           {/* ---- 受保护路由（需要登录） ---- */}
           {/* AuthGuard 包裹 MainLayout，所有子路由都受保护 */}
@@ -104,8 +132,23 @@ export default function App() {
             {/* 题库详情 */}
             <Route path="/repos/:id" element={<RepoDetailPage />} />
 
+            {/* 题库分配（老师给学员分配练习题库） */}
+            <Route path="/repo-assign" element={<RepoAssignPage />} />
+
             {/* 题目管理（全局） */}
             <Route path="/questions" element={<QuestionListPage />} />
+
+            {/* 在线练习（选题页） */}
+            <Route path="/practice" element={<PracticeHomePage />} />
+
+            {/* 在线练习答题页（按 mode + ids 渲染对应答题交互） */}
+            <Route path="/practice/session" element={<PracticeSessionPage />} />
+
+            {/* 错题库管理（题目 × 学员聚合错题列表） */}
+            <Route path="/wrong-questions" element={<WrongQuestionPage />} />
+
+            {/* 系统管理（占位页，后端接口已就绪，前端待开发） */}
+            <Route path="/system" element={<SystemPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -312,6 +312,26 @@ public class SurveySchema implements Serializable {
 		private List<String> examImages;
 
 		/**
+		 * 学科（知识点一级维度，问卷快照）
+		 */
+		private String subject;
+
+		/**
+		 * 章节（知识点二级维度，问卷快照）
+		 */
+		private String chapter;
+
+		/**
+		 * 知识点（知识点三级维度，多值，问卷快照）
+		 */
+		private List<String> knowledgePoint;
+
+		/**
+		 * 难度 easy/medium/hard（问卷快照）
+		 */
+		private String difficulty;
+
+		/**
 		 * 日期时间格式 YYYYMMDD HH:mm:ss
 		 */
 		private String dateTimeFormat;

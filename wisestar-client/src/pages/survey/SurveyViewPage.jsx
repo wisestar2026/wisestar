@@ -8,10 +8,23 @@
  *   4. 提交成功后显示感谢页
  *
  * URL: /survey/:id（公开路由，不需要登录）
+ * 被谁引用: App.jsx 路由表；从 ProjectListPage"预览"按钮新窗口打开
  *
  * 后端接口:
  *   POST /api/public/loadProject  加载问卷
  *   POST /api/public/saveAnswer   提交答案
+ *
+ * 答案构造规则（handleSubmit，与 AnswerDetailPage 的解析约定对应）:
+ *   - 单选/下拉 (Radio/Select): { questionId: { optionId: optionId } }
+ *   - 多选 (Checkbox): { questionId: { opt1: opt1, opt2: opt2 } }（数组转对象）
+ *   - 填空/文本 (FillBlank/Text): { questionId: { text: "输入内容" } }
+ *   - 评分 (Score): { questionId: { score: 数字 } }
+ *   这些 value 结构在 AnswerDetailPage / ProjectAnswersPage 展示时被反向解析
+ *
+ * 数据流:
+ *   加载: loadProject({id}) → POST /api/public/loadProject → 校验 status → 渲染问题
+ *   提交: form.validateFields() → 构造 answer → saveAnswer({projectId, answer, tempSave:1})
+ *   → POST /api/public/saveAnswer → 显示成功页
  */
 
 import { useState, useEffect } from 'react';
@@ -62,30 +75,36 @@ export default function SurveyViewPage() {
   }, [projectId]);
 
   // ---- 提交答案 ----
+  // 重点: answer 结构构造（后端判分/详情展示都依赖此格式，见文件头说明）
   const handleSubmit = async () => {
     try {
-      // 触发表单全部字段验证
+      // 触发表单全部字段验证（必填题未答会抛 errorFields，在 catch 中处理）
       const values = await form.validateFields();
 
       // 构造 answer 格式: { questionId: { optionId: value } }
       const answer = {};
       for (const [qid, val] of Object.entries(values)) {
         if (val != null && val !== '') {
-          // 如果是数组（多选），转为 object
+          // 如果是数组（多选 Checkbox.Group 的值为选中选项 ID 数组），转为 object
+          // 例如 ["opt1","opt2"] → { opt1: "opt1", opt2: "opt2" }
           if (Array.isArray(val)) {
             answer[qid] = {};
             val.forEach((v) => { answer[qid][v] = v; });
           } else if (typeof val === 'number') {
-            // 评分题返回数字
+            // 评分题返回数字 → { score: 数字 }
             answer[qid] = { score: val };
           } else {
-            // 其他类型：填空题、文本题等
+            // 其他类型：单选/下拉存 optionId，填空/文本存文本内容
+            // 为什么统一存对象而非裸值: 后端 answer 字段结构约定为
+            // { optionId: value } / { text } / { score }，见 AnswerDetailPage 解析逻辑
             answer[qid] = { text: val };
           }
         }
       }
 
       setSubmitting(true);
+      // 数据流: 本页 → saveAnswer → POST /api/public/saveAnswer
+      // tempSave: 1 表示"已完成"正式提交（0 为暂存草稿，本页未使用）
       await saveAnswer({
         projectId,
         answer,

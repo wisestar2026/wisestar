@@ -45,5 +45,12 @@ public class TemplateView {
 
 	private String note;
 
+	private String subject;
+
+	private String chapter;
+
+	private String[] knowledgePoint;
+
+	private String difficulty;
 
 }

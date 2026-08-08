@@ -37,4 +37,24 @@ public class TemplateQuery extends PageQuery {
 
 	private String id;
 
+	/**
+	 * 学科筛选
+	 */
+	private String subject;
+
+	/**
+	 * 章节筛选
+	 */
+	private String chapter;
+
+	/**
+	 * 难度筛选
+	 */
+	private String difficulty;
+
+	/**
+	 * 知识点筛选（按名称匹配）
+	 */
+	private String knowledgePoint;
+
 }

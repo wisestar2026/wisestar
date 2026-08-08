@@ -8,14 +8,23 @@
  *   4. 删除问卷：确认后软删除（移入回收站）
  *   5. 编辑问卷：点击名称或编辑按钮跳转到编辑页
  *
+ * 被谁引用: App.jsx 路由表（/projects）；MainLayout 侧边栏"问卷管理"菜单进入
+ *
  * 问卷类型映射:
  *   survey  - 调查问卷（蓝色标签）
  *   exam    - 在线考试（红色标签）
  *   folder  - 文件夹（灰色标签，不显示状态和答卷数列）
+ *   注意: 文件夹类型目前点击名称无响应（TODO 待实现文件夹子页面）
  *
  * 发布状态:
  *   0 - 未发布（灰色标签）
  *   1 - 已发布（绿色标签）
+ *
+ * 数据流:
+ *   列表: fetchProjects → listProject({current, pageSize, name}) → GET /api/project/list
+ *   创建: handleCreate → createProject(values) → POST /api/project/create
+ *   删除: handleDelete → deleteProject(id) → POST /api/project/delete（软删除）
+ *   编辑/答卷/预览: 跳转对应路由或新窗口（/survey/:id 为公开填写页）
  *
  * 数据来源: GET /api/project/list?current=1&pageSize=10&name=搜索词
  */

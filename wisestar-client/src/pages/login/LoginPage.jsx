@@ -11,10 +11,19 @@
  *   - 居中白色卡片（400px 宽）
  *   - 表单包含：用户名输入框、密码输入框、登录按钮、注册链接
  *
+ * 被谁引用: App.jsx（公开路由 /login，无需登录）
+ *
  * 登录流程:
  *   LoginPage → useUserStore.login() → api/user.js login() → POST /api/public/login
- *           ↓ 成功
+ *           ↓ 成功（后端 Set-Cookie 写入 sk-token）
  *           navigate('/') → AuthGuard 检查通过 → MainLayout → 仪表盘
+ *
+ * 安全说明:
+ *   - 密码在 api/user.js login() 中用 RSA 公钥加密后传输，不落明文
+ *   - 登录态由后端 sk-token Cookie 维持，刷新页面后由 fetchCurrentUser 恢复
+ *
+ * 已知说明（非本次修改）:
+ *   - 底部"立即注册"链接指向 /register，但 App.jsx 未注册该路由
  */
 
 import { useState } from 'react';

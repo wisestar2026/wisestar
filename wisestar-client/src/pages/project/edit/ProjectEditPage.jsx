@@ -6,8 +6,21 @@
  *   2. 中间：问题编辑区（标题、类型、选项配置、必填开关）
  *   3. 右侧：问卷设置区（标题、描述、提交按钮文案、后缀文案）
  *
+ * 被谁引用: App.jsx 路由表（/projects/:id/edit）；从 ProjectListPage 进入
+ *
  * 数据流:
- *   加载问卷 JSON → 解析为可编辑状态 → 用户修改 → 序列化回 JSON → POST 保存
+ *   加载: loadProject → getProject(id) → GET /api/project → 解析 survey JSON（字符串或对象）
+ *   编辑: 所有修改通过 cloneSurvey 深拷贝 → setSurvey，保证不可变更新
+ *   保存: handleSave → updateProject({id, name, survey}) → POST /api/project/update
+ *   选题: 左栏"添加问题 → 从系统题目选择" → TemplatePickerModal
+ *         → templateToQuestion 转换 → addTemplateQuestions 追加到问卷
+ *
+ * 重点逻辑: 答案编辑区（详见 updateAnswer 与 Checkbox 分支注释）
+ *   1. 多选题（Checkbox）: <Select mode="multiple"> 值为数组，
+ *      updateAnswer 收到数组后 join('\n') 转成 \n 分隔字符串存 attribute.examCorrectAnswer
+ *      （与 QuestionEditModal 的存取约定一致，后端判分按此解析）
+ *   2. 回填: 读取 attribute.examCorrectAnswer 后 split('\n') 拆回数组渲染多选
+ *   3. 判断题/单选题: 单值选择，直接存取字符串
  *
  * URL: /projects/:id/edit
  */
@@ -52,6 +65,7 @@ export default function ProjectEditPage() {
   const [pickerOpen, setPickerOpen] = useState(false); // 系统题目选择弹窗
 
   // ---- 加载问卷数据 ----
+  // 数据流: 本页 → getProject(id) → GET /api/project?id=xxx → 返回项目对象
   const loadProject = useCallback(async () => {
     setLoading(true);
     try {
@@ -62,15 +76,18 @@ export default function ProjectEditPage() {
       // 如果问卷已有 survey 数据就用它，否则创建空白骨架
       if (data.survey) {
         // 后端可能返回 JSON 字符串或对象，统一解析
+        // 为什么这么写: 后端对 survey 字段的序列化方式可能因创建途径不同而异，
+        // 这里做了兼容（字符串 → JSON.parse，对象直接使用）
         const parsed = typeof data.survey === 'string'
           ? JSON.parse(data.survey)
           : data.survey;
         setSurvey(parsed);
-        // 默认选中第一个问题
+        // 默认选中第一个问题（编辑器默认聚焦，方便直接编辑）
         if (parsed.children && parsed.children.length > 0) {
           setSelectedQid(parsed.children[0].id);
         }
       } else {
+        // 新问卷无 survey 数据 → 生成空白骨架（children 为空数组）
         const empty = createEmptySurvey(data.name);
         setSurvey(empty);
       }
@@ -86,11 +103,14 @@ export default function ProjectEditPage() {
   }, [loadProject]);
 
   // ---- 保存问卷 ----
+  // 数据流: 本页 → updateProject({id, name, survey}) → POST /api/project/update
+  // 保存内容 = 现有 survey + 右侧表单里的问卷级设置（标题/描述/按钮文案/后缀）
   const handleSave = async () => {
     if (!survey) return;
 
-    // 从表单读取问卷级别设置
+    // 从表单读取问卷级别设置（右侧"问卷设置"卡片）
     const formValues = form.getFieldsValue();
+    // 用表单值覆盖 survey 的顶层字段和 attribute（未填写的字段保留原值）
     const toSave = {
       ...survey,
       title: formValues.title || survey.title,
@@ -119,6 +139,8 @@ export default function ProjectEditPage() {
 
   // ---- 问题操作 ----
   // 更新某个问题的某个字段
+  // 为什么 clone: 直接改 prev.children 里的对象会破坏 React 状态不可变性，
+  // 先深拷贝再修改，保证 setSurvey 收到全新引用触发重渲染
   const updateQuestion = (qid, field, value) => {
     setSurvey((prev) => {
       const next = cloneSurvey(prev);
@@ -129,6 +151,8 @@ export default function ProjectEditPage() {
   };
 
   // 添加新问题
+  // 提前调用 createQuestion 拿到带 ID 的新节点（ID 在同一次渲染内稳定），
+  // 追加后再选中它，用户可直接开始编辑
   const addQuestion = (type) => {
     const newQ = createQuestion(type); // 提前创建以获取稳定的 ID
     setSurvey((prev) => {
@@ -141,6 +165,8 @@ export default function ProjectEditPage() {
   };
 
   // 从系统题目库添加问题（TemplatePickerModal 已转换为问卷问题节点）
+  // 数据流: TemplatePickerModal → templateToQuestion 转换 → onAdd(questions)
+  // → 本函数 → 追加到 survey.children（含知识点/答案/解析快照）
   const addTemplateQuestions = (questions) => {
     if (!questions || questions.length === 0) return;
     setSurvey((prev) => {
@@ -164,6 +190,7 @@ export default function ProjectEditPage() {
     });
 
     // 如果删除的是当前选中的问题，自动选中相邻的
+    // （用旧 survey 计算前后节点，因为此时 state 里的还是旧数据）
     if (selectedQid === qid && oldIdx >= 0) {
       setSelectedQid(() => {
         // survey 是旧值，children 还包含被删的问题
@@ -176,7 +203,7 @@ export default function ProjectEditPage() {
   };
 
   // ---- 选项操作 ----
-  // 添加选项
+  // 添加选项（clone → 找到问题 → children.push(createOption())）
   const addOption = (qid) => {
     setSurvey((prev) => {
       const next = cloneSurvey(prev);
@@ -210,11 +237,21 @@ export default function ProjectEditPage() {
   };
 
   // 更新当前选中问题的正确答案（存于 attribute.examCorrectAnswer）
+  // 重点: 多选题传入数组，落库为 \n 分隔字符串（与 QuestionEditModal 存取约定一致）
+  //   数组 → join('\n') → "选项A\n选项B" 存入 attribute.examCorrectAnswer
+  //   回填时由 JSX 中的 split('\n').filter(Boolean) 还原为数组
+  // 为什么这么写: 后端 Attribute.examCorrectAnswer 是单字符串字段，
+  //   多选答案只能约定分隔符拼接；\n 不会被选项文本包含，是最安全的分隔符
   const updateAnswer = (value) => {
     setSurvey((prev) => {
       const next = cloneSurvey(prev);
       const q = next.children.find((c) => c.id === selectedQ.id);
-      if (q) q.attribute = { ...q.attribute, examCorrectAnswer: value || undefined };
+      if (q) {
+        const stored = Array.isArray(value)
+          ? (value.length ? value.join('\n') : undefined)
+          : (value || undefined);
+        q.attribute = { ...q.attribute, examCorrectAnswer: stored };
+      }
       return next;
     });
   };
@@ -461,6 +498,10 @@ export default function ProjectEditPage() {
                 )}
 
                 {/* 答案编辑区（填空题自由输入，判断题/选择题从选项中选择） */}
+                {/* 重点: 多选题答案多选，存 \n 分隔字符串
+                      - 渲染: 读 attribute.examCorrectAnswer，split('\n') 还原为数组
+                      - 保存: updateAnswer 收到数组 → join('\n') 转字符串
+                      - 为什么: 后端 Attribute.examCorrectAnswer 是单字符串字段 */}
                 {(selectedQ.type === 'FillBlank' || selectedQ.type === 'Judge' || TYPES_WITH_OPTIONS.includes(selectedQ.type)) && (
                   <>
                     <Divider style={{ margin: '8px 0' }} />
@@ -469,6 +510,7 @@ export default function ProjectEditPage() {
                         正确答案
                       </Text>
                       {selectedQ.type === 'FillBlank' ? (
+                        /* 填空题: 自由输入正确答案（保存为字符串） */
                         <Input
                           value={selectedQ.attribute?.examCorrectAnswer || ''}
                           onChange={(e) => updateAnswer(e.target.value)}
@@ -476,6 +518,7 @@ export default function ProjectEditPage() {
                           allowClear
                         />
                       ) : selectedQ.type === 'Judge' ? (
+                        /* 判断题: 从"正确/错误"二选一 */
                         <Select
                           value={selectedQ.attribute?.examCorrectAnswer || undefined}
                           onChange={updateAnswer}
@@ -488,19 +531,40 @@ export default function ProjectEditPage() {
                           ]}
                         />
                       ) : (
-                        <Select
-                          value={selectedQ.attribute?.examCorrectAnswer || undefined}
-                          onChange={updateAnswer}
-                          placeholder="请选择正确答案"
-                          style={{ width: 240 }}
-                          allowClear
-                          options={selectedQ.children
-                            .filter((o) => o.title && o.title.trim())
-                            .map((o, idx) => ({
-                              label: `${String.fromCharCode(65 + idx)}. ${o.title}`,
-                              value: o.title,
-                            }))}
-                        />
+                        selectedQ.type === 'Checkbox' ? (
+                          /* 多选题: mode="multiple" 多选
+                             选项 value 为选项文本（非 ID），保存时 join('\n') 落库 */
+                          <Select
+                            mode="multiple"
+                            value={selectedQ.attribute?.examCorrectAnswer
+                              ? String(selectedQ.attribute.examCorrectAnswer).split('\n').filter(Boolean)
+                              : []}
+                            onChange={updateAnswer}
+                            placeholder="请选择正确答案（可多选）"
+                            style={{ width: 240 }}
+                            options={selectedQ.children
+                              .filter((o) => o.title && o.title.trim())
+                              .map((o, idx) => ({
+                                label: `${String.fromCharCode(65 + idx)}. ${o.title}`,
+                                value: o.title,
+                              }))}
+                          />
+                        ) : (
+                          /* 单选/下拉: 单值选择 */
+                          <Select
+                            value={selectedQ.attribute?.examCorrectAnswer || undefined}
+                            onChange={updateAnswer}
+                            placeholder="请选择正确答案"
+                            style={{ width: 240 }}
+                            allowClear
+                            options={selectedQ.children
+                              .filter((o) => o.title && o.title.trim())
+                              .map((o, idx) => ({
+                                label: `${String.fromCharCode(65 + idx)}. ${o.title}`,
+                                value: o.title,
+                              }))}
+                          />
+                        )
                       )}
                     </div>
                   </>

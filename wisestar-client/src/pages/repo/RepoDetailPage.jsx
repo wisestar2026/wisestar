@@ -1,16 +1,24 @@
 /**
- * RepoDetailPage.jsx - 题库详情 & 题目管理页面
+ * RepoDetailPage.jsx - 题库详情 & 组题管理页面
  *
  * 功能:
  *   1. 题库信息展示（名称、类型、标签、题目总数）
  *   2. 题目列表（分页、显示是否有答案和解析）
- *   3. 新建/编辑题目：标题、类型、选项、「正确答案」、分值、「答案解析」、计分方式
- *   4. 删除题目
+ *   3. 批量选择题目：从题目管理（全局题目库）勾选已有题目加入本题库
+ *   4. 移除题目：单个/批量解绑（题目保留在题目管理中，不删除模板本身）
  *
- * 答案存储方案:
- *   题目 JSON 的 attribute 字段中扩展了 examCorrectAnswer（正确答案）、
- *   examAnalysis（答案解析）、examScore（分值）、examScoreMode（计分方式），
- *   这些字段已在后端 SurveySchema.Attribute 中定义，无需改数据库。
+ * 题目来源约定（重要）:
+ *   题目信息的创建/编辑/导入唯一入口是「题目管理」板块（QuestionListPage）。
+ *   本页面不再提供"新建题目"入口，只负责组题（选择题目加入题库 / 从题库移除）。
+ *
+ * 被谁引用: App.jsx 路由表（/repos/:id）；从 RepoListPage 点击题库名称进入
+ *
+ * 数据流:
+ *   题库信息: listRepo({id, pageSize:1}) → GET /api/repo/list → find 出当前题库
+ *   题目列表: fetchTemplates → listTemplate({current, pageSize, repoId}) → GET /api/template/list
+ *   批量选择: SelectTemplateModal → bindTemplate({repoId, ids}) → POST /api/repo/bind
+ *   移除: handleRemoveTemplate / handleBatchRemove → unbindTemplate({repoId, ids})
+ *         → POST /api/repo/unbind（仅清空题目 repoId，题目保留在题目管理）
  *
  * URL: /repos/:id
  */
@@ -18,34 +26,24 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Table, Space, Button, Modal, Input, Select, Switch,
-  Popconfirm, Typography, Tag, message, Card, Descriptions, InputNumber,
-  Collapse,
+  Table, Space, Button, Modal, Popconfirm, Typography, Tag, message, Card, Descriptions,
 } from 'antd';
 import {
-  PlusOutlined, DeleteOutlined, ArrowLeftOutlined, EditOutlined,
+  PlusOutlined, DeleteOutlined, ArrowLeftOutlined,
   BookOutlined, CheckCircleOutlined, BulbOutlined,
 } from '@ant-design/icons';
-import { listTemplate, createTemplate, updateTemplate, deleteTemplate } from '../../api/template';
-import { listRepo } from '../../api/repo';
-import { QUESTION_TYPES, TYPES_WITH_OPTIONS, createQuestion } from '../../utils/surveyHelpers';
+import { listTemplate } from '../../api/template';
+import { listRepo, unbindTemplate } from '../../api/repo';
+import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
 
 const { Title, Text, Paragraph } = Typography;
 
-// 题目类型（含判断题）
-const TEMPLATE_TYPES = [
-  ...QUESTION_TYPES,
-  { label: '判断题', value: 'Judge' },
-];
-
-// 判断题固定选项
-const JUDGE_OPTIONS = [
-  { id: 'true', type: 'Option', title: '正确', attribute: {} },
-  { id: 'false', type: 'Option', title: '错误', attribute: {} },
-];
-
-// 需要展示正确答案选择题型的题目类型
-const CHOICE_TYPES = ['Radio', 'Checkbox', 'Select', 'Judge'];
+// 完整题型映射（含判断题）
+const TYPE_LABELS = {
+  Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
+  FillBlank: '填空题', Text: '多行文本', Score: '评分题',
+  Remark: '备注说明', Judge: '判断题',
+};
 
 export default function RepoDetailPage() {
   const { id: repoId } = useParams();
@@ -59,24 +57,15 @@ export default function RepoDetailPage() {
   const [page, setPage] = useState(1);
   const pageSize = 12;
 
-  // 题目弹窗状态
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalLoading, setModalLoading] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [qType, setQType] = useState('Radio');
-  const [qTitle, setQTitle] = useState('');
-  const [qOptions, setQOptions] = useState(['', '']);      // 选项文本数组
-  const [qTags, setQTags] = useState('');
-  const [qRequired, setQRequired] = useState(false);
-  const [qCategory, setQCategory] = useState('');
+  // 批量选择题目弹窗
+  const [selectOpen, setSelectOpen] = useState(false);
 
-  // ---- 答案 & 解析字段 ----
-  const [answer, setAnswer] = useState('');           // 正确答案（单选=选项标题, 多选=逗号分隔）
-  const [analysis, setAnalysis] = useState('');       // 答案解析（Markdown 纯文本）
-  const [score, setScore] = useState(5);              // 分值（默认 5 分）
-  const [scoreMode, setScoreMode] = useState('onlyOne'); // 计分方式
+  // 表格勾选（批量移除）
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [removing, setRemoving] = useState(false);
 
   // ---- 加载题库信息 ----
+  // 复用 listRepo 列表接口，传入 id + pageSize:1 后从返回列表中 find 出当前题库
   useEffect(() => {
     (async () => {
       try {
@@ -88,12 +77,16 @@ export default function RepoDetailPage() {
   }, [repoId]);
 
   // ---- 加载题目列表 ----
+  // 只加载当前题库（repoId）下的题目
+  // 数据流: 本页 → listTemplate({current, pageSize, repoId}) → GET /api/template/list
   const fetchTemplates = async (p = page) => {
     setLoading(true);
     try {
       const res = await listTemplate({ current: p, pageSize, repoId });
       setTemplates(res.data?.list || []);
       setTotal(res.data?.total || 0);
+      // 刷新后清除失效的勾选（被移除的题）
+      setSelectedRowKeys((prev) => prev.filter((id) => (res.data?.list || []).some((t) => t.id === id)));
     } catch {
       message.error('加载题目失败');
     } finally {
@@ -102,120 +95,47 @@ export default function RepoDetailPage() {
   };
   useEffect(() => { fetchTemplates(); }, [repoId]); // eslint-disable-line
 
-  // ---- 重置弹窗 ----
-  const resetModal = () => {
-    setEditId(null);
-    setQType('Radio');
-    setQTitle('');
-    setQOptions(['', '']);
-    setQTags('');
-    setQRequired(false);
-    setQCategory('');
-    setAnswer('');
-    setAnalysis('');
-    setScore(5);
-    setScoreMode('onlyOne');
+  // ---- 刷新题库信息（题目总数等） ----
+  const refreshRepoInfo = () => {
+    listRepo({ id: repoId, pageSize: 1 }).then((res) => {
+      const r = (res.data?.list || []).find((x) => x.id === repoId);
+      if (r) setRepo(r);
+    }).catch(() => {});
   };
 
-  // ---- 打开新建弹窗 ----
-  const openCreateModal = () => { resetModal(); setModalOpen(true); };
-
-  // ---- 打开编辑弹窗 ----
-  const openEditModal = (record) => {
-    setEditId(record.id);
-    setQType(record.questionType || 'Radio');
-    setQTitle(record.name || '');
-    setQTags((record.tag || []).join(','));
-    setQCategory(record.category || '');
-
-    const tmpl = record.template;
-    if (tmpl?.children?.length > 0) {
-      setQOptions(tmpl.children.map((c) => c.title || ''));
-    } else {
-      setQOptions(['', '']);
-    }
-    setQRequired(tmpl?.attribute?.required || false);
-
-    // 回填答案和解析
-    const attr = tmpl?.attribute || {};
-    setAnswer(attr.examCorrectAnswer || '');
-    setAnalysis(attr.examAnalysis || '');
-    setScore(attr.examScore || 5);
-    setScoreMode(attr.examScoreMode || 'onlyOne');
-
-    setModalOpen(true);
+  // ---- 批量选择题目成功回调 ----
+  const handleSelectSuccess = () => {
+    setSelectOpen(false);
+    fetchTemplates(page);
+    refreshRepoInfo();
   };
 
-  // ---- 保存题目 ----
-  const handleSave = async () => {
-    if (!qTitle.trim()) { message.warning('请输入题目标题'); return; }
-
-    const needsOptions = TYPES_WITH_OPTIONS.includes(qType) || qType === 'Judge';
-    if (needsOptions && qOptions.some((o) => !o.trim())) {
-      message.warning('请填写所有选项');
-      return;
-    }
-
-    setModalLoading(true);
+  // ---- 移除单题（解绑，题目保留在题目管理） ----
+  const handleRemoveTemplate = async (id) => {
     try {
-      const templateJson = createQuestion(qType);
-      templateJson.title = qTitle;
-
-      // 构建 Attribute（包含答案和解析）
-      templateJson.attribute = {
-        required: qRequired,
-        examCorrectAnswer: answer || undefined,
-        examAnalysis: analysis || undefined,
-        examScore: score,
-        examScoreMode: scoreMode,
-      };
-
-      if (qType === 'Judge') {
-        templateJson.children = JUDGE_OPTIONS;
-      } else if (TYPES_WITH_OPTIONS.includes(qType)) {
-        templateJson.children = qOptions.filter((o) => o.trim()).map((title) => ({
-          id: 'opt_' + Math.random().toString(36).substring(2, 10),
-          type: 'Option',
-          title,
-          attribute: {},
-        }));
-      }
-
-      const tags = qTags ? qTags.split(',').map((t) => t.trim()).filter(Boolean) : [];
-      const payload = {
-        name: qTitle,
-        questionType: qType,
-        template: templateJson,
-        tag: tags,
-        category: qCategory || undefined,
-        repoId,
-        mode: repo?.mode === 'exam' ? 'exam' : 'survey',
-      };
-
-      if (editId) {
-        await updateTemplate({ ...payload, id: editId });
-        message.success('题目已更新');
-      } else {
-        await createTemplate(payload);
-        message.success('题目已创建');
-      }
-      setModalOpen(false);
+      await unbindTemplate({ repoId, ids: [id] });
+      message.success('已从题库移除');
       fetchTemplates(page);
+      refreshRepoInfo();
     } catch {
-      message.error('保存失败');
+      message.error('移除失败');
+    }
+  };
+
+  // ---- 批量移除 ----
+  const handleBatchRemove = async () => {
+    if (!selectedRowKeys.length) { message.warning('请先勾选要移除的题目'); return; }
+    setRemoving(true);
+    try {
+      await unbindTemplate({ repoId, ids: selectedRowKeys });
+      message.success(`已移除 ${selectedRowKeys.length} 道题目`);
+      setSelectedRowKeys([]);
+      fetchTemplates(page);
+      refreshRepoInfo();
+    } catch {
+      message.error('批量移除失败');
     } finally {
-      setModalLoading(false);
-    }
-  };
-
-  // ---- 删除题目 ----
-  const handleDeleteTemplate = async (id) => {
-    try {
-      await deleteTemplate({ id });
-      message.success('已删除');
-      fetchTemplates(page);
-    } catch {
-      message.error('删除失败');
+      setRemoving(false);
     }
   };
 
@@ -249,7 +169,7 @@ export default function RepoDetailPage() {
     },
     {
       title: '题型', dataIndex: 'questionType', width: 90,
-      render: (t) => <Tag>{TEMPLATE_TYPES.find((x) => x.value === t)?.label || t}</Tag>,
+      render: (t) => <Tag>{TYPE_LABELS[t] || t}</Tag>,
     },
     {
       title: '分值', width: 60, align: 'center',
@@ -263,14 +183,16 @@ export default function RepoDetailPage() {
       render: (tags) => (!tags?.length ? '-' : tags.slice(0, 2).map((t) => <Tag key={t} color="blue">{t}</Tag>)),
     },
     {
-      title: '操作', width: 140,
+      title: '操作', width: 120,
       render: (_, record) => (
-        <Space size="small">
-          <Button size="small" type="link" icon={<EditOutlined />} onClick={() => openEditModal(record)}>编辑</Button>
-          <Popconfirm title="确定删除？" onConfirm={() => handleDeleteTemplate(record.id)} okText="删除" cancelText="取消">
-            <Button size="small" type="link" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
-        </Space>
+        <Popconfirm
+          title="确定从题库移除该题？"
+          description="题目仍保留在「题目管理」中，可从题库重新选择加入"
+          onConfirm={() => handleRemoveTemplate(record.id)}
+          okText="移除" cancelText="取消"
+        >
+          <Button size="small" type="link" danger icon={<DeleteOutlined />}>移除</Button>
+        </Popconfirm>
       ),
     },
   ];
@@ -323,8 +245,20 @@ export default function RepoDetailPage() {
 
       {/* ---- 题目列表 ---- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <Text strong style={{ fontSize: 15 }}>题目列表</Text>
-        <Button type="primary" size="small" icon={<PlusOutlined />} onClick={openCreateModal}>新建题目</Button>
+        <Text strong style={{ fontSize: 15 }}>题目列表（{total}）</Text>
+        <Space>
+          {selectedRowKeys.length > 0 && (
+            <Button
+              danger size="small" icon={<DeleteOutlined />} loading={removing}
+              onClick={handleBatchRemove}
+            >
+              批量移除（{selectedRowKeys.length}）
+            </Button>
+          )}
+          <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setSelectOpen(true)}>
+            批量选择题目
+          </Button>
+        </Space>
       </div>
 
       <Table
@@ -333,6 +267,10 @@ export default function RepoDetailPage() {
         rowKey="id"
         loading={loading}
         size="small"
+        rowSelection={{
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+        }}
         expandable={{
           expandedRowRender,
           rowExpandable: (r) => !!(r.template?.attribute?.examAnalysis),
@@ -341,130 +279,23 @@ export default function RepoDetailPage() {
           current: page, total, pageSize, showTotal: (t) => `共 ${t} 题`,
           onChange: (p) => { setPage(p); fetchTemplates(p); },
         }}
-        scroll={{ y: 'calc(100vh - 420px)' }}
+        scroll={{ y: 'calc(100vh - 400px)' }}
       />
 
-      {/* ---- 新建/编辑题目弹窗 ---- */}
-      <Modal
-        title={editId ? '编辑题目' : '新建题目'}
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        onOk={handleSave}
-        confirmLoading={modalLoading}
-        okText="保存"
-        cancelText="取消"
-        width={650}
-        destroyOnHidden
-      >
-        <Space orientation="vertical" style={{ width: '100%' }} size="small">
-          {/* -- 基础信息区 -- */}
-          <Text type="secondary" style={{ fontSize: 11 }}>基础信息</Text>
-          <Input value={qTitle} onChange={(e) => setQTitle(e.target.value)} placeholder="请输入题目内容" />
+      {/* ---- 空状态提示 ---- */}
+      {!loading && templates.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '16px 0', color: '#999' }}>
+          题库暂无题目。题目统一在「题目管理」中创建，创建后点击「批量选择题目」加入本题库。
+        </div>
+      )}
 
-          <Select value={qType}
-            onChange={(val) => {
-              setQType(val);
-              if (val === 'Judge') { setQOptions(['正确', '错误']); setAnswer(''); }
-              else if (!TYPES_WITH_OPTIONS.includes(val)) { setQOptions([]); setAnswer(''); }
-              else if (qOptions.length === 0) setQOptions(['', '']);
-            }}
-            options={TEMPLATE_TYPES} style={{ width: 160 }}
-          />
-
-          {/* -- 选项编辑区 -- */}
-          {(TYPES_WITH_OPTIONS.includes(qType) || qType === 'Judge') && (
-            <div>
-              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>
-                选项
-              </Text>
-              {qOptions.map((opt, idx) => (
-                <div key={idx} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                  <Input value={opt}
-                    onChange={(e) => { const n = [...qOptions]; n[idx] = e.target.value; setQOptions(n); }}
-                    placeholder={`选项 ${String.fromCharCode(65 + idx)}`}
-                    disabled={qType === 'Judge'}
-                  />
-                  {qType !== 'Judge' && qOptions.length > 2 && (
-                    <Button danger size="small" onClick={() => setQOptions(qOptions.filter((_, i) => i !== idx))}>删</Button>
-                  )}
-                </div>
-              ))}
-              {qType !== 'Judge' && (
-                <Button type="dashed" size="small" block onClick={() => setQOptions([...qOptions, ''])}>+ 添加选项</Button>
-              )}
-            </div>
-          )}
-
-          <Space>
-            <Switch checked={qRequired} onChange={setQRequired} size="small" />
-            <Text type="secondary" style={{ fontSize: 11 }}>此题必填</Text>
-          </Space>
-
-          {/* -- 答案 & 解析区 -- */}
-          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: 8, marginTop: 4 }}>
-            <Text strong style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
-              <BulbOutlined /> 答案与解析
-            </Text>
-
-            {/* 正确答案 —— 选择题型用 Select，填空题用 Input */}
-            <div style={{ marginBottom: 8 }}>
-              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>正确答案</Text>
-              {CHOICE_TYPES.includes(qType) ? (
-                <Select
-                  value={answer || undefined}
-                  onChange={setAnswer}
-                  placeholder="请选择正确答案"
-                  style={{ width: '100%' }}
-                  allowClear
-                  options={(qType === 'Judge' ? ['正确', '错误'] : qOptions.filter((o) => o.trim()))
-                    .map((title, i) => ({ label: `${String.fromCharCode(65 + i)}. ${title}`, value: title }))
-                  }
-                />
-              ) : (
-                <Input
-                  value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
-                  placeholder="输入正确答案（填空题可模糊匹配）"
-                />
-              )}
-            </div>
-
-            {/* 分值 + 计分方式 */}
-            <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-              <div style={{ flex: 1 }}>
-                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>分值</Text>
-                <InputNumber min={0} max={100} value={score} onChange={setScore} style={{ width: '100%' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>计分方式</Text>
-                <Select value={scoreMode} onChange={setScoreMode} style={{ width: '100%' }}
-                  options={[
-                    { label: '完全匹配得分', value: 'onlyOne' },
-                    { label: '答对任一得分', value: 'selectCorrect' },
-                    { label: '全选才得分', value: 'selectAll' },
-                    { label: '人工评分', value: 'manual' },
-                  ]}
-                />
-              </div>
-            </div>
-
-            {/* 答案解析 */}
-            <div>
-              <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>答案解析</Text>
-              <Input.TextArea
-                value={analysis}
-                onChange={(e) => setAnalysis(e.target.value)}
-                placeholder="输入答案解析（支持 Markdown，如：**关键点**：xxx）"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* -- 标签 / 分类 -- */}
-          <Input value={qTags} onChange={(e) => setQTags(e.target.value)} placeholder="标签（逗号分隔）如：通用,单选" />
-          <Input value={qCategory} onChange={(e) => setQCategory(e.target.value)} placeholder="分类（如：数学、语文）" />
-        </Space>
-      </Modal>
+      {/* ---- 批量选择题目弹窗 ---- */}
+      <SelectTemplateModal
+        open={selectOpen}
+        repoId={repoId}
+        onCancel={() => setSelectOpen(false)}
+        onSuccess={handleSelectSuccess}
+      />
     </div>
   );
 }

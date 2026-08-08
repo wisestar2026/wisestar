@@ -8,13 +8,20 @@
  *
  * Excel 格式要求:
  *   按 Sheet 区分题型：单选题 / 多选题 / 判断题 / 填空题 / 简答题
- *   每 Sheet 第一行为表头，后续行为数据
+ *   每 Sheet 第一行为表头，后续行为数据；选项用独立列（A/B/C/D）
+ *
+ * 被谁引用: QuestionListPage（题目管理页的"Excel 导入"按钮）
  *
  * Props:
  *   open: boolean           - 弹窗是否可见
  *   onCancel: () => void    - 关闭回调
- *   onSuccess: () => void   - 导入成功后回调（刷新列表）
+ *   onSuccess: () => void   - 导入成功后回调（父组件刷新列表）
  *   repos: Array<{id, name}> - 题库列表（供选择目标题库）
+ *
+ * 核心数据流:
+ *   选择题库 + 文件 → handleImport → importTemplate({file, repoId})
+ *   → POST /api/repo/import (multipart/form-data) → 后端解析 Excel 入库
+ *   → onSuccess() → QuestionListPage.fetchData(1) 刷新
  */
 
 import { useState } from 'react';
@@ -26,11 +33,15 @@ const { Text } = Typography;
 const { Dragger } = Upload;
 
 export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
+  // repoId: 选中的目标题库 ID（未选时 undefined）
+  // file: 用户选择的 Excel 文件对象（originFileObj 是浏览器原生 File）
+  // importing: 导入请求进行中标记（控制按钮 loading 状态，防止重复提交）
   const [repoId, setRepoId] = useState(undefined);
   const [file, setFile] = useState(null);
   const [importing, setImporting] = useState(false);
 
   // ---- 重置状态 ----
+  // 关闭弹窗前清空已选题库和文件，保证下次打开是干净状态
   const handleCancel = () => {
     setRepoId(undefined);
     setFile(null);
@@ -38,6 +49,8 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
   };
 
   // ---- 文件选择 ----
+  // antd Upload 的 onChange：通过 beforeUpload={() => false} 阻止自动上传，
+  // 这里手动从 fileList 中取出第一个文件的 originFileObj（原生 File 对象）
   const handleFileSelect = (info) => {
     if (info.fileList?.length > 0) {
       setFile(info.fileList[0].originFileObj);
@@ -45,17 +58,21 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
   };
 
   // ---- 执行导入 ----
+  // 前置校验: 必须选择目标题库和文件，否则提示并中断
   const handleImport = async () => {
     if (!repoId) { message.warning('请选择目标题库'); return; }
     if (!file) { message.warning('请选择 Excel 文件'); return; }
 
     setImporting(true);
     try {
+      // 调用 api/repo.js 的 importTemplate，内部使用原生 axios 走 FormData
+      // 数据流: ImportModal → importTemplate → POST /api/repo/import → 后端解析 Excel
       await importTemplate({ file, repoId });
       message.success('导入成功！请刷新页面查看导入的题目');
-      handleCancel();
-      onSuccess?.();
+      handleCancel();        // 清空本地状态并关闭弹窗
+      onSuccess?.();         // 通知父组件（QuestionListPage）刷新列表
     } catch (err) {
+      // 优先展示后端返回的业务错误信息（如 Excel 格式不符合要求）
       const msg = err?.response?.data?.message || '导入失败，请检查文件格式是否正确';
       message.error(msg);
     } finally {
@@ -64,6 +81,8 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
   };
 
   // ---- 下载模板 ----
+  // 后端 /api/repo/export 不传 repoId 时返回空 Excel 模板（仅表头结构）
+  // 同样用隐藏 a 标签触发下载，避免走 JS 二进制处理
   const handleDownloadTemplate = () => {
     const a = document.createElement('a');
     a.href = `/api/repo/export`;  // 导出空白模板（后端不传 repoId 时返回空结构）

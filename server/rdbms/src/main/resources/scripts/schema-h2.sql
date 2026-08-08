@@ -53,6 +53,35 @@ CREATE TABLE IF NOT EXISTS t_answer (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for t_answer_detail
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_answer_detail (
+  id varchar(64) NOT NULL,
+  answer_id varchar(64) DEFAULT NULL COMMENT '答卷 ID',
+  project_id varchar(64) DEFAULT NULL COMMENT '问卷 ID',
+  question_id varchar(64) DEFAULT NULL COMMENT '题目节点 ID',
+  question_type varchar(64) DEFAULT NULL COMMENT '题型',
+  subject varchar(256) DEFAULT NULL COMMENT '学科快照',
+  chapter varchar(256) DEFAULT NULL COMMENT '章节快照',
+  knowledge_point varchar(1024) DEFAULT NULL COMMENT '知识点快照（多值，逗号分隔）',
+  user_answer text COMMENT '学生答案',
+  is_correct tinyint(1) DEFAULT NULL COMMENT '是否正确：NULL=无标准答案，1=正确，0=错误',
+  score decimal(10,2) DEFAULT NULL COMMENT '得分',
+  duration_ms bigint DEFAULT NULL COMMENT '用时（毫秒）',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL COMMENT '学生 ID',
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id)
+);
+
+-- ----------------------------
+-- Records of t_answer_detail
+-- ----------------------------
+
+-- ----------------------------
 -- Table structure for t_comm_dict
 -- ----------------------------
 
@@ -368,6 +397,10 @@ CREATE TABLE IF NOT EXISTS t_template (
   tag varchar(512) DEFAULT NULL COMMENT '标签',
   priority int DEFAULT NULL COMMENT '排序优先级',
   preview_url varchar(512) DEFAULT NULL COMMENT '预览地址',
+  subject varchar(256) DEFAULT NULL COMMENT '学科',
+  chapter varchar(256) DEFAULT NULL COMMENT '章节',
+  knowledge_point varchar(1024) DEFAULT NULL COMMENT '知识点（多值，逗号分隔）',
+  difficulty varchar(32) DEFAULT NULL COMMENT '难度',
   shared tinyint(1) DEFAULT '0',
   is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

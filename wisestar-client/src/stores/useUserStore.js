@@ -6,12 +6,24 @@
  * 状态:
  *   user       - 当前登录用户对象（null 表示未登录）
  *   isLoggedIn - 是否已登录的布尔标记
- *   loading    - 是否正在加载用户信息
+ *   loading    - 是否正在加载用户信息（App 挂载恢复登录态时置 true，AuthGuard 据此等待）
  *
  * 方法:
  *   fetchCurrentUser() - 页面刷新时尝试从后端恢复登录态
  *   login(username, password) - 执行登录并更新状态
  *   logout() - 执行登出并清空状态
+ *
+ * 被谁引用（本项目唯一的全局状态源）:
+ *   - App.jsx            : fetchCurrentUser（挂载时恢复登录态）、isLoggedIn（控制路由渲染）
+ *   - AuthGuard.jsx      : isLoggedIn / loading（路由守卫判断）
+ *   - MainLayout.jsx     : user（顶栏用户名）、logout（退出登录）
+ *   - LoginPage.jsx      : login（表单提交）
+ *   - DashboardPage.jsx  : user（欢迎语）
+ *
+ * 核心数据流:
+ *   App 挂载 → fetchCurrentUser → GET /api/currentUser（携带 sk-token Cookie）
+ *   → 成功: user + isLoggedIn=true → AuthGuard 放行受保护路由
+ *   → 失败: 状态清空 → AuthGuard 重定向 /login
  *
  * 使用方式（在组件中）:
  *   const { user, isLoggedIn, login, logout } = useUserStore();

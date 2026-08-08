@@ -1317,6 +1317,70 @@ INSERT INTO `t_repo` (`id`, `name`, `description`, `category`, `mode`, `shared`,
 COMMIT;
 
 -- ----------------------------
+-- Table structure for t_user_repo（学员-题库分配）
+-- ----------------------------
+CREATE TABLE `t_user_repo` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学员用户ID',
+  `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID',
+  `assign_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'manual' COMMENT '分配方式 manual手动 auto标签自动',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员题库分配';
+
+-- ----------------------------
+-- Records of t_user_repo
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_practice_record（练习会话记录）
+-- ----------------------------
+CREATE TABLE `t_practice_record` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '练习学员ID',
+  `mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '练习模式 special专项 exam套卷 random随机',
+  `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '来源题库ID',
+  `total_questions` int DEFAULT '0' COMMENT '题目总数',
+  `correct_count` int DEFAULT '0' COMMENT '答对题数',
+  `score` double DEFAULT '0' COMMENT '得分',
+  `total_score` double DEFAULT '0' COMMENT '总分',
+  `duration_ms` bigint DEFAULT NULL COMMENT '练习用时(毫秒)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='练习会话记录';
+
+-- ----------------------------
+-- Table structure for t_practice_detail（练习逐题明细/错题标记）
+-- ----------------------------
+CREATE TABLE `t_practice_detail` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `practice_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '练习会话ID',
+  `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID',
+  `question_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题型',
+  `user_answer` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学生答案(选项标题/文本)',
+  `is_correct` tinyint(1) DEFAULT NULL COMMENT '判分结果 1正确 0错误 null无标准答案',
+  `score` double DEFAULT '0' COMMENT '本题得分',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_practice` (`practice_id`),
+  KEY `idx_question` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='练习逐题明细(错题标记)';
+
+-- ----------------------------
 -- Table structure for t_repo_template
 -- ----------------------------
 CREATE TABLE `t_repo_template` (
@@ -1431,6 +1495,10 @@ CREATE TABLE `t_template` (
   `tag` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '标签',
   `priority` int DEFAULT NULL COMMENT '排序优先级',
   `preview_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '预览地址',
+  `subject` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科',
+  `chapter` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节',
+  `knowledge_point` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点（多值，逗号分隔）',
+  `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '难度',
   `shared` tinyint(1) DEFAULT '0',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -1473,6 +1541,33 @@ INSERT INTO `t_template` (`id`, `repo_id`, `serial_no`, `name`, `question_type`,
 INSERT INTO `t_template` (`id`, `repo_id`, `serial_no`, `name`, `question_type`, `template`, `mode`, `category`, `tag`, `priority`, `preview_url`, `shared`, `is_deleted`, `create_at`, `create_by`, `update_at`, `update_by`) VALUES ('1825718352119619602', '1823691948175663106', NULL, '遇到这种情况的路段， 可以进入网状线区域内停车等候。 判断题', 'Judge', '{\"id\":\"1821712519335702547\",\"title\":\"遇到这种情况的路段， 可以进入网状线区域内停车等候。 判断题\",\"type\":\"Judge\",\"attribute\":{\"examScore\":1.0,\"examAnswerMode\":\"onlyOne\"},\"children\":[{\"id\":\"InQZ\",\"title\":\"对\",\"attribute\":{\"examCorrectAnswer\":\"InQZ\"}},{\"id\":\"BMhs\",\"title\":\"错\",\"attribute\":{}}]}', 'exam', NULL, NULL, NULL, NULL, 0, 0, '2024-08-20 10:15:50', '1457995481966747649', NULL, NULL);
 INSERT INTO `t_template` (`id`, `repo_id`, `serial_no`, `name`, `question_type`, `template`, `mode`, `category`, `tag`, `priority`, `preview_url`, `shared`, `is_deleted`, `create_at`, `create_by`, `update_at`, `update_by`) VALUES ('1825718352119619603', '1823691948175663106', NULL, '驾驶机动车遇到漫水桥时要察明水情确认安全后再低速通过。 判断题', 'Judge', '{\"id\":\"1821712519335702548\",\"title\":\"驾驶机动车遇到漫水桥时要察明水情确认安全后再低速通过。 判断题\",\"type\":\"Judge\",\"attribute\":{\"examScore\":1.0,\"examAnswerMode\":\"onlyOne\"},\"children\":[{\"id\":\"a6CD\",\"title\":\"对\",\"attribute\":{}},{\"id\":\"O3mB\",\"title\":\"错\",\"attribute\":{\"examCorrectAnswer\":\"O3mB\"}}]}', 'exam', NULL, NULL, NULL, NULL, 0, 0, '2024-08-20 10:15:50', '1457995481966747649', NULL, NULL);
 COMMIT;
+
+-- ----------------------------
+-- Table structure for t_answer_detail
+-- ----------------------------
+CREATE TABLE `t_answer_detail` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `answer_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '答卷 ID',
+  `project_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '问卷 ID',
+  `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目节点 ID',
+  `question_type` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题型',
+  `subject` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科快照',
+  `chapter` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节快照',
+  `knowledge_point` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点快照（多值，逗号分隔）',
+  `user_answer` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '学生答案',
+  `is_correct` tinyint(1) DEFAULT NULL COMMENT '是否正确：NULL=无标准答案，1=正确，0=错误',
+  `score` decimal(10,2) DEFAULT NULL COMMENT '得分',
+  `duration_ms` bigint DEFAULT NULL COMMENT '用时（毫秒）',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学生 ID',
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_answer_detail_answer` (`answer_id`),
+  KEY `idx_answer_detail_create_by` (`create_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='答题明细表';
+
 
 -- ----------------------------
 -- Table structure for t_user

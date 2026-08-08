@@ -59,6 +59,38 @@ CREATE TABLE IF NOT EXISTS t_answer (
 -- ----------------------------
 -- Records of t_answer
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for t_answer_detail
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_answer_detail (
+  id varchar(64) NOT NULL,
+  answer_id varchar(64) DEFAULT NULL COMMENT '答卷 ID',
+  project_id varchar(64) DEFAULT NULL COMMENT '问卷 ID',
+  question_id varchar(64) DEFAULT NULL COMMENT '题目节点 ID',
+  question_type varchar(64) DEFAULT NULL COMMENT '题型',
+  subject varchar(256) DEFAULT NULL COMMENT '学科快照',
+  chapter varchar(256) DEFAULT NULL COMMENT '章节快照',
+  knowledge_point varchar(1024) DEFAULT NULL COMMENT '知识点快照（多值，逗号分隔）',
+  user_answer text COMMENT '学生答案',
+  is_correct tinyint(1) DEFAULT NULL COMMENT '是否正确：NULL=无标准答案，1=正确，0=错误',
+  score decimal(10,2) DEFAULT NULL COMMENT '得分',
+  duration_ms bigint DEFAULT NULL COMMENT '用时（毫秒）',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL COMMENT '学生 ID',
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id)
+);
+
+-- ----------------------------
+-- Records of t_answer_detail
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for t_comm_dict
+-- ----------------------------
 BEGIN;
 INSERT INTO t_answer (id, project_id, temp_answer, survey, answer, attachment, meta_info, temp_save, exam_info, exam_exercise_type, exam_score, is_deleted, create_at, create_by, update_at, update_by, repo_id) VALUES ('2721df7ac46eca9f1af4d63cda921683', 'exercise', NULL, '{"id":"1823691948175663106","title":"考试","attribute":{"submitButton":"结束练习","mode":"exam"},"children":[{"id":"1825718352098648066","attribute":{}},{"id":"1825718352119619585","attribute":{}},{"id":"1825718352119619586","attribute":{}},{"id":"1825718352119619587","attribute":{}},{"id":"1825718352119619588","attribute":{}},{"id":"1825718352119619589","attribute":{}},{"id":"1825718352119619590","attribute":{}},{"id":"1825718352119619591","attribute":{}},{"id":"1825718352119619592","attribute":{}},{"id":"1825718352119619593","attribute":{}},{"id":"1825718352119619594","attribute":{}},{"id":"1825718352119619595","attribute":{}},{"id":"1825718352119619596","attribute":{}},{"id":"1825718352119619597","attribute":{}},{"id":"1825718352119619598","attribute":{}},{"id":"1825718352119619599","attribute":{}},{"id":"1825718352119619600","attribute":{}},{"id":"1825718352119619601","attribute":{}},{"id":"1825718352119619602","attribute":{}},{"id":"1825718352119619603","attribute":{}}]}', NULL, NULL, NULL, 0, NULL, 'O', NULL, 0, '2024-08-20 10:16:23', '1457995481966747649', NULL, NULL, '1823691948175663106');
 COMMIT;
@@ -1312,6 +1344,70 @@ INSERT INTO t_repo (id, name, description, category, mode, shared, tag, priority
 COMMIT;
 
 -- ----------------------------
+-- Table structure for t_user_repo（学员-题库分配）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_user_repo (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) DEFAULT NULL COMMENT '学员用户ID',
+  repo_id varchar(64) DEFAULT NULL COMMENT '题库ID',
+  assign_type varchar(16) DEFAULT 'manual' COMMENT '分配方式 manual手动 auto标签自动',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='学员题库分配';
+
+-- ----------------------------
+-- Records of t_user_repo
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_practice_record（练习会话记录）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_practice_record (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) DEFAULT NULL COMMENT '练习学员ID',
+  mode varchar(16) DEFAULT NULL COMMENT '练习模式 special专项 exam套卷 random随机',
+  repo_id varchar(64) DEFAULT NULL COMMENT '来源题库ID',
+  total_questions int DEFAULT '0' COMMENT '题目总数',
+  correct_count int DEFAULT '0' COMMENT '答对题数',
+  score double DEFAULT '0' COMMENT '得分',
+  total_score double DEFAULT '0' COMMENT '总分',
+  duration_ms bigint DEFAULT NULL COMMENT '练习用时(毫秒)',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='练习会话记录';
+
+-- ----------------------------
+-- Table structure for t_practice_detail（练习逐题明细/错题标记）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_practice_detail (
+  id varchar(64) NOT NULL,
+  practice_id varchar(64) DEFAULT NULL COMMENT '练习会话ID',
+  question_id varchar(64) DEFAULT NULL COMMENT '题目ID',
+  question_type varchar(16) DEFAULT NULL COMMENT '题型',
+  user_answer varchar(1024) DEFAULT NULL COMMENT '学生答案(选项标题/文本)',
+  is_correct tinyint(1) DEFAULT NULL COMMENT '判分结果 1正确 0错误 null无标准答案',
+  score double DEFAULT '0' COMMENT '本题得分',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_practice (practice_id),
+  KEY idx_question (question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin ROW_FORMAT=DYNAMIC COMMENT='练习逐题明细(错题标记)';
+
+-- ----------------------------
 -- Table structure for t_repo_template
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS t_repo_template (
@@ -1416,6 +1512,10 @@ CREATE TABLE IF NOT EXISTS t_template (
   tag varchar(512) DEFAULT NULL COMMENT '标签',
   priority int DEFAULT NULL COMMENT '排序优先级',
   preview_url varchar(512) DEFAULT NULL COMMENT '预览地址',
+  subject varchar(256) DEFAULT NULL COMMENT '学科',
+  chapter varchar(256) DEFAULT NULL COMMENT '章节',
+  knowledge_point varchar(1024) DEFAULT NULL COMMENT '知识点（多值，逗号分隔）',
+  difficulty varchar(32) DEFAULT NULL COMMENT '难度',
   shared tinyint(1) DEFAULT '0',
   is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

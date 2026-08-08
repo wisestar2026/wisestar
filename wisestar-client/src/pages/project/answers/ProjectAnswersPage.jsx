@@ -6,12 +6,19 @@
  *   2. 查看单条答卷详情（弹窗展示）
  *   3. 删除答卷（移入回收站）
  *
- * URL: /projects/:id/answers
+ * URL: /projects/:id/answers（受 AuthGuard 保护）
+ * 被谁引用: App.jsx 路由表；从 ProjectListPage 操作列"答卷"按钮进入
  *
  * 后端接口:
  *   GET  /api/answer/list?projectId=xxx  答卷列表
  *   GET  /api/answer?id=xxx              答卷详情
  *   POST /api/answer/delete              删除答卷
+ *
+ * 数据流:
+ *   项目信息: getProject(projectId) → GET /api/project → 显示问卷名称
+ *   答卷列表: fetchAnswers → listAnswers({projectId, current, pageSize}) → GET /api/answer/list
+ *   详情弹窗: handleViewDetail → getAnswer(answerId) → GET /api/answer → 弹窗渲染 answer Map
+ *   删除: handleDelete → deleteAnswer({id}) → POST /api/answer/delete → 刷新列表
  */
 
 import { useState, useEffect } from 'react';
@@ -53,6 +60,8 @@ export default function ProjectAnswersPage() {
   }, [projectId]);
 
   // ---- 加载答卷列表 ----
+  // 数据流: 本页 → listAnswers({projectId, current, pageSize}) → GET /api/answer/list
+  // projectId 来自路由参数 :id
   const fetchAnswers = async (p = page) => {
     setLoading(true);
     try {
@@ -76,6 +85,8 @@ export default function ProjectAnswersPage() {
   }, [projectId]);
 
   // ---- 查看详情 ----
+  // 数据流: 本页 → getAnswer(answerId) → GET /api/answer?id=xxx → 弹窗展示
+  // 详情数据中的 answer 为 Map: { questionId: { optionId: value } / { text } / { score } }
   const handleViewDetail = async (answerId) => {
     setDetailVisible(true);
     setDetailLoading(true);
@@ -90,6 +101,7 @@ export default function ProjectAnswersPage() {
   };
 
   // ---- 删除答卷 ----
+  // 软删除（移入回收站）；删除后刷新当前页列表
   const handleDelete = async (answerId) => {
     try {
       await deleteAnswer({ id: answerId });

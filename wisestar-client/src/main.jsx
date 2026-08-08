@@ -10,6 +10,12 @@
  *
  * 技术栈依赖链:
  *   index.html → main.jsx → App.jsx → Router → AuthGuard → MainLayout → 各页面组件
+ *
+ * 挂载流程:
+ *   1. 浏览器解析 index.html（<div id="root"> + /src/main.jsx 入口脚本）
+ *   2. ReactDOM.createRoot(rootElement) 创建 React 18 并发模式根节点
+ *   3. StrictMode 包裹 App（开发模式下双重渲染，用于暴露副作用问题）
+ *   4. App 内部: ConfigProvider(中文) → BrowserRouter → 路由表
  */
 
 import React from 'react';

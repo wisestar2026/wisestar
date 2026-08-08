@@ -49,6 +49,36 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
+ * 问卷/考试公开访问业务实现：问卷加载校验、公开答卷提交、公开查询、成绩查询、
+ * 答题限制（登录/密码/白名单/Cookie/IP）、关联问卷联动等。
+ *
+ * 【类职责】
+ * 面向"答卷人"（学生/外部用户）的公开入口逻辑：
+ * 1. 问卷加载：loadProject（含登录表单验证、题库练习、随机问题处理）、validateProject 校验
+ * 2. 答卷提交：saveAnswer（区分随机卷/公开查询修改/允许修改开关）、tempSaveAnswer 暂存、
+ *    答题后更新白名单状态 updateProjectPartnerByAnswer
+ * 3. 公开查询：loadQuery 查询表单、getQueryResult 查询结果（字段权限过滤/可编辑回写）、
+ *    loadExamResult 成绩查询（排名/正确答案可见性由考试设置控制）、loadLinkResult 关联问卷回填
+ * 4. 答题限制：登录限制/密码/白名单（内部/导入用户）/Cookie 限制/IP 限制/最大答题数/
+ *    时间窗（CronHelper）校验
+ * 5. 其他：loadDict 字典加载、答案唯一性/配额校验（validateAnswer）
+ *
+ * 【被谁调用】
+ * - Controller：SurveyController（公开访问接口）、AnswerController（间接）
+ * - 业务层：FileServiceImpl.upload（公开上传时校验项目状态）
+ *
+ * 【依赖什么】
+ * - ProjectService/ProjectViewMapper（项目与视图）、AnswerServiceImpl（答卷读写）、
+ *   ProjectPartnerMapper（参与人/白名单）、RepoServiceImpl/UserBookServiceImpl/
+ *   TemplateServiceImpl（题库练习）、RandomSurveyProcessor（随机问题处理）、
+ *   DictItemServiceImpl（字典）、JwtTokenUtil/AuthenticationManager（答卷登录）、
+ *   ObjectMapper（JSON 序列化）、MessageSource（i18n）
+ *
+ * 【核心数据流】
+ * 答卷人访问链接 → SurveyController → loadProject（校验+加载 schema）→ 提交答案
+ * → saveAnswer（限制校验 → AnswerServiceImpl.saveAnswer 落库）→ 考试模式计算错题入错题本
+ * → 白名单状态更新 → 返回答卷 ID；查询侧按配置的字段权限过滤后返回。
+ *
  * @author javahuang
  * @date 2021/8/22
  */
@@ -85,10 +115,24 @@ public class SurveyServiceImpl implements SurveyService {
     private final MessageSource messageSource;
 
     /**
-     * answerService 如果需要验证密码，则只有密码输入正确之后才开始加载 schema
+     * 加载公开问卷/考试页面数据（进入答卷页面的主入口）。
      *
-     * @param query
-     * @return
+     * 【分支逻辑】
+     * 1. repoId 非空（题库练习）：从题库加载题目组装练习卷；已有未完成答卷则回填
+     *    已答内容（examInfo 供前端判断对错），否则按练习类型（O 顺序/R 随机/W 错题）
+     *    生成题目列表并预创建一份 tempSave=0 的答卷；
+     * 2. answerId 非空（随机卷/修改答案）：直接按答卷 id 回显答案与问卷快照；
+     * 3. 其他：先做登录表单校验（convertAndValidateLoginFormIfNeeded），再校验问卷状态
+     *    （validateProject：停用/数量/时间/各类限制）；
+     *    - 需要登录/密码/白名单时返回登录表单 schema（loginRequired=true）；
+     *    - 否则处理随机问题（randomSurveyProcessor.processRandomSurvey）并回填最近答案
+     *      （允许修改开关开启时 getLatestAnswer）。
+     *
+     * @param query 项目 id、repoId（练习）、answerId、examExerciseType 等
+     * @return 公开项目视图（survey schema + 答案 + 登录标识）
+     * @implNote 调用链：SurveyController.loadProject → loadProject → ProjectService.getProject
+     * → AnswerServiceImpl/RandomSurveyProcessor 等。answerService 如需验证密码，
+     * 则只有密码输入正确后才开始加载 schema。
      */
     @Override
     public PublicProjectView loadProject(ProjectQuery query) {
@@ -200,10 +244,11 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 验证问卷
+     * 校验问卷并加载页面数据（登录表单验证 + 随机问题处理 + 问卷状态校验）。
      *
-     * @param query
-     * @return
+     * @param query 项目 id 与登录表单答案（含 whitelistName）
+     * @return 公开项目视图（回填最近答案，白名单用户按 whitelistName 匹配答卷人）
+     * @implNote 调用链：SurveyController.validateProject → validateProject。
      */
     @Override
     public PublicProjectView validateProject(ProjectQuery query) {
@@ -221,6 +266,14 @@ public class SurveyServiceImpl implements SurveyService {
         return projectView;
     }
 
+    /**
+     * 问卷答题统计（各题选项计数，供前端实时统计/配额校验）。
+     *
+     * @param query 项目 id
+     * @return 公开统计视图（各题选项被选次数）
+     * @implNote 调用链：SurveyController.statProject / 本类 validateAnswer（配额校验）。
+     * 基于该项目全部答卷（pageSize=-1 全量）与项目 schema 统计。
+     */
     @Override
     public PublicStatisticsView statProject(ProjectQuery query) {
         AnswerQuery answerQuery = new AnswerQuery();
@@ -231,6 +284,26 @@ public class SurveyServiceImpl implements SurveyService {
         return new ProjectStatHelper(project.getSurvey(), answers).stat();
     }
 
+    /**
+     * 公开提交/更新答卷（答卷人入口）。
+     *
+     * 【答案归属确定逻辑】（按优先级）
+     * 1. 随机卷 Cookie（COOKIE_RANDOM_PROJECT_PREFIX+projectId）非空 → 复用 Cookie 中答卷 id；
+     * 2. 公开查询修改（queryId 非空）→ validateAndMergeAnswer 校验可编辑字段后合并旧答案；
+     * 3. 显式传 id 且非练习项目 → 需项目开启"允许修改答案"开关（enableUpdate）否则拒绝；
+     * 4. 其他 → validateAndGetLatestAnswer：校验通过且（已登录 + 允许修改）时复用最近一次答卷。
+     *
+     * 【保存后处理】
+     * - AnswerServiceImpl.saveAnswer 落库 + 生成答题明细；
+     * - 考试模式（非练习项目）：返回总分与每题得分，并把错题写入错题本
+     *   （userBookService.saveWrongQuestion）；
+     * - 白名单答卷：updateProjectPartnerByAnswer 更新参与人状态为已答题；
+     * - 清理随机卷 Cookie。
+     *
+     * @param request 答卷请求（projectId、answer、id、queryId、whitelistName 等）
+     * @return 公开答卷视图（answerId，考试模式附带 examScore/questionScore）
+     * @implNote 调用链：SurveyController.saveAnswer → saveAnswer。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public PublicAnswerView saveAnswer(AnswerRequest request) {
@@ -286,8 +359,12 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * @param request
-     * @return
+     * 加载公开查询验证表单（校验链接有效性后返回查询条件表单 schema）。
+     *
+     * @param request 含项目 id、查询配置 id（resultId）与密码等
+     * @return 查询验证视图（表单 schema，含密码题则追加密码输入框）
+     * @implNote 调用链：SurveyController.loadQuery → loadQuery → getProjectAndQueryThenValidate
+     * → buildQueryFormSchema。
      */
     @Override
     @SneakyThrows
@@ -299,6 +376,16 @@ public class SurveyServiceImpl implements SurveyService {
         return view;
     }
 
+    /**
+     * 公开查询答卷结果。
+     *
+     * @param request 项目 id、查询配置 id、查询表单答案（answer）与 URL 参数（query）
+     * @return 查询结果视图（结果 schema + 字段权限 + 匹配答卷列表）
+     * @implNote 调用链：SurveyController.getQueryResult → getQueryResult。
+     * - findAnswerByQuery 按条件（表单 + URL 参数 + 密码字段剔除）查匹配答卷；
+     * - 按 fieldPermission 过滤隐藏字段（filterAnswerByFieldPermission）；
+     * - 考试模式字段权限允许时附带 examScore 到答案中。
+     */
     @Override
     public PublicQueryView getQueryResult(PublicQueryRequest request) {
         Tuple2<ProjectView, ProjectSetting.PublicQuery> projectAndQuery = getProjectAndQueryThenValidate(request);
@@ -325,6 +412,13 @@ public class SurveyServiceImpl implements SurveyService {
         return view;
     }
 
+    /**
+     * 加载公开字典项（答卷页下拉选项数据）。
+     *
+     * @param request 字典码 dictCode + 级联层级/父值/搜索词/条数限制
+     * @return 公开字典视图列表（label/value）
+     * @implNote 调用链：SurveyController.loadDict → loadDict → DictItemServiceImpl.list。
+     */
     @Override
     public List<PublicDictView> loadDict(PublicDictRequest request) {
         return dictItemService
@@ -345,10 +439,14 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 成绩查询页面获取成绩信息
+     * 考试结束后的成绩查询页数据。
      *
-     * @param request
-     * @return
+     * @param request 项目 id + 答卷 id（answerId）
+     * @return 成绩结果视图，可见性受 submittedSetting 控制：
+     * - answerAnalysis=true 且考试已结束：返回正确答案与解析（answer + schema + examInfo）；
+     * - transcriptVisible=true：返回总分；rankVisible=true：返回排名；
+     * - 随机卷：用答卷内问卷快照替代项目 schema。
+     * @implNote 调用链：SurveyController.loadExamResult → loadExamResult → AnswerServiceImpl.getAnswer。
      */
     @Override
     public PublicExamResult loadExamResult(PublicExamRequest request) {
@@ -386,6 +484,12 @@ public class SurveyServiceImpl implements SurveyService {
         return result;
     }
 
+    /**
+     * 暂存答案（目前仅支持登录用户 + 随机卷，按 Cookie 中的答卷 id 更新 tempAnswer）。
+     *
+     * @param request 含 projectId、tempSave=0、tempAnswer
+     * @implNote 调用链：SurveyController.tempSaveAnswer → tempSaveAnswer → AnswerServiceImpl.updateAnswer。
+     */
     @Override
     public void tempSaveAnswer(AnswerRequest request) {
         String projectId = request.getProjectId();
@@ -407,6 +511,15 @@ public class SurveyServiceImpl implements SurveyService {
         answerService.updateAnswer(answerRequest);
     }
 
+    /**
+     * 关联问卷联动数据加载：选择某题的某个选项后，返回关联问卷中匹配该选项值的
+     * 最近答卷字段，用于自动回填。
+     *
+     * @param request 项目 id + 题目 id + 选项 id + 选项值（value）
+     * @return 联动结果（fillAnswer：{填充题id: {填充选项id: 值}}）
+     * @implNote 调用链：SurveyController.loadLinkResult → loadLinkResult。
+     * 通过 buildLinkLikeCondition 构造 JSON 片段 LIKE 在关联问卷答案中匹配。
+     */
     @Override
     public PublicLinkResult loadLinkResult(PublicLinkRequest request) {
         PublicLinkResult result = new PublicLinkResult();
@@ -439,6 +552,14 @@ public class SurveyServiceImpl implements SurveyService {
         return result;
     }
 
+    /**
+     * 构造关联问卷答案的 LIKE 匹配片段（把选项值 JSON 序列化后去掉外层花括号）。
+     *
+     * @param linkSurvey 关联问卷配置
+     * @param value      选项值
+     * @return 形如 "optionId":"value" 的 JSON 片段
+     * @implNote 被 loadLinkResult / AnswerServiceImpl.updateLinkSurveyAnswer 调用。
+     */
     @SneakyThrows
     private String buildLinkLikeCondition(SurveySchema.LinkSurvey linkSurvey, Object value) {
         Map<String, Object> optionValue = new HashMap<>();
@@ -448,6 +569,14 @@ public class SurveyServiceImpl implements SurveyService {
         return StringUtils.substringBetween(objectMapper.writeValueAsString(optionValue), "{", "}");
     }
 
+    /**
+     * 填充关联问卷字段值到联动结果 Map（按 linkFields 配置把关联答卷中的字段值
+     * 拷贝到填充题的对应选项位置）。
+     *
+     * @param answer     关联答卷的答案（可 null）
+     * @param linkFields 联动字段配置列表
+     * @param fillAnswer 结果 Map（填充题 id → {填充选项 id → 值}）
+     */
     public void fillLinkFieldAndAnswer(LinkedHashMap answer, List<SurveySchema.LinkField> linkFields,
                                        LinkedHashMap<String, Map<String, Object>> fillAnswer) {
         for (SurveySchema.LinkField linkField : linkFields) {
@@ -465,10 +594,11 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 判断考试是否结束，未设置默认为已结束
+     * 判断考试是否结束（未设置结束时间默认为已结束）。
      *
-     * @param examSetting
-     * @return
+     * @param examSetting 考试设置
+     * @return true=已结束（或未配置结束时间）
+     * @implNote 被 loadExamResult 调用：答案与解析需考试结束后才可见。
      */
     private boolean examFinished(ProjectSetting.ExamSetting examSetting) {
         if (examSetting.getEndTime() == null || examSetting.getEndTime() < System.currentTimeMillis()) {
@@ -478,10 +608,18 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 根据问卷设置校验问卷
+     * 按问卷设置校验项目状态与各类答题限制（提交前必查）。
      *
-     * @param project
-     * @return
+     * 【校验项】（按顺序，任一不满足即抛错）
+     * 1. 项目存在性；2. status=0 已暂停（SurveySuspend）；
+     * 3. 最大答卷数 maxAnswers（AnswerService.count 统计）；
+     * 4. 问卷结束时间 endTime；5. 登录限制 loginLimit（需开启 loginRequired）；
+     * 6. Cookie 限制 cookieLimit；7. IP 限制 ipLimit；8. 白名单限制 whitelistLimit；
+     * 9. 考试时间窗（validateExamSetting）。
+     *
+     * @param project 项目视图
+     * @implNote 被 loadProject / validateProject(ProjectQuery) / validateAndGetLatestAnswer /
+     * FileServiceImpl.upload（公开上传校验）调用。
      */
     public void validateProject(ProjectView project) {
         if (project == null) {
@@ -532,10 +670,16 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 答案校验
+     * 答案校验：唯一性校验 + 选项配额校验（提交答案前）。
      *
-     * @param project
-     * @param request
+     * 【唯一性】题目配置 attribute.unique=true 的选项：检查已有答卷中该选项值是否已存在
+     * （构造 JSON 片段 LIKE 查询），存在则抛 ValidationException（可配置提示文案 uniqueText）。
+     * 【配额】题目配置 attribute.quota=N 的选项：统计该项目该选项当前被选次数，
+     * 超过配额（optionSelectedCount+1 > quota）时拒绝提交。
+     *
+     * @param project 项目视图
+     * @param request 答卷请求（含答案）
+     * @implNote 被 validateAndGetLatestAnswer 调用。
      */
     private void validateAnswer(ProjectView project, AnswerRequest request) {
         List<SurveySchema> uniqueSchemaList = SchemaHelper.findSchemaListByAttribute(project.getSurvey(), "unique",
@@ -594,6 +738,12 @@ public class SurveyServiceImpl implements SurveyService {
 
     }
 
+    /**
+     * 校验考试时间窗：开始时间未到抛 ExamUnStarted，结束时间已过抛 ExamFinished。
+     *
+     * @param project 项目视图（非考试模式直接跳过）
+     * @implNote 被 validateProject 调用。
+     */
     private void validateExamSetting(ProjectView project) {
         ProjectSetting.ExamSetting examSetting = project.getSetting().getExamSetting();
         if (examSetting == null || !ProjectModeEnum.exam.equals(project.getMode())) {
@@ -610,11 +760,15 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 校验问卷并且判断是否要更新最近一次的答案
+     * 校验问卷并判断是否要更新最近一次的答案（允许修改开关场景）。
      *
-     * @param project
-     * @param request
-     * @return 最近一次的答案
+     * @param project 项目视图
+     * @param request 答卷请求（含答案）
+     * @return 最近一次答卷视图（可修改时）；否则 null
+     * @implNote 被 saveAnswer 的默认分支调用。
+     * - 校验通过且（已登录 + 允许修改答案）：取最近一次答卷用于更新；
+     * - 校验抛 SurveySubmitted（已达提交上限）但（已登录 + 允许修改）：
+     *   同样允许继续修改（视为"已提交但可改"），其余错误原样抛出。
      */
     private AnswerView validateAndGetLatestAnswer(ProjectView project, AnswerRequest request) {
         ProjectSetting setting = project.getSetting();
@@ -651,10 +805,14 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 获取最近一次的答案
+     * 获取最近一次的答案（项目开启"允许修改答案"时回填已答内容）。
      *
-     * @param projectView
-     * @return
+     * @param projectView  公开项目视图
+     * @param whitelistName 白名单用户姓名（导入用户白名单场景：用它定位答卷人 partner）
+     * @return 最近一次答卷的答案 Map；无则 null
+     * @implNote 被 loadProject / validateProject(ProjectQuery) 调用。
+     * 白名单（未登录）场景按 partner.id 定位答卷（createBy=partner.id），
+     * 登录场景按当前用户定位。
      */
     private LinkedHashMap<String, Object> getLatestAnswer(PublicProjectView projectView, String whitelistName) {
         // 打开了答案允许修改开关
@@ -682,10 +840,13 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 公开查询修改答案，因为涉及到权限操作，需要将之前的答案和更新的答案做一个 merge 操作
+     * 公开查询修改答案：因涉及权限，需要把已存在答案与本次提交答案做 merge
+     * （本次未提交的字段保留旧值，避免覆盖其他渠道写入的数据）。
      *
-     * @param project
-     * @param answer
+     * @param project 项目视图
+     * @param answer  答卷请求（须含 queryId 与 id）
+     * @implNote 被 saveAnswer 的"公开查询修改答案"分支调用。
+     * 仅当查询配置存在且包含 editable 字段权限时才允许；异常统一抛 QueryResultUpdateError。
      */
     private void validateAndMergeAnswer(ProjectView project, AnswerRequest answer) {
         if (isBlank(answer.getQueryId()) || isBlank(answer.getId())) {
@@ -716,6 +877,13 @@ public class SurveyServiceImpl implements SurveyService {
         }
     }
 
+    /**
+     * 登录次数限制校验：统计当前用户在该项目时间窗内（按 cron 计算）的答卷数，
+     * 达到上限抛 SurveySubmitted。
+     *
+     * @param projectId 项目 id
+     * @param setting   项目设置（含 answerSetting.loginLimit）
+     */
     private void validateLoginLimit(String projectId, ProjectSetting setting) {
         String userId = SecurityContextUtils.getUserId();
         if (userId == null) {
@@ -728,6 +896,13 @@ public class SurveyServiceImpl implements SurveyService {
         doValidate(setting, query, setting.getAnswerSetting().getLoginLimit());
     }
 
+    /**
+     * Cookie 次数限制校验：首次访问下发限制 Cookie（100 年有效期），
+     * 之后每次提交按 Cookie 值统计答卷数。
+     *
+     * @param projectId 项目 id
+     * @param setting   项目设置（含 answerSetting.cookieLimit）
+     */
     private void validateCookieLimit(String projectId, ProjectSetting setting) {
         HttpServletRequest request = ContextHelper.getCurrentHttpRequest();
 
@@ -750,6 +925,12 @@ public class SurveyServiceImpl implements SurveyService {
         doValidate(setting, query, setting.getAnswerSetting().getCookieLimit());
     }
 
+    /**
+     * IP 次数限制校验：按客户端 IP 统计答卷数。
+     *
+     * @param projectId 项目 id
+     * @param setting   项目设置（含 answerSetting.ipLimit）
+     */
     private void validateIpLimit(String projectId, ProjectSetting setting) {
         HttpServletRequest request = ContextHelper.getCurrentHttpRequest();
         String ip = IPUtils.getClientIpAddress(request);
@@ -763,6 +944,13 @@ public class SurveyServiceImpl implements SurveyService {
         doValidate(setting, query, setting.getAnswerSetting().getIpLimit());
     }
 
+    /**
+     * 白名单次数限制校验：白名单校验通过后（request 属性 createBy 已由
+     * convertAndValidateLoginFormIfNeeded 设置），按该答卷人统计答卷数。
+     *
+     * @param projectId 项目 id
+     * @param setting   项目设置（含 answerSetting.whitelistLimit）
+     */
     private void validateWhitelistLimit(String projectId, ProjectSetting setting) {
         AnswerQuery query = new AnswerQuery();
         query.setProjectId(projectId);
@@ -774,6 +962,15 @@ public class SurveyServiceImpl implements SurveyService {
         }
     }
 
+    /**
+     * 通用限制校验执行体：按 cron 计算时间窗并统计该时间窗内答卷数，
+     * 达到 limitNum 抛 SurveySubmitted；开启"允许修改答案"时直接放行（可覆盖旧答卷）。
+     *
+     * @param setting     项目设置（含 submittedSetting）
+     * @param query       答卷统计条件（已按限制类型预置 projectId + 归属）
+     * @param limitSetting 限制配置（cron 频率 + limitNum 上限）
+     * @implNote 被 validateLoginLimit/validateCookieLimit/validateIpLimit/validateWhitelistLimit 调用。
+     */
     private void doValidate(ProjectSetting setting, AnswerQuery query, ProjectSetting.UniqueLimitSetting limitSetting) {
         // 通过 cron 计算时间窗
         CronHelper helper = new CronHelper(limitSetting.getLimitFreq().getCron());
@@ -792,6 +989,14 @@ public class SurveyServiceImpl implements SurveyService {
         }
     }
 
+    /**
+     * 获取项目与查询配置并校验查询有效性。
+     *
+     * @param request 含项目 id（id）与查询配置 id（resultId）
+     * @return 二元组（项目视图 + 查询配置）
+     * @implNote 被 loadQuery / getQueryResult 调用；查询不存在抛 QueryNotExist，
+     * 密码/有效期/开关校验见 validatePublicQuery。
+     */
     private Tuple2<ProjectView, ProjectSetting.PublicQuery> getProjectAndQueryThenValidate(PublicQueryRequest request) {
         ProjectView project = projectService.getProject(request.getId());
         List<ProjectSetting.PublicQuery> queries = project.getSetting().getSubmittedSetting().getPublicQuery();
@@ -805,8 +1010,11 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * @param query  公开查询配置
-     * @param answer 查询答案
+     * 校验公开查询配置：开关（enabled）、有效期（linkValidityPeriod 时间区间）、
+     * 密码（password，匹配后从答案中移除密码字段）。
+     *
+     * @param query  查询配置
+     * @param answer 查询表单答案（含密码字段时可空）
      */
     @SneakyThrows
     private void validatePublicQuery(ProjectSetting.PublicQuery query, LinkedHashMap answer) {
@@ -834,11 +1042,12 @@ public class SurveyServiceImpl implements SurveyService {
     }
 
     /**
-     * 前端支持动态主题(问卷主题/表单主题)切换，动态构建查询表单
+     * 动态构建查询表单 schema（前端支持动态主题切换）。
      *
-     * @param project
-     * @param query
-     * @return
+     * @param project 项目视图
+     * @param query   查询配置（title/description/conditionQuestion 条件题）
+     * @return 查询表单 schema（含密码题则追加一个隐藏的密码输入题）
+     * @implNote 被 loadQuery 调用；条件题来自配置中的 #{questionId} 占位符匹配。
      */
     private SurveySchema buildQueryFormSchema(ProjectView project, ProjectSetting.PublicQuery query) {
         SurveySchema schema = SurveySchema.builder().id(query.getId()).title(query.getTitle())

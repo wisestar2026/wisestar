@@ -12,6 +12,15 @@ import java.util.stream.Collectors;
 /**
  * Model对象到Domain类型对象的相互转换。实现类通常声明在Model实体类中。
  *
+ * <p><b>所属模块</b>：shared 模块基础框架（cn.wisestar.server.core.base.mapper）。</p>
+ * <p><b>类职责</b>：定义"请求 DTO（R）→ 数据库实体（M）→ 视图 DTO（V）"
+ * 三层对象转换的标准接口，并基于 Jackson 提供
+ * "bean ↔ map" 的默认转换工具方法。各模块在 Model 实体类中通过
+ * MapStruct 生成该接口的实现（配合 mapToMap 优化 Map 字段的拷贝）。</p>
+ *
+ * <p><b>数据流</b>：前端请求（Request DTO）→ fromRequest → Model 实体 → 落库；
+ * 数据库查询（Model 实体）→ toView → View DTO → 响应前端。</p>
+ *
  * @param <R> Request请求实体对象，通常用于新增和修改。
  * @param <V> View视图对象。
  * @param <M> Model数据库实体对象类型。
@@ -27,6 +36,11 @@ public interface BaseModelMapper<R, V, M> {
 	 */
 	M fromRequest(R request);
 
+	/**
+	 * 批量：请求列表 → Model 实体列表。
+	 * @param requestList 请求对象列表。
+	 * @return Model 实体对象列表。
+	 */
 	List<M> fromRequest(List<R> requestList);
 
 	/**
@@ -36,6 +50,11 @@ public interface BaseModelMapper<R, V, M> {
 	 */
 	V toView(M model);
 
+	/**
+	 * 批量：Model 实体列表 → 视图对象列表。
+	 * @param modelList Model 实体对象列表。
+	 * @return View视图对象列表。
+	 */
 	List<V> toView(List<M> modelList);
 
 	/**

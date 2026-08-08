@@ -1,0 +1,384 @@
+/* ============================================================
+ * StudentHomePage.css - 学生端主界面（海底AI自习室）样式
+ * 风格: 海底童趣 + 3D 圆润卡片 + 浅蓝渐变海洋背景 + 波浪海面
+ * ============================================================ */
+
+/* ---------- 页面容器 ---------- */
+.shp-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #dff2ff 0%, #bde6ff 45%, #7fd0f5 78%, #5bbfe9 100%);
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 背景波浪 ---------- */
+.shp-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-repeat: repeat-x;
+  background-size: 320px 100%;
+}
+.shp-wave-back {
+  height: 140px;
+  bottom: -20px;
+  background-image: radial-gradient(ellipse at 50% 0%, #5bbfe9 55%, transparent 60%);
+  opacity: 0.45;
+  animation: shp-wave-drift 16s linear infinite;
+}
+.shp-wave-front {
+  height: 90px;
+  bottom: -10px;
+  background-image: radial-gradient(ellipse at 50% 0%, #6ecbf0 55%, transparent 60%);
+  opacity: 0.7;
+  animation: shp-wave-drift 10s linear infinite reverse;
+}
+@keyframes shp-wave-drift {
+  from { background-position-x: 0; }
+  to   { background-position-x: 320px; }
+}
+
+/* ---------- 云朵装饰 ---------- */
+.shp-cloud {
+  position: absolute;
+  font-size: 56px;
+  opacity: 0.5;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.08));
+}
+.shp-cloud-left { top: 110px; left: 24px; }
+.shp-cloud-right { top: 180px; right: 30px; font-size: 40px; }
+
+/* ---------- Header ---------- */
+.shp-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+}
+.shp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.shp-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(64, 164, 212, 0.35);
+}
+.shp-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #1d3a5f;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+.shp-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.shp-coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #b7791f;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+.shp-coin-icon { font-size: 16px; }
+.shp-coin-arrow { font-size: 12px; color: #c9a227; }
+.shp-energy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #7a5b1e;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+.shp-star { font-size: 15px; }
+
+/* ---------- 主体 ---------- */
+.shp-body {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  gap: 20px;
+  padding: 6px 28px 60px;
+  align-items: stretch;
+}
+
+/* ---------- 左侧导航（圆角漂浮面板） ---------- */
+.shp-nav {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(225, 245, 255, 0.92) 100%);
+  border-radius: 24px;
+  padding: 18px 12px;
+  box-shadow: 0 8px 24px rgba(64, 140, 190, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+.shp-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2b4a6b;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.shp-nav-item:hover { background: rgba(255, 255, 255, 0.8); }
+.shp-nav-icon { font-size: 18px; }
+/* 选中态: 首页为白色胶囊；数学贝壳为橙色渐变（设计稿） */
+.shp-nav-item.active {
+  background: linear-gradient(135deg, #ffb64d 0%, #ff8a3d 100%);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(255, 138, 61, 0.4);
+}
+.shp-back-link {
+  margin-top: auto;
+  text-align: center;
+  font-size: 13px;
+  color: #8aa9c4;
+  text-decoration: none;
+}
+.shp-back-link:hover { color: #2b4a6b; }
+
+/* ---------- 内容区 ---------- */
+.shp-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ---------- 吉祥物 + 气泡 ---------- */
+.shp-mascot-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.shp-mascot {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #4fc3f7 0%, #2196f3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.35);
+  position: relative;
+}
+/* 小腮红（设计稿海豚有粉色腮红） */
+.shp-mascot::before,
+.shp-mascot::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 150, 170, 0.75);
+  bottom: 18px;
+}
+.shp-mascot::before { left: 16px; }
+.shp-mascot::after { right: 16px; }
+.shp-bubble {
+  background: #fff7d6;
+  border: 2px solid #ffe28a;
+  border-radius: 18px;
+  padding: 12px 18px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #7a5b1e;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(255, 200, 90, 0.25);
+}
+/* 气泡尾巴 */
+.shp-bubble::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 7px solid transparent;
+  border-right-color: #ffe28a;
+}
+.shp-bubble::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #fff7d6;
+}
+
+/* ---------- 主工作台面板 ---------- */
+.shp-panel {
+  flex: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(236, 248, 255, 0.95) 100%);
+  border-radius: 28px;
+  padding: 26px 26px 18px;
+  box-shadow: 0 10px 30px rgba(64, 140, 190, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 任务卡片 ---------- */
+.shp-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.shp-card {
+  background: #fff;
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 6px 16px rgba(60, 130, 180, 0.12);
+  border-top: 5px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.shp-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(60, 130, 180, 0.2);
+}
+.shp-card-orange { border-top-color: #ff8a3d; }
+.shp-card-blue   { border-top-color: #2196f3; }
+.shp-card-green  { border-top-color: #4caf50; }
+.shp-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.shp-card-icon { font-size: 24px; }
+.shp-card-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #cfd8e3;
+}
+.shp-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #2b4a6b;
+}
+.shp-card-value {
+  font-size: 30px;
+  font-weight: 900;
+  color: #1d3a5f;
+  line-height: 1.1;
+}
+.shp-card-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: #eef3f8;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.shp-card-progress-bar { height: 100%; border-radius: 999px; }
+.shp-card-progress-bar.orange { background: linear-gradient(90deg, #ffb64d, #ff8a3d); }
+.shp-card-progress-bar.blue   { background: linear-gradient(90deg, #64b5f6, #2196f3); }
+.shp-card-progress-bar.green  { background: linear-gradient(90deg, #81c784, #4caf50); }
+.shp-card-desc {
+  font-size: 13px;
+  color: #8aa9c4;
+}
+.shp-card-btn {
+  margin-top: 8px;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+.shp-card-btn:hover { transform: scale(1.03); }
+.shp-card-btn.orange { background: linear-gradient(135deg, #ffb64d, #ff8a3d); box-shadow: 0 4px 10px rgba(255, 138, 61, 0.35); }
+.shp-card-btn.blue   { background: linear-gradient(135deg, #64b5f6, #2196f3); box-shadow: 0 4px 10px rgba(33, 150, 243, 0.35); }
+.shp-card-btn.green  { background: linear-gradient(135deg, #81c784, #4caf50); box-shadow: 0 4px 10px rgba(76, 175, 80, 0.35); }
+
+/* ---------- 专注信息 ---------- */
+.shp-focus {
+  margin-top: auto;
+  padding-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #5b7a99;
+}
+.shp-focus-num {
+  color: #2196f3;
+  font-size: 16px;
+  font-weight: 800;
+}
+.shp-focus-divider { color: #b7cbd9; }
+
+/* ---------- 右下角悬浮 AI 按钮 ---------- */
+.shp-ai-btn {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 10;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(160deg, #4fc3f7 0%, #1976d2 100%);
+  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.45);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.shp-ai-btn:hover { transform: scale(1.06); }
+.shp-ai-line1 { font-size: 14px; font-weight: 600; }
+.shp-ai-line2 { font-size: 16px; font-weight: 800; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 900px) {
+  .shp-body { flex-direction: column; }
+  .shp-nav { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .shp-back-link { width: 100%; }
+  .shp-cards { grid-template-columns: 1fr; }
+  .shp-title { font-size: 20px; }
+}

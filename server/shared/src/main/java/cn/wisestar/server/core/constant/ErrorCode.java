@@ -1,6 +1,18 @@
 package cn.wisestar.server.core.constant;
 
 /**
+ * 业务错误码枚举（ErrorCode）。
+ *
+ * <p><b>所属模块</b>：shared 模块常量包（cn.wisestar.server.core.constant）。</p>
+ * <p><b>类职责</b>：定义系统全部业务错误码（code）与默认错误消息（message）。
+ * 业务代码通过抛出 {@link cn.wisestar.server.core.exception.ErrorCodeException}
+ * 携带本枚举，由
+ * {@link cn.wisestar.server.core.mvc.advice.GlobalExceptionHandler#handleErrorCodeException}
+ * 捕获后把 code/message 透传给前端，前端按 code 做国际化或分支提示。</p>
+ *
+ * <p><b>编码规则</b>：前两位区分模块（10xx 账号、14xx 注册、40xx 问卷回收/
+ * 文件/关联、60xx 考试、70xx 公开查询），后两位区分具体错误消息。</p>
+ *
  * @author javahuang
  * @date 2022/2/23
  */
@@ -115,16 +127,30 @@ public enum ErrorCode {
 	QueryResultUpdateError(7020, "答案更新失败"),;
 
 	/**
-	 * 前两位区分模块，后两位区分错误消息
+	 * 错误码数值（前两位区分模块，后两位区分错误消息）
 	 */
 	public int code;
 
+	/**
+	 * 默认错误消息（可直接展示给用户）
+	 */
 	public String message;
 
+	/**
+	 * 仅含错误码的构造器（message 为空）。
+	 *
+	 * @param code 错误码
+	 */
 	ErrorCode(int code) {
 		this.code = code;
 	}
 
+	/**
+	 * 含错误码与消息的构造器。
+	 *
+	 * @param code    错误码
+	 * @param message 默认错误消息
+	 */
 	ErrorCode(int code, String message) {
 		this.code = code;
 		this.message = message;

@@ -8,9 +8,23 @@
  *   4. 查看答卷详情（跳转详情页）
  *   5. 删除答卷
  *
+ * 被谁引用: App.jsx 路由表（/answers）；MainLayout 侧边栏"答案管理"菜单进入
+ *
  * 后端接口:
- *   GET  /api/answer/list?current=1&pageSize=15&projectId=xxx  答卷列表
+ *   GET  /api/answer/list?current=1&pageSize=15&projectId=xxx&projectName=xxx  答卷列表
  *   POST /api/answer/delete                                   删除答卷
+ *
+ * 数据流:
+ *   项目映射: listProject({current:1, pageSize:-1}) → GET /api/project/list（全量）
+ *   → 构建 { projectId: projectName } 映射表，用于表格中显示问卷名称
+ *   答卷列表: fetchAnswers → listAnswers({current, pageSize, projectName?, startTime?, endTime?})
+ *   → GET /api/answer/list（projectName 传给后端做模糊搜索，分页/翻页均生效）
+ *   名称搜索: handleSearch → fetchAnswers(1) 携带 projectName 重新请求后端
+ *   删除: handleDelete → deleteAnswer({id}) → POST /api/answer/delete
+ *
+ * 已知说明（本次已修复）:
+ *   - searchProjectName 原来为纯前端过滤当前页数组（翻页失效），已改为传给后端
+ *     AnswerQuery.projectName 做服务端模糊过滤（见 AnswerServiceImpl.listAnswer）
  *
  * URL: /answers
  */
@@ -62,10 +76,16 @@ export default function AnswerListPage() {
   }, []);
 
   // ---- 加载答卷列表 ----
+  // 数据流: 本页 → listAnswers(params) → GET /api/answer/list
+  // 时间范围筛选: startTime/endTime 转 ISO 字符串传后端（服务端过滤）
+  // 问卷名称搜索: projectName 传给后端 AnswerQuery.projectName 模糊过滤（翻页仍生效）
   const fetchAnswers = async (p = page) => {
     setLoading(true);
     try {
       const params = { current: p, pageSize };
+      if (searchProjectName.trim()) {
+        params.projectName = searchProjectName.trim();
+      }
       if (dateRange && dateRange[0] && dateRange[1]) {
         params.startTime = dateRange[0].toISOString();
         params.endTime = dateRange[1].toISOString();
@@ -87,12 +107,16 @@ export default function AnswerListPage() {
   }, []);
 
   // ---- 搜索 ----
+  // 触发条件: 输入问卷名称 / 选择时间范围后点击"搜索"或回车
+  // 说明: projectName（服务端模糊）与 startTime/endTime（服务端区间）都在
+  // fetchAnswers 中作为查询参数传给后端，本函数只负责重置页码并重新拉取
   const handleSearch = () => {
     setPage(1);
     fetchAnswers(1);
   };
 
   // ---- 删除答卷 ----
+  // 软删除（移入回收站）；删除后刷新当前页列表
   const handleDelete = async (answerId) => {
     try {
       await deleteAnswer({ id: answerId });
@@ -103,13 +127,10 @@ export default function AnswerListPage() {
     }
   };
 
-  // ---- 前端过滤（按问卷名称） ----
-  const filteredAnswers = searchProjectName
-    ? answers.filter((a) => {
-        const name = projectMap[a.projectId] || '';
-        return name.includes(searchProjectName);
-      })
-    : answers;
+  // ---- 数据已由后端过滤（projectName 服务端模糊搜索） ----
+  // 说明: 问卷名称搜索已传给后端 AnswerQuery.projectName 处理，
+  // 这里直接使用后端返回的当前页数据，不再做前端二次过滤（保证翻页正确）
+  const filteredAnswers = answers;
 
   // ---- 表格列定义 ----
   const columns = [
@@ -242,7 +263,8 @@ export default function AnswerListPage() {
         size="small"
         pagination={{
           current: page,
-          total: searchProjectName ? filteredAnswers.length : total,
+          // 总数直接用后端返回的 total（后端已按 projectName 等条件过滤，翻页正确）
+          total,
           pageSize,
           showTotal: (t) => `共 ${t} 条`,
           onChange: (p) => {

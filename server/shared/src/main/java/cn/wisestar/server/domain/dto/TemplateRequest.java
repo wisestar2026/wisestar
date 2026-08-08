@@ -72,6 +72,26 @@ public class TemplateRequest {
 
 	private String repoId;
 
+	/**
+	 * 学科（知识点一级维度）
+	 */
+	private String subject;
+
+	/**
+	 * 章节（知识点二级维度）
+	 */
+	private String chapter;
+
+	/**
+	 * 知识点（知识点三级维度，多值）
+	 */
+	private String[] knowledgePoint;
+
+	/**
+	 * 难度 easy/medium/hard
+	 */
+	private String difficulty;
+
 	private List<String> ids;
 
 }

@@ -7,9 +7,17 @@
  *   3. 高亮显示用户选择的选项 / 填写的内容
  *   4. 展示答卷元信息（IP、时间、耗时、地区）
  *
+ * 被谁引用: App.jsx 路由表（/answers/:id）；从 AnswerListPage"详情"按钮进入
+ *
  * 答卷答案格式 (answer 字段):
  *   LinkedHashMap<String, Object>，key 为 questionId，
  *   value 为 { optionId: value } 或 { text: "用户输入" } 或 { score: number }
+ *   （该结构由 SurveyViewPage.handleSubmit 构造并 POST 到 /api/public/saveAnswer 落库）
+ *
+ * 数据流:
+ *   本页 → getAnswer(answerId) → GET /api/answer?id=xxx
+ *   → data: { id, survey(问卷JSON), answer(答案Map), metaInfo, tempSave, createAt }
+ *   → 渲染: 题目卡片 + 答案对照（选项高亮 / 填空只读 / 评分星星）
  *
  * URL: /answers/:id
  */

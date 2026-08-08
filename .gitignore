@@ -41,3 +41,15 @@ yarn-error.log*
 *.iws
 *.iml
 *.ipr
+
+### H2 database / runtime artifacts ###
+*.mv.db
+*.mv.db.bak*
+*.trace.db
+/data
+
+### Local runtime config ###
+server/api/application.properties
+
+### Vite cache ###
+surveyking-client/.vite

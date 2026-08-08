@@ -8,7 +8,12 @@
  *   - 团队成员数
  *   - 今日答卷数
  *
- * 数据来源: GET /api/userOverview 接口
+ * 数据来源: GET /api/userOverview 接口（api/user.js getUserOverview）
+ * 被谁引用: App.jsx（受保护路由 /，作为登录后的首页）
+ *
+ * 数据流:
+ *   DashboardPage 挂载 → useEffect → getUserOverview() → GET /api/userOverview
+ *   → 返回 { surveyCount, examCount, userCount, todayAnswerCount } → 渲染 4 个统计卡片
  *
  * 组件布局:
  *   欢迎语 + 4 个统计卡片（响应式网格：大屏 4 列，平板 2 列，手机 1 列）
