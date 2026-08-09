@@ -1,171 +1,176 @@
 /**
- * StudentHomePage.jsx - 学生端主界面（海底AI自习室）
+ * StudentHomePage.jsx - 学生端首页（学海智习系统 V2.0 · 年轻化三卡片布局）
  *
- * 依据设计稿还原的纯前端页面（无后端依赖，数据均为本地 mock）。
- *
- * 布局结构（自上而下、自左而右）:
+ * 布局（海底童趣视觉版）:
  *   +--------------------------------------------------------------+
- *   | Header: [logo] 海底AI自习室       贝壳币 128 ∨ | 今日海浪值 80% |
- *   +--------+-----------------------------------------------------+
- *   | 左导航  |  吉祥物区: 🐬 + 气泡「今天我们潜入3个小任务吧」        |
- *   | 首页    |  +------------------------------------------------+ |
- *   | 任务岛  |  | 任务卡片1   任务卡片2   任务卡片3                 | |
- *   | 阅读珊瑚|  | 语文朗读    数学口算    英语跟读                 | |
- *   | 数学贝壳|  | 15分钟      20题        10分钟                 | |
- *   | 英语浪花|  | 开始探索    开始探索    开始探索                | |
- *   | 成长宝藏|  +------------------------------------------------+ |
- *   |        |  专注倒计时 25分钟 · 休息提醒 浮出水面                 |
- *   +--------+-----------------------------------------------------+
- *                                 (右下角悬浮: 问一问/问小鲸)
+ *   | 🐬 小海星，今天也要潜入知识的海洋哦                            |
+ *   | [我的档案卡] [学海研习卡] [荣誉商城卡]                         |
+ *   | +----------------------------------------------------------+ |
+ *   | | 今日学习数据总览: 时长 / 知识点 / 积分 / 学习币  四模块     | |
+ *   | | 今日待办任务快捷跳转列表                                     | |
+ *   +--------------------------------------------------------------+
  *
- * 视觉风格: 海底童趣 + 3D 圆润卡片 + 浅蓝渐变海洋背景 + 波浪海面
- * 学科配色: 橙色=语文 / 蓝色=数学 / 绿色=英语
+ * 页面跳转:
+ *   - 我的档案卡 → /student/profile（我的档案荣誉墙）
+ *   - 学海研习卡 → /student/study（学海研习主页面·三栏）
+ *   - 荣誉商城卡 → /student/mall（荣誉商城）
+ *   - 今日待办   → /student/study
  *
- * URL: /student（独立路由，不经 MainLayout，全屏展示设计稿）
- * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「学生端主页」菜单进入
+ * 纯净学习模式: 仅保留研习卡 + 今日时长/知识点，激励模块（积分/币/商城）DOM 移除
+ *
+ * 被谁引用: App.jsx 路由表（/student 子路由 index）
+ * 依赖: react-router-dom(useNavigate)、useStudentStore、./student.css
  */
 
-import { useState } from 'react';
-import { message } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import useStudentStore, { SUBJECTS, TITLES, PROFILE, TODAY, DAILY_TASKS } from '../../stores/useStudentStore';
 import './StudentHomePage.css';
 
-// ---- 左侧导航配置 ----
-// 图标用 emoji 呈现童趣感；数学贝壳为当前选中项（设计稿橙色高亮）
-const NAV_ITEMS = [
-  { key: 'home',    label: '首页',     icon: '🏠' },
-  { key: 'mission', label: '任务岛',   icon: '🗂️' },
-  { key: 'reading', label: '阅读珊瑚', icon: '📖' },
-  { key: 'math',    label: '数学贝壳', icon: '🐚' },
-  { key: 'english', label: '英语浪花', icon: '🌊' },
-  { key: 'growth',  label: '成长宝藏', icon: '⭐' },
-];
-
-// ---- 任务卡片配置 ----
-// 每个学科卡片: 名称 / 主数值 / 进度 / 主题色 / 图标
-const TASK_CARDS = [
-  {
-    key: 'chinese', title: '语文朗读', value: '15分钟', progress: 45,
-    theme: 'orange', icon: '📚', desc: '朗读小诗',
-  },
-  {
-    key: 'math', title: '数学口算', value: '20题', progress: 65,
-    theme: 'blue', icon: '🧮', desc: '口算闯关',
-  },
-  {
-    key: 'english', title: '英语跟读', value: '10分钟', progress: 30,
-    theme: 'green', icon: '🔤', desc: '跟读单词',
-  },
-];
-
 export default function StudentHomePage() {
-  const [activeNav, setActiveNav] = useState('math'); // 设计稿中「数学贝壳」为选中态
+  const navigate = useNavigate();
+  const { pureMode } = useStudentStore();
+  const activeSubject = useStudentStore((s) => s.activeSubject);
+  const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
 
-  // mock 交互: 任务卡「开始探索」点击提示（纯前端演示，后续接入练习流程）
-  const handleStart = (card) => {
-    message.success(`开始「${card.title}」探索之旅`);
-  };
+  // 当前头衔（按学海积分自动晋升）
+  const currentTitle = [...TITLES].reverse().find((t) => PROFILE.points >= t.need) || TITLES[0];
+  // 本学期可兑换总学习币（多科合并）
+  const totalCoins = SUBJECTS.reduce((sum, s) => sum + s.coins, 0);
 
   return (
-    <div className="shp-page">
-      {/* 背景装饰: 海面波浪 */}
-      <div className="shp-wave shp-wave-back" />
-      <div className="shp-wave shp-wave-front" />
-      {/* 左右云朵/浪花装饰 */}
-      <div className="shp-cloud shp-cloud-left">☁️</div>
-      <div className="shp-cloud shp-cloud-right">☁️</div>
-
-      {/* ---- Header ---- */}
-      <header className="shp-header">
-        <div className="shp-brand">
-          {/* 素材图: 薄荷绿花朵图标作为 logo */}
-          <img src="/student-assets/logo-flower.webp" alt="logo" className="shp-logo" />
-          <span className="shp-title">海底AI自习室</span>
-        </div>
-        <div className="shp-header-right">
-          {/* 贝壳币 */}
-          <div className="shp-coins">
-            <span className="shp-coin-icon">🐚</span>
-            <span>贝壳币 128</span>
-            <span className="shp-coin-arrow">▾</span>
-          </div>
-          {/* 今日海浪值 */}
-          <div className="shp-energy">
-            <span className="shp-star">⭐</span>
-            <span>今日海浪值 80%</span>
-          </div>
-        </div>
-      </header>
-
-      {/* ---- 主体: 左侧导航 + 内容区 ---- */}
-      <div className="shp-body">
-        {/* 左侧导航（圆角漂浮面板） */}
-        <nav className="shp-nav">
-          {NAV_ITEMS.map((item) => (
-            <div
-              key={item.key}
-              className={`shp-nav-item ${activeNav === item.key ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.key)}
-            >
-              <span className="shp-nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </div>
-          ))}
-          {/* 返回管理端入口（演示用，便于来回切换） */}
-          <a href="/" className="shp-back-link">← 返回管理端</a>
-        </nav>
-
-        {/* 内容区 */}
-        <main className="shp-main">
-          {/* 吉祥物 + 气泡 */}
-          <div className="shp-mascot-row">
-            <div className="shp-mascot">
-              <span className="shp-dolphin">🐬</span>
-            </div>
-            <div className="shp-bubble">今天我们潜入3个小任务吧</div>
-          </div>
-
-          {/* 主工作台面板 */}
-          <div className="shp-panel">
-            {/* 三张任务卡片 */}
-            <div className="shp-cards">
-              {TASK_CARDS.map((card) => (
-                <div key={card.key} className={`shp-card shp-card-${card.theme}`}>
-                  <div className="shp-card-top">
-                    <span className="shp-card-icon">{card.icon}</span>
-                    {/* 空心圆（未勾选状态） */}
-                    <span className="shp-card-dot" />
-                  </div>
-                  <div className="shp-card-title">{card.title}</div>
-                  <div className="shp-card-value">{card.value}</div>
-                  {/* 进度条 */}
-                  <div className="shp-card-progress">
-                    <div className={`shp-card-progress-bar ${card.theme}`} style={{ width: `${card.progress}%` }} />
-                  </div>
-                  <div className="shp-card-desc">{card.desc}</div>
-                  <button className={`shp-card-btn ${card.theme}`} onClick={() => handleStart(card)}>
-                    开始探索
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* 专注信息 */}
-            <div className="shp-focus">
-              <span className="shp-focus-item">
-                专注倒计时 <b className="shp-focus-num">25分钟</b>
-              </span>
-              <span className="shp-focus-divider">·</span>
-              <span className="shp-focus-item">休息提醒 浮出水面</span>
-            </div>
-          </div>
-        </main>
+    <div className="sll-page-enter">
+      {/* 吉祥物 + 欢迎语 */}
+      <div className="sll-mascot-row">
+        <div className="sll-mascot"><span>🐬</span></div>
+        <div className="sll-bubble">{PROFILE.name}，今天也要潜入知识的海洋哦</div>
       </div>
 
-      {/* ---- 右下角悬浮 AI 按钮 ---- */}
-      <button className="shp-ai-btn" onClick={() => message.info('小鲸助手即将上线')}>
-        <span className="shp-ai-line1">问一问</span>
-        <span className="shp-ai-line2">问小鲸</span>
-      </button>
+      {/* ---- 上半部: 三大悬浮功能卡片 ---- */}
+      <div className="sh-home-cards">
+        {/* 1) 我的档案卡片 */}
+        {!pureMode && (
+          <div
+            className="sll-card sll-card-hover sh-home-card sh-home-card-archive"
+            onClick={() => navigate('/student/profile')}
+          >
+            <div className="sh-home-card-head">
+              <span className="sh-home-card-icon">📋</span>
+              <span className="sh-home-card-tag">我的档案</span>
+            </div>
+            <div className="sh-home-archive">
+              <div className="sh-home-avatar">{PROFILE.emoji}</div>
+              <div className="sh-home-archive-info">
+                <div className="sh-home-archive-name">{PROFILE.name}</div>
+                <div className="sh-home-title">{currentTitle.emoji} {currentTitle.name}</div>
+                <div className="sh-home-archive-meta">
+                  <span>⭐ 学海积分 <b>{PROFILE.points}</b></span>
+                  <span>🏅 证书 <b>{PROFILE.certCount}/{PROFILE.certTotal}</b></span>
+                </div>
+              </div>
+            </div>
+            <div className="sh-home-card-foot">查看荣誉档案 ›</div>
+          </div>
+        )}
+
+        {/* 2) 学海研习卡片（核心学习入口） */}
+        <div
+          className={`sll-card sll-card-hover sh-home-card sh-home-card-study sh-home-card-${subject.theme}`}
+          onClick={() => navigate('/student/study')}
+        >
+          <div className="sh-home-card-head">
+            <span className="sh-home-card-icon">{subject.icon}</span>
+            <span className="sh-home-card-tag">学海研习</span>
+          </div>
+          <div className="sh-home-study">
+            <div className="sh-home-study-book">📖</div>
+            <div className="sh-home-study-text">
+              <div className="sh-home-study-title">开启{subject.name}研习</div>
+              <div className="sh-home-study-desc">潜入「{subject.chapters[0].name}」的知识海洋</div>
+            </div>
+          </div>
+          <div className="sh-home-card-foot">进入研习主页面 ›</div>
+        </div>
+
+        {/* 3) 荣誉商城卡片 */}
+        {!pureMode && (
+          <div
+            className="sll-card sll-card-hover sh-home-card sh-home-card-mall"
+            onClick={() => navigate('/student/mall')}
+          >
+            <div className="sh-home-card-head">
+              <span className="sh-home-card-icon">🎁</span>
+              <span className="sh-home-card-tag">荣誉商城</span>
+            </div>
+            <div className="sh-home-mall">
+              <div className="sh-home-mall-coin">🐚</div>
+              <div>
+                <div className="sh-home-mall-num">{totalCoins}</div>
+                <div className="sh-home-mall-label">本学期可兑换总学习币</div>
+              </div>
+            </div>
+            {/* 各科学习币明细（hover 展示） */}
+            <div className="sh-home-mall-detail">
+              {SUBJECTS.map((s) => (
+                <span key={s.key} className={`sh-home-mall-sub sh-home-mall-sub-${s.theme}`}>
+                  {s.icon} {s.name} {s.coins}
+                </span>
+              ))}
+            </div>
+            <div className="sh-home-card-foot">去逛逛商城 ›</div>
+          </div>
+        )}
+      </div>
+
+      {/* ---- 下半部: 今日学习数据总览 ---- */}
+      <div className="sh-home-bottom">
+        <div className="sll-card sh-home-data">
+          <div className="sh-home-section-title">🌊 今日学习数据总览</div>
+          <div className="sh-home-data-grid">
+            <div className="sh-home-data-item">
+              <div className="sh-home-data-icon sh-home-data-time">⏱️</div>
+              <div className="sh-home-data-num">{TODAY.minutes}<small>分钟</small></div>
+              <div className="sh-home-data-label">今日学习时长</div>
+            </div>
+            <div className="sh-home-data-item">
+              <div className="sh-home-data-icon sh-home-data-kp">🧩</div>
+              <div className="sh-home-data-num">{TODAY.kps}<small>个</small></div>
+              <div className="sh-home-data-label">完成知识点</div>
+            </div>
+            {!pureMode && (
+              <>
+                <div className="sh-home-data-item">
+                  <div className="sh-home-data-icon sh-home-data-points">⭐</div>
+                  <div className="sh-home-data-num">+{TODAY.points}<small>积分</small></div>
+                  <div className="sh-home-data-label">今日获得积分</div>
+                </div>
+                <div className="sh-home-data-item">
+                  <div className="sh-home-data-icon sh-home-data-coins">🐚</div>
+                  <div className="sh-home-data-num">+{TODAY.coins}<small>币</small></div>
+                  <div className="sh-home-data-label">今日获得学习币</div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* 今日待办任务快捷跳转 */}
+        <div className="sll-card sh-home-todo">
+          <div className="sh-home-section-title">🗓️ 今日待办任务</div>
+          {DAILY_TASKS.map((t) => (
+            <div
+              key={t.key}
+              className="sh-home-todo-item"
+              onClick={() => navigate('/student/study')}
+            >
+              <span className={`sh-home-todo-dot ${t.done ? 'done' : ''}`}>
+                {t.done ? '✓' : ''}
+              </span>
+              <span className="sh-home-todo-label">{t.label}</span>
+              <span className="sh-home-todo-reward">{t.reward}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

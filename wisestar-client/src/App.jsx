@@ -58,7 +58,12 @@ import QuestionListPage from './pages/question/QuestionListPage';
 import PracticeHomePage from './pages/practice/PracticeHomePage';
 import PracticeSessionPage from './pages/practice/PracticeSessionPage';
 import WrongQuestionPage from './pages/practice/WrongQuestionPage';
+import StudentLayout from './pages/student/StudentLayout';
 import StudentHomePage from './pages/student/StudentHomePage';
+import StudyPage from './pages/student/StudyPage';
+import KnowledgePage from './pages/student/KnowledgePage';
+import ProfilePage from './pages/student/ProfilePage';
+import MallPage from './pages/student/MallPage';
 import SystemPage from './pages/system/SystemPage';
 
 export default function App() {
@@ -89,15 +94,27 @@ export default function App() {
           {/* 公开问卷填写页（任何人可访问） */}
           <Route path="/survey/:id" element={<SurveyViewPage />} />
 
-          {/* 学生端主界面（海底AI自习室，纯前端原型，独立全屏路由） */}
+          {/* 学生端（海底AI自习室 · 学海智习系统 V2.0 纯前端原型，独立全屏路由） */}
+          {/* 公共布局 StudentLayout 提供海洋背景 + 顶部通栏（学科 Tab/版本/纯净模式） */}
           <Route
             path="/student"
             element={
               <AuthGuard>
-                <StudentHomePage />
+                <StudentLayout />
               </AuthGuard>
             }
-          />
+          >
+            {/* 学生首页: 我的档案 / 学海研习 / 荣誉商城 三卡 + 今日数据总览 */}
+            <Route index element={<StudentHomePage />} />
+            {/* 学海研习主页面: 三栏（章节导航 / 主内容 / 快捷操作） */}
+            <Route path="study" element={<StudyPage />} />
+            {/* 知识点详情页: 预习 / 练习 / 试炼 / 错题（?tab=） */}
+            <Route path="knowledge/:kpId" element={<KnowledgePage />} />
+            {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}
+            <Route path="profile" element={<ProfilePage />} />
+            {/* 荣誉商城: 多科合并兑换 */}
+            <Route path="mall" element={<MallPage />} />
+          </Route>
 
           {/* ---- 受保护路由（需要登录） ---- */}
           {/* AuthGuard 包裹 MainLayout，所有子路由都受保护 */}

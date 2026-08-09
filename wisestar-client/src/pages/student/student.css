@@ -1,0 +1,419 @@
+/* ============================================================
+ * student.css - 学生端公共样式（海底AI自习室 · 学海智习系统 V2.0）
+ * 风格: 海底童趣 + 3D 圆润卡片 + 浅蓝渐变海洋背景 + 波浪海面
+ * 规范: 大圆角磨砂卡片 / hover 上浮 scale1.015 300ms / 点击下压回弹 / 页面淡入
+ * ============================================================ */
+
+/* ---------- 页面容器 ---------- */
+.sll-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #dff2ff 0%, #bde6ff 45%, #7fd0f5 78%, #5bbfe9 100%);
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 背景波浪 ---------- */
+.sll-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-repeat: repeat-x;
+  background-size: 320px 100%;
+}
+.sll-wave-back {
+  height: 140px;
+  bottom: -20px;
+  background-image: radial-gradient(ellipse at 50% 0%, #5bbfe9 55%, transparent 60%);
+  opacity: 0.45;
+  animation: sll-wave-drift 16s linear infinite;
+}
+.sll-wave-front {
+  height: 90px;
+  bottom: -10px;
+  background-image: radial-gradient(ellipse at 50% 0%, #6ecbf0 55%, transparent 60%);
+  opacity: 0.7;
+  animation: sll-wave-drift 10s linear infinite reverse;
+}
+@keyframes sll-wave-drift {
+  from { background-position-x: 0; }
+  to   { background-position-x: 320px; }
+}
+
+/* ---------- 云朵装饰 ---------- */
+.sll-cloud {
+  position: absolute;
+  font-size: 56px;
+  opacity: 0.5;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.08));
+}
+.sll-cloud-left { top: 130px; left: 24px; }
+.sll-cloud-right { top: 200px; right: 30px; font-size: 40px; }
+
+/* ---------- 顶部通栏（磨砂悬浮） ---------- */
+.sll-header {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(225, 245, 255, 0.9) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 20px rgba(64, 140, 190, 0.16);
+  backdrop-filter: blur(8px);
+}
+.sll-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.sll-brand { display: flex; align-items: center; gap: 10px; }
+.sll-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 10px rgba(64, 164, 212, 0.35);
+}
+.sll-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1d3a5f;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* ---------- 学科 Tab 胶囊栏 ---------- */
+.sll-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.sll-tabs::-webkit-scrollbar { display: none; }
+.sll-tab {
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.75;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s;
+}
+.sll-tab:hover { opacity: 0.95; transform: translateY(-1px); }
+.sll-tab.active { opacity: 1; transform: scale(1.05); box-shadow: 0 5px 14px rgba(0, 0, 0, 0.22); }
+.sll-tab-icon { font-size: 15px; }
+.sll-tab-orange { background: linear-gradient(135deg, #ffb64d, #ff8a3d); }
+.sll-tab-blue   { background: linear-gradient(135deg, #64b5f6, #2196f3); }
+.sll-tab-green  { background: linear-gradient(135deg, #81c784, #4caf50); }
+/* 版本下拉 */
+.sll-version {
+  flex-shrink: 0;
+  width: 108px;
+}
+.sll-version .ant-select-selector {
+  border-radius: 999px !important;
+  border: none !important;
+  background: #fff !important;
+  font-weight: 600;
+  color: #2b4a6b;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ---------- 右侧信息区 ---------- */
+.sll-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.sll-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #b7791f;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.sll-badge:hover { transform: translateY(-2px); }
+.sll-badge b { font-size: 15px; font-weight: 800; }
+.sll-badge-label { color: #9a8a5f; font-size: 12px; }
+.sll-badge-points { color: #1d3a5f; }
+.sll-badge-points .sll-badge-label { color: #5b7a99; }
+.sll-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  font-size: 17px;
+  color: #2b4a6b;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.sll-icon-btn:hover { transform: translateY(-2px) rotate(8deg); }
+.sll-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+}
+.sll-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #4fc3f7, #2196f3);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 10px rgba(33, 150, 243, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+.sll-title-chip {
+  background: linear-gradient(135deg, #fff3d0, #ffe4a3);
+  color: #9a6a00;
+  border: 1px solid #ffd976;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(255, 190, 60, 0.3);
+}
+.sll-back-btn {
+  border: 1px solid rgba(43, 74, 107, 0.25);
+  background: rgba(255, 255, 255, 0.85);
+  color: #2b4a6b;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sll-back-btn:hover { background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12); }
+/* 设置下拉项 */
+.sll-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 150px;
+  font-size: 13px;
+}
+
+/* ---------- 内容区 ---------- */
+.sll-main {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  padding: 18px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---------- 底部常驻提示 ---------- */
+.sll-footer {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 8px 0 14px;
+  font-size: 12px;
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(43, 74, 107, 0.5);
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================
+ * 通用组件（各学生端页面复用）
+ * ============================================================ */
+
+/* 页面淡入过渡 */
+.sll-page-enter { animation: sll-fade-in 0.35s ease; }
+@keyframes sll-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 磨砂悬浮卡片（大圆角 + 柔和双层阴影） */
+.sll-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(236, 248, 255, 0.97) 100%);
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(64, 140, 190, 0.16), 0 2px 6px rgba(64, 140, 190, 0.08);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+/* 可点击卡片: hover 上浮 + 微放大（scale1.015）300ms 缓动 */
+.sll-card-hover { cursor: pointer; }
+.sll-card-hover:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 16px 32px rgba(64, 140, 190, 0.24), 0 4px 10px rgba(64, 140, 190, 0.1);
+}
+/* 点击下压回弹 */
+.sll-card-hover:active { transform: translateY(-1px) scale(0.99); }
+
+/* 页面标题区（吉祥物 + 气泡欢迎语） */
+.sll-mascot-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.sll-mascot {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #4fc3f7 0%, #2196f3 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.35);
+  position: relative;
+}
+.sll-mascot::before,
+.sll-mascot::after {
+  content: '';
+  position: absolute;
+  width: 11px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 150, 170, 0.75);
+  bottom: 16px;
+}
+.sll-mascot::before { left: 14px; }
+.sll-mascot::after { right: 14px; }
+.sll-bubble {
+  background: #fff7d6;
+  border: 2px solid #ffe28a;
+  border-radius: 18px;
+  padding: 10px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #7a5b1e;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(255, 200, 90, 0.25);
+}
+.sll-bubble::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 7px solid transparent;
+  border-right-color: #ffe28a;
+}
+.sll-bubble::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #fff7d6;
+}
+
+/* 顶部轻柔奖励提示条（1.5s 自动消失） */
+.sll-reward {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: linear-gradient(135deg, #fff7d6, #ffe9b3);
+  border: 2px solid #ffd976;
+  border-radius: 999px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #9a6a00;
+  box-shadow: 0 6px 18px rgba(255, 190, 60, 0.4);
+  animation: sll-reward-fade 1.6s ease forwards;
+  pointer-events: none;
+}
+@keyframes sll-reward-fade {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  75%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+
+/* 章节卡片（左栏导航） */
+.sll-chapter {
+  border-radius: 20px;
+  padding: 14px 16px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(60, 130, 180, 0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+.sll-chapter:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(60, 130, 180, 0.18); }
+.sll-chapter.open { background: linear-gradient(135deg, #eaf6ff, #f4faff); }
+
+/* 掌握度评级标签 */
+.sll-level {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* 右下角悬浮 AI 按钮 */
+.shp-ai-btn {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 10;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(160deg, #4fc3f7 0%, #1976d2 100%);
+  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.45);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.shp-ai-btn:hover { transform: scale(1.06); }
+.shp-ai-line1 { font-size: 14px; font-weight: 600; }
+.shp-ai-line2 { font-size: 16px; font-weight: 800; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1000px) {
+  .sll-header { flex-direction: column; align-items: flex-start; }
+  .sll-right { flex-wrap: wrap; }
+  .sll-main { padding: 14px 16px 30px; }
+  .sll-title { font-size: 18px; }
+}

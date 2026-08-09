@@ -1,0 +1,171 @@
+/* ============================================================
+ * MallPage.css - 荣誉商城页面样式
+ * ============================================================ */
+
+.mall-page {
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+}
+
+/* 顶部数据区 */
+.mall-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  background:
+    radial-gradient(circle at 90% 20%, rgba(255, 200, 90, 0.22) 0%, transparent 45%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 250, 235, 0.97));
+  border-top: 4px solid #ffb64d;
+}
+.mall-top-coin {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3c4, #ffd976);
+  border: 3px solid #fff;
+  box-shadow: 0 6px 16px rgba(255, 190, 60, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  flex-shrink: 0;
+}
+.mall-top-info { flex: 1; min-width: 0; }
+.mall-top-label { font-size: 13px; font-weight: 700; color: #9a8a5f; }
+.mall-top-num { font-size: 40px; font-weight: 900; color: #b7791f; line-height: 1.15; }
+.mall-top-tip {
+  font-size: 12px;
+  color: #c0a76a;
+  margin-top: 4px;
+}
+.mall-top-collapse { flex-shrink: 0; min-width: 300px; }
+.mall-collapse-label { font-size: 13px; font-weight: 800; color: #2b4a6b; }
+.mall-detail-list { display: flex; flex-direction: column; gap: 12px; }
+.mall-detail-row { display: flex; align-items: center; gap: 12px; }
+.mall-detail-sub {
+  width: 90px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b4a6b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mall-detail-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #fff;
+}
+.mall-detail-icon-orange { background: #ff8a3d; }
+.mall-detail-icon-blue   { background: #2196f3; }
+.mall-detail-icon-green  { background: #4caf50; }
+.mall-detail-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: #f0ead8;
+  overflow: hidden;
+}
+.mall-detail-bar-inner { height: 100%; border-radius: 999px; }
+.mall-detail-bar-inner.orange { background: linear-gradient(90deg, #ffb64d, #ff8a3d); }
+.mall-detail-bar-inner.blue   { background: linear-gradient(90deg, #64b5f6, #2196f3); }
+.mall-detail-bar-inner.green  { background: linear-gradient(90deg, #81c784, #4caf50); }
+.mall-detail-num { width: 76px; text-align: right; font-size: 14px; font-weight: 800; color: #b7791f; }
+.mall-detail-num small { font-size: 10px; color: #c0a76a; }
+
+/* 商品网格 */
+.mall-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #2b4a6b;
+  margin: 6px 2px 12px;
+}
+.mall-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.mall-goods {
+  padding: 20px 18px 16px;
+  text-align: center;
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.mall-goods.exchanged { opacity: 0.75; }
+.mall-goods-emoji {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #eaf6ff, #d2ecff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  box-shadow: 0 4px 12px rgba(64, 140, 190, 0.16);
+}
+.mall-goods-name { font-size: 16px; font-weight: 800; color: #1d3a5f; }
+.mall-goods-desc { font-size: 12px; color: #8aa9c4; }
+.mall-goods-price {
+  font-size: 15px;
+  font-weight: 800;
+  color: #b7791f;
+  background: #fff7d6;
+  border-radius: 999px;
+  padding: 4px 14px;
+  margin-top: 4px;
+}
+.mall-goods-btn {
+  margin-top: 6px;
+  border: none;
+  border-radius: 999px;
+  padding: 9px 0;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.mall-goods-btn.ok {
+  color: #fff;
+  background: linear-gradient(135deg, #ffb64d, #ff8a3d);
+  box-shadow: 0 5px 14px rgba(255, 138, 61, 0.35);
+}
+.mall-goods-btn.ok:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 138, 61, 0.45); }
+.mall-goods-btn.no {
+  color: #9aa7b5;
+  background: #eef3f8;
+  cursor: not-allowed;
+}
+
+/* 纯净模式占位 */
+.mall-pure { display: flex; justify-content: center; padding-top: 60px; }
+.mall-pure-card {
+  padding: 44px 60px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.mall-pure-icon { font-size: 48px; }
+.mall-pure-title { font-size: 18px; font-weight: 800; color: #2b4a6b; }
+.mall-pure-desc { font-size: 13px; color: #5b7a99; }
+
+@media (max-width: 800px) {
+  .mall-grid { grid-template-columns: repeat(2, 1fr); }
+  .mall-top { flex-wrap: wrap; }
+  .mall-top-collapse { min-width: 100%; }
+}

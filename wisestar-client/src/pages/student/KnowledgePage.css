@@ -1,0 +1,303 @@
+/* ============================================================
+ * KnowledgePage.css - 知识点详情页样式
+ * 规范: 大圆角卡片选项（无单选框）/ 提交后逐题对错标记 / 低干扰留白
+ * ============================================================ */
+
+.knowledge-page {
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+}
+
+/* 头部 */
+.knowledge-head {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(236, 248, 255, 0.97));
+  border-radius: 26px;
+  padding: 18px 22px;
+  box-shadow: 0 8px 24px rgba(64, 140, 190, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  margin-bottom: 16px;
+}
+.knowledge-back {
+  border: 1px solid rgba(43, 74, 107, 0.25);
+  background: #fff;
+  color: #2b4a6b;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+}
+.knowledge-back:hover { box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12); transform: translateY(-1px); }
+.knowledge-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #1d3a5f;
+}
+.knowledge-title-icon { font-size: 22px; }
+.knowledge-mastery {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 800;
+  color: #2196f3;
+  background: #e3f2fd;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.knowledge-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #5b7a99;
+}
+
+/* 模式 tab */
+.knowledge-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.knowledge-tab {
+  border: 2px solid transparent;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(236, 248, 255, 0.95));
+  color: #2b4a6b;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(64, 140, 190, 0.12);
+  transition: all 0.25s;
+}
+.knowledge-tab:hover { transform: translateY(-2px); }
+.knowledge-tab.active {
+  border-color: #64b5f6;
+  background: linear-gradient(135deg, #64b5f6, #2196f3);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(33, 150, 243, 0.35);
+}
+
+/* 内容卡 */
+.knowledge-preview,
+.knowledge-quiz,
+.knowledge-wrong {
+  padding: 22px 24px;
+}
+.knowledge-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #2b4a6b;
+  margin-bottom: 16px;
+}
+.knowledge-quiz-sub {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8aa9c4;
+}
+
+/* 预习要点 */
+.knowledge-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f6fbfe;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #2b4a6b;
+  line-height: 1.6;
+}
+.knowledge-point-num {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #64b5f6, #2196f3);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.knowledge-preview-tip {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #9a8a5f;
+  background: #fff7d6;
+  border-radius: 12px;
+  padding: 8px 14px;
+}
+
+/* 题目 */
+.knowledge-question {
+  background: #fafdff;
+  border: 2px solid transparent;
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  transition: border-color 0.3s;
+}
+.knowledge-question.right { border-color: #4caf50; background: #f4fdf5; }
+.knowledge-question.wrong  { border-color: #ff7043; background: #fff7f4; }
+.knowledge-q-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.knowledge-q-no {
+  font-size: 13px;
+  font-weight: 800;
+  color: #2b4a6b;
+  background: #e3f2fd;
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+.knowledge-q-type { font-size: 11px; font-weight: 600; color: #8aa9c4; }
+.knowledge-q-result { margin-left: auto; font-size: 13px; font-weight: 800; }
+.knowledge-q-result.right { color: #2e7d32; }
+.knowledge-q-result.wrong  { color: #d84315; }
+.knowledge-q-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1d3a5f;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+/* 大圆角卡片选项 */
+.knowledge-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.knowledge-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 2px solid #e8f2fa;
+  border-radius: 16px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.knowledge-option:hover:not(.readonly .knowledge-option) {
+  border-color: #64b5f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(64, 140, 190, 0.12);
+}
+.knowledge-options.readonly .knowledge-option { cursor: default; }
+.knowledge-option.selected {
+  border-color: #2196f3;
+  background: #eaf6ff;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.18);
+}
+/* 提交后正确答案高亮 */
+.knowledge-option.answer {
+  border-color: #4caf50;
+  background: #f0fdf2;
+}
+.knowledge-opt-key {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e8f2fa;
+  color: #2b4a6b;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.knowledge-option.selected .knowledge-opt-key {
+  background: linear-gradient(135deg, #64b5f6, #2196f3);
+  color: #fff;
+}
+.knowledge-option.answer .knowledge-opt-key {
+  background: linear-gradient(135deg, #81c784, #4caf50);
+  color: #fff;
+}
+.knowledge-opt-text { flex: 1; font-size: 14px; font-weight: 600; color: #2b4a6b; }
+.knowledge-opt-mark {
+  color: #4caf50;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+/* 提交区 */
+.knowledge-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+.knowledge-submit-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 42px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #64b5f6, #2196f3);
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.35);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.knowledge-submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(33, 150, 243, 0.42); }
+.knowledge-submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.knowledge-retry-btn {
+  border: 2px solid #64b5f6;
+  background: #fff;
+  color: #2196f3;
+  border-radius: 999px;
+  padding: 10px 26px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.knowledge-retry-btn:hover { background: #eaf6ff; }
+.knowledge-result-summary {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2e7d32;
+}
+
+/* 空态 */
+.knowledge-empty {
+  display: flex;
+  justify-content: center;
+  padding-top: 60px;
+}
+.knowledge-empty-card {
+  padding: 40px 60px;
+  text-align: center;
+  font-size: 14px;
+  color: #5b7a99;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.knowledge-empty-icon { font-size: 48px; }
+
+@media (max-width: 700px) {
+  .knowledge-title { flex-wrap: wrap; }
+  .knowledge-mastery { margin-left: 0; }
+}
