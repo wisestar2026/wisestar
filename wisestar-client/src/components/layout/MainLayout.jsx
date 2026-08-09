@@ -43,6 +43,10 @@ import {
   AppstoreOutlined,
   PlayCircleOutlined,
   CompassOutlined,
+  ReadOutlined,
+  ProfileOutlined,
+  PartitionOutlined,
+  BulbOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../stores/useUserStore';
@@ -75,6 +79,14 @@ export default function MainLayout() {
       ],
     },
     { key: '/questions',     icon: <AppstoreOutlined />,  label: '题目管理' },
+    {
+      key: 'knowledge-group', icon: <ReadOutlined />, label: '知识管理',
+      children: [
+        { key: '/knowledge/chapters', icon: <ProfileOutlined />, label: '章节管理' },
+        { key: '/knowledge/sections', icon: <PartitionOutlined />, label: '小节管理' },
+        { key: '/knowledge/points',   icon: <BulbOutlined />,    label: '知识点管理' },
+      ],
+    },
     { key: '/system',        icon: <SettingOutlined />,   label: '系统管理' },
   ];
 
@@ -108,11 +120,13 @@ export default function MainLayout() {
   // 从 URL 路径计算选中的 key（让子页面也能高亮对应菜单项）
   // ============================================================
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
-  // 子菜单项 key = 完整路径（如 /repo-assign）。
+  // 子菜单项 key = 完整路径（如 /repo-assign、/knowledge/chapters）。
+  // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
+  const SUB_PATH_KEYS = ['/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points'];
   const selectedKey = location.pathname === '/'
     ? '/'
-    : (location.pathname === '/repo-assign'
-      ? '/repo-assign'
+    : (SUB_PATH_KEYS.includes(location.pathname)
+      ? location.pathname
       : '/' + location.pathname.split('/')[1]);
 
   return (
@@ -130,7 +144,7 @@ export default function MainLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
-          defaultOpenKeys={['repo-group']}
+          defaultOpenKeys={['repo-group', 'knowledge-group']}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
         />

@@ -65,6 +65,9 @@ import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import SystemPage from './pages/system/SystemPage';
+import ChapterManagePage from './pages/knowledge/ChapterManagePage';
+import SectionManagePage from './pages/knowledge/SectionManagePage';
+import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
 
 export default function App() {
   const { fetchCurrentUser, isLoggedIn } = useUserStore();
@@ -163,6 +166,12 @@ export default function App() {
 
             {/* 错题库管理（题目 × 学员聚合错题列表） */}
             <Route path="/wrong-questions" element={<WrongQuestionPage />} />
+
+            {/* ---- 知识管理板块（mock 数据，useKnowledgeStore） ---- */}
+            {/* 学科 → 章节 → 小节 → 知识点 三级管理 */}
+            <Route path="/knowledge/chapters" element={<ChapterManagePage />} />
+            <Route path="/knowledge/sections" element={<SectionManagePage />} />
+            <Route path="/knowledge/points" element={<KnowledgePointManagePage />} />
 
             {/* 系统管理（占位页，后端接口已就绪，前端待开发） */}
             <Route path="/system" element={<SystemPage />} />
