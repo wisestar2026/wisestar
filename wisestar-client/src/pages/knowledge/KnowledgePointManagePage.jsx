@@ -15,14 +15,13 @@
 
 import { useState } from 'react';
 import {
-  Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
+  Card, Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, QuestionCircleOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useKnowledgeStore, { QUESTION_TYPES } from '../../stores/useKnowledgeStore';
 
-const { Title, Text } = Typography;
-const TYPE_LABELS = Object.fromEntries(QUESTION_TYPES.map((t) => [t.value, t.label]));
+const { Text } = Typography;
 
 // ==================== 单题编辑行（内部自管选项/答案联动） ====================
 function QuestionRow({ question, onChange, onRemove }) {
@@ -245,7 +244,7 @@ export default function KnowledgePointManagePage() {
   const saveQuiz = () => {
     const cleaned = localQuestions
       .filter((qq) => qq.q && qq.q.trim())
-      .map(({ order, ...rest }) => rest);
+      .map(({ order: _order, ...rest }) => rest);
     if (cleaned.length === 0) {
       message.warning('请至少保留一题');
       return;

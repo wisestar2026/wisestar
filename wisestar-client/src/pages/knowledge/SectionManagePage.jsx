@@ -18,13 +18,13 @@
 
 import { useState } from 'react';
 import {
-  Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
+  Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined, ApartmentOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useKnowledgeStore, { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export default function SectionManagePage() {
   const navigate = useNavigate();

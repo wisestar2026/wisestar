@@ -17,7 +17,7 @@
 
 import { useState } from 'react';
 import {
-  Space, Button, Input, Select, InputNumber, Modal, Form, Tag, Typography, Popconfirm, message,
+  Table, Space, Button, Input, Select, InputNumber, Modal, Form, Tag, Typography, Popconfirm, message,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';

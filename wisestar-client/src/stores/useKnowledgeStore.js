@@ -275,12 +275,9 @@ const useKnowledgeStore = create((set, get) => ({
 
   // ---- 查找辅助 ----
   getSubject: (subjectId) => get().subjects.find((s) => s.id === subjectId),
-  getChapter: (subjectId, chapterId) => {
-    const sub = get().getSubject(subjectId);
-    return sub?.chapters.find((c) => c.id === chapterId);
-  },
   getSection: (subjectId, chapterId, sectionId) => {
-    const ch = get().getChapter(subjectId, chapterId);
+    const sub = get().getSubject(subjectId);
+    const ch = sub?.chapters.find((c) => c.id === chapterId);
     return ch?.sections.find((s) => s.id === sectionId);
   },
 
@@ -292,7 +289,6 @@ const useKnowledgeStore = create((set, get) => ({
 
   // ==================== 章节管理 ====================
   addChapter: (subjectId, chapter) => {
-    const { getChapter } = get();
     const chId = `c${Date.now().toString(36)}`;
     get()._updateSubject(subjectId, (sub) => ({
       ...sub,
