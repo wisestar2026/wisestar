@@ -1672,4 +1672,151 @@ BEGIN;
 INSERT INTO `t_user_role` (`id`, `user_type`, `user_id`, `role_id`, `create_at`, `create_by`, `update_at`, `update_by`) VALUES ('1488542015867121666', 'SysUser', '1457995481966747649', '1457995481928998914', '2022-02-01 23:57:27', '1457995481966747649', NULL, NULL);
 COMMIT;
 
+-- ----------------------------
+-- Table structure for t_subject（学科字典：知识管理板块一级维度）
+-- ----------------------------
+CREATE TABLE `t_subject` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科名称',
+  `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科编码',
+  `icon` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '图标(emoji)',
+  `theme_color` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '主题色',
+  `sort` int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学科字典';
+
+-- ----------------------------
+-- Records of t_subject（幂等：固定 id，不存在才插入）
+-- ----------------------------
+INSERT INTO `t_subject` (`id`, `name`, `code`, `icon`, `theme_color`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '1001', '语文', 'CHINESE', '📚', 'orange', 1, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_subject` WHERE `id` = '1001');
+INSERT INTO `t_subject` (`id`, `name`, `code`, `icon`, `theme_color`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '1002', '数学', 'MATH', '🧮', 'blue', 2, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_subject` WHERE `id` = '1002');
+INSERT INTO `t_subject` (`id`, `name`, `code`, `icon`, `theme_color`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '1003', '英语', 'ENGLISH', '🔤', 'green', 3, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_subject` WHERE `id` = '1003');
+
+-- ----------------------------
+-- Table structure for t_chapter（章节：学科下的大单元）
+-- ----------------------------
+CREATE TABLE `t_chapter` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID(t_subject.id)',
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节名称',
+  `icon` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '图标(emoji)',
+  `sort` int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_chapter_subject` (`subject_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='章节';
+
+-- ----------------------------
+-- Records of t_chapter
+-- ----------------------------
+INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `icon`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '2001', '1001', '识字与写字', '🖋️', 1, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_chapter` WHERE `id` = '2001');
+INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `icon`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '2002', '1001', '古诗文诵读', '📜', 2, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_chapter` WHERE `id` = '2002');
+INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `icon`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '2003', '1002', '100以内加减法', '🧮', 1, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_chapter` WHERE `id` = '2003');
+INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `icon`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '2004', '1002', '图形的认识', '📐', 2, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_chapter` WHERE `id` = '2004');
+INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `icon`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '2005', '1003', '字母与拼读', '🔠', 1, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_chapter` WHERE `id` = '2005');
+INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `icon`, `sort`, `is_deleted`, `create_at`, `create_by`) SELECT '2006', '1003', '基础单词', '🗣️', 2, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_chapter` WHERE `id` = '2006');
+
+-- ----------------------------
+-- Table structure for t_section（小节：章节下的学习小站，含内容/练习设置 JSON）
+-- ----------------------------
+CREATE TABLE `t_section` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID(t_chapter.id)',
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节名称',
+  `sort` int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '小节内容设置JSON(objective/overview/points)',
+  `practice` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '小节练习设置JSON(questionCount/difficulty/types)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_section_chapter` (`chapter_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='小节';
+
+-- ----------------------------
+-- Records of t_section
+-- ----------------------------
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3001', '2001', '拼音入门', 1, '{"objective":"掌握拼音字母读写与拼读规则","overview":"本小节学习声母、韵母与整体认读音节，打好拼音基础。","points":["声母 23 个 / 韵母 24 个 / 整体认读音节 16 个","四声标调规则","常见拼读组合训练"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3001');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3002', '2001', '字词辨析', 2, '{"objective":"区分易混字形近字","overview":"通过偏旁与字义对比，掌握形近字辨析方法。","points":["形近字概念","偏旁部首辨义","组词对比记忆"]}', '{"questionCount":8,"difficulty":"基础","types":["Radio","Judge"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3002');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3003', '2002', '唐诗赏读', 1, '{"objective":"背诵理解三首经典唐诗","overview":"精读《静夜思》《春晓》《咏鹅》。","points":["作者与朝代","诗句大意","名句赏析"]}', '{"questionCount":10,"difficulty":"进阶","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3003');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3004', '2002', '名句积累', 2, '{"objective":"积累经典名句","overview":"背诵常用名句并理解含义。","points":["举头望明月，低头思故乡","谁知盘中餐，粒粒皆辛苦"]}', '{"questionCount":8,"difficulty":"基础","types":["FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3004');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3005', '2003', '加法小站', 1, '{"objective":"掌握两位数进位加法","overview":"学习个位相加满十进一的规则与口算技巧。","points":["进位加法竖式书写","凑十法口算","相同数位对齐"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3005');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3006', '2003', '减法小站', 2, '{"objective":"掌握两位数退位减法与混合运算","overview":"学习个位不够减向十位借一的规则。","points":["退位减法竖式","破十法口算","加减混合运算顺序"]}', '{"questionCount":10,"difficulty":"进阶","types":["Radio","Judge"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3006');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3007', '2004', '平面图形', 1, '{"objective":"认识常见平面图形","overview":"三角形、长方形、正方形、圆的特征。","points":["边与角的数量","图形分类"]}', '{"questionCount":8,"difficulty":"基础","types":["Radio"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3007');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3008', '2004', '立体图形', 2, '{"objective":"认识常见立体图形","overview":"长方体、正方体、圆柱、球的特征。","points":["面与棱","图形与实物对应"]}', '{"questionCount":8,"difficulty":"基础","types":["Radio","Judge"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3008');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3009', '2005', '字母乐园', 1, '{"objective":"掌握 26 个字母","overview":"字母名称音、大小写与书写占格。","points":["26 个字母顺序","大小写对应","5 个元音字母"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3009');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3010', '2005', '拼读魔法', 2, '{"objective":"掌握自然拼读","overview":"元音字母在单词中的短音规律。","points":["a→/æ/ e→/e/ i→/ɪ/","辅音发音","拼读练习"]}', '{"questionCount":8,"difficulty":"进阶","types":["Radio"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3010');
+INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3011', '2006', '校园词汇', 1, '{"objective":"掌握校园常用词汇","overview":"教室、文具、颜色等词汇。","points":["book/pen/ruler","red/blue/green"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3011');
+
+-- ----------------------------
+-- Table structure for t_knowledge_point（知识点：最小学习单元，含内容设置 JSON 与图片）
+-- ----------------------------
+CREATE TABLE `t_knowledge_point` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
+  `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点名称',
+  `sort` int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '知识点内容设置JSON(points讲解要点数组)',
+  `image_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点图片地址(FileView.previewUrl，可为空)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_kp_section` (`section_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='知识点';
+
+-- ----------------------------
+-- Records of t_knowledge_point
+-- ----------------------------
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4001', '3001', '拼音王国', 1, '{"points":["单韵母 a o e i u ü 的认读","声母与韵母拼读方法","整体认读音节 zh ch sh r 等"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4001');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4002', '3001', '汉字笔顺', 2, '{"points":["先横后竖、先撇后捺书写规则","常见偏旁部首","左右/上下/半包围结构"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4002');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4003', '3002', '形近字辨析', 1, '{"points":["日与目 / 人入八等易混字","借助偏旁区别字义","组词法巩固"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4003');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4004', '3003', '唐诗三首', 1, '{"points":["《静夜思》李白：床前明月光","《春晓》孟浩然：春眠不觉晓","《咏鹅》骆宾王：曲项向天歌"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4004');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4005', '3004', '名句积累', 1, '{"points":["名句与出处对应","名句含义理解"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4005');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4006', '3005', '进位加法', 1, '{"points":["个位相加满十向十位进 1","竖式书写规范","凑十法快速口算"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4006');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4007', '3005', '口算技巧', 2, '{"points":["凑十法","破十法","视算与听算训练"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4007');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4008', '3006', '退位减法', 1, '{"points":["个位不够减向十位借 1 当 10","借位标记写法","破十法口算"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4008');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4009', '3006', '加减混合运算', 2, '{"points":["从左到右依次计算","有括号先算括号内","两步式混合运算"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4009');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4010', '3007', '平面图形', 1, '{"points":["三角形 3 条边 3 个角","长方形对边相等","圆由曲线围成"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4010');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4011', '3008', '立体图形', 1, '{"points":["长方体 6 个面","正方体 6 个面都是正方形","球可任意滚动"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4011');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4012', '3009', '26个字母', 1, '{"points":["A-Z 字母顺序","元音字母 A E I O U","书写占格规范"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4012');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4013', '3010', '自然拼读', 1, '{"points":["短音发音规律","c-a-t 拼读","单词拼读训练"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4013');
+INSERT INTO `t_knowledge_point` (`id`, `section_id`, `name`, `sort`, `content`, `image_url`, `is_deleted`, `create_at`, `create_by`) SELECT '4014', '3011', '校园词汇', 1, '{"points":["学习用品词汇","颜色词汇","看图说词"]}', NULL, 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_knowledge_point` WHERE `id` = '4014');
+
+-- ----------------------------
+-- Table structure for t_knowledge_point_question（知识点-题目绑定：从题目库选题，多对多）
+-- ----------------------------
+CREATE TABLE `t_knowledge_point_question` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `knowledge_point_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点ID(t_knowledge_point.id)',
+  `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID(t_template.id，仅能从题目库选择)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_kpq_kp` (`knowledge_point_id`),
+  KEY `idx_kpq_question` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='知识点-题目绑定';
+
+-- ----------------------------
+-- Records of t_knowledge_point_question
+-- ----------------------------
+BEGIN;
+COMMIT;
+
 SET FOREIGN_KEY_CHECKS = 1;

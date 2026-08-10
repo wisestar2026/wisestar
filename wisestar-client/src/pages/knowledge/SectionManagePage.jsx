@@ -2,48 +2,46 @@
  * SectionManagePage.jsx - 小节管理页（知识管理板块）
  *
  * 功能:
- *   1. 面包屑定位: 知识管理 → 学科名 → 章节名（通过 URL query 携带 subjectId/chapterId）
- *   2. 小节 CRUD（mock 数据，存于 useKnowledgeStore）
- *   3. 「内容设置」: 编辑小节的学习目标 / 内容概述 / 讲解要点（Form.List 动态增删）
- *   4. 「练习设置」: 编辑小节的练习题量 / 难度 / 题型组合
+ *   1. 顶部学科/章节下拉联动定位（URL query 携带 subjectId/chapterId 时优先回填）
+ *   2. 小节 CRUD（真实 API，删除级联其后知识点/题目绑定）
+ *   3. 「内容设置」: 编辑小节学习目标 / 内容概述 / 讲解要点（存 t_section.content JSON）
+ *   4. 「练习设置」: 编辑小节练习题量 / 难度 / 题型组合（存 t_section.practice JSON）
  *   5. 「管理知识点」跳转 /knowledge/points（携带 subjectId/chapterId/sectionId）
  *
  * URL: /knowledge/sections（受 AuthGuard 保护）
  * 被谁引用: App.jsx 路由表；章节管理页「管理小节」按钮跳转进入
  *
  * 数据流:
- *   useSearchParams 读取 subjectId/chapterId → getChapter 定位章节 → sections 渲染
- *   内容/练习设置保存 → updateSectionContent / updateSectionPractice
+ *   listSubjects / listChapters / listSections 三级联动；
+ *   内容/练习设置为 JSON 字符串透传（前端 stringify/parse），后端仅存储
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined, ApartmentOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import useKnowledgeStore, { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
+import {
+  listSubjects, listChapters, listSections, createSection, updateSection, deleteSection,
+} from '../../api/knowledge';
+import { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
 
 const { Text } = Typography;
 
 export default function SectionManagePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const subjectId = searchParams.get('subjectId');
-  const chapterId = searchParams.get('chapterId');
+  const urlSubjectId = searchParams.get('subjectId');
+  const urlChapterId = searchParams.get('chapterId');
 
-  const subjects = useKnowledgeStore((s) => s.subjects);
-  const addSection = useKnowledgeStore((s) => s.addSection);
-  const updateSection = useKnowledgeStore((s) => s.updateSection);
-  const updateSectionContent = useKnowledgeStore((s) => s.updateSectionContent);
-  const updateSectionPractice = useKnowledgeStore((s) => s.updateSectionPractice);
-  const deleteSection = useKnowledgeStore((s) => s.deleteSection);
+  const [subjects, setSubjects] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [subjectId, setSubjectId] = useState(urlSubjectId || undefined);
+  const [chapterId, setChapterId] = useState(urlChapterId || undefined);
+  const [sections, setSections] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const subject = subjects.find((s) => s.id === subjectId);
-  const chapter = subject?.chapters.find((c) => c.id === chapterId);
-  const sections = chapter?.sections || [];
-
-  // ---- 新增/编辑弹窗 ----
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
@@ -58,6 +56,42 @@ export default function SectionManagePage() {
   const [practiceSection, setPracticeSection] = useState(null);
   const [practiceForm] = Form.useForm();
 
+  // ---- 加载学科（默认选中第一个） ----
+  useEffect(() => {
+    listSubjects().then((res) => {
+      const list = res?.data || [];
+      setSubjects(list);
+      setSubjectId((prev) => prev || list[0]?.id);
+    }).catch(() => { /* request 拦截器已提示 */ });
+  }, []);
+
+  // ---- 学科切换 → 加载章节（默认选第一个） ----
+  useEffect(() => {
+    if (!subjectId) return;
+    listChapters({ subjectId }).then((res) => {
+      const list = res?.data || [];
+      setChapters(list);
+      setChapterId((prev) => {
+        // URL 指定的章节不属于当前学科时，回退到第一个章节
+        if (prev && list.some((c) => c.id === prev)) return prev;
+        return list[0]?.id;
+      });
+    }).catch(() => setChapters([]));
+  }, [subjectId]);
+
+  // ---- 章节切换 → 加载小节 ----
+  useEffect(() => {
+    if (!chapterId) return;
+    setLoading(true);
+    listSections({ chapterId }).then((res) => {
+      setSections(res?.data || []);
+    }).catch(() => setSections([])).finally(() => setLoading(false));
+  }, [chapterId]);
+
+  const subject = subjects.find((s) => s.id === subjectId);
+  const chapter = chapters.find((c) => c.id === chapterId);
+
+  // ---- 新增/编辑弹窗 ----
   const openModal = (section = null) => {
     setEditing(section);
     setModalOpen(true);
@@ -72,53 +106,68 @@ export default function SectionManagePage() {
   const handleSave = () => {
     form.validateFields().then((values) => {
       if (editing) {
-        updateSection(subjectId, chapterId, editing.id, values);
-        message.success('小节已更新');
+        updateSection({ ...values, id: editing.id, chapterId }).then(() => {
+          message.success('小节已更新');
+          setModalOpen(false);
+          setSections((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...values } : s)));
+        });
       } else {
-        addSection(subjectId, chapterId, values);
-        message.success('小节已新增');
+        createSection({ ...values, chapterId }).then(() => {
+          message.success('小节已新增');
+          setModalOpen(false);
+          listSections({ chapterId }).then((res) => setSections(res?.data || []));
+        });
       }
-      setModalOpen(false);
     });
   };
 
-  // ---- 内容设置 ----
+  // ---- 内容设置（JSON 透传） ----
   const openContent = (section) => {
     setContentSection(section);
     setContentOpen(true);
+    let content = {};
+    try { content = section.content ? JSON.parse(section.content) : {}; } catch { content = {}; }
     contentForm.setFieldsValue({
-      objective: section.content?.objective || '',
-      overview: section.content?.overview || '',
-      points: section.content?.points || [''],
+      objective: content.objective || '',
+      overview: content.overview || '',
+      points: content.points?.length ? content.points : [''],
     });
   };
   const saveContent = () => {
     contentForm.validateFields().then((values) => {
-      updateSectionContent(subjectId, chapterId, contentSection.id, {
+      const payload = JSON.stringify({
         objective: values.objective || '',
         overview: values.overview || '',
         points: (values.points || []).filter((p) => p && p.trim()),
       });
-      message.success('内容设置已保存');
-      setContentOpen(false);
+      updateSection({ id: contentSection.id, chapterId, content: payload }).then(() => {
+        message.success('内容设置已保存');
+        setContentOpen(false);
+        setSections((prev) => prev.map((s) => (s.id === contentSection.id ? { ...s, content: payload } : s)));
+      });
     });
   };
 
-  // ---- 练习设置 ----
+  // ---- 练习设置（JSON 透传） ----
   const openPractice = (section) => {
     setPracticeSection(section);
     setPracticeOpen(true);
+    let practice = {};
+    try { practice = section.practice ? JSON.parse(section.practice) : {}; } catch { practice = {}; }
     practiceForm.setFieldsValue({
-      questionCount: section.practice?.questionCount ?? 10,
-      difficulty: section.practice?.difficulty || '基础',
-      types: section.practice?.types || ['Radio'],
+      questionCount: practice.questionCount ?? 10,
+      difficulty: practice.difficulty || '基础',
+      types: practice.types || ['Radio'],
     });
   };
   const savePractice = () => {
     practiceForm.validateFields().then((values) => {
-      updateSectionPractice(subjectId, chapterId, practiceSection.id, values);
-      message.success('练习设置已保存');
-      setPracticeOpen(false);
+      const payload = JSON.stringify(values);
+      updateSection({ id: practiceSection.id, chapterId, practice: payload }).then(() => {
+        message.success('练习设置已保存');
+        setPracticeOpen(false);
+        setSections((prev) => prev.map((s) => (s.id === practiceSection.id ? { ...s, practice: payload } : s)));
+      });
     });
   };
 
@@ -134,22 +183,25 @@ export default function SectionManagePage() {
     {
       title: '内容设置', width: 110, align: 'center',
       render: (_, s) => {
-        const done = s.content?.objective || s.content?.points?.length;
+        let content = {};
+        try { content = s.content ? JSON.parse(s.content) : {}; } catch { content = {}; }
+        const done = content.objective || content.points?.length;
         return done ? <Tag color="green">已设置</Tag> : <Tag>未设置</Tag>;
       },
     },
     {
       title: '练习设置', width: 160, align: 'center',
       render: (_, s) => {
-        const p = s.practice;
-        return p
-          ? <Tag color="blue">{p.questionCount}题 / {p.difficulty}</Tag>
+        let practice = null;
+        try { practice = s.practice ? JSON.parse(s.practice) : null; } catch { practice = null; }
+        return practice
+          ? <Tag color="blue">{practice.questionCount}题 / {practice.difficulty}</Tag>
           : <Tag>未设置</Tag>;
       },
     },
     {
-      title: '知识点数', width: 90, align: 'center',
-      render: (_, s) => <Tag color="green">{s.kps?.length || 0}</Tag>,
+      title: '知识点数', dataIndex: 'knowledgePointCount', width: 90, align: 'center',
+      render: (count) => <Tag color="green">{count || 0}</Tag>,
     },
     {
       title: '操作', key: 'action', width: 430,
@@ -167,7 +219,12 @@ export default function SectionManagePage() {
           <Popconfirm
             title={`删除小节「${s.name}」？`}
             description="其下所有知识点将一并删除，删除后不可恢复。"
-            onConfirm={() => { deleteSection(subjectId, chapterId, s.id); message.success('小节已删除'); }}
+            onConfirm={() => {
+              deleteSection({ id: s.id }).then(() => {
+                message.success('小节已删除');
+                setSections((prev) => prev.filter((x) => x.id !== s.id));
+              });
+            }}
           >
             <Button size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
@@ -193,10 +250,29 @@ export default function SectionManagePage() {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>
       </div>
 
+      {/* ---- 三级联动下拉（前两级） ---- */}
+      <Space style={{ marginBottom: 16 }}>
+        <Select
+          style={{ width: 180 }}
+          value={subjectId}
+          onChange={setSubjectId}
+          placeholder="选择学科"
+          options={subjects.map((s) => ({ value: s.id, label: `${s.icon} ${s.name}` }))}
+        />
+        <Select
+          style={{ width: 220 }}
+          value={chapterId}
+          onChange={setChapterId}
+          placeholder="选择章节"
+          options={chapters.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))}
+        />
+      </Space>
+
       <Table
         rowKey="id"
         columns={columns}
         dataSource={sections}
+        loading={loading}
         pagination={false}
         locale={{ emptyText: '该章节下暂无小节，点击右上角「新增小节」创建' }}
       />

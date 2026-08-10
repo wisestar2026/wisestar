@@ -2,43 +2,59 @@
  * ChapterManagePage.jsx - 章节管理页（知识管理板块）
  *
  * 功能:
- *   1. 学科切换（语文/数学/英语）→ 展示该学科下的章节列表
- *   2. 章节 CRUD（新增/编辑/删除，mock 数据，存于 useKnowledgeStore）
- *   3. 统计展示: 每章节包含的小节数 / 知识点数
- *   4. 「管理小节」跳转 /knowledge/sections（携带 subjectId / chapterId）
+ *   1. 顶部学科下拉 → 展示该学科下的章节列表（真实 API，含小节数统计）
+ *   2. 章节 CRUD（新增/编辑/删除，删除级联其后小节/知识点）
+ *   3. 「管理小节」跳转 /knowledge/sections（携带 subjectId / chapterId）
  *
  * URL: /knowledge/chapters（受 AuthGuard 保护）
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「知识管理 → 章节管理」菜单进入
  *
  * 数据流:
- *   subjects 来自 useKnowledgeStore（zustand），增删改直接调用 store action
- *   当前学科默认取第一个（语文），通过 subjectId 定位章节数据
+ *   listSubjects() → 学科下拉；listChapters({ subjectId }) → 当前学科章节列表
+ *   增删改 → createChapter / updateChapter / deleteChapter → 成功后刷新列表
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, Select, InputNumber, Modal, Form, Tag, Typography, Popconfirm, message,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import useKnowledgeStore from '../../stores/useKnowledgeStore';
+import {
+  listSubjects, listChapters, createChapter, updateChapter, deleteChapter,
+} from '../../api/knowledge';
 
 const { Title, Text } = Typography;
 
 export default function ChapterManagePage() {
   const navigate = useNavigate();
-  const subjects = useKnowledgeStore((s) => s.subjects);
-  const addChapter = useKnowledgeStore((s) => s.addChapter);
-  const updateChapter = useKnowledgeStore((s) => s.updateChapter);
-  const deleteChapter = useKnowledgeStore((s) => s.deleteChapter);
 
-  const [subjectId, setSubjectId] = useState(subjects[0]?.id);
+  const [subjects, setSubjects] = useState([]);
+  const [subjectId, setSubjectId] = useState(undefined);
+  const [chapters, setChapters] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // null=新增, 对象=编辑
   const [form] = Form.useForm();
 
-  const subject = subjects.find((s) => s.id === subjectId) || subjects[0];
-  const chapters = subject?.chapters || [];
+  // ---- 加载学科（默认选中第一个） ----
+  useEffect(() => {
+    listSubjects().then((res) => {
+      const list = res?.data || [];
+      setSubjects(list);
+      setSubjectId((prev) => prev || list[0]?.id);
+    }).catch(() => { /* request 拦截器已提示 */ });
+  }, []);
+
+  // ---- 学科切换 → 加载章节 ----
+  useEffect(() => {
+    if (!subjectId) return;
+    setLoading(true);
+    listChapters({ subjectId }).then((res) => {
+      setChapters(res?.data || []);
+    }).catch(() => setChapters([])).finally(() => setLoading(false));
+  }, [subjectId]);
 
   // ---- 打开新增/编辑弹窗 ----
   const openModal = (chapter = null) => {
@@ -55,13 +71,27 @@ export default function ChapterManagePage() {
   const handleSave = () => {
     form.validateFields().then((values) => {
       if (editing) {
-        updateChapter(subjectId, editing.id, values);
-        message.success('章节已更新');
+        updateChapter({ ...values, id: editing.id, subjectId }).then(() => {
+          message.success('章节已更新');
+          setModalOpen(false);
+          setChapters((prev) => prev.map((c) => (c.id === editing.id ? { ...c, ...values } : c)));
+        });
       } else {
-        addChapter(subjectId, values);
-        message.success('章节已新增');
+        createChapter({ ...values, subjectId }).then(() => {
+          message.success('章节已新增');
+          setModalOpen(false);
+          setSubjectId((s) => s); // 触发章节列表刷新
+          listChapters({ subjectId }).then((res) => setChapters(res?.data || []));
+        });
       }
-      setModalOpen(false);
+    });
+  };
+
+  // ---- 删除章节（级联删除） ----
+  const handleDelete = (chapter) => {
+    deleteChapter({ id: chapter.id }).then(() => {
+      message.success('章节已删除');
+      setChapters((prev) => prev.filter((c) => c.id !== chapter.id));
     });
   };
 
@@ -79,15 +109,8 @@ export default function ChapterManagePage() {
       title: '排序', dataIndex: 'sort', width: 80, align: 'center',
     },
     {
-      title: '小节数', width: 90, align: 'center',
-      render: (_, c) => <Tag color="blue">{c.sections?.length || 0}</Tag>,
-    },
-    {
-      title: '知识点数', width: 100, align: 'center',
-      render: (_, c) => {
-        const total = (c.sections || []).reduce((sum, s) => sum + (s.kps?.length || 0), 0);
-        return <Tag color="green">{total}</Tag>;
-      },
+      title: '小节数', dataIndex: 'sectionCount', width: 90, align: 'center',
+      render: (count) => <Tag color="blue">{count || 0}</Tag>,
     },
     {
       title: '操作', key: 'action', width: 220,
@@ -103,7 +126,7 @@ export default function ChapterManagePage() {
           <Popconfirm
             title={`删除章节「${c.name}」？`}
             description="其下所有小节与知识点将一并删除，删除后不可恢复。"
-            onConfirm={() => { deleteChapter(subjectId, c.id); message.success('章节已删除'); }}
+            onConfirm={() => handleDelete(c)}
           >
             <Button size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
@@ -126,7 +149,8 @@ export default function ChapterManagePage() {
       <Select
         style={{ width: 200, marginBottom: 16 }}
         value={subjectId}
-        onChange={(v) => setSubjectId(v)}
+        onChange={setSubjectId}
+        placeholder="选择学科"
         options={subjects.map((s) => ({ value: s.id, label: `${s.icon} ${s.name}` }))}
       />
 
@@ -134,6 +158,7 @@ export default function ChapterManagePage() {
         rowKey="id"
         columns={columns}
         dataSource={chapters}
+        loading={loading}
         pagination={false}
         locale={{ emptyText: '该学科下暂无章节，点击右上角「新增章节」创建' }}
       />
