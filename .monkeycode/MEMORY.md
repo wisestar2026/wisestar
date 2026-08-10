@@ -36,3 +36,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 前端构建验证：`cd /workspace/wisestar/wisestar-client && npm run build`；dev 服务 `npm run dev`（vite，3000 端口，代理 /api → 1991）
   - 预览地址由 `request_preview` 申请，重启前端后需重新申请
+
+[管理端页面验证经验]
+- Date: 2026-08-10
+- Context: Agent 修复知识管理页面白屏（误删 Table/Card import）时发现
+- Category: 排错调试
+- Instructions:
+  - 本前端 `npm run build`（vite）与 `npm run lint`（oxlint）均不报「组件未定义」错误（JSX 变量是运行时引用），删除 antd 组件 import 前必须先确认 JSX 无引用
+  - 改动页面后仅靠 build/lint 通过不够，需浏览器实测渲染；管理端页面风格为裸 div + Title level={4}，不要用 Card 包裹（Content 已白底）
