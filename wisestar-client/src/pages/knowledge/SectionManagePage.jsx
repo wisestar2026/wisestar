@@ -5,7 +5,9 @@
  *   1. 顶部学科/章节下拉联动定位（URL query 携带 subjectId/chapterId 时优先回填）
  *   2. 小节 CRUD（真实 API，删除级联其后知识点/题目绑定）
  *   3. 「内容设置」: 编辑小节学习目标 / 内容概述 / 讲解要点（存 t_section.content JSON）
- *   4. 「练习设置」: 编辑小节练习题量 / 难度 / 题型组合（存 t_section.practice JSON）
+ *   4. 「练习设置」: 合并练习配置与测试绑定——上方从题库管理（t_template）勾选绑定测试
+ *      题目（可直接看到题库数据，全量替换保存），下方配置题量/难度/题型组合自动出题
+ *      （存 t_section.practice JSON），保存时一起提交
  *   5. 「管理知识点」跳转 /knowledge/points（携带 subjectId/chapterId/sectionId）
  *
  * URL: /knowledge/sections（受 AuthGuard 保护）
@@ -18,11 +20,11 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
+  Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, Divider, message,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined,
-  ApartmentOutlined, ArrowLeftOutlined, LinkOutlined, EyeOutlined,
+  ApartmentOutlined, ArrowLeftOutlined, EyeOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -56,14 +58,10 @@ export default function SectionManagePage() {
   const [contentSection, setContentSection] = useState(null);
   const [contentForm] = Form.useForm();
 
-  // ---- 练习设置弹窗 ----
+  // ---- 练习设置弹窗（含题库选题绑定测试 + 题量/难度/题型自动出题配置） ----
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [practiceSection, setPracticeSection] = useState(null);
   const [practiceForm] = Form.useForm();
-
-  // ---- 绑定测试弹窗（题目库选择） ----
-  const [bindOpen, setBindOpen] = useState(false);
-  const [bindSection, setBindSection] = useState(null);
   const [bindKeyword, setBindKeyword] = useState('');
   const [tplList, setTplList] = useState([]);
   const [tplTotal, setTplTotal] = useState(0);
@@ -174,7 +172,7 @@ export default function SectionManagePage() {
     });
   };
 
-  // ---- 练习设置（JSON 透传） ----
+  // ---- 练习设置（题库选题绑定测试 + 题量/难度/题型自动出题配置，合并保存） ----
   const openPractice = (section) => {
     setPracticeSection(section);
     setPracticeOpen(true);
@@ -185,22 +183,7 @@ export default function SectionManagePage() {
       difficulty: practice.difficulty || '基础',
       types: practice.types || ['Radio'],
     });
-  };
-  const savePractice = () => {
-    practiceForm.validateFields().then((values) => {
-      const payload = JSON.stringify(values);
-      updateSection({ id: practiceSection.id, chapterId, practice: payload }).then(() => {
-        message.success('练习设置已保存');
-        setPracticeOpen(false);
-        setSections((prev) => prev.map((s) => (s.id === practiceSection.id ? { ...s, practice: payload } : s)));
-      });
-    });
-  };
-
-  // ---- 绑定测试（从题目库选题，全量替换） ----
-  const openBind = (section) => {
-    setBindSection(section);
-    setBindOpen(true);
+    // 回显已绑定测试题目 + 加载题目库（数据来自题库管理 t_template）
     setBindKeyword('');
     setTplCurrent(1);
     setSelectedIds([]);
@@ -209,10 +192,26 @@ export default function SectionManagePage() {
     }).catch(() => { /* 已提示 */ });
     fetchTemplates(1, '');
   };
+  const savePractice = () => {
+    practiceForm.validateFields().then((values) => {
+      const payload = JSON.stringify(values);
+      const sectionId = practiceSection.id;
+      setSavingBind(true);
+      Promise.all([
+        updateSection({ id: sectionId, chapterId, practice: payload }),
+        saveSectionQuestions({ sectionId, questionIds: selectedIds }),
+      ]).then(() => {
+        message.success('练习设置已保存');
+        setPracticeOpen(false);
+        setSections((prev) => prev.map((s) => (s.id === sectionId
+          ? { ...s, practice: payload, questionCount: selectedIds.length } : s)));
+      }).finally(() => setSavingBind(false));
+    });
+  };
 
   const fetchTemplates = (page, keyword) => {
     setTplLoading(true);
-    listTemplate({ current: page, pageSize: 8, name: keyword || undefined, shared: 1 })
+    listTemplate({ current: page, pageSize: 8, name: keyword || undefined })
       .then((res) => {
         setTplList(res?.data?.list || []);
         setTplTotal(res?.data?.total || 0);
@@ -222,15 +221,6 @@ export default function SectionManagePage() {
   const onBindKeywordSearch = () => {
     setTplCurrent(1);
     fetchTemplates(1, bindKeyword);
-  };
-
-  const saveBind = () => {
-    setSavingBind(true);
-    saveSectionQuestions({ sectionId: bindSection.id, questionIds: selectedIds }).then(() => {
-      message.success('测试题目绑定已保存');
-      setBindOpen(false);
-      setSections((prev) => prev.map((s) => (s.id === bindSection.id ? { ...s, questionCount: selectedIds.length } : s)));
-    }).finally(() => setSavingBind(false));
   };
 
   // ---- 查看小节知识点（数据来自知识点管理 t_knowledge_point） ----
@@ -294,7 +284,6 @@ export default function SectionManagePage() {
           >
             管理知识点
           </Button>
-          <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(s)}>绑定测试</Button>
           <Button size="small" icon={<FileTextOutlined />} onClick={() => openContent(s)}>内容设置</Button>
           <Button size="small" icon={<SettingOutlined />} onClick={() => openPractice(s)}>练习设置</Button>
           <Button size="small" icon={<EditOutlined />} onClick={() => openModal(s)}>编辑</Button>
@@ -409,7 +398,7 @@ export default function SectionManagePage() {
         </Form>
       </Modal>
 
-      {/* 小节练习设置弹窗 */}
+      {/* 练习设置弹窗（题库选题绑定测试 + 题量/难度/题型自动出题配置） */}
       <Modal
         title={`练习设置 - ${practiceSection?.name || ''}`}
         open={practiceOpen}
@@ -417,33 +406,11 @@ export default function SectionManagePage() {
         onCancel={() => setPracticeOpen(false)}
         okText="保存"
         cancelText="取消"
-        destroyOnClose
-      >
-        <Form form={practiceForm} layout="vertical">
-          <Form.Item name="questionCount" label="练习题量" rules={[{ required: true, message: '请输入题量' }]}>
-            <InputNumber min={1} max={100} style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="difficulty" label="难度" rules={[{ required: true, message: '请选择难度' }]}>
-            <Select options={DIFFICULTY_OPTIONS.map((d) => ({ value: d, label: d }))} />
-          </Form.Item>
-          <Form.Item name="types" label="题型组合" rules={[{ required: true, message: '请至少选择一种题型' }]}>
-            <Select mode="multiple" options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))} />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 绑定测试弹窗（题目库选择，全量替换保存） */}
-      <Modal
-        title={`绑定测试 - ${bindSection?.name || ''}`}
-        open={bindOpen}
-        onOk={saveBind}
-        onCancel={() => setBindOpen(false)}
-        okText="保存绑定"
-        cancelText="取消"
-        width={820}
+        width={860}
         confirmLoading={savingBind}
         destroyOnClose
       >
+        <Divider orientation="left" plain>测试题目（来自题库管理，勾选绑定）</Divider>
         <Space style={{ marginBottom: 12 }} align="center">
           <Input.Search
             style={{ width: 320 }}
@@ -453,7 +420,7 @@ export default function SectionManagePage() {
             onSearch={onBindKeywordSearch}
             allowClear
           />
-          <Text type="secondary">已选 {selectedIds.length} 题（测试题目来自题库管理，不能在此新增）</Text>
+          <Text type="secondary">已选 {selectedIds.length} 题（题库数据来自题库管理 t_template，不能在此新增）</Text>
         </Space>
         <Table
           rowKey="id"
@@ -483,6 +450,18 @@ export default function SectionManagePage() {
             },
           ]}
         />
+        <Divider orientation="left" plain>自动出题配置</Divider>
+        <Form form={practiceForm} layout="vertical">
+          <Form.Item name="questionCount" label="练习题量" rules={[{ required: true, message: '请输入题量' }]}>
+            <InputNumber min={1} max={100} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="difficulty" label="难度" rules={[{ required: true, message: '请选择难度' }]}>
+            <Select options={DIFFICULTY_OPTIONS.map((d) => ({ value: d, label: d }))} />
+          </Form.Item>
+          <Form.Item name="types" label="题型组合" rules={[{ required: true, message: '请至少选择一种题型' }]}>
+            <Select mode="multiple" options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))} />
+          </Form.Item>
+        </Form>
       </Modal>
 
       {/* 知识点查看弹窗（数据来自知识点管理 t_knowledge_point） */}

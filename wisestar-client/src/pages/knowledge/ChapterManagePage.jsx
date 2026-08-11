@@ -137,7 +137,7 @@ export default function ChapterManagePage() {
 
   const fetchTemplates = (page, keyword) => {
     setTplLoading(true);
-    listTemplate({ current: page, pageSize: 8, name: keyword || undefined, shared: 1 })
+    listTemplate({ current: page, pageSize: 8, name: keyword || undefined })
       .then((res) => {
         setTplList(res?.data?.list || []);
         setTplTotal(res?.data?.total || 0);
