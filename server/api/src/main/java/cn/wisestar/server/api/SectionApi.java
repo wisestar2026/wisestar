@@ -1,5 +1,7 @@
 package cn.wisestar.server.api;
 
+import cn.wisestar.server.domain.dto.TemplateView;
+import cn.wisestar.server.domain.dto.knowledge.SectionQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.service.SectionService;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -95,6 +98,46 @@ public class SectionApi {
 	@PreAuthorize("isAuthenticated()")
 	public void deleteSection(@RequestBody SectionRequest request) {
 		sectionService.deleteSection(request);
+	}
+
+	/**
+	 * 保存小节-测试题目绑定（全量替换）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/section/questions
+	 * （如 /api/section/questions）。</p>
+	 *
+	 * <p><b>功能</b>：将题目库（t_template）中选中的测试题目整体绑定到小节——
+	 * 先清空旧绑定再写入新绑定（事务内完成）。测试题目只能来自题库管理，不能在此新增。</p>
+	 *
+	 * <p><b>请求参数</b>：{@link SectionQuestionRequest}（@RequestBody JSON：
+	 * sectionId + questionIds[]）。</p>
+	 *
+	 * @param request 绑定请求
+	 */
+	@PostMapping("/questions")
+	@PreAuthorize("isAuthenticated()")
+	public void saveQuestions(@RequestBody SectionQuestionRequest request) {
+		sectionService.saveQuestions(request);
+	}
+
+	/**
+	 * 查询小节已绑定的测试题目列表。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/section/questions
+	 * （如 /api/section/questions?sectionId=xxx）。</p>
+	 *
+	 * <p><b>功能</b>：返回该小节已绑定的题库测试题目（保持绑定顺序），
+	 * 供前端编辑绑定弹窗回显已选题目。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@link TemplateView} 列表。</p>
+	 *
+	 * @param sectionId 小节ID
+	 * @return 已绑定测试题目列表
+	 */
+	@GetMapping("/questions")
+	@PreAuthorize("isAuthenticated()")
+	public List<TemplateView> listQuestions(@RequestParam("sectionId") String sectionId) {
+		return sectionService.listQuestions(sectionId);
 	}
 
 }

@@ -6,19 +6,23 @@
  *           POST /subject/create|update|delete
  *   章节:   GET  /chapter/list         章节列表（?subjectId=）
  *           POST /chapter/create|update|delete
- *   小节:   GET  /section/list         小节列表（?chapterId=）
+ *   小节:   GET  /section/list         小节列表（?chapterId=，含知识点数/测试题数）
  *           POST /section/create|update|delete
+ *           GET  /section/questions?sectionId=   已绑定测试题目列表
+ *           POST /section/questions              保存测试题目绑定（全量替换）
  *   知识点: GET  /knowledge-point/list          知识点分页（?subjectId=&chapterId=&sectionId=）
  *           POST /knowledge-point/create|update|delete
  *           GET  /knowledge-point/questions?knowledgePointId=  已绑定题目列表
  *           POST /knowledge-point/questions                    保存题目绑定（全量替换）
  *
  * 数据层级: 学科 → 章节 → 小节 → 知识点
- * 题目来源: 知识点绑定的题目来自题目库（t_template，/api/template/list），不能在此新增
+ * 题目来源: 小节测试题目与知识点绑定题目均来自题目库（t_template，/api/template/list），
+ *           不能在此新增
  *
  * 调用方:
  *   - ChapterManagePage       : listSubjects / listChapters + 章节 CRUD
  *   - SectionManagePage       : listSubjects / listChapters / listSections + 小节 CRUD
+ *                               + 小节测试绑定 + 小节知识点查看
  *   - KnowledgePointManagePage: 三级下拉 + 知识点分页/CRUD + 题目绑定
  */
 
@@ -112,11 +116,12 @@ export async function deleteChapter(data) {
 // ============================================================
 
 /**
- * 小节列表（按章节过滤，含知识点数 knowledgePointCount）
+ * 小节列表（按章节过滤，含知识点数 knowledgePointCount 与测试题数 questionCount）
  * 后端接口: GET /api/section/list
  * @param {Object} params - { chapterId? }
  * @returns {Object} data: [SectionView, ...]
- *   { id, chapterId, name, sort, content(JSON串), practice(JSON串), knowledgePointCount }
+ *   { id, chapterId, name, sort, content(JSON串), practice(JSON串),
+ *     knowledgePointCount, questionCount }
  * 调用方: SectionManagePage 列表、KnowledgePointManagePage 小节下拉
  */
 export async function listSections(params) {
@@ -143,12 +148,33 @@ export async function updateSection(data) {
 }
 
 /**
- * 删除小节（级联逻辑删除其下知识点/题目绑定）
+ * 删除小节（级联逻辑删除其下知识点/题目绑定/测试题目绑定）
  * 后端接口: POST /api/section/delete
  * @param {Object} data - { id }
  */
 export async function deleteSection(data) {
   return request.post('/section/delete', data);
+}
+
+/**
+ * 保存小节-测试题目绑定（全量替换：传完整 questionIds，先清空旧绑定再写入）
+ * 后端接口: POST /api/section/questions
+ * @param {Object} data - { sectionId, questionIds: [题目ID] }
+ * 调用方: SectionManagePage 绑定测试弹窗保存
+ */
+export async function saveSectionQuestions(data) {
+  return request.post('/section/questions', data);
+}
+
+/**
+ * 查询小节已绑定的测试题目列表（保持绑定顺序）
+ * 后端接口: GET /api/section/questions
+ * @param {String} sectionId - 小节ID
+ * @returns {Object} data: [TemplateView, ...]  { id, name, questionType, repoName, ... }
+ * 调用方: SectionManagePage 绑定测试弹窗回显
+ */
+export async function listSectionQuestions(sectionId) {
+  return request.get('/section/questions', { params: { sectionId } });
 }
 
 // ============================================================

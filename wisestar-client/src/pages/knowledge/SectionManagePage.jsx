@@ -20,11 +20,16 @@ import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, message,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined, ApartmentOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined,
+  ApartmentOutlined, ArrowLeftOutlined, LinkOutlined, EyeOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   listSubjects, listChapters, listSections, createSection, updateSection, deleteSection,
+  saveSectionQuestions, listSectionQuestions, listKnowledgePoints,
 } from '../../api/knowledge';
+import { listTemplate } from '../../api/template';
 import { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
 
 const { Text } = Typography;
@@ -55,6 +60,27 @@ export default function SectionManagePage() {
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [practiceSection, setPracticeSection] = useState(null);
   const [practiceForm] = Form.useForm();
+
+  // ---- 绑定测试弹窗（题目库选择） ----
+  const [bindOpen, setBindOpen] = useState(false);
+  const [bindSection, setBindSection] = useState(null);
+  const [bindKeyword, setBindKeyword] = useState('');
+  const [tplList, setTplList] = useState([]);
+  const [tplTotal, setTplTotal] = useState(0);
+  const [tplCurrent, setTplCurrent] = useState(1);
+  const [tplLoading, setTplLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [savingBind, setSavingBind] = useState(false);
+
+  // ---- 知识点查看弹窗（数据来自知识点管理 t_knowledge_point） ----
+  const [kpOpen, setKpOpen] = useState(false);
+  const [kpSection, setKpSection] = useState(null);
+  const [kpList, setKpList] = useState([]);
+  const [kpLoading, setKpLoading] = useState(false);
+
+  const QUESTION_TYPE_LABEL = {
+    Radio: '单选', Checkbox: '多选', Judge: '判断', FillBlank: '填空',
+  };
 
   // ---- 加载学科（默认选中第一个） ----
   useEffect(() => {
@@ -171,6 +197,52 @@ export default function SectionManagePage() {
     });
   };
 
+  // ---- 绑定测试（从题目库选题，全量替换） ----
+  const openBind = (section) => {
+    setBindSection(section);
+    setBindOpen(true);
+    setBindKeyword('');
+    setTplCurrent(1);
+    setSelectedIds([]);
+    listSectionQuestions(section.id).then((res) => {
+      setSelectedIds((res?.data || []).map((q) => q.id));
+    }).catch(() => { /* 已提示 */ });
+    fetchTemplates(1, '');
+  };
+
+  const fetchTemplates = (page, keyword) => {
+    setTplLoading(true);
+    listTemplate({ current: page, pageSize: 8, name: keyword || undefined, shared: 1 })
+      .then((res) => {
+        setTplList(res?.data?.list || []);
+        setTplTotal(res?.data?.total || 0);
+      }).catch(() => { setTplList([]); setTplTotal(0); }).finally(() => setTplLoading(false));
+  };
+
+  const onBindKeywordSearch = () => {
+    setTplCurrent(1);
+    fetchTemplates(1, bindKeyword);
+  };
+
+  const saveBind = () => {
+    setSavingBind(true);
+    saveSectionQuestions({ sectionId: bindSection.id, questionIds: selectedIds }).then(() => {
+      message.success('测试题目绑定已保存');
+      setBindOpen(false);
+      setSections((prev) => prev.map((s) => (s.id === bindSection.id ? { ...s, questionCount: selectedIds.length } : s)));
+    }).finally(() => setSavingBind(false));
+  };
+
+  // ---- 查看小节知识点（数据来自知识点管理 t_knowledge_point） ----
+  const openKpList = (section) => {
+    setKpSection(section);
+    setKpOpen(true);
+    setKpLoading(true);
+    listKnowledgePoints({ sectionId: section.id, current: 1, pageSize: 100 }).then((res) => {
+      setKpList(res?.data?.list || []);
+    }).catch(() => setKpList([])).finally(() => setKpLoading(false));
+  };
+
   // ---- 表格列 ----
   const columns = [
     {
@@ -200,11 +272,20 @@ export default function SectionManagePage() {
       },
     },
     {
-      title: '知识点数', dataIndex: 'knowledgePointCount', width: 90, align: 'center',
-      render: (count) => <Tag color="green">{count || 0}</Tag>,
+      title: '知识点数', dataIndex: 'knowledgePointCount', width: 110, align: 'center',
+      render: (count, s) => (
+        <Button type="link" size="small" style={{ padding: 0 }} icon={<EyeOutlined />}
+          onClick={() => openKpList(s)}>
+          {count || 0} 个
+        </Button>
+      ),
     },
     {
-      title: '操作', key: 'action', width: 430,
+      title: '测试题数', dataIndex: 'questionCount', width: 90, align: 'center',
+      render: (count) => (count > 0 ? <Tag color="blue">{count} 题</Tag> : <Tag>未绑定</Tag>),
+    },
+    {
+      title: '操作', key: 'action', width: 500,
       render: (_, s) => (
         <Space wrap>
           <Button
@@ -213,12 +294,13 @@ export default function SectionManagePage() {
           >
             管理知识点
           </Button>
+          <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(s)}>绑定测试</Button>
           <Button size="small" icon={<FileTextOutlined />} onClick={() => openContent(s)}>内容设置</Button>
           <Button size="small" icon={<SettingOutlined />} onClick={() => openPractice(s)}>练习设置</Button>
           <Button size="small" icon={<EditOutlined />} onClick={() => openModal(s)}>编辑</Button>
           <Popconfirm
             title={`删除小节「${s.name}」？`}
-            description="其下所有知识点将一并删除，删除后不可恢复。"
+            description="其下所有知识点与测试绑定将一并删除，删除后不可恢复。"
             onConfirm={() => {
               deleteSection({ id: s.id }).then(() => {
                 message.success('小节已删除');
@@ -348,6 +430,106 @@ export default function SectionManagePage() {
             <Select mode="multiple" options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))} />
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* 绑定测试弹窗（题目库选择，全量替换保存） */}
+      <Modal
+        title={`绑定测试 - ${bindSection?.name || ''}`}
+        open={bindOpen}
+        onOk={saveBind}
+        onCancel={() => setBindOpen(false)}
+        okText="保存绑定"
+        cancelText="取消"
+        width={820}
+        confirmLoading={savingBind}
+        destroyOnClose
+      >
+        <Space style={{ marginBottom: 12 }} align="center">
+          <Input.Search
+            style={{ width: 320 }}
+            placeholder="按题目名称搜索题目库"
+            value={bindKeyword}
+            onChange={(e) => setBindKeyword(e.target.value)}
+            onSearch={onBindKeywordSearch}
+            allowClear
+          />
+          <Text type="secondary">已选 {selectedIds.length} 题（测试题目来自题库管理，不能在此新增）</Text>
+        </Space>
+        <Table
+          rowKey="id"
+          size="small"
+          loading={tplLoading}
+          dataSource={tplList}
+          rowSelection={{
+            selectedRowKeys: selectedIds,
+            onChange: (keys) => setSelectedIds(keys),
+          }}
+          pagination={{
+            current: tplCurrent,
+            pageSize: 8,
+            total: tplTotal,
+            size: 'small',
+            onChange: (c) => { setTplCurrent(c); fetchTemplates(c, bindKeyword); },
+          }}
+          columns={[
+            { title: '题目名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
+            {
+              title: '题型', dataIndex: 'questionType', width: 80, align: 'center',
+              render: (t) => <Tag>{QUESTION_TYPE_LABEL[t] || t}</Tag>,
+            },
+            {
+              title: '所属题库', dataIndex: 'repoName', width: 140, ellipsis: true,
+              render: (n) => n || '-',
+            },
+          ]}
+        />
+      </Modal>
+
+      {/* 知识点查看弹窗（数据来自知识点管理 t_knowledge_point） */}
+      <Modal
+        title={`知识点列表 - ${kpSection?.name || ''}`}
+        open={kpOpen}
+        onCancel={() => setKpOpen(false)}
+        footer={
+          <Space>
+            <Button onClick={() => setKpOpen(false)}>关闭</Button>
+            <Button type="primary" icon={<ApartmentOutlined />}
+              onClick={() => navigate(`/knowledge/points?subjectId=${subjectId}&chapterId=${chapterId}&sectionId=${kpSection?.id}`)}>
+              进入知识点管理
+            </Button>
+          </Space>
+        }
+        width={720}
+        destroyOnClose
+      >
+        <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          以下知识点来自「知识点管理」数据（t_knowledge_point），可在知识点管理页维护
+        </Text>
+        <Table
+          rowKey="id"
+          size="small"
+          loading={kpLoading}
+          dataSource={kpList}
+          pagination={false}
+          locale={{ emptyText: '该小节下暂无知识点，点击右上角「进入知识点管理」创建' }}
+          columns={[
+            { title: '知识点名称', dataIndex: 'name', width: 200, render: (n) => <Text strong>{n}</Text> },
+            { title: '排序', dataIndex: 'sort', width: 70, align: 'center' },
+            {
+              title: '内容设置', width: 120, align: 'center',
+              render: (_, k) => {
+                let content = {};
+                try { content = k.content ? JSON.parse(k.content) : {}; } catch { content = {}; }
+                const pointCount = content.points?.length || 0;
+                return pointCount > 0 ? <Tag color="green">{pointCount} 条要点</Tag> : <Tag>未设置</Tag>;
+              },
+            },
+            {
+              title: '绑定题目', dataIndex: 'questionCount', width: 90, align: 'center',
+              render: (count) => (count > 0 ? <Tag color="blue">{count} 题</Tag> : <Tag>未绑定</Tag>),
+            },
+          ]}
+        />
       </Modal>
     </div>
   );

@@ -1819,4 +1819,27 @@ CREATE TABLE `t_knowledge_point_question` (
 BEGIN;
 COMMIT;
 
+-- ----------------------------
+-- Table structure for t_section_question（小节-测试题目绑定：从题目库选题，多对多）
+-- ----------------------------
+CREATE TABLE `t_section_question` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
+  `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID(t_template.id，仅能从题目库选择)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_secq_section` (`section_id`),
+  KEY `idx_secq_question` (`question_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='小节-测试题目绑定';
+
+-- ----------------------------
+-- Records of t_section_question
+-- ----------------------------
+BEGIN;
+COMMIT;
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -1781,4 +1781,27 @@ CREATE TABLE IF NOT EXISTS t_knowledge_point_question (
 BEGIN;
 COMMIT;
 
+-- ----------------------------
+-- Table structure for t_section_question（小节-测试题目绑定：从题目库选题，多对多）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_section_question (
+  id varchar(64) NOT NULL COMMENT '绑定ID',
+  section_id varchar(64) DEFAULT NULL COMMENT '小节ID(t_section.id)',
+  question_id varchar(64) DEFAULT NULL COMMENT '题目ID(t_template.id，仅能从题目库选择)',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_secq_section (section_id),
+  KEY idx_secq_question (question_id)
+);
+
+-- ----------------------------
+-- Records of t_section_question
+-- ----------------------------
+BEGIN;
+COMMIT;
+
 SET FOREIGN_KEY_CHECKS = 1;
