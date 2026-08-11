@@ -4,8 +4,10 @@
  * 接口（后端 KnowledgePointApi 等 4 个 Controller，前缀 /api）:
  *   学科:   GET  /subject/list         学科列表（含章节数）
  *           POST /subject/create|update|delete
- *   章节:   GET  /chapter/list         章节列表（?subjectId=）
+ *   章节:   GET  /chapter/list         章节列表（?subjectId=，含小节数/测试题数）
  *           POST /chapter/create|update|delete
+ *           GET  /chapter/questions?chapterId=    已绑定测试题目列表
+ *           POST /chapter/questions               保存测试题目绑定（全量替换）
  *   小节:   GET  /section/list         小节列表（?chapterId=，含知识点数/测试题数）
  *           POST /section/create|update|delete
  *           GET  /section/questions?sectionId=   已绑定测试题目列表
@@ -16,11 +18,12 @@
  *           POST /knowledge-point/questions                    保存题目绑定（全量替换）
  *
  * 数据层级: 学科 → 章节 → 小节 → 知识点
- * 题目来源: 小节测试题目与知识点绑定题目均来自题目库（t_template，/api/template/list），
+ * 题目来源: 章节/小节测试题目与知识点绑定题目均来自题目库（t_template，/api/template/list），
  *           不能在此新增
  *
  * 调用方:
  *   - ChapterManagePage       : listSubjects / listChapters + 章节 CRUD
+ *                               + 章节测试绑定 + 章节小节查看（数据来自小节管理）
  *   - SectionManagePage       : listSubjects / listChapters / listSections + 小节 CRUD
  *                               + 小节测试绑定 + 小节知识点查看
  *   - KnowledgePointManagePage: 三级下拉 + 知识点分页/CRUD + 题目绑定
@@ -74,10 +77,11 @@ export async function deleteSubject(data) {
 // ============================================================
 
 /**
- * 章节列表（按学科过滤，含小节数 sectionCount）
+ * 章节列表（按学科过滤，含小节数 sectionCount 与测试题数 questionCount）
  * 后端接口: GET /api/chapter/list
  * @param {Object} params - { subjectId? }
- * @returns {Object} data: [ChapterView, ...]  { id, subjectId, name, icon, sort, sectionCount }
+ * @returns {Object} data: [ChapterView, ...]
+ *   { id, subjectId, name, icon, sort, sectionCount, questionCount }
  * 调用方: ChapterManagePage 列表、SectionManagePage 章节下拉
  */
 export async function listChapters(params) {
@@ -103,12 +107,33 @@ export async function updateChapter(data) {
 }
 
 /**
- * 删除章节（级联逻辑删除其下小节/知识点/题目绑定）
+ * 删除章节（级联逻辑删除其下小节/知识点/题目绑定/测试题目绑定）
  * 后端接口: POST /api/chapter/delete
  * @param {Object} data - { id }
  */
 export async function deleteChapter(data) {
   return request.post('/chapter/delete', data);
+}
+
+/**
+ * 保存章节-测试题目绑定（全量替换：传完整 questionIds，先清空旧绑定再写入）
+ * 后端接口: POST /api/chapter/questions
+ * @param {Object} data - { chapterId, questionIds: [题目ID] }
+ * 调用方: ChapterManagePage 绑定测试弹窗保存
+ */
+export async function saveChapterQuestions(data) {
+  return request.post('/chapter/questions', data);
+}
+
+/**
+ * 查询章节已绑定的测试题目列表（保持绑定顺序）
+ * 后端接口: GET /api/chapter/questions
+ * @param {String} chapterId - 章节ID
+ * @returns {Object} data: [TemplateView, ...]  { id, name, questionType, repoName, ... }
+ * 调用方: ChapterManagePage 绑定测试弹窗回显
+ */
+export async function listChapterQuestions(chapterId) {
+  return request.get('/chapter/questions', { params: { chapterId } });
 }
 
 // ============================================================
