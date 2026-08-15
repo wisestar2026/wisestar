@@ -26,7 +26,11 @@
  *   /repos/:id              → RepoDetailPage（题库详情&题目管理，受保护）
  *   /questions              → QuestionListPage（题目管理，受保护）
  *   /register               → RegisterPage（注册，公开）
- *   /system                 → SystemPage（系统管理占位，受保护）
+ *   /system/users          → UserManagePage（用户管理，受保护）
+ *   /system/depts          → DeptManagePage（部门管理，受保护）
+ *   /system/positions      → PositionManagePage（岗位管理，受保护）
+ *   /system/dicts          → DictManagePage（字典管理，受保护）
+ *   /system/dict-items     → DictItemManagePage（字典条目管理，受保护）
  *
  * 认证流程:
  *   1. App 组件挂载 → useEffect 调用 fetchCurrentUser()
@@ -64,13 +68,17 @@ import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
-import SystemPage from './pages/system/SystemPage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
 import StudentManagePage from './pages/student/StudentManagePage';
 import OrderManagePage from './pages/student/OrderManagePage';
 import RoleManagePage from './pages/hr/RoleManagePage';
+import UserManagePage from './pages/system/UserManagePage';
+import DeptManagePage from './pages/system/DeptManagePage';
+import PositionManagePage from './pages/system/PositionManagePage';
+import DictManagePage from './pages/system/DictManagePage';
+import DictItemManagePage from './pages/system/DictItemManagePage';
 
 export default function App() {
   const { fetchCurrentUser, isLoggedIn } = useUserStore();
@@ -281,12 +289,44 @@ export default function App() {
               }
             />
 
-            {/* 系统管理（占位页，后端接口已就绪，前端待开发） */}
+            {/* 系统管理：用户/部门/岗位/字典/字典条目 */}
             <Route
-              path="/system"
+              path="/system/users"
               element={
-                <AuthGuard required={['system:user:list', 'system:role:list', 'system:dept:list', 'system:position:list', 'system:dict:list', 'system:dictItem:list']}>
-                  <SystemPage />
+                <AuthGuard required={['system:user:list', 'system:user:create', 'system:user:update', 'system:user:delete']}>
+                  <UserManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/system/depts"
+              element={
+                <AuthGuard required={['system:dept:list', 'system:dept:create', 'system:dept:update', 'system:dept:delete']}>
+                  <DeptManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/system/positions"
+              element={
+                <AuthGuard required={['system:position:list', 'system:position:create', 'system:position:update', 'system:position:delete']}>
+                  <PositionManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/system/dicts"
+              element={
+                <AuthGuard required={['system:dict:list', 'system:dict:create', 'system:dict:update', 'system:dict:delete']}>
+                  <DictManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/system/dict-items"
+              element={
+                <AuthGuard required={['system:dictItem:list', 'system:dictItem:create', 'system:dictItem:update', 'system:dictItem:delete', 'system:dictItem:import']}>
+                  <DictItemManagePage />
                 </AuthGuard>
               }
             />

@@ -27,8 +27,8 @@
  *
  * 菜单项说明:
  *   key 同时作为路由路径，点击时直接 navigate(key)；
- *   "系统管理"（/system）已注册到 App.jsx 的 SystemPage 占位页
- *   （后端 SystemApi 接口已就绪，前端功能页面待开发）
+ *   "系统管理"为分组菜单（用户管理/部门管理/岗位管理/字典管理/字典条目管理，
+ *   对应 App.jsx 的 /system/users|depts|positions|dicts|dict-items 五个页面）
  */
 
 import { Layout, Menu, Avatar, Dropdown, Typography } from 'antd';
@@ -124,8 +124,17 @@ export default function MainLayout() {
       ],
     },
     {
-      key: '/system',        icon: <SettingOutlined />,   label: '系统管理',
-      required: ['system:user:list', 'system:role:list', 'system:dept:list', 'system:position:list', 'system:dict:list', 'system:dictItem:list'],
+      key: 'system-group', icon: <SettingOutlined />, label: '系统管理',
+      children: [
+        { key: '/system/users', label: '用户管理', required: ['system:user:list', 'system:user:create', 'system:user:update', 'system:user:delete'] },
+        { key: '/system/depts', label: '部门管理', required: ['system:dept:list', 'system:dept:create', 'system:dept:update', 'system:dept:delete'] },
+        { key: '/system/positions', label: '岗位管理', required: ['system:position:list', 'system:position:create', 'system:position:update', 'system:position:delete'] },
+        { key: '/system/dicts', label: '字典管理', required: ['system:dict:list', 'system:dict:create', 'system:dict:update', 'system:dict:delete'] },
+        {
+          key: '/system/dict-items', label: '字典条目管理',
+          required: ['system:dictItem:list', 'system:dictItem:create', 'system:dictItem:update', 'system:dictItem:delete', 'system:dictItem:import'],
+        },
+      ],
     },
   ];
 
@@ -168,7 +177,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /repo-assign、/knowledge/chapters）。
   // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
-  const SUB_PATH_KEYS = ['/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles'];
+  const SUB_PATH_KEYS = ['/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)
@@ -190,7 +199,7 @@ export default function MainLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
-          defaultOpenKeys={['repo-group', 'knowledge-group', 'hr-group']}
+          defaultOpenKeys={['repo-group', 'knowledge-group', 'hr-group', 'system-group']}
           items={visibleMenu}
           onClick={({ key }) => navigate(key)}
         />
