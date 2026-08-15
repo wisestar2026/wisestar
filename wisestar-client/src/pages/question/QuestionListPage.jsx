@@ -13,10 +13,10 @@
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"题目管理"菜单进入
  *
  * 筛选维度说明（重点）:
- *   支持"学科 / 章节 / 难度 / 知识点"四维筛选（加上题型、题库、名称共 7 个条件），
+ *   支持"学科 / 年级 / 章节 / 难度 / 知识点"五维筛选（加上题型、题库、名称共 8 个条件），
  *   全部通过 GET /api/template/list 的 query 参数下发给后端做 AND 组合查询。
  *   知识点属性字段在题目对象上的来源（两处均可能）:
- *     - 顶层字段: record.subject / record.chapter / record.knowledgePoint / record.difficulty
+ *     - 顶层字段: record.subject / record.grade / record.chapter / record.knowledgePoint / record.difficulty
  *       （t_template 表字段，QuestionEditModal 保存时写入）
  *     - template.attribute 快照: record.template.attribute.subject 等
  *       （兼容旧数据；表格"知识点"列两者都读，优先顶层字段）
@@ -27,7 +27,7 @@
  *   → POST /api/template/create|update → 刷新列表
  *   导入: ImportModal → importTemplate → POST /api/repo/import
  *   导出: handleExport → exportTemplate(全部筛选条件) → GET /api/repo/export?… → 下载 xlsx
- *   （导出内容与当前筛选结果一致，含名称/题型/学科/章节/难度/知识点条件）
+ *   （导出内容与当前筛选结果一致，含名称/题型/学科/年级/章节/难度/知识点条件）
  *   删除: deleteTemplate({ids}) → POST /api/template/delete（单个/批量）
  */
 
@@ -69,8 +69,9 @@ export default function QuestionListPage() {
   const [keyword, setKeyword] = useState('');
   const [filterType, setFilterType] = useState(undefined);
   const [filterRepoId, setFilterRepoId] = useState(undefined);
-  // 知识点属性四维筛选: 学科 / 章节 / 难度 / 知识点
+  // 知识点属性筛选: 学科 / 章节 / 年级 / 难度 / 知识点
   const [filterSubject, setFilterSubject] = useState('');
+  const [filterGrade, setFilterGrade] = useState('');
   const [filterChapter, setFilterChapter] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState(undefined);
   const [filterKnowledgePoint, setFilterKnowledgePoint] = useState('');
@@ -109,6 +110,7 @@ export default function QuestionListPage() {
       if (filterType) params.questionType = filterType;                    // 题型过滤
       if (filterRepoId) params.repoId = filterRepoId;                      // 题库过滤
       if (filterSubject.trim()) params.subject = filterSubject.trim();     // 学科过滤
+      if (filterGrade.trim()) params.grade = filterGrade.trim();           // 年级过滤
       if (filterChapter.trim()) params.chapter = filterChapter.trim();     // 章节过滤
       if (filterDifficulty) params.difficulty = filterDifficulty;          // 难度过滤（easy/medium/hard）
       if (filterKnowledgePoint.trim()) params.knowledgePoint = filterKnowledgePoint.trim(); // 知识点过滤
@@ -120,10 +122,10 @@ export default function QuestionListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, keyword, filterType, filterRepoId, filterSubject, filterChapter, filterDifficulty, filterKnowledgePoint]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterDifficulty, filterKnowledgePoint]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 任一筛选条件 / 页码变化时自动重新拉取（输入框 onChange 同时 setPage(1) 保证从首页开始）
-  useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterChapter, filterDifficulty, filterKnowledgePoint, fetchData]);
+  useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterDifficulty, filterKnowledgePoint, fetchData]);
 
   // ---- 新建 ----
   // editRecord 置 null → 弹窗进入"新建模式"（清空表单）
@@ -186,7 +188,7 @@ export default function QuestionListPage() {
   };
 
   // ---- 导出当前筛选结果 ----
-  // 把题目管理页的 7 个筛选条件（题库/名称/题型/学科/章节/难度/知识点）全部传给
+  // 把题目管理页的筛选条件（题库/名称/题型/学科/年级/章节/难度/知识点）全部传给
   // 导出接口，保证导出内容与当前筛选结果一致（后端 exportRepoQuestions 支持这些条件）
   // 数据流: 本页 → exportTemplate(filters) → GET /api/repo/export?… → 浏览器下载 xlsx
   const handleExport = () => {
@@ -195,6 +197,7 @@ export default function QuestionListPage() {
       name: keyword.trim() || undefined,
       questionType: filterType,
       subject: filterSubject.trim() || undefined,
+      grade: filterGrade.trim() || undefined,
       chapter: filterChapter.trim() || undefined,
       difficulty: filterDifficulty,
       knowledgePoint: filterKnowledgePoint.trim() || undefined,
@@ -249,22 +252,25 @@ export default function QuestionListPage() {
       },
     },
     {
-      title: '知识点', width: 200,
-      // 知识点列: 展示学科/章节/知识点/难度 4 类标签
+      title: '知识点', width: 220,
+      // 知识点列: 展示学科/章节/知识点/年级/难度 5 类标签
       // 数据来源优先顶层字段（t_template 表），其次 template.attribute 快照（兼容旧数据）
       render: (_, r) => {
         const subject = r.subject || r.template?.attribute?.subject;
+        const grade = r.grade || r.template?.attribute?.grade;
         const chapter = r.chapter || r.template?.attribute?.chapter;
         const kps = r.knowledgePoint || r.template?.attribute?.knowledgePoint || [];
         const difficulty = r.difficulty || r.template?.attribute?.difficulty;
-        // 4 项全空时显示占位符 "-"
-        if (!subject && !chapter && kps.length === 0 && !difficulty) {
+        // 5 项全空时显示占位符 "-"
+        if (!subject && !grade && !chapter && kps.length === 0 && !difficulty) {
           return <Text type="secondary">-</Text>;
         }
         return (
           <Space size={4} wrap>
             {/* 学科标签（青色） */}
             {subject && <Tag color="cyan" style={{ fontSize: 10, lineHeight: '16px' }}>{subject}</Tag>}
+            {/* 年级标签（紫色） */}
+            {grade && <Tag color="purple" style={{ fontSize: 10, lineHeight: '16px' }}>{grade}</Tag>}
             {/* 章节标签（蓝灰色） */}
             {chapter && <Tag color="geekblue" style={{ fontSize: 10, lineHeight: '16px' }}>{chapter}</Tag>}
             {/* 知识点: 最多展示 2 个，超出显示 "+N"（防止列宽撑爆） */}
@@ -365,7 +371,7 @@ export default function QuestionListPage() {
           style={{ width: 180 }}
           options={repos.map((r) => ({ label: r.name, value: r.id }))}
         />
-        {/* 学科筛选（四维筛选之一） */}
+        {/* 学科筛选（五维筛选之一） */}
         <Input
           prefix={<SearchOutlined />}
           placeholder="学科"
@@ -374,7 +380,16 @@ export default function QuestionListPage() {
           style={{ width: 120 }}
           allowClear
         />
-        {/* 章节筛选（四维筛选之一） */}
+        {/* 年级筛选（五维筛选之一） */}
+        <Input
+          prefix={<SearchOutlined />}
+          placeholder="年级"
+          value={filterGrade}
+          onChange={(e) => { setFilterGrade(e.target.value); setPage(1); }}
+          style={{ width: 120 }}
+          allowClear
+        />
+        {/* 章节筛选（五维筛选之一） */}
         <Input
           prefix={<SearchOutlined />}
           placeholder="章节"
@@ -383,7 +398,7 @@ export default function QuestionListPage() {
           style={{ width: 120 }}
           allowClear
         />
-        {/* 难度筛选（四维筛选之一） */}
+        {/* 难度筛选（五维筛选之一） */}
         <Select
           value={filterDifficulty}
           onChange={(v) => { setFilterDifficulty(v); setPage(1); }}
@@ -396,7 +411,7 @@ export default function QuestionListPage() {
             { label: '困难', value: 'hard' },
           ]}
         />
-        {/* 知识点筛选（四维筛选之一，模糊匹配） */}
+        {/* 知识点筛选（五维筛选之一，模糊匹配） */}
         <Input
           prefix={<SearchOutlined />}
           placeholder="知识点"
@@ -405,10 +420,10 @@ export default function QuestionListPage() {
           style={{ width: 140 }}
           allowClear
         />
-        {/* 重置: 清空全部 7 个条件并回到第 1 页 */}
+        {/* 重置: 清空全部筛选条件并回到第 1 页 */}
         <Button icon={<ReloadOutlined />} onClick={() => {
           setKeyword(''); setFilterType(undefined); setFilterRepoId(undefined);
-          setFilterSubject(''); setFilterChapter(''); setFilterDifficulty(undefined); setFilterKnowledgePoint('');
+          setFilterSubject(''); setFilterGrade(''); setFilterChapter(''); setFilterDifficulty(undefined); setFilterKnowledgePoint('');
           setPage(1);
         }}>
           重置

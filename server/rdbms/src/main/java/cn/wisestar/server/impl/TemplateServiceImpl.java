@@ -103,6 +103,7 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
                 .eq(query.getSubject() != null, Template::getSubject, query.getSubject())
                 .eq(query.getChapter() != null, Template::getChapter, query.getChapter())
                 .eq(query.getDifficulty() != null, Template::getDifficulty, query.getDifficulty())
+                .eq(query.getGrade() != null, Template::getGrade, query.getGrade())
                 .like(query.getKnowledgePoint() != null, Template::getKnowledgePoint, query.getKnowledgePoint())
                 .exists(!query.getTag().isEmpty(),
                         String.format("select 1 from t_tag t where t.entity_id = t_template.id and t.name in (%s)",

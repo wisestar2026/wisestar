@@ -1,7 +1,7 @@
 package cn.wisestar.server.api;
 
-import cn.wisestar.server.domain.dto.TemplateView;
-import cn.wisestar.server.domain.dto.knowledge.ChapterQuestionRequest;
+import cn.wisestar.server.domain.dto.RepoView;
+import cn.wisestar.server.domain.dto.knowledge.ChapterRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.service.ChapterService;
@@ -21,7 +21,7 @@ import java.util.List;
  *
  * <p><b>定位</b>：管理端「知识管理 → 章节」页面数据源——章节 CRUD；
  * 章节挂载于学科下（subjectId），列表按学科过滤，供顶部下拉二级联动使用；
- * 章节测试题目经 t_chapter_question 从题目库（t_template）绑定。</p>
+ * 章节题库经 t_chapter_repo 从题库管理（t_repo）绑定。</p>
  */
 @RestController
 @RequestMapping("${api.prefix}/chapter")
@@ -41,7 +41,8 @@ public class ChapterApi {
 	 * <p><b>请求参数</b>：{@link ChapterRequest}（Query 参数：subjectId 可选，
 	 * 不传返回全部章节）。</p>
 	 *
-	 * <p><b>功能</b>：返回章节列表（sort 升序），每项含该章节下的小节数 sectionCount。</p>
+	 * <p><b>功能</b>：返回章节列表（sort 升序），每项含该章节下的小节数 sectionCount
+	 * 与已绑定题库数 repoCount。</p>
 	 *
 	 * <p><b>返回值结构</b>：{@link ChapterView} 列表。</p>
 	 *
@@ -49,7 +50,7 @@ public class ChapterApi {
 	 * @return 章节视图列表
 	 */
 	@GetMapping("/list")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:list')")
 	public List<ChapterView> listChapters(ChapterRequest query) {
 		return chapterService.listChapters(query);
 	}
@@ -68,7 +69,7 @@ public class ChapterApi {
 	 * @return 新章节 id
 	 */
 	@PostMapping("/create")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:create')")
 	public String addChapter(@RequestBody ChapterRequest request) {
 		return chapterService.addChapter(request);
 	}
@@ -81,62 +82,62 @@ public class ChapterApi {
 	 * @param request 章节请求（含 id）
 	 */
 	@PostMapping("/update")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:update')")
 	public void updateChapter(@RequestBody ChapterRequest request) {
 		chapterService.updateChapter(request);
 	}
 
 	/**
-	 * 删除章节（级联逻辑删除其下小节、知识点及题目绑定）。
+	 * 删除章节（级联逻辑删除其下小节、知识点及题库绑定）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/delete（如 /api/chapter/delete）。</p>
 	 *
 	 * @param request 章节请求（含 id）
 	 */
 	@PostMapping("/delete")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:delete')")
 	public void deleteChapter(@RequestBody ChapterRequest request) {
 		chapterService.deleteChapter(request);
 	}
 
 	/**
-	 * 保存章节-测试题目绑定（全量替换）。
+	 * 保存章节-题库绑定（全量替换）。
 	 *
-	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/questions
-	 * （如 /api/chapter/questions）。</p>
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/repos
+	 * （如 /api/chapter/repos）。</p>
 	 *
-	 * <p><b>功能</b>：将题目库（t_template）中选中的测试题目整体绑定到章节——
-	 * 先清空旧绑定再写入新绑定（事务内完成）。测试题目只能来自题库管理，不能在此新增。</p>
+	 * <p><b>功能</b>：将题库管理（t_repo）中选中的题库整体绑定到章节——
+	 * 先清空旧绑定再写入新绑定（事务内完成）。题库只能来自题库管理，不能在此新增。</p>
 	 *
-	 * <p><b>请求参数</b>：{@link ChapterQuestionRequest}（@RequestBody JSON：
-	 * chapterId + questionIds[]）。</p>
+	 * <p><b>请求参数</b>：{@link ChapterRepoRequest}（@RequestBody JSON：
+	 * chapterId + repoIds[]）。</p>
 	 *
 	 * @param request 绑定请求
 	 */
-	@PostMapping("/questions")
-	@PreAuthorize("isAuthenticated()")
-	public void saveQuestions(@RequestBody ChapterQuestionRequest request) {
-		chapterService.saveQuestions(request);
+	@PostMapping("/repos")
+	@PreAuthorize("hasAuthority('knowledge:update')")
+	public void saveRepos(@RequestBody ChapterRepoRequest request) {
+		chapterService.saveRepos(request);
 	}
 
 	/**
-	 * 查询章节已绑定的测试题目列表。
+	 * 查询章节已绑定的题库列表。
 	 *
-	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/chapter/questions
-	 * （如 /api/chapter/questions?chapterId=xxx）。</p>
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/chapter/repos
+	 * （如 /api/chapter/repos?chapterId=xxx）。</p>
 	 *
-	 * <p><b>功能</b>：返回该章节已绑定的题库测试题目（保持绑定顺序），
-	 * 供前端编辑绑定弹窗回显已选题目。</p>
+	 * <p><b>功能</b>：返回该章节已绑定的题库（保持绑定顺序），
+	 * 供前端编辑绑定弹窗回显已选题库。</p>
 	 *
-	 * <p><b>返回值结构</b>：{@link TemplateView} 列表。</p>
+	 * <p><b>返回值结构</b>：{@link RepoView} 列表。</p>
 	 *
 	 * @param chapterId 章节ID
-	 * @return 已绑定测试题目列表
+	 * @return 已绑定题库列表
 	 */
-	@GetMapping("/questions")
-	@PreAuthorize("isAuthenticated()")
-	public List<TemplateView> listQuestions(@RequestParam("chapterId") String chapterId) {
-		return chapterService.listQuestions(chapterId);
+	@GetMapping("/repos")
+	@PreAuthorize("hasAuthority('knowledge:list')")
+	public List<RepoView> listRepos(@RequestParam("chapterId") String chapterId) {
+		return chapterService.listRepos(chapterId);
 	}
 
 }

@@ -1305,6 +1305,9 @@ CREATE TABLE `t_repo` (
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `is_practice` tinyint DEFAULT NULL COMMENT '添加到练习题库 1是 0否',
+  `subject` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科标签',
+  `grade` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级标签',
+  `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '难度标签(easy简单/medium中等/hard困难)',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='模板组';
 
@@ -1409,6 +1412,7 @@ CREATE TABLE `t_role` (
   `authority` varchar(3000) DEFAULT NULL COMMENT '权限列表',
   `status` tinyint(1) DEFAULT '1' COMMENT '1激活 0失活',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `builtin` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否内置角色 1内置不可删 0普通',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(256) DEFAULT NULL,
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -1420,7 +1424,28 @@ CREATE TABLE `t_role` (
 -- Records of t_role
 -- ----------------------------
 BEGIN;
-INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `create_at`, `create_by`, `update_at`, `update_by`) VALUES ('1457995481928998914', 'Admin', 'admin', '系统初始化角色', 'answer,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,file,file:detail,file:list,file:import,file:delete,project,project:list,project:detail,project:create,project:update,project:delete,project:report,system,system:role,system:role:list,system:user,system:user:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,position,position:list,position:create,system:position,system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,system:org:delete,template,template:list,template:create,template:update,template:delete,system:position:list,system:position:create,system:dept,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,repo,repo:list,repo:detail,repo:create,repo:update,repo:delete,user,user:update,answer:upload,system:dict,system:dict:update,system:dict:delete,system:dictItem,system:dictItem:list,system:dictItem:create,system:dictItem:import,system:dictItem:delete,system:dict:list,system:dict:create,exercise,exercise:list,repo:book,system:dictItem:update,home', 1, 0, '2021-11-09 16:56:26', NULL, '2025-08-08 10:04:12', '1457995481966747649');
+-- 管理员：全量权限（含新增知识/学员/订单模块权限点），幂等插入
+INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
+SELECT '1457995481928998914', '管理员', 'admin', '系统初始化角色（超管）', 'answer,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,file,file:detail,file:list,file:import,file:delete,project,project:list,project:detail,project:create,project:update,project:delete,project:report,system,system:role,system:role:list,system:user,system:user:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,position,position:list,position:create,system:position,system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,system:org:delete,template,template:list,template:create,template:update,template:delete,system:position:list,system:position:create,system:dept,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,repo,repo:list,repo:detail,repo:create,repo:update,repo:delete,user,user:update,answer:upload,system:dict,system:dict:update,system:dict:delete,system:dictItem,system:dictItem:list,system:dictItem:create,system:dictItem:import,system:dictItem:delete,system:dict:list,system:dict:create,exercise,exercise:list,repo:book,system:dictItem:update,home,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete', 1, 0, 1, '2021-11-09 16:56:26', NULL, '2026-08-13 10:00:00', '1457995481966747649'
+WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'admin');
+-- 内置角色：校长（决策层）
+INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
+SELECT '2608130000000000001', '校长', 'principal', '内置角色（不可删除）', 'home,exercise:list,project:list,project:detail,answer:list,answer:detail,repo:list,repo:detail,template:list,knowledge:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
+WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'principal');
+-- 内置角色：教师（教学执行）
+INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
+SELECT '2608130000000000002', '教师', 'teacher', '内置角色（不可删除）', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,project:list,project:detail,answer:list,answer:detail', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
+WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'teacher');
+-- 内置角色：学管师（学员运营）
+INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
+SELECT '2608130000000000003', '学管师', 'consultant', '内置角色（不可删除）', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,knowledge:list,repo:list,repo:detail', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
+WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'consultant');
+-- 内置角色：教务（教务管理）
+INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
+SELECT '2608130000000000004', '教务', 'academic', '内置角色（不可删除）', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,project:list,project:detail,answer:list,answer:detail,system:dict:list,system:dictItem:list', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
+WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'academic');
+-- 收敛旧库：已有 admin 角色补充内置标记与新权限点
+UPDATE `t_role` SET `name` = '管理员', `remark` = '系统初始化角色（超管）', `builtin` = 1, `update_at` = '2026-08-13 10:00:00', `update_by` = '1457995481966747649', `authority` = 'answer,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,file,file:detail,file:list,file:import,file:delete,project,project:list,project:detail,project:create,project:update,project:delete,project:report,system,system:role,system:role:list,system:user,system:user:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,position,position:list,position:create,system:position,system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,system:org:delete,template,template:list,template:create,template:update,template:delete,system:position:list,system:position:create,system:dept,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,repo,repo:list,repo:detail,repo:create,repo:update,repo:delete,user,user:update,answer:upload,system:dict,system:dict:update,system:dict:delete,system:dictItem,system:dictItem:list,system:dictItem:create,system:dictItem:import,system:dictItem:delete,system:dict:list,system:dict:create,exercise,exercise:list,repo:book,system:dictItem:update,home,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete' WHERE `code` = 'admin';
 COMMIT;
 
 -- ----------------------------
@@ -1499,6 +1524,7 @@ CREATE TABLE `t_template` (
   `chapter` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节',
   `knowledge_point` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点（多值，逗号分隔）',
   `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '难度',
+  `grade` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级标签',
   `shared` tinyint(1) DEFAULT '0',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -1820,47 +1846,151 @@ BEGIN;
 COMMIT;
 
 -- ----------------------------
--- Table structure for t_section_question（小节-测试题目绑定：从题目库选题，多对多）
+-- Table structure for t_section_repo（小节-题库绑定：从题库管理选题库，多对多）
 -- ----------------------------
-CREATE TABLE `t_section_question` (
+CREATE TABLE `t_section_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
-  `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID(t_template.id，仅能从题目库选择)',
+  `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID(t_repo.id，仅能从题库管理选择)',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_secq_section` (`section_id`),
-  KEY `idx_secq_question` (`question_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='小节-测试题目绑定';
+  KEY `idx_secr_section` (`section_id`),
+  KEY `idx_secr_repo` (`repo_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='小节-题库绑定';
 
 -- ----------------------------
--- Records of t_section_question
+-- Records of t_section_repo
 -- ----------------------------
 BEGIN;
 COMMIT;
 
 -- ----------------------------
--- Table structure for t_chapter_question（章节-测试题目绑定：从习题库选题，多对多）
+-- Table structure for t_chapter_repo（章节-题库绑定：从题库管理选题库，多对多）
 -- ----------------------------
-CREATE TABLE `t_chapter_question` (
+CREATE TABLE `t_chapter_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID(t_chapter.id)',
-  `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID(t_template.id，仅能从习题库选择)',
+  `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID(t_repo.id，仅能从题库管理选择)',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_chapq_chapter` (`chapter_id`),
-  KEY `idx_chapq_question` (`question_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='章节-测试题目绑定';
+  KEY `idx_chapr_chapter` (`chapter_id`),
+  KEY `idx_chapr_repo` (`repo_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='章节-题库绑定';
 
 -- ----------------------------
--- Records of t_chapter_question
+-- Records of t_chapter_repo
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- 演示题库种子（带学科/年级/难度标签，供章节/小节绑定题库演示）
+-- ----------------------------
+INSERT INTO `t_repo` (`id`, `name`, `description`, `category`, `mode`, `shared`, `tag`, `priority`, `setting`, `create_at`, `create_by`, `update_at`, `update_by`, `is_practice`, `subject`, `grade`, `difficulty`) VALUES
+('9931000000000000001', '数学三年级-口算与四则运算', '三年级口算与四则运算专项练习', '同步练习', 'exam', 0, '["口算","四则运算"]', NULL, NULL, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, 1, '数学', '三年级', 'medium'),
+('9931000000000000002', '数学二年级-图形与长度', '二年级图形认识与长度单位练习', '同步练习', 'exam', 0, '["图形","长度"]', NULL, NULL, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, 1, '数学', '二年级', 'easy'),
+('9931000000000000003', '语文二年级-生字词', '二年级生字词积累与运用', '同步练习', 'exam', 0, '["生字","词语"]', NULL, NULL, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, 1, '语文', '二年级', 'easy');
+
+-- ----------------------------
+-- 演示题目种子（带学科/章节/年级/难度/知识点标签，挂演示题库下）
+-- ----------------------------
+INSERT INTO `t_template` (`id`, `repo_id`, `serial_no`, `name`, `question_type`, `template`, `mode`, `category`, `tag`, `priority`, `preview_url`, `shared`, `is_deleted`, `create_at`, `create_by`, `update_at`, `update_by`, `subject`, `chapter`, `knowledge_point`, `difficulty`, `grade`) VALUES
+('9932000000000000001', '9931000000000000001', '1', '45+27=（ ）', 'FillBlank', '{"id":"demo1","title":"45+27=（ ）","type":"FillBlank","attribute":{"examCorrectAnswer":"72"},"children":[]}', 'exam', '口算', '["口算"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '数学', '万以内数的加减法', '["两位数加法"]', 'easy', '三年级'),
+('9932000000000000002', '9931000000000000001', '2', '计算 120×3=（ ）', 'FillBlank', '{"id":"demo2","title":"计算 120×3=（ ）","type":"FillBlank","attribute":{"examCorrectAnswer":"360"},"children":[]}', 'exam', '口算', '["口算"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '数学', '多位数乘一位数', '["整百数乘一位数"]', 'medium', '三年级'),
+('9932000000000000003', '9931000000000000001', '3', '一个数除以 8 商是 6，这个数是多少？', 'Radio', '{"id":"demo3","title":"一个数除以 8 商是 6，这个数是多少？","type":"Radio","attribute":{"examCorrectAnswer":"c"},"children":[{"id":"a","title":"42"},{"id":"b","title":"46"},{"id":"c","title":"48"},{"id":"d","title":"54"}]}', 'exam', '除法', '["除法"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '数学', '除数是一位数的除法', '["有余数除法"]', 'medium', '三年级'),
+('9932000000000000004', '9931000000000000002', '1', '直角一定比锐角大。', 'Judge', '{"id":"demo4","title":"直角一定比锐角大。","type":"Judge","attribute":{"examCorrectAnswer":"对"},"children":[]}', 'exam', '图形', '["图形"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '数学', '角的初步认识', '["锐角直角钝角"]', 'easy', '二年级'),
+('9932000000000000005', '9931000000000000002', '2', '1 米 =（ ）厘米', 'FillBlank', '{"id":"demo5","title":"1 米 =（ ）厘米","type":"FillBlank","attribute":{"examCorrectAnswer":"100"},"children":[]}', 'exam', '长度', '["长度"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '数学', '长度单位', '["米和厘米"]', 'easy', '二年级'),
+('9932000000000000006', '9931000000000000003', '1', '下列词语书写完全正确的一组是（）', 'Radio', '{"id":"demo6","title":"下列词语书写完全正确的一组是（）","type":"Radio","attribute":{"examCorrectAnswer":"b"},"children":[{"id":"a","title":"波烂壮阔"},{"id":"b","title":"风景秀丽"},{"id":"c","title":"光采夺目"},{"id":"d","title":"山青水秀"}]}', 'exam', '词语', '["词语"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '语文', '词语积累', '["正确书写"]', 'medium', '二年级'),
+('9932000000000000007', '9931000000000000003', '2', '"湖"字的部首是（ ）', 'FillBlank', '{"id":"demo7","title":"\"湖\"字的部首是（ ）","type":"FillBlank","attribute":{"examCorrectAnswer":"氵"},"children":[]}', 'exam', '生字', '["生字"]', NULL, NULL, 0, 0, '2026-08-11 00:00:00', '1457995481966747649', NULL, NULL, '语文', '偏旁部首', '["三点水"]', 'easy', '二年级');
+
+-- ----------------------------
+-- Table structure for t_student（学员主数据：学员管理模块，学号唯一）
+-- ----------------------------
+CREATE TABLE `t_student` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
+  `student_no` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学号(8位数字，系统自动生成，全局唯一)',
+  `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '姓名',
+  `age` int DEFAULT NULL COMMENT '年龄',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '联系号码',
+  `school` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学校',
+  `campus` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '校区(本迭代仅占位，业务逻辑后续迭代)',
+  `extra` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '扩展预留字段(JSON，前端不展示，供后续数据分析)',
+  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态(1正常 0停用)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_student_no` (`student_no`),
+  KEY `idx_student_name_phone` (`name`,`phone`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员主数据';
+
+-- ----------------------------
+-- Records of t_student
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_student_order（学员订单：开通AI自习室权限）
+-- ----------------------------
+CREATE TABLE `t_student_order` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID(t_student.id)',
+  `subject_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID多选(逗号分隔，t_subject.id)',
+  `grades` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '年级多选(逗号分隔)',
+  `version` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `duration` int NOT NULL COMMENT '账号时长数值',
+  `duration_unit` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '时长单位(DAY/MONTH/YEAR)',
+  `expire_at` datetime NOT NULL COMMENT '有效期至(服务端按时长计算)',
+  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态(1生效 0作废)',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_order_student` (`student_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员订单';
+
+-- ----------------------------
+-- Records of t_student_order
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_student_permission（学员权限：多选学科×年级笛卡尔积展开，供学员端鉴权）
+-- ----------------------------
+CREATE TABLE `t_student_permission` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID(t_student.id)',
+  `order_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '来源订单ID(t_student_order.id)',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID(t_subject.id)',
+  `grade` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '年级',
+  `version` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `expire_at` datetime NOT NULL COMMENT '有效期至',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_perm_student` (`student_id`),
+  KEY `idx_perm_order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员权限';
+
+-- ----------------------------
+-- Records of t_student_permission
 -- ----------------------------
 BEGIN;
 COMMIT;

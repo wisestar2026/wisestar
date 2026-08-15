@@ -44,8 +44,8 @@ public class SectionView {
 	private Long knowledgePointCount;
 
 	/**
-	 * 该小节已绑定的测试题目数（t_section_question 统计，题目来自题目库）。
+	 * 该小节已绑定的题库数（t_section_repo 统计，题库来自题库管理）。
 	 */
-	private Long questionCount;
+	private Long repoCount;
 
 }

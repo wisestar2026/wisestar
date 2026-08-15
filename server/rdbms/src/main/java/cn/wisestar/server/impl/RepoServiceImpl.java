@@ -115,7 +115,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     /**
      * 分页查询题库列表。
      *
-     * @param query 条件：name 模糊、category、isPractice、mode；
+     * @param query 条件：name 模糊、category、isPractice、mode、subject、grade、difficulty；
      *              权限范围：自己创建 OR shared=true（共享题库）
      * @return 分页的 RepoView（每项回填题目总数 total、各标签题数 templateTags、
      *         各题型题数 repoQuestionTypes）
@@ -131,7 +131,11 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                         .and(x -> x.eq(Repo::getCreateBy, SecurityContextUtils.getUserId())
                                 .or(y -> y.eq(Repo::getShared, true)))
                         .eq(query.getIsPractice() != null, Repo::getIsPractice, query.getIsPractice())
-                        .eq(query.getMode() != null, Repo::getMode, query.getMode()).orderByAsc(Repo::getCreateAt));
+                        .eq(query.getMode() != null, Repo::getMode, query.getMode())
+                        .eq(StringUtils.hasText(query.getSubject()), Repo::getSubject, query.getSubject())
+                        .eq(StringUtils.hasText(query.getGrade()), Repo::getGrade, query.getGrade())
+                        .eq(StringUtils.hasText(query.getDifficulty()), Repo::getDifficulty, query.getDifficulty())
+                        .orderByAsc(Repo::getCreateAt));
         PaginationResponse<RepoView> result = new PaginationResponse<>(page.getTotal(),
                 repoViewMapper.toView(page.getRecords()));
         result.getList().forEach(repoView -> {

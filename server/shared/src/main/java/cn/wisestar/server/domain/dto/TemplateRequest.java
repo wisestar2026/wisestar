@@ -92,6 +92,11 @@ public class TemplateRequest {
 	 */
 	private String difficulty;
 
+	/**
+	 * 年级（如 一年级/二年级/三年级）
+	 */
+	private String grade;
+
 	private List<String> ids;
 
 }

@@ -44,7 +44,7 @@ public class SubjectApi {
 	 * @return 学科视图列表
 	 */
 	@GetMapping("/list")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:list')")
 	public List<SubjectView> listSubjects() {
 		return subjectService.listSubjects();
 	}
@@ -63,7 +63,7 @@ public class SubjectApi {
 	 * @return 新学科 id
 	 */
 	@PostMapping("/create")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:create')")
 	public String addSubject(@RequestBody SubjectRequest request) {
 		return subjectService.addSubject(request);
 	}
@@ -76,7 +76,7 @@ public class SubjectApi {
 	 * @param request 学科请求（含 id）
 	 */
 	@PostMapping("/update")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:update')")
 	public void updateSubject(@RequestBody SubjectRequest request) {
 		subjectService.updateSubject(request);
 	}
@@ -89,7 +89,7 @@ public class SubjectApi {
 	 * @param request 学科请求（含 id）
 	 */
 	@PostMapping("/delete")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:delete')")
 	public void deleteSubject(@RequestBody SubjectRequest request) {
 		subjectService.deleteSubject(request);
 	}

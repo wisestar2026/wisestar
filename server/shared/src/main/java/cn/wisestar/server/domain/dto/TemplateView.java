@@ -53,4 +53,9 @@ public class TemplateView {
 
 	private String difficulty;
 
+	/**
+	 * 年级标签（如 一年级/二年级/三年级）
+	 */
+	private String grade;
+
 }

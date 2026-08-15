@@ -153,4 +153,11 @@ public class Template extends BaseModel {
 	 */
 	private String difficulty;
 
+	/**
+	 * 年级标签（对应数据库列 grade，如 一年级/二年级/三年级）。
+	 * 与 subject/chapter/knowledgePoint/difficulty 共同组成题目标签体系，
+	 * 用于题目管理列表与章节/小节绑定时按年级筛选。
+	 */
+	private String grade;
+
 }

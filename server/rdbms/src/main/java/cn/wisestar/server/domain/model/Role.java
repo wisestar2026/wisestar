@@ -35,4 +35,9 @@ public class Role extends BaseModel {
 	 */
 	private Integer status;
 
+	/**
+	 * 是否内置角色：1 内置（系统预置，不可删除、编码不可修改）；0 普通
+	 */
+	private Integer builtin;
+
 }

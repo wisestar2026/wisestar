@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.validation.ValidationException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,6 +88,13 @@ public class SystemServiceImpl implements SystemService {
 
 	@Override
 	public void createRole(RoleRequest request) {
+		// 角色编码唯一性校验
+		if (isNotBlank(request.getCode())) {
+			long count = roleService.count(Wrappers.<Role>lambdaQuery().eq(Role::getCode, request.getCode()));
+			if (count > 0) {
+				throw new ValidationException("角色编码已存在");
+			}
+		}
 		roleService.save(roleViewMapper.fromRequest(request));
 	}
 
@@ -105,6 +113,23 @@ public class SystemServiceImpl implements SystemService {
 			userRoleMapper.delete(Wrappers.<UserRole>lambdaUpdate().eq(UserRole::getRoleId, request.getId())
 					.in(UserRole::getUserId, request.getEvictUserIds()));
 		} else {
+			Role exist = roleService.getById(request.getId());
+			if (exist != null && exist.getBuiltin() != null && exist.getBuiltin() == 1) {
+				// 内置角色编码不可修改
+				if (isNotBlank(request.getCode()) && !exist.getCode().equals(request.getCode())) {
+					throw new ValidationException("内置角色编码不可修改");
+				}
+				// 内置角色编码以数据库为准，防止覆盖为空
+				request.setCode(exist.getCode());
+			}
+			// 编码唯一性校验（排除自身）
+			if (isNotBlank(request.getCode())) {
+				long count = roleService.count(Wrappers.<Role>lambdaQuery().eq(Role::getCode, request.getCode())
+						.ne(Role::getId, request.getId()));
+				if (count > 0) {
+					throw new ValidationException("角色编码已存在");
+				}
+			}
 			roleService.updateById(roleViewMapper.fromRequest(request));
 			evictCache(request.getId());
 		}
@@ -112,6 +137,10 @@ public class SystemServiceImpl implements SystemService {
 
 	@Override
 	public void deleteRole(RoleRequest request) {
+		Role exist = roleService.getById(request.getId());
+		if (exist != null && exist.getBuiltin() != null && exist.getBuiltin() == 1) {
+			throw new ValidationException("内置角色不可删除");
+		}
 		roleService.removeById(request.getId());
 		userRoleMapper.delete(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getRoleId, request.getId()));
 		evictCache(request.getId());

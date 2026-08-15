@@ -47,6 +47,8 @@ import {
   ProfileOutlined,
   PartitionOutlined,
   BulbOutlined,
+  TeamOutlined,
+  SolutionOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../stores/useUserStore';
@@ -59,36 +61,80 @@ export default function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // 当前用户权限点列表（无权限点的菜单项将被隐藏）
+  const authorityList = user?.authorityList || [];
+
+  // 判断是否拥有任一权限点；未配置 required 的菜单项对所有登录用户可见
+  const hasAny = (perms) => !perms || perms.length === 0 || perms.some((p) => authorityList.includes(p));
+
   // ============================================================
   // 侧边栏菜单配置
   // ============================================================
   // key 对应路由路径，点击后 navigate(key) 跳转
-  // 注意: App.jsx 已注册全部菜单路由；/system 目前指向 SystemPage 占位页
+  // required: 权限点列表（满足任一点即显示）；无 required 的菜单项始终显示
   const menuItems = [
-    { key: '/',              icon: <DashboardOutlined />, label: '仪表盘' },
+    { key: '/',              icon: <DashboardOutlined />, label: '仪表盘', required: ['home'] },
     { key: '/student',       icon: <CompassOutlined />,   label: '学生端主页' },
-    { key: '/practice',      icon: <PlayCircleOutlined />, label: '在线练习' },
-    { key: '/projects',      icon: <ProjectOutlined />,   label: '问卷管理' },
-    { key: '/answers',       icon: <FileTextOutlined />,  label: '答案管理' },
+    { key: '/practice',      icon: <PlayCircleOutlined />, label: '在线练习', required: ['exercise:list'] },
+    {
+      key: '/projects',      icon: <ProjectOutlined />,   label: '问卷管理',
+      required: ['project:list', 'project:detail', 'project:create', 'project:update', 'project:delete'],
+    },
+    {
+      key: '/answers',       icon: <FileTextOutlined />,  label: '答案管理',
+      required: ['answer:list', 'answer:detail', 'answer:create', 'answer:update', 'answer:delete', 'answer:export', 'answer:upload'],
+    },
     {
       key: 'repo-group', icon: <BookOutlined />, label: '题库管理',
+      required: ['repo:list', 'repo:detail', 'repo:create', 'repo:update', 'repo:delete', 'repo:export', 'repo:book'],
       children: [
         { key: '/repos',         label: '题库列表' },
         { key: '/repo-assign',   label: '题库分配' },
         { key: '/wrong-questions', label: '错题库管理' },
       ],
     },
-    { key: '/questions',     icon: <AppstoreOutlined />,  label: '题目管理' },
+    {
+      key: '/questions',     icon: <AppstoreOutlined />,  label: '题目管理',
+      required: ['template:list', 'template:create', 'template:update', 'template:delete'],
+    },
     {
       key: 'knowledge-group', icon: <ReadOutlined />, label: '知识管理',
+      required: ['knowledge:list', 'knowledge:create', 'knowledge:update', 'knowledge:delete'],
       children: [
         { key: '/knowledge/chapters', icon: <ProfileOutlined />, label: '章节管理' },
         { key: '/knowledge/sections', icon: <PartitionOutlined />, label: '小节管理' },
         { key: '/knowledge/points',   icon: <BulbOutlined />,    label: '知识点管理' },
       ],
     },
-    { key: '/system',        icon: <SettingOutlined />,   label: '系统管理' },
+    {
+      key: 'student-group', icon: <TeamOutlined />, label: '学员管理',
+      required: ['student:list', 'student:create', 'student:update', 'student:delete'],
+      children: [
+        { key: '/students', label: '学员列表' },
+        {
+          key: '/orders',   label: '订单管理',
+          required: ['order:list', 'order:create', 'order:update', 'order:delete'],
+        },
+      ],
+    },
+    {
+      key: 'hr-group', icon: <SolutionOutlined />, label: '人事管理',
+      children: [
+        { key: '/hr/roles', label: '角色权限', required: ['system:role:list'] },
+      ],
+    },
+    {
+      key: '/system',        icon: <SettingOutlined />,   label: '系统管理',
+      required: ['system:user:list', 'system:role:list', 'system:dept:list', 'system:position:list', 'system:dict:list', 'system:dictItem:list'],
+    },
   ];
+
+  // 按权限过滤菜单：无权限的子菜单整体隐藏，父菜单全部子项隐藏时父菜单也隐藏
+  const filterMenu = (items) => items
+    .filter((item) => hasAny(item.required))
+    .map((item) => (item.children ? { ...item, children: filterMenu(item.children) } : item))
+    .filter((item) => !item.children || item.children.length > 0);
+  const visibleMenu = filterMenu(menuItems);
 
   // ============================================================
   // 退出登录处理
@@ -122,7 +168,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /repo-assign、/knowledge/chapters）。
   // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
-  const SUB_PATH_KEYS = ['/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points'];
+  const SUB_PATH_KEYS = ['/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)
@@ -144,8 +190,8 @@ export default function MainLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
-          defaultOpenKeys={['repo-group', 'knowledge-group']}
-          items={menuItems}
+          defaultOpenKeys={['repo-group', 'knowledge-group', 'hr-group']}
+          items={visibleMenu}
           onClick={({ key }) => navigate(key)}
         />
       </Sider>

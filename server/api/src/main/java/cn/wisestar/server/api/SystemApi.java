@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.constant.PermissionConsts;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.*;
 import cn.wisestar.server.service.*;
@@ -180,6 +181,28 @@ public class SystemApi {
 	@PreAuthorize("hasAuthority('system:role:list')")
 	public PaginationResponse<RoleView> roles(RoleQuery query) {
 		return systemService.getRoles(query);
+	}
+
+	/**
+	 * 获取角色权限树。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/system/permissionTree
+	 * （如 /api/system/permissionTree）。</p>
+	 *
+	 * <p><b>功能</b>：返回后台系统按功能模块分组的权限点清单（模块 → 操作点），
+	 * 供角色管理页权限树勾选。数据源为静态清单 {@link PermissionConsts}，
+	 * 与后端接口的 @PreAuthorize 权限点一一对应。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@link List}&lt;{@link PermissionConsts.Node}&gt;（模块分组树）。</p>
+	 *
+	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 *
+	 * @return 权限树（模块 → 操作点）
+	 */
+	@GetMapping("/permissionTree")
+	@PreAuthorize("hasRole('admin')")
+	public List<PermissionConsts.Node> permissionTree() {
+		return PermissionConsts.tree();
 	}
 
 	/**

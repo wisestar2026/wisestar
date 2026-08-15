@@ -80,6 +80,11 @@
   color: #5b7a99;
 }
 .sh-home-archive-meta b { color: #1d3a5f; font-size: 14px; }
+.sh-home-archive-school {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #5b7a99;
+}
 
 /* 2) 学海研习卡（跟随学科主题色） */
 .sh-home-card-study {

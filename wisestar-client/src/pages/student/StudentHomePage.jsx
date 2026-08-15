@@ -22,8 +22,10 @@
  * 依赖: react-router-dom(useNavigate)、useStudentStore、./student.css
  */
 
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE, TODAY, DAILY_TASKS } from '../../stores/useStudentStore';
+import { getMyStudentInfo } from '../../api/student';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -32,17 +34,25 @@ export default function StudentHomePage() {
   const activeSubject = useStudentStore((s) => s.activeSubject);
   const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
 
+  // 当前学员真实档案（学号/姓名/学校等，来自 GET /api/student/me；加载失败回退 mock）
+  const [myInfo, setMyInfo] = useState(null);
+  useEffect(() => {
+    getMyStudentInfo().then((res) => setMyInfo(res?.data || null)).catch(() => setMyInfo(null));
+  }, []);
+
   // 当前头衔（按学海积分自动晋升）
   const currentTitle = [...TITLES].reverse().find((t) => PROFILE.points >= t.need) || TITLES[0];
   // 本学期可兑换总学习币（多科合并）
   const totalCoins = SUBJECTS.reduce((sum, s) => sum + s.coins, 0);
+  // 展示用学员姓名（真实档案优先，缺失回退 mock）
+  const displayName = myInfo?.name || PROFILE.name;
 
   return (
     <div className="sll-page-enter">
       {/* 吉祥物 + 欢迎语 */}
       <div className="sll-mascot-row">
         <div className="sll-mascot"><span>🐬</span></div>
-        <div className="sll-bubble">{PROFILE.name}，今天也要潜入知识的海洋哦</div>
+        <div className="sll-bubble">{displayName}，今天也要潜入知识的海洋哦</div>
       </div>
 
       {/* ---- 上半部: 三大悬浮功能卡片 ---- */}
@@ -60,12 +70,14 @@ export default function StudentHomePage() {
             <div className="sh-home-archive">
               <div className="sh-home-avatar">{PROFILE.emoji}</div>
               <div className="sh-home-archive-info">
-                <div className="sh-home-archive-name">{PROFILE.name}</div>
+                <div className="sh-home-archive-name">{displayName}</div>
                 <div className="sh-home-title">{currentTitle.emoji} {currentTitle.name}</div>
                 <div className="sh-home-archive-meta">
+                  {myInfo?.studentNo && <span>🎓 学号 <b>{myInfo.studentNo}</b></span>}
                   <span>⭐ 学海积分 <b>{PROFILE.points}</b></span>
                   <span>🏅 证书 <b>{PROFILE.certCount}/{PROFILE.certTotal}</b></span>
                 </div>
+                {myInfo?.school && <div className="sh-home-archive-school">🏫 {myInfo.school}</div>}
               </div>
             </div>
             <div className="sh-home-card-foot">查看荣誉档案 ›</div>

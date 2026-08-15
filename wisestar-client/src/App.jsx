@@ -68,6 +68,9 @@ import SystemPage from './pages/system/SystemPage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
+import StudentManagePage from './pages/student/StudentManagePage';
+import OrderManagePage from './pages/student/OrderManagePage';
+import RoleManagePage from './pages/hr/RoleManagePage';
 
 export default function App() {
   const { fetchCurrentUser, isLoggedIn } = useUserStore();
@@ -120,61 +123,173 @@ export default function App() {
           </Route>
 
           {/* ---- 受保护路由（需要登录） ---- */}
-          {/* AuthGuard 包裹 MainLayout，所有子路由都受保护 */}
+          {/* AuthGuard 包裹 MainLayout，所有子路由都受保护；adminOnly 仅允许系统用户进入管理端 */}
           <Route
             element={
-              <AuthGuard>
+              <AuthGuard adminOnly>
                 <MainLayout />
               </AuthGuard>
             }
           >
             {/* 仪表盘 */}
-            <Route path="/" element={<DashboardPage />} />
+            <Route path="/" element={<AuthGuard required={['home']}><DashboardPage /></AuthGuard>} />
 
             {/* 问卷列表 */}
-            <Route path="/projects" element={<ProjectListPage />} />
+            <Route
+              path="/projects"
+              element={
+                <AuthGuard required={['project:list', 'project:detail', 'project:create', 'project:update', 'project:delete']}>
+                  <ProjectListPage />
+                </AuthGuard>
+              }
+            />
 
             {/* 问卷编辑器 */}
-            <Route path="/projects/:id/edit" element={<ProjectEditPage />} />
+            <Route
+              path="/projects/:id/edit"
+              element={
+                <AuthGuard required={['project:update']}><ProjectEditPage /></AuthGuard>
+              }
+            />
 
             {/* 答卷列表（指定问卷） */}
-            <Route path="/projects/:id/answers" element={<ProjectAnswersPage />} />
+            <Route
+              path="/projects/:id/answers"
+              element={
+                <AuthGuard required={['answer:list', 'answer:detail']}><ProjectAnswersPage /></AuthGuard>
+              }
+            />
 
             {/* 全局答案管理 */}
-            <Route path="/answers" element={<AnswerListPage />} />
+            <Route
+              path="/answers"
+              element={
+                <AuthGuard required={['answer:list', 'answer:detail', 'answer:create', 'answer:update', 'answer:delete', 'answer:export', 'answer:upload']}>
+                  <AnswerListPage />
+                </AuthGuard>
+              }
+            />
 
             {/* 答卷详情 */}
-            <Route path="/answers/:id" element={<AnswerDetailPage />} />
+            <Route
+              path="/answers/:id"
+              element={
+                <AuthGuard required={['answer:detail']}><AnswerDetailPage /></AuthGuard>
+              }
+            />
 
             {/* 题库列表 */}
-            <Route path="/repos" element={<RepoListPage />} />
+            <Route
+              path="/repos"
+              element={
+                <AuthGuard required={['repo:list', 'repo:detail', 'repo:create', 'repo:update', 'repo:delete']}>
+                  <RepoListPage />
+                </AuthGuard>
+              }
+            />
 
             {/* 题库详情 */}
-            <Route path="/repos/:id" element={<RepoDetailPage />} />
+            <Route
+              path="/repos/:id"
+              element={
+                <AuthGuard required={['repo:detail']}><RepoDetailPage /></AuthGuard>
+              }
+            />
 
             {/* 题库分配（老师给学员分配练习题库） */}
-            <Route path="/repo-assign" element={<RepoAssignPage />} />
+            <Route
+              path="/repo-assign"
+              element={
+                <AuthGuard required={['repo:list', 'repo:update']}><RepoAssignPage /></AuthGuard>
+              }
+            />
 
             {/* 题目管理（全局） */}
-            <Route path="/questions" element={<QuestionListPage />} />
+            <Route
+              path="/questions"
+              element={
+                <AuthGuard required={['template:list', 'template:create', 'template:update', 'template:delete']}>
+                  <QuestionListPage />
+                </AuthGuard>
+              }
+            />
 
             {/* 在线练习（选题页） */}
-            <Route path="/practice" element={<PracticeHomePage />} />
+            <Route
+              path="/practice"
+              element={
+                <AuthGuard required={['exercise:list']}><PracticeHomePage /></AuthGuard>
+              }
+            />
 
             {/* 在线练习答题页（按 mode + ids 渲染对应答题交互） */}
             <Route path="/practice/session" element={<PracticeSessionPage />} />
 
             {/* 错题库管理（题目 × 学员聚合错题列表） */}
-            <Route path="/wrong-questions" element={<WrongQuestionPage />} />
+            <Route
+              path="/wrong-questions"
+              element={
+                <AuthGuard required={['repo:list', 'exercise:list']}><WrongQuestionPage /></AuthGuard>
+              }
+            />
 
-            {/* ---- 知识管理板块（mock 数据，useKnowledgeStore） ---- */}
-            {/* 学科 → 章节 → 小节 → 知识点 三级管理 */}
-            <Route path="/knowledge/chapters" element={<ChapterManagePage />} />
-            <Route path="/knowledge/sections" element={<SectionManagePage />} />
-            <Route path="/knowledge/points" element={<KnowledgePointManagePage />} />
+            {/* ---- 知识管理板块（学科 → 章节 → 小节 → 知识点 三级管理） ---- */}
+            <Route
+              path="/knowledge/chapters"
+              element={
+                <AuthGuard required={['knowledge:list']}><ChapterManagePage /></AuthGuard>
+              }
+            />
+            <Route
+              path="/knowledge/sections"
+              element={
+                <AuthGuard required={['knowledge:list']}><SectionManagePage /></AuthGuard>
+              }
+            />
+            <Route
+              path="/knowledge/points"
+              element={
+                <AuthGuard required={['knowledge:list']}><KnowledgePointManagePage /></AuthGuard>
+              }
+            />
+
+            {/* 学员管理（学员列表 / 订单管理） */}
+            <Route
+              path="/students"
+              element={
+                <AuthGuard required={['student:list', 'student:create', 'student:update', 'student:delete']}>
+                  <StudentManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <AuthGuard required={['order:list', 'order:create', 'order:update', 'order:delete']}>
+                  <OrderManagePage />
+                </AuthGuard>
+              }
+            />
+
+            {/* 人事管理（角色权限） */}
+            <Route
+              path="/hr/roles"
+              element={
+                <AuthGuard required={['system:role:list', 'system:role:create', 'system:role:update', 'system:role:delete']}>
+                  <RoleManagePage />
+                </AuthGuard>
+              }
+            />
 
             {/* 系统管理（占位页，后端接口已就绪，前端待开发） */}
-            <Route path="/system" element={<SystemPage />} />
+            <Route
+              path="/system"
+              element={
+                <AuthGuard required={['system:user:list', 'system:role:list', 'system:dept:list', 'system:position:list', 'system:dict:list', 'system:dictItem:list']}>
+                  <SystemPage />
+                </AuthGuard>
+              }
+            />
           </Route>
         </Routes>
       </BrowserRouter>

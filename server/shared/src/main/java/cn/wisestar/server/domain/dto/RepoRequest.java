@@ -55,10 +55,13 @@ public class RepoRequest {
 	/** 是否是练习题库 */
 	private Boolean isPractice;
 
+	/** 年级标签（如 一年级/二年级/三年级） */
+	private String grade;
+
 	/** 题型筛选（导出用）：Radio 单选 / Checkbox 多选 / Judge 判断 / FillBlank 填空 / Textarea 简答 */
 	private String questionType;
 
-	/** 学科筛选（导出用）：知识点体系一级维度 */
+	/** 学科筛选（导出用，同时为题库学科标签）：知识点体系一级维度 */
 	private String subject;
 
 	/** 章节筛选（导出用）：知识点体系二级维度 */
@@ -67,7 +70,7 @@ public class RepoRequest {
 	/** 知识点筛选（导出用）：知识点体系三级维度 */
 	private String knowledgePoint;
 
-	/** 难度筛选（导出用）：easy 简单 / medium 中等 / hard 困难 */
+	/** 难度筛选（导出用，同时为题库难度标签）：easy 简单 / medium 中等 / hard 困难 */
 	private String difficulty;
 
 }

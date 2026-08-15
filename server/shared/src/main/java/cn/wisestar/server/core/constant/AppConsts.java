@@ -139,12 +139,15 @@ public class AppConsts {
 	}
 
 	/**
-	 * 用户类型枚举（当前仅系统用户 SysUser）。
+	 * 用户类型枚举（SysUser 系统用户 / Student 学员）。
 	 */
 	public enum USER_TYPE {
 
 		/** 系统用户 */
-		SysUser
+		SysUser,
+
+		/** 学员（学号登录，学员管理模块新增，走学员端 /student） */
+		Student
 
 	}
 

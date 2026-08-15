@@ -3,10 +3,10 @@
  *
  * 功能:
  *   1. 顶部学科/章节下拉联动定位（URL query 携带 subjectId/chapterId 时优先回填）
- *   2. 小节 CRUD（真实 API，删除级联其后知识点/题目绑定）
+ *   2. 小节 CRUD（真实 API，删除级联其后知识点/题库绑定）
  *   3. 「内容设置」: 编辑小节学习目标 / 内容概述 / 讲解要点（存 t_section.content JSON）
- *   4. 「练习设置」: 合并练习配置与测试绑定——上方从题库管理（t_template）勾选绑定测试
- *      题目（可直接看到题库数据，全量替换保存），下方配置题量/难度/题型组合自动出题
+ *   4. 「练习设置」: 合并练习配置与题库绑定——上方从题库管理（t_repo）勾选绑定题库
+ *      （可直接看到题库数据，全量替换保存），下方配置题量/难度/题型组合自动出题
  *      （存 t_section.practice JSON），保存时一起提交
  *   5. 「管理知识点」跳转 /knowledge/points（携带 subjectId/chapterId/sectionId）
  *
@@ -15,7 +15,8 @@
  *
  * 数据流:
  *   listSubjects / listChapters / listSections 三级联动；
- *   内容/练习设置为 JSON 字符串透传（前端 stringify/parse），后端仅存储
+ *   内容/练习设置为 JSON 字符串透传（前端 stringify/parse），后端仅存储；
+ *   题库绑定: listRepo() 题库库 → saveSectionRepos / listSectionRepos 全量替换回显
  */
 
 import { useEffect, useState } from 'react';
@@ -29,9 +30,9 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   listSubjects, listChapters, listSections, createSection, updateSection, deleteSection,
-  saveSectionQuestions, listSectionQuestions, listKnowledgePoints,
+  saveSectionRepos, listSectionRepos, listKnowledgePoints,
 } from '../../api/knowledge';
-import { listTemplate } from '../../api/template';
+import { listRepo } from '../../api/repo';
 import { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
 
 const { Text } = Typography;
@@ -58,15 +59,15 @@ export default function SectionManagePage() {
   const [contentSection, setContentSection] = useState(null);
   const [contentForm] = Form.useForm();
 
-  // ---- 练习设置弹窗（含题库选题绑定测试 + 题量/难度/题型自动出题配置） ----
+  // ---- 练习设置弹窗（含题库选题绑定 + 题量/难度/题型自动出题配置） ----
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [practiceSection, setPracticeSection] = useState(null);
   const [practiceForm] = Form.useForm();
   const [bindKeyword, setBindKeyword] = useState('');
-  const [tplList, setTplList] = useState([]);
-  const [tplTotal, setTplTotal] = useState(0);
-  const [tplCurrent, setTplCurrent] = useState(1);
-  const [tplLoading, setTplLoading] = useState(false);
+  const [repoList, setRepoList] = useState([]);
+  const [repoTotal, setRepoTotal] = useState(0);
+  const [repoCurrent, setRepoCurrent] = useState(1);
+  const [repoLoading, setRepoLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [savingBind, setSavingBind] = useState(false);
 
@@ -75,10 +76,6 @@ export default function SectionManagePage() {
   const [kpSection, setKpSection] = useState(null);
   const [kpList, setKpList] = useState([]);
   const [kpLoading, setKpLoading] = useState(false);
-
-  const QUESTION_TYPE_LABEL = {
-    Radio: '单选', Checkbox: '多选', Judge: '判断', FillBlank: '填空',
-  };
 
   // ---- 加载学科（默认选中第一个） ----
   useEffect(() => {
@@ -172,7 +169,7 @@ export default function SectionManagePage() {
     });
   };
 
-  // ---- 练习设置（题库选题绑定测试 + 题量/难度/题型自动出题配置，合并保存） ----
+  // ---- 练习设置（题库选题绑定 + 题量/难度/题型自动出题配置，合并保存） ----
   const openPractice = (section) => {
     setPracticeSection(section);
     setPracticeOpen(true);
@@ -183,14 +180,14 @@ export default function SectionManagePage() {
       difficulty: practice.difficulty || '基础',
       types: practice.types || ['Radio'],
     });
-    // 回显已绑定测试题目 + 加载题目库（数据来自题库管理 t_template）
+    // 回显已绑定题库 + 加载题库库（数据来自题库管理 t_repo）
     setBindKeyword('');
-    setTplCurrent(1);
+    setRepoCurrent(1);
     setSelectedIds([]);
-    listSectionQuestions(section.id).then((res) => {
-      setSelectedIds((res?.data || []).map((q) => q.id));
+    listSectionRepos(section.id).then((res) => {
+      setSelectedIds((res?.data || []).map((r) => r.id));
     }).catch(() => { /* 已提示 */ });
-    fetchTemplates(1, '');
+    fetchRepos(1, '');
   };
   const savePractice = () => {
     practiceForm.validateFields().then((values) => {
@@ -199,28 +196,28 @@ export default function SectionManagePage() {
       setSavingBind(true);
       Promise.all([
         updateSection({ id: sectionId, chapterId, practice: payload }),
-        saveSectionQuestions({ sectionId, questionIds: selectedIds }),
+        saveSectionRepos({ sectionId, repoIds: selectedIds }),
       ]).then(() => {
         message.success('练习设置已保存');
         setPracticeOpen(false);
         setSections((prev) => prev.map((s) => (s.id === sectionId
-          ? { ...s, practice: payload, questionCount: selectedIds.length } : s)));
+          ? { ...s, practice: payload, repoCount: selectedIds.length } : s)));
       }).finally(() => setSavingBind(false));
     });
   };
 
-  const fetchTemplates = (page, keyword) => {
-    setTplLoading(true);
-    listTemplate({ current: page, pageSize: 8, name: keyword || undefined })
+  const fetchRepos = (page, keyword) => {
+    setRepoLoading(true);
+    listRepo({ current: page, pageSize: 8, name: keyword || undefined })
       .then((res) => {
-        setTplList(res?.data?.list || []);
-        setTplTotal(res?.data?.total || 0);
-      }).catch(() => { setTplList([]); setTplTotal(0); }).finally(() => setTplLoading(false));
+        setRepoList(res?.data?.list || []);
+        setRepoTotal(res?.data?.total || 0);
+      }).catch(() => { setRepoList([]); setRepoTotal(0); }).finally(() => setRepoLoading(false));
   };
 
   const onBindKeywordSearch = () => {
-    setTplCurrent(1);
-    fetchTemplates(1, bindKeyword);
+    setRepoCurrent(1);
+    fetchRepos(1, bindKeyword);
   };
 
   // ---- 查看小节知识点（数据来自知识点管理 t_knowledge_point） ----
@@ -271,8 +268,8 @@ export default function SectionManagePage() {
       ),
     },
     {
-      title: '测试题数', dataIndex: 'questionCount', width: 90, align: 'center',
-      render: (count) => (count > 0 ? <Tag color="blue">{count} 题</Tag> : <Tag>未绑定</Tag>),
+      title: '题库数', dataIndex: 'repoCount', width: 100, align: 'center',
+      render: (count) => (count > 0 ? <Tag color="blue">{count} 个题库</Tag> : <Tag>未绑定</Tag>),
     },
     {
       title: '操作', key: 'action', width: 500,
@@ -289,7 +286,7 @@ export default function SectionManagePage() {
           <Button size="small" icon={<EditOutlined />} onClick={() => openModal(s)}>编辑</Button>
           <Popconfirm
             title={`删除小节「${s.name}」？`}
-            description="其下所有知识点与测试绑定将一并删除，删除后不可恢复。"
+            description="其下所有知识点与题库绑定将一并删除，删除后不可恢复。"
             onConfirm={() => {
               deleteSection({ id: s.id }).then(() => {
                 message.success('小节已删除');
@@ -398,7 +395,7 @@ export default function SectionManagePage() {
         </Form>
       </Modal>
 
-      {/* 练习设置弹窗（题库选题绑定测试 + 题量/难度/题型自动出题配置） */}
+      {/* 练习设置弹窗（题库选题绑定 + 题量/难度/题型自动出题配置） */}
       <Modal
         title={`练习设置 - ${practiceSection?.name || ''}`}
         open={practiceOpen}
@@ -410,43 +407,51 @@ export default function SectionManagePage() {
         confirmLoading={savingBind}
         destroyOnClose
       >
-        <Divider orientation="left" plain>测试题目（来自题库管理，勾选绑定）</Divider>
+        <Divider orientation="left" plain>绑定题库（来自题库管理，勾选绑定）</Divider>
         <Space style={{ marginBottom: 12 }} align="center">
           <Input.Search
             style={{ width: 320 }}
-            placeholder="按题目名称搜索题目库"
+            placeholder="按题库名称搜索题库库"
             value={bindKeyword}
             onChange={(e) => setBindKeyword(e.target.value)}
             onSearch={onBindKeywordSearch}
             allowClear
           />
-          <Text type="secondary">已选 {selectedIds.length} 题（题库数据来自题库管理 t_template，不能在此新增）</Text>
+          <Text type="secondary">已选 {selectedIds.length} 个题库（题库数据来自题库管理 t_repo，不能在此新增）</Text>
         </Space>
         <Table
           rowKey="id"
           size="small"
-          loading={tplLoading}
-          dataSource={tplList}
+          loading={repoLoading}
+          dataSource={repoList}
           rowSelection={{
             selectedRowKeys: selectedIds,
             onChange: (keys) => setSelectedIds(keys),
           }}
           pagination={{
-            current: tplCurrent,
+            current: repoCurrent,
             pageSize: 8,
-            total: tplTotal,
+            total: repoTotal,
             size: 'small',
-            onChange: (c) => { setTplCurrent(c); fetchTemplates(c, bindKeyword); },
+            onChange: (c) => { setRepoCurrent(c); fetchRepos(c, bindKeyword); },
           }}
           columns={[
-            { title: '题目名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
+            { title: '题库名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
             {
-              title: '题型', dataIndex: 'questionType', width: 80, align: 'center',
-              render: (t) => <Tag>{QUESTION_TYPE_LABEL[t] || t}</Tag>,
+              title: '学科', dataIndex: 'subject', width: 80, align: 'center',
+              render: (s) => (s ? <Tag color="geekblue">{s}</Tag> : '-'),
             },
             {
-              title: '所属题库', dataIndex: 'repoName', width: 140, ellipsis: true,
-              render: (n) => n || '-',
+              title: '年级', dataIndex: 'grade', width: 80, align: 'center',
+              render: (g) => (g ? <Tag color="purple">{g}</Tag> : '-'),
+            },
+            {
+              title: '难度', dataIndex: 'difficulty', width: 80, align: 'center',
+              render: (d) => (d ? <Tag>{d}</Tag> : '-'),
+            },
+            {
+              title: '题目数', dataIndex: 'total', width: 80, align: 'center',
+              render: (t) => (t > 0 ? t : 0),
             },
           ]}
         />

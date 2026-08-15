@@ -22,6 +22,11 @@ public class RoleView {
 
 	private List<String> authorities;
 
+	/**
+	 * 是否内置角色：1 内置（不可删除）；0 普通
+	 */
+	private Integer builtin;
+
 	private Date createAt;
 
 	private Integer status;

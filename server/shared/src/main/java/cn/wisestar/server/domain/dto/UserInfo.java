@@ -23,6 +23,9 @@ public class UserInfo implements UserDetails, Serializable {
 	/** 用户id */
 	private String userId;
 
+	/** 用户类型（SysUser 系统用户 / Student 学员，前端据此跳转） */
+	private String userType;
+
 	/** 用户名 */
 	private String name;
 

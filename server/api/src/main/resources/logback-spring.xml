@@ -85,4 +85,12 @@
             <appender-ref ref="ASYNC_ERROR"/>
         </root>
     </springProfile>
+
+    <springProfile name="preview">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="INFO_FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
+        </root>
+    </springProfile>
 </configuration>

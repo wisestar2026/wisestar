@@ -53,6 +53,11 @@ public class TemplateQuery extends PageQuery {
 	private String difficulty;
 
 	/**
+	 * 年级筛选（如 一年级/二年级/三年级）
+	 */
+	private String grade;
+
+	/**
 	 * 知识点筛选（按名称匹配）
 	 */
 	private String knowledgePoint;

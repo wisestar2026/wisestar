@@ -59,6 +59,21 @@ public class Repo extends BaseModel {
 
 	private Boolean isPractice;
 
+	/**
+	 * 学科标签（对应数据库列 subject，知识管理维度，如 数学/语文/英语）
+	 */
+	private String subject;
+
+	/**
+	 * 年级标签（对应数据库列 grade，如 一年级/二年级/三年级）
+	 */
+	private String grade;
+
+	/**
+	 * 难度标签（对应数据库列 difficulty）：easy 简单 / medium 中等 / hard 困难
+	 */
+	private String difficulty;
+
 	@JsonIgnore
 	@TableField(exist = false)
 	private boolean deleted = false;

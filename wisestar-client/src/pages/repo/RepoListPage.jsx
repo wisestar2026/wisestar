@@ -148,6 +148,9 @@ export default function RepoListPage() {
       tag: (record.tag || []).join(','),
       shared: record.shared,
       isPractice: record.isPractice,
+      subject: record.subject,
+      grade: record.grade,
+      difficulty: record.difficulty,
     });
     setCreateOpen(true);
     fetchEditTemplates(record.id);
@@ -206,6 +209,29 @@ export default function RepoListPage() {
         const cfg = MODE_MAP[mode] || { color: 'default', label: mode };
         return <Tag color={cfg.color}>{cfg.label}</Tag>;
       },
+    },
+    {
+      title: '学科',
+      dataIndex: 'subject',
+      width: 80,
+      align: 'center',
+      render: (s) => (s ? <Tag color="geekblue">{s}</Tag> : '-'),
+    },
+    {
+      title: '年级',
+      dataIndex: 'grade',
+      width: 80,
+      align: 'center',
+      render: (g) => (g ? <Tag color="purple">{g}</Tag> : '-'),
+    },
+    {
+      title: '难度',
+      dataIndex: 'difficulty',
+      width: 80,
+      align: 'center',
+      render: (d) => (d ? <Tag color={d === 'hard' ? 'red' : d === 'medium' ? 'orange' : 'green'}>
+        {d === 'easy' ? '简单' : d === 'medium' ? '中等' : '困难'}
+      </Tag> : '-'),
     },
     {
       title: '题目数',
@@ -338,6 +364,28 @@ export default function RepoListPage() {
 
           <Form.Item name="tag" label="标签（逗号分隔）">
             <Input placeholder="例如：通用,单选,基础" />
+          </Form.Item>
+
+          {/* 学科/年级/难度标签: 与题目管理知识点属性保持一致，
+              供章节/小节绑定题库时按学科/年级/难度识别；均为可选项 */}
+          <Form.Item name="subject" label="学科">
+            <Input placeholder="如：数学 / 语文" />
+          </Form.Item>
+
+          <Form.Item name="grade" label="年级">
+            <Input placeholder="如：一年级 / 三年级" />
+          </Form.Item>
+
+          <Form.Item name="difficulty" label="难度">
+            <Select
+              allowClear
+              placeholder="选择难度"
+              options={[
+                { label: '简单', value: 'easy' },
+                { label: '中等', value: 'medium' },
+                { label: '困难', value: 'hard' },
+              ]}
+            />
           </Form.Item>
 
           <Form.Item name="shared" label="是否公开" initialValue={false}>

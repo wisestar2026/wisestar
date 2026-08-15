@@ -232,6 +232,15 @@ export default function RepoDetailPage() {
               <Tag color={repo.mode === 'exam' ? 'red' : 'blue'}>{repo.mode === 'exam' ? '考试' : '问卷'}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="题目总数">{repo.total || 0}</Descriptions.Item>
+            <Descriptions.Item label="学科">{repo.subject ? <Tag color="geekblue">{repo.subject}</Tag> : '-'}</Descriptions.Item>
+            <Descriptions.Item label="年级">{repo.grade ? <Tag color="purple">{repo.grade}</Tag> : '-'}</Descriptions.Item>
+            <Descriptions.Item label="难度">
+              {repo.difficulty ? (
+                <Tag color={repo.difficulty === 'hard' ? 'red' : repo.difficulty === 'medium' ? 'orange' : 'green'}>
+                  {repo.difficulty === 'easy' ? '简单' : repo.difficulty === 'medium' ? '中等' : '困难'}
+                </Tag>
+              ) : '-'}
+            </Descriptions.Item>
             <Descriptions.Item label="共享">
               <Tag color={repo.shared ? 'green' : 'default'}>{repo.shared ? '是' : '否'}</Tag>
             </Descriptions.Item>

@@ -55,7 +55,7 @@ public class KnowledgePointApi {
 	 * @return 知识点分页结果
 	 */
 	@GetMapping("/list")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:list')")
 	public PaginationResponse<KnowledgePointView> listKnowledgePoints(KnowledgePointQuery query) {
 		return knowledgePointService.listKnowledgePoints(query);
 	}
@@ -75,7 +75,7 @@ public class KnowledgePointApi {
 	 * @return 新知识点 id
 	 */
 	@PostMapping("/create")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:create')")
 	public String addKnowledgePoint(@RequestBody KnowledgePointRequest request) {
 		return knowledgePointService.addKnowledgePoint(request);
 	}
@@ -89,7 +89,7 @@ public class KnowledgePointApi {
 	 * @param request 知识点请求（含 id）
 	 */
 	@PostMapping("/update")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:update')")
 	public void updateKnowledgePoint(@RequestBody KnowledgePointRequest request) {
 		knowledgePointService.updateKnowledgePoint(request);
 	}
@@ -103,7 +103,7 @@ public class KnowledgePointApi {
 	 * @param request 知识点请求（含 id）
 	 */
 	@PostMapping("/delete")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:delete')")
 	public void deleteKnowledgePoint(@RequestBody KnowledgePointRequest request) {
 		knowledgePointService.deleteKnowledgePoint(request);
 	}
@@ -123,7 +123,7 @@ public class KnowledgePointApi {
 	 * @param request 绑定请求
 	 */
 	@PostMapping("/questions")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:update')")
 	public void saveQuestions(@RequestBody KnowledgePointQuestionRequest request) {
 		knowledgePointService.saveQuestions(request);
 	}
@@ -143,7 +143,7 @@ public class KnowledgePointApi {
 	 * @return 已绑定题目列表
 	 */
 	@GetMapping("/questions")
-	@PreAuthorize("isAuthenticated()")
+	@PreAuthorize("hasAuthority('knowledge:list')")
 	public List<TemplateView> listQuestions(@RequestParam("knowledgePointId") String knowledgePointId) {
 		return knowledgePointService.listQuestions(knowledgePointId);
 	}

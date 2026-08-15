@@ -114,11 +114,22 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 	@Override
 	@Cacheable(cacheNames = "userCache", key = "#p0", condition = "#p0!=null", unless = "#result == null")
 	public UserInfo loadUserById(String userId) {
+		// 学员类型：查 t_student 构建用户信息（学号登录，无 t_user 记录）
+		Account account = accountMapper
+				.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, userId));
+		if (account != null && AppConsts.USER_TYPE.Student.toString().equals(account.getUserType())) {
+			UserInfo studentInfo = userViewMapper.toUserView(account);
+			if (studentInfo != null) {
+				studentInfo.setUserId(userId);
+			}
+			return studentInfo;
+		}
 		User user = this.getById(userId);
 		if (user == null) {
 			return null;
 		}
 		UserInfo userInfo = userViewMapper.toUserInfo(user);
+		userInfo.setUserType(AppConsts.USER_TYPE.SysUser.toString());
 		List<Role> roles = userRoleMapper
 				.selectList(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, user.getId())).stream()
 				.map(ur -> roleService.getById(ur.getRoleId())).filter(x -> x != null).collect(Collectors.toList());

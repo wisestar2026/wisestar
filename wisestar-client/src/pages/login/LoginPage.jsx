@@ -54,8 +54,9 @@ export default function LoginPage() {
       // 调用 Zustand 的 login，内部会执行 RSA 加密流程
       await login(values.username, values.password);
       message.success('登录成功');
-      // 跳转到首页
-      navigate('/');
+      // 按用户类型跳转：学员（学号登录，userType=Student）→ 学员端；系统用户 → 管理端
+      const userType = useUserStore.getState().user?.userType;
+      navigate(userType === 'Student' ? '/student' : '/');
     } catch (error) {
       // 错误已在 request.js 拦截器中处理，这里做兜底显示
       message.error(error?.response?.data?.message || '登录失败，请检查用户名和密码');

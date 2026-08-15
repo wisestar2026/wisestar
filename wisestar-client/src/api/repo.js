@@ -117,19 +117,20 @@ export async function importTemplate({ file, repoId }) {
 
 /**
  * 导出题库题目为 Excel 文件（触发浏览器下载）
- * 后端接口: GET /api/repo/export?id=repoId&name=xxx&questionType=xxx&subject=xxx&chapter=xxx&knowledgePoint=xxx&difficulty=xxx
+ * 后端接口: GET /api/repo/export?id=repoId&name=xxx&questionType=xxx&subject=xxx&grade=xxx&chapter=xxx&knowledgePoint=xxx&difficulty=xxx
  * 为什么这么写: 不使用 axios，而是创建隐藏 <a> 标签直接访问下载 URL，
  *   这样浏览器会原生处理二进制流下载，避免经过 JS 内存转换
- * @param {Object} params - { repoId, name, questionType, subject, chapter, knowledgePoint, difficulty }
+ * @param {Object} params - { repoId, name, questionType, subject, grade, chapter, knowledgePoint, difficulty }
  *   除 repoId（题库）外，其余为题目维度筛选条件（与题目管理页筛选栏一致，AND 关系）
  * 调用方: QuestionListPage.handleExport（导出当前筛选条件的题库题目）
  */
-export async function exportTemplate({ repoId, name, questionType, subject, chapter, knowledgePoint, difficulty }) {
+export async function exportTemplate({ repoId, name, questionType, subject, grade, chapter, knowledgePoint, difficulty }) {
   const params = new URLSearchParams();
   if (repoId) params.append('id', repoId);
   if (name) params.append('name', name);
   if (questionType) params.append('questionType', questionType);
   if (subject) params.append('subject', subject);
+  if (grade) params.append('grade', grade);
   if (chapter) params.append('chapter', chapter);
   if (knowledgePoint) params.append('knowledgePoint', knowledgePoint);
   if (difficulty) params.append('difficulty', difficulty);

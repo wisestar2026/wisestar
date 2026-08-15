@@ -19,7 +19,7 @@ public interface ChapterViewMapper extends BaseModelMapper<ChapterRequest, Chapt
 	Chapter fromRequest(ChapterRequest request);
 
 	@Mapping(target = "sectionCount", ignore = true)
-	@Mapping(target = "questionCount", ignore = true)
+	@Mapping(target = "repoCount", ignore = true)
 	ChapterView toView(Chapter item);
 
 }

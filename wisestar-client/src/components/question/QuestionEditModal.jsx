@@ -97,8 +97,9 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   const [score, setScore] = useState(5);        // 分值，默认 5 分
   const [scoreMode, setScoreMode] = useState('onlyOne'); // 计分方式: onlyOne/selectCorrect/selectAll/manual
 
-  // ---- 知识点属性（学科/章节/知识点/难度） ----
+  // ---- 知识点属性（学科/章节/知识点/难度/年级） ----
   const [subject, setSubject] = useState('');         // 学科（如: 数学）
+  const [grade, setGrade] = useState('');             // 年级（如: 三年级）
   const [chapter, setChapter] = useState('');         // 章节（如: 第三章 函数）
   const [knowledgePoints, setKnowledgePoints] = useState([]); // 知识点（多值数组，tags 模式录入）
   const [difficulty, setDifficulty] = useState(undefined);    // 难度: easy/medium/hard
@@ -143,7 +144,9 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setScore(attr.examScore || 5);
       setScoreMode(attr.examScoreMode || 'onlyOne');
       // 知识点属性回填: 兼容数组 / 单值两种情况，统一转为数组
-      setSubject(attr.subject || '');
+      // 年级优先取顶层字段（t_template.grade），其次 attribute 快照（兼容旧数据）
+      setSubject(attr.subject || record.subject || '');
+      setGrade(attr.grade || record.grade || '');
       setChapter(attr.chapter || '');
       setKnowledgePoints(Array.isArray(attr.knowledgePoint) ? attr.knowledgePoint : (attr.knowledgePoint ? [attr.knowledgePoint] : []));
       setDifficulty(attr.difficulty || undefined);
@@ -170,6 +173,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setScore(5);
       setScoreMode('onlyOne');
       setSubject('');
+      setGrade('');
       setChapter('');
       setKnowledgePoints([]);
       setDifficulty(undefined);
@@ -257,6 +261,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         examImages: images.length > 0 ? images.map((i) => i.url) : undefined,
         // 知识点属性快照（写入 template.attribute，供题目转入问卷时随卷保存）
         subject: subject || undefined,
+        grade: grade || undefined,
         chapter: chapter || undefined,
         knowledgePoint: knowledgePoints.length > 0 ? knowledgePoints : undefined,
         difficulty: difficulty || undefined,
@@ -285,9 +290,10 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         tag: tagArr,
         category: category || undefined,
         // 知识点属性（顶层字段存 t_template 表，attribute 内快照供入卷使用）
-        // 双写原因: 顶层字段供"题目管理"列表筛选（学科/章节/难度/知识点四维筛选），
+        // 双写原因: 顶层字段供"题目管理"列表筛选（学科/章节/难度/知识点/年级筛选），
         // attribute 快照供"从系统题目选择"入卷时随问卷保存
         subject: subject || undefined,
+        grade: grade || undefined,
         chapter: chapter || undefined,
         knowledgePoint: knowledgePoints.length > 0 ? knowledgePoints : undefined,
         difficulty: difficulty || undefined,
@@ -400,13 +406,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
         <Divider style={{ margin: '4px 0' }} />
 
-        {/* ========== 知识点属性（学科/章节/知识点/难度） ========== */}
-        {/* 重点: 三级归类（学科→章节→知识点）+ 难度，用于学生答题情况分析；
+        {/* ========== 知识点属性（学科/年级/章节/知识点/难度） ========== */}
+        {/* 重点: 三级归类（学科→章节→知识点）+ 年级 + 难度，用于学生答题情况分析；
              题目入卷时由 templateToQuestion 快照到问卷节点 attribute，
              历史答卷的分析不受后续题目修改影响 */}
         <Text strong style={{ fontSize: 12 }}>知识点属性</Text>
         <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
-          学科 → 章节 → 知识点三级归类，用于学生答题情况分析；入卷时自动快照，历史答卷不受题目修改影响
+          学科 → 章节 → 知识点三级归类，附年级与难度，用于学生答题情况分析；入卷时自动快照，历史答卷不受题目修改影响
         </Text>
         <div style={{ display: 'flex', gap: 12 }}>
           {/* 学科: 单行文本录入（保存时写入顶层 subject + attribute.subject） */}
@@ -416,11 +422,11 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
             placeholder="学科（如：数学）"
             style={{ flex: 1 }}
           />
-          {/* 章节: 单行文本录入（保存时写入顶层 chapter + attribute.chapter） */}
+          {/* 年级: 单行文本录入（保存时写入顶层 grade + attribute.grade） */}
           <Input
-            value={chapter}
-            onChange={(e) => setChapter(e.target.value)}
-            placeholder="章节（如：第三章 函数）"
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            placeholder="年级（如：三年级）"
             style={{ flex: 1 }}
           />
           {/* 难度: 下拉选择 easy/medium/hard（保存时写入顶层 difficulty + attribute.difficulty） */}
@@ -437,6 +443,12 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
             ]}
           />
         </div>
+        {/* 章节: 单行文本录入（保存时写入顶层 chapter + attribute.chapter） */}
+        <Input
+          value={chapter}
+          onChange={(e) => setChapter(e.target.value)}
+          placeholder="章节（如：第三章 函数）"
+        />
         {/* 知识点: mode="tags" 多值输入，回车/逗号分隔确认
              状态为数组（knowledgePoints），保存时写入顶层 knowledgePoint[] + attribute.knowledgePoint */}
         <Select

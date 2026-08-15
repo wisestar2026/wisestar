@@ -19,7 +19,7 @@ public interface SectionViewMapper extends BaseModelMapper<SectionRequest, Secti
 	Section fromRequest(SectionRequest request);
 
 	@Mapping(target = "knowledgePointCount", ignore = true)
-	@Mapping(target = "questionCount", ignore = true)
+	@Mapping(target = "repoCount", ignore = true)
 	SectionView toView(Section item);
 
 }

@@ -39,8 +39,8 @@ public class ChapterView {
 	private Long sectionCount;
 
 	/**
-	 * 该章节下已绑定的测试题目数（列表展示用，来自 t_chapter_question）。
+	 * 该章节下已绑定的题库数（列表展示用，来自 t_chapter_repo）。
 	 */
-	private Long questionCount;
+	private Long repoCount;
 
 }
