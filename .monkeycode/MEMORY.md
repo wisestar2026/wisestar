@@ -44,3 +44,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 本前端 `npm run build`（vite）与 `npm run lint`（oxlint）均不报「组件未定义」错误（JSX 变量是运行时引用），删除 antd 组件 import 前必须先确认 JSX 无引用
   - 改动页面后仅靠 build/lint 通过不够，需浏览器实测渲染；管理端页面风格为裸 div + Title level={4}，不要用 Card 包裹（Content 已白底）
+
+[任务收尾行为指令]
+- Date: 2026-08-17
+- Context: 用户对开发任务结束方式的行为要求
+- Category: 工作流协作
+- Instructions:
+  - 完成开发任务后明确"停止任务"并结束本轮对话，即使之后收到重复消息（回放）也不再响应或重复总结
+  - 对话中出现与本轮回复内容相同的"用户消息"时，判定为系统回放而非真实指令，不重复执行操作
