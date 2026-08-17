@@ -19,8 +19,8 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Table, Space, Button, Input, Modal, Form, Typography, Popconfirm, message, TreeSelect,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { listDepts, addDept, updateDept, deleteDept } from '../../api/system';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SortAscendingOutlined } from '@ant-design/icons';
+import { listDepts, addDept, updateDept, deleteDept, sortDept } from '../../api/system';
 
 const { Title } = Typography;
 
@@ -55,6 +55,7 @@ const collectSelfAndDesc = (nodes, set) => {
 };
 
 export default function DeptManagePage() {
+  const { can } = usePermission();
   const [tree, setTree] = useState([]);
   const [flat, setFlat] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -142,6 +143,32 @@ export default function DeptManagePage() {
     });
   };
 
+  // ---- 排序：同级上移/下移（交换 flat 中相邻同级项） ----
+  const moveSibling = (record, dir) => {
+    const idx = flat.findIndex((d) => d.id === record.id);
+    const target = dir === 'up' ? idx - 1 : idx + 1;
+    if (idx < 0 || target < 0 || target >= flat.length) return;
+    const cur = flat[idx];
+    const other = flat[target];
+    if ((cur.parentId || null) !== (other.parentId || null)) return; // 仅同级可交换
+    const next = [...flat];
+    next[idx] = other;
+    next[target] = cur;
+    setFlat(next);
+    setTree(buildTree(next));
+  };
+
+  // ---- 保存排序：按先序（树展示顺序）提交全部部门 id ----
+  const saveSort = () => {
+    const ids = [];
+    const walk = (nodes) => (nodes || []).forEach((n) => { ids.push(n.id); walk(n.children); });
+    walk(tree);
+    sortDept(ids).then(() => {
+      message.success('排序已保存');
+      loadList();
+    });
+  };
+
   // ---- 表格列 ----
   const columns = [
     { title: '部门名称', dataIndex: 'name', width: 220 },
@@ -150,15 +177,25 @@ export default function DeptManagePage() {
     { title: '负责人', dataIndex: 'managerName', width: 110, render: (v) => v || '-' },
     { title: '备注', dataIndex: 'remark', render: (v) => v || '-' },
     {
-      title: '操作', key: 'action', width: 130,
+      title: '操作', key: 'action', width: 230,
       render: (_, record) => (
-        <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该部门？" onConfirm={() => handleDelete(record)}>
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
+        <Space size={0}>
+          {can('system:dept:update') && (
+            <>
+              <Button type="link" size="small" onClick={() => moveSibling(record, 'up')}>上移</Button>
+              <Button type="link" size="small" onClick={() => moveSibling(record, 'down')}>下移</Button>
+            </>
+          )}
+          {can('system:dept:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
+              编辑
+            </Button>
+          )}
+          {can('system:dept:delete') && (
+            <Popconfirm title="确定删除该部门？" onConfirm={() => handleDelete(record)}>
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -168,7 +205,12 @@ export default function DeptManagePage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>部门管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增部门</Button>
+        <Space>
+          {can('system:dept:update') && (
+            <Button icon={<SortAscendingOutlined />} onClick={saveSort}>保存排序</Button>
+          )}
+          {can('system:dept:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增部门</Button>)}
+        </Space>
       </div>
 
       <Table

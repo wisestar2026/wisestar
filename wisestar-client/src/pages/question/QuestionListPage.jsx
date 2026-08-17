@@ -46,6 +46,7 @@ import { listRepo, exportTemplate } from '../../api/repo';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
 import ImportModal from '../../components/question/ImportModal';
 import { QUESTION_TYPES } from '../../utils/surveyHelpers';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title, Text } = Typography;
 
@@ -57,6 +58,7 @@ const TYPE_LABELS = {
 };
 
 export default function QuestionListPage() {
+  const { can } = usePermission();
   // ---- 列表状态 ----
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);   // 当前页题目数据（TemplateView 数组）
@@ -314,12 +316,16 @@ export default function QuestionListPage() {
       title: '操作', width: 120, fixed: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Button size="small" type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)} okText="删除" cancelText="取消">
-            <Button size="small" type="link" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
+          {can('template:update') && (
+            <Button size="small" type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
+              编辑
+            </Button>
+          )}
+          {can('template:delete') && (
+            <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)} okText="删除" cancelText="取消">
+              <Button size="small" type="link" danger icon={<DeleteOutlined />}>删除</Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -333,7 +339,9 @@ export default function QuestionListPage() {
         <Space>
           <Button icon={<ImportOutlined />} onClick={() => setImportOpen(true)}>Excel 导入</Button>
           <Button icon={<ExportOutlined />} onClick={handleExport}>导出</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>新建题目</Button>
+          {can('template:create') && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>新建题目</Button>
+          )}
         </Space>
       </div>
 
@@ -430,17 +438,17 @@ export default function QuestionListPage() {
         </Button>
 
         {/* 批量操作 */}
-        {selectedRowKeys.length > 0 && (
-          <Popconfirm
-            title={`确定删除选中的 ${selectedRowKeys.length} 道题目？`}
-            onConfirm={handleBatchDelete}
-            okText="删除" cancelText="取消"
-          >
-            <Button danger icon={<DeleteOutlined />}>
-              批量删除 ({selectedRowKeys.length})
-            </Button>
-          </Popconfirm>
-        )}
+          {selectedRowKeys.length > 0 && can('template:delete') && (
+            <Popconfirm
+              title={`确定删除选中的 ${selectedRowKeys.length} 道题目？`}
+              onConfirm={handleBatchDelete}
+              okText="删除" cancelText="取消"
+            >
+              <Button danger icon={<DeleteOutlined />}>
+                批量删除 ({selectedRowKeys.length})
+              </Button>
+            </Popconfirm>
+          )}
       </div>
 
       {/* ---- 数据表格 ---- */}

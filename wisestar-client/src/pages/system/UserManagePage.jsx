@@ -20,13 +20,14 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Table, Space, Button, Input, Select, Modal, Form, Typography, Popconfirm, message, Tag,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, SwapOutlined } from '@ant-design/icons';
 import {
-  listUsers, createUser, updateUser, deleteUser, checkUsernameExist,
+  listUsers, createUser, updateUser, deleteUser, checkUsernameExist, updateUserPosition,
 } from '../../api/system';
 import { listDepts } from '../../api/system';
 import { listPositions } from '../../api/system';
 import { listAllRoles } from '../../api/system';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 
@@ -37,6 +38,7 @@ const STATUS_MAP = { 1: { text: '启用', color: 'green' }, 0: { text: '禁用',
 const formatTime = (v) => (v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '-');
 
 export default function UserManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -54,6 +56,12 @@ export default function UserManagePage() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
+
+  // 调整岗位弹窗
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
+  const [positionTarget, setPositionTarget] = useState(null);
+  const [positionSaving, setPositionSaving] = useState(false);
+  const [positionForm] = Form.useForm();
 
   // ---- 加载分页列表 ----
   const loadList = useCallback(() => {
@@ -169,6 +177,34 @@ export default function UserManagePage() {
     });
   };
 
+  // ---- 打开调整岗位弹窗 ----
+  const openPositionModal = (user) => {
+    setPositionTarget(user);
+    setPositionModalOpen(true);
+    positionForm.setFieldsValue({
+      deptId: user.deptId || undefined,
+      positions: (user.userPositions || []).map((p) => p.positionId),
+    });
+  };
+
+  // ---- 保存调整岗位（updateUserPosition 全量替换该用户岗位） ----
+  const handleSavePosition = () => {
+    positionForm.validateFields().then((values) => {
+      const userPositions = (values.positions || []).map((positionId) => ({
+        deptId: values.deptId || undefined,
+        positionId,
+      }));
+      setPositionSaving(true);
+      updateUserPosition({ id: positionTarget.id, userPositions })
+        .then(() => {
+          message.success('岗位已调整');
+          setPositionModalOpen(false);
+          loadList();
+        })
+        .finally(() => setPositionSaving(false));
+    });
+  };
+
   // ---- 表格列 ----
   const columns = [
     { title: '登录账号', dataIndex: 'username', width: 130 },
@@ -197,15 +233,24 @@ export default function UserManagePage() {
     },
     { title: '创建时间', dataIndex: 'createAt', width: 170, render: formatTime },
     {
-      title: '操作', key: 'action', width: 130,
+      title: '操作', key: 'action', width: 200,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该用户？" description="删除后该登录账号将无法使用" onConfirm={() => handleDelete(record)}>
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
+          {can('system:user:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
+              编辑
+            </Button>
+          )}
+          {can('system:user:update') && (
+            <Button type="link" size="small" icon={<SwapOutlined />} onClick={() => openPositionModal(record)}>
+              调整岗位
+            </Button>
+          )}
+          {can('system:user:delete') && (
+            <Popconfirm title="确定删除该用户？" description="删除后该登录账号将无法使用" onConfirm={() => handleDelete(record)}>
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -215,7 +260,9 @@ export default function UserManagePage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>用户管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增用户</Button>
+        {can('system:user:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增用户</Button>
+        )}
       </div>
 
       {/* ---- 搜索栏 ---- */}
@@ -295,6 +342,28 @@ export default function UserManagePage() {
                 { value: 1, label: '启用' },
                 { value: 0, label: '禁用' },
               ]}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* ---- 调整岗位弹窗 ---- */}
+      <Modal
+        title={`调整岗位：${positionTarget?.name || ''}`}
+        open={positionModalOpen}
+        onOk={handleSavePosition}
+        onCancel={() => setPositionModalOpen(false)}
+        confirmLoading={positionSaving}
+        destroyOnClose
+      >
+        <Form form={positionForm} labelCol={{ span: 5 }} wrapperCol={{ span: 18 }}>
+          <Form.Item name="deptId" label="部门">
+            <Select allowClear placeholder="选填（岗位可关联部门）" options={deptOptions} showSearch optionFilterProp="label" />
+          </Form.Item>
+          <Form.Item name="positions" label="岗位">
+            <Select
+              mode="multiple" allowClear placeholder="选填（保存后全量替换该用户岗位）" options={positionOptions}
+              showSearch optionFilterProp="label"
             />
           </Form.Item>
         </Form>

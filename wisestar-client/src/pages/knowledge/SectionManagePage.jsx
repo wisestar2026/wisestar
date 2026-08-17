@@ -34,10 +34,12 @@ import {
 } from '../../api/knowledge';
 import { listRepo } from '../../api/repo';
 import { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
+import { usePermission } from '../../utils/usePermission';
 
 const { Text } = Typography;
 
 export default function SectionManagePage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlSubjectId = searchParams.get('subjectId');
@@ -283,7 +285,10 @@ export default function SectionManagePage() {
           </Button>
           <Button size="small" icon={<FileTextOutlined />} onClick={() => openContent(s)}>内容设置</Button>
           <Button size="small" icon={<SettingOutlined />} onClick={() => openPractice(s)}>练习设置</Button>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openModal(s)}>编辑</Button>
+{can('knowledge:update') && (
+            <Button size="small" icon={<EditOutlined />} onClick={() => openModal(s)}>编辑</Button>
+          )}
+          {can('knowledge:delete') && (
           <Popconfirm
             title={`删除小节「${s.name}」？`}
             description="其下所有知识点与题库绑定将一并删除，删除后不可恢复。"
@@ -296,6 +301,7 @@ export default function SectionManagePage() {
           >
             <Button size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -315,7 +321,7 @@ export default function SectionManagePage() {
             ]}
           />
         </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>
+        {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>)}
       </div>
 
       {/* ---- 三级联动下拉（前两级） ---- */}

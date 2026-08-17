@@ -40,11 +40,13 @@ import {
 } from '@ant-design/icons';
 import { listAnswers, deleteAnswer } from '../../api/answer';
 import { listProject } from '../../api/project';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 export default function AnswerListPage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
 
   // ---- 状态 ----
@@ -202,16 +204,18 @@ export default function AnswerListPage() {
             详情
           </Button>
           {/* 删除 */}
-          <Popconfirm
-            title="确定删除此答卷？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="删除"
-            cancelText="取消"
-          >
-            <Button size="small" type="link" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
+          {can('answer:delete') && (
+            <Popconfirm
+              title="确定删除此答卷？"
+              onConfirm={() => handleDelete(record.id)}
+              okText="删除"
+              cancelText="取消"
+            >
+              <Button size="small" type="link" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },

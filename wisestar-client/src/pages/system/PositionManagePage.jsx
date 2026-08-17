@@ -24,6 +24,7 @@ import { listPositions, addPosition, updatePosition, deletePosition } from '../.
 const { Title } = Typography;
 
 export default function PositionManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -129,12 +130,16 @@ export default function PositionManagePage() {
       title: '操作', key: 'action', width: 130,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该岗位？" onConfirm={() => handleDelete(record)}>
+          {can('system:position:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
+              编辑
+            </Button>
+          )}
+          {can('system:position:delete') && (
+            <Popconfirm title="确定删除该岗位？" onConfirm={() => handleDelete(record)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -144,7 +149,7 @@ export default function PositionManagePage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>岗位管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增岗位</Button>
+        {can('system:position:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增岗位</Button>)}
       </div>
 
       {/* ---- 搜索栏 ---- */}

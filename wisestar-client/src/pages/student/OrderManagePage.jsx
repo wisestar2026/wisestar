@@ -26,6 +26,7 @@ import {
 } from '../../api/student';
 import { listStudents } from '../../api/student';
 import { listSubjects } from '../../api/knowledge';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 
@@ -48,6 +49,7 @@ const DURATION_UNIT_OPTIONS = [
 const UNIT_TEXT = { DAY: '天', MONTH: '个月', YEAR: '年' };
 
 export default function OrderManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -170,14 +172,16 @@ export default function OrderManagePage() {
       title: '操作', key: 'action', width: 140,
       render: (_, record) => (
         <Space>
-          {record.status === 1 && (
+          {record.status === 1 && can('order:delete') && (
             <Popconfirm title="确定作废该订单？" description="作废后对应学员权限将失效" onConfirm={() => handleCancel(record)}>
               <Button type="link" size="small" icon={<StopOutlined />}>作废</Button>
             </Popconfirm>
           )}
-          <Popconfirm title="确定删除该订单？" onConfirm={() => handleDelete(record)}>
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
-          </Popconfirm>
+          {can('order:delete') && (
+            <Popconfirm title="确定删除该订单？" onConfirm={() => handleDelete(record)}>
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -187,7 +191,9 @@ export default function OrderManagePage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>订单管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>创建订单</Button>
+        {can('order:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={openModal}>创建订单</Button>
+        )}
       </div>
 
       {/* ---- 搜索栏 ---- */}

@@ -34,6 +34,7 @@ const CAMPUS_OPTIONS = [
 ];
 
 export default function StudentManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -135,12 +136,16 @@ export default function StudentManagePage() {
       title: '操作', key: 'action', width: 140,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该学员？" description="删除后学员端将无法登录" onConfirm={() => handleDelete(record)}>
+          {can('student:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
+              编辑
+            </Button>
+          )}
+          {can('student:delete') && (
+            <Popconfirm title="确定删除该学员？" description="删除后学员端将无法登录" onConfirm={() => handleDelete(record)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -150,7 +155,7 @@ export default function StudentManagePage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>学员列表</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增学员</Button>
+        {can('student:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增学员</Button>)}
       </div>
 
       {/* ---- 搜索栏 ---- */}

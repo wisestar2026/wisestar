@@ -30,10 +30,12 @@ import {
   listSections, saveChapterRepos, listChapterRepos,
 } from '../../api/knowledge';
 import { listRepo } from '../../api/repo';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title, Text } = Typography;
 
 export default function ChapterManagePage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
 
   const [subjects, setSubjects] = useState([]);
@@ -201,7 +203,10 @@ export default function ChapterManagePage() {
             管理小节
           </Button>
           <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(c)}>绑定题库</Button>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openModal(c)}>编辑</Button>
+{can('knowledge:update') && (
+            <Button size="small" icon={<EditOutlined />} onClick={() => openModal(c)}>编辑</Button>
+          )}
+          {can('knowledge:delete') && (
           <Popconfirm
             title={`删除章节「${c.name}」？`}
             description="其下所有小节与知识点将一并删除，删除后不可恢复。"
@@ -209,6 +214,7 @@ export default function ChapterManagePage() {
           >
             <Button size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -222,7 +228,7 @@ export default function ChapterManagePage() {
           <Title level={4} style={{ margin: 0 }}>章节管理</Title>
           <Text type="secondary">管理各学科下的大单元（章节），进入后可管理小节</Text>
         </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增章节</Button>
+        {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增章节</Button>)}
       </div>
 
       <Select

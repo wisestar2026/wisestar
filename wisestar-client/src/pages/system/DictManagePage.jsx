@@ -31,6 +31,7 @@ const DICT_TYPE_OPTIONS = [
 ];
 
 export default function DictManagePage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
@@ -138,12 +139,16 @@ export default function DictManagePage() {
           >
             条目管理
           </Button>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该字典？" description="该字典下全部条目将同步删除" onConfirm={() => handleDelete(record)}>
+          {can('system:dict:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
+              编辑
+            </Button>
+          )}
+          {can('system:dict:delete') && (
+            <Popconfirm title="确定删除该字典？" description="该字典下全部条目将同步删除" onConfirm={() => handleDelete(record)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -153,7 +158,7 @@ export default function DictManagePage() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>字典管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增字典</Button>
+        {can('system:dict:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增字典</Button>)}
       </div>
 
       {/* ---- 搜索栏 ---- */}

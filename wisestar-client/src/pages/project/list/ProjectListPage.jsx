@@ -39,10 +39,12 @@ import {
 } from '@ant-design/icons';
 import { listProject, createProject, deleteProject } from '../../../api/project';
 import { useNavigate } from 'react-router-dom';
+import { usePermission } from '../../../utils/usePermission';
 
 const { Title } = Typography;
 
 export default function ProjectListPage() {
+  const { can } = usePermission();
   // ---- 状态 ----
   const [projects, setProjects] = useState([]);                 // 问卷列表数据
   const [loading, setLoading] = useState(false);                // 列表加载状态
@@ -198,14 +200,16 @@ export default function ProjectListPage() {
           {record.mode !== 'folder' && (
             <>
               {/* 编辑按钮 → 跳转到编辑页面 */}
-              <Button
-                type="link"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => navigate(`/projects/${record.id}/edit`)}
-              >
-                编辑
-              </Button>
+              {can('project:update') && (
+                <Button
+                  type="link"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/projects/${record.id}/edit`)}
+                >
+                  编辑
+                </Button>
+              )}
 
               {/* 答卷列表按钮 → 跳转到答卷管理页面 */}
               <Button
@@ -232,15 +236,17 @@ export default function ProjectListPage() {
           )}
 
           {/* 删除按钮（带二次确认弹窗） */}
-          <Popconfirm
-            title="确定要删除吗？"
-            description="删除后将移入回收站，可在回收站恢复"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              删除
-            </Button>
-          </Popconfirm>
+          {can('project:delete') && (
+            <Popconfirm
+              title="确定要删除吗？"
+              description="删除后将移入回收站，可在回收站恢复"
+              onConfirm={() => handleDelete(record.id)}
+            >
+              <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -251,9 +257,11 @@ export default function ProjectListPage() {
       {/* ---- 标题栏 + 新建按钮 ---- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>问卷管理</Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-          新建问卷
-        </Button>
+        {can('project:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+            新建问卷
+          </Button>
+        )}
       </div>
 
       {/* ---- 搜索栏 ---- */}

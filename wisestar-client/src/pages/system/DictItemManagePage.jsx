@@ -29,6 +29,7 @@ import {
 const { Title } = Typography;
 
 export default function DictItemManagePage() {
+  const { can } = usePermission();
   const [searchParams] = useSearchParams();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
@@ -139,12 +140,16 @@ export default function DictItemManagePage() {
       title: '操作', key: 'action', width: 130,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
-            编辑
-          </Button>
-          <Popconfirm title="确定删除该条目？" onConfirm={() => handleDelete(record)}>
+          {can('system:dictItem:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
+              编辑
+            </Button>
+          )}
+          {can('system:dictItem:delete') && (
+            <Popconfirm title="确定删除该条目？" onConfirm={() => handleDelete(record)}>
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -155,10 +160,12 @@ export default function DictItemManagePage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>字典条目管理</Title>
         <Space>
-          <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls" disabled={importing}>
-            <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
-          </Upload>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增条目</Button>
+          {can('system:dictItem:import') && (
+            <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls" disabled={importing}>
+              <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
+            </Upload>
+          )}
+          {can('system:dictItem:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增条目</Button>)}
         </Space>
       </div>
 

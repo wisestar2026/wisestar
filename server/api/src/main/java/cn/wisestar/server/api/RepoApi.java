@@ -388,7 +388,7 @@ public class RepoApi {
 	 * @param request 导出查询参数
 	 */
 	@GetMapping("/export")
-	// @PreAuthorize("hasAuthority('repo:export')")
+	@PreAuthorize("hasAuthority('repo:export')")
 	public void exportRepoQuestions(RepoRequest request) {
 		repoService.exportRepoQuestions(request);
 	}

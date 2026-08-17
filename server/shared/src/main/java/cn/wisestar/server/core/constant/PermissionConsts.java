@@ -248,23 +248,23 @@ public final class PermissionConsts {
 	public static final String ROLE_ACADEMIC = "academic";
 
 	/**
-	 * 管理员全量权限（历史保留 + 新增模块权限点）。
+	 * 管理员全量权限（仅保留有接口消费的权限点，2026-08-15 清理 file/org/裸模块名等残留）。
 	 */
-	public static final String ADMIN_AUTHORITY = "answer,answer:list,answer:detail,answer:create,answer:update,answer:delete,"
-			+ "answer:export,file,file:detail,file:list,file:import,file:delete,project,project:list,project:detail,"
-			+ "project:create,project:update,project:delete,project:report,system,system:role,system:role:list,system:user,"
-			+ "system:user:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,"
-			+ "system:user:updatePosition,system:user:delete,position,position:list,position:create,system:position,"
-			+ "system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,"
-			+ "system:org:delete,template,template:list,template:create,template:update,template:delete,system:position:list,"
-			+ "system:position:create,system:dept,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,"
-			+ "repo,repo:list,repo:detail,repo:create,repo:update,repo:delete,user,user:update,answer:upload,system:dict,"
-			+ "system:dict:update,system:dict:delete,system:dictItem,system:dictItem:list,system:dictItem:create,"
-			+ "system:dictItem:import,system:dictItem:delete,system:dict:list,system:dict:create,exercise,exercise:list,"
-			+ "repo:book,system:dictItem:update,home,"
+	public static final String ADMIN_AUTHORITY = "home,exercise:list,"
+			+ "project:list,project:detail,project:create,project:update,project:delete,project:report,"
+			+ "answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,"
+			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,"
+			+ "template:list,template:create,template:update,template:delete,"
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
 			+ "student:list,student:create,student:update,student:delete,"
-			+ "order:list,order:create,order:update,order:delete";
+			+ "order:list,order:create,order:update,order:delete,"
+			+ "system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,"
+			+ "system:role:list,system:role:create,system:role:update,system:role:delete,"
+			+ "system:dept:list,system:dept:create,system:dept:update,system:dept:delete,"
+			+ "system:position:list,system:position:create,system:position:update,system:position:delete,"
+			+ "system:dict:list,system:dict:create,system:dict:update,system:dict:delete,"
+			+ "system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,"
+			+ "user:update";
 
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */
 	public static final String PRINCIPAL_AUTHORITY = "home,exercise:list,"

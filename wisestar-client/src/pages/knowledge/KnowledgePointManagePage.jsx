@@ -34,6 +34,7 @@ import {
 } from '../../api/knowledge';
 import { listTemplate } from '../../api/template';
 import { uploadImage } from '../../api/upload';
+import { usePermission } from '../../utils/usePermission';
 
 const { Text } = Typography;
 
@@ -45,6 +46,7 @@ const QUESTION_TYPE_LABEL = {
 };
 
 export default function KnowledgePointManagePage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlSubjectId = searchParams.get('subjectId');
@@ -294,7 +296,10 @@ export default function KnowledgePointManagePage() {
         <Space wrap>
           <Button type="primary" size="small" icon={<FileTextOutlined />} onClick={() => openContent(k)}>内容设置</Button>
           <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(k)}>绑定题目</Button>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openModal(k)}>编辑</Button>
+{can('knowledge:update') && (
+            <Button size="small" icon={<EditOutlined />} onClick={() => openModal(k)}>编辑</Button>
+          )}
+          {can('knowledge:delete') && (
           <Popconfirm
             title={`删除知识点「${k.name}」？`}
             description="其绑定的题目将一并解除，删除后不可恢复。"
@@ -302,6 +307,7 @@ export default function KnowledgePointManagePage() {
           >
             <Button size="small" danger icon={<DeleteOutlined />} />
           </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -322,7 +328,7 @@ export default function KnowledgePointManagePage() {
             ]}
           />
         </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增知识点</Button>
+        {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增知识点</Button>)}
       </div>
 
       {/* ---- 三级联动下拉 ---- */}

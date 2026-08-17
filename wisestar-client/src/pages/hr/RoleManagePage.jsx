@@ -21,10 +21,12 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { listRole, createRole, updateRole, deleteRole, getPermissionTree } from '../../api/hr';
+import { usePermission } from '../../utils/usePermission';
 
 const { Text } = Typography;
 
 export default function RoleManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -157,31 +159,35 @@ export default function RoleManagePage() {
       width: 150,
       render: (_, record) => (
         <Space size={0}>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            disabled={record.code === 'admin'}
-            onClick={() => openModal(record)}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title={`确认删除角色「${record.name}」？`}
-            description="删除后该角色关联的用户将失去对应权限"
-            disabled={record.builtin === 1}
-            onConfirm={() => handleDelete(record)}
-          >
+          {can('system:role:update') && (
             <Button
               type="link"
               size="small"
-              danger
-              icon={<DeleteOutlined />}
-              disabled={record.builtin === 1}
+              icon={<EditOutlined />}
+              disabled={record.code === 'admin'}
+              onClick={() => openModal(record)}
             >
-              删除
+              编辑
             </Button>
-          </Popconfirm>
+          )}
+          {can('system:role:delete') && (
+            <Popconfirm
+              title={`确认删除角色「${record.name}」？`}
+              description="删除后该角色关联的用户将失去对应权限"
+              disabled={record.builtin === 1}
+              onConfirm={() => handleDelete(record)}
+            >
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                disabled={record.builtin === 1}
+              >
+                删除
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -207,7 +213,9 @@ export default function RoleManagePage() {
           />
           <Button icon={<ReloadOutlined />} onClick={fetchList}>刷新</Button>
         </Space>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增角色</Button>
+        {can('system:role:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增角色</Button>
+        )}
       </Space>
 
       <Table

@@ -34,6 +34,7 @@ import {
 } from '@ant-design/icons';
 import { listRepo, createRepo, updateRepo, deleteRepo, unbindTemplate } from '../../api/repo';
 import { listTemplate } from '../../api/template';
+import { usePermission } from '../../utils/usePermission';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
 
 const { Title, Text } = Typography;
@@ -52,6 +53,7 @@ const MODE_MAP = {
 };
 
 export default function RepoListPage() {
+  const { can } = usePermission();
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
@@ -267,19 +269,23 @@ export default function RepoListPage() {
       width: 130,
       render: (_, record) => (
         <Space size="small">
-          <Button size="small" type="link" icon={<EditOutlined />} onClick={() => openEdit(record)}>
-            编辑
-          </Button>
-          <Popconfirm
-            title="删除题库将同时删除其中所有题目，确定？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="删除"
-            cancelText="取消"
-          >
-            <Button size="small" type="link" danger icon={<DeleteOutlined />}>
-              删除
+          {can('repo:update') && (
+            <Button size="small" type="link" icon={<EditOutlined />} onClick={() => openEdit(record)}>
+              编辑
             </Button>
-          </Popconfirm>
+          )}
+          {can('repo:delete') && (
+            <Popconfirm
+              title="删除题库将同时删除其中所有题目，确定？"
+              onConfirm={() => handleDelete(record.id)}
+              okText="删除"
+              cancelText="取消"
+            >
+              <Button size="small" type="link" danger icon={<DeleteOutlined />}>
+                删除
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -293,9 +299,11 @@ export default function RepoListPage() {
           <BookOutlined style={{ marginRight: 8 }} />
           题库管理
         </Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditId(null); form.resetFields(); setCreateOpen(true); }}>
-          新建题库
-        </Button>
+        {can('repo:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditId(null); form.resetFields(); setCreateOpen(true); }}>
+            新建题库
+          </Button>
+        )}
       </div>
 
       {/* ---- 搜索栏 ---- */}

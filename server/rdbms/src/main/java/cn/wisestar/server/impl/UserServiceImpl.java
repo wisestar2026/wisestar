@@ -85,6 +85,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 
 	private final DeptMapper deptMapper;
 
+	private final PositionMapper positionMapper;
+
 	private final SystemService systemService;
 
 	private final ProjectMapper projectMapper;
@@ -182,9 +184,24 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 					userRoleMapper.selectList(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, x.getId()))
 							.stream().map(userRole -> roleViewMapper.toView(roleService.getById(userRole.getRoleId())))
 							.collect(Collectors.toList()));
-			// 设置用户岗位
-			userView.setUserPositions(userPositionDtoMapper.toView(userPositionMapper
-					.selectList(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getUserId, x.getId()))));
+			// 设置用户岗位（补全部门名/岗位名）
+			List<UserPositionView> positionViews = userPositionDtoMapper.toView(userPositionMapper
+					.selectList(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getUserId, x.getId())));
+			positionViews.forEach(pv -> {
+				if (isNotBlank(pv.getPositionId())) {
+					Position position = positionMapper.selectById(pv.getPositionId());
+					if (position != null) {
+						pv.setPositionName(position.getName());
+					}
+				}
+				if (isNotBlank(pv.getDeptId())) {
+					Dept posDept = deptMapper.selectById(pv.getDeptId());
+					if (posDept != null) {
+						pv.setDeptName(posDept.getName());
+					}
+				}
+			});
+			userView.setUserPositions(positionViews);
 			return userView;
 		}).collect(Collectors.toList()));
 	}
@@ -306,8 +323,9 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 
 	@Override
 	public void updateUserPosition(UserRequest request) {
+		// 调整指定用户（request.id）的岗位：先删除该用户全部岗位关联，再按 userPositions 重建
 		userPositionMapper
-				.delete(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getPositionId, request.getId()));
+				.delete(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getUserId, request.getId()));
 		if (!CollectionUtils.isEmpty(request.getUserPositions())) {
 			request.getUserPositions().forEach(userPositionRequest -> {
 				UserPosition position = userPositionDtoMapper.fromRequest(userPositionRequest);
