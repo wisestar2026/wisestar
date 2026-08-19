@@ -16,8 +16,9 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal } from 'antd';
+import { Modal, Form, Input, Button, message } from 'antd';
 import useStudentStore, { TITLES, PROFILE, SUBJECTS } from '../../stores/useStudentStore';
+import { changePassword } from '../../api/student';
 import './ProfilePage.css';
 
 // 成长数据统计（mock）
@@ -28,6 +29,30 @@ const GROWTH_STATS = [
 ];
 
 export default function ProfilePage() {
+  const [pwModalOpen, setPwModalOpen] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwForm] = Form.useForm();
+
+  // ---- 修改密码 ----
+  const openPwModal = () => {
+    pwForm.resetFields();
+    setPwModalOpen(true);
+  };
+  const handlePwSave = () => {
+    pwForm.validateFields().then((values) => {
+      if (values.newPassword !== values.confirmPassword) {
+        message.warning('两次输入的新密码不一致');
+        return;
+      }
+      setPwSaving(true);
+      changePassword({ oldPassword: values.oldPassword, newPassword: values.newPassword })
+        .then(() => {
+          message.success('密码修改成功');
+          setPwModalOpen(false);
+        })
+        .finally(() => setPwSaving(false));
+    });
+  };
   const navigate = useNavigate();
   const { pureMode } = useStudentStore();
   const [previewCert, setPreviewCert] = useState(null); // 正在预览的证书
@@ -59,10 +84,29 @@ export default function ProfilePage() {
             </span>
           </div>
         </div>
-        <button className="profile-study-btn" onClick={() => navigate('/student/study')}>
-          继续研习 ›
-        </button>
+        <div className="profile-actions">
+          <button className="profile-study-btn" onClick={() => navigate('/student/study')}>
+            继续研习 ›
+          </button>
+          <Button size="small" onClick={openPwModal}>修改密码</Button>
+        </div>
       </div>
+
+      {/* ---- 修改密码弹窗 ---- */}
+      <Modal title="修改登录密码" open={pwModalOpen} onOk={handlePwSave} onCancel={() => setPwModalOpen(false)}
+        okText="确认修改" cancelText="取消" confirmLoading={pwSaving} destroyOnClose>
+        <Form form={pwForm} layout="vertical" style={{ marginTop: 8 }}>
+          <Form.Item name="oldPassword" label="原密码" rules={[{ required: true, message: '请输入原密码' }]}>
+            <Input.Password placeholder="输入当前登录密码" />
+          </Form.Item>
+          <Form.Item name="newPassword" label="新密码" rules={[{ required: true, message: '请输入新密码' }, { min: 6, message: '新密码至少 6 位' }]}>
+            <Input.Password placeholder="至少 6 位" />
+          </Form.Item>
+          <Form.Item name="confirmPassword" label="确认新密码" rules={[{ required: true, message: '请再次输入新密码' }]}>
+            <Input.Password placeholder="再次输入新密码" />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* ---- 中部: 证书网格陈列墙 ---- */}
       <div className="profile-section-title">🏅 证书荣誉墙（解锁永久保留）</div>

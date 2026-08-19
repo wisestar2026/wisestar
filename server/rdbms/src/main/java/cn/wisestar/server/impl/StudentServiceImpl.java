@@ -4,14 +4,20 @@ import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.AppConsts;
 import cn.wisestar.server.core.security.PasswordEncoder;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.student.ChangePasswordRequest;
+import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
 import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.domain.mapper.StudentViewMapper;
 import cn.wisestar.server.domain.model.Account;
 import cn.wisestar.server.domain.model.Student;
+import cn.wisestar.server.domain.model.StudentPermission;
+import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.mapper.AccountMapper;
 import cn.wisestar.server.mapper.StudentMapper;
+import cn.wisestar.server.mapper.StudentPermissionMapper;
+import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.StudentService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -22,6 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.validation.ValidationException;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -58,6 +68,10 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	private final PasswordEncoder passwordEncoder;
 
+	private final StudentPermissionMapper studentPermissionMapper;
+
+	private final SubjectMapper subjectMapper;
+
 	/**
 	 * 新增学员：自动生成学号 + 创建登录账号（同一事务）。
 	 */
@@ -91,6 +105,63 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		accountMapper.insert(account);
 
 		return studentViewMapper.toView(student);
+	}
+
+	/**
+	 * 学员修改密码（校验原密码后更新登录账号密码）。
+	 */
+	@Override
+	public void changePassword(ChangePasswordRequest request) {
+		if (request.getOldPassword() == null || request.getNewPassword() == null
+				|| !StringUtils.hasText(request.getOldPassword()) || !StringUtils.hasText(request.getNewPassword())) {
+			throw new ValidationException("原密码与新密码不能为空");
+		}
+		if (request.getNewPassword().length() < 6) {
+			throw new ValidationException("新密码至少 6 位");
+		}
+		String userId = SecurityContextUtils.getUserId();
+		if (getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		Account account = accountMapper.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, userId));
+		if (account == null) {
+			throw new ValidationException("登录账号不存在");
+		}
+		if (!passwordEncoder.matches(request.getOldPassword(), account.getAuthSecret())) {
+			throw new ValidationException("原密码不正确");
+		}
+		account.setAuthSecret(passwordEncoder.encode(request.getNewPassword()));
+		accountMapper.updateById(account);
+	}
+
+	/**
+	 * 学员有效权限（多条有效订单合并，expire_at > NOW()）。
+	 */
+	@Override
+	public StudentPermissionView permissions() {
+		String userId = SecurityContextUtils.getUserId();
+		if (getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		List<StudentPermission> perms = studentPermissionMapper.selectList(Wrappers.<StudentPermission>lambdaQuery()
+				.eq(StudentPermission::getStudentId, userId)
+				.gt(StudentPermission::getExpireAt, new Date()));
+		StudentPermissionView view = new StudentPermissionView();
+		if (perms.isEmpty()) {
+			return view;
+		}
+		// 学科去重并补名称
+		Map<String, String> subjectNames = new LinkedHashMap<>();
+		perms.forEach(p -> subjectNames.put(p.getSubjectId(), null));
+		subjectMapper.selectBatchIds(subjectNames.keySet())
+				.forEach(sub -> subjectNames.put(sub.getId(), sub.getName()));
+		subjectNames.forEach((id, name) -> view.getSubjects().add(new StudentPermissionView.SubjectItem(id, name)));
+		// 年级 / 教材版本去重
+		perms.stream().map(StudentPermission::getGrade).filter(StringUtils::hasText).distinct()
+				.forEach(view.getGrades()::add);
+		perms.stream().map(StudentPermission::getVersion).filter(StringUtils::hasText).distinct()
+				.forEach(view.getVersions()::add);
+		return view;
 	}
 
 	/**

@@ -20,6 +20,7 @@
  *       useStudentStore、../student/student.css
  */
 
+import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Select, Dropdown, Switch, message } from 'antd';
 import {
@@ -31,8 +32,18 @@ import './student.css';
 export default function StudentLayout() {
   const {
     activeSubject, version, pureMode,
-    setSubject, setVersion, togglePureMode,
+    setSubject, setVersion, togglePureMode, fetchPermissions,
+    getVisibleSubjects, getVisibleVersions,
   } = useStudentStore();
+
+  // 挂载时加载学员有效权限（订单授予范围）
+  useEffect(() => {
+    fetchPermissions();
+  }, [fetchPermissions]);
+
+  // 按订单权限过滤后的可见学科
+  const visibleSubjects = getVisibleSubjects();
+  const hasPermission = visibleSubjects.length > 0;
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -83,7 +94,7 @@ export default function StudentLayout() {
           </div>
           {/* 学科 Tab 胶囊栏（后台绑定，仅展示切换） */}
           <div className="sll-tabs">
-            {SUBJECTS.map((s) => (
+            {hasPermission ? visibleSubjects.map((s) => (
               <button
                 key={s.key}
                 className={`sll-tab sll-tab-${s.theme} ${activeSubject === s.key ? 'active' : ''}`}
@@ -92,14 +103,16 @@ export default function StudentLayout() {
                 <span className="sll-tab-icon">{s.icon}</span>
                 <span>{s.name}</span>
               </button>
-            ))}
-            {/* 教材版本下拉（跟随当前学科，记忆上次选择） */}
+            )) : (
+              <span className="sll-no-perm">暂无可访问学科，请联系管理员开通</span>
+            )}
+            {/* 教材版本下拉（按权限过滤；跟随当前学科，记忆上次选择） */}
             <Select
               className="sll-version"
               size="small"
               value={version}
               onChange={setVersion}
-              options={(subject.versions || ['人教版']).map((v) => ({ label: v, value: v }))}
+              options={getVisibleVersions(activeSubject).map((v) => ({ label: v, value: v }))}
               popupMatchSelectWidth={false}
             />
           </div>

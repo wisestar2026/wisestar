@@ -12,6 +12,7 @@
  */
 
 import { create } from 'zustand';
+import { getMyPermissions } from '../api/student';
 
 // ---- 五级头衔 + 证书体系（学海积分自动晋升，无降级） ----
 export const TITLES = [
@@ -267,6 +268,8 @@ const useStudentStore = create((set, get) => ({
   activeSubject: localStorage.getItem('sh-active-subject') || 'math', // 当前学科（记忆上次选择）
   version: localStorage.getItem('sh-version') || '人教版',            // 当前教材版本（记忆上次选择）
   pureMode: localStorage.getItem('sh-pure-mode') === '1',             // 纯净学习模式（迎检专用）
+  // 学员有效权限（null=未加载/加载失败；有值={ subjects, grades, versions }，按订单授予范围过滤内容）
+  permissions: null,
 
   // ---- actions ----
   setSubject: (key) => {
@@ -286,12 +289,37 @@ const useStudentStore = create((set, get) => ({
       return { pureMode: !s.pureMode };
     });
   },
+  // 加载当前学员有效权限（订单授予范围：学科/年级/版本）
+  fetchPermissions: async () => {
+    try {
+      const res = await getMyPermissions();
+      set({ permissions: res?.data || { subjects: [], grades: [], versions: [] } });
+    } catch {
+      // 非学员或未登录：回退为空权限（前端仍可浏览 mock 内容）
+      set({ permissions: { subjects: [], grades: [], versions: [] } });
+    }
+  },
 
   // ---- 派生数据 helper ----
   getSubject: () => SUBJECTS.find((s) => s.key === get().activeSubject) || SUBJECTS[1],
   getChapters: () => {
     const sub = SUBJECTS.find((s) => s.key === get().activeSubject) || SUBJECTS[1];
     return sub.chapters;
+  },
+  // 按订单权限过滤可见学科（未加载权限时回退显示全部 mock 学科）
+  getVisibleSubjects: () => {
+    const perms = get().permissions;
+    if (!perms) return SUBJECTS;
+    const names = (perms.subjects || []).map((s) => s.name);
+    if (names.length === 0) return [];
+    return SUBJECTS.filter((s) => names.includes(s.name));
+  },
+  // 按订单权限过滤可见教材版本（当前学科）
+  getVisibleVersions: (subjectKey) => {
+    const sub = SUBJECTS.find((s) => s.key === subjectKey) || SUBJECTS[1];
+    const perms = get().permissions;
+    if (!perms || (perms.versions || []).length === 0) return sub.versions || [];
+    return (sub.versions || []).filter((v) => (perms.versions || []).includes(v));
   },
 }));
 

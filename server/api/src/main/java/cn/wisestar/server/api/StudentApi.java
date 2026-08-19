@@ -3,6 +3,8 @@ package cn.wisestar.server.api;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
+import cn.wisestar.server.domain.dto.student.ChangePasswordRequest;
+import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -110,6 +112,39 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentView myStudentInfo() {
 		return studentService.me();
+	}
+
+	/**
+	 * 学员修改密码（当前登录学员）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/changePassword。</p>
+	 *
+	 * <p><b>权限</b>：isAuthenticated()（学员端登录即可，服务层校验身份）。</p>
+	 *
+	 * @param request 修改密码请求（oldPassword/newPassword）
+	 */
+	@PostMapping("/changePassword")
+	@PreAuthorize("isAuthenticated()")
+	public void changePassword(@RequestBody ChangePasswordRequest request) {
+		studentService.changePassword(request);
+	}
+
+	/**
+	 * 学员有效权限（多条有效订单合并）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/permissions。</p>
+	 *
+	 * <p><b>功能</b>：返回可访问的学科（含名称）、年级、教材版本（expire_at > NOW()），
+	 * 供学员端按订单授予范围过滤内容。</p>
+	 *
+	 * <p><b>权限</b>：isAuthenticated()（学员端登录即可）。</p>
+	 *
+	 * @return 有效权限视图
+	 */
+	@GetMapping("/permissions")
+	@PreAuthorize("isAuthenticated()")
+	public StudentPermissionView permissions() {
+		return studentService.permissions();
 	}
 
 }
