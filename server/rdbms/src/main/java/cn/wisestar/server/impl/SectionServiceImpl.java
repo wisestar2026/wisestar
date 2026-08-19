@@ -1,6 +1,8 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.domain.dto.RepoView;
+import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
@@ -20,15 +22,26 @@ import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.SectionService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
+import org.dhatim.fastexcel.reader.ReadableWorkbook;
+import org.dhatim.fastexcel.reader.Row;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.validation.ValidationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -97,6 +110,58 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		Section section = sectionViewMapper.fromRequest(request);
 		save(section);
 		return section.getId();
+	}
+
+	/**
+	 * 批量导入小节（Excel：小节名/排序；按 chapterId+name 去重）。
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public int importSections(SectionImportRequest request) {
+		if (!hasText(request.getChapterId())) {
+			throw new ValidationException("请选择章节后再导入");
+		}
+		Set<String> existing = this.baseMapper.selectList(
+						Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, request.getChapterId()))
+				.stream().map(Section::getName).collect(Collectors.toSet());
+		AtomicInteger imported = new AtomicInteger(0);
+		List<Section> toSave = new ArrayList<>();
+		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
+			wb.getSheets().forEach(sheet -> {
+				try (Stream<Row> rows = sheet.openStream()) {
+					rows.forEach(r -> {
+						if (r.getRowNum() == 1) {
+							return; // 跳过表头
+						}
+						String name = r.getCellText(0);
+						if (!hasText(name) || existing.contains(name.trim())) {
+							return;
+						}
+						Section section = new Section();
+						section.setChapterId(request.getChapterId());
+						section.setName(name.trim());
+						section.setSort(r.getCellAsNumber(1).orElse(BigDecimal.ONE).intValue());
+						toSave.add(section);
+						if (toSave.size() >= 500) {
+							saveBatch(toSave);
+							imported.addAndGet(toSave.size());
+							toSave.clear();
+						}
+					});
+				}
+				catch (Exception e) {
+					throw new ValidationException("Excel 文件无法解析，请使用 Excel/WPS 导出的 .xlsx 文件");
+				}
+			});
+		}
+		catch (Exception e) {
+			throw new ValidationException("Excel 文件无法解析，请使用 Excel/WPS 导出的 .xlsx 文件");
+		}
+		if (!toSave.isEmpty()) {
+			saveBatch(toSave);
+			imported.addAndGet(toSave.size());
+		}
+		return imported.get();
 	}
 
 	/**

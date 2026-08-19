@@ -30,6 +30,7 @@
  */
 
 import request from './request';
+import axios from 'axios';
 
 // ============================================================
 // 学科
@@ -266,4 +267,62 @@ export async function saveKnowledgePointQuestions(data) {
  */
 export async function listKnowledgePointQuestions(knowledgePointId) {
   return request.get('/knowledge-point/questions', { params: { knowledgePointId } });
+}
+
+// ------------------------------------------------------------
+// 知识批量导入（Excel，multipart）
+// ------------------------------------------------------------
+
+/** 通用 multipart 导入请求（原生 axios，不经过 JSON 拦截器） */
+async function importExcel(url, formData) {
+  const response = await axios.post(url, formData, {
+    withCredentials: true,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  if (response.data?.code === 200) {
+    return response.data;
+  }
+  throw new Error(response.data?.message || '导入失败');
+}
+
+/**
+ * 批量导入章节（Excel 列：章节名/图标(选填)/排序(选填)，首行表头跳过）
+ * 后端接口: POST /api/chapter/import（按 subjectId+name 去重）
+ * @param {File} file - Excel 文件
+ * @param {String} subjectId - 目标学科 ID
+ * @returns {Object} data: 新增条数
+ */
+export async function importChapters(file, subjectId) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('subjectId', subjectId);
+  return importExcel('/api/chapter/import', formData);
+}
+
+/**
+ * 批量导入小节（Excel 列：小节名/排序(选填)，首行表头跳过）
+ * 后端接口: POST /api/section/import（按 chapterId+name 去重）
+ * @param {File} file - Excel 文件
+ * @param {String} chapterId - 目标章节 ID
+ * @returns {Object} data: 新增条数
+ */
+export async function importSections(file, chapterId) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('chapterId', chapterId);
+  return importExcel('/api/section/import', formData);
+}
+
+/**
+ * 批量导入知识点（Excel 列：知识点名/排序(选填)，首行表头跳过）
+ * 后端接口: POST /api/knowledge-point/import（按 sectionId+name 去重）
+ * @param {File} file - Excel 文件
+ * @param {String} sectionId - 目标小节 ID
+ * @returns {Object} data: 新增条数
+ */
+export async function importKnowledgePoints(file, sectionId) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('sectionId', sectionId);
+  return importExcel('/api/knowledge-point/import', formData);
 }

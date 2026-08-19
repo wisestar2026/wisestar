@@ -20,14 +20,17 @@
 import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, Select, InputNumber, Modal, Form, Tag, Typography, Popconfirm, message,
+  Upload,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, LinkOutlined, EyeOutlined,
+  ImportOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import {
   listSubjects, listChapters, createChapter, updateChapter, deleteChapter,
   listSections, saveChapterRepos, listChapterRepos,
+  importChapters,
 } from '../../api/knowledge';
 import { listRepo } from '../../api/repo';
 import { usePermission } from '../../utils/usePermission';
@@ -42,6 +45,7 @@ export default function ChapterManagePage() {
   const [subjectId, setSubjectId] = useState(undefined);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // null=新增, 对象=编辑
@@ -81,6 +85,20 @@ export default function ChapterManagePage() {
       setChapters(res?.data || []);
     }).catch(() => setChapters([])).finally(() => setLoading(false));
   }, [subjectId]);
+
+  // ---- Excel 批量导入 ----
+  const handleImport = (file) => {
+    if (!subjectId) { message.warning('请先选择学科后再导入'); return false; }
+    setImporting(true);
+    importChapters(file, subjectId)
+      .then((res) => {
+        message.success(`导入成功，新增 ${res?.data ?? 0} 个章节（同名已跳过）`);
+        listChapters({ subjectId }).then((res) => setChapters(res?.data || [])).catch(() => setChapters([]));
+      })
+      .catch((err) => message.error(err?.message || '导入失败'))
+      .finally(() => setImporting(false));
+    return false; // 阻止 antd 自动上传
+  };
 
   // ---- 打开新增/编辑弹窗 ----
   const openModal = (chapter = null) => {
@@ -228,7 +246,14 @@ export default function ChapterManagePage() {
           <Title level={4} style={{ margin: 0 }}>章节管理</Title>
           <Text type="secondary">管理各学科下的大单元（章节），进入后可管理小节</Text>
         </Space>
-        {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增章节</Button>)}
+        <Space>
+          {can('knowledge:create') && (
+            <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls">
+              <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
+            </Upload>
+          )}
+          {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增章节</Button>)}
+        </Space>
       </div>
 
       <Select

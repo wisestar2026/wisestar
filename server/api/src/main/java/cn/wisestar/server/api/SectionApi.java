@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.domain.dto.RepoView;
+import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
@@ -72,6 +73,25 @@ public class SectionApi {
 	@PreAuthorize("hasAuthority('knowledge:create')")
 	public String addSection(@RequestBody SectionRequest request) {
 		return sectionService.addSection(request);
+	}
+
+	/**
+	 * 批量导入小节（multipart 表单：chapterId + file）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/section/import。</p>
+	 *
+	 * <p><b>功能</b>：解析 Excel（列：小节名/排序(选填)，首行为表头跳过），
+	 * 按 chapterId+name 去重后批量写入 t_section。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('knowledge:create')。</p>
+	 *
+	 * @param request 导入请求（chapterId + Excel 文件）
+	 * @return 实际新增小节数
+	 */
+	@PostMapping("/import")
+	@PreAuthorize("hasAuthority('knowledge:create')")
+	public int importSections(SectionImportRequest request) {
+		return sectionService.importSections(request);
 	}
 
 	/**

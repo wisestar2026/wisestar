@@ -1,7 +1,9 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.domain.dto.TemplateView;
+import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
@@ -25,17 +27,26 @@ import cn.wisestar.server.service.KnowledgePointService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import org.dhatim.fastexcel.reader.ReadableWorkbook;
+import org.dhatim.fastexcel.reader.Row;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.validation.ValidationException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -99,6 +110,58 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		KnowledgePoint knowledgePoint = knowledgePointViewMapper.fromRequest(request);
 		save(knowledgePoint);
 		return knowledgePoint.getId();
+	}
+
+	/**
+	 * 批量导入知识点（Excel：知识点名/排序；按 sectionId+name 去重）。
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public int importKnowledgePoints(KnowledgePointImportRequest request) {
+		if (!hasText(request.getSectionId())) {
+			throw new ValidationException("请选择小节后再导入");
+		}
+		Set<String> existing = this.baseMapper.selectList(
+						Wrappers.<KnowledgePoint>lambdaQuery().eq(KnowledgePoint::getSectionId, request.getSectionId()))
+				.stream().map(KnowledgePoint::getName).collect(Collectors.toSet());
+		AtomicInteger imported = new AtomicInteger(0);
+		List<KnowledgePoint> toSave = new ArrayList<>();
+		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
+			wb.getSheets().forEach(sheet -> {
+				try (Stream<Row> rows = sheet.openStream()) {
+					rows.forEach(r -> {
+						if (r.getRowNum() == 1) {
+							return; // 跳过表头
+						}
+						String name = r.getCellText(0);
+						if (!hasText(name) || existing.contains(name.trim())) {
+							return;
+						}
+						KnowledgePoint point = new KnowledgePoint();
+						point.setSectionId(request.getSectionId());
+						point.setName(name.trim());
+						point.setSort(r.getCellAsNumber(1).orElse(BigDecimal.ONE).intValue());
+						toSave.add(point);
+						if (toSave.size() >= 500) {
+							saveBatch(toSave);
+							imported.addAndGet(toSave.size());
+							toSave.clear();
+						}
+					});
+				}
+				catch (Exception e) {
+					throw new ValidationException("Excel 文件无法解析，请使用 Excel/WPS 导出的 .xlsx 文件");
+				}
+			});
+		}
+		catch (Exception e) {
+			throw new ValidationException("Excel 文件无法解析，请使用 Excel/WPS 导出的 .xlsx 文件");
+		}
+		if (!toSave.isEmpty()) {
+			saveBatch(toSave);
+			imported.addAndGet(toSave.size());
+		}
+		return imported.get();
 	}
 
 	/**

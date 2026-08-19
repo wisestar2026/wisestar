@@ -2,6 +2,7 @@ package cn.wisestar.server.service;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.TemplateView;
+import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
@@ -36,6 +37,16 @@ public interface KnowledgePointService {
 	 * @return 新知识点 id
 	 */
 	String addKnowledgePoint(KnowledgePointRequest request);
+
+	/**
+	 * 批量导入知识点（Excel：知识点名/排序，首行表头跳过）。
+	 *
+	 * <p>按 sectionId + name 去重（已存在的同名知识点跳过），返回实际新增条数。</p>
+	 *
+	 * @param request 导入请求（sectionId + Excel 文件）
+	 * @return 新增知识点数
+	 */
+	int importKnowledgePoints(KnowledgePointImportRequest request);
 
 	/**
 	 * 更新知识点（含内容设置/图片地址）。

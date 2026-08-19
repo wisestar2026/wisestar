@@ -22,15 +22,18 @@
 import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, Divider, message,
+  Upload,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined,
   ApartmentOutlined, ArrowLeftOutlined, EyeOutlined,
+  ImportOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   listSubjects, listChapters, listSections, createSection, updateSection, deleteSection,
   saveSectionRepos, listSectionRepos, listKnowledgePoints,
+  importSections,
 } from '../../api/knowledge';
 import { listRepo } from '../../api/repo';
 import { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
@@ -51,6 +54,7 @@ export default function SectionManagePage() {
   const [chapterId, setChapterId] = useState(urlChapterId || undefined);
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -113,6 +117,20 @@ export default function SectionManagePage() {
 
   const subject = subjects.find((s) => s.id === subjectId);
   const chapter = chapters.find((c) => c.id === chapterId);
+
+  // ---- Excel 批量导入 ----
+  const handleImport = (file) => {
+    if (!chapterId) { message.warning('请先选择章节后再导入'); return false; }
+    setImporting(true);
+    importSections(file, chapterId)
+      .then((res) => {
+        message.success(`导入成功，新增 ${res?.data ?? 0} 个小节（同名已跳过）`);
+        listSections({ chapterId }).then((res2) => setSections(res2?.data || [])).catch(() => setSections([]));
+      })
+      .catch((err) => message.error(err?.message || '导入失败'))
+      .finally(() => setImporting(false));
+    return false; // 阻止 antd 自动上传
+  };
 
   // ---- 新增/编辑弹窗 ----
   const openModal = (section = null) => {
@@ -321,7 +339,14 @@ export default function SectionManagePage() {
             ]}
           />
         </Space>
-        {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>)}
+        <Space>
+          {can('knowledge:create') && (
+            <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls">
+              <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
+            </Upload>
+          )}
+          {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>)}
+        </Space>
       </div>
 
       {/* ---- 三级联动下拉（前两级） ---- */}

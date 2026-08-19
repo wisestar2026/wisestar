@@ -25,12 +25,14 @@ import {
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined,
   LinkOutlined, ArrowLeftOutlined, UploadOutlined, PictureOutlined,
+  ImportOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   listSubjects, listChapters, listSections, listKnowledgePoints,
   createKnowledgePoint, updateKnowledgePoint, deleteKnowledgePoint,
   saveKnowledgePointQuestions, listKnowledgePointQuestions,
+  importKnowledgePoints,
 } from '../../api/knowledge';
 import { listTemplate } from '../../api/template';
 import { uploadImage } from '../../api/upload';
@@ -67,6 +69,7 @@ export default function KnowledgePointManagePage() {
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // ---- 新增/编辑弹窗 ----
   const [modalOpen, setModalOpen] = useState(false);
@@ -141,6 +144,20 @@ export default function KnowledgePointManagePage() {
   const subject = useMemo(() => subjects.find((s) => s.id === subjectId), [subjects, subjectId]);
   const chapter = useMemo(() => chapters.find((c) => c.id === chapterId), [chapters, chapterId]);
   const section = useMemo(() => sections.find((s) => s.id === sectionId), [sections, sectionId]);
+
+  // ---- Excel 批量导入 ----
+  const handleImport = (file) => {
+    if (!sectionId) { message.warning('请先选择小节后再导入'); return false; }
+    setImporting(true);
+    importKnowledgePoints(file, sectionId)
+      .then((res) => {
+        message.success(`导入成功，新增 ${res?.data ?? 0} 个知识点（同名已跳过）`);
+        listKnowledgePoints({ current: 1, pageSize, sectionId }).then((res) => { setKps(res?.data?.list || []); setTotal(res?.data?.total || 0); }).catch(() => { setKps([]); setTotal(0); });
+      })
+      .catch((err) => message.error(err?.message || '导入失败'))
+      .finally(() => setImporting(false));
+    return false; // 阻止 antd 自动上传
+  };
 
   // ---- 新增/编辑 ----
   const openModal = (kp = null) => {
@@ -328,7 +345,14 @@ export default function KnowledgePointManagePage() {
             ]}
           />
         </Space>
-        {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增知识点</Button>)}
+        <Space>
+          {can('knowledge:create') && (
+            <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls">
+              <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
+            </Upload>
+          )}
+          {can('knowledge:create') && (<Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增知识点</Button>)}
+        </Space>
       </div>
 
       {/* ---- 三级联动下拉 ---- */}

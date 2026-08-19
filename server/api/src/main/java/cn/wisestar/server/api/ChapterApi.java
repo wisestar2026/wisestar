@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.domain.dto.RepoView;
+import cn.wisestar.server.domain.dto.knowledge.ChapterImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
@@ -72,6 +73,26 @@ public class ChapterApi {
 	@PreAuthorize("hasAuthority('knowledge:create')")
 	public String addChapter(@RequestBody ChapterRequest request) {
 		return chapterService.addChapter(request);
+	}
+
+	/**
+	 * 批量导入章节（multipart 表单：subjectId + file）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/import
+	 * （如 /api/chapter/import）。</p>
+	 *
+	 * <p><b>功能</b>：解析 Excel（列：章节名/图标(选填)/排序(选填)，
+	 * 首行为表头跳过），按 subjectId+name 去重后批量写入 t_chapter。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('knowledge:create')。</p>
+	 *
+	 * @param request 导入请求（subjectId + Excel 文件）
+	 * @return 实际新增章节数
+	 */
+	@PostMapping("/import")
+	@PreAuthorize("hasAuthority('knowledge:create')")
+	public int importChapters(ChapterImportRequest request) {
+		return chapterService.importChapters(request);
 	}
 
 	/**

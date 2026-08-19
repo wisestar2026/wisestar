@@ -2,6 +2,7 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.TemplateView;
+import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
@@ -78,6 +79,25 @@ public class KnowledgePointApi {
 	@PreAuthorize("hasAuthority('knowledge:create')")
 	public String addKnowledgePoint(@RequestBody KnowledgePointRequest request) {
 		return knowledgePointService.addKnowledgePoint(request);
+	}
+
+	/**
+	 * 批量导入知识点（multipart 表单：sectionId + file）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/knowledgePoint/import。</p>
+	 *
+	 * <p><b>功能</b>：解析 Excel（列：知识点名/排序(选填)，首行为表头跳过），
+	 * 按 sectionId+name 去重后批量写入 t_knowledge_point。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('knowledge:create')。</p>
+	 *
+	 * @param request 导入请求（sectionId + Excel 文件）
+	 * @return 实际新增知识点数
+	 */
+	@PostMapping("/import")
+	@PreAuthorize("hasAuthority('knowledge:create')")
+	public int importKnowledgePoints(KnowledgePointImportRequest request) {
+		return knowledgePointService.importKnowledgePoints(request);
 	}
 
 	/**
