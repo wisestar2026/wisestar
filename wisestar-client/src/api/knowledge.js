@@ -286,43 +286,37 @@ async function importExcel(url, formData) {
 }
 
 /**
- * 批量导入章节（Excel 列：章节名/图标(选填)/排序(选填)，首行表头跳过）
- * 后端接口: POST /api/chapter/import（按 subjectId+name 去重）
+ * 批量导入章节（Excel 列：学科名/章节名/图标(选填)/排序(选填)，首行表头跳过）
+ * 后端接口: POST /api/chapter/import（按学科+章节名去重，归属由学科名列匹配）
  * @param {File} file - Excel 文件
- * @param {String} subjectId - 目标学科 ID
- * @returns {Object} data: 新增条数
+ * @returns {Object} data: { imported, skipped }
  */
-export async function importChapters(file, subjectId) {
+export async function importChapters(file) {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('subjectId', subjectId);
   return importExcel('/api/chapter/import', formData);
 }
 
 /**
- * 批量导入小节（Excel 列：小节名/排序(选填)，首行表头跳过）
- * 后端接口: POST /api/section/import（按 chapterId+name 去重）
+ * 批量导入小节（Excel 列：学科名/章节名/小节名/排序(选填)，首行表头跳过）
+ * 后端接口: POST /api/section/import（按学科+章节名定位归属，章节内重名跳过）
  * @param {File} file - Excel 文件
- * @param {String} chapterId - 目标章节 ID
- * @returns {Object} data: 新增条数
+ * @returns {Object} data: { imported, skipped }
  */
-export async function importSections(file, chapterId) {
+export async function importSections(file) {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('chapterId', chapterId);
   return importExcel('/api/section/import', formData);
 }
 
 /**
- * 批量导入知识点（Excel 列：知识点名/排序(选填)，首行表头跳过）
- * 后端接口: POST /api/knowledge-point/import（按 sectionId+name 去重）
+ * 批量导入知识点（Excel 列：学科名/章节名/小节名/知识点名/排序(选填)，首行表头跳过）
+ * 后端接口: POST /api/knowledge-point/import（按学科+章节+小节名定位归属，小节内重名跳过）
  * @param {File} file - Excel 文件
- * @param {String} sectionId - 目标小节 ID
- * @returns {Object} data: 新增条数
+ * @returns {Object} data: { imported, skipped }
  */
-export async function importKnowledgePoints(file, sectionId) {
+export async function importKnowledgePoints(file) {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('sectionId', sectionId);
   return importExcel('/api/knowledge-point/import', formData);
 }

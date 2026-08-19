@@ -3,6 +3,7 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.domain.dto.TemplateView;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
@@ -117,14 +118,17 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public int importKnowledgePoints(KnowledgePointImportRequest request) {
-		if (!hasText(request.getSectionId())) {
-			throw new ValidationException("请选择小节后再导入");
-		}
-		Set<String> existing = this.baseMapper.selectList(
-						Wrappers.<KnowledgePoint>lambdaQuery().eq(KnowledgePoint::getSectionId, request.getSectionId()))
-				.stream().map(KnowledgePoint::getName).collect(Collectors.toSet());
+	public ImportResultView importKnowledgePoints(KnowledgePointImportRequest request) {
+		Map<String, String> subjectCache = subjectMapper.selectList(null).stream()
+				.collect(Collectors.toMap(Subject::getName, Subject::getId, (a, b) -> a));
+		Map<String, String> chapterCache = chapterMapper.selectList(null).stream()
+				.collect(Collectors.toMap(c -> c.getSubjectId() + "|" + c.getName(), Chapter::getId, (a, b) -> a));
+		Map<String, String> sectionCache = sectionMapper.selectList(null).stream()
+				.collect(Collectors.toMap(s -> s.getChapterId() + "|" + s.getName(), Section::getId, (a, b) -> a));
+		Set<String> existing = this.baseMapper.selectList(null).stream()
+				.map(k -> k.getSectionId() + "|" + k.getName()).collect(Collectors.toSet());
 		AtomicInteger imported = new AtomicInteger(0);
+		AtomicInteger skipped = new AtomicInteger(0);
 		List<KnowledgePoint> toSave = new ArrayList<>();
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
@@ -133,14 +137,27 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 						if (r.getRowNum() == 1) {
 							return; // 跳过表头
 						}
-						String name = r.getCellText(0);
-						if (!hasText(name) || existing.contains(name.trim())) {
+						String subjectName = r.getCellText(0);
+						String chapterName = r.getCellText(1);
+						String sectionName = r.getCellText(2);
+						String name = r.getCellText(3);
+						if (!hasText(subjectName) || !hasText(chapterName) || !hasText(sectionName) || !hasText(name)) {
+							skipped.incrementAndGet();
 							return;
 						}
+						String subjectId = subjectCache.get(subjectName.trim());
+						String chapterId = subjectId == null ? null : chapterCache.get(subjectId + "|" + chapterName.trim());
+						String sectionId = chapterId == null ? null : sectionCache.get(chapterId + "|" + sectionName.trim());
+						String key = (sectionId == null ? "?" : sectionId) + "|" + name.trim();
+						if (sectionId == null || existing.contains(key)) {
+							skipped.incrementAndGet();
+							return;
+						}
+						existing.add(key);
 						KnowledgePoint point = new KnowledgePoint();
-						point.setSectionId(request.getSectionId());
+						point.setSectionId(sectionId);
 						point.setName(name.trim());
-						point.setSort(r.getCellAsNumber(1).orElse(BigDecimal.ONE).intValue());
+						point.setSort(r.getCellAsNumber(4).orElse(BigDecimal.ONE).intValue());
 						toSave.add(point);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -161,7 +178,7 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 			saveBatch(toSave);
 			imported.addAndGet(toSave.size());
 		}
-		return imported.get();
+		return new ImportResultView(imported.get(), skipped.get());
 	}
 
 	/**

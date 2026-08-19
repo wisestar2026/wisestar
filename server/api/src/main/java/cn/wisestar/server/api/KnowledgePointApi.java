@@ -3,6 +3,7 @@ package cn.wisestar.server.api;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.TemplateView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
@@ -96,7 +97,7 @@ public class KnowledgePointApi {
 	 */
 	@PostMapping("/import")
 	@PreAuthorize("hasAuthority('knowledge:create')")
-	public int importKnowledgePoints(KnowledgePointImportRequest request) {
+	public ImportResultView importKnowledgePoints(KnowledgePointImportRequest request) {
 		return knowledgePointService.importKnowledgePoints(request);
 	}
 

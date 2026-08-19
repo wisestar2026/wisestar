@@ -6,6 +6,7 @@ import cn.wisestar.server.domain.dto.knowledge.ChapterImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.mapper.ChapterViewMapper;
 import cn.wisestar.server.domain.mapper.RepoViewMapper;
 import cn.wisestar.server.domain.model.Chapter;
@@ -15,12 +16,14 @@ import cn.wisestar.server.domain.model.KnowledgePointQuestion;
 import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionRepo;
+import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.ChapterRepoMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
 import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.SectionMapper;
+import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.ChapterService;
@@ -85,6 +88,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 
 	private final RepoMapper repoMapper;
 
+	private final SubjectMapper subjectMapper;
+
 	/**
 	 * 章节列表（按学科过滤，sort 升序），并统计各章节下小节数与已绑定题库数。
 	 */
@@ -126,14 +131,13 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public int importChapters(ChapterImportRequest request) {
-		if (!hasText(request.getSubjectId())) {
-			throw new ValidationException("请选择学科后再导入");
-		}
-		Set<String> existing = this.baseMapper.selectList(
-						Wrappers.<Chapter>lambdaQuery().eq(Chapter::getSubjectId, request.getSubjectId()))
-				.stream().map(Chapter::getName).collect(Collectors.toSet());
+	public ImportResultView importChapters(ChapterImportRequest request) {
+		Map<String, String> subjectCache = subjectMapper.selectList(null).stream()
+				.collect(Collectors.toMap(Subject::getName, Subject::getId, (a, b) -> a));
+		Set<String> existing = this.baseMapper.selectList(null).stream()
+				.map(c -> c.getSubjectId() + "|" + c.getName()).collect(Collectors.toSet());
 		AtomicInteger imported = new AtomicInteger(0);
+		AtomicInteger skipped = new AtomicInteger(0);
 		List<Chapter> toSave = new ArrayList<>();
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
@@ -142,16 +146,25 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 						if (r.getRowNum() == 1) {
 							return; // 跳过表头
 						}
-						String name = r.getCellText(0);
-						if (!hasText(name) || existing.contains(name.trim())) {
+						String subjectName = r.getCellText(0);
+						String name = r.getCellText(1);
+						if (!hasText(subjectName) || !hasText(name)) {
+							skipped.incrementAndGet();
 							return;
 						}
+						String subjectId = subjectCache.get(subjectName.trim());
+						String key = (subjectId == null ? "?" : subjectId) + "|" + name.trim();
+						if (subjectId == null || existing.contains(key)) {
+							skipped.incrementAndGet();
+							return;
+						}
+						existing.add(key);
 						Chapter chapter = new Chapter();
-						chapter.setSubjectId(request.getSubjectId());
+						chapter.setSubjectId(subjectId);
 						chapter.setName(name.trim());
-						String icon = r.getCellText(1);
+						String icon = r.getCellText(2);
 						chapter.setIcon(hasText(icon) ? icon : null);
-						chapter.setSort(r.getCellAsNumber(2).orElse(BigDecimal.ONE).intValue());
+						chapter.setSort(r.getCellAsNumber(3).orElse(BigDecimal.ONE).intValue());
 						toSave.add(chapter);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -172,7 +185,7 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 			saveBatch(toSave);
 			imported.addAndGet(toSave.size());
 		}
-		return imported.get();
+		return new ImportResultView(imported.get(), skipped.get());
 	}
 
 	/**

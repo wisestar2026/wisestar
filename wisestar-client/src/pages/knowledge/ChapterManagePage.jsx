@@ -89,12 +89,12 @@ export default function ChapterManagePage() {
 
   // ---- Excel 批量导入 ----
   const handleImport = (file) => {
-    if (!subjectId) { message.warning('请先选择学科后再导入'); return false; }
     setImporting(true);
-    importChapters(file, subjectId)
+    importChapters(file)
       .then((res) => {
-        message.success(`导入成功，新增 ${res?.data ?? 0} 个章节（同名已跳过）`);
-        listChapters({ subjectId }).then((res) => setChapters(res?.data || [])).catch(() => setChapters([]));
+        const d = res?.data || {};
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个章节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
+        listChapters({ subjectId }).then((res2) => setChapters(res2?.data || [])).catch(() => setChapters([]));
       })
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));

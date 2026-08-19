@@ -2,6 +2,7 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.ChapterImportRequest;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
@@ -91,7 +92,7 @@ public class ChapterApi {
 	 */
 	@PostMapping("/import")
 	@PreAuthorize("hasAuthority('knowledge:create')")
-	public int importChapters(ChapterImportRequest request) {
+	public ImportResultView importChapters(ChapterImportRequest request) {
 		return chapterService.importChapters(request);
 	}
 

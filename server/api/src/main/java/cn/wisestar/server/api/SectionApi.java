@@ -2,6 +2,7 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
@@ -90,7 +91,7 @@ public class SectionApi {
 	 */
 	@PostMapping("/import")
 	@PreAuthorize("hasAuthority('knowledge:create')")
-	public int importSections(SectionImportRequest request) {
+	public ImportResultView importSections(SectionImportRequest request) {
 		return sectionService.importSections(request);
 	}
 

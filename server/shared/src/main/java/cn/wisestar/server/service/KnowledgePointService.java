@@ -3,6 +3,7 @@ package cn.wisestar.server.service;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.TemplateView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
@@ -44,9 +45,9 @@ public interface KnowledgePointService {
 	 * <p>按 sectionId + name 去重（已存在的同名知识点跳过），返回实际新增条数。</p>
 	 *
 	 * @param request 导入请求（sectionId + Excel 文件）
-	 * @return 新增知识点数
+	 * @return 导入结果（新增/跳过条数）
 	 */
-	int importKnowledgePoints(KnowledgePointImportRequest request);
+	ImportResultView importKnowledgePoints(KnowledgePointImportRequest request);
 
 	/**
 	 * 更新知识点（含内容设置/图片地址）。

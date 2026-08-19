@@ -2,6 +2,7 @@ package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.ChapterImportRequest;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
@@ -38,9 +39,9 @@ public interface ChapterService {
 	 * <p>按 subjectId + name 去重（已存在的同名章节跳过），返回实际新增条数。</p>
 	 *
 	 * @param request 导入请求（subjectId + Excel 文件）
-	 * @return 新增章节数
+	 * @return 导入结果（新增/跳过条数）
 	 */
-	int importChapters(ChapterImportRequest request);
+	ImportResultView importChapters(ChapterImportRequest request);
 
 	/**
 	 * 更新章节。

@@ -2,6 +2,7 @@ package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
@@ -38,9 +39,9 @@ public interface SectionService {
 	 * <p>按 chapterId + name 去重（已存在的同名小节跳过），返回实际新增条数。</p>
 	 *
 	 * @param request 导入请求（chapterId + Excel 文件）
-	 * @return 新增小节数
+	 * @return 导入结果（新增/跳过条数）
 	 */
-	int importSections(SectionImportRequest request);
+	ImportResultView importSections(SectionImportRequest request);
 
 	/**
 	 * 更新小节（含内容设置/练习设置 JSON）。

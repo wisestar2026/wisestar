@@ -148,12 +148,12 @@ export default function KnowledgePointManagePage() {
 
   // ---- Excel 批量导入 ----
   const handleImport = (file) => {
-    if (!sectionId) { message.warning('请先选择小节后再导入'); return false; }
     setImporting(true);
-    importKnowledgePoints(file, sectionId)
+    importKnowledgePoints(file)
       .then((res) => {
-        message.success(`导入成功，新增 ${res?.data ?? 0} 个知识点（同名已跳过）`);
-        listKnowledgePoints({ current: 1, pageSize, sectionId }).then((res) => { setKps(res?.data?.list || []); setTotal(res?.data?.total || 0); }).catch(() => { setKps([]); setTotal(0); });
+        const d = res?.data || {};
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个知识点，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
+        listKnowledgePoints({ current: 1, pageSize, sectionId }).then((res2) => { setKps(res2?.data?.list || []); setTotal(res2?.data?.total || 0); }).catch(() => { setKps([]); setTotal(0); });
       })
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));

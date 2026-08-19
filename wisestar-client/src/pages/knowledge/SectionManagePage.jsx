@@ -121,11 +121,11 @@ export default function SectionManagePage() {
 
   // ---- Excel 批量导入 ----
   const handleImport = (file) => {
-    if (!chapterId) { message.warning('请先选择章节后再导入'); return false; }
     setImporting(true);
-    importSections(file, chapterId)
+    importSections(file)
       .then((res) => {
-        message.success(`导入成功，新增 ${res?.data ?? 0} 个小节（同名已跳过）`);
+        const d = res?.data || {};
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个小节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
         listSections({ chapterId }).then((res2) => setSections(res2?.data || [])).catch(() => setSections([]));
       })
       .catch((err) => message.error(err?.message || '导入失败'))

@@ -6,17 +6,22 @@ import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
+import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.mapper.RepoViewMapper;
 import cn.wisestar.server.domain.mapper.SectionViewMapper;
 import cn.wisestar.server.domain.model.KnowledgePoint;
 import cn.wisestar.server.domain.model.KnowledgePointQuestion;
 import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.Section;
+import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.SectionRepo;
+import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
 import cn.wisestar.server.mapper.RepoMapper;
+import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.SectionMapper;
+import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.SectionService;
@@ -77,6 +82,10 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 
 	private final RepoMapper repoMapper;
 
+	private final SubjectMapper subjectMapper;
+
+	private final ChapterMapper chapterMapper;
+
 	/**
 	 * 小节列表（按章节过滤，sort 升序），并统计各小节下知识点数与已绑定题库数。
 	 */
@@ -117,14 +126,15 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public int importSections(SectionImportRequest request) {
-		if (!hasText(request.getChapterId())) {
-			throw new ValidationException("请选择章节后再导入");
-		}
-		Set<String> existing = this.baseMapper.selectList(
-						Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, request.getChapterId()))
-				.stream().map(Section::getName).collect(Collectors.toSet());
+	public ImportResultView importSections(SectionImportRequest request) {
+		Map<String, String> subjectCache = subjectMapper.selectList(null).stream()
+				.collect(Collectors.toMap(Subject::getName, Subject::getId, (a, b) -> a));
+		Map<String, String> chapterCache = chapterMapper.selectList(null).stream()
+				.collect(Collectors.toMap(c -> c.getSubjectId() + "|" + c.getName(), Chapter::getId, (a, b) -> a));
+		Set<String> existing = this.baseMapper.selectList(null).stream()
+				.map(s -> s.getChapterId() + "|" + s.getName()).collect(Collectors.toSet());
 		AtomicInteger imported = new AtomicInteger(0);
+		AtomicInteger skipped = new AtomicInteger(0);
 		List<Section> toSave = new ArrayList<>();
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
@@ -133,14 +143,25 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						if (r.getRowNum() == 1) {
 							return; // 跳过表头
 						}
-						String name = r.getCellText(0);
-						if (!hasText(name) || existing.contains(name.trim())) {
+						String subjectName = r.getCellText(0);
+						String chapterName = r.getCellText(1);
+						String name = r.getCellText(2);
+						if (!hasText(subjectName) || !hasText(chapterName) || !hasText(name)) {
+							skipped.incrementAndGet();
 							return;
 						}
+						String subjectId = subjectCache.get(subjectName.trim());
+						String chapterId = subjectId == null ? null : chapterCache.get(subjectId + "|" + chapterName.trim());
+						String key = (chapterId == null ? "?" : chapterId) + "|" + name.trim();
+						if (chapterId == null || existing.contains(key)) {
+							skipped.incrementAndGet();
+							return;
+						}
+						existing.add(key);
 						Section section = new Section();
-						section.setChapterId(request.getChapterId());
+						section.setChapterId(chapterId);
 						section.setName(name.trim());
-						section.setSort(r.getCellAsNumber(1).orElse(BigDecimal.ONE).intValue());
+						section.setSort(r.getCellAsNumber(3).orElse(BigDecimal.ONE).intValue());
 						toSave.add(section);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -161,7 +182,7 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 			saveBatch(toSave);
 			imported.addAndGet(toSave.size());
 		}
-		return imported.get();
+		return new ImportResultView(imported.get(), skipped.get());
 	}
 
 	/**
