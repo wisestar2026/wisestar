@@ -28,6 +28,7 @@ import {
   PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined,
   ApartmentOutlined, ArrowLeftOutlined, EyeOutlined,
   ImportOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -340,6 +341,11 @@ export default function SectionManagePage() {
           />
         </Space>
         <Space>
+          {can('knowledge:create') && (
+            <Button icon={<DownloadOutlined />} href="/templates/section-import-template.xlsx" download>
+              模板下载
+            </Button>
+          )}
           {can('knowledge:create') && (
             <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls">
               <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>

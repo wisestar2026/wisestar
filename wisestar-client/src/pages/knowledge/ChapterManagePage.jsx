@@ -25,6 +25,7 @@ import {
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, LinkOutlined, EyeOutlined,
   ImportOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -247,6 +248,11 @@ export default function ChapterManagePage() {
           <Text type="secondary">管理各学科下的大单元（章节），进入后可管理小节</Text>
         </Space>
         <Space>
+          {can('knowledge:create') && (
+            <Button icon={<DownloadOutlined />} href="/templates/chapter-import-template.xlsx" download>
+              模板下载
+            </Button>
+          )}
           {can('knowledge:create') && (
             <Upload beforeUpload={handleImport} showUploadList={false} accept=".xlsx,.xls">
               <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
