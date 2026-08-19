@@ -46,8 +46,8 @@ export default defineConfig(({ mode }) => {
       // 匹配所有 /api 开头的请求
       '/api': {
         // 转发目标：后端 Spring Boot 服务地址
-        // 默认 localhost:7007（用户本地 dev），可通过 .env.local 中 API_TARGET 覆盖
-        target: env.API_TARGET || 'http://localhost:7007',
+        // 默认 localhost:1991（后端 preview 服务），可通过 .env.local 中 API_TARGET 覆盖
+        target: env.API_TARGET || 'http://localhost:1991',
         // 修改请求头中的 Host 为目标地址（避免后端校验 Host 失败）
         changeOrigin: true,
         // 注意: 不设置 rewrite，保留 /api 前缀，后端接口路径本身就是 /api/xxx
