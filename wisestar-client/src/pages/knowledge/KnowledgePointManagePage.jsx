@@ -60,6 +60,11 @@ export default function KnowledgePointManagePage() {
   const [subjects, setSubjects] = useState([]);
   const [chapters, setChapters] = useState([]);
   const [sections, setSections] = useState([]);
+  // 弹窗内「学科→章节→小节」联动状态（与顶部筛选独立）
+  const [dialogSubjectId, setDialogSubjectId] = useState(undefined);
+  const [dialogChapterId, setDialogChapterId] = useState(undefined);
+  const [dialogChapters, setDialogChapters] = useState([]);
+  const [dialogSections, setDialogSections] = useState([]);
   const [subjectId, setSubjectId] = useState(urlSubjectId || undefined);
   const [chapterId, setChapterId] = useState(urlChapterId || undefined);
   const [sectionId, setSectionId] = useState(urlSectionId || undefined);
@@ -146,14 +151,7 @@ export default function KnowledgePointManagePage() {
   const chapter = useMemo(() => chapters.find((c) => c.id === chapterId), [chapters, chapterId]);
   const section = useMemo(() => sections.find((s) => s.id === sectionId), [sections, sectionId]);
 
-  // 弹窗所属小节选项：当前筛选下的小节 + 编辑时原归属小节（不在列表时补充显示）
-  const sectionOptions = useMemo(() => {
-    const opts = sections.map((s) => ({ value: s.id, label: s.name }));
-    if (editing && !opts.some((o) => o.value === editing.sectionId)) {
-      opts.push({ value: editing.sectionId, label: editing.sectionName || '(原归属小节)' });
-    }
-    return opts;
-  }, [sections, editing]);
+
 
   // ---- Excel 批量导入 ----
   const handleImport = (file) => {
@@ -174,17 +172,79 @@ export default function KnowledgePointManagePage() {
     setEditing(kp);
     setModalOpen(true);
     if (kp) {
+      form.resetFields();
       form.setFieldsValue({ sectionId: kp.sectionId, name: kp.name, sort: kp.sort });
+      // 编辑：反查归属（小节→章节→学科）
+      listSections().then((res) => {
+        const allSec = res?.data || [];
+        const sec = allSec.find((x) => x.id === kp.sectionId);
+        if (sec) {
+          setDialogChapterId(sec.chapterId);
+          setDialogSections(allSec.filter((x) => x.chapterId === sec.chapterId));
+          listChapters().then((res2) => {
+            const allCh = res2?.data || [];
+            const ch = allCh.find((c) => c.id === sec.chapterId);
+            if (ch) {
+              setDialogSubjectId(ch.subjectId);
+              setDialogChapters(allCh.filter((c) => c.subjectId === ch.subjectId));
+            } else {
+              setDialogSubjectId(undefined);
+              setDialogChapters(allCh);
+            }
+          });
+        } else {
+          setDialogSubjectId(undefined);
+          setDialogChapterId(undefined);
+          setDialogChapters([]);
+          setDialogSections(allSec);
+        }
+      });
     } else {
       form.resetFields();
       form.setFieldsValue({ sectionId: sectionId || undefined, sort: kps.length + 1 });
+      setDialogSubjectId(subjectId || undefined);
+      setDialogChapterId(chapterId || undefined);
+      if (subjectId) {
+        listChapters({ subjectId }).then((res) => setDialogChapters(res?.data || []));
+      } else {
+        setDialogChapters([]);
+      }
+      if (chapterId) {
+        listSections({ chapterId }).then((res) => setDialogSections(res?.data || []));
+      } else {
+        setDialogSections([]);
+      }
+    }
+  };
+
+  // 弹窗内学科切换 → 联动章节
+  const handleDialogSubjectChange = (val) => {
+    setDialogSubjectId(val);
+    setDialogChapterId(undefined);
+    form.setFieldsValue({ chapterId: undefined, sectionId: undefined });
+    setDialogSections([]);
+    if (val) {
+      listChapters({ subjectId: val }).then((res) => setDialogChapters(res?.data || []));
+    } else {
+      setDialogChapters([]);
+    }
+  };
+
+  // 弹窗内章节切换 → 联动小节
+  const handleDialogChapterChange = (val) => {
+    setDialogChapterId(val);
+    form.setFieldsValue({ sectionId: undefined });
+    if (val) {
+      listSections({ chapterId: val }).then((res) => setDialogSections(res?.data || []));
+    } else {
+      setDialogSections([]);
     }
   };
 
   const handleSave = () => {
     form.validateFields().then((values) => {
-      if (!values.sectionId) {
-        message.warning('请选择所属小节');
+      if (!values.subjectId || !values.chapterId || !values.sectionId) {
+        message.warning('请选择所属学科、章节与小节');
         return;
       }
       if (editing) {
@@ -419,10 +479,28 @@ export default function KnowledgePointManagePage() {
       {/* 新增/编辑知识点弹窗 */}
       <Modal title={editing ? '编辑知识点' : '新增知识点'} open={modalOpen} onOk={handleSave} onCancel={() => setModalOpen(false)} okText="保存" cancelText="取消" destroyOnClose>
         <Form form={form} layout="vertical">
+          <Form.Item name="subjectId" label="所属学科" rules={[{ required: true, message: '请选择所属学科' }]}>
+            <Select
+              placeholder="选择所属学科（与导入 Excel 的「学科名」对应）"
+              value={dialogSubjectId}
+              onChange={handleDialogSubjectChange}
+              options={subjects.map((sub) => ({ value: sub.id, label: `${sub.icon || ''} ${sub.name}` }))}
+              showSearch optionFilterProp="label"
+            />
+          </Form.Item>
+          <Form.Item name="chapterId" label="所属章节" rules={[{ required: true, message: '请选择所属章节' }]}>
+            <Select
+              placeholder="先选学科，再选所属章节（与导入 Excel 的「章节名」对应）"
+              value={dialogChapterId}
+              onChange={handleDialogChapterChange}
+              options={dialogChapters.map((c) => ({ value: c.id, label: `${c.icon || ''} ${c.name}` }))}
+              showSearch optionFilterProp="label"
+            />
+          </Form.Item>
           <Form.Item name="sectionId" label="所属小节" rules={[{ required: true, message: '请选择所属小节' }]}>
             <Select
-              placeholder="选择所属小节（与导入 Excel 的「小节名」对应）"
-              options={sectionOptions}
+              placeholder="先选章节，再选所属小节（与导入 Excel 的「小节名」对应）"
+              options={dialogSections.map((sec) => ({ value: sec.id, label: sec.name }))}
               showSearch optionFilterProp="label"
             />
           </Form.Item>

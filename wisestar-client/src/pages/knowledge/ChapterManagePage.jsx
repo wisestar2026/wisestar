@@ -106,26 +106,30 @@ export default function ChapterManagePage() {
     setEditing(chapter);
     setModalOpen(true);
     if (chapter) {
-      form.setFieldsValue({ name: chapter.name, icon: chapter.icon, sort: chapter.sort });
+      form.setFieldsValue({ subjectId: chapter.subjectId, name: chapter.name, icon: chapter.icon, sort: chapter.sort });
     } else {
       form.resetFields();
-      form.setFieldsValue({ icon: '📖', sort: chapters.length + 1 });
+      form.setFieldsValue({ subjectId: subjectId || undefined, icon: '📖', sort: chapters.length + 1 });
     }
   };
 
   const handleSave = () => {
     form.validateFields().then((values) => {
+      if (!values.subjectId) {
+        message.warning('请选择所属学科');
+        return;
+      }
       if (editing) {
-        updateChapter({ ...values, id: editing.id, subjectId }).then(() => {
+        updateChapter({ ...values, id: editing.id }).then(() => {
           message.success('章节已更新');
           setModalOpen(false);
           setChapters((prev) => prev.map((c) => (c.id === editing.id ? { ...c, ...values } : c)));
         });
       } else {
-        createChapter({ ...values, subjectId }).then(() => {
+        createChapter(values).then(() => {
           message.success('章节已新增');
           setModalOpen(false);
-          listChapters({ subjectId }).then((res) => setChapters(res?.data || []));
+          listChapters({ subjectId: values.subjectId }).then((res) => setChapters(res?.data || []));
         });
       }
     });
@@ -290,6 +294,13 @@ export default function ChapterManagePage() {
         destroyOnClose
       >
         <Form form={form} layout="vertical">
+          <Form.Item name="subjectId" label="所属学科" rules={[{ required: true, message: '请选择所属学科' }]}>
+            <Select
+              placeholder="选择所属学科（与导入 Excel 的「学科名」对应）"
+              options={subjects.map((sub) => ({ value: sub.id, label: `${sub.icon || ''} ${sub.name}` }))}
+              showSearch optionFilterProp="label"
+            />
+          </Form.Item>
           <Form.Item name="name" label="章节名称" rules={[{ required: true, message: '请输入章节名称' }]}>
             <Input placeholder="如：100以内加减法" maxLength={30} />
           </Form.Item>
