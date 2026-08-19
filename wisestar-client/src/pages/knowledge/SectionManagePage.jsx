@@ -138,26 +138,34 @@ export default function SectionManagePage() {
     setEditing(section);
     setModalOpen(true);
     if (section) {
-      form.setFieldsValue({ name: section.name, sort: section.sort });
+      form.setFieldsValue({
+        chapterId: section.chapterId,
+        name: section.name,
+        sort: section.sort,
+      });
     } else {
       form.resetFields();
-      form.setFieldsValue({ sort: sections.length + 1 });
+      form.setFieldsValue({ chapterId: chapterId || undefined, sort: sections.length + 1 });
     }
   };
 
   const handleSave = () => {
     form.validateFields().then((values) => {
+      if (!values.chapterId) {
+        message.warning('请选择所属章节');
+        return;
+      }
       if (editing) {
-        updateSection({ ...values, id: editing.id, chapterId }).then(() => {
+        updateSection({ ...values, id: editing.id }).then(() => {
           message.success('小节已更新');
           setModalOpen(false);
           setSections((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...values } : s)));
         });
       } else {
-        createSection({ ...values, chapterId }).then(() => {
+        createSection(values).then(() => {
           message.success('小节已新增');
           setModalOpen(false);
-          listSections({ chapterId }).then((res) => setSections(res?.data || []));
+          listSections({ chapterId: values.chapterId }).then((res) => setSections(res?.data || []));
         });
       }
     });
@@ -385,6 +393,13 @@ export default function SectionManagePage() {
       {/* 新增/编辑小节弹窗 */}
       <Modal title={editing ? '编辑小节' : '新增小节'} open={modalOpen} onOk={handleSave} onCancel={() => setModalOpen(false)} okText="保存" cancelText="取消" destroyOnClose>
         <Form form={form} layout="vertical">
+          <Form.Item name="chapterId" label="所属章节" rules={[{ required: true, message: '请选择所属章节' }]}>
+            <Select
+              placeholder="选择所属章节（与导入 Excel 的「章节名」对应）"
+              options={chapters.map((c) => ({ value: c.id, label: `${c.icon || ''} ${c.name}` }))}
+              showSearch optionFilterProp="label"
+            />
+          </Form.Item>
           <Form.Item name="name" label="小节名称" rules={[{ required: true, message: '请输入小节名称' }]}>
             <Input placeholder="如：加法小站" maxLength={30} />
           </Form.Item>

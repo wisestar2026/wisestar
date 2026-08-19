@@ -146,6 +146,15 @@ export default function KnowledgePointManagePage() {
   const chapter = useMemo(() => chapters.find((c) => c.id === chapterId), [chapters, chapterId]);
   const section = useMemo(() => sections.find((s) => s.id === sectionId), [sections, sectionId]);
 
+  // 弹窗所属小节选项：当前筛选下的小节 + 编辑时原归属小节（不在列表时补充显示）
+  const sectionOptions = useMemo(() => {
+    const opts = sections.map((s) => ({ value: s.id, label: s.name }));
+    if (editing && !opts.some((o) => o.value === editing.sectionId)) {
+      opts.push({ value: editing.sectionId, label: editing.sectionName || '(原归属小节)' });
+    }
+    return opts;
+  }, [sections, editing]);
+
   // ---- Excel 批量导入 ----
   const handleImport = (file) => {
     setImporting(true);
@@ -165,27 +174,30 @@ export default function KnowledgePointManagePage() {
     setEditing(kp);
     setModalOpen(true);
     if (kp) {
-      form.setFieldsValue({ name: kp.name, sort: kp.sort });
+      form.setFieldsValue({ sectionId: kp.sectionId, name: kp.name, sort: kp.sort });
     } else {
       form.resetFields();
-      form.setFieldsValue({ sort: kps.length + 1 });
+      form.setFieldsValue({ sectionId: sectionId || undefined, sort: kps.length + 1 });
     }
   };
 
   const handleSave = () => {
     form.validateFields().then((values) => {
+      if (!values.sectionId) {
+        message.warning('请选择所属小节');
+        return;
+      }
       if (editing) {
-        updateKnowledgePoint({ ...values, id: editing.id, sectionId: editing.sectionId }).then(() => {
+        updateKnowledgePoint({ ...values, id: editing.id }).then(() => {
           message.success('知识点已更新');
           setModalOpen(false);
           setKps((prev) => prev.map((k) => (k.id === editing.id ? { ...k, ...values } : k)));
         });
       } else {
-        if (!sectionId) { message.warning('请先选择小节，知识点必须归属到小节下'); return; }
-        createKnowledgePoint({ ...values, sectionId }).then(() => {
+        createKnowledgePoint(values).then(() => {
           message.success('知识点已新增');
           setModalOpen(false);
-          listKnowledgePoints({ current, pageSize, sectionId }).then((res) => {
+          listKnowledgePoints({ current, pageSize, sectionId: values.sectionId }).then((res) => {
             setKps(res?.data?.list || []);
             setTotal(res?.data?.total || 0);
           });
@@ -407,6 +419,13 @@ export default function KnowledgePointManagePage() {
       {/* 新增/编辑知识点弹窗 */}
       <Modal title={editing ? '编辑知识点' : '新增知识点'} open={modalOpen} onOk={handleSave} onCancel={() => setModalOpen(false)} okText="保存" cancelText="取消" destroyOnClose>
         <Form form={form} layout="vertical">
+          <Form.Item name="sectionId" label="所属小节" rules={[{ required: true, message: '请选择所属小节' }]}>
+            <Select
+              placeholder="选择所属小节（与导入 Excel 的「小节名」对应）"
+              options={sectionOptions}
+              showSearch optionFilterProp="label"
+            />
+          </Form.Item>
           <Form.Item name="name" label="知识点名称" rules={[{ required: true, message: '请输入知识点名称' }]}>
             <Input placeholder="如：进位加法" maxLength={30} />
           </Form.Item>
