@@ -20,6 +20,7 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { listPositions, addPosition, updatePosition, deletePosition } from '../../api/system';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 

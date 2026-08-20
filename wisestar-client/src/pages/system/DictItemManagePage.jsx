@@ -25,6 +25,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, ImportOutli
 import {
   listDictItems, saveDictItem, deleteDictItem, importDictItems,
 } from '../../api/system';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 

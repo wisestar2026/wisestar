@@ -21,6 +21,7 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import { listDepts, addDept, updateDept, deleteDept, sortDept } from '../../api/system';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 

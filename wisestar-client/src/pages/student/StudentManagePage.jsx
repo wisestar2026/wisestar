@@ -22,6 +22,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant
 import {
   listStudents, createStudent, updateStudent, deleteStudent,
 } from '../../api/student';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 

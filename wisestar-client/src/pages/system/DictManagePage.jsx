@@ -22,6 +22,7 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { listDicts, addDict, updateDict, deleteDict } from '../../api/system';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 
