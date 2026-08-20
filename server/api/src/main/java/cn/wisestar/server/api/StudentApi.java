@@ -3,7 +3,6 @@ package cn.wisestar.server.api;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
-import cn.wisestar.server.domain.dto.student.ChangePasswordRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.service.StudentService;
@@ -112,21 +111,6 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentView myStudentInfo() {
 		return studentService.me();
-	}
-
-	/**
-	 * 学员修改密码（当前登录学员）。
-	 *
-	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/changePassword。</p>
-	 *
-	 * <p><b>权限</b>：isAuthenticated()（学员端登录即可，服务层校验身份）。</p>
-	 *
-	 * @param request 修改密码请求（oldPassword/newPassword）
-	 */
-	@PostMapping("/changePassword")
-	@PreAuthorize("isAuthenticated()")
-	public void changePassword(@RequestBody ChangePasswordRequest request) {
-		studentService.changePassword(request);
 	}
 
 	/**

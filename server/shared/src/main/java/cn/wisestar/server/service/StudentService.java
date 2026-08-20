@@ -1,7 +1,6 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.core.common.PaginationResponse;
-import cn.wisestar.server.domain.dto.student.ChangePasswordRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
@@ -54,15 +53,6 @@ public interface StudentService {
 	 * @return 学员视图；当前用户非学员时抛校验异常
 	 */
 	StudentView me();
-
-	/**
-	 * 学员修改密码（当前登录学员）。
-	 *
-	 * <p>校验原密码正确后更新登录账号密码（BCrypt 加密）；新密码至少 6 位。</p>
-	 *
-	 * @param request 修改密码请求（oldPassword/newPassword）
-	 */
-	void changePassword(ChangePasswordRequest request);
 
 	/**
 	 * 当前学员的有效权限（多条有效订单合并，expire_at > NOW()）。

@@ -114,15 +114,6 @@ export async function deleteOrder(data) {
 }
 
 /**
- * 学员修改密码（学员端）
- * 后端接口: POST /api/student/changePassword
- * @param {Object} data - { oldPassword, newPassword }
- */
-export async function changePassword(data) {
-  return request.post('/student/changePassword', data);
-}
-
-/**
  * 当前学员有效权限（多条有效订单合并）
  * 后端接口: GET /api/student/permissions
  * @returns {Object} data: { subjects: [{id,name}], grades: [], versions: [] }

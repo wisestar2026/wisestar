@@ -4,7 +4,6 @@ import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.AppConsts;
 import cn.wisestar.server.core.security.PasswordEncoder;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
-import cn.wisestar.server.domain.dto.student.ChangePasswordRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
@@ -105,33 +104,6 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		accountMapper.insert(account);
 
 		return studentViewMapper.toView(student);
-	}
-
-	/**
-	 * 学员修改密码（校验原密码后更新登录账号密码）。
-	 */
-	@Override
-	public void changePassword(ChangePasswordRequest request) {
-		if (request.getOldPassword() == null || request.getNewPassword() == null
-				|| !StringUtils.hasText(request.getOldPassword()) || !StringUtils.hasText(request.getNewPassword())) {
-			throw new ValidationException("原密码与新密码不能为空");
-		}
-		if (request.getNewPassword().length() < 6) {
-			throw new ValidationException("新密码至少 6 位");
-		}
-		String userId = SecurityContextUtils.getUserId();
-		if (getById(userId) == null) {
-			throw new ValidationException("当前用户不是学员");
-		}
-		Account account = accountMapper.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, userId));
-		if (account == null) {
-			throw new ValidationException("登录账号不存在");
-		}
-		if (!passwordEncoder.matches(request.getOldPassword(), account.getAuthSecret())) {
-			throw new ValidationException("原密码不正确");
-		}
-		account.setAuthSecret(passwordEncoder.encode(request.getNewPassword()));
-		accountMapper.updateById(account);
 	}
 
 	/**
