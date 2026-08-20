@@ -80,10 +80,15 @@ export default function RoleManagePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pageSize]);
 
-  // 加载权限树（页面挂载一次）
+  // 加载权限树（页面挂载一次）；接口返回 {key,name,children}，转换为 antd Tree 需要的 {title,key,children}
   useEffect(() => {
+    const toTreeData = (nodes) => (nodes || []).map((n) => ({
+      title: n.name,
+      key: n.key,
+      children: toTreeData(n.children),
+    }));
     getPermissionTree()
-      .then((res) => setPermissionTree(res.data || []))
+      .then((res) => setPermissionTree(toTreeData(res.data || [])))
       .catch(() => {});
   }, []);
 
