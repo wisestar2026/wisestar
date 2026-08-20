@@ -21,12 +21,13 @@
  */
 
 import { useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Select, Dropdown, Switch, message } from 'antd';
 import {
   SettingOutlined, BellOutlined, LogoutOutlined, ArrowLeftOutlined,
 } from '@ant-design/icons';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
+import useUserStore from '../../stores/useUserStore';
 import './student.css';
 
 export default function StudentLayout() {
@@ -45,10 +46,14 @@ export default function StudentLayout() {
   const visibleSubjects = getVisibleSubjects();
   const hasPermission = visibleSubjects.length > 0;
   const navigate = useNavigate();
-  const location = useLocation();
+  const { logout } = useUserStore();
 
-  // 当前激活学科对象（含主题色/图标/版本）
-  const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
+  // 退出登录（学员端）：清登录态并返回学员端登录页
+  const handleStudentLogout = () => {
+    logout();
+    navigate('/student-login');
+  };
+
 
   // 当前头衔（按学海积分自动晋升，无降级）
   const currentTitle = [...TITLES].reverse().find((t) => PROFILE.points >= t.need) || TITLES[0];
@@ -69,10 +74,10 @@ export default function StudentLayout() {
     },
     { type: 'divider' },
     {
-      key: 'back',
-      label: '返回管理端',
+      key: 'logout',
+      label: '退出登录',
       icon: <LogoutOutlined />,
-      onClick: () => { navigate('/'); },
+      onClick: handleStudentLogout,
     },
   ];
 
@@ -149,12 +154,9 @@ export default function StudentLayout() {
             <span className="sll-avatar">🐬</span>
             {!pureMode && <span className="sll-title-chip">{currentTitle.emoji} {currentTitle.name}</span>}
           </button>
-          {/* 返回管理端 */}
-          <button
-            className="sll-back-btn"
-            onClick={() => (location.pathname === '/student' ? navigate('/') : navigate('/student'))}
-          >
-            <ArrowLeftOutlined /> {location.pathname === '/student' ? '管理端' : '学生首页'}
+          {/* 退出登录（学员账号无管理端权限） */}
+          <button className="sll-back-btn" onClick={handleStudentLogout}>
+            <ArrowLeftOutlined /> 退出登录
           </button>
         </div>
       </header>

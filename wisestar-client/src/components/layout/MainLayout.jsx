@@ -199,7 +199,8 @@ export default function MainLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
-          defaultOpenKeys={['repo-group', 'knowledge-group', 'hr-group', 'system-group']}
+          // 左侧菜单分组默认全部收起（用户手动展开；当前激活菜单项所在分组由 Menu 自动高亮，不自动展开）
+          defaultOpenKeys={[]}
           items={visibleMenu}
           onClick={({ key }) => navigate(key)}
         />

@@ -47,6 +47,7 @@ import useUserStore from './stores/useUserStore';
 import AuthGuard from './components/common/AuthGuard';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/login/LoginPage';
+import StudentLoginPage from './pages/student/StudentLoginPage';
 import RegisterPage from './pages/login/RegisterPage';
 import SurveyViewPage from './pages/survey/SurveyViewPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -101,6 +102,7 @@ export default function App() {
           {/* ---- 公开路由（无需登录） ---- */}
           {/* 登录页 */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/student-login" element={<StudentLoginPage />} />
 
           {/* 注册页（POST /api/public/register，是否开放由后端配置） */}
           <Route path="/register" element={<RegisterPage />} />

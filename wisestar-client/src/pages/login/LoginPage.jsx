@@ -116,6 +116,11 @@ export default function LoginPage() {
               <Link to="/register">立即注册</Link>
             </Space>
           </div>
+
+          {/* 学员端登录入口（海洋智学） */}
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <Link to="/student-login">🌊 学员端登录入口（海洋智学）</Link>
+          </div>
         </Form>
       </Card>
     </div>
