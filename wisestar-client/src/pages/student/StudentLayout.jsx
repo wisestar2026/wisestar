@@ -21,7 +21,7 @@
  */
 
 import { useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Select, Dropdown, Switch, message } from 'antd';
 import {
   SettingOutlined, BellOutlined, LogoutOutlined, ArrowLeftOutlined,
@@ -29,6 +29,14 @@ import {
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
 import './student.css';
+
+// 底部导航配置
+const TABS = [
+  { path: '/student', icon: '🏠', label: '首页' },
+  { path: '/student/study', icon: '📖', label: '学习' },
+  { path: '/student/wrong', icon: '📕', label: '错题本' },
+  { path: '/student/profile', icon: '👤', label: '个人中心' },
+];
 
 export default function StudentLayout() {
   const {
@@ -47,6 +55,7 @@ export default function StudentLayout() {
   const visibleSubjects = getVisibleSubjects();
   const hasPermission = visibleSubjects.length > 0;
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout } = useUserStore();
 
   // 退出登录（学员端）：清登录态并返回学员端登录页
@@ -166,6 +175,24 @@ export default function StudentLayout() {
       <main className="sll-main">
         <Outlet />
       </main>
+
+      {/* ---- 底部导航栏（首页/学习/错题本/个人中心） ---- */}
+      <nav className="sll-tabbar">
+        {TABS.map((t) => {
+          const active = location.pathname === t.path
+            || (t.path === '/student' && location.pathname.startsWith('/student/knowledge'));
+          return (
+            <button
+              key={t.path}
+              className={`sll-tabbar-item ${active ? 'active' : ''}`}
+              onClick={() => navigate(t.path)}
+            >
+              <span className="sll-tabbar-icon">{t.icon}</span>
+              <span className="sll-tabbar-label">{t.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* ---- 底部常驻提示小字 ---- */}
       <footer className="sll-footer">
