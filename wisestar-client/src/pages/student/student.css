@@ -423,15 +423,22 @@
    ============================================================ */
 .sll-tabbar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 14px;
   z-index: 100;
   display: flex;
-  background: rgba(255, 255, 255, 0.96);
-  border-top: 1px solid #e0f2f7;
-  box-shadow: 0 -4px 16px rgba(2, 119, 189, 0.08);
-  padding-bottom: env(safe-area-inset-bottom);
+  gap: 2px;
+  min-width: 320px;
+  max-width: 92vw;
+  padding: 6px 10px;
+  border-radius: 999px; /* 圆角矩形（胶囊） */
+  background: rgba(255, 255, 255, 0.55); /* 半透明 */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 24px rgba(2, 119, 189, 0.18);
+  padding-bottom: calc(6px + env(safe-area-inset-bottom));
 }
 .sll-tabbar-item {
   flex: 1;
@@ -459,5 +466,5 @@
 
 /* 内容区底部留白，避免被固定导航栏遮挡 */
 .sll-main {
-  padding-bottom: 64px;
+  padding-bottom: 92px;
 }
