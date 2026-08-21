@@ -33,14 +33,15 @@ import './student.css';
 export default function StudentLayout() {
   const {
     activeSubject, version, pureMode,
-    setSubject, setVersion, togglePureMode, fetchPermissions,
+    setSubject, setVersion, togglePureMode, fetchPermissions, fetchStudySubjects,
     getVisibleSubjects, getVisibleVersions,
   } = useStudentStore();
 
-  // 挂载时加载学员有效权限（订单授予范围）
+  // 挂载时加载学员有效权限与真实学科（订单授予范围）
   useEffect(() => {
     fetchPermissions();
-  }, [fetchPermissions]);
+    fetchStudySubjects();
+  }, [fetchPermissions, fetchStudySubjects]);
 
   // 按订单权限过滤后的可见学科
   const visibleSubjects = getVisibleSubjects();

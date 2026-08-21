@@ -1,10 +1,17 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.knowledge.ChapterView;
+import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
+import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
+import cn.wisestar.server.domain.dto.student.StudentSubjectView;
 import cn.wisestar.server.domain.dto.student.StudentView;
+
+import java.util.List;
 
 /**
  * 学员管理服务（学员管理模块）。
@@ -62,5 +69,52 @@ public interface StudentService {
 	 * @return 有效权限视图（无权限时各列表为空）
 	 */
 	StudentPermissionView permissions();
+
+	/**
+	 * 学员端学科列表（按订单有效权限过滤）。
+	 *
+	 * @return 可访问学科（含该学科有权限的教材版本）
+	 */
+	List<StudentSubjectView> studySubjects();
+
+	/**
+	 * 学员端章节列表（按订单权限校验学科）。
+	 *
+	 * @param subjectId 学科ID
+	 * @return 章节列表（含小节数）；学科不在权限内返回空列表
+	 */
+	List<ChapterView> studyChapters(String subjectId);
+
+	/**
+	 * 学员端小节列表（含内容设置 JSON 与知识点数）。
+	 *
+	 * @param chapterId 章节ID
+	 * @return 小节列表；归属学科不在权限内返回空列表
+	 */
+	List<SectionView> studySections(String chapterId);
+
+	/**
+	 * 学员端知识点列表（含讲解要点与配图）。
+	 *
+	 * @param sectionId 小节ID
+	 * @return 知识点列表；归属学科不在权限内返回空列表
+	 */
+	List<KnowledgePointView> studyPoints(String sectionId);
+
+	/**
+	 * 学员端练习/试炼题目（剥离标准答案，防作弊）。
+	 *
+	 * <p>题目来源二选一：sectionId → 小节绑定题库题目；knowledgePointId → 知识点绑定题目。
+	 * 按题型/难度过滤，count 限制返回数量。</p>
+	 *
+	 * @param sectionId        小节ID（小节练习数据源）
+	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
+	 * @param count            返回题目数量（默认 10，上限 50）
+	 * @param types            题型过滤（可选）
+	 * @param difficulty       难度过滤（可选）
+	 * @return 题目列表（不含答案）；无数据返回空列表
+	 */
+	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, Integer count,
+			List<String> types, String difficulty);
 
 }

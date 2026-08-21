@@ -1,6 +1,7 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.PracticeResultView;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
@@ -19,7 +20,7 @@ public interface PracticeService {
 	 *
 	 * @param request 练习交卷请求（模式/题库/用时/逐题作答）
 	 */
-	void submitPractice(PracticeSubmitRequest request);
+	PracticeResultView submitPractice(PracticeSubmitRequest request);
 
 	/**
 	 * 分页查询错题库（题目 × 学员聚合）。

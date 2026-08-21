@@ -3,7 +3,12 @@ package cn.wisestar.server.api;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
+import cn.wisestar.server.domain.dto.knowledge.ChapterView;
+import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentSubjectView;
 import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.service.StudentService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +17,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 学员管理接口（学员管理模块）。
@@ -129,6 +137,85 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentPermissionView permissions() {
 		return studentService.permissions();
+	}
+
+	/**
+	 * 学员端学科列表（按订单有效权限过滤）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/subjects。</p>
+	 *
+	 * <p><b>权限</b>：isAuthenticated()（服务层校验学员身份与订单权限）。</p>
+	 *
+	 * @return 可访问学科（含该学科有权限的教材版本）
+	 */
+	@GetMapping("/study/subjects")
+	@PreAuthorize("isAuthenticated()")
+	public List<StudentSubjectView> studySubjects() {
+		return studentService.studySubjects();
+	}
+
+	/**
+	 * 学员端章节列表。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/chapters?subjectId=。</p>
+	 *
+	 * @param subjectId 学科ID
+	 * @return 章节列表（含小节数）
+	 */
+	@GetMapping("/study/chapters")
+	@PreAuthorize("isAuthenticated()")
+	public List<ChapterView> studyChapters(@RequestParam(required = false) String subjectId) {
+		return studentService.studyChapters(subjectId);
+	}
+
+	/**
+	 * 学员端小节列表。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/sections?chapterId=。</p>
+	 *
+	 * @param chapterId 章节ID
+	 * @return 小节列表（含内容设置与知识点数）
+	 */
+	@GetMapping("/study/sections")
+	@PreAuthorize("isAuthenticated()")
+	public List<SectionView> studySections(@RequestParam(required = false) String chapterId) {
+		return studentService.studySections(chapterId);
+	}
+
+	/**
+	 * 学员端知识点列表。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/points?sectionId=。</p>
+	 *
+	 * @param sectionId 小节ID
+	 * @return 知识点列表（含讲解要点与配图）
+	 */
+	@GetMapping("/study/points")
+	@PreAuthorize("isAuthenticated()")
+	public List<KnowledgePointView> studyPoints(@RequestParam(required = false) String sectionId) {
+		return studentService.studyPoints(sectionId);
+	}
+
+	/**
+	 * 学员端练习/试炼题目（剥离标准答案）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/questions?sectionId=&knowledgePointId=&count=&types=&difficulty=。</p>
+	 *
+	 * @param sectionId        小节ID（小节练习数据源）
+	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
+	 * @param count            返回题目数量（默认 10，上限 50）
+	 * @param types            题型过滤（逗号分隔，可选）
+	 * @param difficulty       难度过滤（可选）
+	 * @return 题目列表（不含答案）
+	 */
+	@GetMapping("/study/questions")
+	@PreAuthorize("isAuthenticated()")
+	public List<StudentQuestionView> studyQuestions(@RequestParam(required = false) String sectionId,
+			@RequestParam(required = false) String knowledgePointId,
+			@RequestParam(required = false) Integer count,
+			@RequestParam(required = false) List<String> types,
+			@RequestParam(required = false) String difficulty) {
+		return studentService.studyQuestions(sectionId, knowledgePointId, count, types, difficulty);
 	}
 
 }

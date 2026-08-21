@@ -3,6 +3,7 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.uitls.AnswerJudgeUtil;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.PracticeResultView;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
@@ -84,10 +85,10 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
-	public void submitPractice(PracticeSubmitRequest request) {
+	public PracticeResultView submitPractice(PracticeSubmitRequest request) {
 		if (request == null || CollectionUtils.isEmpty(request.getItems())) {
 			log.warn("practice submit skipped: empty items");
-			return;
+			return new PracticeResultView();
 		}
 		String userId = SecurityContextUtils.getUserId();
 
@@ -149,12 +150,41 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		record.setDurationMs(request.getDurationMs());
 		save(record);
 
+		// 4. 落库逐题明细
 		details.forEach(detail -> {
 			detail.setPracticeId(record.getId());
 			practiceDetailMapper.insert(detail);
 		});
 		log.info("practice submitted: userId={}, mode={}, total={}, correct={}, score={}/{}",
 				userId, request.getMode(), details.size(), correctCount, record.getScore(), record.getTotalScore());
+
+		// 5. 组装判分结果（含标准答案，供学员端即时反馈）
+		PracticeResultView result = new PracticeResultView();
+		result.setScore(Math.round(score * 100) / 100.0);
+		result.setTotalScore(Math.round(totalScore * 100) / 100.0);
+		result.setCorrectCount(correctCount);
+		result.setTotal(details.size());
+		for (PracticeSubmitRequest.PracticeItem item : request.getItems()) {
+			Template template = item.getQuestionId() == null ? null : templateMap.get(item.getQuestionId());
+			Integer correct = null;
+			String correctAnswer = null;
+			if (template != null && template.getTemplate() != null) {
+				SurveySchema schema = template.getTemplate();
+				try {
+					correct = AnswerJudgeUtil.evaluate(schema, item.getAnswer());
+				}
+				catch (Exception ignored) {
+					// 未判
+				}
+				List<String> answers = AnswerJudgeUtil.extractCorrectAnswers(schema);
+				if (answers != null) {
+					correctAnswer = String.join(" / ", answers);
+				}
+			}
+			result.getItems().add(new PracticeResultView.PracticeResultItem(
+					item.getQuestionId(), correct, correctAnswer));
+		}
+		return result;
 	}
 
 	/**

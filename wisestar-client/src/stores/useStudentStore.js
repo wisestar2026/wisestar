@@ -13,6 +13,9 @@
 
 import { create } from 'zustand';
 import { getMyPermissions } from '../api/student';
+import {
+  getStudySubjects, getStudyChapters, getStudySections, getStudyPoints, getStudyQuestions,
+} from '../api/student';
 
 // ---- 五级头衔 + 证书体系（学海积分自动晋升，无降级） ----
 export const TITLES = [
@@ -270,6 +273,15 @@ const useStudentStore = create((set, get) => ({
   pureMode: localStorage.getItem('sh-pure-mode') === '1',             // 纯净学习模式（迎检专用）
   // 学员有效权限（null=未加载/加载失败；有值={ subjects, grades, versions }，按订单授予范围过滤内容）
   permissions: null,
+  // 真实学习内容（后台配置，按订单权限过滤；null=未加载，[]=已加载但无数据）
+  studyContent: {
+    subjects: null,    // 真实学科（含 icon/versions）
+    chapters: null,    // 当前学科真实章节
+    sections: null,    // 当前章节真实小节
+    points: null,      // 当前小节真实知识点
+    questions: null,   // 当前练习/试炼真实题目
+    loadFailed: false, // 接口异常标记（回退 mock 提示）
+  },
 
   // ---- actions ----
   setSubject: (key) => {
@@ -299,6 +311,47 @@ const useStudentStore = create((set, get) => ({
       set({ permissions: { subjects: [], grades: [], versions: [] } });
     }
   },
+  // 通用内容加载：成功写缓存，失败标记 loadFailed（页面回退 mock 并提示）
+  fetchStudySubjects: async () => {
+    try {
+      const res = await getStudySubjects();
+      set((s) => ({ studyContent: { ...s.studyContent, subjects: res?.data || [] } }));
+    } catch {
+      set((s) => ({ studyContent: { ...s.studyContent, subjects: [], loadFailed: true } }));
+    }
+  },
+  fetchStudyChapters: async (subjectId) => {
+    try {
+      const res = await getStudyChapters(subjectId);
+      set((s) => ({ studyContent: { ...s.studyContent, chapters: res?.data || [] } }));
+    } catch {
+      set((s) => ({ studyContent: { ...s.studyContent, chapters: [], loadFailed: true } }));
+    }
+  },
+  fetchStudySections: async (chapterId) => {
+    try {
+      const res = await getStudySections(chapterId);
+      set((s) => ({ studyContent: { ...s.studyContent, sections: res?.data || [] } }));
+    } catch {
+      set((s) => ({ studyContent: { ...s.studyContent, sections: [], loadFailed: true } }));
+    }
+  },
+  fetchStudyPoints: async (sectionId) => {
+    try {
+      const res = await getStudyPoints(sectionId);
+      set((s) => ({ studyContent: { ...s.studyContent, points: res?.data || [] } }));
+    } catch {
+      set((s) => ({ studyContent: { ...s.studyContent, points: [], loadFailed: true } }));
+    }
+  },
+  fetchStudyQuestions: async (params) => {
+    try {
+      const res = await getStudyQuestions(params);
+      set((s) => ({ studyContent: { ...s.studyContent, questions: res?.data || [] } }));
+    } catch {
+      set((s) => ({ studyContent: { ...s.studyContent, questions: [], loadFailed: true } }));
+    }
+  },
 
   // ---- 派生数据 helper ----
   getSubject: () => SUBJECTS.find((s) => s.key === get().activeSubject) || SUBJECTS[1],
@@ -306,16 +359,35 @@ const useStudentStore = create((set, get) => ({
     const sub = SUBJECTS.find((s) => s.key === get().activeSubject) || SUBJECTS[1];
     return sub.chapters;
   },
-  // 按订单权限过滤可见学科（未加载权限时回退显示全部 mock 学科）
+  // 按订单权限过滤可见学科（优先真实学科；真实未加载/为空时回退 mock 学科）
   getVisibleSubjects: () => {
+    const real = get().studyContent?.subjects;
+    if (real && real.length > 0) {
+      // 真实学科映射为学员端学科形状（key=学科id，chapters 由真实接口加载）
+      return real.map((s) => ({
+        key: s.id,
+        name: s.name,
+        icon: s.icon || '📚',
+        theme: 'blue',
+        version: s.versions?.[0] || '人教版',
+        versions: s.versions?.length ? s.versions : ['人教版'],
+        chapters: [],
+      }));
+    }
     const perms = get().permissions;
     if (!perms) return SUBJECTS;
     const names = (perms.subjects || []).map((s) => s.name);
     if (names.length === 0) return [];
     return SUBJECTS.filter((s) => names.includes(s.name));
   },
-  // 按订单权限过滤可见教材版本（当前学科）
+  // 按订单权限过滤可见教材版本（优先真实学科版本）
   getVisibleVersions: (subjectKey) => {
+    const real = get().studyContent?.subjects;
+    if (real && real.length > 0) {
+      const rs = real.find((s) => s.id === subjectKey);
+      if (rs && rs.versions?.length) return rs.versions;
+      if (rs) return ['人教版'];
+    }
     const sub = SUBJECTS.find((s) => s.key === subjectKey) || SUBJECTS[1];
     const perms = get().permissions;
     if (!perms || (perms.versions || []).length === 0) return sub.versions || [];

@@ -13,9 +13,11 @@
  * 依赖: react-router-dom(useParams/useSearchParams/useNavigate)、useStudentStore、./KnowledgePage.css
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, masteryLevel, getQuestions, REWARDS } from '../../stores/useStudentStore';
+import { getStudyPoints, getStudyQuestions } from '../../api/student';
+import { submitPractice } from '../../api/practice';
 import './KnowledgePage.css';
 
 // 四种模式 tab 配置
@@ -56,7 +58,61 @@ export default function KnowledgePage() {
   const { kpId } = useParams();
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'preview';
+  const sectionId = searchParams.get('sectionId'); // 真实模式（后台配置内容）入口
+  const realMode = !!sectionId;
   const navigate = useNavigate();
+
+  // ============================================================
+  // 真实模式（后台配置内容：知识点/题目来自 /api/student/study/*）
+  // ============================================================
+  const [realPoints, setRealPoints] = useState(null);      // 知识点（预习）
+  const [realQuestions, setRealQuestions] = useState(null); // 题目（练习/试炼）
+  const [realAnswers, setRealAnswers] = useState({});       // 作答 {questionId: {type, optionId/optionIds}}
+  const [realResult, setRealResult] = useState(null);       // 判分结果
+  const [realSubmitting, setRealSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!realMode) return;
+    if (tab === 'preview') {
+      getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
+    } else if (tab === 'practice' || tab === 'trial') {
+      getStudyQuestions({ sectionId, count: tab === 'trial' ? 2 : 3 })
+        .then((res) => setRealQuestions(res?.data || []))
+        .catch(() => setRealQuestions([]));
+    }
+    setRealAnswers({});
+    setRealResult(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realMode, tab, sectionId]);
+
+  // 真实模式：选择选项（按题型单选/多选）
+  const realPick = (q, optId) => {
+    if (realResult) return;
+    const multi = q.questionType === 'Checkbox' || q.questionType === 'Multiple';
+    setRealAnswers((prev) => {
+      const cur = prev[q.id];
+      if (!multi) return { ...prev, [q.id]: { type: 'option', optionId: optId } };
+      const ids = cur?.type === 'options' ? cur.optionIds : [];
+      return { ...prev, [q.id]: { type: 'options', optionIds: ids.includes(optId) ? ids.filter((x) => x !== optId) : [...ids, optId] } };
+    });
+  };
+
+  // 真实模式：交卷（后端判分，返回对错 + 标准答案）
+  const realSubmit = () => {
+    if (realSubmitting || !realQuestions?.length) return;
+    const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
+    setRealSubmitting(true);
+    submitPractice({ mode: tab, items })
+      .then((res) => setRealResult(res?.data || { items: [] }))
+      .catch(() => setRealResult({ items: [], score: 0 }))
+      .finally(() => setRealSubmitting(false));
+  };
+
+  // 真实模式：标准答案文本（题目 schema 中选项级答案标记在判分后由后端返回）
+  const realCorrectOf = (qId) => {
+    const item = (realResult?.items || []).find((i) => i.questionId === qId);
+    return item ? item.correct : null;
+  };
   const { pureMode, activeSubject } = useStudentStore();
   const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
 
@@ -131,6 +187,123 @@ export default function KnowledgePage() {
       setTimeout(() => setReward(null), 1600);
     }
   };
+
+  // ============================================================
+  // 真实模式渲染（后台配置内容）
+  // ============================================================
+  if (realMode) {
+    return (
+      <div className="sll-page-enter knowledge-page">
+        <div className="sll-card" style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h3 style={{ margin: 0 }}>
+              {tab === 'preview' ? '📖 知识点预习' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 试炼检测' : '📕 知识点错题本'}
+            </h3>
+            <button className="knowledge-back" onClick={() => navigate('/student/study')}>返回学海研习</button>
+          </div>
+
+          {/* 预习：后台配置的知识点讲解要点 */}
+          {tab === 'preview' && (
+            realPoints === null ? <div>加载中…</div> : realPoints.length === 0 ? (
+              <div className="knowledge-empty">该小节暂未配置知识点，请联系管理员</div>
+            ) : (
+              realPoints.map((p) => {
+                let content = null;
+                try { content = p.content ? JSON.parse(p.content) : null; } catch { content = null; }
+                return (
+                  <div key={p.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
+                    <div style={{ fontWeight: 600, marginBottom: 8 }}>🌊 {p.name}</div>
+                    {p.imageUrl && <img src={p.imageUrl} alt={p.name} style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 8 }} />}
+                    {(content?.points || []).map((pt, i) => (
+                      <div key={i} style={{ color: '#455a64', marginBottom: 4 }}>• {pt}</div>
+                    ))}
+                    {(!content?.points || content.points.length === 0) && (
+                      <div style={{ color: '#90a4ae' }}>该知识点暂未配置讲解要点</div>
+                    )}
+                  </div>
+                );
+              })
+            )
+          )}
+
+          {/* 练习/试炼：真实题目 + 后端判分 */}
+          {(tab === 'practice' || tab === 'trial') && (
+            realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
+              <div className="knowledge-empty">暂无可练习题目，请联系管理员配置题库/题目</div>
+            ) : (
+              <>
+                {realQuestions.map((question, i) => {
+                  const schema = question.schema || {};
+                  const children = schema.children || [];
+                  const multi = question.questionType === 'Checkbox' || question.questionType === 'Multiple';
+                  const picked = realAnswers[question.id];
+                  const correct = realCorrectOf(question.id);
+                  const isRightNow = correct === 1;
+                  return (
+                    <div key={question.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
+                      <div style={{ fontWeight: 600, marginBottom: 10 }}>
+                        {i + 1}. {question.name || schema.title}
+                      </div>
+                      {children.map((opt) => {
+                        const selected = picked?.type === 'option'
+                          ? picked.optionId === opt.id
+                          : (picked?.optionIds || []).includes(opt.id);
+                        const showRight = realResult && isRightNow && selected;
+                        const showWrong = realResult && correct === 0 && selected;
+                        return (
+                          <div
+                            key={opt.id}
+                            onClick={() => realPick(question, opt.id)}
+                            style={{
+                              padding: '8px 12px', marginBottom: 6, borderRadius: 8, cursor: realResult ? 'default' : 'pointer',
+                              border: selected ? '2px solid #29b6f6' : '1px solid #e0e0e0',
+                              background: showRight ? '#e8f5e9' : showWrong ? '#ffebee' : selected ? '#e1f5fe' : '#fff',
+                            }}
+                          >
+                            {multi ? (selected ? '☑ ' : '☐ ') : (selected ? '● ' : '○ ')}{opt.title || opt.id}
+                          </div>
+                        );
+                      })}
+                      {realResult && (
+                        <div style={{ marginTop: 8, fontSize: 13 }}>
+                          {correct === 1 ? (
+                            <span style={{ color: '#2e7d32' }}>✅ 回答正确</span>
+                          ) : correct === 0 ? (
+                            <span style={{ color: '#c62828' }}>❌ 回答错误 · 标准答案：{realResult.items.find((x) => x.questionId === question.id)?.correctAnswer || '—'}</span>
+                          ) : (
+                            <span style={{ color: '#90a4ae' }}>未作答/未判</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {!realResult ? (
+                  <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting} style={{ marginTop: 8 }}>
+                    {realSubmitting ? '提交中…' : '提交作答'}
+                  </button>
+                ) : (
+                  <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: '#e8f5e9', textAlign: 'center' }}>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#2e7d32' }}>
+                      🎉 得分 {realResult.score ?? 0} / {realResult.totalScore ?? 0} · 答对 {realResult.correctCount ?? 0}/{realResult.total ?? 0}
+                    </div>
+                    <button className="knowledge-back" onClick={() => { setRealResult(null); setRealAnswers({}); }} style={{ marginTop: 8 }}>
+                      再练一次
+                    </button>
+                  </div>
+                )}
+              </>
+            )
+          )}
+
+          {/* 错题本：真实错题（/api/practice/wrong-list）后续接入 */}
+          {tab === 'wrong' && (
+            <div className="knowledge-empty">错题本功能建设中，练习错题已自动记录</div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // 未找到知识点
   if (!kp) {

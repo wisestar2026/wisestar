@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.PracticeResultView;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
@@ -51,8 +52,8 @@ public class PracticeApi {
 	 */
 	@PostMapping("/submit")
 	@PreAuthorize("isAuthenticated()")
-	public void submitPractice(@RequestBody PracticeSubmitRequest request) {
-		practiceService.submitPractice(request);
+	public PracticeResultView submitPractice(@RequestBody PracticeSubmitRequest request) {
+		return practiceService.submitPractice(request);
 	}
 
 	/**

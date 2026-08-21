@@ -4,18 +4,41 @@ import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.AppConsts;
 import cn.wisestar.server.core.security.PasswordEncoder;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.SurveySchema;
+import cn.wisestar.server.domain.dto.knowledge.ChapterView;
+import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentSubjectView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
 import cn.wisestar.server.domain.dto.student.StudentView;
+import cn.wisestar.server.domain.mapper.ChapterViewMapper;
+import cn.wisestar.server.domain.mapper.KnowledgePointViewMapper;
+import cn.wisestar.server.domain.mapper.SectionViewMapper;
 import cn.wisestar.server.domain.mapper.StudentViewMapper;
 import cn.wisestar.server.domain.model.Account;
 import cn.wisestar.server.domain.model.Student;
+import cn.wisestar.server.domain.model.Chapter;
+import cn.wisestar.server.domain.model.KnowledgePoint;
+import cn.wisestar.server.domain.model.KnowledgePointQuestion;
+import cn.wisestar.server.domain.model.RepoTemplate;
+import cn.wisestar.server.domain.model.Section;
+import cn.wisestar.server.domain.model.SectionRepo;
 import cn.wisestar.server.domain.model.StudentPermission;
+import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.mapper.AccountMapper;
 import cn.wisestar.server.mapper.StudentMapper;
+import cn.wisestar.server.mapper.ChapterMapper;
+import cn.wisestar.server.mapper.KnowledgePointMapper;
+import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
+import cn.wisestar.server.mapper.RepoTemplateMapper;
+import cn.wisestar.server.mapper.SectionMapper;
+import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;
+import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.StudentService;
@@ -27,7 +50,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.validation.ValidationException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +98,26 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private final StudentPermissionMapper studentPermissionMapper;
 
 	private final SubjectMapper subjectMapper;
+
+	private final ChapterMapper chapterMapper;
+
+	private final SectionMapper sectionMapper;
+
+	private final KnowledgePointMapper knowledgePointMapper;
+
+	private final TemplateMapper templateMapper;
+
+	private final SectionRepoMapper sectionRepoMapper;
+
+	private final RepoTemplateMapper repoTemplateMapper;
+
+	private final KnowledgePointQuestionMapper knowledgePointQuestionMapper;
+
+	private final ChapterViewMapper chapterViewMapper;
+
+	private final SectionViewMapper sectionViewMapper;
+
+	private final KnowledgePointViewMapper knowledgePointViewMapper;
 
 	/**
 	 * 新增学员：自动生成学号 + 创建登录账号（同一事务）。
@@ -134,6 +182,172 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		perms.stream().map(StudentPermission::getVersion).filter(StringUtils::hasText).distinct()
 				.forEach(view.getVersions()::add);
 		return view;
+	}
+
+	// ============================================================
+	// 学员端内容（study/*，按订单有效权限过滤）
+	// ============================================================
+
+	/** 当前学员有效权限的学科 id 集合（expire_at > NOW()）；非学员抛校验异常 */
+	private Set<String> validSubjectIds() {
+		String userId = SecurityContextUtils.getUserId();
+		if (getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		return studentPermissionMapper.selectList(Wrappers.<StudentPermission>lambdaQuery()
+				.eq(StudentPermission::getStudentId, userId)
+				.gt(StudentPermission::getExpireAt, new Date()))
+				.stream().map(StudentPermission::getSubjectId).collect(Collectors.toSet());
+	}
+
+	@Override
+	public List<StudentSubjectView> studySubjects() {
+		Set<String> subjectIds = validSubjectIds();
+		if (subjectIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<Subject> subjects = subjectMapper.selectBatchIds(subjectIds);
+		// 各学科有权限的教材版本（去重）
+		String userId = SecurityContextUtils.getUserId();
+		Map<String, Set<String>> versionsBySubject = studentPermissionMapper.selectList(
+						Wrappers.<StudentPermission>lambdaQuery()
+								.eq(StudentPermission::getStudentId, userId)
+								.gt(StudentPermission::getExpireAt, new Date()))
+				.stream().filter(p -> StringUtils.hasText(p.getVersion()))
+				.collect(Collectors.groupingBy(StudentPermission::getSubjectId,
+						Collectors.mapping(StudentPermission::getVersion, Collectors.toSet())));
+		return subjects.stream().map(sub -> {
+			StudentSubjectView view = new StudentSubjectView();
+			view.setId(sub.getId());
+			view.setName(sub.getName());
+			view.setIcon(sub.getIcon());
+			view.setVersions(new ArrayList<>(versionsBySubject.getOrDefault(sub.getId(), Collections.emptySet())));
+			return view;
+		}).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<ChapterView> studyChapters(String subjectId) {
+		if (!StringUtils.hasText(subjectId) || !validSubjectIds().contains(subjectId)) {
+			return Collections.emptyList();
+		}
+		List<Chapter> chapters = chapterMapper.selectList(Wrappers.<Chapter>lambdaQuery()
+				.eq(Chapter::getSubjectId, subjectId).orderByAsc(Chapter::getSort));
+		List<ChapterView> views = chapterViewMapper.toView(chapters);
+		views.forEach(v -> v.setSectionCount(
+				sectionMapper.selectCount(Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, v.getId()))));
+		return views;
+	}
+
+	@Override
+	public List<SectionView> studySections(String chapterId) {
+		if (!StringUtils.hasText(chapterId)) {
+			return Collections.emptyList();
+		}
+		Chapter chapter = chapterMapper.selectById(chapterId);
+		if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+			return Collections.emptyList();
+		}
+		List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+				.eq(Section::getChapterId, chapterId).orderByAsc(Section::getSort));
+		List<SectionView> views = sectionViewMapper.toView(sections);
+		views.forEach(v -> v.setKnowledgePointCount(knowledgePointMapper.selectCount(
+				Wrappers.<KnowledgePoint>lambdaQuery().eq(KnowledgePoint::getSectionId, v.getId()))));
+		return views;
+	}
+
+	@Override
+	public List<KnowledgePointView> studyPoints(String sectionId) {
+		if (!StringUtils.hasText(sectionId)) {
+			return Collections.emptyList();
+		}
+		Section section = sectionMapper.selectById(sectionId);
+		if (section == null) {
+			return Collections.emptyList();
+		}
+		Chapter chapter = chapterMapper.selectById(section.getChapterId());
+		if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+			return Collections.emptyList();
+		}
+		return knowledgePointViewMapper.toView(knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+				.eq(KnowledgePoint::getSectionId, sectionId).orderByAsc(KnowledgePoint::getSort)));
+	}
+
+	@Override
+	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, Integer count,
+			List<String> types, String difficulty) {
+		// 归属校验（学科须在学员有效权限内）
+		if (StringUtils.hasText(sectionId)) {
+			Section section = sectionMapper.selectById(sectionId);
+			Chapter chapter = section == null ? null : chapterMapper.selectById(section.getChapterId());
+			if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+				return Collections.emptyList();
+			}
+		}
+		else if (StringUtils.hasText(knowledgePointId)) {
+			KnowledgePoint point = knowledgePointMapper.selectById(knowledgePointId);
+			Section section = point == null ? null : sectionMapper.selectById(point.getSectionId());
+			Chapter chapter = section == null ? null : chapterMapper.selectById(section.getChapterId());
+			if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+				return Collections.emptyList();
+			}
+		}
+		else {
+			return Collections.emptyList();
+		}
+		// 题目 id 集合（小节绑定题库 + 知识点绑定题目，去重）
+		Set<String> templateIds = new LinkedHashSet<>();
+		if (StringUtils.hasText(sectionId)) {
+			List<String> repoIds = sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
+							.eq(SectionRepo::getSectionId, sectionId))
+					.stream().map(SectionRepo::getRepoId).collect(Collectors.toList());
+			if (!repoIds.isEmpty()) {
+				// 题目按所属题库（t_template.repo_id）回源，覆盖种子与组题两套关联
+				templateMapper.selectList(Wrappers.<Template>lambdaQuery().in(Template::getRepoId, repoIds))
+						.forEach(t -> templateIds.add(t.getId()));
+			}
+		}
+		if (StringUtils.hasText(knowledgePointId)) {
+			knowledgePointQuestionMapper.selectList(Wrappers.<KnowledgePointQuestion>lambdaQuery()
+							.eq(KnowledgePointQuestion::getKnowledgePointId, knowledgePointId))
+					.forEach(kq -> templateIds.add(kq.getQuestionId()));
+		}
+		if (templateIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		int limit = count == null ? 10 : Math.min(count, 50);
+		return templateMapper.selectBatchIds(templateIds).stream()
+				.filter(t -> types == null || types.isEmpty()
+						|| (t.getQuestionType() != null && types.contains(t.getQuestionType().name())))
+				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()))
+				.limit(limit)
+				.map(this::toStudentQuestionView)
+				.collect(Collectors.toList());
+	}
+
+	/** 题目转学员端视图（剥离标准答案与选项级答案标记，防作弊） */
+	private StudentQuestionView toStudentQuestionView(Template template) {
+		StudentQuestionView view = new StudentQuestionView();
+		view.setId(template.getId());
+		view.setName(template.getName());
+		view.setQuestionType(template.getQuestionType());
+		view.setTag(template.getTag());
+		SurveySchema schema = template.getTemplate();
+		if (schema != null) {
+			stripAnswer(schema);
+		}
+		view.setSchema(schema);
+		return view;
+	}
+
+	/** 递归清除 schema 及其选项的标准答案字段 */
+	private void stripAnswer(SurveySchema schema) {
+		if (schema.getAttribute() != null) {
+			schema.getAttribute().setExamCorrectAnswer(null);
+		}
+		if (schema.getChildren() != null) {
+			schema.getChildren().forEach(this::stripAnswer);
+		}
 	}
 
 	/**

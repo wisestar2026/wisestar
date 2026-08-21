@@ -121,3 +121,35 @@ export async function deleteOrder(data) {
 export async function getMyPermissions() {
   return request.get('/student/permissions');
 }
+
+// ------------------------------------------------------------
+// 学员端学习内容（按订单权限过滤，后台配置真实呈现）
+// ------------------------------------------------------------
+
+/** 学员端学科列表（含该学科有权限的教材版本） */
+export async function getStudySubjects() {
+  return request.get('/student/study/subjects');
+}
+
+/** 学员端章节列表（?subjectId=） */
+export async function getStudyChapters(subjectId) {
+  return request.get('/student/study/chapters', { params: { subjectId } });
+}
+
+/** 学员端小节列表（?chapterId=） */
+export async function getStudySections(chapterId) {
+  return request.get('/student/study/sections', { params: { chapterId } });
+}
+
+/** 学员端知识点列表（?sectionId=） */
+export async function getStudyPoints(sectionId) {
+  return request.get('/student/study/points', { params: { sectionId } });
+}
+
+/**
+ * 学员端练习/试炼题目（剥离标准答案）
+ * @param {Object} params - { sectionId, knowledgePointId, count, types, difficulty }
+ */
+export async function getStudyQuestions(params) {
+  return request.get('/student/study/questions', { params });
+}
