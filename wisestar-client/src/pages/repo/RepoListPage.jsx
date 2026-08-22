@@ -113,7 +113,7 @@ export default function RepoListPage() {
         message.success('练习已更新');
       } else {
         await createRepo(payload);
-        message.success('练习已创建');
+        message.success('练习已创建，可在列表中点击「组题」加入题目');
       }
       setCreateOpen(false);
       setEditId(null);
@@ -272,6 +272,11 @@ export default function RepoListPage() {
           {can('repo:update') && (
             <Button size="small" type="link" icon={<EditOutlined />} onClick={() => openEdit(record)}>
               编辑
+            </Button>
+          )}
+          {can('repo:book') && (
+            <Button size="small" type="link" icon={<BookOutlined />} onClick={() => openEdit(record)}>
+              组题
             </Button>
           )}
           {can('repo:delete') && (
