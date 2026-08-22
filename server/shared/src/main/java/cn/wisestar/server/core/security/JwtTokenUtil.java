@@ -11,6 +11,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -33,7 +34,7 @@ import java.util.Date;
  * </ul>
  *
  * <p><b>签名机制</b>：使用 HS512（HMAC-SHA512）算法对称签名，密钥由
- * {@link #generateSecurityKey()} 每次启动时随机生成，因此<em>应用每次重启后所有
+ * 旧版每次启动随机生成密钥导致重启后令牌全部失效；现改为固定配置（wisestar.jwt.secret），应用每次重启后所有
  * 已签发的令牌都会失效</em>（用户需要重新登录）。</p>
  * <p><b>数据流</b>：登录成功 → 组装 UserTokenView → generateAccessToken 生成令牌返回前端
  * → 前端存入 Cookie/请求头 → 后续请求 → JwtTokenFilter → validate 校验 → getUser 解析用户。</p>
@@ -52,8 +53,12 @@ public class JwtTokenUtil {
 	 */
 	private final ObjectMapper objectMapper;
 
-	// 每次重启，所有客户端的 token 将失效
-	private final String jwtSecret = generateSecurityKey();
+	/**
+	 * JWT 签名密钥：固定配置（wisestar.jwt.secret，可经 application.yml 覆盖），
+	 * 保证后端重启后已签发令牌仍有效（刷新页面/重启服务不登出）。
+	 */
+	@Value("${wisestar.jwt.secret:wisestar-jwt-secret-2026-fixed-key-for-preview-env-0123456789abcdef}")
+	private String jwtSecret;
 
 	/**
 	 * 生成访问令牌（Access Token）。
@@ -121,18 +126,5 @@ public class JwtTokenUtil {
 				.get("user", UserTokenView.class);
 	}
 
-	/**
-	 * 随机生成 HS512 密钥（Base64 编码字符串）。
-	 *
-	 * <p>每次 JVM 启动时调用一次，由 {@code Keys.secretKeyFor} 基于安全随机数生成
-	 * 满足 HS512 长度要求的密钥。由于密钥不落盘、不持久化，应用重启即全部令牌失效。</p>
-	 *
-	 * @return Base64 编码的 HS512 密钥字符串
-	 */
-	private static String generateSecurityKey() {
-		Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
-		String secretString = Encoders.BASE64.encode(key.getEncoded());
-		return secretString;
-	}
 
 }

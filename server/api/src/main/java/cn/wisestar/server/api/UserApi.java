@@ -120,7 +120,7 @@ public class UserApi {
 			UserInfo user = (UserInfo) authenticate.getPrincipal();
 			HttpCookie cookie = ResponseCookie
 					.from(AppConsts.TOKEN_NAME, jwtTokenUtil.generateAccessToken(new UserTokenView(user.getUserId())))
-					.path("/").httpOnly(true).build();
+					.path("/").httpOnly(true).maxAge(7 * 24 * 3600).build(); // 7 天持久，刷新/关浏览器保持登录
 			return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
 					.header(HttpHeaders.AUTHORIZATION,
 							jwtTokenUtil.generateAccessToken(new UserTokenView(user.getUserId())))
