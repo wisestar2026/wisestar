@@ -62,7 +62,7 @@ export default function RepoListPage() {
   const [repos, setRepos] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 15;
+  const pageSize = 20;
   const [searchName, setSearchName] = useState('');
 
   // 创建/编辑弹窗（共用表单，editId 为空 = 新建）
@@ -113,7 +113,7 @@ export default function RepoListPage() {
         message.success('练习已更新');
       } else {
         await createRepo(payload);
-        message.success('练习已创建，可在列表中点击「组题」加入题目');
+        message.success('练习已创建，可在列表中点击「编辑」加入题目');
       }
       setCreateOpen(false);
       setEditId(null);
@@ -272,11 +272,6 @@ export default function RepoListPage() {
           {can('repo:update') && (
             <Button size="small" type="link" icon={<EditOutlined />} onClick={() => openEdit(record)}>
               编辑
-            </Button>
-          )}
-          {can('repo:book') && (
-            <Button size="small" type="link" icon={<BookOutlined />} onClick={() => openEdit(record)}>
-              组题
             </Button>
           )}
           {can('repo:delete') && (

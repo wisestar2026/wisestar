@@ -73,7 +73,7 @@ export default function KnowledgePointManagePage() {
   const [kps, setKps] = useState([]);
   const [total, setTotal] = useState(0);
   const [current, setCurrent] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
 

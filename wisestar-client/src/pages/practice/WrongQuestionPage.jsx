@@ -43,7 +43,7 @@ export default function WrongQuestionPage() {
   const [data, setData] = useState([]);   // 当前页错题聚合数据
   const [total, setTotal] = useState(0);  // 符合条件的错题总数
   const [page, setPage] = useState(1);    // 当前页码
-  const pageSize = 15;                    // 每页 15 条（固定）
+  const pageSize = 20;                    // 每页 15 条（固定）
 
   // ---- 筛选状态 ----
   const [repos, setRepos] = useState([]);      // 全量练习列表（供筛选下拉）

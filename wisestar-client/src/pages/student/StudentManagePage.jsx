@@ -40,7 +40,7 @@ export default function StudentManagePage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [current, setCurrent] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
 
   // 搜索条件
   const [name, setName] = useState('');

@@ -39,7 +39,7 @@ export default function RepoAssignPage() {
   const [userTotal, setUserTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [keyword, setKeyword] = useState('');
-  const pageSize = 10;
+  const pageSize = 20;
 
   // ---- 选中学员 ----
   const [selectedUser, setSelectedUser] = useState(null);

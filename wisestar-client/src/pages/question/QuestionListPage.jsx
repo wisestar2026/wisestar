@@ -64,7 +64,7 @@ export default function QuestionListPage() {
   const [data, setData] = useState([]);   // 当前页题目数据（TemplateView 数组）
   const [total, setTotal] = useState(0);  // 符合条件的题目总数
   const [page, setPage] = useState(1);    // 当前页码
-  const pageSize = 15;                    // 每页 15 条（固定）
+  const pageSize = 20;                    // 每页 15 条（固定）
 
   // ---- 筛选状态 ----
   // 名称搜索 / 题型 / 练习 三个常规条件

@@ -31,7 +31,7 @@ export default function RoleManagePage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [current, setCurrent] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
   const [keyword, setKeyword] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);

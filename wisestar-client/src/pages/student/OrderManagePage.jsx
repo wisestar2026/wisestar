@@ -54,7 +54,7 @@ export default function OrderManagePage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [current, setCurrent] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(20);
 
   // 搜索/筛选条件
   const [studentName, setStudentName] = useState('');

@@ -56,7 +56,7 @@ export default function RepoDetailPage() {
   const [templates, setTemplates] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 12;
+  const pageSize = 20;
 
   // 批量选择题目弹窗
   const [selectOpen, setSelectOpen] = useState(false);
