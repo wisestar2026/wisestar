@@ -2,18 +2,18 @@
  * QuestionListPage.jsx - 题目管理主页
  *
  * 功能:
- *   1. 全量题目列表（跨所有题库），支持分页、搜索、筛选
+ *   1. 全量题目列表（跨所有练习），支持分页、搜索、筛选
  *   2. 新建/编辑题目弹窗（带答案、解析、图片上传）
  *   3. Excel 批量导入题目
  *   4. Excel 批量导出题目
  *   5. 批量删除题目
- *   6. 表格中展示题目信息：标题、图片、题型、所属题库、分值、正确答案、标签
+ *   6. 表格中展示题目信息：标题、图片、题型、所属练习、分值、正确答案、标签
  *
  * URL: /questions（受 AuthGuard 保护）
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"题目管理"菜单进入
  *
  * 筛选维度说明（重点）:
- *   支持"学科 / 年级 / 章节 / 难度 / 知识点"五维筛选（加上题型、题库、名称共 8 个条件），
+ *   支持"学科 / 年级 / 章节 / 难度 / 知识点"五维筛选（加上题型、练习、名称共 8 个条件），
  *   全部通过 GET /api/template/list 的 query 参数下发给后端做 AND 组合查询。
  *   知识点属性字段在题目对象上的来源（两处均可能）:
  *     - 顶层字段: record.subject / record.grade / record.chapter / record.knowledgePoint / record.difficulty
@@ -67,7 +67,7 @@ export default function QuestionListPage() {
   const pageSize = 15;                    // 每页 15 条（固定）
 
   // ---- 筛选状态 ----
-  // 名称搜索 / 题型 / 题库 三个常规条件
+  // 名称搜索 / 题型 / 练习 三个常规条件
   const [keyword, setKeyword] = useState('');
   const [filterType, setFilterType] = useState(undefined);
   const [filterRepoId, setFilterRepoId] = useState(undefined);
@@ -77,8 +77,8 @@ export default function QuestionListPage() {
   const [filterChapter, setFilterChapter] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState(undefined);
   const [filterKnowledgePoint, setFilterKnowledgePoint] = useState('');
-  const [repos, setRepos] = useState([]);               // 全量题库列表（供筛选下拉）
-  const [allReposCache, setAllReposCache] = useState([]); // 编辑弹窗用的题库列表（全量）
+  const [repos, setRepos] = useState([]);               // 全量练习列表（供筛选下拉）
+  const [allReposCache, setAllReposCache] = useState([]); // 编辑弹窗用的练习列表（全量）
 
   // ---- 选中行 ----
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -88,8 +88,8 @@ export default function QuestionListPage() {
   const [editRecord, setEditRecord] = useState(null); // 编辑时传入的题目记录（null=新建）
   const [importOpen, setImportOpen] = useState(false); // Excel 导入弹窗
 
-  // ---- 加载题库列表（全量，供筛选下拉 + 编辑弹窗题库选择） ----
-  // pageSize=200 一次性拉取，业务上题库数量级不大，够用
+  // ---- 加载练习列表（全量，供筛选下拉 + 编辑弹窗练习选择） ----
+  // pageSize=200 一次性拉取，业务上练习数量级不大，够用
   useEffect(() => {
     (async () => {
       try {
@@ -110,7 +110,7 @@ export default function QuestionListPage() {
       const params = { current: p, pageSize };
       if (keyword.trim()) params.name = keyword.trim();                    // 名称模糊搜索
       if (filterType) params.questionType = filterType;                    // 题型过滤
-      if (filterRepoId) params.repoId = filterRepoId;                      // 题库过滤
+      if (filterRepoId) params.repoId = filterRepoId;                      // 练习过滤
       if (filterSubject.trim()) params.subject = filterSubject.trim();     // 学科过滤
       if (filterGrade.trim()) params.grade = filterGrade.trim();           // 年级过滤
       if (filterChapter.trim()) params.chapter = filterChapter.trim();     // 章节过滤
@@ -190,7 +190,7 @@ export default function QuestionListPage() {
   };
 
   // ---- 导出当前筛选结果 ----
-  // 把题目管理页的筛选条件（题库/名称/题型/学科/年级/章节/难度/知识点）全部传给
+  // 把题目管理页的筛选条件（练习/名称/题型/学科/年级/章节/难度/知识点）全部传给
   // 导出接口，保证导出内容与当前筛选结果一致（后端 exportRepoQuestions 支持这些条件）
   // 数据流: 本页 → exportTemplate(filters) → GET /api/repo/export?… → 浏览器下载 xlsx
   const handleExport = () => {
@@ -247,7 +247,7 @@ export default function QuestionListPage() {
       render: (t) => <Tag>{TYPE_LABELS[t] || t}</Tag>,
     },
     {
-      title: '所属题库', dataIndex: 'repoId', width: 120,
+      title: '所属练习', dataIndex: 'repoId', width: 120,
       render: (repoId) => {
         const r = repos.find((x) => x.id === repoId);
         return r ? <Tag color="blue">{r.name}</Tag> : <Text type="secondary">未分配</Text>;
@@ -370,11 +370,11 @@ export default function QuestionListPage() {
             { label: '判断题', value: 'Judge' },
           ]}
         />
-        {/* 按题库筛选 */}
+        {/* 按练习筛选 */}
         <Select
           value={filterRepoId}
           onChange={(v) => { setFilterRepoId(v); setPage(1); }}
-          placeholder="按题库筛选"
+          placeholder="按练习筛选"
           allowClear
           style={{ width: 180 }}
           options={repos.map((r) => ({ label: r.name, value: r.id }))}

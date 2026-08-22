@@ -611,7 +611,7 @@ export default function KnowledgePointManagePage() {
               render: (t) => <Tag>{QUESTION_TYPE_LABEL[t] || t}</Tag>,
             },
             {
-              title: '所属题库', dataIndex: 'repoName', width: 140, ellipsis: true,
+              title: '所属练习', dataIndex: 'repoName', width: 140, ellipsis: true,
               render: (n) => n || '-',
             },
           ]}

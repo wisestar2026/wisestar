@@ -1,16 +1,16 @@
 /**
- * RepoListPage.jsx - 题库列表页面
+ * RepoListPage.jsx - 练习列表页面
  *
  * 功能:
- *   1. 分页展示题库（名称、类型、题目数、标签、创建时间）
- *   2. 搜索题库名称
- *   3. 创建题库（名称、类型、描述、标签、练习标记）
- *   4. 编辑题库（属性编辑 + 组题：批量选择题目加入 / 移除题目）
- *   5. 删除题库（级联删除题目）
- *   6. 点击名称进入题库详情
+ *   1. 分页展示练习（名称、类型、题目数、标签、创建时间）
+ *   2. 搜索练习名称
+ *   3. 创建练习（名称、类型、描述、标签、练习标记）
+ *   4. 编辑练习（属性编辑 + 组题：批量选择题目加入 / 移除题目）
+ *   5. 删除练习（级联删除题目）
+ *   6. 点击名称进入练习详情
  *
  * URL: /repos（受 AuthGuard 保护）
- * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"题库管理"菜单进入
+ * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"练习管理"菜单进入
  *
  * 数据流:
  *   列表: fetchRepos → listRepo({current, pageSize, name}) → GET /api/repo/list
@@ -19,7 +19,7 @@
  *   组题: 编辑弹窗内 SelectTemplateModal → bindTemplate({repoId, ids}) → POST /api/repo/bind
  *        移除: unbindTemplate({repoId, ids}) → POST /api/repo/unbind（题目保留在题目管理）
  *   删除: handleDelete → deleteRepo({id}) → POST /api/repo/delete（级联删题目）→ 刷新列表
- *   进入详情: 点击题库名称 → navigate(`/repos/${id}`) → RepoDetailPage
+ *   进入详情: 点击练习名称 → navigate(`/repos/${id}`) → RepoDetailPage
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -46,7 +46,7 @@ const TYPE_LABELS = {
   Remark: '备注说明', Judge: '判断题',
 };
 
-// 题库类型映射
+// 练习类型映射
 const MODE_MAP = {
   survey: { color: 'blue', label: '问卷' },
   exam: { color: 'red', label: '考试' },
@@ -71,11 +71,11 @@ export default function RepoListPage() {
   const [editId, setEditId] = useState(null);
 
   // 编辑弹窗内组题（题目管理）
-  const [editTemplates, setEditTemplates] = useState([]);   // 当前题库题目列表
+  const [editTemplates, setEditTemplates] = useState([]);   // 当前练习题目列表
   const [editLoading, setEditLoading] = useState(false);    // 题目列表加载
   const [selectOpen, setSelectOpen] = useState(false);      // 批量选择题目弹窗
 
-  // ---- 加载题库列表 ----
+  // ---- 加载练习列表 ----
   // useCallback 依赖 searchName: 名称变化时重建函数；翻页/搜索/删除后复用
   // 数据流: 本页 → listRepo(params) → GET /api/repo/list → 渲染表格
   const fetchRepos = useCallback(async (p = 1) => {
@@ -86,7 +86,7 @@ export default function RepoListPage() {
       setRepos(res.data?.list || []);
       setTotal(res.data?.total || 0);
     } catch {
-      message.error('加载题库列表失败');
+      message.error('加载练习列表失败');
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function RepoListPage() {
     fetchRepos();
   }, [fetchRepos]);
 
-  // ---- 创建/编辑题库 ----
+  // ---- 创建/编辑练习 ----
   // values 为表单提交值: { name, mode, description, tag, shared, isPractice }
   // tag 前端为逗号分隔字符串，提交时转换为数组（后端 RepoRequest.tag 为 String[]）
   // 数据流: 弹窗表单 → createRepo / updateRepo → 刷新列表
@@ -110,10 +110,10 @@ export default function RepoListPage() {
       };
       if (editId) {
         await updateRepo({ ...payload, id: editId });
-        message.success('题库已更新');
+        message.success('练习已更新');
       } else {
         await createRepo(payload);
-        message.success('题库已创建');
+        message.success('练习已创建');
       }
       setCreateOpen(false);
       setEditId(null);
@@ -126,21 +126,21 @@ export default function RepoListPage() {
     }
   };
 
-  // ---- 加载编辑弹窗内题库题目 ----
+  // ---- 加载编辑弹窗内练习题目 ----
   const fetchEditTemplates = async (rid) => {
     setEditLoading(true);
     try {
       const res = await listTemplate({ current: 1, pageSize: 500, repoId: rid });
       setEditTemplates(res.data?.list || []);
     } catch {
-      message.error('加载题库题目失败');
+      message.error('加载练习题目失败');
     } finally {
       setEditLoading(false);
     }
   };
 
   // ---- 打开编辑弹窗 ----
-  // record 为题库行数据（RepoView），回填到表单；tag 数组转逗号分隔字符串
+  // record 为练习行数据（RepoView），回填到表单；tag 数组转逗号分隔字符串
   const openEdit = (record) => {
     setEditId(record.id);
     form.setFieldsValue({
@@ -162,7 +162,7 @@ export default function RepoListPage() {
   const handleRemoveFromEdit = async (id) => {
     try {
       await unbindTemplate({ repoId: editId, ids: [id] });
-      message.success('已从题库移除');
+      message.success('已从练习移除');
       fetchEditTemplates(editId);
     } catch {
       message.error('移除失败');
@@ -175,8 +175,8 @@ export default function RepoListPage() {
     fetchEditTemplates(editId);
   };
 
-  // ---- 删除题库 ----
-  // 注意: 删除是级联的（题库内所有题目一并删除），弹窗文案已明确提示
+  // ---- 删除练习 ----
+  // 注意: 删除是级联的（练习内所有题目一并删除），弹窗文案已明确提示
   const handleDelete = async (id) => {
     try {
       await deleteRepo({ id });
@@ -196,7 +196,7 @@ export default function RepoListPage() {
   // ---- 表格列 ----
   const columns = [
     {
-      title: '题库名称',
+      title: '练习名称',
       dataIndex: 'name',
       ellipsis: true,
       render: (text, record) => (
@@ -276,7 +276,7 @@ export default function RepoListPage() {
           )}
           {can('repo:delete') && (
             <Popconfirm
-              title="删除题库将同时删除其中所有题目，确定？"
+              title="删除练习将同时删除其中所有题目，确定？"
               onConfirm={() => handleDelete(record.id)}
               okText="删除"
               cancelText="取消"
@@ -297,11 +297,11 @@ export default function RepoListPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>
           <BookOutlined style={{ marginRight: 8 }} />
-          题库管理
+          练习管理
         </Title>
         {can('repo:create') && (
           <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditId(null); form.resetFields(); setCreateOpen(true); }}>
-            新建题库
+            新建练习
           </Button>
         )}
       </div>
@@ -309,7 +309,7 @@ export default function RepoListPage() {
       {/* ---- 搜索栏 ---- */}
       <Space style={{ marginBottom: 16 }}>
         <Input
-          placeholder="搜索题库名称"
+          placeholder="搜索练习名称"
           value={searchName}
           onChange={(e) => setSearchName(e.target.value)}
           onPressEnter={handleSearch}
@@ -333,15 +333,15 @@ export default function RepoListPage() {
           current: page,
           total,
           pageSize,
-          showTotal: (t) => `共 ${t} 个题库`,
+          showTotal: (t) => `共 ${t} 个练习`,
           onChange: (p) => { setPage(p); fetchRepos(p); },
         }}
         scroll={{ y: 'calc(100vh - 320px)' }}
       />
 
-      {/* ---- 新建/编辑题库弹窗 ---- */}
+      {/* ---- 新建/编辑练习弹窗 ---- */}
       <Modal
-        title={editId ? '编辑题库' : '新建题库'}
+        title={editId ? '编辑练习' : '新建练习'}
         open={createOpen}
         onCancel={() => { setCreateOpen(false); setEditId(null); setEditTemplates([]); form.resetFields(); }}
         footer={null}
@@ -351,13 +351,13 @@ export default function RepoListPage() {
         <Form form={form} onFinish={handleSave} layout="vertical">
           <Form.Item
             name="name"
-            label="题库名称"
-            rules={[{ required: true, message: '请输入题库名称' }]}
+            label="练习名称"
+            rules={[{ required: true, message: '请输入练习名称' }]}
           >
-            <Input placeholder="例如：通用单选题库" />
+            <Input placeholder="例如：通用单选练习" />
           </Form.Item>
 
-          <Form.Item name="mode" label="题库类型" initialValue="survey">
+          <Form.Item name="mode" label="练习类型" initialValue="survey">
             <Select
               options={[
                 { label: '调查问卷', value: 'survey' },
@@ -367,7 +367,7 @@ export default function RepoListPage() {
           </Form.Item>
 
           <Form.Item name="description" label="描述">
-            <Input.TextArea rows={2} placeholder="题库说明" />
+            <Input.TextArea rows={2} placeholder="练习说明" />
           </Form.Item>
 
           <Form.Item name="tag" label="标签（逗号分隔）">
@@ -375,7 +375,7 @@ export default function RepoListPage() {
           </Form.Item>
 
           {/* 学科/年级/难度标签: 与题目管理知识点属性保持一致，
-              供章节/小节绑定题库时按学科/年级/难度识别；均为可选项 */}
+              供章节/小节绑定练习时按学科/年级/难度识别；均为可选项 */}
           <Form.Item name="subject" label="学科">
             <Input placeholder="如：数学 / 语文" />
           </Form.Item>
@@ -407,8 +407,8 @@ export default function RepoListPage() {
 
           <Form.Item
             name="isPractice"
-            label="练习题库"
-            extra="开启后该题库可供学员端练习使用"
+            label="练习练习"
+            extra="开启后该练习可供学员端练习使用"
             initialValue={false}
           >
             <Select
@@ -431,7 +431,7 @@ export default function RepoListPage() {
           <>
             <Divider style={{ margin: '4px 0 12px' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text strong>题库题目（{editTemplates.length}）</Text>
+              <Text strong>练习题目（{editTemplates.length}）</Text>
               <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setSelectOpen(true)}>
                 批量选择题目
               </Button>
@@ -470,7 +470,7 @@ export default function RepoListPage() {
                 {
                   title: '', width: 56,
                   render: (_, r) => (
-                    <Popconfirm title="从题库移除该题？" onConfirm={() => handleRemoveFromEdit(r.id)} okText="移除" cancelText="取消">
+                    <Popconfirm title="从练习移除该题？" onConfirm={() => handleRemoveFromEdit(r.id)} okText="移除" cancelText="取消">
                       <Button size="small" type="link" danger icon={<DeleteOutlined />}>移除</Button>
                     </Popconfirm>
                   ),
@@ -479,7 +479,7 @@ export default function RepoListPage() {
             />
             {!editLoading && editTemplates.length === 0 && (
               <Text type="secondary" style={{ display: 'block', textAlign: 'center', padding: '12px 0' }}>
-                题库暂无题目，点击「批量选择题目」从题目管理中添加
+                练习暂无题目，点击「批量选择题目」从题目管理中添加
               </Text>
             )}
           </>

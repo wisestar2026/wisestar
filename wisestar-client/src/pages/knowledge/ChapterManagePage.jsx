@@ -2,11 +2,11 @@
  * ChapterManagePage.jsx - 章节管理页（知识管理板块）
  *
  * 功能:
- *   1. 顶部学科下拉 → 展示该学科下的章节列表（真实 API，含小节数/题库数统计）
+ *   1. 顶部学科下拉 → 展示该学科下的章节列表（真实 API，含小节数/练习数统计）
  *   2. 章节 CRUD（新增/编辑/删除，删除级联其后小节/知识点/绑定）
  *   3. 「小节数」列可点击 → 弹窗查看该章节下的小节列表（数据来自小节管理 t_section），
  *      弹窗内可直接跳转小节管理页维护
- *   4. 「绑定题库」→ 从题库库（t_repo）选择题库绑定到章节（全量替换保存）
+ *   4. 「绑定练习」→ 从练习库（t_repo）选择练习绑定到章节（全量替换保存）
  *
  * URL: /knowledge/chapters（受 AuthGuard 保护）
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「知识管理 → 章节管理」菜单进入
@@ -14,7 +14,7 @@
  * 数据流:
  *   listSubjects() → 学科下拉；listChapters({ subjectId }) → 当前学科章节列表
  *   listSections({ chapterId }) → 小节查看弹窗（小节数据由小节管理表 t_section 提供）
- *   listRepo() → 绑定题库弹窗题库库；saveChapterRepos / listChapterRepos 绑定回显
+ *   listRepo() → 绑定练习弹窗练习库；saveChapterRepos / listChapterRepos 绑定回显
  */
 
 import { useEffect, useState } from 'react';
@@ -52,7 +52,7 @@ export default function ChapterManagePage() {
   const [editing, setEditing] = useState(null); // null=新增, 对象=编辑
   const [form] = Form.useForm();
 
-  // ---- 绑定题库弹窗（题库库选择） ----
+  // ---- 绑定练习弹窗（练习库选择） ----
   const [bindOpen, setBindOpen] = useState(false);
   const [bindChapter, setBindChapter] = useState(null);
   const [bindKeyword, setBindKeyword] = useState('');
@@ -143,7 +143,7 @@ export default function ChapterManagePage() {
     });
   };
 
-  // ---- 绑定题库（从题库库选题，全量替换） ----
+  // ---- 绑定练习（从练习库选题，全量替换） ----
   const openBind = (chapter) => {
     setBindChapter(chapter);
     setBindOpen(true);
@@ -173,7 +173,7 @@ export default function ChapterManagePage() {
   const saveBind = () => {
     setSavingBind(true);
     saveChapterRepos({ chapterId: bindChapter.id, repoIds: selectedIds }).then(() => {
-      message.success('题库绑定已保存');
+      message.success('练习绑定已保存');
       setBindOpen(false);
       setChapters((prev) => prev.map((c) => (c.id === bindChapter.id ? { ...c, repoCount: selectedIds.length } : c)));
     }).finally(() => setSavingBind(false));
@@ -212,8 +212,8 @@ export default function ChapterManagePage() {
       ),
     },
     {
-      title: '题库数', dataIndex: 'repoCount', width: 100, align: 'center',
-      render: (count) => (count > 0 ? <Tag color="blue">{count} 个题库</Tag> : <Tag>未绑定</Tag>),
+      title: '练习数', dataIndex: 'repoCount', width: 100, align: 'center',
+      render: (count) => (count > 0 ? <Tag color="blue">{count} 个练习</Tag> : <Tag>未绑定</Tag>),
     },
     {
       title: '操作', key: 'action', width: 380,
@@ -225,7 +225,7 @@ export default function ChapterManagePage() {
           >
             管理小节
           </Button>
-          <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(c)}>绑定题库</Button>
+          <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(c)}>绑定练习</Button>
 {can('knowledge:update') && (
             <Button size="small" icon={<EditOutlined />} onClick={() => openModal(c)}>编辑</Button>
           )}
@@ -313,9 +313,9 @@ export default function ChapterManagePage() {
         </Form>
       </Modal>
 
-      {/* 绑定题库弹窗（题库库选择，全量替换保存） */}
+      {/* 绑定练习弹窗（练习库选择，全量替换保存） */}
       <Modal
-        title={`绑定题库 - ${bindChapter?.name || ''}`}
+        title={`绑定练习 - ${bindChapter?.name || ''}`}
         open={bindOpen}
         onOk={saveBind}
         onCancel={() => setBindOpen(false)}
@@ -328,13 +328,13 @@ export default function ChapterManagePage() {
         <Space style={{ marginBottom: 12 }} align="center">
           <Input.Search
             style={{ width: 320 }}
-            placeholder="按题库名称搜索题库库"
+            placeholder="按练习名称搜索练习库"
             value={bindKeyword}
             onChange={(e) => setBindKeyword(e.target.value)}
             onSearch={onBindKeywordSearch}
             allowClear
           />
-          <Text type="secondary">已选 {selectedIds.length} 个题库（题库来自题库管理，不能在此新增）</Text>
+          <Text type="secondary">已选 {selectedIds.length} 个练习（练习来自练习管理，不能在此新增）</Text>
         </Space>
         <Table
           rowKey="id"
@@ -353,7 +353,7 @@ export default function ChapterManagePage() {
             onChange: (c) => { setRepoCurrent(c); fetchRepos(c, bindKeyword); },
           }}
           columns={[
-            { title: '题库名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
+            { title: '练习名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
             {
               title: '学科', dataIndex: 'subject', width: 80, align: 'center',
               render: (s) => (s ? <Tag color="geekblue">{s}</Tag> : '-'),
@@ -428,7 +428,7 @@ export default function ChapterManagePage() {
               render: (count) => (count > 0 ? <Tag color="blue">{count} 个</Tag> : <Tag>0 个</Tag>),
             },
             {
-              title: '题库数', dataIndex: 'repoCount', width: 90, align: 'center',
+              title: '练习数', dataIndex: 'repoCount', width: 90, align: 'center',
               render: (count) => (count > 0 ? <Tag color="blue">{count} 个</Tag> : <Tag>未绑定</Tag>),
             },
           ]}

@@ -67,7 +67,7 @@ export default function PracticeSessionPage() {
   // 模式判定（必须先于 useState 定义，避免 const 暂时性死区）
   const isExam = mode === 'exam';   // 套卷模拟
   const isRandom = mode === 'random'; // 随机练习
-  // 来源题库 ID（从题库整库练习时带上，落库记录来源；可空）
+  // 来源练习 ID（从练习整库练习时带上，落库记录来源；可空）
   const repoId = searchParams.get('repoId') || undefined;
   // 题目 id 数组（useMemo 缓存，避免每次渲染生成新数组导致 loadQuestions 无限重触发）
   const ids = useMemo(

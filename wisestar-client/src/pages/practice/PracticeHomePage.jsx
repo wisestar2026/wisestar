@@ -3,18 +3,18 @@
  *
  * 功能:
  *   1. 三种练习模式选择（专项刷题 / 套卷模拟 / 随机练习）
- *   2. 「我的题库」列表（老师手动分配 ∪ 系统按标签自动匹配）
- *   3. 选择题库/测试卷 → 「开始练习」→ 该题库全部题目进入答题页
+ *   2. 「我的练习」列表（老师手动分配 ∪ 系统按标签自动匹配）
+ *   3. 选择练习/测试卷 → 「开始练习」→ 该练习全部题目进入答题页
  *
- * 【学员端限制】学员只能选择分配到的习题库/测试卷，无法对单个题目勾选。
- *   题库来源: 老师手动分配（管理端「题库分配」页）+ 系统按标签自动分配
+ * 【学员端限制】学员只能选择分配到的习练习/测试卷，无法对单个题目勾选。
+ *   练习来源: 老师手动分配（管理端「练习分配」页）+ 系统按标签自动分配
  *
  * URL: /practice（受 AuthGuard 保护，侧边栏「在线练习」菜单进入）
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"在线练习"菜单
  *
  * 数据流:
- *   挂载 → myRepos() 拉取我的题库（GET /api/repo/my）
- *   开始练习 → 选择题库 + 模式 → listTemplate({repoId, pageSize: total}) 拉取全部题目 ids
+ *   挂载 → myRepos() 拉取我的练习（GET /api/repo/my）
+ *   开始练习 → 选择练习 + 模式 → listTemplate({repoId, pageSize: total}) 拉取全部题目 ids
  *     → navigate(`/practice/session?mode=xx&ids=xx`) → PracticeSessionPage
  *
  * 三种模式说明:
@@ -68,13 +68,13 @@ export default function PracticeHomePage() {
   // ---- 练习模式 ----
   const [mode, setMode] = useState('practice');
 
-  // ---- 我的题库状态 ----
+  // ---- 我的练习状态 ----
   const [loading, setLoading] = useState(true);
-  const [repos, setRepos] = useState([]);        // 我的题库列表（RepoView）
-  const [selectedRepoId, setSelectedRepoId] = useState(null); // 选中的题库 id
+  const [repos, setRepos] = useState([]);        // 我的练习列表（RepoView）
+  const [selectedRepoId, setSelectedRepoId] = useState(null); // 选中的练习 id
   const [starting, setStarting] = useState(false); // 开始练习请求中
 
-  // ---- 加载我的题库 ----
+  // ---- 加载我的练习 ----
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -82,7 +82,7 @@ export default function PracticeHomePage() {
         const res = await myRepos();
         setRepos(res.data || []);
       } catch {
-        message.error('加载我的题库失败');
+        message.error('加载我的练习失败');
       } finally {
         setLoading(false);
       }
@@ -90,10 +90,10 @@ export default function PracticeHomePage() {
   }, []);
 
   // ---- 开始练习 ----
-  // 学员端只能选择题库：拉取该题库全部题目 id 后进入答题页
+  // 学员端只能选择练习：拉取该练习全部题目 id 后进入答题页
   const handleStart = async () => {
     if (!selectedRepoId) {
-      message.warning('请先选择一个习题库或测试卷');
+      message.warning('请先选择一个习练习或测试卷');
       return;
     }
     const repo = repos.find((r) => r.id === selectedRepoId);
@@ -103,7 +103,7 @@ export default function PracticeHomePage() {
       const res = await listTemplate({ repoId: selectedRepoId, current: 1, pageSize: Math.max(total, 100) });
       const list = res.data?.list || [];
       if (list.length === 0) {
-        message.warning('该题库暂无题目，请联系老师补充');
+        message.warning('该练习暂无题目，请联系老师补充');
         return;
       }
       const ids = list.map((q) => q.id).join(',');
@@ -115,18 +115,18 @@ export default function PracticeHomePage() {
     }
   };
 
-  // ---- 题库类型标识 ----
+  // ---- 练习类型标识 ----
   const repoType = (repo) => (
     repo?.mode === 'exam'
       ? { label: '测试卷', color: 'purple', icon: <FileTextOutlined /> }
-      : { label: '习题库', color: 'blue', icon: <BookOutlined /> }
+      : { label: '习练习', color: 'blue', icon: <BookOutlined /> }
   );
 
   return (
     <div style={{ padding: 24 }}>
       <Card style={{ marginBottom: 16 }}>
         <Title level={4} style={{ marginBottom: 4 }}>在线练习</Title>
-        <Text type="secondary">选择练习模式与老师分配的习题库/测试卷开始学习</Text>
+        <Text type="secondary">选择练习模式与老师分配的习练习/测试卷开始学习</Text>
       </Card>
 
       {/* ---- 三种练习模式选择 ---- */}
@@ -157,11 +157,11 @@ export default function PracticeHomePage() {
         </Row>
       </Card>
 
-      {/* ---- 我的题库列表 ---- */}
+      {/* ---- 我的练习列表 ---- */}
       <Card
         title={
           <Space>
-            <span>我的题库 / 测试卷</span>
+            <span>我的练习 / 测试卷</span>
             <Text type="secondary" style={{ fontSize: 12 }}>
               （共 {repos.length} 个，由老师分配或系统按标签自动分配）
             </Text>
@@ -169,9 +169,9 @@ export default function PracticeHomePage() {
         }
       >
         {loading ? (
-          <div style={{ padding: 48, textAlign: 'center' }}><Text type="secondary">题库加载中...</Text></div>
+          <div style={{ padding: 48, textAlign: 'center' }}><Text type="secondary">练习加载中...</Text></div>
         ) : repos.length === 0 ? (
-          <Empty description="暂无分配的题库，请联系老师为您分配习题库或测试卷" />
+          <Empty description="暂无分配的练习，请联系老师为您分配习练习或测试卷" />
         ) : (
           <Row gutter={[16, 16]}>
             {repos.map((repo) => {

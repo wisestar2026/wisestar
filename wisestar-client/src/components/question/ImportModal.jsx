@@ -2,7 +2,7 @@
  * ImportModal.jsx - Excel 批量导入题目弹窗
  *
  * 功能:
- *   1. 选择目标题库（必须）
+ *   1. 选择目标练习（必须）
  *   2. 上传 Excel 文件（.xlsx / .xls）
  *   3. 提交到后端 /api/repo/import 接口
  *
@@ -16,10 +16,10 @@
  *   open: boolean           - 弹窗是否可见
  *   onCancel: () => void    - 关闭回调
  *   onSuccess: () => void   - 导入成功后回调（父组件刷新列表）
- *   repos: Array<{id, name}> - 题库列表（供选择目标题库）
+ *   repos: Array<{id, name}> - 练习列表（供选择目标练习）
  *
  * 核心数据流:
- *   选择题库 + 文件 → handleImport → importTemplate({file, repoId})
+ *   选择练习 + 文件 → handleImport → importTemplate({file, repoId})
  *   → POST /api/repo/import (multipart/form-data) → 后端解析 Excel 入库
  *   → onSuccess() → QuestionListPage.fetchData(1) 刷新
  */
@@ -33,7 +33,7 @@ const { Text } = Typography;
 const { Dragger } = Upload;
 
 export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
-  // repoId: 选中的目标题库 ID（未选时 undefined）
+  // repoId: 选中的目标练习 ID（未选时 undefined）
   // file: 用户选择的 Excel 文件对象（originFileObj 是浏览器原生 File）
   // importing: 导入请求进行中标记（控制按钮 loading 状态，防止重复提交）
   const [repoId, setRepoId] = useState(undefined);
@@ -41,7 +41,7 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
   const [importing, setImporting] = useState(false);
 
   // ---- 重置状态 ----
-  // 关闭弹窗前清空已选题库和文件，保证下次打开是干净状态
+  // 关闭弹窗前清空已选练习和文件，保证下次打开是干净状态
   const handleCancel = () => {
     setRepoId(undefined);
     setFile(null);
@@ -58,9 +58,9 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
   };
 
   // ---- 执行导入 ----
-  // 前置校验: 必须选择目标题库和文件，否则提示并中断
+  // 前置校验: 必须选择目标练习和文件，否则提示并中断
   const handleImport = async () => {
-    if (!repoId) { message.warning('请选择目标题库'); return; }
+    if (!repoId) { message.warning('请选择目标练习'); return; }
     if (!file) { message.warning('请选择 Excel 文件'); return; }
 
     setImporting(true);
@@ -122,13 +122,13 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
           }
         />
 
-        {/* ---- 选择目标题库 ---- */}
+        {/* ---- 选择目标练习 ---- */}
         <div>
-          <Text strong style={{ display: 'block', marginBottom: 4 }}>目标题库</Text>
+          <Text strong style={{ display: 'block', marginBottom: 4 }}>目标练习</Text>
           <Select
             value={repoId}
             onChange={setRepoId}
-            placeholder="请选择题目导入到哪个题库"
+            placeholder="请选择题目导入到哪个练习"
             style={{ width: '100%' }}
             options={repos.map((r) => ({ label: r.name, value: r.id }))}
           />

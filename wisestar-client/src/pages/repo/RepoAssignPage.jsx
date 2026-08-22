@@ -1,18 +1,18 @@
 /**
- * RepoAssignPage.jsx - 题库分配管理页（老师端）
+ * RepoAssignPage.jsx - 练习分配管理页（老师端）
  *
  * 功能:
  *   1. 学员列表（分页，姓名搜索）——点击选中学员
- *   2. 选中学员后管理其练习题库:
- *      - 学员标签（系统按标签自动分配题库的规则）: 保存后，题库 tag 与学员标签有交集即自动可见
- *      - 已分配题库列表（手动分配记录）: 可移除
- *      - 分配新题库: 勾选题库 → 分配（幂等）
+ *   2. 选中学员后管理其练习练习:
+ *      - 学员标签（系统按标签自动分配练习的规则）: 保存后，练习 tag 与学员标签有交集即自动可见
+ *      - 已分配练习列表（手动分配记录）: 可移除
+ *      - 分配新练习: 勾选练习 → 分配（幂等）
  *
- * URL: /repo-assign（受 AuthGuard 保护，侧边栏「题库分配」菜单进入）
+ * URL: /repo-assign（受 AuthGuard 保护，侧边栏「练习分配」菜单进入）
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏
  *
  * 数据流:
- *   挂载 → listUser 拉取学员 → 选中学员 → listAssign 拉已分配 + getUserTags 拉标签 + listRepo 拉可选题库
+ *   挂载 → listUser 拉取学员 → 选中学员 → listAssign 拉已分配 + getUserTags 拉标签 + listRepo 拉可选练习
  *   分配 → assignRepo({userId, repoIds}) → 刷新已分配列表
  *   移除 → deleteAssign({ids}) → 刷新
  *   保存标签 → saveUserTags({userId, tags}) → 提示按标签自动分配生效
@@ -51,7 +51,7 @@ export default function RepoAssignPage() {
   // ---- 分配管理 ----
   const [assignLoading, setAssignLoading] = useState(false);
   const [assigns, setAssigns] = useState([]);       // 已分配记录
-  const [allRepos, setAllRepos] = useState([]);     // 全部题库（可选）
+  const [allRepos, setAllRepos] = useState([]);     // 全部练习（可选）
   const [checkedRepos, setCheckedRepos] = useState([]); // 勾选待分配
   const [assigning, setAssigning] = useState(false);
 
@@ -71,7 +71,7 @@ export default function RepoAssignPage() {
 
   useEffect(() => { fetchUsers(page, keyword); }, [page, keyword, fetchUsers]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ---- 选中学员：加载标签 + 已分配 + 全部题库 ----
+  // ---- 选中学员：加载标签 + 已分配 + 全部练习 ----
   const loadAssign = useCallback(async (userId) => {
     if (!userId) return;
     setAssignLoading(true);
@@ -97,16 +97,16 @@ export default function RepoAssignPage() {
     loadAssign(user.id);
   };
 
-  // ---- 分配题库 ----
+  // ---- 分配练习 ----
   const handleAssign = async () => {
     if (!selectedUser || checkedRepos.length === 0) {
-      message.warning('请先勾选要分配的题库');
+      message.warning('请先勾选要分配的练习');
       return;
     }
     setAssigning(true);
     try {
       await assignRepo({ userId: selectedUser.id, repoIds: checkedRepos });
-      message.success('分配成功，学员端「我的题库」已更新');
+      message.success('分配成功，学员端「我的练习」已更新');
       setCheckedRepos([]);
       loadAssign(selectedUser.id);
     } catch {
@@ -173,7 +173,7 @@ export default function RepoAssignPage() {
   // ---- 已分配列 ----
   const assignColumns = [
     {
-      title: '题库名称',
+      title: '练习名称',
       dataIndex: 'repoName',
       key: 'repoName',
       render: (t) => <Text strong>{t || '-'}</Text>,
@@ -201,7 +201,7 @@ export default function RepoAssignPage() {
       key: 'action',
       width: 90,
       render: (_, record) => (
-        <Popconfirm title="确定移除该题库分配？" onConfirm={() => handleRemove(record.id)}>
+        <Popconfirm title="确定移除该练习分配？" onConfirm={() => handleRemove(record.id)}>
           <Button size="small" danger icon={<DeleteOutlined />}>移除</Button>
         </Popconfirm>
       ),
@@ -210,9 +210,9 @@ export default function RepoAssignPage() {
 
   return (
     <div style={{ padding: 24 }}>
-      <Title level={4} style={{ marginBottom: 4 }}>题库分配</Title>
+      <Title level={4} style={{ marginBottom: 4 }}>练习分配</Title>
       <Text type="secondary">
-        为学员分配习题库/测试卷（手动分配），或为学员设置标签按标签自动分配题库
+        为学员分配习练习/测试卷（手动分配），或为学员设置标签按标签自动分配练习
       </Text>
 
       <Row gutter={16} style={{ marginTop: 16 }}>
@@ -243,7 +243,7 @@ export default function RepoAssignPage() {
           {!selectedUser ? (
             <Card>
               <div style={{ padding: 40, textAlign: 'center' }}>
-                <Text type="secondary">点击左侧学员查看并管理其题库分配</Text>
+                <Text type="secondary">点击左侧学员查看并管理其练习分配</Text>
               </div>
             </Card>
           ) : (
@@ -253,9 +253,9 @@ export default function RepoAssignPage() {
                 title={
                   <Space>
                     <TagsOutlined style={{ color: '#13c2c2' }} />
-                    学员标签（按标签自动分配题库）
+                    学员标签（按标签自动分配练习）
                     <Text type="secondary" style={{ fontSize: 12 }}>
-                      题库标签与学员标签有交集时自动出现在学员「我的题库」
+                      练习标签与学员标签有交集时自动出现在学员「我的练习」
                     </Text>
                   </Space>
                 }
@@ -273,12 +273,12 @@ export default function RepoAssignPage() {
                 </Space>
               </Card>
 
-              {/* 已分配题库 */}
+              {/* 已分配练习 */}
               <Card
                 title={
                   <Space>
                     <BookOutlined style={{ color: '#1677ff' }} />
-                    已分配题库（{assigns.length}）
+                    已分配练习（{assigns.length}）
                   </Space>
                 }
                 styles={{ body: { padding: assigns.length ? 16 : 8 } }}
@@ -290,16 +290,16 @@ export default function RepoAssignPage() {
                   columns={assignColumns}
                   dataSource={assigns}
                   pagination={false}
-                  locale={{ emptyText: '暂未分配题库，请在下方分配' }}
+                  locale={{ emptyText: '暂未分配练习，请在下方分配' }}
                 />
               </Card>
 
-              {/* 分配新题库 */}
+              {/* 分配新练习 */}
               <Card
                 title={
                   <Space>
                     <PlusOutlined style={{ color: '#52c41a' }} />
-                    分配题库
+                    分配练习
                   </Space>
                 }
               >
@@ -307,12 +307,12 @@ export default function RepoAssignPage() {
                   <Select
                     mode="multiple"
                     style={{ minWidth: 360, flex: 1 }}
-                    placeholder="选择要分配给该学员的题库"
+                    placeholder="选择要分配给该学员的练习"
                     value={checkedRepos}
                     onChange={setCheckedRepos}
                     optionFilterProp="label"
                     options={allRepos.map((r) => ({
-                      label: `${r.name}（${r.mode === 'exam' ? '测试卷' : '习题库'}·${r.total ?? 0}题）`,
+                      label: `${r.name}（${r.mode === 'exam' ? '测试卷' : '习练习'}·${r.total ?? 0}题）`,
                       value: r.id,
                     }))}
                   />

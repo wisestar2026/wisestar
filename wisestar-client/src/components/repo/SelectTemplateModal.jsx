@@ -1,16 +1,16 @@
 /**
- * SelectTemplateModal.jsx - 题库批量选择题目弹窗
+ * SelectTemplateModal.jsx - 练习批量选择题目弹窗
  *
  * 功能:
- *   从题目管理（全局题目库）中批量勾选题目，绑定到当前题库。
+ *   从题目管理（全局题目库）中批量勾选题目，绑定到当前练习。
  *   题目信息统一来源于题目管理板块，本弹窗只做"选择 + 绑定"，不提供创建/编辑题目入口。
  *
  * 数据流:
  *   打开: listTemplate({current:1, pageSize:500}) → GET /api/template/list（全量题目）
- *   过滤: 前端排除已绑定当前题库的题目（record.repoId === repoId → 禁用勾选）
- *   确认: bindTemplate({repoId, ids}) → POST /api/repo/bind → onSuccess() 刷新题库题目列表
+ *   过滤: 前端排除已绑定当前练习的题目（record.repoId === repoId → 禁用勾选）
+ *   确认: bindTemplate({repoId, ids}) → POST /api/repo/bind → onSuccess() 刷新练习题目列表
  *
- * 被谁引用: RepoDetailPage（题库详情页「批量选择题目」按钮）
+ * 被谁引用: RepoDetailPage（练习详情页「批量选择题目」按钮）
  *
  * URL: 无独立路由，Modal 形式挂载在 RepoDetailPage 内
  */
@@ -32,7 +32,7 @@ const TYPE_LABELS = {
 
 export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess }) {
   // ---- 状态 ----
-  const [allTemplates, setAllTemplates] = useState([]);   // 全量题目（不含已绑定本题库）
+  const [allTemplates, setAllTemplates] = useState([]);   // 全量题目（不含已绑定本练习）
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');             // 名称搜索
   const [qType, setQType] = useState(undefined);          // 题型筛选
@@ -45,7 +45,7 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
     try {
       const res = await listTemplate({ current: 1, pageSize: 500 });
       const list = res.data?.list || [];
-      // 排除已绑定当前题库的题目（前端过滤；数据量可控时一次性加载更利于勾选跨页）
+      // 排除已绑定当前练习的题目（前端过滤；数据量可控时一次性加载更利于勾选跨页）
       const others = list.filter((t) => t.repoId !== repoId);
       setAllTemplates(others);
       // 关闭已有选中（题目归属可能已变化）
@@ -82,7 +82,7 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
 
   // ---- 确认绑定 ----
   const handleConfirm = async () => {
-    if (!selectedRowKeys.length) { message.warning('请先勾选要加入题库的题目'); return; }
+    if (!selectedRowKeys.length) { message.warning('请先勾选要加入练习的题目'); return; }
     setConfirmLoading(true);
     try {
       await bindTemplate({ repoId, ids: selectedRowKeys });
@@ -119,8 +119,8 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
       render: (_, r) => r.template?.attribute?.examScore || '-',
     },
     {
-      title: '所属题库', dataIndex: 'repoId', width: 110,
-      render: (rid) => (rid ? <Tag color="blue">{rid === repoId ? '本题库' : '其他'}</Tag> : <Text type="secondary">未绑定</Text>),
+      title: '所属练习', dataIndex: 'repoId', width: 110,
+      render: (rid) => (rid ? <Tag color="blue">{rid === repoId ? '本练习' : '其他'}</Tag> : <Text type="secondary">未绑定</Text>),
     },
     {
       title: '标签', dataIndex: 'tag', width: 130,
@@ -135,14 +135,14 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
       onCancel={onCancel}
       onOk={handleConfirm}
       confirmLoading={confirmLoading}
-      okText={`加入题库（${selectedRowKeys.length}）`}
+      okText={`加入练习（${selectedRowKeys.length}）`}
       cancelText="取消"
       width={820}
       destroyOnHidden
     >
       {/* ---- 说明 ---- */}
       <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-        从题目管理中勾选已有题目加入本题库。题目内容统一在「题目管理」中维护，此处仅选择与绑定。
+        从题目管理中勾选已有题目加入本练习。题目内容统一在「题目管理」中维护，此处仅选择与绑定。
       </Text>
 
       {/* ---- 筛选栏 ---- */}
@@ -166,7 +166,7 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
           />
           <Button icon={<ReloadOutlined />} onClick={fetchAll}>刷新</Button>
         </Space>
-        <Text type="secondary">可选 {filtered.length} 题（已绑定本题库的题目不在列表中）</Text>
+        <Text type="secondary">可选 {filtered.length} 题（已绑定本练习的题目不在列表中）</Text>
       </Space>
 
       {/* ---- 题目表格 ---- */}

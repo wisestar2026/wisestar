@@ -9,7 +9,7 @@
  *   5. 分值 & 计分方式
  *   6. 答案解析（支持 Markdown）
  *   7. 题目图片上传（通过 POST /api/file/create）
- *   8. 所属题库选择、标签、分类
+ *   8. 所属练习选择、标签、分类
  *   9. 知识点属性录入区（学科/章节/知识点多值/难度）
  *
  * 被谁引用: QuestionListPage（题目管理页"新建题目"/"编辑"按钮）
@@ -19,7 +19,7 @@
  *   onCancel: () => void    - 关闭回调
  *   onSave: (data) => void  - 保存回调，data 为 TemplateRequest 格式
  *   record: object | null   - 编辑时传入的题目数据（TemplateView），新建时传 null
- *   repos: Array<{id, name}> - 可选题库列表（供题库选择下拉）
+ *   repos: Array<{id, name}> - 可选练习列表（供练习选择下拉）
  *
  * 重点逻辑说明（后期维护必读）:
  *
@@ -84,7 +84,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   const [required, setRequired] = useState(false);  // 是否必填
   const [tags, setTags] = useState('');         // 标签（逗号分隔的原始字符串，保存时拆分）
   const [category, setCategory] = useState(''); // 分类
-  const [repoId, setRepoId] = useState(undefined); // 所属题库 ID（可选）
+  const [repoId, setRepoId] = useState(undefined); // 所属练习 ID（可选）
   const [saving, setSaving] = useState(false);  // 保存请求进行中
 
   // ---- 答案 & 解析 ----
@@ -297,7 +297,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         chapter: chapter || undefined,
         knowledgePoint: knowledgePoints.length > 0 ? knowledgePoints : undefined,
         difficulty: difficulty || undefined,
-        // 如果选择了所属题库，传 repoId + mode='exam'（表示考试题库类型的题目）
+        // 如果选择了所属练习，传 repoId + mode='exam'（表示考试练习类型的题目）
         ...(repoId ? { repoId, mode: 'exam' } : {}),
       };
 
@@ -358,7 +358,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
             <Select
               value={repoId}
               onChange={setRepoId}
-              placeholder="选择所属题库（可选）"
+              placeholder="选择所属练习（可选）"
               allowClear
               style={{ flex: 1 }}
               options={repos.map((r) => ({ label: r.name, value: r.id }))}

@@ -3,10 +3,10 @@
  *
  * 功能:
  *   1. 顶部学科/章节下拉联动定位（URL query 携带 subjectId/chapterId 时优先回填）
- *   2. 小节 CRUD（真实 API，删除级联其后知识点/题库绑定）
+ *   2. 小节 CRUD（真实 API，删除级联其后知识点/练习绑定）
  *   3. 「内容设置」: 编辑小节学习目标 / 内容概述 / 讲解要点（存 t_section.content JSON）
- *   4. 「练习设置」: 合并练习配置与题库绑定——上方从题库管理（t_repo）勾选绑定题库
- *      （可直接看到题库数据，全量替换保存），下方配置题量/难度/题型组合自动出题
+ *   4. 「练习设置」: 合并练习配置与练习绑定——上方从练习管理（t_repo）勾选绑定练习
+ *      （可直接看到练习数据，全量替换保存），下方配置题量/难度/题型组合自动出题
  *      （存 t_section.practice JSON），保存时一起提交
  *   5. 「管理知识点」跳转 /knowledge/points（携带 subjectId/chapterId/sectionId）
  *
@@ -16,7 +16,7 @@
  * 数据流:
  *   listSubjects / listChapters / listSections 三级联动；
  *   内容/练习设置为 JSON 字符串透传（前端 stringify/parse），后端仅存储；
- *   题库绑定: listRepo() 题库库 → saveSectionRepos / listSectionRepos 全量替换回显
+ *   练习绑定: listRepo() 练习库 → saveSectionRepos / listSectionRepos 全量替换回显
  */
 
 import { useEffect, useState } from 'react';
@@ -69,7 +69,7 @@ export default function SectionManagePage() {
   const [contentSection, setContentSection] = useState(null);
   const [contentForm] = Form.useForm();
 
-  // ---- 练习设置弹窗（含题库选题绑定 + 题量/难度/题型自动出题配置） ----
+  // ---- 练习设置弹窗（含练习选题绑定 + 题量/难度/题型自动出题配置） ----
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [practiceSection, setPracticeSection] = useState(null);
   const [practiceForm] = Form.useForm();
@@ -227,7 +227,7 @@ export default function SectionManagePage() {
     });
   };
 
-  // ---- 练习设置（题库选题绑定 + 题量/难度/题型自动出题配置，合并保存） ----
+  // ---- 练习设置（练习选题绑定 + 题量/难度/题型自动出题配置，合并保存） ----
   const openPractice = (section) => {
     setPracticeSection(section);
     setPracticeOpen(true);
@@ -238,7 +238,7 @@ export default function SectionManagePage() {
       difficulty: practice.difficulty || '基础',
       types: practice.types || ['Radio'],
     });
-    // 回显已绑定题库 + 加载题库库（数据来自题库管理 t_repo）
+    // 回显已绑定练习 + 加载练习库（数据来自练习管理 t_repo）
     setBindKeyword('');
     setRepoCurrent(1);
     setSelectedIds([]);
@@ -326,8 +326,8 @@ export default function SectionManagePage() {
       ),
     },
     {
-      title: '题库数', dataIndex: 'repoCount', width: 100, align: 'center',
-      render: (count) => (count > 0 ? <Tag color="blue">{count} 个题库</Tag> : <Tag>未绑定</Tag>),
+      title: '练习数', dataIndex: 'repoCount', width: 100, align: 'center',
+      render: (count) => (count > 0 ? <Tag color="blue">{count} 个练习</Tag> : <Tag>未绑定</Tag>),
     },
     {
       title: '操作', key: 'action', width: 500,
@@ -347,7 +347,7 @@ export default function SectionManagePage() {
           {can('knowledge:delete') && (
           <Popconfirm
             title={`删除小节「${s.name}」？`}
-            description="其下所有知识点与题库绑定将一并删除，删除后不可恢复。"
+            description="其下所有知识点与练习绑定将一并删除，删除后不可恢复。"
             onConfirm={() => {
               deleteSection({ id: s.id }).then(() => {
                 message.success('小节已删除');
@@ -485,7 +485,7 @@ export default function SectionManagePage() {
         </Form>
       </Modal>
 
-      {/* 练习设置弹窗（题库选题绑定 + 题量/难度/题型自动出题配置） */}
+      {/* 练习设置弹窗（练习选题绑定 + 题量/难度/题型自动出题配置） */}
       <Modal
         title={`练习设置 - ${practiceSection?.name || ''}`}
         open={practiceOpen}
@@ -497,17 +497,17 @@ export default function SectionManagePage() {
         confirmLoading={savingBind}
         destroyOnClose
       >
-        <Divider orientation="left" plain>绑定题库（来自题库管理，勾选绑定）</Divider>
+        <Divider orientation="left" plain>绑定练习（来自练习管理，勾选绑定）</Divider>
         <Space style={{ marginBottom: 12 }} align="center">
           <Input.Search
             style={{ width: 320 }}
-            placeholder="按题库名称搜索题库库"
+            placeholder="按练习名称搜索练习库"
             value={bindKeyword}
             onChange={(e) => setBindKeyword(e.target.value)}
             onSearch={onBindKeywordSearch}
             allowClear
           />
-          <Text type="secondary">已选 {selectedIds.length} 个题库（题库数据来自题库管理 t_repo，不能在此新增）</Text>
+          <Text type="secondary">已选 {selectedIds.length} 个练习（练习数据来自练习管理 t_repo，不能在此新增）</Text>
         </Space>
         <Table
           rowKey="id"
@@ -526,7 +526,7 @@ export default function SectionManagePage() {
             onChange: (c) => { setRepoCurrent(c); fetchRepos(c, bindKeyword); },
           }}
           columns={[
-            { title: '题库名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
+            { title: '练习名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
             {
               title: '学科', dataIndex: 'subject', width: 80, align: 'center',
               render: (s) => (s ? <Tag color="geekblue">{s}</Tag> : '-'),

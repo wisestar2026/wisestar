@@ -147,8 +147,8 @@ export default function TemplatePickerModal({ open, onCancel, onAdd }) {
       render: (t) => <Tag>{TYPE_LABELS[t] || t}</Tag>,
     },
     {
-      title: '所属题库', dataIndex: 'repoName', width: 120,
-      // 题目未绑定题库时显示"未分配"
+      title: '所属练习', dataIndex: 'repoName', width: 120,
+      // 题目未绑定练习时显示"未分配"
       render: (name) => name
         ? <Tag color="blue">{name}</Tag>
         : <Text type="secondary">未分配</Text>,

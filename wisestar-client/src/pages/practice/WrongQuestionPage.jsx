@@ -1,13 +1,13 @@
 /**
- * WrongQuestionPage.jsx - 错题库管理页
+ * WrongQuestionPage.jsx - 错题管理页
  *
  * 功能:
- *   1. 错题列表（题目 × 学员聚合）：展示题目标题、题型、所属题库、学员、错误次数、最近做错时间、最近答案、最近得分
- *   2. 筛选：题库 / 题型 / 关键词（题目标题或学员姓名）/ 做错时间范围
+ *   1. 错题列表（题目 × 学员聚合）：展示题目标题、题型、所属练习、学员、错误次数、最近做错时间、最近答案、最近得分
+ *   2. 筛选：练习 / 题型 / 关键词（题目标题或学员姓名）/ 做错时间范围
  *   3. 分页查询
  *
  * URL: /wrong-questions（受 AuthGuard 保护）
- * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「题库管理 → 错题库管理」菜单进入
+ * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「练习管理 → 错题管理」菜单进入
  *
  * 数据流:
  *   加载: fetchData → listWrongQuestions(params) → GET /api/practice/wrong-list → 渲染表格
@@ -16,7 +16,7 @@
  * 数据来源说明:
  *   - 错题 = t_practice_detail.is_correct = 0（学员交卷落库时由后端复核判分写入）
  *   - 聚合口径: 同一学员反复做错同一题合并为一条，wrongCount 累计错误次数
- *   - 题库下拉用 listRepo 全量（供筛选）
+ *   - 练习下拉用 listRepo 全量（供筛选）
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -30,7 +30,7 @@ import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
-// 练习场景题型映射（错题库管理仅出现练习题型）
+// 练习场景题型映射（错题管理仅出现练习题型）
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Judge: '判断题',
   FillBlank: '填空题', Textarea: '多行文本',
@@ -46,13 +46,13 @@ export default function WrongQuestionPage() {
   const pageSize = 15;                    // 每页 15 条（固定）
 
   // ---- 筛选状态 ----
-  const [repos, setRepos] = useState([]);      // 全量题库列表（供筛选下拉）
+  const [repos, setRepos] = useState([]);      // 全量练习列表（供筛选下拉）
   const [filterRepoId, setFilterRepoId] = useState(undefined);
   const [filterType, setFilterType] = useState(undefined);
   const [keyword, setKeyword] = useState('');
   const [timeRange, setTimeRange] = useState(null); // [dayjs, dayjs] | null
 
-  // ---- 加载题库列表（全量，供筛选下拉） ----
+  // ---- 加载练习列表（全量，供筛选下拉） ----
   useEffect(() => {
     (async () => {
       try {
@@ -68,7 +68,7 @@ export default function WrongQuestionPage() {
     setLoading(true);
     try {
       const params = { current: p, pageSize };
-      if (filterRepoId) params.repoId = filterRepoId;                       // 题库过滤
+      if (filterRepoId) params.repoId = filterRepoId;                       // 练习过滤
       if (filterType) params.questionType = filterType;                     // 题型过滤
       if (keyword.trim()) params.keyword = keyword.trim();                  // 题目标题 / 学员姓名
       if (timeRange && timeRange[0]) params.startTime = timeRange[0].startOf('day').toISOString();
@@ -106,7 +106,7 @@ export default function WrongQuestionPage() {
       render: (t) => <Tag>{TYPE_LABELS[t] || t}</Tag>,
     },
     {
-      title: '所属题库', dataIndex: 'repoName', width: 140,
+      title: '所属练习', dataIndex: 'repoName', width: 140,
       render: (n) => n ? <Tag color="blue">{n}</Tag> : <Text type="secondary">未归属</Text>,
     },
     {
@@ -137,13 +137,13 @@ export default function WrongQuestionPage() {
     <div>
       {/* ---- 页面标题 ---- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>错题库管理</Title>
+        <Title level={4} style={{ margin: 0 }}>错题管理</Title>
       </div>
 
       {/* ---- 筛选栏 ---- */}
       <Space wrap style={{ marginBottom: 16 }}>
         <Select
-          placeholder="题库筛选" allowClear style={{ width: 180 }} value={filterRepoId}
+          placeholder="练习筛选" allowClear style={{ width: 180 }} value={filterRepoId}
           options={repos.map((r) => ({ value: r.id, label: r.name }))}
           onChange={(v) => { setFilterRepoId(v); setPage(1); }}
         />

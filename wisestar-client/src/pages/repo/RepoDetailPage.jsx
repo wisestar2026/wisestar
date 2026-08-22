@@ -1,20 +1,20 @@
 /**
- * RepoDetailPage.jsx - 题库详情 & 组题管理页面
+ * RepoDetailPage.jsx - 练习详情 & 组题管理页面
  *
  * 功能:
- *   1. 题库信息展示（名称、类型、标签、题目总数）
+ *   1. 练习信息展示（名称、类型、标签、题目总数）
  *   2. 题目列表（分页、显示是否有答案和解析）
- *   3. 批量选择题目：从题目管理（全局题目库）勾选已有题目加入本题库
+ *   3. 批量选择题目：从题目管理（全局题目库）勾选已有题目加入本练习
  *   4. 移除题目：单个/批量解绑（题目保留在题目管理中，不删除模板本身）
  *
  * 题目来源约定（重要）:
  *   题目信息的创建/编辑/导入唯一入口是「题目管理」板块（QuestionListPage）。
- *   本页面不再提供"新建题目"入口，只负责组题（选择题目加入题库 / 从题库移除）。
+ *   本页面不再提供"新建题目"入口，只负责组题（选择题目加入练习 / 从练习移除）。
  *
- * 被谁引用: App.jsx 路由表（/repos/:id）；从 RepoListPage 点击题库名称进入
+ * 被谁引用: App.jsx 路由表（/repos/:id）；从 RepoListPage 点击练习名称进入
  *
  * 数据流:
- *   题库信息: listRepo({id, pageSize:1}) → GET /api/repo/list → find 出当前题库
+ *   练习信息: listRepo({id, pageSize:1}) → GET /api/repo/list → find 出当前练习
  *   题目列表: fetchTemplates → listTemplate({current, pageSize, repoId}) → GET /api/template/list
  *   批量选择: SelectTemplateModal → bindTemplate({repoId, ids}) → POST /api/repo/bind
  *   移除: handleRemoveTemplate / handleBatchRemove → unbindTemplate({repoId, ids})
@@ -26,15 +26,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Table, Space, Button, Modal, Popconfirm, Typography, Tag, message, Card, Descriptions,
+  Table, Space, Button, Popconfirm, Typography, Tag, message, Card, Descriptions, Upload,
 } from 'antd';
 import {
-  PlusOutlined, DeleteOutlined, ArrowLeftOutlined,
+  PlusOutlined, DeleteOutlined, ArrowLeftOutlined, EditOutlined, ImportOutlined,
   BookOutlined, CheckCircleOutlined, BulbOutlined,
 } from '@ant-design/icons';
-import { listTemplate } from '../../api/template';
-import { listRepo, unbindTemplate } from '../../api/repo';
+import { listTemplate, updateTemplate } from '../../api/template';
+import { listRepo, unbindTemplate, importTemplate } from '../../api/repo';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
+import QuestionEditModal from '../../components/question/QuestionEditModal';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -60,12 +61,17 @@ export default function RepoDetailPage() {
   // 批量选择题目弹窗
   const [selectOpen, setSelectOpen] = useState(false);
 
+  // 编辑题目弹窗 + 导入状态
+  const [editOpen, setEditOpen] = useState(false);
+  const [editRecord, setEditRecord] = useState(null);
+  const [importing, setImporting] = useState(false);
+
   // 表格勾选（批量移除）
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [removing, setRemoving] = useState(false);
 
-  // ---- 加载题库信息 ----
-  // 复用 listRepo 列表接口，传入 id + pageSize:1 后从返回列表中 find 出当前题库
+  // ---- 加载练习信息 ----
+  // 复用 listRepo 列表接口，传入 id + pageSize:1 后从返回列表中 find 出当前练习
   useEffect(() => {
     (async () => {
       try {
@@ -77,7 +83,7 @@ export default function RepoDetailPage() {
   }, [repoId]);
 
   // ---- 加载题目列表 ----
-  // 只加载当前题库（repoId）下的题目
+  // 只加载当前练习（repoId）下的题目
   // 数据流: 本页 → listTemplate({current, pageSize, repoId}) → GET /api/template/list
   const fetchTemplates = async (p = page) => {
     setLoading(true);
@@ -95,7 +101,7 @@ export default function RepoDetailPage() {
   };
   useEffect(() => { fetchTemplates(); }, [repoId]); // eslint-disable-line
 
-  // ---- 刷新题库信息（题目总数等） ----
+  // ---- 刷新练习信息（题目总数等） ----
   const refreshRepoInfo = () => {
     listRepo({ id: repoId, pageSize: 1 }).then((res) => {
       const r = (res.data?.list || []).find((x) => x.id === repoId);
@@ -114,7 +120,7 @@ export default function RepoDetailPage() {
   const handleRemoveTemplate = async (id) => {
     try {
       await unbindTemplate({ repoId, ids: [id] });
-      message.success('已从题库移除');
+      message.success('已从练习移除');
       fetchTemplates(page);
       refreshRepoInfo();
     } catch {
@@ -137,6 +143,31 @@ export default function RepoDetailPage() {
     } finally {
       setRemoving(false);
     }
+  };
+
+  // ---- Excel 导入题目（归属当前练习） ----
+  const handleImport = (file) => {
+    setImporting(true);
+    importTemplate({ file, repoId })
+      .then(() => {
+        message.success('题目导入成功');
+        fetchTemplates(1);
+        refreshRepoInfo();
+      })
+      .catch((err) => message.error(err?.message || '导入失败'))
+      .finally(() => setImporting(false));
+    return false; // 阻止 antd 自动上传
+  };
+
+  // ---- 编辑题目保存（复用题目管理编辑弹窗） ----
+  const handleEditSave = (payload) => {
+    updateTemplate(payload)
+      .then(() => {
+        message.success('题目已更新');
+        setEditOpen(false);
+        fetchTemplates(page);
+      })
+      .catch(() => message.error('保存失败'));
   };
 
   // ---- 渲染正确答案预览 ----
@@ -183,16 +214,24 @@ export default function RepoDetailPage() {
       render: (tags) => (!tags?.length ? '-' : tags.slice(0, 2).map((t) => <Tag key={t} color="blue">{t}</Tag>)),
     },
     {
-      title: '操作', width: 120,
+      title: '操作', width: 160,
       render: (_, record) => (
-        <Popconfirm
-          title="确定从题库移除该题？"
-          description="题目仍保留在「题目管理」中，可从题库重新选择加入"
-          onConfirm={() => handleRemoveTemplate(record.id)}
-          okText="移除" cancelText="取消"
-        >
-          <Button size="small" type="link" danger icon={<DeleteOutlined />}>移除</Button>
-        </Popconfirm>
+        <Space size={0}>
+          <Button
+            size="small" type="link" icon={<EditOutlined />}
+            onClick={() => { setEditRecord(record); setEditOpen(true); }}
+          >
+            编辑
+          </Button>
+          <Popconfirm
+            title="确定从练习移除该题？"
+            description="题目仍保留在「题目管理」中，可从练习重新选择加入"
+            onConfirm={() => handleRemoveTemplate(record.id)}
+            okText="移除" cancelText="取消"
+          >
+            <Button size="small" type="link" danger icon={<DeleteOutlined />}>移除</Button>
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
@@ -217,14 +256,24 @@ export default function RepoDetailPage() {
   return (
     <div>
       {/* ---- 顶部导航 ---- */}
-      <Space style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/repos')}>返回题库列表</Button>
-        <Title level={4} style={{ margin: 0 }}>
-          <BookOutlined style={{ marginRight: 8 }} />{repo?.name || '题库详情'}
-        </Title>
-      </Space>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Space>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/repos')}>返回练习列表</Button>
+          <Title level={4} style={{ margin: 0 }}>
+            <BookOutlined style={{ marginRight: 8 }} />{repo?.name || '练习详情'}
+          </Title>
+        </Space>
+        <Upload
+          beforeUpload={handleImport}
+          showUploadList={false}
+          accept=".xlsx,.xls"
+          disabled={importing}
+        >
+          <Button type="primary" icon={<ImportOutlined />} loading={importing}>导入题目</Button>
+        </Upload>
+      </div>
 
-      {/* ---- 题库信息 ---- */}
+      {/* ---- 练习信息 ---- */}
       {repo && (
         <Card size="small" style={{ marginBottom: 16 }}>
           <Descriptions size="small" column={4}>
@@ -294,7 +343,7 @@ export default function RepoDetailPage() {
       {/* ---- 空状态提示 ---- */}
       {!loading && templates.length === 0 && (
         <div style={{ textAlign: 'center', padding: '16px 0', color: '#999' }}>
-          题库暂无题目。题目统一在「题目管理」中创建，创建后点击「批量选择题目」加入本题库。
+          练习暂无题目。题目统一在「题目管理」中创建，创建后点击「批量选择题目」加入本练习。
         </div>
       )}
 
@@ -304,6 +353,15 @@ export default function RepoDetailPage() {
         repoId={repoId}
         onCancel={() => setSelectOpen(false)}
         onSuccess={handleSelectSuccess}
+      />
+
+      {/* ---- 编辑题目弹窗（复用题目管理编辑弹窗） ---- */}
+      <QuestionEditModal
+        open={editOpen}
+        record={editRecord}
+        repos={[{ id: repoId, name: repo?.name || '' }]}
+        onCancel={() => setEditOpen(false)}
+        onSave={handleEditSave}
       />
     </div>
   );

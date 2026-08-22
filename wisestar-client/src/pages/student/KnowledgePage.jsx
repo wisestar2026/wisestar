@@ -229,7 +229,7 @@ export default function KnowledgePage() {
           {/* 练习/试炼：真实题目 + 后端判分 */}
           {(tab === 'practice' || tab === 'trial') && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
-              <div className="knowledge-empty">暂无可练习题目，请联系管理员配置题库/题目</div>
+              <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
               <>
                 {realQuestions.map((question, i) => {

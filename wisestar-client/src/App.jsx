@@ -15,13 +15,7 @@
  *
  * 路由结构:
  *   /login                  → LoginPage（公开，无需登录）
- *   /survey/:id             → SurveyViewPage（公开，填写问卷无需登录）
  *   /                       → DashboardPage（受 AuthGuard 保护）
- *   /projects               → ProjectListPage（受保护）
- *   /projects/:id/edit      → ProjectEditPage（问卷编辑器，受保护）
- *   /projects/:id/answers   → ProjectAnswersPage（指定问卷的答卷列表，受保护）
- *   /answers                → AnswerListPage（全局答案管理，受保护）
- *   /answers/:id            → AnswerDetailPage（答卷详情，受保护）
  *   /repos                  → RepoListPage（题库列表，受保护）
  *   /repos/:id              → RepoDetailPage（题库详情&题目管理，受保护）
  *   /questions              → QuestionListPage（题目管理，受保护）
@@ -49,13 +43,7 @@ import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/login/LoginPage';
 import StudentLoginPage from './pages/student/StudentLoginPage';
 import RegisterPage from './pages/login/RegisterPage';
-import SurveyViewPage from './pages/survey/SurveyViewPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
-import ProjectListPage from './pages/project/list/ProjectListPage';
-import ProjectEditPage from './pages/project/edit/ProjectEditPage';
-import ProjectAnswersPage from './pages/project/answers/ProjectAnswersPage';
-import AnswerListPage from './pages/answer/AnswerListPage';
-import AnswerDetailPage from './pages/answer/AnswerDetailPage';
 import RepoListPage from './pages/repo/RepoListPage';
 import RepoDetailPage from './pages/repo/RepoDetailPage';
 import RepoAssignPage from './pages/repo/RepoAssignPage';
@@ -108,8 +96,6 @@ export default function App() {
           {/* 注册页（POST /api/public/register，是否开放由后端配置） */}
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* 公开问卷填写页（任何人可访问） */}
-          <Route path="/survey/:id" element={<SurveyViewPage />} />
 
           {/* 学生端（海底AI自习室 · 学海智习系统 V2.0 纯前端原型，独立全屏路由） */}
           {/* 公共布局 StudentLayout 提供海洋背景 + 顶部通栏（学科 Tab/版本/纯净模式） */}
@@ -148,51 +134,7 @@ export default function App() {
             {/* 仪表盘 */}
             <Route path="/" element={<AuthGuard required={['home']}><DashboardPage /></AuthGuard>} />
 
-            {/* 问卷列表 */}
-            <Route
-              path="/projects"
-              element={
-                <AuthGuard required={['project:list', 'project:detail', 'project:create', 'project:update', 'project:delete']}>
-                  <ProjectListPage />
-                </AuthGuard>
-              }
-            />
-
-            {/* 问卷编辑器 */}
-            <Route
-              path="/projects/:id/edit"
-              element={
-                <AuthGuard required={['project:update']}><ProjectEditPage /></AuthGuard>
-              }
-            />
-
-            {/* 答卷列表（指定问卷） */}
-            <Route
-              path="/projects/:id/answers"
-              element={
-                <AuthGuard required={['answer:list', 'answer:detail']}><ProjectAnswersPage /></AuthGuard>
-              }
-            />
-
-            {/* 全局答案管理 */}
-            <Route
-              path="/answers"
-              element={
-                <AuthGuard required={['answer:list', 'answer:detail', 'answer:create', 'answer:update', 'answer:delete', 'answer:export', 'answer:upload']}>
-                  <AnswerListPage />
-                </AuthGuard>
-              }
-            />
-
-            {/* 答卷详情 */}
-            <Route
-              path="/answers/:id"
-              element={
-                <AuthGuard required={['answer:detail']}><AnswerDetailPage /></AuthGuard>
-              }
-            />
-
-            {/* 题库列表 */}
+            {/* 练习列表 */}
             <Route
               path="/repos"
               element={

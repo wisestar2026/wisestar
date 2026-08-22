@@ -6,9 +6,9 @@
  *   |  Sider (侧边栏)  |  Header (顶栏)    用户菜单      |
  *   |  wisestar        |  Header (顶栏)    用户菜单      |
  *   |   仪表盘         |                                 |
- *   |   问卷管理       |  Content (内容区)               |
- *   |   答案管理       |    <Outlet />                   |
- *   |   题库管理       |    (子路由页面在此渲染)          |
+ *   |   练习管理       |  Content (内容区)               |
+ *   |   <Outlet />     |    <Outlet />                   |
+ *   |   练习管理       |    (子路由页面在此渲染)          |
  *   |   模板管理       |                                 |
  *   |   系统管理       |                                 |
  *   +-----------------+---------------------------------+
@@ -77,20 +77,12 @@ export default function MainLayout() {
     { key: '/student',       icon: <CompassOutlined />,   label: '学生端主页' },
     { key: '/practice',      icon: <PlayCircleOutlined />, label: '在线练习', required: ['exercise:list'] },
     {
-      key: '/projects',      icon: <ProjectOutlined />,   label: '问卷管理',
-      required: ['project:list', 'project:detail', 'project:create', 'project:update', 'project:delete'],
-    },
-    {
-      key: '/answers',       icon: <FileTextOutlined />,  label: '答案管理',
-      required: ['answer:list', 'answer:detail', 'answer:create', 'answer:update', 'answer:delete', 'answer:export', 'answer:upload'],
-    },
-    {
-      key: 'repo-group', icon: <BookOutlined />, label: '题库管理',
+      key: 'repo-group', icon: <BookOutlined />, label: '练习管理',
       required: ['repo:list', 'repo:detail', 'repo:create', 'repo:update', 'repo:delete', 'repo:export', 'repo:book'],
       children: [
-        { key: '/repos',         label: '题库列表' },
-        { key: '/repo-assign',   label: '题库分配' },
-        { key: '/wrong-questions', label: '错题库管理' },
+        { key: '/repos',         label: '练习列表' },
+        { key: '/repo-assign',   label: '练习分配' },
+        { key: '/wrong-questions', label: '错题管理' },
       ],
     },
     {
