@@ -45,6 +45,9 @@ export default function StudentLayout() {
     setSubject, setVersion, togglePureMode, fetchPermissions, fetchStudySubjects,
     getVisibleSubjects, getVisibleVersions,
   } = useStudentStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useUserStore();
 
   // 挂载时加载学员有效权限与真实学科（订单授予范围）
   useEffect(() => {
@@ -67,9 +70,6 @@ export default function StudentLayout() {
   // 按订单权限过滤后的可见学科
   const visibleSubjects = getVisibleSubjects();
   const hasPermission = visibleSubjects.length > 0;
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { logout } = useUserStore();
 
   // 退出登录（学员端）：清登录态并返回学员端登录页
   const handleStudentLogout = () => {
