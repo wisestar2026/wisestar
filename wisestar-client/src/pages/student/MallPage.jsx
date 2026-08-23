@@ -15,10 +15,12 @@
  * 依赖: react-router-dom(useNavigate)、antd(Collapse)、useStudentStore、./MallPage.css
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Collapse } from 'antd';
 import useStudentStore, { SUBJECTS, GOODS } from '../../stores/useStudentStore';
+import { listGoods } from '../../api/mall';
+import { getStudentStats } from '../../api/student';
 import './MallPage.css';
 
 export default function MallPage() {
@@ -31,6 +33,19 @@ export default function MallPage() {
   );
   const [reward, setReward] = useState(null);
   const [exchanged, setExchanged] = useState({}); // 已兑换商品记录
+
+  // 真实商品列表（后台配置，仅上架）与可用积分
+  const [goods, setGoods] = useState(null);
+  const [availablePoints, setAvailablePoints] = useState(0);
+  useEffect(() => {
+    listGoods(1).then((res) => setGoods(res?.data || [])).catch(() => setGoods(null));
+    getStudentStats().then((res) => setAvailablePoints(res?.data?.totalPoints ?? 0)).catch(() => {});
+  }, []);
+
+  // 展示商品：真实列表优先（未加载回退 mock）
+  const displayGoods = goods || GOODS.map((g) => ({
+    id: g.id, name: g.name, description: g.desc, imageUrl: '', points: g.price,
+  }));
 
   const totalCoins = SUBJECTS.reduce((sum, s) => sum + subjectCoins[s.key], 0);
 
@@ -119,23 +134,28 @@ export default function MallPage() {
       {/* ---- 商品网格 ---- */}
       <div className="mall-section-title">🎁 荣誉商品</div>
       <div className="mall-grid">
-        {GOODS.map((g) => {
-          const affordable = totalCoins >= g.price;
+        {displayGoods.length === 0 && (
+          <div className="mall-goods-desc" style={{ textAlign: 'center', padding: 24 }}>暂无上架商品，敬请期待</div>
+        )}
+        {displayGoods.map((g) => {
+          const affordable = availablePoints >= g.points;
           return (
             <div
               key={g.id}
               className={`sll-card sll-card-hover mall-goods ${exchanged[g.id] ? 'exchanged' : ''}`}
             >
-              <div className="mall-goods-emoji">{g.emoji}</div>
+              <div className="mall-goods-emoji">
+                {g.imageUrl ? <img src={g.imageUrl} alt={g.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} /> : '🎁'}
+              </div>
               <div className="mall-goods-name">{g.name}</div>
-              <div className="mall-goods-desc">{g.desc}</div>
-              <div className="mall-goods-price">🐚 {g.price} 学习币</div>
+              <div className="mall-goods-desc">{g.description}</div>
+              <div className="mall-goods-price">⭐ {g.points} 积分</div>
               <button
                 className={`mall-goods-btn ${affordable && !exchanged[g.id] ? 'ok' : 'no'}`}
                 disabled={!affordable || exchanged[g.id]}
                 onClick={() => handleExchange(g)}
               >
-                {exchanged[g.id] ? '✓ 已兑换' : affordable ? '立即兑换' : '学习币不足'}
+                {exchanged[g.id] ? '✓ 已兑换' : affordable ? '立即兑换' : '积分不足'}
               </button>
             </div>
           );

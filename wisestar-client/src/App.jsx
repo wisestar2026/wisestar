@@ -59,6 +59,7 @@ import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
 import StudentActivityPage from './pages/student/StudentActivityPage';
+import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
@@ -224,6 +225,14 @@ export default function App() {
               element={
                 <AuthGuard required={['student:list']}>
                   <StudentActivityPage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/mall/goods"
+              element={
+                <AuthGuard required={['mall:list', 'mall:create', 'mall:update', 'mall:delete']}>
+                  <MallGoodsManagePage />
                 </AuthGuard>
               }
             />

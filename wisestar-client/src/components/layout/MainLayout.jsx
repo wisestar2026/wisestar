@@ -33,7 +33,7 @@
 
 import { Layout, Menu, Avatar, Dropdown, Typography } from 'antd';
 import {
-  DashboardOutlined,
+  ShoppingOutlined,  DashboardOutlined,
   ProjectOutlined,
   FileTextOutlined,
   SettingOutlined,
@@ -117,6 +117,12 @@ export default function MainLayout() {
       ],
     },
     {
+      key: 'mall-group', icon: <ShoppingOutlined />, label: '积分商城',
+      children: [
+        { key: '/mall/goods', label: '商品管理', required: ['mall:list', 'mall:create', 'mall:update', 'mall:delete'] },
+      ],
+    },
+    {
       key: 'system-group', icon: <SettingOutlined />, label: '系统管理',
       children: [
         { key: '/system/users', label: '用户管理', required: ['system:user:list', 'system:user:create', 'system:user:update', 'system:user:delete'] },
@@ -170,7 +176,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /repo-assign、/knowledge/chapters）。
   // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
-  const SUB_PATH_KEYS = ['/students/activity', '/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
+  const SUB_PATH_KEYS = ['/mall/goods', '/students/activity', '/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)
