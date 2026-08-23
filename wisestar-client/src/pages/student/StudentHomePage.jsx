@@ -24,8 +24,8 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useStudentStore, { SUBJECTS, TITLES, PROFILE, TODAY, DAILY_TASKS } from '../../stores/useStudentStore';
-import { getMyStudentInfo } from '../../api/student';
+import useStudentStore, { SUBJECTS, TITLES, PROFILE, DAILY_TASKS } from '../../stores/useStudentStore';
+import { getMyStudentInfo, getStudentStats } from '../../api/student';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -40,10 +40,19 @@ export default function StudentHomePage() {
     getMyStudentInfo().then((res) => setMyInfo(res?.data || null)).catch(() => setMyInfo(null));
   }, []);
 
-  // 当前头衔（按学海积分自动晋升）
-  const currentTitle = [...TITLES].reverse().find((t) => PROFILE.points >= t.need) || TITLES[0];
-  // 本学期可兑换总学习币（多科合并）
-  const totalCoins = SUBJECTS.reduce((sum, s) => sum + s.coins, 0);
+  // 真实学习统计（基于练习记录聚合；未加载时为 0）
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    getStudentStats().then((res) => setStats(res?.data || null)).catch(() => setStats(null));
+  }, []);
+
+  // 真实学习统计：学海积分 = 累计练习得分；总学币 = 分科学币合计
+  const totalPoints = stats?.totalPoints ?? 0;
+  const coinsBySubject = stats?.coinsBySubject || [];
+  const totalCoins = coinsBySubject.reduce((sum, c) => sum + c.coins, 0);
+  const coinOf = (name) => coinsBySubject.find((c) => c.subjectName === name)?.coins ?? 0;
+  // 当前头衔（按真实学海积分自动晋升）
+  const currentTitle = [...TITLES].reverse().find((t) => totalPoints >= t.need) || TITLES[0];
   // 展示用学员姓名（真实档案优先，缺失回退 mock）
   const displayName = myInfo?.name || PROFILE.name;
 
@@ -74,7 +83,7 @@ export default function StudentHomePage() {
                 <div className="sh-home-title">{currentTitle.emoji} {currentTitle.name}</div>
                 <div className="sh-home-archive-meta">
                   {myInfo?.studentNo && <span>🎓 学号 <b>{myInfo.studentNo}</b></span>}
-                  <span>⭐ 学海积分 <b>{PROFILE.points}</b></span>
+                  <span>⭐ 学海积分 <b>{totalPoints}</b></span>
                   <span>🏅 证书 <b>{PROFILE.certCount}/{PROFILE.certTotal}</b></span>
                 </div>
                 {myInfo?.school && <div className="sh-home-archive-school">🏫 {myInfo.school}</div>}
@@ -124,7 +133,7 @@ export default function StudentHomePage() {
             <div className="sh-home-mall-detail">
               {SUBJECTS.map((s) => (
                 <span key={s.key} className={`sh-home-mall-sub sh-home-mall-sub-${s.theme}`}>
-                  {s.icon} {s.name} {s.coins}
+                  {s.icon} {s.name} {coinOf(s.name)}
                 </span>
               ))}
             </div>
@@ -140,24 +149,24 @@ export default function StudentHomePage() {
           <div className="sh-home-data-grid">
             <div className="sh-home-data-item">
               <div className="sh-home-data-icon sh-home-data-time">⏱️</div>
-              <div className="sh-home-data-num">{TODAY.minutes}<small>分钟</small></div>
+              <div className="sh-home-data-num">{(stats?.today?.minutes) ?? 0}<small>分钟</small></div>
               <div className="sh-home-data-label">今日学习时长</div>
             </div>
             <div className="sh-home-data-item">
               <div className="sh-home-data-icon sh-home-data-kp">🧩</div>
-              <div className="sh-home-data-num">{TODAY.kps}<small>个</small></div>
-              <div className="sh-home-data-label">完成知识点</div>
+              <div className="sh-home-data-num">{(stats?.today?.questionCount) ?? 0}<small>题</small></div>
+              <div className="sh-home-data-label">今日答题</div>
             </div>
             {!pureMode && (
               <>
                 <div className="sh-home-data-item">
                   <div className="sh-home-data-icon sh-home-data-points">⭐</div>
-                  <div className="sh-home-data-num">+{TODAY.points}<small>积分</small></div>
+                  <div className="sh-home-data-num">+{(stats?.today?.points) ?? 0}<small>积分</small></div>
                   <div className="sh-home-data-label">今日获得积分</div>
                 </div>
                 <div className="sh-home-data-item">
                   <div className="sh-home-data-icon sh-home-data-coins">🐚</div>
-                  <div className="sh-home-data-num">+{TODAY.coins}<small>币</small></div>
+                  <div className="sh-home-data-num">+{(stats?.today?.coins) ?? 0}<small>币</small></div>
                   <div className="sh-home-data-label">今日获得学习币</div>
                 </div>
               </>

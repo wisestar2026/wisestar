@@ -167,3 +167,8 @@ export async function uploadActivity(data) {
 export async function listActivities() {
   return request.get('/student/activities');
 }
+
+/** 学员学习统计（首页真实化，基于练习记录聚合） */
+export async function getStudentStats() {
+  return request.get('/student/stats');
+}

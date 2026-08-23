@@ -10,6 +10,7 @@ import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentStatsView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
 import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.service.StudentService;
@@ -139,6 +140,21 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentPermissionView permissions() {
 		return studentService.permissions();
+	}
+
+	/**
+	 * 学员学习统计（首页真实化，基于练习记录聚合）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/stats。</p>
+	 *
+	 * <p><b>权限</b>：isAuthenticated()（学员端登录即可）。</p>
+	 *
+	 * @return 累计/今日/分科学币统计
+	 */
+	@GetMapping("/stats")
+	@PreAuthorize("isAuthenticated()")
+	public StudentStatsView stats() {
+		return studentService.stats();
 	}
 
 	/**

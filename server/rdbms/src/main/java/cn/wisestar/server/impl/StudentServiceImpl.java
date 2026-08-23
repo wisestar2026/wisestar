@@ -12,6 +12,7 @@ import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentStatsView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
@@ -29,6 +30,8 @@ import cn.wisestar.server.domain.model.RepoTemplate;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionRepo;
 import cn.wisestar.server.domain.model.StudentActivity;
+import cn.wisestar.server.domain.model.PracticeRecord;
+import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.StudentPermission;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.Subject;
@@ -40,6 +43,8 @@ import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
 import cn.wisestar.server.mapper.RepoTemplateMapper;
 import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
+import cn.wisestar.server.mapper.PracticeRecordMapper;
+import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.StudentActivityMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
@@ -58,6 +63,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -103,6 +110,10 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private final StudentPermissionMapper studentPermissionMapper;
 
 	private final StudentActivityMapper studentActivityMapper;
+
+	private final PracticeRecordMapper practiceRecordMapper;
+
+	private final RepoMapper repoMapper;
 
 	private final SubjectMapper subjectMapper;
 
@@ -330,6 +341,64 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.limit(limit)
 				.map(this::toStudentQuestionView)
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 学员学习统计（基于真实练习记录聚合：累计/今日/分科学币）。
+	 */
+	@Override
+	public StudentStatsView stats() {
+		String userId = SecurityContextUtils.getUserId();
+		if (getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		List<PracticeRecord> records = practiceRecordMapper.selectList(
+				Wrappers.<PracticeRecord>lambdaQuery().eq(PracticeRecord::getUserId, userId));
+		StudentStatsView view = new StudentStatsView();
+		if (records.isEmpty()) {
+			return view;
+		}
+		// 今日起点（0 点）
+		Date todayStart = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
+		// 练习所属学科（record.repoId → t_repo.subject）
+		Set<String> repoIds = records.stream().map(PracticeRecord::getRepoId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		Map<String, String> repoSubjectMap = new HashMap<>();
+		if (!repoIds.isEmpty()) {
+			repoMapper.selectBatchIds(repoIds).forEach(r -> repoSubjectMap.put(r.getId(), r.getSubject()));
+		}
+		Map<String, Integer> coinsMap = new LinkedHashMap<>();
+		int totalQuestions = 0, totalCorrect = 0;
+		double totalPoints = 0;
+		StudentStatsView.TodayStats today = view.getToday();
+		for (PracticeRecord record : records) {
+			int q = record.getTotalQuestions() == null ? 0 : record.getTotalQuestions();
+			int c = record.getCorrectCount() == null ? 0 : record.getCorrectCount();
+			double sc = record.getScore() == null ? 0 : record.getScore();
+			totalQuestions += q;
+			totalCorrect += c;
+			totalPoints += sc;
+			boolean isToday = record.getCreateAt() != null && !record.getCreateAt().before(todayStart);
+			if (isToday) {
+				today.setPracticeCount(today.getPracticeCount() + 1);
+				today.setQuestionCount(today.getQuestionCount() + q);
+				today.setCorrectCount(today.getCorrectCount() + c);
+				today.setPoints(today.getPoints() + sc);
+				today.setMinutes(today.getMinutes() + (record.getDurationMs() == null ? 0 : record.getDurationMs() / 60000));
+			}
+			String subject = repoSubjectMap.getOrDefault(record.getRepoId(), "综合练习");
+			coinsMap.merge(subject, c, Integer::sum);
+		}
+		view.setTotalPoints(Math.round(totalPoints * 100) / 100.0);
+		view.setPracticeCount(records.size());
+		view.setTotalQuestions(totalQuestions);
+		view.setTotalCorrect(totalCorrect);
+		view.setAccuracy(totalQuestions == 0 ? 0 : (int) Math.round(totalCorrect * 100.0 / totalQuestions));
+		today.setAccuracy(today.getQuestionCount() == 0 ? 0
+				: (int) Math.round(today.getCorrectCount() * 100.0 / today.getQuestionCount()));
+		today.setCoins(today.getCorrectCount());
+		coinsMap.forEach((name, coins) -> view.getCoinsBySubject().add(new StudentStatsView.SubjectCoins(name, coins)));
+		return view;
 	}
 
 	/**
