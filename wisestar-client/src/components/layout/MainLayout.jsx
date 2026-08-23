@@ -103,6 +103,7 @@ export default function MainLayout() {
       required: ['student:list', 'student:create', 'student:update', 'student:delete'],
       children: [
         { key: '/students', label: '学员列表' },
+        { key: '/students/activity', label: '学员动态', required: ['student:list'] },
         {
           key: '/orders',   label: '订单管理',
           required: ['order:list', 'order:create', 'order:update', 'order:delete'],
@@ -169,7 +170,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /repo-assign、/knowledge/chapters）。
   // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
-  const SUB_PATH_KEYS = ['/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
+  const SUB_PATH_KEYS = ['/students/activity', '/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)

@@ -8,6 +8,8 @@ import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
+import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
+import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
@@ -26,6 +28,7 @@ import cn.wisestar.server.domain.model.KnowledgePointQuestion;
 import cn.wisestar.server.domain.model.RepoTemplate;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionRepo;
+import cn.wisestar.server.domain.model.StudentActivity;
 import cn.wisestar.server.domain.model.StudentPermission;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.Subject;
@@ -37,6 +40,7 @@ import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
 import cn.wisestar.server.mapper.RepoTemplateMapper;
 import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
+import cn.wisestar.server.mapper.StudentActivityMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
@@ -52,6 +56,7 @@ import org.springframework.util.StringUtils;
 import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -96,6 +101,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private final PasswordEncoder passwordEncoder;
 
 	private final StudentPermissionMapper studentPermissionMapper;
+
+	private final StudentActivityMapper studentActivityMapper;
 
 	private final SubjectMapper subjectMapper;
 
@@ -323,6 +330,71 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.limit(limit)
 				.map(this::toStudentQuestionView)
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 学员端实时位置上报（按学员覆盖，记录最后活跃时间）。
+	 */
+	@Override
+	public void uploadActivity(StudentActivityRequest request) {
+		String userId = SecurityContextUtils.getUserId();
+		if (getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		StudentActivity existing = studentActivityMapper.selectOne(
+				Wrappers.<StudentActivity>lambdaQuery().eq(StudentActivity::getStudentId, userId));
+		if (existing == null) {
+			StudentActivity activity = new StudentActivity();
+			activity.setStudentId(userId);
+			activity.setPage(request.getPage());
+			activity.setQuestionId(request.getQuestionId());
+			activity.setSectionId(request.getSectionId());
+			studentActivityMapper.insert(activity);
+		}
+		else {
+			existing.setPage(request.getPage());
+			existing.setQuestionId(request.getQuestionId());
+			existing.setSectionId(request.getSectionId());
+			existing.setUpdateAt(new Date());
+			studentActivityMapper.updateById(existing);
+		}
+	}
+
+	/**
+	 * 后台学员实时位置列表（含学员姓名/学号与习题标题）。
+	 */
+	@Override
+	public List<StudentActivityView> listActivities() {
+		List<StudentActivity> activities = studentActivityMapper.selectList(
+				Wrappers.<StudentActivity>lambdaQuery().orderByDesc(StudentActivity::getUpdateAt));
+		if (activities.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Map<String, Student> studentMap = this.baseMapper.selectBatchIds(activities.stream()
+				.map(StudentActivity::getStudentId).collect(Collectors.toList())).stream()
+				.collect(Collectors.toMap(Student::getId, java.util.function.Function.identity(), (a, b) -> a));
+		Set<String> questionIds = activities.stream().map(StudentActivity::getQuestionId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		Map<String, String> questionTitleMap = new HashMap<>();
+		if (!questionIds.isEmpty()) {
+			templateMapper.selectBatchIds(questionIds)
+					.forEach(t -> questionTitleMap.put(t.getId(), t.getName()));
+		}
+		return activities.stream().map(activity -> {
+			StudentActivityView view = new StudentActivityView();
+			view.setStudentId(activity.getStudentId());
+			Student student = studentMap.get(activity.getStudentId());
+			if (student != null) {
+				view.setStudentNo(student.getStudentNo());
+				view.setStudentName(student.getName());
+			}
+			view.setPage(activity.getPage());
+			view.setQuestionId(activity.getQuestionId());
+			view.setQuestionTitle(questionTitleMap.get(activity.getQuestionId()));
+			view.setSectionId(activity.getSectionId());
+			view.setUpdateAt(activity.getUpdateAt());
+			return view;
+		}).collect(Collectors.toList());
 	}
 
 	/** 题目转学员端视图（剥离标准答案与选项级答案标记，防作弊） */

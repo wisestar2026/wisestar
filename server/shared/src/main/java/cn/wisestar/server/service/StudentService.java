@@ -4,6 +4,8 @@ import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
+import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
+import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
@@ -100,6 +102,20 @@ public interface StudentService {
 	 * @return 知识点列表；归属学科不在权限内返回空列表
 	 */
 	List<KnowledgePointView> studyPoints(String sectionId);
+
+	/**
+	 * 学员端实时位置上报（当前学员，路由变化/进入习题时调用）。
+	 *
+	 * @param request 位置上报（page/questionId/sectionId）
+	 */
+	void uploadActivity(StudentActivityRequest request);
+
+	/**
+	 * 后台学员实时位置列表（老师监控用，含学员姓名/学号与习题标题）。
+	 *
+	 * @return 各学员最后上报位置，按最后活跃时间倒序
+	 */
+	List<StudentActivityView> listActivities();
 
 	/**
 	 * 学员端练习/试炼题目（剥离标准答案，防作弊）。

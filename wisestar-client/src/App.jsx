@@ -58,6 +58,7 @@ import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
+import StudentActivityPage from './pages/student/StudentActivityPage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
@@ -215,6 +216,14 @@ export default function App() {
               element={
                 <AuthGuard required={['student:list', 'student:create', 'student:update', 'student:delete']}>
                   <StudentManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/students/activity"
+              element={
+                <AuthGuard required={['student:list']}>
+                  <StudentActivityPage />
                 </AuthGuard>
               }
             />

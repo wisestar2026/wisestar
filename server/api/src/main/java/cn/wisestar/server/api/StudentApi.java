@@ -6,6 +6,8 @@ import cn.wisestar.server.domain.dto.student.StudentRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
+import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
+import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
@@ -216,6 +218,36 @@ public class StudentApi {
 			@RequestParam(required = false) List<String> types,
 			@RequestParam(required = false) String difficulty) {
 		return studentService.studyQuestions(sectionId, knowledgePointId, count, types, difficulty);
+	}
+
+	/**
+	 * 学员端实时位置上报（路由变化/进入习题时调用）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/activity。</p>
+	 *
+	 * <p><b>权限</b>：isAuthenticated()（服务层校验学员身份）。</p>
+	 *
+	 * @param request 位置上报（page/questionId/sectionId）
+	 */
+	@PostMapping("/activity")
+	@PreAuthorize("isAuthenticated()")
+	public void uploadActivity(@RequestBody StudentActivityRequest request) {
+		studentService.uploadActivity(request);
+	}
+
+	/**
+	 * 后台学员实时位置列表（老师监控）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/activities。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('student:list')（后台老师/管理员）。</p>
+	 *
+	 * @return 各学员最后上报位置（含姓名/学号/习题标题），按最后活跃时间倒序
+	 */
+	@GetMapping("/activities")
+	@PreAuthorize("hasAuthority('student:list')")
+	public List<StudentActivityView> activities() {
+		return studentService.listActivities();
 	}
 
 }

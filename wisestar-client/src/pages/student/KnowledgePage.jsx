@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, masteryLevel, getQuestions, REWARDS } from '../../stores/useStudentStore';
-import { getStudyPoints, getStudyQuestions } from '../../api/student';
+import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/student';
 import { submitPractice } from '../../api/practice';
 import './KnowledgePage.css';
 
@@ -70,6 +70,17 @@ export default function KnowledgePage() {
   const [realAnswers, setRealAnswers] = useState({});       // 作答 {questionId: {type, optionId/optionIds}}
   const [realResult, setRealResult] = useState(null);       // 判分结果
   const [realSubmitting, setRealSubmitting] = useState(false);
+
+  // 习题级上报：进入练习/试炼后上报「正在做哪道题」（供后台老师监控）
+  useEffect(() => {
+    if (!realMode || !realQuestions?.length) return;
+    uploadActivity({
+      page: `/student/knowledge?tab=${tab}`,
+      sectionId: sectionId || undefined,
+      questionId: realQuestions[0]?.id,
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realMode, tab, realQuestions]);
 
   useEffect(() => {
     if (!realMode) return;

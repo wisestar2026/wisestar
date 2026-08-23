@@ -20,7 +20,7 @@
  *       useStudentStore、../student/student.css
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Select, Dropdown, Switch, message } from 'antd';
 import {
@@ -28,6 +28,7 @@ import {
 } from '@ant-design/icons';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
+import { uploadActivity } from '../../api/student';
 import './student.css';
 
 // 底部导航配置
@@ -50,6 +51,18 @@ export default function StudentLayout() {
     fetchPermissions();
     fetchStudySubjects();
   }, [fetchPermissions, fetchStudySubjects]);
+
+  // 实时位置上报：路由变化时上报当前页面（节流：同页 5 秒内不重复）
+  const lastReport = useRef({ page: '', ts: 0 });
+  useEffect(() => {
+    const page = location.pathname;
+    const now = Date.now();
+    if (lastReport.current.page === page && now - lastReport.current.ts < 5000) {
+      return;
+    }
+    lastReport.current = { page, ts: now };
+    uploadActivity({ page }).catch(() => {});
+  }, [location.pathname]);
 
   // 按订单权限过滤后的可见学科
   const visibleSubjects = getVisibleSubjects();

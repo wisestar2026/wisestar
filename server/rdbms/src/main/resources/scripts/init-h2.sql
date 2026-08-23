@@ -1968,3 +1968,24 @@ BEGIN;
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ----------------------------
+-- 学员实时位置（学员端上报 + 后台监控）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_student_activity (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) DEFAULT NULL COMMENT '学员ID(t_student.id)',
+  page varchar(64) DEFAULT NULL COMMENT '当前页面标识(/student/study 等)',
+  question_id varchar(64) DEFAULT NULL COMMENT '当前习题ID(可为空)',
+  section_id varchar(64) DEFAULT NULL COMMENT '小节ID(习题上下文,可为空)',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp DEFAULT NULL COMMENT '最后活跃时间',
+  update_by varchar(256) DEFAULT NULL,
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
+ALTER TABLE t_student_activity ADD COLUMN IF NOT EXISTS create_at timestamp DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE t_student_activity ADD COLUMN IF NOT EXISTS create_by varchar(256);
+ALTER TABLE t_student_activity ADD COLUMN IF NOT EXISTS update_by varchar(256);
+ALTER TABLE t_student_activity ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;

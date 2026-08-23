@@ -153,3 +153,17 @@ export async function getStudyPoints(sectionId) {
 export async function getStudyQuestions(params) {
   return request.get('/student/study/questions', { params });
 }
+
+// ------------------------------------------------------------
+// 学员实时位置（后台老师监控：学员在哪个页面/哪道习题）
+// ------------------------------------------------------------
+
+/** 学员端上报当前位置（路由变化/进入习题时调用，节流） */
+export async function uploadActivity(data) {
+  return request.post('/student/activity', data);
+}
+
+/** 后台学员实时位置列表（student:list 权限） */
+export async function listActivities() {
+  return request.get('/student/activities');
+}
