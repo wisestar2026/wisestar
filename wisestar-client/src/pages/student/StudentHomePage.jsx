@@ -32,7 +32,12 @@ export default function StudentHomePage() {
   const navigate = useNavigate();
   const { pureMode } = useStudentStore();
   const activeSubject = useStudentStore((s) => s.activeSubject);
-  const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
+  const getVisibleSubjects = useStudentStore((s) => s.getVisibleSubjects);
+  // 学科按当前选择（真实学科优先，随下拉切换变化）
+  const visibleSubjects = getVisibleSubjects();
+  const subject = visibleSubjects.find((s) => s.key === activeSubject)
+    || SUBJECTS.find((s) => s.key === activeSubject)
+    || SUBJECTS[1];
 
   // 当前学员真实档案（学号/姓名/学校等，来自 GET /api/student/me；加载失败回退 mock）
   const [myInfo, setMyInfo] = useState(null);
@@ -106,7 +111,7 @@ export default function StudentHomePage() {
             <div className="sh-home-study-book">📖</div>
             <div className="sh-home-study-text">
               <div className="sh-home-study-title">开启{subject.name}研习</div>
-              <div className="sh-home-study-desc">潜入「{subject.chapters[0].name}」的知识海洋</div>
+              <div className="sh-home-study-desc">潜入「{(subject.chapters?.[0]?.name) || '今日研习'}」的知识海洋</div>
             </div>
           </div>
           <div className="sh-home-card-foot">进入研习主页面 ›</div>

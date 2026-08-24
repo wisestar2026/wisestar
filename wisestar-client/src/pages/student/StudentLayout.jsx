@@ -20,16 +20,19 @@
  *       useStudentStore、../student/student.css
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Select, Dropdown, Switch, message } from 'antd';
 import {
   SettingOutlined, BellOutlined, LogoutOutlined, ArrowLeftOutlined,
 } from '@ant-design/icons';
-import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
+import useStudentStore, { TITLES, PROFILE } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
-import { uploadActivity } from '../../api/student';
+import { uploadActivity, getStudentStats } from '../../api/student';
 import './student.css';
+
+// 年级枚举（与订单管理一致）
+const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
 
 // 底部导航配置
 const TABS = [
@@ -42,7 +45,7 @@ const TABS = [
 export default function StudentLayout() {
   const {
     activeSubject, version, pureMode,
-    setSubject, setVersion, togglePureMode, fetchPermissions, fetchStudySubjects,
+    setSubject, setVersion, setGrade, grade, togglePureMode, fetchPermissions, fetchStudySubjects,
     getVisibleSubjects, getVisibleVersions,
   } = useStudentStore();
   const navigate = useNavigate();
@@ -67,8 +70,21 @@ export default function StudentLayout() {
     uploadActivity({ page }).catch(() => {});
   }, [location.pathname]);
 
-  // 按订单权限过滤后的可见学科
-  const visibleSubjects = getVisibleSubjects();
+  // 真实学习统计（学海积分/学习币，从 0 开始）
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    getStudentStats().then((res) => setStats(res?.data || null)).catch(() => setStats(null));
+  }, []);
+  const totalPoints = stats?.totalPoints ?? 0;
+  const totalCoins = (stats?.coinsBySubject || []).reduce((sum, c) => sum + c.coins, 0);
+
+  // 按订单权限过滤后的可见学科（顺序：语文-数学-英语）
+  const SUBJECT_ORDER = ['语文', '数学', '英语'];
+  const visibleSubjects = [...getVisibleSubjects()].sort((a, b) => {
+    const ia = SUBJECT_ORDER.indexOf(a.name);
+    const ib = SUBJECT_ORDER.indexOf(b.name);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
   const hasPermission = visibleSubjects.length > 0;
 
   // 退出登录（学员端）：清登录态并返回学员端登录页
@@ -80,9 +96,6 @@ export default function StudentLayout() {
 
   // 当前头衔（按学海积分自动晋升，无降级）
   const currentTitle = [...TITLES].reverse().find((t) => PROFILE.points >= t.need) || TITLES[0];
-
-  // 学习币合计（多科合并）
-  const totalCoins = SUBJECTS.reduce((sum, s) => sum + s.coins, 0);
 
   // 设置菜单项（纯净学习模式开关 / 返回管理端）
   const settingsItems = [
@@ -120,27 +133,34 @@ export default function StudentLayout() {
             <img src="/student-assets/logo-flower.webp" alt="logo" className="sll-logo" />
             <span className="sll-title">海底AI自习室</span>
           </div>
-          {/* 学科 Tab 胶囊栏（后台绑定，仅展示切换） */}
+          {/* 学科下拉（语文-数学-英语顺序；默认展示拥有学科，可切换）+ 版本/年级下拉 */}
           <div className="sll-tabs">
-            {hasPermission ? visibleSubjects.map((s) => (
-              <button
-                key={s.key}
-                className={`sll-tab sll-tab-${s.theme} ${activeSubject === s.key ? 'active' : ''}`}
-                onClick={() => setSubject(s.key)}
-              >
-                <span className="sll-tab-icon">{s.icon}</span>
-                <span>{s.name}</span>
-              </button>
-            )) : (
+            {hasPermission ? (
+              <Select
+                className="sll-subject"
+                size="small"
+                value={activeSubject}
+                onChange={setSubject}
+                options={visibleSubjects.map((s) => ({ value: s.key, label: `${s.icon} ${s.name}` }))}
+                popupMatchSelectWidth={false}
+              />
+            ) : (
               <span className="sll-no-perm">暂无可访问学科，请联系管理员开通</span>
             )}
-            {/* 教材版本下拉（按权限过滤；跟随当前学科，记忆上次选择） */}
             <Select
               className="sll-version"
               size="small"
               value={version}
               onChange={setVersion}
               options={getVisibleVersions(activeSubject).map((v) => ({ label: v, value: v }))}
+              popupMatchSelectWidth={false}
+            />
+            <Select
+              className="sll-grade"
+              size="small"
+              value={grade}
+              onChange={setGrade}
+              options={GRADES.map((g) => ({ label: g, value: g }))}
               popupMatchSelectWidth={false}
             />
           </div>
@@ -160,7 +180,7 @@ export default function StudentLayout() {
           {!pureMode && (
             <button className="sll-badge sll-badge-points" onClick={() => navigate('/student/profile')}>
               <span>⭐</span>
-              <b>{PROFILE.points}</b>
+              <b>{totalPoints}</b>
               <span className="sll-badge-label">学海积分</span>
             </button>
           )}
