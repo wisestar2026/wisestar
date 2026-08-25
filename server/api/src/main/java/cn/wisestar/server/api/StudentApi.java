@@ -233,8 +233,9 @@ public class StudentApi {
 			@RequestParam(required = false) String repoId,
 			@RequestParam(required = false) Integer count,
 			@RequestParam(required = false) List<String> types,
-			@RequestParam(required = false) String difficulty) {
-		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, count, types, difficulty);
+			@RequestParam(required = false) String difficulty,
+			@RequestParam(required = false) Boolean exposeAnswer) {
+		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, count, types, difficulty, exposeAnswer);
 	}
 
 	/**

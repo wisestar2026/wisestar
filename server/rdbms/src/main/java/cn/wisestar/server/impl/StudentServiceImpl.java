@@ -356,7 +356,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	@Override
 	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
-			List<String> types, String difficulty) {
+			List<String> types, String difficulty, Boolean exposeAnswer) {
 		// 归属校验（学科须在学员有效权限内）
 		if (StringUtils.hasText(repoId)) {
 			Repo repo = repoMapper.selectById(repoId);
@@ -407,12 +407,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			return Collections.emptyList();
 		}
 		int limit = count == null ? 10 : Math.min(count, 50);
+		boolean expose = Boolean.TRUE.equals(exposeAnswer);
 		return templateMapper.selectBatchIds(templateIds).stream()
 				.filter(t -> types == null || types.isEmpty()
 						|| (t.getQuestionType() != null && types.contains(t.getQuestionType().name())))
 				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()))
 				.limit(limit)
-				.map(this::toStudentQuestionView)
+				.map(t -> expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t))
 				.collect(Collectors.toList());
 	}
 
@@ -537,6 +538,17 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			view.setUpdateAt(activity.getUpdateAt());
 			return view;
 		}).collect(Collectors.toList());
+	}
+
+	/** 题目转学员端视图（含标准答案，试炼实时判分用） */
+	private StudentQuestionView toStudentQuestionViewWithAnswer(Template template) {
+		StudentQuestionView view = new StudentQuestionView();
+		view.setId(template.getId());
+		view.setName(template.getName());
+		view.setQuestionType(template.getQuestionType());
+		view.setTag(template.getTag());
+		view.setSchema(template.getTemplate());
+		return view;
 	}
 
 	/** 题目转学员端视图（剥离标准答案与选项级答案标记，防作弊） */

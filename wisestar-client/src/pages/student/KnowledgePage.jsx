@@ -90,6 +90,7 @@ export default function KnowledgePage() {
       getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
     } else if (tab === 'practice' || tab === 'trial') {
       const params = { count: tab === 'trial' ? 2 : 3 };
+      if (tab === 'trial') params.exposeAnswer = true; // 试炼实时出答案（本地即时判分）
       if (sectionId) params.sectionId = sectionId;
       if (repoId) params.repoId = repoId;
       if (kpIdParam) params.knowledgePointId = kpIdParam;
@@ -102,9 +103,28 @@ export default function KnowledgePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realMode, tab, sectionId]);
 
-  // 真实模式：选择选项（按题型单选/多选）
+  // 真实模式：试炼本地即时判分（题目带答案，比对选项文本）
+  const realJudge = (q) => {
+    const schema = q.schema || {};
+    const answerText = schema.attribute?.examCorrectAnswer;
+    if (!answerText) return null;
+    const correctAnswers = answerText.split('\n').map((x) => x.trim()).filter(Boolean);
+    const picked = realAnswers[q.id];
+    if (!picked) return null;
+    const titleOf = (id) => (schema.children || []).find((o) => o.id === id)?.title;
+    const mine = picked.type === 'option'
+      ? [titleOf(picked.optionId)]
+      : (picked.optionIds || []).map(titleOf);
+    const mineSet = new Set(mine.map((x) => String(x).trim()));
+    const correctSet = new Set(correctAnswers);
+    const isRight = mineSet.size === correctSet.size && [...mineSet].every((x) => correctSet.has(x));
+    return { correct: isRight ? 1 : 0, answer: answerText };
+  };
+
+  // 真实模式：选择选项（按题型单选/多选；试炼选后即时判分锁定）
   const realPick = (q, optId) => {
     if (realResult) return;
+    if (tab === 'trial' && realJudge(q)) return;
     const multi = q.questionType === 'Checkbox' || q.questionType === 'Multiple';
     setRealAnswers((prev) => {
       const cur = prev[q.id];
@@ -254,7 +274,11 @@ export default function KnowledgePage() {
                   const children = schema.children || [];
                   const multi = question.questionType === 'Checkbox' || question.questionType === 'Multiple';
                   const picked = realAnswers[question.id];
-                  const correct = realCorrectOf(question.id);
+                  // 判定：试炼=本地实时判分；练习=交卷后后端判分
+                  const judge = tab === 'trial' ? realJudge(question) : null;
+                  const correct = tab === 'trial' ? (judge ? judge.correct : null) : realCorrectOf(question.id);
+                  const answerText = tab === 'trial' ? (judge ? judge.answer : '') : (realResult?.items.find((x) => x.questionId === question.id)?.correctAnswer || '');
+                  const judged = tab === 'trial' ? !!judge : !!realResult;
                   const isRightNow = correct === 1;
                   return (
                     <div key={question.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
@@ -272,7 +296,7 @@ export default function KnowledgePage() {
                             key={opt.id}
                             onClick={() => realPick(question, opt.id)}
                             style={{
-                              padding: '8px 12px', marginBottom: 6, borderRadius: 8, cursor: realResult ? 'default' : 'pointer',
+                              padding: '8px 12px', marginBottom: 6, borderRadius: 8, cursor: judged ? 'default' : 'pointer',
                               border: selected ? '2px solid #29b6f6' : '1px solid #e0e0e0',
                               background: showRight ? '#e8f5e9' : showWrong ? '#ffebee' : selected ? '#e1f5fe' : '#fff',
                             }}
@@ -281,21 +305,25 @@ export default function KnowledgePage() {
                           </div>
                         );
                       })}
-                      {realResult && (
+                      {judged && (
                         <div style={{ marginTop: 8, fontSize: 13 }}>
                           {correct === 1 ? (
                             <span style={{ color: '#2e7d32' }}>✅ 回答正确</span>
                           ) : correct === 0 ? (
-                            <span style={{ color: '#c62828' }}>❌ 回答错误 · 标准答案：{realResult.items.find((x) => x.questionId === question.id)?.correctAnswer || '—'}</span>
+                            <span style={{ color: '#c62828' }}>❌ 回答错误 · 标准答案：{answerText || '—'}</span>
                           ) : (
-                            <span style={{ color: '#90a4ae' }}>未作答/未判</span>
+                            <span style={{ color: '#90a4ae' }}>未作答</span>
                           )}
                         </div>
                       )}
                     </div>
                   );
                 })}
-                {!realResult ? (
+                {tab === 'trial' ? (
+                  <div style={{ marginTop: 12, padding: 10, borderRadius: 10, background: '#fffbe6', textAlign: 'center', fontSize: 13, color: '#b26a00' }}>
+                    试炼为实时判分：每题选择后立即显示对错与标准答案
+                  </div>
+                ) : !realResult ? (
                   <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting} style={{ marginTop: 8 }}>
                     {realSubmitting ? '提交中…' : '提交作答'}
                   </button>
@@ -307,6 +335,23 @@ export default function KnowledgePage() {
                     <button className="knowledge-back" onClick={() => { setRealResult(null); setRealAnswers({}); }} style={{ marginTop: 8 }}>
                       再练一次
                     </button>
+                  </div>
+                )}
+                {tab === 'practice' && realResult && (
+                  <div style={{ marginTop: 12 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 6 }}>📕 错题汇总（{realResult.items.filter((i) => i.correct === 0).length} 题）</div>
+                    {realResult.items.filter((i) => i.correct === 0).length === 0 && (
+                      <div style={{ color: '#2e7d32' }}>全部答对，无错题 🎉</div>
+                    )}
+                    {realResult.items.filter((i) => i.correct === 0).map((i) => {
+                      const q = realQuestions.find((x) => x.id === i.questionId);
+                      return (
+                        <div key={i.questionId} style={{ padding: '8px 10px', marginBottom: 6, background: '#ffebee', borderRadius: 8, fontSize: 13 }}>
+                          <b>{q?.name || i.questionId.slice(0, 8)}</b>
+                          <div style={{ color: '#c62828' }}>标准答案：{i.correctAnswer || '—'}</div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </>

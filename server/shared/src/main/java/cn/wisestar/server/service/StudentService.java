@@ -139,6 +139,6 @@ public interface StudentService {
 	 * @return 题目列表（不含答案）；无数据返回空列表
 	 */
 	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
-			List<String> types, String difficulty);
+			List<String> types, String difficulty, Boolean exposeAnswer);
 
 }
