@@ -28,6 +28,9 @@ public class PracticeSubmitRequest {
 	 */
 	private String repoId;
 
+	/** 知识点ID（知识点练习提交时记录，供知识点型任务完成判定） */
+	private String knowledgePointId;
+
 	/**
 	 * 练习用时（毫秒）
 	 */

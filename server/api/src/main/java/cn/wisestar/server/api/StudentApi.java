@@ -230,10 +230,11 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public List<StudentQuestionView> studyQuestions(@RequestParam(required = false) String sectionId,
 			@RequestParam(required = false) String knowledgePointId,
+			@RequestParam(required = false) String repoId,
 			@RequestParam(required = false) Integer count,
 			@RequestParam(required = false) List<String> types,
 			@RequestParam(required = false) String difficulty) {
-		return studentService.studyQuestions(sectionId, knowledgePointId, count, types, difficulty);
+		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, count, types, difficulty);
 	}
 
 	/**

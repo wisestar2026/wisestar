@@ -89,6 +89,12 @@ public final class PermissionConsts {
 	public static final String MALL_UPDATE = "mall:update";
 	public static final String MALL_DELETE = "mall:delete";
 
+	/** 今日任务 */
+	public static final String TASK_LIST = "task:list";
+	public static final String TASK_CREATE = "task:create";
+	public static final String TASK_UPDATE = "task:update";
+	public static final String TASK_DELETE = "task:delete";
+
 	/** 系统管理-用户 */
 	public static final String SYSTEM_USER_LIST = "system:user:list";
 	public static final String SYSTEM_USER_CREATE = "system:user:create";
@@ -219,6 +225,8 @@ public final class PermissionConsts {
 				ops(ORDER_LIST, "查看", ORDER_CREATE, "新增", ORDER_UPDATE, "修改", ORDER_DELETE, "删除")));
 		tree.add(node("mall", "积分商城",
 				ops(MALL_LIST, "查看", MALL_CREATE, "新增", MALL_UPDATE, "修改", MALL_DELETE, "删除")));
+		tree.add(node("task", "今日任务",
+				ops(TASK_LIST, "查看", TASK_CREATE, "新增", TASK_UPDATE, "修改", TASK_DELETE, "删除")));
 
 		// 系统管理：二级子组（用户/角色/部门/岗位/字典/字典条目）
 		Node system = node("system", "系统管理", new ArrayList<>());
@@ -267,6 +275,7 @@ public final class PermissionConsts {
 			+ "student:list,student:create,student:update,student:delete,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
+			+ "task:list,task:create,task:update,task:delete,"
 			+ "system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,"
 			+ "system:role:list,system:role:create,system:role:update,system:role:delete,"
 			+ "system:dept:list,system:dept:create,system:dept:update,system:dept:delete,"
@@ -290,6 +299,7 @@ public final class PermissionConsts {
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
 			+ "student:list,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
+			+ "task:list,task:create,task:update,task:delete,"
 			+ "project:list,project:detail,answer:list,answer:detail";
 
 	/** 学管师：学员运营，学员/订单全操作 + 知识查看 */
@@ -297,6 +307,7 @@ public final class PermissionConsts {
 			+ "student:list,student:create,student:update,student:delete,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,"
+			+ "task:list,"
 			+ "knowledge:list,repo:list,repo:detail";
 
 	/** 教务：教务管理，知识/题库维护 + 查看学员与订单 */
@@ -306,6 +317,7 @@ public final class PermissionConsts {
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
 			+ "student:list,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
+			+ "task:list,task:create,task:update,task:delete,"
 			+ "project:list,project:detail,answer:list,answer:detail,"
 			+ "system:dict:list,system:dictItem:list";
 

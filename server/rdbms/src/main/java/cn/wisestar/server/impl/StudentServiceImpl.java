@@ -292,10 +292,16 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	}
 
 	@Override
-	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, Integer count,
+	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
 			List<String> types, String difficulty) {
 		// 归属校验（学科须在学员有效权限内）
-		if (StringUtils.hasText(sectionId)) {
+		if (StringUtils.hasText(repoId)) {
+			Repo repo = repoMapper.selectById(repoId);
+			if (repo == null) {
+				return Collections.emptyList();
+			}
+		}
+		else if (StringUtils.hasText(sectionId)) {
 			Section section = sectionMapper.selectById(sectionId);
 			Chapter chapter = section == null ? null : chapterMapper.selectById(section.getChapterId());
 			if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
@@ -313,9 +319,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		else {
 			return Collections.emptyList();
 		}
-		// 题目 id 集合（小节绑定题库 + 知识点绑定题目，去重）
+		// 题目 id 集合（练习直接出题 + 小节绑定题库 + 知识点绑定题目，去重）
 		Set<String> templateIds = new LinkedHashSet<>();
-		if (StringUtils.hasText(sectionId)) {
+		if (StringUtils.hasText(repoId)) {
+			templateMapper.selectList(Wrappers.<Template>lambdaQuery().eq(Template::getRepoId, repoId))
+					.forEach(t -> templateIds.add(t.getId()));
+		}
+		else if (StringUtils.hasText(sectionId)) {
 			List<String> repoIds = sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
 							.eq(SectionRepo::getSectionId, sectionId))
 					.stream().map(SectionRepo::getRepoId).collect(Collectors.toList());

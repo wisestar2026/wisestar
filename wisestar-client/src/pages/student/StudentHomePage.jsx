@@ -24,8 +24,9 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useStudentStore, { SUBJECTS, TITLES, PROFILE, DAILY_TASKS } from '../../stores/useStudentStore';
+import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
 import { getMyStudentInfo, getStudentStats } from '../../api/student';
+import { studentTasks } from '../../api/task';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -50,6 +51,21 @@ export default function StudentHomePage() {
   useEffect(() => {
     getStudentStats().then((res) => setStats(res?.data || null)).catch(() => setStats(null));
   }, []);
+
+  // 今日任务（老师布置，含完成状态）
+  const [tasks, setTasks] = useState([]);
+  useEffect(() => {
+    studentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
+  }, []);
+
+  // 进入任务练习：练习型按 repoId、知识点型按 kpId
+  const goTask = (t) => {
+    if (t.contentType === 'knowledge_point') {
+      navigate(`/student/knowledge?kpId=${t.contentId}&tab=practice`);
+    } else {
+      navigate(`/student/knowledge?repoId=${t.contentId}&tab=practice`);
+    }
+  };
 
   // 真实学习统计：学海积分 = 累计练习得分；总学币 = 分科学币合计
   const totalPoints = stats?.totalPoints ?? 0;
@@ -179,20 +195,28 @@ export default function StudentHomePage() {
           </div>
         </div>
 
-        {/* 今日待办任务快捷跳转 */}
+        {/* 今日任务（老师布置，交卷且及格判定完成） */}
         <div className="sll-card sh-home-todo">
-          <div className="sh-home-section-title">🗓️ 今日待办任务</div>
-          {DAILY_TASKS.map((t) => (
+          <div className="sh-home-section-title">🗓️ 今日任务</div>
+          {tasks.length === 0 && (
+            <div className="sh-home-todo-item"><span className="sh-home-todo-label" style={{ color: '#90a4ae' }}>今日暂无任务，自由研习吧</span></div>
+          )}
+          {tasks.map((t) => (
             <div
-              key={t.key}
+              key={t.id}
               className="sh-home-todo-item"
-              onClick={() => navigate('/student/study')}
+              onClick={() => goTask(t)}
             >
-              <span className={`sh-home-todo-dot ${t.done ? 'done' : ''}`}>
-                {t.done ? '✓' : ''}
+              <span className={`sh-home-todo-dot ${t.completed ? 'done' : ''}`}>
+                {t.completed ? '✓' : '▶'}
               </span>
-              <span className="sh-home-todo-label">{t.label}</span>
-              <span className="sh-home-todo-reward">{t.reward}</span>
+              <span className="sh-home-todo-label">
+                {t.name}
+                {t.description && <span className="sh-home-todo-desc"> · {t.description}</span>}
+              </span>
+              <span className={`sh-home-todo-reward ${t.completed ? 'done' : ''}`}>
+                {t.completed ? `已完成 ${t.correctRate}%` : '去完成'}
+              </span>
             </div>
           ))}
         </div>

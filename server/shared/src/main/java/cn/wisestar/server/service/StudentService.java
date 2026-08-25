@@ -138,7 +138,7 @@ public interface StudentService {
 	 * @param difficulty       难度过滤（可选）
 	 * @return 题目列表（不含答案）；无数据返回空列表
 	 */
-	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, Integer count,
+	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
 			List<String> types, String difficulty);
 
 }

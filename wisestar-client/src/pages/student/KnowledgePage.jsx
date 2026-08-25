@@ -58,8 +58,10 @@ export default function KnowledgePage() {
   const { kpId } = useParams();
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'preview';
-  const sectionId = searchParams.get('sectionId'); // 真实模式（后台配置内容）入口
-  const realMode = !!sectionId;
+  const sectionId = searchParams.get('sectionId'); // 小节练习入口
+  const repoId = searchParams.get('repoId');         // 练习（题库）任务/直接练习入口
+  const kpIdParam = searchParams.get('kpId');        // 知识点任务入口
+  const realMode = !!(sectionId || repoId || kpIdParam);
   const navigate = useNavigate();
 
   // ============================================================
@@ -84,10 +86,14 @@ export default function KnowledgePage() {
 
   useEffect(() => {
     if (!realMode) return;
-    if (tab === 'preview') {
+    if (tab === 'preview' && sectionId) {
       getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
     } else if (tab === 'practice' || tab === 'trial') {
-      getStudyQuestions({ sectionId, count: tab === 'trial' ? 2 : 3 })
+      const params = { count: tab === 'trial' ? 2 : 3 };
+      if (sectionId) params.sectionId = sectionId;
+      if (repoId) params.repoId = repoId;
+      if (kpIdParam) params.knowledgePointId = kpIdParam;
+      getStudyQuestions(params)
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     }
@@ -113,7 +119,7 @@ export default function KnowledgePage() {
     if (realSubmitting || !realQuestions?.length) return;
     const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
     setRealSubmitting(true);
-    submitPractice({ mode: tab, items })
+    submitPractice({ mode: tab, items, repoId: repoId || undefined, knowledgePointId: kpIdParam || undefined })
       .then((res) => setRealResult(res?.data || { items: [] }))
       .catch(() => setRealResult({ items: [], score: 0 }))
       .finally(() => setRealSubmitting(false));
@@ -210,7 +216,7 @@ export default function KnowledgePage() {
             <h3 style={{ margin: 0 }}>
               {tab === 'preview' ? '📖 知识点预习' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 试炼检测' : '📕 知识点错题本'}
             </h3>
-            <button className="knowledge-back" onClick={() => navigate('/student/study')}>返回学海研习</button>
+            <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
           </div>
 
           {/* 预习：后台配置的知识点讲解要点 */}

@@ -143,6 +143,7 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		record.setUserId(userId);
 		record.setMode(request.getMode());
 		record.setRepoId(request.getRepoId());
+		record.setKnowledgePointId(request.getKnowledgePointId());
 		record.setTotalQuestions(details.size());
 		record.setCorrectCount(correctCount);
 		record.setScore(Math.round(score * 100) / 100.0);

@@ -60,6 +60,7 @@ import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
 import StudentActivityPage from './pages/student/StudentActivityPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
+import TaskManagePage from './pages/system/TaskManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
@@ -233,6 +234,14 @@ export default function App() {
               element={
                 <AuthGuard required={['mall:list', 'mall:create', 'mall:update', 'mall:delete']}>
                   <MallGoodsManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/tasks"
+              element={
+                <AuthGuard required={['task:list', 'task:create', 'task:update', 'task:delete']}>
+                  <TaskManagePage />
                 </AuthGuard>
               }
             />

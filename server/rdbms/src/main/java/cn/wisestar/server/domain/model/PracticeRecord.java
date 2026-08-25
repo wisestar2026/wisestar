@@ -70,4 +70,7 @@ public class PracticeRecord extends BaseModel {
 	@TableField("duration_ms")
 	private Long durationMs;
 
+	/** 知识点ID（知识点练习提交时记录，供知识点型任务完成判定） */
+	private String knowledgePointId;
+
 }
