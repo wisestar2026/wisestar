@@ -123,9 +123,12 @@ export default function StudyPage() {
                 <div className="study-chapter-head" onClick={() => toggleChapter(ch.id)}>
                   <span className="study-chapter-icon">{ch.icon || '📖'}</span>
                   <div className="study-chapter-info">
-                    <div className="study-chapter-name">{ch.name}</div>
+                    <div className="study-chapter-name">
+                      {ch.name}
+                      {realMode && <span className="study-chapter-stars">{stars(ch.progress || 0)}</span>}
+                    </div>
                     {realMode ? (
-                      <div className="study-chapter-sub">小节 {ch.sectionCount ?? 0} 个</div>
+                      <div className="study-chapter-sub">学习完成度 {ch.progress || 0}%</div>
                     ) : (
                       <div className="study-chapter-progress">
                         <div className="study-chapter-progress-bar" style={{ width: `${ch.progress}%` }} />
@@ -146,7 +149,8 @@ export default function StudyPage() {
                       >
                         <span className="study-kp-name">🌊 {sec.name}</span>
                         <span className="study-kp-meta">
-                          <span className="study-kp-pct">知识点 {sec.knowledgePointCount ?? 0}</span>
+                          <span className="study-kp-stars">{stars(sec.progress || 0)}</span>
+                          <span className="study-kp-pct">{sec.progress || 0}%</span>
                         </span>
                       </div>
                     ))

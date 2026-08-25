@@ -254,7 +254,26 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		List<ChapterView> views = chapterViewMapper.toView(chapters);
 		views.forEach(v -> v.setSectionCount(
 				sectionMapper.selectCount(Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, v.getId()))));
+		// 学习完成度：章节下各小节完成度平均（有练习数据的小节）
+		fillChapterProgress(views);
 		return views;
+	}
+
+	/** 章节完成度 = 章节下各小节完成度的平均值 */
+	private void fillChapterProgress(List<ChapterView> views) {
+		if (views.isEmpty()) {
+			return;
+		}
+		String userId = SecurityContextUtils.getUserId();
+		for (ChapterView chapter : views) {
+			List<SectionView> sections = sectionViewMapper.toView(sectionMapper.selectList(
+					Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, chapter.getId())));
+			fillProgress(sections);
+			List<Integer> rates = sections.stream().map(SectionView::getProgress)
+					.filter(p -> p != null && p > 0).collect(Collectors.toList());
+			chapter.setProgress(rates.isEmpty() ? 0
+					: rates.stream().mapToInt(Integer::intValue).sum() / rates.size());
+		}
 	}
 
 	@Override
@@ -271,7 +290,51 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		List<SectionView> views = sectionViewMapper.toView(sections);
 		views.forEach(v -> v.setKnowledgePointCount(knowledgePointMapper.selectCount(
 				Wrappers.<KnowledgePoint>lambdaQuery().eq(KnowledgePoint::getSectionId, v.getId()))));
+		// 学习完成度：各小节绑定练习的学员最高正确率
+		fillProgress(views);
 		return views;
+	}
+
+	/** 按小节绑定练习计算学员学习完成度（最高正确率） */
+	private void fillProgress(List<SectionView> views) {
+		if (views.isEmpty()) {
+			return;
+		}
+		String userId = SecurityContextUtils.getUserId();
+		List<String> sectionIds = views.stream().map(SectionView::getId).collect(Collectors.toList());
+		Map<String, List<String>> reposBySection = sectionRepoMapper.selectList(
+						Wrappers.<SectionRepo>lambdaQuery().in(SectionRepo::getSectionId, sectionIds))
+				.stream().collect(Collectors.groupingBy(SectionRepo::getSectionId,
+						Collectors.mapping(SectionRepo::getRepoId, Collectors.toList())));
+		Set<String> allRepoIds = reposBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
+		if (allRepoIds.isEmpty()) {
+			views.forEach(v -> v.setProgress(0));
+			return;
+		}
+		Map<String, Integer> repoRate = repoRateMap(userId, allRepoIds);
+		views.forEach(v -> {
+			List<String> repoIds = reposBySection.getOrDefault(v.getId(), Collections.emptyList());
+			int best = repoIds.stream().mapToInt(r -> repoRate.getOrDefault(r, 0)).max().orElse(0);
+			v.setProgress(best);
+		});
+	}
+
+	/** 学员各练习（repoId）最高正确率（0-100） */
+	private Map<String, Integer> repoRateMap(String userId, Set<String> repoIds) {
+		Map<String, Integer> repoRate = new HashMap<>();
+		if (userId == null || repoIds.isEmpty()) {
+			return repoRate;
+		}
+		List<PracticeRecord> records = practiceRecordMapper.selectList(Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId)
+				.in(PracticeRecord::getRepoId, repoIds));
+		for (PracticeRecord r : records) {
+			if (r.getRepoId() != null && r.getTotalScore() != null && r.getTotalScore() > 0) {
+				int rate = (int) Math.round((r.getScore() == null ? 0 : r.getScore()) * 100.0 / r.getTotalScore());
+				repoRate.merge(r.getRepoId(), rate, Math::max);
+			}
+		}
+		return repoRate;
 	}
 
 	@Override

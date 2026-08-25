@@ -48,4 +48,7 @@ public class SectionView {
 	 */
 	private Long repoCount;
 
+	/** 学习完成度（0-100，学员维度：相关练习最高正确率） */
+	private Integer progress;
+
 }
