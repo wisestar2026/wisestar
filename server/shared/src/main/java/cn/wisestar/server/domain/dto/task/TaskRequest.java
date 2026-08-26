@@ -13,7 +13,10 @@ public class TaskRequest {
 
 	private String id;
 
-	/** 任务名称（必填） */
+	/** 绑定学员ID（t_student.id，必填） */
+	private String studentId;
+
+	/** 任务名称（选填） */
 	private String name;
 
 	/** 任务描述 */

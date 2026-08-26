@@ -2032,7 +2032,8 @@ ALTER TABLE t_mall_goods ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS t_task (
   id varchar(64) NOT NULL,
-  name varchar(128) DEFAULT NULL COMMENT '任务名称',
+  student_id varchar(64) DEFAULT NULL COMMENT '绑定学员ID(t_student.id)',
+  name varchar(128) DEFAULT NULL COMMENT '任务名称(选填)',
   description varchar(512) DEFAULT NULL COMMENT '任务描述',
   task_date varchar(16) DEFAULT NULL COMMENT '任务日期(YYYY-MM-DD)',
   content_type varchar(32) DEFAULT NULL COMMENT '内容类型 practice练习 knowledge_point知识点',
@@ -2046,6 +2047,7 @@ CREATE TABLE IF NOT EXISTS t_task (
   is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (id)
 );
+ALTER TABLE t_task ADD COLUMN IF NOT EXISTS student_id varchar(64);
 ALTER TABLE t_task ADD COLUMN IF NOT EXISTS description varchar(512);
 ALTER TABLE t_task ADD COLUMN IF NOT EXISTS task_date varchar(16);
 ALTER TABLE t_task ADD COLUMN IF NOT EXISTS content_type varchar(32);

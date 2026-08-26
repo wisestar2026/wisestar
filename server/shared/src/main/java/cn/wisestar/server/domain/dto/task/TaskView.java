@@ -15,6 +15,11 @@ public class TaskView {
 
 	private String id;
 
+	private String studentId;
+
+	/** 绑定学员姓名（列表回填） */
+	private String studentName;
+
 	private String name;
 
 	private String description;

@@ -2048,7 +2048,8 @@ CREATE TABLE IF NOT EXISTS `t_mall_goods` (
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `t_task` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '任务名称',
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '绑定学员ID(t_student.id)',
+  `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '任务名称(选填)',
   `description` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '任务描述',
   `task_date` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '任务日期(YYYY-MM-DD)',
   `content_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '内容类型 practice练习 knowledge_point知识点',
@@ -2060,7 +2061,8 @@ CREATE TABLE IF NOT EXISTS `t_task` (
   `update_at` timestamp NULL DEFAULT NULL COMMENT '更新时间',
   `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_task_student_date` (`student_id`, `task_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='今日任务';
 -- 练习记录加知识点维度（知识点型任务完成判定）
 ALTER TABLE `t_practice_record` ADD COLUMN IF NOT EXISTS `knowledge_point_id` varchar(64) DEFAULT NULL COMMENT '知识点ID(知识点练习提交时记录)';

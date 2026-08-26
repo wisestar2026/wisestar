@@ -6,8 +6,10 @@ import cn.wisestar.server.domain.dto.task.TaskRequest;
 import cn.wisestar.server.domain.dto.task.TaskView;
 import cn.wisestar.server.domain.mapper.TaskViewMapper;
 import cn.wisestar.server.domain.model.PracticeRecord;
+import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.Task;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
+import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.TaskMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.TaskService;
@@ -22,6 +24,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +45,8 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 
 	private final PracticeRecordMapper practiceRecordMapper;
 
+	private final StudentMapper studentMapper;
+
 	@Override
 	public List<TaskView> listTasks(String taskDate, String name) {
 		List<Task> tasks = this.baseMapper.selectList(Wrappers.<Task>lambdaQuery()
@@ -48,12 +54,33 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 				.like(StringUtils.hasText(name), Task::getName, name)
 				.orderByDesc(Task::getTaskDate)
 				.orderByAsc(Task::getSort));
-		return taskViewMapper.toView(tasks);
+		List<TaskView> views = taskViewMapper.toView(tasks);
+		fillStudentName(views);
+		return views;
+	}
+
+	/** 回填绑定学员姓名 */
+	private void fillStudentName(List<TaskView> views) {
+		java.util.Set<String> studentIds = views.stream().map(TaskView::getStudentId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		if (studentIds.isEmpty()) {
+			return;
+		}
+		Map<String, String> nameMap = studentMapper.selectBatchIds(studentIds).stream()
+				.collect(Collectors.toMap(Student::getId, Student::getName, (a, b) -> a));
+		views.forEach(v -> v.setStudentName(nameMap.get(v.getStudentId())));
 	}
 
 	@Override
 	public void createTask(TaskRequest request) {
 		validate(request);
+		// 每学员每日最多 3 个任务
+		Long count = this.baseMapper.selectCount(Wrappers.<Task>lambdaQuery()
+				.eq(Task::getStudentId, request.getStudentId())
+				.eq(Task::getTaskDate, request.getTaskDate()));
+		if (count != null && count >= MAX_DAILY_TASKS) {
+			throw new ValidationException("该学员当日任务已达上限（最多 3 个）");
+		}
 		Task task = taskViewMapper.fromRequest(request);
 		if (task.getStatus() == null) {
 			task.setStatus(1);
@@ -81,9 +108,12 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 		removeById(request.getId());
 	}
 
+	/** 每学员每日最多任务数 */
+	private static final int MAX_DAILY_TASKS = 3;
+
 	private void validate(TaskRequest request) {
-		if (!StringUtils.hasText(request.getName())) {
-			throw new ValidationException("任务名称不能为空");
+		if (!StringUtils.hasText(request.getStudentId())) {
+			throw new ValidationException("请选择绑定学员");
 		}
 		if (!StringUtils.hasText(request.getTaskDate())) {
 			throw new ValidationException("任务日期不能为空");
@@ -102,6 +132,7 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 		String date = StringUtils.hasText(taskDate) ? taskDate : LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
 		List<Task> tasks = this.baseMapper.selectList(Wrappers.<Task>lambdaQuery()
 				.eq(Task::getTaskDate, date)
+				.eq(Task::getStudentId, userId)
 				.eq(Task::getStatus, 1)
 				.orderByAsc(Task::getSort));
 		if (tasks.isEmpty()) {
@@ -116,6 +147,7 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 		return tasks.stream().map(task -> {
 			StudentTaskView view = new StudentTaskView();
 			view.setId(task.getId());
+			view.setStudentId(task.getStudentId());
 			view.setName(task.getName());
 			view.setDescription(task.getDescription());
 			view.setContentType(task.getContentType());

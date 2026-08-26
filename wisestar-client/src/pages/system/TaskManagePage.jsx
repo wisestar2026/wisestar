@@ -20,6 +20,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant
 import dayjs from 'dayjs';
 import { listTasks, createTask, updateTask, deleteTask } from '../../api/task';
 import { listRepo } from '../../api/repo';
+import { listStudents } from '../../api/student';
 import { listSubjects, listChapters, listSections, listKnowledgePoints } from '../../api/knowledge';
 import { usePermission } from '../../utils/usePermission';
 
@@ -38,6 +39,7 @@ export default function TaskManagePage() {
   const [form] = Form.useForm();
 
   // 关联内容选项
+  const [studentOptions, setStudentOptions] = useState([]);
   const [repoOptions, setRepoOptions] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [dlgChapters, setDlgChapters] = useState([]);
@@ -59,6 +61,9 @@ export default function TaskManagePage() {
 
   // 关联内容选项（练习列表 + 学科）
   useEffect(() => {
+    listStudents({ current: 1, pageSize: 200 }).then((res) => {
+      setStudentOptions((res?.data?.list || []).map((x) => ({ value: x.id, label: `${x.studentNo} ${x.name}` })));
+    }).catch(() => setStudentOptions([]));
     listRepo({ current: 1, pageSize: 200 }).then((res) => {
       setRepoOptions((res?.data?.list || []).map((r) => ({ value: r.id, label: r.name })));
     }).catch(() => {});
@@ -74,6 +79,7 @@ export default function TaskManagePage() {
     if (task) {
       setContentType(task.contentType);
       form.setFieldsValue({
+        studentId: task.studentId,
         name: task.name,
         description: task.description,
         taskDate: dayjs(task.taskDate),
@@ -117,7 +123,8 @@ export default function TaskManagePage() {
   const handleSave = () => {
     form.validateFields().then((values) => {
       const payload = {
-        name: values.name,
+        studentId: values.studentId,
+        name: values.name || '今日任务',
         description: values.description,
         taskDate: dayjs(values.taskDate).format('YYYY-MM-DD'),
         contentType: values.contentType,
@@ -154,6 +161,7 @@ export default function TaskManagePage() {
   };
 
   const columns = [
+    { title: '绑定学员', dataIndex: 'studentName', width: 100, render: (v) => v || '-' },
     { title: '任务名称', dataIndex: 'name', width: 160 },
     { title: '描述', dataIndex: 'description', ellipsis: true, render: (v) => v || '-' },
     { title: '任务日期', dataIndex: 'taskDate', width: 110 },
@@ -211,8 +219,11 @@ export default function TaskManagePage() {
         destroyOnClose
       >
         <Form form={form} labelCol={{ span: 5 }} wrapperCol={{ span: 18 }}>
-          <Form.Item name="name" label="任务名称" rules={[{ required: true, message: '请输入任务名称' }]}>
-            <Input placeholder="如：完成数学练习一" maxLength={128} />
+          <Form.Item name="studentId" label="绑定学员" rules={[{ required: true, message: '请选择绑定学员' }]}>
+            <Select showSearch optionFilterProp="label" placeholder="选择学员（每人每日最多 3 个任务）" options={studentOptions} />
+          </Form.Item>
+          <Form.Item name="name" label="任务名称">
+            <Input placeholder="选填，如：完成数学练习一" maxLength={128} />
           </Form.Item>
           <Form.Item name="description" label="任务描述">
             <Input.TextArea placeholder="选填" rows={2} maxLength={512} />

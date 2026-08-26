@@ -13,6 +13,8 @@ public class StudentTaskView {
 
 	private String id;
 
+	private String studentId;
+
 	private String name;
 
 	private String description;

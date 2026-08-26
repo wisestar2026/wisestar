@@ -16,7 +16,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class Task extends BaseModel {
 
-	/** 任务名称 */
+	/** 绑定学员ID（t_student.id） */
+	private String studentId;
+
+	/** 任务名称（选填） */
 	private String name;
 
 	/** 任务描述 */
