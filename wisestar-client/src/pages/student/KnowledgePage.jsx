@@ -22,9 +22,8 @@ import './KnowledgePage.css';
 
 // 四种模式 tab 配置
 const TABS = [
-  { key: 'preview',  label: '知识点预习', icon: '📖' },
+  { key: 'preview',  label: '知识点预习/复习', icon: '📖' },
   { key: 'practice', label: '专项练习湾', icon: '✏️' },
-  { key: 'trial',    label: '试炼检测',   icon: '🎯' },
   { key: 'wrong',    label: '错题本',     icon: '📕' },
 ];
 
@@ -86,8 +85,18 @@ export default function KnowledgePage() {
 
   useEffect(() => {
     if (!realMode) return;
-    if (tab === 'preview' && sectionId) {
-      getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
+    if (tab === 'preview') {
+      // 预习/复习：讲解要点 + 知识点练习检测（实时判分）
+      if (sectionId) {
+        getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
+      }
+      const params = { count: 3, exposeAnswer: true };
+      if (sectionId) params.sectionId = sectionId;
+      if (repoId) params.repoId = repoId;
+      if (kpIdParam) params.knowledgePointId = kpIdParam;
+      getStudyQuestions(params)
+        .then((res) => setRealQuestions(res?.data || []))
+        .catch(() => setRealQuestions([]));
     } else if (tab === 'practice' || tab === 'trial') {
       const params = { count: tab === 'trial' ? 2 : 3 };
       if (tab === 'trial') params.exposeAnswer = true; // 试炼实时出答案（本地即时判分）
@@ -124,7 +133,7 @@ export default function KnowledgePage() {
   // 真实模式：选择选项（按题型单选/多选；试炼选后即时判分锁定）
   const realPick = (q, optId) => {
     if (realResult) return;
-    if (tab === 'trial' && realJudge(q)) return;
+    if ((tab === 'trial' || tab === 'preview') && realJudge(q)) return;
     const multi = q.questionType === 'Checkbox' || q.questionType === 'Multiple';
     setRealAnswers((prev) => {
       const cur = prev[q.id];
@@ -234,12 +243,15 @@ export default function KnowledgePage() {
         <div className="sll-card" style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ margin: 0 }}>
-              {tab === 'preview' ? '📖 知识点预习' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 试炼检测' : '📕 知识点错题本'}
+              {tab === 'preview' ? '📖 知识点预习/复习' : tab === 'practice' ? '✏️ 专项练习湾' : '📕 知识点错题本'}
             </h3>
             <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
           </div>
 
           {/* 预习：后台配置的知识点讲解要点 */}
+          {tab === 'preview' && (
+            <div style={{ marginBottom: 12, fontWeight: 600 }}>📖 知识点讲解（预习/复习）</div>
+          )}
           {tab === 'preview' && (
             realPoints === null ? <div>加载中…</div> : realPoints.length === 0 ? (
               <div className="knowledge-empty">该小节暂未配置知识点，请联系管理员</div>
@@ -264,7 +276,7 @@ export default function KnowledgePage() {
           )}
 
           {/* 练习/试炼：真实题目 + 后端判分 */}
-          {(tab === 'practice' || tab === 'trial') && (
+          {(tab === 'practice' || tab === 'trial' || tab === 'preview') && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
@@ -274,11 +286,12 @@ export default function KnowledgePage() {
                   const children = schema.children || [];
                   const multi = question.questionType === 'Checkbox' || question.questionType === 'Multiple';
                   const picked = realAnswers[question.id];
-                  // 判定：试炼=本地实时判分；练习=交卷后后端判分
-                  const judge = tab === 'trial' ? realJudge(question) : null;
-                  const correct = tab === 'trial' ? (judge ? judge.correct : null) : realCorrectOf(question.id);
-                  const answerText = tab === 'trial' ? (judge ? judge.answer : '') : (realResult?.items.find((x) => x.questionId === question.id)?.correctAnswer || '');
-                  const judged = tab === 'trial' ? !!judge : !!realResult;
+                  // 判定：预习检测/试炼=本地实时判分；练习=交卷后后端判分
+                  const isDetect = tab === 'trial' || tab === 'preview';
+                  const judge = isDetect ? realJudge(question) : null;
+                  const correct = isDetect ? (judge ? judge.correct : null) : realCorrectOf(question.id);
+                  const answerText = isDetect ? (judge ? judge.answer : '') : (realResult?.items.find((x) => x.questionId === question.id)?.correctAnswer || '');
+                  const judged = isDetect ? !!judge : !!realResult;
                   const isRightNow = correct === 1;
                   return (
                     <div key={question.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
@@ -319,9 +332,9 @@ export default function KnowledgePage() {
                     </div>
                   );
                 })}
-                {tab === 'trial' ? (
+                {(tab === 'trial' || tab === 'preview') ? (
                   <div style={{ marginTop: 12, padding: 10, borderRadius: 10, background: '#fffbe6', textAlign: 'center', fontSize: 13, color: '#b26a00' }}>
-                    试炼为实时判分：每题选择后立即显示对错与标准答案
+                    练习检测为实时判分：每题选择后立即显示对错与标准答案
                   </div>
                 ) : !realResult ? (
                   <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting} style={{ marginTop: 8 }}>
