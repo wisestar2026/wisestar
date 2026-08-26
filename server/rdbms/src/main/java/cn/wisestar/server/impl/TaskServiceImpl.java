@@ -92,6 +92,39 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 	}
 
 	@Override
+	public void batchCreateTasks(List<TaskRequest> requests) {
+		if (requests == null || requests.isEmpty()) {
+			throw new ValidationException("请至少布置一个任务");
+		}
+		String firstStudentId = requests.get(0).getStudentId();
+		String firstDate = requests.get(0).getTaskDate();
+		boolean sameTarget = requests.stream().allMatch(r ->
+				firstStudentId.equals(r.getStudentId()) && firstDate.equals(r.getTaskDate()));
+		if (!sameTarget) {
+			requests.forEach(this::createTask);
+			return;
+		}
+		Long existing = this.baseMapper.selectCount(Wrappers.<Task>lambdaQuery()
+				.eq(Task::getStudentId, firstStudentId)
+				.eq(Task::getTaskDate, firstDate));
+		long total = (existing == null ? 0 : existing) + requests.size();
+		if (total > MAX_DAILY_TASKS) {
+			throw new ValidationException("该学员当日任务已达上限（最多 3 个）");
+		}
+		for (TaskRequest request : requests) {
+			validate(request);
+			Task task = taskViewMapper.fromRequest(request);
+			if (task.getStatus() == null) {
+				task.setStatus(1);
+			}
+			if (task.getSort() == null) {
+				task.setSort(1);
+			}
+			save(task);
+		}
+	}
+
+	@Override
 	public void updateTask(TaskRequest request) {
 		if (request.getId() == null) {
 			throw new ValidationException("任务 ID 不能为空");

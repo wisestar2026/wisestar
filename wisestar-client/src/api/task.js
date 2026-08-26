@@ -22,6 +22,11 @@ export async function createTask(data) {
   return request.post('/task/create', data);
 }
 
+/** 批量布置任务（同一弹窗一次布置多条，校验同学员同日 <=3） */
+export async function batchCreateTasks(data) {
+  return request.post('/task/batchCreate', data);
+}
+
 /** 编辑任务 */
 export async function updateTask(data) {
   return request.post('/task/update', data);

@@ -52,6 +52,17 @@ public class TaskApi {
 	}
 
 	/**
+	 * 批量布置任务（同一弹窗一次布置多条，task:create）。
+	 *
+	 * @param requests 任务请求列表
+	 */
+	@PostMapping("/batchCreate")
+	@PreAuthorize("hasAuthority('task:create')")
+	public void batchCreateTasks(@RequestBody List<TaskRequest> requests) {
+		taskService.batchCreateTasks(requests);
+	}
+
+	/**
 	 * 编辑任务（task:update）。
 	 */
 	@PostMapping("/update")

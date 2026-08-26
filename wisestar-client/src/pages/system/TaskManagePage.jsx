@@ -18,13 +18,55 @@ import {
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { listTasks, createTask, updateTask, deleteTask } from '../../api/task';
+import { listTasks, updateTask, deleteTask, batchCreateTasks } from '../../api/task';
 import { listRepo } from '../../api/repo';
 import { listStudents } from '../../api/student';
 import { listSubjects, listChapters, listSections, listKnowledgePoints } from '../../api/knowledge';
 import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
+
+/** 知识点选择（行内四级联动：学科→章节→小节→知识点） */
+function KnowledgePicker({ value, onChange }) {
+  const [subjects, setSubjects] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [points, setPoints] = useState([]);
+  const [selSubject, setSelSubject] = useState();
+  const [selChapter, setSelChapter] = useState();
+  const [selSection, setSelSection] = useState();
+  useEffect(() => {
+    listSubjects().then((res) => setSubjects(res?.data || [])).catch(() => setSubjects([]));
+  }, []);
+  const loadChapters = (sid) => {
+    setSelSubject(sid); setSelChapter(undefined); setSelSection(undefined); setPoints([]);
+    onChange(undefined);
+    listChapters({ subjectId: sid }).then((res) => setChapters(res?.data || [])).catch(() => setChapters([]));
+  };
+  const loadSections = (cid) => {
+    setSelChapter(cid); setSelSection(undefined); setPoints([]);
+    onChange(undefined);
+    listSections({ chapterId: cid }).then((res) => setSections(res?.data || [])).catch(() => setSections([]));
+  };
+  const loadPoints = (sid) => {
+    setSelSection(sid);
+    listKnowledgePoints({ current: 1, pageSize: 200, sectionId: sid }).then((res) => setPoints(res?.data?.list || [])).catch(() => setPoints([]));
+  };
+  return (
+    <Space direction="vertical" style={{ width: '100%' }}>
+      <Space style={{ width: '100%' }}>
+        <Select style={{ flex: 1 }} placeholder="学科" value={selSubject} onChange={loadChapters} showSearch optionFilterProp="label"
+          options={subjects.map((x) => ({ value: x.id, label: x.name }))} />
+        <Select style={{ flex: 1 }} placeholder="章节" value={selChapter} onChange={loadSections} showSearch optionFilterProp="label"
+          options={chapters.map((x) => ({ value: x.id, label: x.name }))} />
+        <Select style={{ flex: 1 }} placeholder="小节" value={selSection} onChange={loadPoints} showSearch optionFilterProp="label"
+          options={sections.map((x) => ({ value: x.id, label: x.name }))} />
+      </Space>
+      <Select style={{ width: '100%' }} placeholder="选择知识点" value={value} onChange={onChange} showSearch optionFilterProp="label"
+        options={points.map((x) => ({ value: x.id, label: x.name }))} />
+    </Space>
+  );
+}
 
 export default function TaskManagePage() {
   const { can } = usePermission();
@@ -41,11 +83,6 @@ export default function TaskManagePage() {
   // 关联内容选项
   const [studentOptions, setStudentOptions] = useState([]);
   const [repoOptions, setRepoOptions] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [dlgChapters, setDlgChapters] = useState([]);
-  const [dlgSections, setDlgSections] = useState([]);
-  const [dlgPoints, setDlgPoints] = useState([]);
-  const [contentType, setContentType] = useState('practice');
 
   const loadList = useCallback(() => {
     setLoading(true);
@@ -67,89 +104,50 @@ export default function TaskManagePage() {
     listRepo({ current: 1, pageSize: 200 }).then((res) => {
       setRepoOptions((res?.data?.list || []).map((r) => ({ value: r.id, label: r.name })));
     }).catch(() => {});
-    listSubjects().then((res) => setSubjects(res?.data || [])).catch(() => setSubjects([]));
   }, []);
 
   const openModal = (task = null) => {
     setEditing(task);
     setModalOpen(true);
-    setDlgChapters([]);
-    setDlgSections([]);
-    setDlgPoints([]);
     if (task) {
-      setContentType(task.contentType);
       form.setFieldsValue({
         studentId: task.studentId,
-        name: task.name,
-        description: task.description,
         taskDate: dayjs(task.taskDate),
-        contentType: task.contentType,
-        contentId: task.contentId,
-        status: task.status === 0 ? false : true,
+        tasks: [{ name: task.name, contentType: task.contentType, contentId: task.contentId }],
       });
     } else {
       form.resetFields();
-      setContentType('practice');
-      form.setFieldsValue({ taskDate: dayjs(), contentType: 'practice', status: true });
+      form.setFieldsValue({ taskDate: dayjs(), tasks: [{ contentType: 'practice' }] });
     }
-  };
-
-  // 类型切换
-  const handleTypeChange = (type) => {
-    setContentType(type);
-    form.setFieldsValue({ contentId: undefined });
-    setDlgChapters([]);
-    setDlgSections([]);
-    setDlgPoints([]);
-  };
-
-  // 知识点三级联动
-  const loadChapters = (subjectId) => {
-    if (!subjectId) { setDlgChapters([]); return; }
-    listChapters({ subjectId }).then((res) => setDlgChapters(res?.data || [])).catch(() => setDlgChapters([]));
-    setDlgSections([]);
-    setDlgPoints([]);
-  };
-  const loadSections = (chapterId) => {
-    if (!chapterId) { setDlgSections([]); return; }
-    listSections({ chapterId }).then((res) => setDlgSections(res?.data || [])).catch(() => setDlgSections([]));
-    setDlgPoints([]);
-  };
-  const loadPoints = (sectionId) => {
-    if (!sectionId) { setDlgPoints([]); return; }
-    listKnowledgePoints({ current: 1, pageSize: 200, sectionId }).then((res) => setDlgPoints(res?.data?.list || [])).catch(() => setDlgPoints([]));
   };
 
   const handleSave = () => {
     form.validateFields().then((values) => {
-      const payload = {
-        studentId: values.studentId,
-        name: values.name || '今日任务',
-        description: values.description,
-        taskDate: dayjs(values.taskDate).format('YYYY-MM-DD'),
-        contentType: values.contentType,
-        contentId: values.contentId,
-        status: values.status ? 1 : 0,
-        sort: 1,
-      };
-      setSaving(true);
-      if (editing) {
-        updateTask({ ...payload, id: editing.id })
-          .then(() => {
-            message.success('任务已更新');
-            setModalOpen(false);
-            loadList();
-          })
-          .finally(() => setSaving(false));
-      } else {
-        createTask(payload)
-          .then(() => {
-            message.success('任务已布置');
-            setModalOpen(false);
-            loadList();
-          })
-          .finally(() => setSaving(false));
+      if (!values.tasks || values.tasks.length === 0) {
+        message.warning('请至少添加一个任务');
+        return;
       }
+      const requests = values.tasks.map((t) => ({
+        studentId: values.studentId,
+        taskDate: dayjs(values.taskDate).format('YYYY-MM-DD'),
+        name: t.name || '今日任务',
+        contentType: t.contentType,
+        contentId: t.contentId,
+        status: 1,
+        sort: 1,
+      }));
+      setSaving(true);
+      const action = editing
+        ? (() => { const p = requests[0]; p.id = editing.id; p.name = values.tasks[0].name || '今日任务'; return updateTask(p); })()
+        : batchCreateTasks(requests);
+      action
+        .then(() => {
+          message.success(editing ? '任务已更新' : '任务已布置，学员端已同步');
+          setModalOpen(false);
+          loadList();
+        })
+        .catch(() => {})
+        .finally(() => setSaving(false));
     });
   };
 
@@ -222,53 +220,64 @@ export default function TaskManagePage() {
           <Form.Item name="studentId" label="绑定学员" rules={[{ required: true, message: '请选择绑定学员' }]}>
             <Select showSearch optionFilterProp="label" placeholder="选择学员（每人每日最多 3 个任务）" options={studentOptions} />
           </Form.Item>
-          <Form.Item name="name" label="任务名称">
-            <Input placeholder="选填，如：完成数学练习一" maxLength={128} />
-          </Form.Item>
-          <Form.Item name="description" label="任务描述">
-            <Input.TextArea placeholder="选填" rows={2} maxLength={512} />
-          </Form.Item>
           <Form.Item name="taskDate" label="任务日期" rules={[{ required: true, message: '请选择任务日期' }]}>
             <DatePicker style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="contentType" label="任务类型" rules={[{ required: true, message: '请选择任务类型' }]}>
-            <Select
-              options={[
-                { value: 'practice', label: '练习' },
-                { value: 'knowledge_point', label: '知识点' },
-              ]}
-              onChange={handleTypeChange}
-            />
-          </Form.Item>
 
-          {contentType === 'practice' ? (
-            <Form.Item name="contentId" label="关联练习" rules={[{ required: true, message: '请选择关联练习' }]}>
-              <Select showSearch optionFilterProp="label" placeholder="选择练习" options={repoOptions} />
-            </Form.Item>
-          ) : (
-            <>
-              <Form.Item name="subjectId" label="学科">
-                <Select allowClear placeholder="选择学科" options={subjects.map((s) => ({ value: s.id, label: `${s.icon || ''} ${s.name}` }))}
-                  onChange={loadChapters} showSearch optionFilterProp="label" />
-              </Form.Item>
-              <Form.Item name="chapterId" label="章节">
-                <Select allowClear placeholder="选择章节" options={dlgChapters.map((c) => ({ value: c.id, label: c.name }))}
-                  onChange={loadSections} showSearch optionFilterProp="label" />
-              </Form.Item>
-              <Form.Item name="sectionId" label="小节">
-                <Select allowClear placeholder="选择小节" options={dlgSections.map((s) => ({ value: s.id, label: s.name }))}
-                  onChange={loadPoints} showSearch optionFilterProp="label" />
-              </Form.Item>
-              <Form.Item name="contentId" label="关联知识点" rules={[{ required: true, message: '请选择关联知识点' }]}>
-                <Select allowClear placeholder="选择知识点" options={dlgPoints.map((p) => ({ value: p.id, label: p.name }))}
-                  showSearch optionFilterProp="label" />
-              </Form.Item>
-            </>
-          )}
-
-          <Form.Item name="status" label="发布">
-            <Select options={[{ value: 1, label: '发布' }, { value: 0, label: '停用' }]} />
-          </Form.Item>
+          <Form.List name="tasks">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map((field, idx) => (
+                  <div key={field.key} style={{ border: '1px solid #e3f2fd', borderRadius: 10, padding: 12, marginBottom: 12, background: '#f8fcff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <b>任务 {idx + 1}</b>
+                      {fields.length > 1 && (
+                        <Button type="link" size="small" danger onClick={() => remove(field.name)}>移除</Button>
+                      )}
+                    </div>
+                    <Form.Item {...field} name={[field.name, 'name']} label="任务名称" labelCol={{ span: 5 }} wrapperCol={{ span: 18 }} style={{ marginBottom: 8 }}>
+                      <Input placeholder="选填，如：完成数学练习一" maxLength={128} />
+                    </Form.Item>
+                    <Form.Item {...field} name={[field.name, 'contentType']} label="任务类型" rules={[{ required: true, message: '请选择类型' }]} labelCol={{ span: 5 }} wrapperCol={{ span: 18 }} style={{ marginBottom: 8 }}>
+                      <Select options={[{ value: 'practice', label: '练习' }, { value: 'knowledge_point', label: '知识点' }]} placeholder="选择类型" />
+                    </Form.Item>
+                    <Form.Item shouldUpdate noStyle>
+                      {() => {
+                        const type = form.getFieldValue(['tasks', field.name, 'contentType']);
+                        if (type === 'practice') {
+                          return (
+                            <Form.Item {...field} name={[field.name, 'contentId']} label="关联练习" rules={[{ required: true, message: '请选择练习' }]} labelCol={{ span: 5 }} wrapperCol={{ span: 18 }} style={{ marginBottom: 0 }}>
+                              <Select showSearch optionFilterProp="label" placeholder="选择练习" options={repoOptions} />
+                            </Form.Item>
+                          );
+                        }
+                        if (type === 'knowledge_point') {
+                          return (
+                            <Form.Item {...field} name={[field.name, 'contentId']} label="关联知识点" rules={[{ required: true, message: '请选择知识点' }]} labelCol={{ span: 5 }} wrapperCol={{ span: 18 }} style={{ marginBottom: 0 }}>
+                              <KnowledgePicker />
+                            </Form.Item>
+                          );
+                        }
+                        return null;
+                      }}
+                    </Form.Item>
+                  </div>
+                ))}
+                <Button
+                  block type="dashed" icon={<PlusOutlined />}
+                  onClick={() => {
+                    if (fields.length >= 3) {
+                      message.warning('每人每日最多布置 3 个任务');
+                      return;
+                    }
+                    add({ contentType: 'practice' });
+                  }}
+                >
+                  新增任务（已添加 {fields.length}/3）
+                </Button>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
     </div>

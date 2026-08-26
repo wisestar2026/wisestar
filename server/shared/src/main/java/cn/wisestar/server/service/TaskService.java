@@ -31,6 +31,13 @@ public interface TaskService {
 	void createTask(TaskRequest request);
 
 	/**
+	 * 批量新增任务（同一弹窗一次布置多条；校验同学员同日总量不超过 3）。
+	 *
+	 * @param requests 任务请求列表
+	 */
+	void batchCreateTasks(List<TaskRequest> requests);
+
+	/**
 	 * 编辑任务。
 	 *
 	 * @param request 任务请求（含 id）
