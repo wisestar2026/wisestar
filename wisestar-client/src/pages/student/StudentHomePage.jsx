@@ -211,7 +211,7 @@ export default function StudentHomePage() {
                 {t.completed ? '✓' : '▶'}
               </span>
               <span className="sh-home-todo-label">
-                {t.name}
+                {t.contentName ? `${t.contentType === 'knowledge_point' ? '📌 知识点' : '✏️ 练习'}：${t.contentName}` : t.name}
                 {t.description && <span className="sh-home-todo-desc"> · {t.description}</span>}
               </span>
               <span className={`sh-home-todo-reward ${t.completed ? 'done' : ''}`}>

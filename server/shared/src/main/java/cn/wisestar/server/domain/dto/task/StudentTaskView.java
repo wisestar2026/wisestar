@@ -25,6 +25,9 @@ public class StudentTaskView {
 	/** 关联内容ID */
 	private String contentId;
 
+	/** 关联内容名称（练习名/知识点名，学员端展示） */
+	private String contentName;
+
 	/** 是否完成（当日交卷且正确率≥60%） */
 	private boolean completed;
 

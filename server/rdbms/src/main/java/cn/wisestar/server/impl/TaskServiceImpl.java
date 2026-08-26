@@ -8,7 +8,9 @@ import cn.wisestar.server.domain.mapper.TaskViewMapper;
 import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.Task;
+import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
+import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.TaskMapper;
 import cn.wisestar.server.service.BaseService;
@@ -46,6 +48,10 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 	private final PracticeRecordMapper practiceRecordMapper;
 
 	private final StudentMapper studentMapper;
+
+	private final RepoMapper repoMapper;
+
+	private final KnowledgePointMapper knowledgePointMapper;
 
 	@Override
 	public List<TaskView> listTasks(String taskDate, String name) {
@@ -177,6 +183,18 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 		List<PracticeRecord> records = practiceRecordMapper.selectList(Wrappers.<PracticeRecord>lambdaQuery()
 				.eq(PracticeRecord::getUserId, userId)
 				.ge(PracticeRecord::getCreateAt, todayStart));
+		java.util.Map<String, String> repoNameMap = new java.util.HashMap<>();
+		java.util.Map<String, String> kpNameMap = new java.util.HashMap<>();
+		java.util.Set<String> repoIds = tasks.stream().filter(t -> "practice".equals(t.getContentType()))
+				.map(Task::getContentId).filter(StringUtils::hasText).collect(Collectors.toSet());
+		if (!repoIds.isEmpty()) {
+			repoMapper.selectBatchIds(repoIds).forEach(r -> repoNameMap.put(r.getId(), r.getName()));
+		}
+		java.util.Set<String> kpIds = tasks.stream().filter(t -> "knowledge_point".equals(t.getContentType()))
+				.map(Task::getContentId).filter(StringUtils::hasText).collect(Collectors.toSet());
+		if (!kpIds.isEmpty()) {
+			knowledgePointMapper.selectBatchIds(kpIds).forEach(k -> kpNameMap.put(k.getId(), k.getName()));
+		}
 		return tasks.stream().map(task -> {
 			StudentTaskView view = new StudentTaskView();
 			view.setId(task.getId());
@@ -185,6 +203,9 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 			view.setDescription(task.getDescription());
 			view.setContentType(task.getContentType());
 			view.setContentId(task.getContentId());
+			view.setContentName("practice".equals(task.getContentType())
+					? repoNameMap.get(task.getContentId())
+					: kpNameMap.get(task.getContentId()));
 			// 匹配相关练习记录（练习型按 repoId，知识点型按 knowledgePointId）
 			List<PracticeRecord> matched = records.stream()
 					.filter(r -> {
