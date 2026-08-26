@@ -24,7 +24,7 @@ import './StudyPage.css';
 const ACTION_BUTTONS = [
   { key: 'preview', label: '知识点预习', icon: '📖', color: 'blue' },
   { key: 'practice', label: '专项练习湾', icon: '✏️', color: 'orange' },
-  { key: 'trial', label: '知识点试炼检测', icon: '🎯', color: 'green' },
+  { key: 'trial', label: '小节通关', icon: '🎯', color: 'green' },
   { key: 'wrong', label: '知识点错题本', icon: '📕', color: 'purple' },
 ];
 

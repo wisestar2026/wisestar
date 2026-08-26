@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Input } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/student';
 import { submitPractice } from '../../api/practice';
@@ -101,11 +102,20 @@ export default function KnowledgePage() {
     const titleOf = (id) => questionOptions(q).find((o) => o.id === id)?.title;
     const mine = picked.type === 'option'
       ? [titleOf(picked.optionId)]
-      : (picked.optionIds || []).map(titleOf);
+      : picked.type === 'options'
+        ? (picked.optionIds || []).map(titleOf)
+        : [picked.text || ''];
     const mineSet = new Set(mine.map((x) => String(x).trim()));
     const correctSet = new Set(correctAnswers);
     const isRight = mineSet.size === correctSet.size && [...mineSet].every((x) => correctSet.has(x));
     return { correct: isRight ? 1 : 0, answer: answerText };
+  };
+
+  // 真实模式：填空作答
+  const realInput = (q, text) => {
+    if (realResult) return;
+    if ((tab === 'trial' || tab === 'preview') && realJudge(q)) return;
+    setRealAnswers((prev) => ({ ...prev, [q.id]: { type: 'text', text } }));
   };
 
   // 真实模式：选择选项（按题型单选/多选；试炼选后即时判分锁定）
@@ -141,7 +151,7 @@ export default function KnowledgePage() {
         <div className="sll-card" style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ margin: 0 }}>
-              {tab === 'preview' ? '📖 知识点预习/复习' : tab === 'practice' ? '✏️ 专项练习湾' : '📕 知识点错题本'}
+              {tab === 'preview' ? '📖 知识点预习/复习' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 小节通关' : '📕 知识点错题本'}
             </h3>
             <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
           </div>
@@ -185,7 +195,14 @@ export default function KnowledgePage() {
                 return (
                   <div key={question.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
                     <div style={{ fontWeight: 600, marginBottom: 10 }}>{i + 1}. {question.name || question.schema?.title}</div>
-                    {options.map((opt) => {
+                    {question.questionType === 'FillBlank' || question.questionType === 'Text' ? (
+                      <Input
+                        placeholder="请输入你的答案" disabled={!!judge}
+                        value={realAnswers[question.id]?.type === 'text' ? realAnswers[question.id].text : ''}
+                        onChange={(e) => realInput(question, e.target.value)}
+                        style={{ maxWidth: 420 }}
+                      />
+                    ) : options.map((opt) => {
                       const selected = realAnswers[question.id]?.type === 'option'
                         ? realAnswers[question.id].optionId === opt.id
                         : (realAnswers[question.id]?.optionIds || []).includes(opt.id);
@@ -232,11 +249,18 @@ export default function KnowledgePage() {
                       <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                           <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : '试炼检测'}</span>
+                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : '小节通关'}</span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
-                        {/* 判断题无选项时补 正确/错误 */}
-                        {options.map((opt) => {
+                        {/* 填空题输入；判断题无选项时补 正确/错误 */}
+                        {question.questionType === 'FillBlank' || question.questionType === 'Text' ? (
+                          <Input
+                            placeholder="请输入你的答案" disabled={showResult}
+                            value={picked?.type === 'text' ? picked.text : ''}
+                            onChange={(e) => realInput(question, e.target.value)}
+                            style={{ maxWidth: 420 }}
+                          />
+                        ) : options.map((opt) => {
                           const selected = picked?.type === 'option'
                             ? picked.optionId === opt.id
                             : (picked?.optionIds || []).includes(opt.id);
