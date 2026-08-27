@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Input } from 'antd';
+import { Input, Button } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/student';
 import { submitPractice } from '../../api/practice';
@@ -40,7 +40,7 @@ export default function KnowledgePage() {
   const [realResult, setRealResult] = useState(null);       // 判分结果
   const [realSubmitting, setRealSubmitting] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);          // 逐题模式当前题索引
-  const [judgeRevealed, setJudgeRevealed] = useState(false); // 试炼全部做完后查看结果
+  const [judgeState, setJudgeState] = useState({}); // 每题是否已提交判定 {qid: true}
 
   // 习题级上报：进入练习/试炼后上报「正在做哪道题」（供后台老师监控）
   useEffect(() => {
@@ -99,29 +99,41 @@ export default function KnowledgePage() {
     const correctAnswers = answerText.split('\n').map((x) => x.trim()).filter(Boolean);
     const picked = realAnswers[q.id];
     if (!picked) return null;
-    const titleOf = (id) => questionOptions(q).find((o) => o.id === id)?.title;
+    const options = questionOptions(q);
+    const titleOf = (id) => options.find((o) => o.id === id)?.title;
     const mine = picked.type === 'option'
       ? [titleOf(picked.optionId)]
       : picked.type === 'options'
         ? (picked.optionIds || []).map(titleOf)
         : [picked.text || ''];
     const mineSet = new Set(mine.map((x) => String(x).trim()));
-    const correctSet = new Set(correctAnswers);
-    const isRight = mineSet.size === correctSet.size && [...mineSet].every((x) => correctSet.has(x));
+    // 标准答案归一化：支持 选项文本 / 选项字母(A/B/C…) / 选项序号(1/2/3…)
+    const LETTERS = 'ABCDEFGHIJ';
+    const answerSet = new Set();
+    correctAnswers.forEach((ans) => {
+      const direct = options.find((o) => String(o.title || '').trim() === ans);
+      if (direct) { answerSet.add(String(direct.title).trim()); return; }
+      const li = LETTERS.indexOf(ans.trim().toUpperCase());
+      if (li >= 0 && options[li]) { answerSet.add(String(options[li].title || '').trim()); return; }
+      const ni = parseInt(ans.trim(), 10) - 1;
+      if (!Number.isNaN(ni) && options[ni]) { answerSet.add(String(options[ni].title || '').trim()); return; }
+      answerSet.add(ans);
+    });
+    const isRight = mineSet.size === answerSet.size && [...mineSet].every((x) => answerSet.has(x));
     return { correct: isRight ? 1 : 0, answer: answerText };
   };
 
   // 真实模式：填空作答
   const realInput = (q, text) => {
     if (realResult) return;
-    if ((tab === 'trial' || tab === 'preview') && realJudge(q)) return;
+    if (judgeState[q.id] || (tab === 'preview' && realJudge(q))) return;
     setRealAnswers((prev) => ({ ...prev, [q.id]: { type: 'text', text } }));
   };
 
   // 真实模式：选择选项（按题型单选/多选；试炼选后即时判分锁定）
   const realPick = (q, optId) => {
     if (realResult) return;
-    if ((tab === 'trial' || tab === 'preview') && realJudge(q)) return;
+    if (judgeState[q.id] || (tab === 'preview' && realJudge(q))) return;
     const multi = q.questionType === 'Checkbox' || q.questionType === 'Multiple';
     setRealAnswers((prev) => {
       const cur = prev[q.id];
@@ -242,7 +254,7 @@ export default function KnowledgePage() {
                     const multi = question.questionType === 'Checkbox' || question.questionType === 'Multiple';
                     const picked = realAnswers[question.id];
                     const judge = realJudge(question);
-                    const showResult = tab === 'practice' ? !!judge : judgeRevealed;
+                    const showResult = judgeState[question.id] === true;
                     const correct = judge ? judge.correct : null;
                     const analysis = schema.attribute?.examAnalysis;
                     return (
@@ -291,44 +303,41 @@ export default function KnowledgePage() {
                             )}
                           </div>
                         )}
+                        {/* 提交答案按钮：点击后才判定 */}
+                        {!showResult && picked && (
+                          <Button type="primary" size="small" style={{ marginTop: 12 }} onClick={() => setJudgeState((p) => ({ ...p, [question.id]: true }))}>
+                            提交答案
+                          </Button>
+                        )}
                         {/* 导航 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
                           <button className="knowledge-back" disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)}>上一题</button>
                           <div style={{ fontSize: 13, color: '#90a4ae' }}>
-                            {tab === 'trial' && !judgeRevealed
-                              ? `已答 ${Object.keys(realAnswers).filter((k) => realAnswers[k]).length}/${realQuestions.length} 题`
-                              : ''}
+                            已判定 {Object.keys(judgeState).length}/{realQuestions.length} 题
                           </div>
                           {currentQ < realQuestions.length - 1 ? (
                             <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
-                          ) : tab === 'trial' && !judgeRevealed ? (
-                            <button className="knowledge-back"
-                              disabled={!realQuestions.every((q) => realAnswers[q.id]) || realSubmitting}
-                              onClick={() => { realSubmit(); setJudgeRevealed(true); }}>
-                              {realSubmitting ? '提交中…' : '查看结果'}
-                            </button>
                           ) : (
-                            <span />
+                            realQuestions.every((q) => judgeState[q.id]) ? (
+                              <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
+                                {realSubmitting ? '提交中…' : '完成'}
+                              </button>
+                            ) : (
+                              <span />
+                            )
                           )}
                         </div>
-                        {tab === 'trial' && !judgeRevealed && !realQuestions.every((q) => realAnswers[q.id]) && (
-                          <div style={{ marginTop: 8, fontSize: 12, color: '#b26a00' }}>全部作答完成后才能查看答案</div>
+                        {!showResult && (
+                          <div style={{ marginTop: 8, fontSize: 12, color: '#b26a00' }}>
+                            选择题/填空作答后，点击「提交答案」才会判定
+                          </div>
                         )}
-                        {tab === 'practice' && !showResult && (
-                          <div style={{ marginTop: 8, fontSize: 12, color: '#b26a00' }}>选择答案后立即显示答案与解析</div>
-                        )}
-                        {tab === 'practice' && currentQ === realQuestions.length - 1 && realQuestions.every((q) => realAnswers[q.id]) && (
-                          realResult ? (
-                            <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: '#e8f5e9', textAlign: 'center' }}>
-                              <div style={{ fontSize: 18, fontWeight: 700, color: '#2e7d32' }}>
-                                🎉 练习完成 · 得分 {realResult.score ?? 0} / {realResult.totalScore ?? 0} · 答对 {realResult.correctCount ?? 0}/{realResult.total ?? 0}
-                              </div>
+                        {(tab === 'practice' || tab === 'trial') && currentQ === realQuestions.length - 1 && realResult && (
+                          <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: '#e8f5e9', textAlign: 'center' }}>
+                            <div style={{ fontSize: 18, fontWeight: 700, color: '#2e7d32' }}>
+                              🎉 {tab === 'practice' ? '练习' : '小节通关'}完成 · 得分 {realResult.score ?? 0} / {realResult.totalScore ?? 0} · 答对 {realResult.correctCount ?? 0}/{realResult.total ?? 0}
                             </div>
-                          ) : (
-                            <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting} style={{ marginTop: 12 }}>
-                              {realSubmitting ? '提交中…' : '完成练习'}
-                            </button>
-                          )
+                          </div>
                         )}
                       </div>
                     );
