@@ -308,7 +308,7 @@ export default function KnowledgePage() {
                             placeholder="请输入你的答案" disabled={showResult}
                             value={picked?.type === 'text' ? picked.text : ''}
                             onChange={(e) => realInput(question, e.target.value)}
-                            style={{ maxWidth: 420 }}
+                            style={{ width: '100%', maxWidth: 480 }}
                           />
                         ) : options.map((opt) => {
                           const selected = picked?.type === 'option'
