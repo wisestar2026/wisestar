@@ -2,6 +2,7 @@ package cn.wisestar.server.service;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.PracticeResultView;
+import cn.wisestar.server.domain.dto.WrongReasonRequest;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
@@ -21,6 +22,13 @@ public interface PracticeService {
 	 * @param request 练习交卷请求（模式/题库/用时/逐题作答）
 	 */
 	PracticeResultView submitPractice(PracticeSubmitRequest request);
+
+	/**
+	 * 保存错题错误归因（学员标注：大意/计算错误/知识点不熟/题型不会等）。
+	 *
+	 * @param request 归因请求（detailId + reason）
+	 */
+	void saveWrongReason(WrongReasonRequest request);
 
 	/**
 	 * 分页查询错题库（题目 × 学员聚合）。

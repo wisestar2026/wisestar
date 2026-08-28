@@ -4,14 +4,20 @@ import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.uitls.AnswerJudgeUtil;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.PracticeResultView;
+import cn.wisestar.server.domain.dto.WrongReasonRequest;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
 import cn.wisestar.server.domain.model.PracticeDetail;
 import cn.wisestar.server.domain.model.PracticeRecord;
+
+import javax.validation.ValidationException;
+import cn.wisestar.server.domain.model.Student;
+import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.mapper.PracticeDetailMapper;
+import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.PracticeService;
@@ -22,6 +28,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -62,6 +69,8 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	 */
 	private final PracticeDetailMapper practiceDetailMapper;
 
+	private final StudentMapper studentMapper;
+
 	/**
 	 * 题目服务（回源题目 schema 用于判分）。
 	 */
@@ -73,9 +82,11 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	 * @param practiceDetailMapper 逐题明细 Mapper
 	 * @param templateService      题目服务
 	 */
-	public PracticeServiceImpl(PracticeDetailMapper practiceDetailMapper, TemplateServiceImpl templateService) {
+	public PracticeServiceImpl(PracticeDetailMapper practiceDetailMapper, TemplateServiceImpl templateService,
+			StudentMapper studentMapper) {
 		this.practiceDetailMapper = practiceDetailMapper;
 		this.templateService = templateService;
+		this.studentMapper = studentMapper;
 	}
 
 	/**
@@ -182,8 +193,11 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 					correctAnswer = String.join(" / ", answers);
 				}
 			}
+			String detailId = details.stream()
+					.filter(d -> item.getQuestionId() != null && item.getQuestionId().equals(d.getQuestionId()))
+					.findFirst().map(PracticeDetail::getId).orElse(null);
 			result.getItems().add(new PracticeResultView.PracticeResultItem(
-					item.getQuestionId(), correct, correctAnswer));
+					item.getQuestionId(), correct, correctAnswer, detailId));
 		}
 		return result;
 	}
@@ -199,8 +213,34 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		if (query == null) {
 			query = new WrongQuestionQuery();
 		}
+		// 学员身份：强制只看自己的错题（管理端不限）
+		String userId = SecurityContextUtils.getUserId();
+		if (userId != null && studentMapper.selectById(userId) != null && !StringUtils.hasText(query.getUserId())) {
+			query.setUserId(userId);
+		}
 		Page<WrongQuestionView> page = new Page<>(query.getCurrent(), query.getPageSize());
 		IPage<WrongQuestionView> result = practiceDetailMapper.selectWrongQuestions(page, query);
 		return new PaginationResponse<>(result.getTotal(), result.getRecords());
+	}
+
+	/**
+	 * 保存错题错误归因（校验明细属于当前学员）。
+	 */
+	@Override
+	public void saveWrongReason(WrongReasonRequest request) {
+		if (request.getDetailId() == null || !StringUtils.hasText(request.getReason())) {
+			throw new ValidationException("明细ID与归因不能为空");
+		}
+		PracticeDetail detail = practiceDetailMapper.selectById(request.getDetailId());
+		if (detail == null) {
+			throw new ValidationException("错题明细不存在");
+		}
+		String userId = SecurityContextUtils.getUserId();
+		PracticeRecord record = this.baseMapper.selectById(detail.getPracticeId());
+		if (record == null || !userId.equals(record.getUserId())) {
+			throw new ValidationException("无权修改该错题归因");
+		}
+		detail.setWrongReason(request.getReason());
+		practiceDetailMapper.updateById(detail);
 	}
 }

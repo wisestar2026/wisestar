@@ -74,15 +74,41 @@ public final class AnswerJudgeUtil {
 		if (student == null || student.trim().isEmpty()) {
 			return 0;
 		}
+		// 标准答案归一化：支持 选项文本 / 选项字母(A/B/C…) / 选项序号(1/2/3…) → 选项标题
+		List<SurveySchema> children = question.getChildren() == null ? java.util.Collections.emptyList()
+				: question.getChildren();
+		List<String> normalized = correctAnswers.stream().map(ans -> {
+			String a = ans == null ? "" : ans.trim();
+			for (SurveySchema c : children) {
+				if (StringUtils.hasText(c.getTitle()) && c.getTitle().trim().equals(a)) {
+					return c.getTitle().trim();
+				}
+			}
+			String upper = a.toUpperCase();
+			int li = "ABCDEFGHIJ".indexOf(upper);
+			if (li >= 0 && li < children.size() && StringUtils.hasText(children.get(li).getTitle())) {
+				return children.get(li).getTitle().trim();
+			}
+			try {
+				int ni = Integer.parseInt(a) - 1;
+				if (ni >= 0 && ni < children.size() && StringUtils.hasText(children.get(ni).getTitle())) {
+					return children.get(ni).getTitle().trim();
+				}
+			}
+			catch (NumberFormatException ignored) {
+				// 非序号
+			}
+			return a;
+		}).collect(Collectors.toList());
 		if (SurveySchema.QuestionType.Checkbox.equals(question.getType())) {
 			Set<String> studentSet = splitAnswerSet(student);
 			Set<String> correctSet = new HashSet<>();
-			for (String correct : correctAnswers) {
+			for (String correct : normalized) {
 				correctSet.addAll(splitAnswerSet(correct));
 			}
 			return studentSet.equals(correctSet) ? 1 : 0;
 		}
-		for (String correct : correctAnswers) {
+		for (String correct : normalized) {
 			if (correct != null && correct.trim().equals(student.trim())) {
 				return 1;
 			}

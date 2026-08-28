@@ -2067,4 +2067,7 @@ CREATE TABLE IF NOT EXISTS `t_task` (
 -- 练习记录加知识点维度（知识点型任务完成判定）
 ALTER TABLE `t_practice_record` ADD COLUMN IF NOT EXISTS `knowledge_point_id` varchar(64) DEFAULT NULL COMMENT '知识点ID(知识点练习提交时记录)';
 
+
+ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `wrong_reason` varchar(32) DEFAULT NULL COMMENT '错误归因(大意/计算错误/知识点不熟/题型不会等)';
+
 SET FOREIGN_KEY_CHECKS = 1;

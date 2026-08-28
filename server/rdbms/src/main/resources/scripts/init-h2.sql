@@ -2061,3 +2061,4 @@ ALTER TABLE t_task ADD COLUMN IF NOT EXISTS update_by varchar(256);
 ALTER TABLE t_task ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 -- 练习记录加知识点维度（知识点型任务完成判定）
 ALTER TABLE t_practice_record ADD COLUMN IF NOT EXISTS knowledge_point_id varchar(64);
+ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS wrong_reason varchar(32);

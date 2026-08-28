@@ -295,28 +295,56 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		return views;
 	}
 
-	/** 按小节绑定练习计算学员学习完成度（最高正确率） */
+	/** 按小节绑定练习 + 小节知识点练习计算学员学习完成度（最高正确率） */
 	private void fillProgress(List<SectionView> views) {
 		if (views.isEmpty()) {
 			return;
 		}
 		String userId = SecurityContextUtils.getUserId();
 		List<String> sectionIds = views.stream().map(SectionView::getId).collect(Collectors.toList());
+		// 小节绑定练习
 		Map<String, List<String>> reposBySection = sectionRepoMapper.selectList(
 						Wrappers.<SectionRepo>lambdaQuery().in(SectionRepo::getSectionId, sectionIds))
 				.stream().collect(Collectors.groupingBy(SectionRepo::getSectionId,
 						Collectors.mapping(SectionRepo::getRepoId, Collectors.toList())));
+		// 小节下知识点
+		Map<String, List<String>> kpsBySection = knowledgePointMapper.selectList(
+						Wrappers.<KnowledgePoint>lambdaQuery().in(KnowledgePoint::getSectionId, sectionIds))
+				.stream().collect(Collectors.groupingBy(KnowledgePoint::getSectionId,
+						Collectors.mapping(KnowledgePoint::getId, Collectors.toList())));
 		Set<String> allRepoIds = reposBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
-		if (allRepoIds.isEmpty()) {
+		Set<String> allKpIds = kpsBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
+		if (allRepoIds.isEmpty() && allKpIds.isEmpty()) {
 			views.forEach(v -> v.setProgress(0));
 			return;
 		}
 		Map<String, Integer> repoRate = repoRateMap(userId, allRepoIds);
+		Map<String, Integer> kpRate = kpRateMap(userId, allKpIds);
 		views.forEach(v -> {
-			List<String> repoIds = reposBySection.getOrDefault(v.getId(), Collections.emptyList());
-			int best = repoIds.stream().mapToInt(r -> repoRate.getOrDefault(r, 0)).max().orElse(0);
-			v.setProgress(best);
+			int repoBest = reposBySection.getOrDefault(v.getId(), Collections.emptyList()).stream()
+					.mapToInt(r -> repoRate.getOrDefault(r, 0)).max().orElse(0);
+			int kpBest = kpsBySection.getOrDefault(v.getId(), Collections.emptyList()).stream()
+					.mapToInt(k -> kpRate.getOrDefault(k, 0)).max().orElse(0);
+			v.setProgress(Math.max(repoBest, kpBest));
 		});
+	}
+
+	/** 学员各知识点（knowledgePointId）最高正确率（0-100） */
+	private Map<String, Integer> kpRateMap(String userId, Set<String> kpIds) {
+		Map<String, Integer> kpRate = new HashMap<>();
+		if (userId == null || kpIds.isEmpty()) {
+			return kpRate;
+		}
+		List<PracticeRecord> records = practiceRecordMapper.selectList(Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId)
+				.in(PracticeRecord::getKnowledgePointId, kpIds));
+		for (PracticeRecord r : records) {
+			if (r.getKnowledgePointId() != null && r.getTotalScore() != null && r.getTotalScore() > 0) {
+				int rate = (int) Math.round((r.getScore() == null ? 0 : r.getScore()) * 100.0 / r.getTotalScore());
+				kpRate.merge(r.getKnowledgePointId(), rate, Math::max);
+			}
+		}
+		return kpRate;
 	}
 
 	/** 学员各练习（repoId）最高正确率（0-100） */

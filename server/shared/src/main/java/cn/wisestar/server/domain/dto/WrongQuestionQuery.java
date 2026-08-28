@@ -21,6 +21,8 @@ public class WrongQuestionQuery extends PageQuery {
 	/**
 	 * 题库 ID（练习会话 repo_id 或题目归属 repo_id 命中即匹配）
 	 */
+	private String userId;
+
 	private String repoId;
 
 	/**

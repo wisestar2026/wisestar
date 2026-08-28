@@ -2,6 +2,7 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.PracticeResultView;
+import cn.wisestar.server.domain.dto.WrongReasonRequest;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
@@ -82,5 +83,16 @@ public class PracticeApi {
 	@PreAuthorize("isAuthenticated()")
 	public PaginationResponse<WrongQuestionView> listWrongQuestions(WrongQuestionQuery query) {
 		return practiceService.listWrongQuestions(query);
+	}
+
+	/**
+	 * 保存错题错误归因（学员标注）。
+	 *
+	 * @param request 归因请求（detailId + reason）
+	 */
+	@PostMapping("/wrongReason")
+	@PreAuthorize("isAuthenticated()")
+	public void saveWrongReason(@RequestBody WrongReasonRequest request) {
+		practiceService.saveWrongReason(request);
 	}
 }

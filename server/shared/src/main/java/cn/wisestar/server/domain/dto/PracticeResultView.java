@@ -37,6 +37,9 @@ public class PracticeResultView {
 		/** 题目ID */
 		private String questionId;
 
+		/** 练习明细ID（t_practice_detail.id，错误归因用） */
+		private String detailId;
+
 		/** 1 对 / 0 错 / null 未判 */
 		private Integer correct;
 
@@ -46,10 +49,11 @@ public class PracticeResultView {
 		public PracticeResultItem() {
 		}
 
-		public PracticeResultItem(String questionId, Integer correct, String correctAnswer) {
+		public PracticeResultItem(String questionId, Integer correct, String correctAnswer, String detailId) {
 			this.questionId = questionId;
 			this.correct = correct;
 			this.correctAnswer = correctAnswer;
+			this.detailId = detailId;
 		}
 	}
 }

@@ -57,4 +57,7 @@ public class PracticeDetail extends BaseModel {
 	@TableField("score")
 	private Double score;
 
+	/** 错误归因（大意/计算错误/知识点不熟/题型不会等，学员标注） */
+	private String wrongReason;
+
 }

@@ -14,10 +14,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Input, Button } from 'antd';
+import { Input, Button, Modal, Select } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/student';
-import { submitPractice } from '../../api/practice';
+import { submitPractice, saveWrongReason } from '../../api/practice';
 import './KnowledgePage.css';
 
 // 四种模式 tab 配置
@@ -41,6 +41,10 @@ export default function KnowledgePage() {
   const [realSubmitting, setRealSubmitting] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);          // 逐题模式当前题索引
   const [judgeState, setJudgeState] = useState({}); // 每题是否已提交判定 {qid: true}
+  const [startPractice, setStartPractice] = useState(false); // 预习页是否开始练习
+  const [wrongOpen, setWrongOpen] = useState(false);        // 查看错题弹窗
+  const [wrongReasons, setWrongReasons] = useState({});     // 各错题归因 {questionId: reason}
+  const [wrongList, setWrongList] = useState([]);          // 当前错题列表（查看错题弹窗）
 
   // 习题级上报：进入练习/试炼后上报「正在做哪道题」（供后台老师监控）
   useEffect(() => {
@@ -123,6 +127,34 @@ export default function KnowledgePage() {
     return { correct: isRight ? 1 : 0, answer: answerText };
   };
 
+  // 本地判分统计（与后端判分对齐后展示一致）
+  const localStats = () => {
+    const list = realQuestions || [];
+    const correct = list.filter((q) => realJudge(q)?.correct === 1).length;
+    return { total: list.length, correct, wrong: list.length - correct };
+  };
+
+  // 保存错题归因
+  const saveReason = (qid) => {
+    const reason = wrongReasons[qid];
+    if (!reason) { return; }
+    const item = (realResult?.items || []).find((x) => x.questionId === qid);
+    if (!item?.detailId) { return; }
+    saveWrongReason({ detailId: item.detailId, reason })
+      .then(() => {})
+      .catch(() => {});
+  };
+
+  // 学生答案文本（查看错题用）
+  const answerTextOf = (q) => {
+    const picked = realAnswers[q.id];
+    if (!picked) return '未作答';
+    const titleOf = (id) => questionOptions(q).find((o) => o.id === id)?.title;
+    if (picked.type === 'option') return titleOf(picked.optionId) || '—';
+    if (picked.type === 'options') return (picked.optionIds || []).map(titleOf).join('、');
+    return picked.text || '—';
+  };
+
   // 真实模式：填空作答
   const realInput = (q, text) => {
     if (realResult) return;
@@ -168,6 +200,43 @@ export default function KnowledgePage() {
             <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
           </div>
 
+          {/* 查看错题弹窗（学生答案/正确答案/解析/错误归因） */}
+          <Modal title="📕 错题详情" open={wrongOpen} onCancel={() => setWrongOpen(false)} footer={null} width={640}>
+            {wrongList.map((q) => {
+              const judge = realJudge(q);
+              const schema = q.schema || {};
+              const analysis = schema.attribute?.examAnalysis;
+              return (
+                <div key={q.id} style={{ border: '1px solid #ffcdd2', borderRadius: 10, padding: 12, marginBottom: 10, background: '#fff8f8' }}>
+                  <div style={{ fontWeight: 600, marginBottom: 6 }}>{q.name || schema.title}</div>
+                  <div style={{ fontSize: 13, marginBottom: 4 }}>
+                    <b>你的答案：</b><span style={{ color: '#c62828' }}>{answerTextOf(q)}</span>
+                  </div>
+                  <div style={{ fontSize: 13, marginBottom: 4 }}>
+                    <b>正确答案：</b><span style={{ color: '#2e7d32' }}>{judge ? judge.answer : '—'}</span>
+                  </div>
+                  {analysis && (
+                    <div style={{ fontSize: 13, marginBottom: 6, padding: 8, background: '#fffbe6', borderRadius: 6 }}>
+                      <b>📝 解析：</b><span style={{ whiteSpace: 'pre-wrap' }}>{analysis}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <b style={{ fontSize: 13 }}>错误归因：</b>
+                    <Select
+                      style={{ width: 200 }} size="small" placeholder="选择错误原因"
+                      value={wrongReasons[q.id]}
+                      onChange={(v) => { setWrongReasons((p) => ({ ...p, [q.id]: v })); }}
+                      options={['大意', '计算错误', '知识点不熟', '题型不会'].map((r) => ({ value: r, label: r }))}
+                    />
+                    <Button size="small" type="primary" disabled={!wrongReasons[q.id]} onClick={() => saveReason(q.id)}>
+                      保存
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </Modal>
+
           {/* 预习：后台配置的知识点讲解要点 */}
           {tab === 'preview' && (
             <div style={{ marginBottom: 12, fontWeight: 600 }}>📖 知识点讲解（预习/复习）</div>
@@ -195,52 +264,21 @@ export default function KnowledgePage() {
             )
           )}
 
-          {/* 预习：知识点讲解 + 练习检测（实时判分） */}
+          {/* 预习：开始练习按钮（点击后进入逐题练习，错题不入错题本） */}
           {tab === 'preview' && (
-            realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
-              <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
-            ) : (
-              realQuestions.map((question, i) => {
-                const judge = realJudge(question);
-                const options = questionOptions(question);
-                const correct = judge ? judge.correct : null;
-                return (
-                  <div key={question.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
-                    <div style={{ fontWeight: 600, marginBottom: 10 }}>{i + 1}. {question.name || question.schema?.title}</div>
-                    {question.questionType === 'FillBlank' || question.questionType === 'Text' ? (
-                      <Input
-                        placeholder="请输入你的答案" disabled={!!judge}
-                        value={realAnswers[question.id]?.type === 'text' ? realAnswers[question.id].text : ''}
-                        onChange={(e) => realInput(question, e.target.value)}
-                        style={{ maxWidth: 420 }}
-                      />
-                    ) : options.map((opt) => {
-                      const selected = realAnswers[question.id]?.type === 'option'
-                        ? realAnswers[question.id].optionId === opt.id
-                        : (realAnswers[question.id]?.optionIds || []).includes(opt.id);
-                      return (
-                        <div key={opt.id} onClick={() => realPick(question, opt.id)}
-                          style={{ padding: '8px 12px', marginBottom: 6, borderRadius: 8, cursor: judge ? 'default' : 'pointer',
-                            border: selected ? '2px solid #29b6f6' : '1px solid #e0e0e0',
-                            background: selected ? '#e1f5fe' : '#fff' }}>
-                          {opt.title}
-                        </div>
-                      );
-                    })}
-                    {judge && (
-                      <div style={{ marginTop: 8, fontSize: 13 }}>
-                        {correct === 1 ? <span style={{ color: '#2e7d32' }}>✅ 回答正确</span>
-                          : <span style={{ color: '#c62828' }}>❌ 回答错误 · 标准答案：{judge.answer}</span>}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              {!startPractice ? (
+                <Button type="primary" size="large" onClick={() => setStartPractice(true)}>
+                  🎯 开始练习
+                </Button>
+              ) : (
+                <div style={{ fontSize: 13, color: '#90a4ae' }}>预习练习：逐题作答，提交后查看答案与解析（不记录错题）</div>
+              )}
+            </div>
           )}
 
           {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial') && (
+          {(tab === 'practice' || tab === 'trial' || (tab === 'preview' && startPractice)) && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
@@ -261,7 +299,7 @@ export default function KnowledgePage() {
                       <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                           <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : '小节通关'}</span>
+                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空题输入；判断题无选项时补 正确/错误 */}
@@ -318,7 +356,7 @@ export default function KnowledgePage() {
                           {currentQ < realQuestions.length - 1 ? (
                             <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
                           ) : (
-                            realQuestions.every((q) => judgeState[q.id]) ? (
+                            realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' ? (
                               <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
                                 {realSubmitting ? '提交中…' : '完成'}
                               </button>
@@ -332,12 +370,23 @@ export default function KnowledgePage() {
                             选择题/填空作答后，点击「提交答案」才会判定
                           </div>
                         )}
-                        {(tab === 'practice' || tab === 'trial') && currentQ === realQuestions.length - 1 && realResult && (
-                          <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: '#e8f5e9', textAlign: 'center' }}>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: '#2e7d32' }}>
-                              🎉 {tab === 'practice' ? '练习' : '小节通关'}完成 · 得分 {realResult.score ?? 0} / {realResult.totalScore ?? 0} · 答对 {realResult.correctCount ?? 0}/{realResult.total ?? 0}
-                            </div>
-                          </div>
+                        {currentQ === realQuestions.length - 1 && realQuestions.every((q) => judgeState[q.id]) && (
+                          (() => {
+                            const st = localStats();
+                            const wrongList = (realQuestions || []).filter((q) => realJudge(q)?.correct === 0);
+                            return (
+                              <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: '#e8f5e9', textAlign: 'center' }}>
+                                <div style={{ fontSize: 18, fontWeight: 700, color: '#2e7d32' }}>
+                                  🎉 完成 · 答对 {st.correct}/{st.total}
+                                </div>
+                                {st.wrong > 0 && (
+                                  <Button type="primary" size="small" style={{ marginTop: 10 }} onClick={() => { setWrongList(wrongList); setWrongOpen(true); }}>
+                                    📕 查看错题（{st.wrong}）
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })()
                         )}
                       </div>
                     );

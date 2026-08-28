@@ -66,6 +66,9 @@ public class WrongQuestionView {
 	 */
 	private String lastAnswer;
 
+	/** 错误归因（学员标注） */
+	private String wrongReason;
+
 	/**
 	 * 最近一次做错时的本题得分（答错恒为 0）
 	 */

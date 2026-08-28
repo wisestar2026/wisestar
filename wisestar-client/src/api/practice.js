@@ -41,3 +41,8 @@ export async function submitPractice(data) {
 export async function listWrongQuestions(params) {
   return request.get('/practice/wrong-list', { params });
 }
+
+/** 保存错题错误归因（学员标注：大意/计算错误/知识点不熟/题型不会等） */
+export async function saveWrongReason(data) {
+  return request.post('/practice/wrongReason', data);
+}
