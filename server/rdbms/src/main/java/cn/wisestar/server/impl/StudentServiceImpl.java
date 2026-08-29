@@ -269,8 +269,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			List<SectionView> sections = sectionViewMapper.toView(sectionMapper.selectList(
 					Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, chapter.getId())));
 			fillProgress(sections);
+			// 章节进度 = 全部小节完成度平均值（含未完成小节的 0，避免单个小节完成即整章点亮）
 			List<Integer> rates = sections.stream().map(SectionView::getProgress)
-					.filter(p -> p != null && p > 0).collect(Collectors.toList());
+					.map(p -> p == null ? 0 : p).collect(Collectors.toList());
 			chapter.setProgress(rates.isEmpty() ? 0
 					: rates.stream().mapToInt(Integer::intValue).sum() / rates.size());
 		}

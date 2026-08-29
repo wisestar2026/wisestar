@@ -28,10 +28,10 @@ const ACTION_BUTTONS = [
   { key: 'wrong', label: '知识点错题本', icon: '📕', color: 'purple' },
 ];
 
-// 完成度 → 星星（≥80 三星 / ≥60 两星 / ≥30 一星 / 其余无）
+// 完成度 → 星星（5 颗，金色点亮；完成练习且正确率达标：≥80 五颗 / ≥60 四颗 / ≥40 三颗 / ≥20 两颗 / >0 一颗）
 const stars = (rate) => {
-  const n = rate >= 80 ? 3 : rate >= 60 ? 2 : rate >= 30 ? 1 : 0;
-  return '★'.repeat(n) + '☆'.repeat(3 - n);
+  const n = rate >= 80 ? 5 : rate >= 60 ? 4 : rate >= 40 ? 3 : rate >= 20 ? 2 : rate > 0 ? 1 : 0;
+  return '⭐'.repeat(n) + '☆'.repeat(5 - n);
 };
 
 export default function StudyPage() {
