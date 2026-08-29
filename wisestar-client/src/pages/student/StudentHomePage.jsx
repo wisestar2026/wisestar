@@ -58,15 +58,6 @@ export default function StudentHomePage() {
     studentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
   }, []);
 
-  // 进入任务练习：练习型按 repoId、知识点型按 kpId
-  const goTask = (t) => {
-    if (t.contentType === 'knowledge_point') {
-      navigate(`/student/knowledge?kpId=${t.contentId}&tab=practice`);
-    } else {
-      navigate(`/student/knowledge?repoId=${t.contentId}&tab=practice`);
-    }
-  };
-
   // 真实学习统计：学海积分 = 累计练习得分；总学币 = 分科学币合计
   const totalPoints = stats?.totalPoints ?? 0;
   const coinsBySubject = stats?.coinsBySubject || [];
@@ -202,20 +193,11 @@ export default function StudentHomePage() {
             <div className="sh-home-todo-item"><span className="sh-home-todo-label" style={{ color: '#90a4ae' }}>今日暂无任务，自由研习吧</span></div>
           )}
           {tasks.map((t) => (
-            <div
-              key={t.id}
-              className="sh-home-todo-item"
-              onClick={() => goTask(t)}
-            >
-              <span className={`sh-home-todo-dot ${t.completed ? 'done' : ''}`}>
-                {t.completed ? '✓' : '▶'}
-              </span>
+            <div key={t.id} className="sh-home-todo-item">
+              <span className="sh-home-todo-dot done">📋</span>
               <span className="sh-home-todo-label">
-                {t.contentName ? `${t.contentType === 'knowledge_point' ? '📌 知识点' : '✏️ 练习'}：${t.contentName}` : t.name}
+                {t.name || '今日任务'}
                 {t.description && <span className="sh-home-todo-desc"> · {t.description}</span>}
-              </span>
-              <span className={`sh-home-todo-reward ${t.completed ? 'done' : ''}`}>
-                {t.completed ? `已完成 ${t.correctRate}%` : '去完成'}
               </span>
             </div>
           ))}

@@ -157,9 +157,6 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 		if (!StringUtils.hasText(request.getTaskDate())) {
 			throw new ValidationException("任务日期不能为空");
 		}
-		if (!StringUtils.hasText(request.getContentType()) || !StringUtils.hasText(request.getContentId())) {
-			throw new ValidationException("请选择关联的练习或知识点");
-		}
 	}
 
 	@Override
