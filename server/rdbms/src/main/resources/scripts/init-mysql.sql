@@ -2070,4 +2070,5 @@ ALTER TABLE `t_practice_record` ADD COLUMN IF NOT EXISTS `knowledge_point_id` va
 
 ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `wrong_reason` varchar(32) DEFAULT NULL COMMENT '错误归因(大意/计算错误/知识点不熟/题型不会等)';
 
+ALTER TABLE `t_practice_record` ADD COLUMN IF NOT EXISTS `section_id` varchar(64) DEFAULT NULL COMMENT '小节ID(小节练习提交时记录，供小节进度判定)';
 SET FOREIGN_KEY_CHECKS = 1;

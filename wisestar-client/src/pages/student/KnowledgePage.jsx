@@ -180,7 +180,7 @@ export default function KnowledgePage() {
     if (realSubmitting || !realQuestions?.length) return;
     const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
     setRealSubmitting(true);
-    submitPractice({ mode: tab, items, repoId: repoId || undefined, knowledgePointId: kpIdParam || undefined })
+    submitPractice({ mode: tab, items, repoId: repoId || undefined, knowledgePointId: kpIdParam || undefined, sectionId: sectionId || undefined })
       .then((res) => setRealResult(res?.data || { items: [] }))
       .catch(() => setRealResult({ items: [], score: 0 }))
       .finally(() => setRealSubmitting(false));

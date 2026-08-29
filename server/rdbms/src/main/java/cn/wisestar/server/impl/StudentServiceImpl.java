@@ -314,18 +314,35 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 						Collectors.mapping(KnowledgePoint::getId, Collectors.toList())));
 		Set<String> allRepoIds = reposBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
 		Set<String> allKpIds = kpsBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
-		if (allRepoIds.isEmpty() && allKpIds.isEmpty()) {
-			views.forEach(v -> v.setProgress(0));
-			return;
+		// 学员练习记录：按小节/练习/知识点任一匹配（一次查询）
+		Map<String, Integer> sectionRate = new HashMap<>();
+		Map<String, Integer> repoRate = new HashMap<>();
+		Map<String, Integer> kpRate = new HashMap<>();
+		if (userId != null && (!allRepoIds.isEmpty() || !allKpIds.isEmpty())) {
+			com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<PracticeRecord> wrapper =
+					Wrappers.<PracticeRecord>lambdaQuery().eq(PracticeRecord::getUserId, userId);
+			boolean or = false;
+			if (!allRepoIds.isEmpty()) { wrapper.in(PracticeRecord::getRepoId, allRepoIds); or = true; }
+			if (!allKpIds.isEmpty()) {
+				if (or) { wrapper.or().in(PracticeRecord::getKnowledgePointId, allKpIds); } else { wrapper.in(PracticeRecord::getKnowledgePointId, allKpIds); }
+			}
+			wrapper.or().in(PracticeRecord::getSectionId, sectionIds);
+			List<PracticeRecord> records = practiceRecordMapper.selectList(wrapper);
+			for (PracticeRecord r : records) {
+				if (r.getTotalScore() == null || r.getTotalScore() <= 0) continue;
+				int rate = (int) Math.round((r.getScore() == null ? 0 : r.getScore()) * 100.0 / r.getTotalScore());
+				if (r.getSectionId() != null) sectionRate.merge(r.getSectionId(), rate, Math::max);
+				if (r.getRepoId() != null) repoRate.merge(r.getRepoId(), rate, Math::max);
+				if (r.getKnowledgePointId() != null) kpRate.merge(r.getKnowledgePointId(), rate, Math::max);
+			}
 		}
-		Map<String, Integer> repoRate = repoRateMap(userId, allRepoIds);
-		Map<String, Integer> kpRate = kpRateMap(userId, allKpIds);
 		views.forEach(v -> {
+			int sectionBest = sectionRate.getOrDefault(v.getId(), 0);
 			int repoBest = reposBySection.getOrDefault(v.getId(), Collections.emptyList()).stream()
 					.mapToInt(r -> repoRate.getOrDefault(r, 0)).max().orElse(0);
 			int kpBest = kpsBySection.getOrDefault(v.getId(), Collections.emptyList()).stream()
 					.mapToInt(k -> kpRate.getOrDefault(k, 0)).max().orElse(0);
-			v.setProgress(Math.max(repoBest, kpBest));
+			v.setProgress(Math.max(sectionBest, Math.max(repoBest, kpBest)));
 		});
 	}
 

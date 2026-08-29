@@ -31,6 +31,9 @@ public class PracticeSubmitRequest {
 	/** 知识点ID（知识点练习提交时记录，供知识点型任务完成判定） */
 	private String knowledgePointId;
 
+	/** 小节ID（小节练习提交时记录，供小节进度判定） */
+	private String sectionId;
+
 	/**
 	 * 练习用时（毫秒）
 	 */
