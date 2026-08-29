@@ -69,6 +69,12 @@ public class WrongQuestionView {
 	/** 错误归因（学员标注） */
 	private String wrongReason;
 
+	/** 所属知识点ID（t_knowledge_point.id） */
+	private String knowledgePointId;
+
+	/** 所属知识点名称 */
+	private String knowledgePointName;
+
 	/**
 	 * 最近一次做错时的本题得分（答错恒为 0）
 	 */

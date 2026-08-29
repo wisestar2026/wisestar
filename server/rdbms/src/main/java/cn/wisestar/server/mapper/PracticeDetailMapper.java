@@ -44,7 +44,7 @@ public interface PracticeDetailMapper extends BaseMapper<PracticeDetail> {
 	 */
 	@Select("<script>"
 			+ "SELECT x.questionId, x.questionType, x.questionTitle, x.repoId, x.repoName, "
-			+ "       x.userId, x.userName, x.wrongCount, x.lastWrongTime, x.lastAnswer, x.lastScore, x.wrongReason "
+			+ "       x.userId, x.userName, x.wrongCount, x.lastWrongTime, x.lastAnswer, x.lastScore, x.wrongReason, x.knowledgePointId, x.knowledgePointName "
 			+ "FROM ( "
 			+ "  SELECT d.question_id AS questionId, d.question_type AS questionType, "
 			+ "         t.name AS questionTitle, "
@@ -52,14 +52,16 @@ public interface PracticeDetailMapper extends BaseMapper<PracticeDetail> {
 			+ "         r.user_id AS userId, COALESCE(u.name, st.name) AS userName, "
 			+ "         COUNT(*) OVER (PARTITION BY d.question_id, r.user_id) AS wrongCount, "
 			+ "         MAX(d.create_at) OVER (PARTITION BY d.question_id, r.user_id) AS lastWrongTime, "
-			+ "         d.user_answer AS lastAnswer, d.score AS lastScore, d.wrong_reason AS wrongReason, "
+			+ "         d.user_answer AS lastAnswer, d.score AS lastScore, d.wrong_reason AS wrongReason, kpq.knowledge_point_id AS knowledgePointId, kp.name AS knowledgePointName, "
 			+ "         ROW_NUMBER() OVER (PARTITION BY d.question_id, r.user_id ORDER BY d.create_at DESC) AS rn "
 			+ "  FROM t_practice_detail d "
 			+ "  JOIN t_practice_record r ON d.practice_id = r.id AND r.is_deleted = 0 "
 			+ "  LEFT JOIN t_user u ON r.user_id = u.id AND u.is_deleted = 0 "
 			+ "  LEFT JOIN t_student st ON r.user_id = st.id AND st.is_deleted = 0 "
 			+ "  LEFT JOIN t_template t ON d.question_id = t.id AND t.is_deleted = 0 "
-			+ "  LEFT JOIN t_repo rp ON COALESCE(r.repo_id, t.repo_id) = rp.id " // t_repo 为遗留表，无 is_deleted 列，不做逻辑删除过滤
+			+ "  LEFT JOIN t_repo rp ON COALESCE(r.repo_id, t.repo_id) = rp.id "
+			+ "  LEFT JOIN t_knowledge_point_question kpq ON d.question_id = kpq.question_id "
+			+ "  LEFT JOIN t_knowledge_point kp ON kpq.knowledge_point_id = kp.id AND kp.is_deleted = 0 " // t_repo 为遗留表，无 is_deleted 列，不做逻辑删除过滤
 			+ "  WHERE d.is_deleted = 0 AND d.is_correct = 0 "
 			+ "  <if test=\"query.repoId != null and query.repoId != ''\"> "
 			+ "    AND COALESCE(r.repo_id, t.repo_id) = #{query.repoId} "

@@ -28,6 +28,8 @@ export default function KnowledgePage() {
   const sectionId = searchParams.get('sectionId'); // 小节练习入口
   const repoId = searchParams.get('repoId');         // 练习（题库）任务/直接练习入口
   const kpIdParam = searchParams.get('kpId');        // 知识点任务入口
+  const typesParam = searchParams.get('types');      // 题型过滤（逗号分隔，消灭错题用）
+  const countParam = searchParams.get('count');      // 出题数量（消灭易错知识点/错题用）
   const realMode = !!(sectionId || repoId || kpIdParam);
   const navigate = useNavigate();
 
@@ -64,7 +66,8 @@ export default function KnowledgePage() {
       if (sectionId) {
         getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
       }
-      const params = { count: 3, exposeAnswer: true };
+      const params = { count: Number(countParam) || 3, exposeAnswer: true };
+      if (typesParam) params.types = typesParam.split(',');
       if (sectionId) params.sectionId = sectionId;
       if (repoId) params.repoId = repoId;
       if (kpIdParam) params.knowledgePointId = kpIdParam;
@@ -72,7 +75,8 @@ export default function KnowledgePage() {
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     } else if (tab === 'practice' || tab === 'trial') {
-      const params = { count: 3, exposeAnswer: true }; // 练习/试炼本地即时判分（题目带答案）
+      const params = { count: Number(countParam) || 3, exposeAnswer: true }; // 练习/试炼本地即时判分（题目带答案）
+      if (typesParam) params.types = typesParam.split(',');
       if (sectionId) params.sectionId = sectionId;
       if (repoId) params.repoId = repoId;
       if (kpIdParam) params.knowledgePointId = kpIdParam;
