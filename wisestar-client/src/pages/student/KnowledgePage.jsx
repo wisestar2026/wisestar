@@ -316,14 +316,28 @@ export default function KnowledgePage() {
                       return (
                         <div key={question.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
                           <div style={{ fontWeight: 600, marginBottom: 10 }}>例题 {i + 1}. {question.name || schema.title}</div>
-                          {question.questionType === 'FillBlank' || question.questionType === 'Text' ? (
-                            <Input
-                              placeholder="请输入你的答案" disabled={!!judge}
-                              value={realAnswers[question.id]?.type === 'text' ? realAnswers[question.id].text : ''}
-                              onChange={(e) => realInput(question, e.target.value)}
-                              style={{ width: '100%', maxWidth: 600, fontSize: 15, padding: '10px 12px' }}
-                            />
-                          ) : options.map((opt) => {
+                          {(question.questionType === 'FillBlank' || question.questionType === 'Text') ? (() => {
+                            {(function() {
+                            const schema = question.schema || {};
+                            const blankCount = (schema.attribute?.blankCount || 1);
+                            const curText = realAnswers[question.id]?.text || '';
+                            const texts = curText.split('|');
+                            return (
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {Array.from({ length: blankCount }).map((_, idx) => (
+                                  <Input
+                                    key={idx}
+                                    placeholder={`空${idx + 1}`}
+                                    disabled={!!judge}
+                                    value={texts[idx] || ''}
+                                    onChange={(e) => realInput(question, idx, e.target.value)}
+                                    style={{ width: 120, fontSize: 15, padding: '8px 10px' }}
+                                  />
+                                ))}
+                              </div>
+                            );
+                          })()}
+                          })() : options.map((opt) => {
                             const selected = realAnswers[question.id]?.type === 'option'
                               ? realAnswers[question.id].optionId === opt.id
                               : (realAnswers[question.id]?.optionIds || []).includes(opt.id);
@@ -382,14 +396,14 @@ export default function KnowledgePage() {
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空题输入；判断题无选项时补 正确/错误 */}
-                        {question.questionType === 'FillBlank' || question.questionType === 'Text' ? (
+                        {(question.questionType === 'FillBlank' || question.questionType === 'Text') ? (() => {
                           <Input
                             placeholder="请输入你的答案" disabled={showResult}
                             value={picked?.type === 'text' ? picked.text : ''}
                             onChange={(e) => realInput(question, e.target.value)}
                             style={{ width: '100%', maxWidth: 600, fontSize: 15, padding: '10px 12px' }}
                           />
-                        ) : options.map((opt) => {
+                        })() : options.map((opt) => {
                           const selected = picked?.type === 'option'
                             ? picked.optionId === opt.id
                             : (picked?.optionIds || []).includes(opt.id);

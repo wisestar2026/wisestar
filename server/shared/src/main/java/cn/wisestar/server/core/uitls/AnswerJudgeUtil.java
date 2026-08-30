@@ -108,7 +108,21 @@ public final class AnswerJudgeUtil {
 			}
 			return studentSet.equals(correctSet) ? 1 : 0;
 		}
+		// 填空/简答：支持多空按顺序比对（正确答案以 | 分隔多空）
 		for (String correct : normalized) {
+			String[] correctBlanks = correct.split("\\|");
+			String[] studentBlanks = student.split("\\|");
+			if (correctBlanks.length == studentBlanks.length) {
+				boolean allMatch = true;
+				for (int i = 0; i < correctBlanks.length; i++) {
+					if (!correctBlanks[i].trim().equals(studentBlanks[i].trim())) {
+						allMatch = false;
+						break;
+					}
+				}
+				if (allMatch) return 1;
+			}
+			// 兼容单空：直接比对
 			if (correct != null && correct.trim().equals(student.trim())) {
 				return 1;
 			}
