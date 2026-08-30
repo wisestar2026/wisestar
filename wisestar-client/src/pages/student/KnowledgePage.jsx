@@ -371,7 +371,7 @@ export default function KnowledgePage() {
           )}
 
           {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial' || (tab === 'preview' && startPractice)) && (
+          {(tab === 'practice' || tab === 'trial' || (tab === 'preview' && activeTab === 'example')) && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
