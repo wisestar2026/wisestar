@@ -172,3 +172,8 @@ export async function listActivities() {
 export async function getStudentStats() {
   return request.get('/student/stats');
 }
+
+/** 老师给学员发放学币（student:update） */
+export async function addCoin(data) {
+  return request.post('/student/coin', data);
+}

@@ -35,6 +35,9 @@ public class StudentStatsView {
 	/** 分科学币（按练习所属学科聚合答对数，每题 1 币） */
 	private List<SubjectCoins> coinsBySubject = new ArrayList<>();
 
+	/** 老师手动发放的学币合计 */
+	private int manualCoins;
+
 	@Data
 	public static class TodayStats {
 

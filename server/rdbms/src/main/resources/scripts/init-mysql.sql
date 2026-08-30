@@ -2071,4 +2071,18 @@ ALTER TABLE `t_practice_record` ADD COLUMN IF NOT EXISTS `knowledge_point_id` va
 ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `wrong_reason` varchar(32) DEFAULT NULL COMMENT '错误归因(大意/计算错误/知识点不熟/题型不会等)';
 
 ALTER TABLE `t_practice_record` ADD COLUMN IF NOT EXISTS `section_id` varchar(64) DEFAULT NULL COMMENT '小节ID(小节练习提交时记录，供小节进度判定)';
+
+CREATE TABLE IF NOT EXISTS `t_student_coin` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学员ID(t_student.id)',
+  `coins` int DEFAULT '0' COMMENT '学币数量(正加负扣)',
+  `reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '发放原因',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员学币发放记录';
+
 SET FOREIGN_KEY_CHECKS = 1;

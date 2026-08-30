@@ -2063,3 +2063,19 @@ ALTER TABLE t_task ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 ALTER TABLE t_practice_record ADD COLUMN IF NOT EXISTS knowledge_point_id varchar(64);
 ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS wrong_reason varchar(32);
 ALTER TABLE t_practice_record ADD COLUMN IF NOT EXISTS section_id varchar(64);
+-- 学员学币发放记录（老师手动加学币）
+CREATE TABLE IF NOT EXISTS t_student_coin (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) DEFAULT NULL COMMENT '学员ID(t_student.id)',
+  coins int DEFAULT 0 COMMENT '学币数量(正加负扣)',
+  reason varchar(255) DEFAULT NULL COMMENT '发放原因',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp DEFAULT NULL,
+  update_by varchar(256) DEFAULT NULL,
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS coins int DEFAULT 0;
+ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS reason varchar(255);
+ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS deleted tinyint DEFAULT 0;

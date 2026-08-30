@@ -6,6 +6,7 @@ import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
+import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
@@ -121,9 +122,16 @@ public interface StudentService {
 	/**
 	 * 学员学习统计（首页真实化，基于练习记录聚合）。
 	 *
-	 * @return 累计/今日/分科学币统计
+	 * @return 累计/今日/分科学币统计（含老师手动发放学币）
 	 */
 	StudentStatsView stats();
+
+	/**
+	 * 老师给学员发放学币（手动加/扣）。
+	 *
+	 * @param request 学币发放请求
+	 */
+	void addCoin(StudentCoinRequest request);
 
 	/**
 	 * 学员端练习/试炼题目（剥离标准答案，防作弊）。

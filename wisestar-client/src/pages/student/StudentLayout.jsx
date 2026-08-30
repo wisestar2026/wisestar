@@ -76,7 +76,7 @@ export default function StudentLayout() {
     getStudentStats().then((res) => setStats(res?.data || null)).catch(() => setStats(null));
   }, []);
   const totalPoints = stats?.totalPoints ?? 0;
-  const totalCoins = (stats?.coinsBySubject || []).reduce((sum, c) => sum + c.coins, 0);
+  const totalCoins = (stats?.coinsBySubject || []).reduce((sum, c) => sum + c.coins, 0) + (stats?.manualCoins || 0);
 
   // 按订单权限过滤后的可见学科（顺序：语文-数学-英语）
   const SUBJECT_ORDER = ['语文', '数学', '英语'];

@@ -10,6 +10,7 @@ import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
+import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentStatsView;
@@ -32,6 +33,7 @@ import cn.wisestar.server.domain.model.SectionRepo;
 import cn.wisestar.server.domain.model.StudentActivity;
 import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Repo;
+import cn.wisestar.server.domain.model.StudentCoin;
 import cn.wisestar.server.domain.model.StudentPermission;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.Subject;
@@ -46,6 +48,7 @@ import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
 import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.StudentActivityMapper;
+import cn.wisestar.server.mapper.StudentCoinMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
@@ -112,6 +115,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private final StudentActivityMapper studentActivityMapper;
 
 	private final PracticeRecordMapper practiceRecordMapper;
+
+	private final StudentCoinMapper studentCoinMapper;
 
 	private final RepoMapper repoMapper;
 
@@ -518,7 +523,29 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				: (int) Math.round(today.getCorrectCount() * 100.0 / today.getQuestionCount()));
 		today.setCoins(today.getCorrectCount());
 		coinsMap.forEach((name, coins) -> view.getCoinsBySubject().add(new StudentStatsView.SubjectCoins(name, coins)));
+		// 老师手动发放学币合计
+		view.setManualCoins(studentCoinMapper.selectList(Wrappers.<StudentCoin>lambdaQuery()
+						.eq(StudentCoin::getStudentId, userId))
+				.stream().mapToInt(c -> c.getCoins() == null ? 0 : c.getCoins()).sum());
 		return view;
+	}
+
+	/**
+	 * 老师给学员发放学币。
+	 */
+	@Override
+	public void addCoin(StudentCoinRequest request) {
+		if (request.getStudentId() == null || getById(request.getStudentId()) == null) {
+			throw new ValidationException("学员不存在");
+		}
+		if (request.getCoins() == null || request.getCoins() == 0) {
+			throw new ValidationException("学币数量不能为空且不能为 0");
+		}
+		StudentCoin coin = new StudentCoin();
+		coin.setStudentId(request.getStudentId());
+		coin.setCoins(request.getCoins());
+		coin.setReason(request.getReason());
+		studentCoinMapper.insert(coin);
 	}
 
 	/**

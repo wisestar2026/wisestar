@@ -83,6 +83,30 @@ export default function StudentManagePage() {
     setCurrent(1);
   };
 
+  // ---- 加学币 ----
+  const [coinOpen, setCoinOpen] = useState(false);
+  const [coinTarget, setCoinTarget] = useState(null);
+  const [coinSaving, setCoinSaving] = useState(false);
+  const [coinForm] = Form.useForm();
+  const openCoin = (student) => {
+    setCoinTarget(student);
+    setCoinOpen(true);
+    coinForm.resetFields();
+    coinForm.setFieldsValue({ coins: 10 });
+  };
+  const handleCoinSave = () => {
+    coinForm.validateFields().then((values) => {
+      setCoinSaving(true);
+      addCoin({ studentId: coinTarget.id, coins: values.coins, reason: values.reason })
+        .then(() => {
+          message.success(`已为 ${coinTarget.name} 发放 ${values.coins} 学币`);
+          setCoinOpen(false);
+        })
+        .catch(() => {})
+        .finally(() => setCoinSaving(false));
+    });
+  };
+
   // ---- 打开新增/编辑弹窗 ----
   const openModal = (student = null) => {
     setEditing(student);
@@ -137,6 +161,11 @@ export default function StudentManagePage() {
       title: '操作', key: 'action', width: 140,
       render: (_, record) => (
         <Space>
+          {can('student:update') && (
+            <Button type="link" size="small" icon={<PlusOutlined />} onClick={() => openCoin(record)}>
+              加学币
+            </Button>
+          )}
           {can('student:update') && (
             <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>
               编辑
@@ -220,6 +249,19 @@ export default function StudentManagePage() {
             <Select
               allowClear placeholder="选填（本迭代仅占位）" options={CAMPUS_OPTIONS}
             />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* ---- 加学币弹窗 ---- */}
+      <Modal title={`发放学币：${coinTarget?.name || ''}`} open={coinOpen} onOk={handleCoinSave} onCancel={() => setCoinOpen(false)}
+        confirmLoading={coinSaving} okText="发放" cancelText="取消" destroyOnClose>
+        <Form form={coinForm} labelCol={{ span: 5 }} wrapperCol={{ span: 18 }}>
+          <Form.Item name="coins" label="学币数量" rules={[{ required: true, message: '请输入学币数量' }]}>
+            <InputNumber style={{ width: '100%' }} placeholder="正数发放，负数扣减" />
+          </Form.Item>
+          <Form.Item name="reason" label="发放原因">
+            <Input placeholder="选填，如：表现优秀奖励" maxLength={255} />
           </Form.Item>
         </Form>
       </Modal>

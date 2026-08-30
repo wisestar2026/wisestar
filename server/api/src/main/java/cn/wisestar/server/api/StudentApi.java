@@ -8,6 +8,7 @@ import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
+import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentStatsView;
@@ -266,6 +267,17 @@ public class StudentApi {
 	@PreAuthorize("hasAuthority('student:list')")
 	public List<StudentActivityView> activities() {
 		return studentService.listActivities();
+	}
+
+	/**
+	 * 老师给学员发放学币（student:update）。
+	 *
+	 * @param request 学币发放请求（studentId + coins + reason）
+	 */
+	@PostMapping("/coin")
+	@PreAuthorize("hasAuthority('student:update')")
+	public void addCoin(@RequestBody StudentCoinRequest request) {
+		studentService.addCoin(request);
 	}
 
 }

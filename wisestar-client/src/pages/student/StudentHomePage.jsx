@@ -61,7 +61,7 @@ export default function StudentHomePage() {
   // 真实学习统计：学海积分 = 累计练习得分；总学币 = 分科学币合计
   const totalPoints = stats?.totalPoints ?? 0;
   const coinsBySubject = stats?.coinsBySubject || [];
-  const totalCoins = coinsBySubject.reduce((sum, c) => sum + c.coins, 0);
+  const totalCoins = coinsBySubject.reduce((sum, c) => sum + c.coins, 0) + (stats?.manualCoins || 0);
   const coinOf = (name) => coinsBySubject.find((c) => c.subjectName === name)?.coins ?? 0;
   // 当前头衔（按真实学海积分自动晋升）
   const currentTitle = [...TITLES].reverse().find((t) => totalPoints >= t.need) || TITLES[0];
