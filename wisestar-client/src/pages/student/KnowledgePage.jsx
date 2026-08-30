@@ -207,9 +207,16 @@ export default function KnowledgePage() {
       <div className="sll-page-enter knowledge-page">
         <div className="sll-card" style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ margin: 0 }}>
-              {tab === 'preview' ? '📖 知识点预习/复习' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 小节通关' : '📕 知识点错题本'}
-            </h3>
+            <div>
+              <h3 style={{ margin: 0, display: 'inline-block' }}>
+                {tab === 'preview' ? '📖 知识点讲解' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? ' 小节通关' : tab === 'example' ? '📝 知识点例题' : tab === 'wrong' ? ' 知识点错题本' : ' 知识点预习/复习'}
+              </h3>
+              {tab === 'preview' && (
+                <Button type="primary" size="small" style={{ marginLeft: 12 }} onClick={() => window.location.href = `/student/knowledge?sectionId=${sectionId}&tab=example`}>
+                  📝 知识点例题
+                </Button>
+              )}
+            </div>
             <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
           </div>
 
@@ -371,7 +378,7 @@ export default function KnowledgePage() {
           )}
 
           {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial' || (tab === 'preview' && activeTab === 'example')) && (
+          {(tab === 'practice' || tab === 'trial' || tab === 'example') && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
