@@ -35,7 +35,7 @@ import {
 import { listTemplate, updateTemplate } from '../../api/template';
 import { listRepo, unbindTemplate, importTemplate } from '../../api/repo';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
-import QuestionEditModal from '../../components/question/QuestionEditModal';
+import RepoEditorWizard from '../../components/repo/RepoEditorWizard';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -62,8 +62,8 @@ export default function RepoDetailPage() {
   const [selectOpen, setSelectOpen] = useState(false);
 
   // 编辑题目弹窗 + 导入状态
-  const [editOpen, setEditOpen] = useState(false);
-  const [editRecord, setEditRecord] = useState(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [importing, setImporting] = useState(false);
 
   // 表格勾选（批量移除）
@@ -356,12 +356,14 @@ export default function RepoDetailPage() {
       />
 
       {/* ---- 编辑题目弹窗（复用题目管理编辑弹窗） ---- */}
-      <QuestionEditModal
-        open={editOpen}
-        record={editRecord}
-        repos={[{ id: repoId, name: repo?.name || '' }]}
-        onCancel={() => setEditOpen(false)}
-        onSave={handleEditSave}
+      <RepoEditorWizard
+        open={wizardOpen}
+        onCancel={() => setWizardOpen(false)}
+        repoId={repoId}
+        onSave={(info) => {
+          // 基本信息保存（编辑模式调用 updateRepo，新增模式调用 createRepo）
+        }}
+        onTemplatesSelect={handleWizardTemplatesSelect}
       />
     </div>
   );
