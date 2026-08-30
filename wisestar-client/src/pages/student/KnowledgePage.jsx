@@ -209,13 +209,9 @@ export default function KnowledgePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               <h3 style={{ margin: 0, display: 'inline-block' }}>
-                {tab === 'preview' ? '📖 知识点讲解' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? ' 小节通关' : tab === 'example' ? '📝 知识点例题' : tab === 'wrong' ? ' 知识点错题本' : ' 知识点预习/复习'}
+                {tab === 'preview' ? '📖 知识点讲解' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? ' 小节通关' : tab === 'wrong' ? ' 知识点错题本' : ' 知识点预习/复习'}
               </h3>
-              {tab === 'preview' && (
-                <Button type="primary" size="small" style={{ marginLeft: 12 }} onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=example`)}>
-                  📝 知识点例题
-                </Button>
-              )}
+
             </div>
             <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
           </div>
@@ -306,10 +302,10 @@ export default function KnowledgePage() {
               <Button
                 type="primary"
                 size="large"
-                onClick={() => window.location.href = `/student/knowledge?sectionId=${sectionId}&tab=example`}
+                onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=practice`)}
                 style={{ width: 180, height: 44, borderRadius: 8, fontSize: 15, marginTop: 8, alignSelf: 'center' }}
               >
-                 例题练习
+                 知识点练习
               </Button>
             </div>
           )}
