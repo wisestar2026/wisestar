@@ -17,6 +17,10 @@
  *   listRepo() → 绑定练习弹窗练习库；saveChapterRepos / listChapterRepos 绑定回显
  */
 
+const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
+const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
+const VERSION_OPTIONS = [{ value: '人教版', label: '人教版' }, { value: '苏教版', label: '苏教版' }, { value: '北师大版', label: '北师大版' }, { value: '外研版', label: '外研版' }];
+
 import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, Select, InputNumber, Modal, Form, Tag, Typography, Popconfirm, message,
@@ -99,6 +103,17 @@ export default function ChapterManagePage() {
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));
     return false; // 阻止 antd 自动上传
+  };
+
+  // ---- 搜索栏 ----
+  const [searchGrade, setSearchGrade] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchVersion, setSearchVersion] = useState('');
+
+  const handleReset = () => {
+    setSearchGrade('');
+    setSearchTerm('');
+    setSearchVersion('');
   };
 
   // ---- 打开新增/编辑弹窗 ----
@@ -192,9 +207,12 @@ export default function ChapterManagePage() {
   // ---- 表格列 ----
   const columns = [
     {
-      title: '章节名称', dataIndex: 'name', width: 200,
+      title: '章节名称', dataIndex: 'name', width: 180,
       render: (n) => <Text strong>{n}</Text>,
     },
+    { title: '年级', dataIndex: 'grade', width: 80 },
+    { title: '学期', dataIndex: 'term', width: 60 },
+    { title: '版本', dataIndex: 'version', width: 100 },
     {
       title: '图标', dataIndex: 'icon', width: 80, align: 'center',
       render: (icon) => <span style={{ fontSize: 18 }}>{icon}</span>,
@@ -274,6 +292,14 @@ export default function ChapterManagePage() {
         options={subjects.map((s) => ({ value: s.id, label: `${s.icon} ${s.name}` }))}
       />
 
+      {/* 搜索栏 */}
+      <Space wrap style={{ marginBottom: 16 }}>
+        <Select placeholder="年级" allowClear style={{ width: 100 }} value={searchGrade} onChange={setSearchGrade} options={GRADE_OPTIONS} />
+        <Select placeholder="学期" allowClear style={{ width: 80 }} value={searchTerm} onChange={setSearchTerm} options={TERM_OPTIONS} />
+        <Select placeholder="版本" allowClear style={{ width: 100 }} value={searchVersion} onChange={setSearchVersion} options={VERSION_OPTIONS} />
+        <Button onClick={handleReset}>重置</Button>
+      </Space>
+
       <Table
         rowKey="id"
         columns={columns}
@@ -303,6 +329,15 @@ export default function ChapterManagePage() {
           </Form.Item>
           <Form.Item name="name" label="章节名称" rules={[{ required: true, message: '请输入章节名称' }]}>
             <Input placeholder="如：100以内加减法" maxLength={30} />
+          </Form.Item>
+          <Form.Item name="grade" label="年级">
+            <Select allowClear placeholder="选择年级" options={GRADE_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="term" label="学期">
+            <Select allowClear placeholder="选择学期" options={TERM_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="version" label="教材版本">
+            <Select allowClear placeholder="选择版本" options={VERSION_OPTIONS} />
           </Form.Item>
           <Form.Item name="icon" label="章节图标（emoji）" rules={[{ required: true, message: '请输入图标' }]}>
             <Input placeholder="如：🧮 / 📜 / 🖋️" maxLength={4} />

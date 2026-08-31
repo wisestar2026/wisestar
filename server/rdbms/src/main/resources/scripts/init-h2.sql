@@ -2079,3 +2079,7 @@ CREATE TABLE IF NOT EXISTS t_student_coin (
 ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS coins int DEFAULT 0;
 ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS reason varchar(255);
 ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS deleted tinyint DEFAULT 0;
+-- 章节表添加年级/学期/版本字段
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级（一年级~六年级）';
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS term varchar(16) DEFAULT NULL COMMENT '学期（上/下）';
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS version varchar(64) DEFAULT NULL COMMENT '教材版本（人教版/苏教版等）';

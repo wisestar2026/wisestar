@@ -2085,4 +2085,10 @@ CREATE TABLE IF NOT EXISTS `t_student_coin` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员学币发放记录';
 
+
+-- 章节表添加年级/学期/版本字段
+ALTER TABLE `t_chapter` ADD COLUMN IF NOT EXISTS `grade` varchar(32) DEFAULT NULL COMMENT '年级（一年级~六年级）';
+ALTER TABLE `t_chapter` ADD COLUMN IF NOT EXISTS `term` varchar(16) DEFAULT NULL COMMENT '学期（上/下）';
+ALTER TABLE `t_chapter` ADD COLUMN IF NOT EXISTS `version` varchar(64) DEFAULT NULL COMMENT '教材版本（人教版/苏教版等）';
+
 SET FOREIGN_KEY_CHECKS = 1;
