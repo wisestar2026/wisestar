@@ -62,7 +62,7 @@ export default function KnowledgePage() {
   useEffect(() => {
     if (!realMode) return;
     if (tab === 'preview') {
-      // 预习/复习：讲解要点 + 知识点练习检测（实时判分）
+      // 预习/复习：讲解要点 + 例题练习检测（实时判分）
       if (sectionId) {
         getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
       }
@@ -302,10 +302,10 @@ export default function KnowledgePage() {
               <Button
                 type="primary"
                 size="large"
-                onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=practice`)}
+                onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=example`)}
                 style={{ width: 180, height: 44, borderRadius: 8, fontSize: 15, marginTop: 8, alignSelf: 'center' }}
               >
-                 知识点练习
+                 例题练习
               </Button>
             </div>
           )}
@@ -325,14 +325,14 @@ export default function KnowledgePage() {
                     const multi = question.questionType === 'Checkbox' || question.questionType === 'Multiple';
                     const picked = realAnswers[question.id];
                     const judge = realJudge(question);
-                    const showResult = judgeState[question.id] === true;
+                    const showResult = tab === 'example' ? !!picked : judgeState[question.id] === true;
                     const correct = judge ? judge.correct : null;
                     const analysis = schema.attribute?.examAnalysis;
                     return (
                       <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                           <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
+                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空题输入；判断题无选项时补 正确/错误 */}
@@ -386,7 +386,7 @@ export default function KnowledgePage() {
                           </div>
                         )}
                         {/* 提交答案按钮：点击后才判定 */}
-                        {!showResult && picked && (
+                        {tab !== 'example' && !showResult && picked && (
                           <Button type="primary" size="small" style={{ marginTop: 12 }} onClick={() => setJudgeState((p) => ({ ...p, [question.id]: true }))}>
                             提交答案
                           </Button>
@@ -398,7 +398,14 @@ export default function KnowledgePage() {
                             已判定 {Object.keys(judgeState).length}/{realQuestions.length} 题
                           </div>
                           {currentQ < realQuestions.length - 1 ? (
-                            <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
+                            <button className="knowledge-back" onClick={() => {
+                              if (tab === 'example' && !showResult && picked) {
+                                setJudgeState((p) => ({ ...p, [question.id]: true }));
+                                setTimeout(() => setCurrentQ((c) => c + 1), 500);
+                              } else {
+                                setCurrentQ((c) => c + 1);
+                              }
+                            }}>下一题</button>
                           ) : (
                             realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' ? (
                               <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
