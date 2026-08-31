@@ -160,10 +160,19 @@ export default function KnowledgePage() {
   };
 
   // 真实模式：填空作答
-  const realInput = (q, text) => {
+  const realInput = (q, blankIdx, text) => {
     if (realResult) return;
     if (judgeState[q.id] || (tab === 'preview' && realJudge(q))) return;
-    setRealAnswers((prev) => ({ ...prev, [q.id]: { type: 'text', text } }));
+    setRealAnswers((prev) => {
+      const cur = prev[q.id] || { type: 'text', text: '' };
+      const texts = (cur.text || '').split('|');
+      if (blankIdx >= 0 && blankIdx < texts.length) {
+        texts[blankIdx] = text;
+      } else {
+        texts[0] = text;
+      }
+      return { ...prev, [q.id]: { type: 'text', text: texts.join('|') } };
+    });
   };
 
   // 真实模式：选择选项（按题型单选/多选；试炼选后即时判分锁定）
