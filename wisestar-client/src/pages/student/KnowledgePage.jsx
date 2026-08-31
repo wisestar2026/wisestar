@@ -62,7 +62,7 @@ export default function KnowledgePage() {
   useEffect(() => {
     if (!realMode) return;
     if (tab === 'preview') {
-      // 预习/复习：讲解要点 + 例题练习检测（实时判分）
+      // 预习/复习：讲解要点 + 知识点预习检测（实时判分）
       if (sectionId) {
         getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
       }
@@ -311,7 +311,7 @@ export default function KnowledgePage() {
               <Button
                 type="primary"
                 size="large"
-                onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=example`)}
+                onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=preview_practice`)}
                 style={{ width: 180, height: 44, borderRadius: 8, fontSize: 15, marginTop: 8, alignSelf: 'center' }}
               >
                  例题练习
@@ -320,7 +320,7 @@ export default function KnowledgePage() {
           )}
 
           {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial' || tab === 'example') && (
+          {(tab === 'practice' || tab === 'trial' || tab === 'example' || tab === 'preview_practice') && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
@@ -341,7 +341,7 @@ export default function KnowledgePage() {
                       <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                           <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
+                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '知识点预习' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空题输入；判断题无选项时补 正确/错误 */}
