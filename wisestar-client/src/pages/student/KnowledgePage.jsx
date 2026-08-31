@@ -337,12 +337,23 @@ export default function KnowledgePage() {
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空题输入；判断题无选项时补 正确/错误 */}
                         {(question.questionType === 'FillBlank' || question.questionType === 'Text') ? (() => {
-                          <Input
-                            placeholder="请输入你的答案" disabled={showResult}
-                            value={picked?.type === 'text' ? picked.text : ''}
-                            onChange={(e) => realInput(question, e.target.value)}
-                            style={{ width: '100%', maxWidth: 600, fontSize: 15, padding: '10px 12px' }}
-                          />
+                          const blankCount = (schema.attribute?.blankCount || 1);
+                          const curText = picked?.text || '';
+                          const texts = curText.split('|');
+                          return (
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {Array.from({ length: blankCount }).map((_, idx) => (
+                                <Input
+                                  key={idx}
+                                  placeholder={`空${idx + 1}`}
+                                  disabled={showResult}
+                                  value={texts[idx] || ''}
+                                  onChange={(e) => realInput(question, idx, e.target.value)}
+                                  style={{ width: 120, fontSize: 15, padding: '8px 10px' }}
+                                />
+                              ))}
+                            </div>
+                          );
                         })() : options.map((opt) => {
                           const selected = picked?.type === 'option'
                             ? picked.optionId === opt.id
