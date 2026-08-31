@@ -325,7 +325,7 @@ export default function KnowledgePage() {
                     const multi = question.questionType === 'Checkbox' || question.questionType === 'Multiple';
                     const picked = realAnswers[question.id];
                     const judge = realJudge(question);
-                    const showResult = tab === 'example' ? !!picked : judgeState[question.id] === true;
+                    const showResult = judgeState[question.id] === true;
                     const correct = judge ? judge.correct : null;
                     const analysis = schema.attribute?.examAnalysis;
                     return (
@@ -386,7 +386,7 @@ export default function KnowledgePage() {
                           </div>
                         )}
                         {/* 提交答案按钮：点击后才判定 */}
-                        {tab !== 'example' && !showResult && picked && (
+                        {!showResult && picked && (
                           <Button type="primary" size="small" style={{ marginTop: 12 }} onClick={() => setJudgeState((p) => ({ ...p, [question.id]: true }))}>
                             提交答案
                           </Button>
@@ -398,14 +398,7 @@ export default function KnowledgePage() {
                             已判定 {Object.keys(judgeState).length}/{realQuestions.length} 题
                           </div>
                           {currentQ < realQuestions.length - 1 ? (
-                            <button className="knowledge-back" onClick={() => {
-                              if (tab === 'example' && !showResult && picked) {
-                                setJudgeState((p) => ({ ...p, [question.id]: true }));
-                                setTimeout(() => setCurrentQ((c) => c + 1), 500);
-                              } else {
-                                setCurrentQ((c) => c + 1);
-                              }
-                            }}>下一题</button>
+                            <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
                           ) : (
                             realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' ? (
                               <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
