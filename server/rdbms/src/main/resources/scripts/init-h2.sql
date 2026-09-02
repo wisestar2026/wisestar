@@ -2083,3 +2083,53 @@ ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS deleted tinyint DEFAULT 0;
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级（一年级~六年级）';
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS term varchar(16) DEFAULT NULL COMMENT '学期（上/下）';
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS version varchar(64) DEFAULT NULL COMMENT '教材版本（人教版/苏教版等）';
+
+-- 英语学习模块
+CREATE TABLE IF NOT EXISTS t_english_word (
+  id varchar(64) NOT NULL,
+  spell varchar(128) NOT NULL COMMENT '单词拼写',
+  phonetic varchar(64) COMMENT '音标',
+  meaning text COMMENT '释义',
+  image_url varchar(512) COMMENT '图片 URL',
+  audio_url varchar(512) COMMENT '音频 URL',
+  example_sentence text COMMENT '例句',
+  version varchar(32) COMMENT '教材版本',
+  grade varchar(16) COMMENT '年级',
+  unit varchar(32) COMMENT '单元',
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS t_english_word_book (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL,
+  word_id varchar(64) NOT NULL,
+  familiarity tinyint DEFAULT 0 COMMENT '熟练度 0-未学习 1-生疏 2-熟悉 3-熟练 4-精通',
+  next_review_time timestamp COMMENT '下次复习时间',
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_word (user_id, word_id)
+);
+
+CREATE TABLE IF NOT EXISTS t_english_grammar (
+  id varchar(64) NOT NULL,
+  title varchar(256) NOT NULL COMMENT '标题',
+  content text COMMENT '讲解内容',
+  examples text COMMENT '例句',
+  exercises json COMMENT '练习题',
+  grade varchar(16) COMMENT '年级',
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS t_english_learning_log (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL,
+  type varchar(16) NOT NULL COMMENT '类型 word/grammar',
+  content_id varchar(64) NOT NULL,
+  duration int COMMENT '学习时长 (秒)',
+  correct_count int COMMENT '正确数',
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_english_log_user ON t_english_learning_log (user_id, created_at);

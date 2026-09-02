@@ -75,3 +75,17 @@ wisestar:
         - display-name: "Llama-3.1-70B-Instruct"
           value: "meta-llama/Meta-Llama-3.1-70B-Instruct"
           description: "Llama 3.1 70B 指令模型"
+# AI 服务配置
+ai:
+  tts:
+    enabled: false  # 是否启用 TTS 语音生成
+    api-url: https://api.openai.com/v1/audio/speech  # TTS API 地址
+    api-key: YOUR_TTS_API_KEY  # TTS API Key
+  image:
+    enabled: false  # 是否启用 DALL-E 图片生成
+    api-url: https://api.openai.com/v1/images/generations  # DALL-E API 地址
+    api-key: YOUR_IMAGE_API_KEY  # DALL-E API Key
+  text:
+    enabled: false  # 是否启用 GPT 文本生成
+    api-url: https://api.openai.com/v1/chat/completions  # GPT API 地址
+    api-key: YOUR_TEXT_API_KEY  # GPT API Key

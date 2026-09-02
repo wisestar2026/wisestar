@@ -72,6 +72,10 @@ import DeptManagePage from './pages/system/DeptManagePage';
 import PositionManagePage from './pages/system/PositionManagePage';
 import DictManagePage from './pages/system/DictManagePage';
 import DictItemManagePage from './pages/system/DictItemManagePage';
+import WordStudyPage from './pages/english/WordStudyPage';
+import WordBookManagePage from './pages/english/WordBookManagePage';
+import WordManagePage from './pages/english/WordManagePage';
+import WordAiManagePage from './pages/english/WordAiManagePage';
 
 export default function App() {
   const { fetchCurrentUser, isLoggedIn } = useUserStore();
@@ -302,6 +306,40 @@ export default function App() {
               element={
                 <AuthGuard required={['system:dictItem:list', 'system:dictItem:create', 'system:dictItem:update', 'system:dictItem:delete', 'system:dictItem:import']}>
                   <DictItemManagePage />
+                </AuthGuard>
+              }
+            />
+
+            {/* 英语学习 */}
+            <Route
+              path="/english/word"
+              element={
+                <AuthGuard>
+                  <WordStudyPage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/word-book"
+              element={
+                <AuthGuard>
+                  <WordBookManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/word-manager"
+              element={
+                <AuthGuard required={['english:word:list', 'english:word:create', 'english:word:update', 'english:word:delete', 'english:word:import']}>
+                  <WordManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/word-ai"
+              element={
+                <AuthGuard required={['english:word:ai']}>
+                  <WordAiManagePage />
                 </AuthGuard>
               }
             />

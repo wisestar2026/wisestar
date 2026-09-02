@@ -130,6 +130,15 @@ export default function MainLayout() {
       ],
     },
     {
+      key: 'english-group', icon: <BookOutlined />, label: '英语学习',
+      children: [
+        { key: '/english/word', label: '单词学习', required: [] },
+        { key: '/english/word-book', label: '单词本', required: [] },
+        { key: '/english/word-manager', label: '单词管理', required: ['english:word:list', 'english:word:create', 'english:word:update', 'english:word:delete', 'english:word:import'] },
+        { key: '/english/word-ai', label: 'AI 内容生成', required: ['english:word:ai'] },
+      ],
+    },
+    {
       key: 'system-group', icon: <SettingOutlined />, label: '系统管理',
       children: [
         { key: '/system/users', label: '用户管理', required: ['system:user:list', 'system:user:create', 'system:user:update', 'system:user:delete'] },
