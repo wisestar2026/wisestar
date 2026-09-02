@@ -282,7 +282,8 @@ public final class PermissionConsts {
 			+ "system:position:list,system:position:create,system:position:update,system:position:delete,"
 			+ "system:dict:list,system:dict:create,system:dict:update,system:dict:delete,"
 			+ "system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,"
-			+ "user:update";
+			+ "user:update,"
+			+ "english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai";
 
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */
 	public static final String PRINCIPAL_AUTHORITY = "home,exercise:list,"
