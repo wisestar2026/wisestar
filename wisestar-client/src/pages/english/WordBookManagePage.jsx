@@ -11,7 +11,7 @@
  * 被谁引用：App.jsx 路由表
  *
  * 数据流:
- *   GET /api/english/word/list → 单词列表（按版本/年级/单元筛选）
+ *   GET /api/english/word/word-book → 单词本列表（按版本/年级/单元筛选）
  */
 
 import { useEffect, useState } from 'react';
@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { Table, Tag, Space, Select, Input, Button, Progress, Card, Statistic } from 'antd';
 import { BookOutlined, ClockCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-const API_BASE = '/api/english/word';
+const API_BASE = '/api/english/word'; // Student API
 
 const FAMILIARITY_MAP = {
   0: { text: '未学习', color: 'default' },
@@ -61,7 +61,7 @@ export default function WordBookManagePage() {
       ...(unit && { unit }),
     });
 
-    fetch(`${API_BASE}/list?${params}`)
+    fetch(`${API_BASE}/word-book?${params}`)
       .then((res) => res.json())
       .then((res) => {
         if (res.code === 200) {
