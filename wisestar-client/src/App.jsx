@@ -82,6 +82,7 @@ import WrongBookPage from './pages/exercise/WrongBookPage';
 import SentenceManagePage from './pages/english/SentenceManagePage';
 import VerifyPage from './pages/mall/VerifyPage';
 import CampusManagePage from './pages/admin/CampusManagePage';
+import UnitManagePage from './pages/english/UnitManagePage';
 
 
 export default function App() {
