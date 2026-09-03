@@ -1,0 +1,7 @@
+import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
+import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
+import ExerciseListPage from './pages/exercise/ExerciseListPage';
+import WrongBookPage from './pages/exercise/WrongBookPage';
+import SentenceManagePage from './pages/english/SentenceManagePage';
+import VerifyPage from './pages/mall/VerifyPage';
+import CampusManagePage from './pages/admin/CampusManagePage';

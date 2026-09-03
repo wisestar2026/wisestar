@@ -76,79 +76,78 @@ export default function MainLayout() {
   const menuItems = [
     { key: '/',              icon: <DashboardOutlined />, label: '仪表盘', required: ['home'] },
     { key: '/student',       icon: <CompassOutlined />,   label: '学生端主页' },
-    { key: '/practice',      icon: <PlayCircleOutlined />, label: '在线练习', required: ['exercise:list'] },
+    
+    // 学员管理
     {
-      key: 'repo-group', icon: <BookOutlined />, label: '练习管理',
-      required: ['repo:list', 'repo:detail', 'repo:create', 'repo:update', 'repo:delete', 'repo:export', 'repo:book'],
+      key: 'student-mgmt-group', icon: <TeamOutlined />, label: '学员管理',
       children: [
-        { key: '/repos',         label: '练习列表' },
-        { key: '/repo-assign',   label: '练习分配' },
-        { key: '/wrong-questions', label: '错题管理' },
+        { key: '/students', label: '学员列表' },
+        { key: '/orders',   label: '订单管理', required: ['order:list'] },
+        { key: '/student/supervision', label: '学员督学' },
+        { key: '/student/task-assignment', label: '任务分配' },
       ],
     },
+    
+    // 习题管理
     {
-      key: '/questions',     icon: <AppstoreOutlined />,  label: '题目管理',
-      required: ['template:list', 'template:create', 'template:update', 'template:delete'],
+      key: 'exercise-group', icon: <BookOutlined />, label: '习题管理',
+      children: [
+        { key: '/questions', label: '题目管理', required: ['template:list'] },
+        { key: '/exercise/list', label: '习题列表' },
+        { key: '/exercise/wrong-book', label: '错题管理' },
+      ],
     },
+    
+    // 知识管理
     {
       key: 'knowledge-group', icon: <ReadOutlined />, label: '知识管理',
-      required: ['knowledge:list', 'knowledge:create', 'knowledge:update', 'knowledge:delete'],
       children: [
         { key: '/knowledge/chapters', icon: <ProfileOutlined />, label: '章节管理' },
         { key: '/knowledge/sections', icon: <PartitionOutlined />, label: '小节管理' },
         { key: '/knowledge/points',   icon: <BulbOutlined />,    label: '知识点管理' },
       ],
     },
+    
+    // 英语板块
     {
-      key: 'student-group', icon: <TeamOutlined />, label: '学员管理',
-      required: ['student:list', 'student:create', 'student:update', 'student:delete'],
+      key: 'english-group', icon: <BookOutlined />, label: '英语板块',
       children: [
-        { key: '/students', label: '学员列表' },
-        { key: '/students/activity', label: '学员动态', required: ['student:list'] },
-        {
-          key: '/orders',   label: '订单管理',
-          required: ['order:list', 'order:create', 'order:update', 'order:delete'],
-        },
-      ],
-    },
-    {
-      key: 'hr-group', icon: <SolutionOutlined />, label: '人事管理',
-      children: [
-        { key: '/hr/roles', label: '角色权限', required: ['system:role:list'] },
-      ],
-    },
-    {
-      key: 'task-group', icon: <CalendarOutlined />, label: '今日任务',
-      children: [
-        { key: '/tasks', label: '任务管理', required: ['task:list', 'task:create', 'task:update', 'task:delete'] },
-      ],
-    },
-    {
-      key: 'mall-group', icon: <ShoppingOutlined />, label: '积分商城',
-      children: [
-        { key: '/mall/goods', label: '商品管理', required: ['mall:list', 'mall:create', 'mall:update', 'mall:delete'] },
-      ],
-    },
-    {
-      key: 'english-group', icon: <BookOutlined />, label: '英语学习',
-      children: [
-        { key: '/english/word', label: '单词学习', required: [] },
-        { key: '/english/word-book', label: '单词本', required: [] },
-        { key: '/english/word-manager', label: '单词管理', required: ['english:word:list', 'english:word:create', 'english:word:update', 'english:word:delete', 'english:word:import'] },
+        { key: '/english/unit', label: '单元管理' },
+        { key: '/english/word', label: '单词管理', required: ['english:word:list'] },
+        { key: '/english/sentence', label: '句式管理' },
+        { key: '/english/study', label: '单词学习' },
+        { key: '/english/word-book', label: '单词本' },
         { key: '/english/word-ai', label: 'AI 内容生成', required: ['english:word:ai'] },
       ],
     },
+    
+    // 积分管理
+    {
+      key: 'mall-group', icon: <ShoppingOutlined />, label: '积分管理',
+      children: [
+        { key: '/mall/goods', label: '商品管理', required: ['mall:list'] },
+        { key: '/mall/verify', label: '商品核销' },
+      ],
+    },
+    
+    // 行政管理
+    {
+      key: 'admin-group', icon: <SolutionOutlined />, label: '行政管理',
+      children: [
+        { key: '/admin/roles', label: '角色权限', required: ['system:role:list'] },
+        { key: '/admin/campus', label: '校区管理' },
+      ],
+    },
+    
+    // 系统管理
     {
       key: 'system-group', icon: <SettingOutlined />, label: '系统管理',
       children: [
-        { key: '/system/users', label: '用户管理', required: ['system:user:list', 'system:user:create', 'system:user:update', 'system:user:delete'] },
-        { key: '/system/depts', label: '部门管理', required: ['system:dept:list', 'system:dept:create', 'system:dept:update', 'system:dept:delete'] },
-        { key: '/system/positions', label: '岗位管理', required: ['system:position:list', 'system:position:create', 'system:position:update', 'system:position:delete'] },
-        { key: '/system/dicts', label: '字典管理', required: ['system:dict:list', 'system:dict:create', 'system:dict:update', 'system:dict:delete'] },
-        {
-          key: '/system/dict-items', label: '字典条目管理',
-          required: ['system:dictItem:list', 'system:dictItem:create', 'system:dictItem:update', 'system:dictItem:delete', 'system:dictItem:import'],
-        },
+        { key: '/system/users', label: '用户管理', required: ['system:user:list'] },
+        { key: '/system/depts', label: '部门管理', required: ['system:dept:list'] },
+        { key: '/system/positions', label: '岗位管理', required: ['system:position:list'] },
+        { key: '/system/dicts', label: '字典管理', required: ['system:dict:list'] },
+        { key: '/system/dict-items', label: '字典条目管理', required: ['system:dictItem:list'] },
       ],
     },
   ];

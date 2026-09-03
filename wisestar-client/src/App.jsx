@@ -57,7 +57,6 @@ import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
-import WrongBookPage from './pages/student/WrongBookPage';
 import StudentActivityPage from './pages/student/StudentActivityPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import TaskManagePage from './pages/system/TaskManagePage';
@@ -76,6 +75,14 @@ import WordStudyPage from './pages/english/WordStudyPage';
 import WordBookManagePage from './pages/english/WordBookManagePage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
+import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
+import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
+import ExerciseListPage from './pages/exercise/ExerciseListPage';
+import WrongBookPage from './pages/exercise/WrongBookPage';
+import SentenceManagePage from './pages/english/SentenceManagePage';
+import VerifyPage from './pages/mall/VerifyPage';
+import CampusManagePage from './pages/admin/CampusManagePage';
+
 
 export default function App() {
   const { fetchCurrentUser, isLoggedIn } = useUserStore();
@@ -122,7 +129,6 @@ export default function App() {
             <Route path="knowledge" element={<KnowledgePage />} />
             <Route path="knowledge/:kpId" element={<KnowledgePage />} />
             {/* 错题本: 练习错题自动收录（/api/practice/wrong-list） */}
-            <Route path="wrong" element={<WrongBookPage />} />
             {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}
             <Route path="profile" element={<ProfilePage />} />
             {/* 荣誉商城: 多科合并兑换 */}
@@ -310,9 +316,33 @@ export default function App() {
               }
             />
 
-            {/* 英语学习 */}
+            {/* 英语板块 */}
+            <Route
+              path="/english/unit"
+              element={
+                <AuthGuard>
+                  <UnitManagePage />
+                </AuthGuard>
+              }
+            />
             <Route
               path="/english/word"
+              element={
+                <AuthGuard required={['english:word:list']}>
+                  <WordManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/sentence"
+              element={
+                <AuthGuard>
+                  <SentenceManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/study"
               element={
                 <AuthGuard>
                   <WordStudyPage />
@@ -328,18 +358,30 @@ export default function App() {
               }
             />
             <Route
-              path="/english/word-manager"
-              element={
-                <AuthGuard required={['english:word:list', 'english:word:create', 'english:word:update', 'english:word:delete', 'english:word:import']}>
-                  <WordManagePage />
-                </AuthGuard>
-              }
-            />
-            <Route
               path="/english/word-ai"
               element={
                 <AuthGuard required={['english:word:ai']}>
                   <WordAiManagePage />
+                </AuthGuard>
+              }
+            />
+
+            {/* 积分管理 */}
+            <Route
+              path="/mall/verify"
+              element={
+                <AuthGuard>
+                  <VerifyPage />
+                </AuthGuard>
+              }
+            />
+
+            {/* 行政管理 */}
+            <Route
+              path="/admin/campus"
+              element={
+                <AuthGuard>
+                  <CampusManagePage />
                 </AuthGuard>
               }
             />
