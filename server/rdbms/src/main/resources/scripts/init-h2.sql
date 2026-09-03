@@ -2133,3 +2133,15 @@ CREATE TABLE IF NOT EXISTS t_english_learning_log (
   PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_english_log_user ON t_english_learning_log (user_id, created_at);
+
+-- 学员学习记录表（学员督学功能）
+CREATE TABLE IF NOT EXISTS t_student_record (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) DEFAULT NULL COMMENT '学员 ID',
+  current_location varchar(255) DEFAULT NULL COMMENT '当前学习位置（chapter/ID, section/ID, knowledge/ID, exercise/ID）',
+  last_active_time varchar(32) DEFAULT NULL COMMENT '最后活跃时间',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  update_at timestamp DEFAULT NULL COMMENT '更新时间',
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
