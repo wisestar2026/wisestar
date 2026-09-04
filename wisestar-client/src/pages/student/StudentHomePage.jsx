@@ -206,3 +206,53 @@ export default function StudentHomePage() {
     </div>
   );
 }
+
+// 学员端首页添加今日任务组件
+function TodayTaskCard() {
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // 获取当前学员 ID
+    const studentId = localStorage.getItem('studentId');
+    if (!studentId) return;
+
+    setLoading(true);
+    fetch(`${API_BASE}/list?studentId=${studentId}`)
+      .then((res) => res.json())
+      .then((res) => {
+        if (res.code === 200) {
+          setTasks(res.data || []);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (tasks.length === 0) {
+    return null;
+  }
+
+  return (
+    <Card
+      title="今日任务"
+      style={{ marginTop: 20, position: 'fixed', bottom: 20, right: 20, width: 300, zIndex: 1000 }}
+    >
+      {tasks.map((task, index) => (
+        <Card
+          key={task.id}
+          size="small"
+          style={{ marginBottom: 8 }}
+          title={`任务 ${index + 1}`}
+        >
+          <div>{task.taskContent}</div>
+          {task.createTime && (
+            <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+              发布时间：{task.createTime}
+            </div>
+          )}
+        </Card>
+      ))}
+    </Card>
+  );
+}

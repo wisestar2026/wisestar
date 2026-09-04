@@ -2145,3 +2145,19 @@ CREATE TABLE IF NOT EXISTS t_student_record (
   is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (id)
 );
+
+-- 学员任务分配表
+CREATE TABLE IF NOT EXISTS t_student_task (
+  id varchar(64) NOT NULL,
+  school_id varchar(64) DEFAULT NULL COMMENT '学校 ID',
+  student_id varchar(64) DEFAULT NULL COMMENT '学员 ID',
+  task_content varchar(500) DEFAULT NULL COMMENT '任务内容（文本）',
+  task_type varchar(32) DEFAULT NULL COMMENT '任务类型（chapter/section/knowledge/exercise）',
+  task_target varchar(64) DEFAULT NULL COMMENT '任务目标 ID（章节/小节/知识点/习题 ID）',
+  status varchar(16) DEFAULT 'pending' COMMENT '状态（pending-待完成，completed-已完成）',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建人（教师 ID）',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  update_at timestamp DEFAULT NULL COMMENT '更新时间',
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
