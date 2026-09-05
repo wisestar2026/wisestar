@@ -115,9 +115,9 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 	}
 
 	/**
-	 * 批量导入知识点（Excel：学科名/章节名/小节名/知识点名/排序(选填)/内容设置(选填，仅文本)；
+	 * 批量导入知识点（Excel：学科名/章节名/小节名/知识点名/排序(选填)/年级(选填)/学期(选填)/内容设置(选填，仅文本)；
 	 * 内容设置不支持图片，整格文本作为一条讲解要点写入 content JSON；
-	 * 按 sectionId+name 去重）。
+	 * 按 sectionId+name 去重；跳过原因分类统计（缺失必填/归属未匹配/重名）。
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -131,7 +131,9 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		Set<String> existing = this.baseMapper.selectList(null).stream()
 				.map(k -> k.getSectionId() + "|" + k.getName()).collect(Collectors.toSet());
 		AtomicInteger imported = new AtomicInteger(0);
-		AtomicInteger skipped = new AtomicInteger(0);
+		AtomicInteger missingRequired = new AtomicInteger(0);
+		AtomicInteger sectionNotFound = new AtomicInteger(0);
+		AtomicInteger duplicate = new AtomicInteger(0);
 		List<KnowledgePoint> toSave = new ArrayList<>();
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
@@ -145,15 +147,19 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 						String sectionName = cellText(r, 2);
 						String name = cellText(r, 3);
 						if (!hasText(subjectName) || !hasText(chapterName) || !hasText(sectionName) || !hasText(name)) {
-							skipped.incrementAndGet();
+							missingRequired.incrementAndGet();
 							return;
 						}
 						String subjectId = subjectCache.get(subjectName.trim());
 						String chapterId = subjectId == null ? null : chapterCache.get(subjectId + "|" + chapterName.trim());
 						String sectionId = chapterId == null ? null : sectionCache.get(chapterId + "|" + sectionName.trim());
 						String key = (sectionId == null ? "?" : sectionId) + "|" + name.trim();
-						if (sectionId == null || existing.contains(key)) {
-							skipped.incrementAndGet();
+						if (sectionId == null) {
+							sectionNotFound.incrementAndGet();
+							return;
+						}
+						if (existing.contains(key)) {
+							duplicate.incrementAndGet();
 							return;
 						}
 						existing.add(key);
@@ -161,7 +167,15 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 						point.setSectionId(sectionId);
 						point.setName(name.trim());
 						point.setSort(cellAsInt(r, 4, 1));
-						point.setContent(buildContentJson(cellText(r, 5)));
+						String grade = cellText(r, 5).trim();
+						String term = cellText(r, 6).trim();
+						if (hasText(grade)) {
+							point.setGrade(grade);
+						}
+						if (hasText(term)) {
+							point.setTerm(term);
+						}
+						point.setContent(buildContentJson(cellText(r, 7)));
 						toSave.add(point);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -182,7 +196,12 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 			saveBatch(toSave);
 			imported.addAndGet(toSave.size());
 		}
-		return new ImportResultView(imported.get(), skipped.get());
+		ImportResultView result = new ImportResultView(imported.get(),
+				missingRequired.get() + sectionNotFound.get() + duplicate.get());
+		result.setMissingRequired(missingRequired.get());
+		result.setSectionNotFound(sectionNotFound.get());
+		result.setDuplicate(duplicate.get());
+		return result;
 	}
 
 	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */
@@ -197,14 +216,20 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		}).orElse("");
 	}
 
-	/** 读取行中指定列数值，缺列/非数字返回默认值。 */
+	/** 读取行中指定列数值：数字单元格直接取值；文本型数字（如 WPS 粘贴导致）回退解析文本；仍失败返回默认值。 */
 	private int cellAsInt(Row row, int index, int defaultValue) {
 		return row.getOptionalCell(index).map(cell -> {
 			try {
 				return cell.asNumber().intValue();
 			}
 			catch (Exception e) {
-				return defaultValue;
+				try {
+					String text = cell.getText() == null ? "" : cell.getText().trim();
+					return text.isEmpty() ? defaultValue : Integer.parseInt(text);
+				}
+				catch (Exception e2) {
+					return defaultValue;
+				}
 			}
 		}).orElse(defaultValue);
 	}

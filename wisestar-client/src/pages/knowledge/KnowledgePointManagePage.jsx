@@ -179,7 +179,12 @@ export default function KnowledgePointManagePage() {
     importKnowledgePoints(file)
       .then((res) => {
         const d = res?.data || {};
-        message.success(`导入完成：新增 ${d.imported ?? 0} 个知识点，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
+        const reason = [];
+        if ((d.missingRequired ?? 0) > 0) reason.push(`必填缺失 ${d.missingRequired}`);
+        if ((d.sectionNotFound ?? 0) > 0) reason.push(`学科/章节/小节未匹配 ${d.sectionNotFound}`);
+        if ((d.duplicate ?? 0) > 0) reason.push(`同小节下重名 ${d.duplicate}`);
+        const reasonText = reason.length ? `；跳过原因：${reason.join('、')}` : '';
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个知识点，跳过 ${d.skipped ?? 0} 个${reasonText}`);
         setCurrent(1);
         fetchKps(1);
       })
@@ -451,7 +456,7 @@ export default function KnowledgePointManagePage() {
         </Space>
         <Space>
           {can('knowledge:create') && (
-            <Button icon={<DownloadOutlined />} href="/templates/knowledge-point-import-template.xlsx" download>
+            <Button icon={<DownloadOutlined />} href="/templates/knowledge-point-import-template.xlsx?v=20260905" download>
               模板下载
             </Button>
           )}
