@@ -48,7 +48,7 @@
 - **主线：`main`（76 提交，root `762e10d` → `429139f`）**；origin = `https://github.com/wisestar2026/wisestar.git`（HTTPS，公网可直连）
 - 原功能分支 `260810-feat-knowledge-mgmt-backend` 已 ff 并入 main 并删除（本地+远端）；仓库无子模块
 - 开发规范：新功能先在 main 上开 `YYMMDD-feat-xxx` 分支，完成 commit+push 后合回 main（参考 docs/开发维护日志.md 3.1）
-- 最近推送：`429139f`（2026-09-05 整合收尾）；工作区干净
+- 最近推送：`aaacf08`（2026-09-05，仓库布局记忆）；工作区干净；本阶段"分支整合+清理"任务已全部收尾，可开启新开发任务
 - 注意：`.gitignore` 已补 `*.mv.db` 与 `/application.properties`，勿再将 H2 运行库/生成文件入库
 
 ## 4. 验证脚本（/tmp/opencode/）
