@@ -31,9 +31,6 @@ import useUserStore from '../../stores/useUserStore';
 import { uploadActivity, getStudentStats } from '../../api/student';
 import './student.css';
 
-// 年级枚举（与订单管理一致）
-const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
-
 // 底部导航配置
 const TABS = [
   { path: '/student', icon: '🏠', label: '首页' },
@@ -46,7 +43,7 @@ export default function StudentLayout() {
   const {
     activeSubject, version, pureMode,
     setSubject, setVersion, setGrade, grade, togglePureMode, fetchPermissions, fetchStudySubjects,
-    getVisibleSubjects, getVisibleVersions,
+    getVisibleSubjects, getVisibleVersions, getVisibleGrades,
   } = useStudentStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -160,7 +157,8 @@ export default function StudentLayout() {
               size="small"
               value={grade}
               onChange={setGrade}
-              options={GRADES.map((g) => ({ label: g, value: g }))}
+              disabled={getVisibleGrades(activeSubject).length === 0}
+              options={getVisibleGrades(activeSubject).map((g) => ({ label: g, value: g }))}
               popupMatchSelectWidth={false}
             />
           </div>

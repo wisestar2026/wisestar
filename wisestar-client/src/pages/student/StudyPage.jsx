@@ -37,7 +37,7 @@ const stars = (rate) => {
 export default function StudyPage() {
   const navigate = useNavigate();
   const {
-    activeSubject, version, pureMode,
+    activeSubject, version, grade, pureMode,
     studyContent, fetchStudyChapters, getVisibleSubjects,
   } = useStudentStore();
   const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
@@ -58,16 +58,16 @@ export default function StudyPage() {
   // 章节数据：真实模式用真实章节；否则用 mock 学科章节
   const chapters = realMode ? (realChapters || []) : subject.chapters;
 
-  // 学科切换 → 加载真实章节
+  // 学科/年级切换 → 按订单授权年级加载真实章节
   useEffect(() => {
     if (realMode) {
-      fetchStudyChapters(activeSubject);
+      fetchStudyChapters(activeSubject, grade);
     }
     setOpenChapters([]);
     setSelectedSection(null);
     setSelectedKp(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSubject, realMode]);
+  }, [activeSubject, grade, realMode]);
 
   // 展开章节：真实模式加载该章节的小节（按章节缓存）
   const toggleChapter = (chId) => {

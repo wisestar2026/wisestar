@@ -77,17 +77,21 @@ public interface StudentService {
 	/**
 	 * 学员端学科列表（按订单有效权限过滤）。
 	 *
-	 * @return 可访问学科（含该学科有权限的教材版本）
+	 * @return 可访问学科（含该学科有权限的教材版本与年级）
 	 */
 	List<StudentSubjectView> studySubjects();
 
 	/**
-	 * 学员端章节列表（按订单权限校验学科）。
+	 * 学员端章节列表（按订单权限校验学科与年级）。
+	 *
+	 * <p>仅返回订单授予年级下的章节：grade 为空时返回该学科全部授权年级的章节；
+	 * grade 有值且不在该学科授权年级内时返回空列表。</p>
 	 *
 	 * @param subjectId 学科ID
+	 * @param grade     年级（可选，如 三年级；不传按该学科全部授权年级返回）
 	 * @return 章节列表（含小节数）；学科不在权限内返回空列表
 	 */
-	List<ChapterView> studyChapters(String subjectId);
+	List<ChapterView> studyChapters(String subjectId, String grade);
 
 	/**
 	 * 学员端小节列表（含内容设置 JSON 与知识点数）。

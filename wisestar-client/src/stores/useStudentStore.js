@@ -17,6 +17,9 @@ import {
   getStudySubjects, getStudyChapters, getStudySections, getStudyPoints, getStudyQuestions,
 } from '../api/student';
 
+// ---- 年级枚举（与订单管理/后台内容年级一致，顺序即展示顺序） ----
+export const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
+
 // ---- 五级头衔 + 证书体系（学海积分自动晋升，无降级） ----
 export const TITLES = [
   { key: 'beginner', name: '学海初探者', need: 0,   cert: '学海初探·启航荣誉证书',   emoji: '🌱' },
@@ -286,11 +289,23 @@ const useStudentStore = create((set, get) => ({
 
   // ---- actions ----
   setSubject: (key) => {
+    const real = get().studyContent?.subjects;
+    const realSubject = real && real.length > 0 ? real.find((s) => s.id === key) : null;
     const subject = SUBJECTS.find((s) => s.key === key);
-    const version = subject ? subject.version : get().version;
+    const next = { activeSubject: key };
+    // 真实学科：版本/年级对齐该学科订单授权范围；mock：对齐 mock 默认版本
+    if (realSubject) {
+      const curVersion = get().version;
+      const curGrade = get().grade;
+      next.version = realSubject.versions?.includes(curVersion) ? curVersion : (realSubject.versions?.[0] || curVersion);
+      next.grade = realSubject.grades?.includes(curGrade) ? curGrade : (realSubject.grades?.[0] || curGrade);
+    } else if (subject) {
+      next.version = subject.version;
+    }
     localStorage.setItem('sh-active-subject', key);
-    localStorage.setItem('sh-version', version);
-    set({ activeSubject: key, version });
+    if (next.version) localStorage.setItem('sh-version', next.version);
+    if (next.grade) localStorage.setItem('sh-grade', next.grade);
+    set(next);
   },
   setVersion: (v) => {
     localStorage.setItem('sh-version', v);
@@ -299,6 +314,26 @@ const useStudentStore = create((set, get) => ({
   setGrade: (g) => {
     localStorage.setItem('sh-grade', g);
     set({ grade: g });
+  },
+  // 真实学科/权限加载后收敛当前学科-年级-版本到订单授权范围（防越权残留）
+  normalizeSelection: () => {
+    const real = get().studyContent?.subjects;
+    if (!real || real.length === 0) return;
+    if (!real.some((s) => s.id === get().activeSubject)) {
+      get().setSubject(real[0].id);
+      return;
+    }
+    const has = real.find((s) => s.id === get().activeSubject);
+    const next = {};
+    if (has.grades?.length && !has.grades.includes(get().grade)) {
+      next.grade = has.grades[0];
+    }
+    if (has.versions?.length && !has.versions.includes(get().version)) {
+      next.version = has.versions[0];
+    }
+    if (next.grade) localStorage.setItem('sh-grade', next.grade);
+    if (next.version) localStorage.setItem('sh-version', next.version);
+    if (next.grade || next.version) set(next);
   },
   togglePureMode: () => {
     set((s) => {
@@ -321,13 +356,15 @@ const useStudentStore = create((set, get) => ({
     try {
       const res = await getStudySubjects();
       set((s) => ({ studyContent: { ...s.studyContent, subjects: res?.data || [] } }));
+      // 真实学科到位后收敛当前学科-年级-版本到订单授权范围
+      get().normalizeSelection();
     } catch {
       set((s) => ({ studyContent: { ...s.studyContent, subjects: [], loadFailed: true } }));
     }
   },
-  fetchStudyChapters: async (subjectId) => {
+  fetchStudyChapters: async (subjectId, grade) => {
     try {
-      const res = await getStudyChapters(subjectId);
+      const res = await getStudyChapters(subjectId, grade);
       set((s) => ({ studyContent: { ...s.studyContent, chapters: res?.data || [] } }));
     } catch {
       set((s) => ({ studyContent: { ...s.studyContent, chapters: [], loadFailed: true } }));
@@ -376,6 +413,7 @@ const useStudentStore = create((set, get) => ({
         theme: 'blue',
         version: s.versions?.[0] || '人教版',
         versions: s.versions?.length ? s.versions : ['人教版'],
+        grades: Array.isArray(s.grades) ? s.grades : [],
         chapters: [],
       }));
     }
@@ -384,6 +422,16 @@ const useStudentStore = create((set, get) => ({
     const names = (perms.subjects || []).map((s) => s.name);
     if (names.length === 0) return [];
     return SUBJECTS.filter((s) => names.includes(s.name));
+  },
+  // 按订单权限过滤可见年级（真实模式 = 该学科授权年级；mock 回退全部六档）
+  getVisibleGrades: (subjectKey) => {
+    const real = get().studyContent?.subjects;
+    if (real && real.length > 0) {
+      const rs = real.find((s) => s.id === subjectKey);
+      if (rs && rs.grades?.length) return rs.grades;
+      if (rs) return [];
+    }
+    return GRADES;
   },
   // 按订单权限过滤可见教材版本（优先真实学科版本）
   getVisibleVersions: (subjectKey) => {

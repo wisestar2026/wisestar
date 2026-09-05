@@ -211,51 +211,93 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	// 学员端内容（study/*，按订单有效权限过滤）
 	// ============================================================
 
-	/** 当前学员有效权限的学科 id 集合（expire_at > NOW()）；非学员抛校验异常 */
-	private Set<String> validSubjectIds() {
+	/**
+	 * 当前学员全部有效权限行（expire_at > NOW()）；非学员抛校验异常。
+	 */
+	private List<StudentPermission> validPermissions() {
 		String userId = SecurityContextUtils.getUserId();
 		if (getById(userId) == null) {
 			throw new ValidationException("当前用户不是学员");
 		}
 		return studentPermissionMapper.selectList(Wrappers.<StudentPermission>lambdaQuery()
 				.eq(StudentPermission::getStudentId, userId)
-				.gt(StudentPermission::getExpireAt, new Date()))
-				.stream().map(StudentPermission::getSubjectId).collect(Collectors.toSet());
+				.gt(StudentPermission::getExpireAt, new Date()));
+	}
+
+	/** 当前学员有效权限的学科 id 集合（expire_at > NOW()）；非学员抛校验异常 */
+	private Set<String> validSubjectIds() {
+		return validPermissions().stream().map(StudentPermission::getSubjectId).collect(Collectors.toSet());
+	}
+
+	/** 当前学员在指定学科下有效授权的年级集合（去重；未标年级的权限行忽略） */
+	private Set<String> validGrades(String subjectId) {
+		return validPermissions().stream()
+				.filter(p -> subjectId.equals(p.getSubjectId()))
+				.map(StudentPermission::getGrade)
+				.filter(StringUtils::hasText)
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * 当前学员对指定归属（学科+年级）是否有有效权限。
+	 * grade 为空时仅按学科判定（兼容历史未标年级内容）。
+	 */
+	private boolean hasPermission(String subjectId, String grade) {
+		return validPermissions().stream().anyMatch(p -> subjectId.equals(p.getSubjectId())
+				&& (!StringUtils.hasText(grade) || grade.equals(p.getGrade())));
 	}
 
 	@Override
 	public List<StudentSubjectView> studySubjects() {
-		Set<String> subjectIds = validSubjectIds();
+		List<StudentPermission> perms = validPermissions();
+		Set<String> subjectIds = perms.stream().map(StudentPermission::getSubjectId).collect(Collectors.toSet());
 		if (subjectIds.isEmpty()) {
 			return Collections.emptyList();
 		}
 		List<Subject> subjects = subjectMapper.selectBatchIds(subjectIds);
-		// 各学科有权限的教材版本（去重）
-		String userId = SecurityContextUtils.getUserId();
-		Map<String, Set<String>> versionsBySubject = studentPermissionMapper.selectList(
-						Wrappers.<StudentPermission>lambdaQuery()
-								.eq(StudentPermission::getStudentId, userId)
-								.gt(StudentPermission::getExpireAt, new Date()))
-				.stream().filter(p -> StringUtils.hasText(p.getVersion()))
+		// 各学科有权限的教材版本 / 年级（去重）
+		Map<String, Set<String>> versionsBySubject = perms.stream()
+				.filter(p -> StringUtils.hasText(p.getVersion()))
 				.collect(Collectors.groupingBy(StudentPermission::getSubjectId,
 						Collectors.mapping(StudentPermission::getVersion, Collectors.toSet())));
+		Map<String, Set<String>> gradesBySubject = perms.stream()
+				.filter(p -> StringUtils.hasText(p.getGrade()))
+				.collect(Collectors.groupingBy(StudentPermission::getSubjectId,
+						Collectors.mapping(StudentPermission::getGrade, Collectors.toSet())));
 		return subjects.stream().map(sub -> {
 			StudentSubjectView view = new StudentSubjectView();
 			view.setId(sub.getId());
 			view.setName(sub.getName());
 			view.setIcon(sub.getIcon());
 			view.setVersions(new ArrayList<>(versionsBySubject.getOrDefault(sub.getId(), Collections.emptySet())));
+			view.setGrades(new ArrayList<>(gradesBySubject.getOrDefault(sub.getId(), Collections.emptySet())));
 			return view;
 		}).collect(Collectors.toList());
 	}
 
 	@Override
-	public List<ChapterView> studyChapters(String subjectId) {
-		if (!StringUtils.hasText(subjectId) || !validSubjectIds().contains(subjectId)) {
+	public List<ChapterView> studyChapters(String subjectId, String grade) {
+		if (!StringUtils.hasText(subjectId)) {
 			return Collections.emptyList();
 		}
-		List<Chapter> chapters = chapterMapper.selectList(Wrappers.<Chapter>lambdaQuery()
-				.eq(Chapter::getSubjectId, subjectId).orderByAsc(Chapter::getSort));
+		// 学科下授权年级集合；空则无任何可访问章节
+		Set<String> permittedGrades = validGrades(subjectId);
+		if (permittedGrades.isEmpty()) {
+			return Collections.emptyList();
+		}
+		// 指定了年级但不在该学科授权内 → 越权，返回空
+		if (StringUtils.hasText(grade) && !permittedGrades.contains(grade)) {
+			return Collections.emptyList();
+		}
+		// 章节按学科 + 订单授权年级过滤（未传 grade 时返回该学科全部授权年级章节）
+		com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Chapter> query =
+				Wrappers.<Chapter>lambdaQuery().eq(Chapter::getSubjectId, subjectId);
+		if (StringUtils.hasText(grade)) {
+			query.eq(Chapter::getGrade, grade);
+		} else {
+			query.in(Chapter::getGrade, permittedGrades);
+		}
+		List<Chapter> chapters = chapterMapper.selectList(query.orderByAsc(Chapter::getSort));
 		List<ChapterView> views = chapterViewMapper.toView(chapters);
 		views.forEach(v -> v.setSectionCount(
 				sectionMapper.selectCount(Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, v.getId()))));
@@ -288,7 +330,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			return Collections.emptyList();
 		}
 		Chapter chapter = chapterMapper.selectById(chapterId);
-		if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+		if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 			return Collections.emptyList();
 		}
 		List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
@@ -398,7 +440,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			return Collections.emptyList();
 		}
 		Chapter chapter = chapterMapper.selectById(section.getChapterId());
-		if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+		if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 			return Collections.emptyList();
 		}
 		return knowledgePointViewMapper.toView(knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
@@ -418,7 +460,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		else if (StringUtils.hasText(sectionId)) {
 			Section section = sectionMapper.selectById(sectionId);
 			Chapter chapter = section == null ? null : chapterMapper.selectById(section.getChapterId());
-			if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+			if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 				return Collections.emptyList();
 			}
 		}
@@ -426,7 +468,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			KnowledgePoint point = knowledgePointMapper.selectById(knowledgePointId);
 			Section section = point == null ? null : sectionMapper.selectById(point.getSectionId());
 			Chapter chapter = section == null ? null : chapterMapper.selectById(section.getChapterId());
-			if (chapter == null || !validSubjectIds().contains(chapter.getSubjectId())) {
+			if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 				return Collections.emptyList();
 			}
 		}

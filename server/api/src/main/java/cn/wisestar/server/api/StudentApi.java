@@ -174,17 +174,19 @@ public class StudentApi {
 	}
 
 	/**
-	 * 学员端章节列表。
+	 * 学员端章节列表（按订单权限过滤学科与年级）。
 	 *
-	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/chapters?subjectId=。</p>
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/chapters?subjectId=&grade=。</p>
 	 *
 	 * @param subjectId 学科ID
+	 * @param grade     年级（可选，如 三年级；不传按该学科全部授权年级返回）
 	 * @return 章节列表（含小节数）
 	 */
 	@GetMapping("/study/chapters")
 	@PreAuthorize("isAuthenticated()")
-	public List<ChapterView> studyChapters(@RequestParam(required = false) String subjectId) {
-		return studentService.studyChapters(subjectId);
+	public List<ChapterView> studyChapters(@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String grade) {
+		return studentService.studyChapters(subjectId, grade);
 	}
 
 	/**

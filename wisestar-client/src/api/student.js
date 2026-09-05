@@ -126,14 +126,14 @@ export async function getMyPermissions() {
 // 学员端学习内容（按订单权限过滤，后台配置真实呈现）
 // ------------------------------------------------------------
 
-/** 学员端学科列表（含该学科有权限的教材版本） */
+/** 学员端学科列表（含该学科有权限的教材版本与年级） */
 export async function getStudySubjects() {
   return request.get('/student/study/subjects');
 }
 
-/** 学员端章节列表（?subjectId=） */
-export async function getStudyChapters(subjectId) {
-  return request.get('/student/study/chapters', { params: { subjectId } });
+/** 学员端章节列表（?subjectId=&grade=，grade 缺省按该学科全部授权年级返回） */
+export async function getStudyChapters(subjectId, grade) {
+  return request.get('/student/study/chapters', { params: { subjectId, grade } });
 }
 
 /** 学员端小节列表（?chapterId=） */

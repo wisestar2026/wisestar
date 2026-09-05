@@ -25,4 +25,7 @@ public class StudentSubjectView {
 	/** 该学科下有权限的教材版本（去重） */
 	private List<String> versions = new ArrayList<>();
 
+	/** 该学科下有权限的年级（去重，如 一年级/三年级） */
+	private List<String> grades = new ArrayList<>();
+
 }
