@@ -248,8 +248,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 	}
 
 	/**
-	 * 更新章节（仅更新管理端可维护列：名称/年级/学期/版本；
-	 * 图标与排序由系统默认维护，不随本次更新改动）。
+	 * 更新章节（仅更新管理端可维护列：名称/年级/学期/版本/排序；
+	 * 图标由系统默认维护，不随本次更新改动；排序留空时不改动原值）。
 	 */
 	@Override
 	public void updateChapter(ChapterRequest request) {
@@ -259,7 +259,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 				.set(Chapter::getName, chapter.getName())
 				.set(Chapter::getGrade, chapter.getGrade())
 				.set(Chapter::getTerm, chapter.getTerm())
-				.set(Chapter::getVersion, chapter.getVersion()));
+				.set(Chapter::getVersion, chapter.getVersion())
+				.set(request.getSort() != null, Chapter::getSort, chapter.getSort()));
 	}
 
 	/**

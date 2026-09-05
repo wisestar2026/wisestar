@@ -23,7 +23,7 @@ const VERSION_OPTIONS = [{ value: '人教版', label: '人教版' }, { value: '�
 
 import { useEffect, useState } from 'react';
 import {
-  Table, Space, Button, Input, Select, Modal, Form, Tag, Typography, Popconfirm, message,
+  Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Popconfirm, message,
   Upload,
 } from 'antd';
 import {
@@ -142,6 +142,7 @@ export default function ChapterManagePage() {
     if (chapter) {
       form.setFieldsValue({
         subjectId: chapter.subjectId, name: chapter.name,
+        sort: chapter.sort,
         grade: chapter.grade, term: chapter.term, version: chapter.version,
       });
     } else {
@@ -231,6 +232,10 @@ export default function ChapterManagePage() {
     {
       title: '章节名称', dataIndex: 'name', width: 180,
       render: (n) => <Text strong>{n}</Text>,
+    },
+    {
+      title: '排序', dataIndex: 'sort', width: 70, align: 'center',
+      render: (s) => (s || '-'),
     },
     { title: '年级', dataIndex: 'grade', width: 80, render: (g) => (g || '-') },
     { title: '学期', dataIndex: 'term', width: 60, render: (t) => (t || '-') },
@@ -348,6 +353,9 @@ export default function ChapterManagePage() {
           <Form.Item name="name" label="章节名称" rules={[{ required: true, message: '请输入章节名称' }]}>
             <Input placeholder="如：100以内加减法" maxLength={30} />
           </Form.Item>
+          <Form.Item name="sort" label="排序（数字越小越靠前，学员端按此顺序展示）">
+            <InputNumber min={1} style={{ width: '100%' }} placeholder="留空自动排到最后" />
+          </Form.Item>
           <Form.Item name="grade" label="年级">
             <Select allowClear placeholder="选择年级" options={GRADE_OPTIONS} />
           </Form.Item>
@@ -357,7 +365,7 @@ export default function ChapterManagePage() {
           <Form.Item name="version" label="教材版本">
             <Select allowClear placeholder="选择版本" options={VERSION_OPTIONS} />
           </Form.Item>
-          <Text type="secondary">章节图标与排序由系统默认维护，无需手动设置。</Text>
+          <Text type="secondary">章节图标由系统默认维护；排序数字越小越靠前。</Text>
         </Form>
       </Modal>
 
