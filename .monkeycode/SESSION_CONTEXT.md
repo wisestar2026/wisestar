@@ -2,7 +2,16 @@
 
 > 更新：2026-09-05 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
 
-## 0. 最近进展（2026-09-05 云端复现修复）
+## 0. 最近进展（2026-09-05：云端复现修复 + 全仓库整合收尾）
+
+**整合已完成：main 为唯一主线（76 提交，root 762e10d → 429139f），功能分支已删。**
+
+- 三段收尾提交（已推送 origin/main）：
+  - `93c4a50` fix: 知识管理/督学/英语模块云端编译与运行缺陷（SurveySchema 类型/StudentTask::getCreateTime/EnglishWordApi 重复映射/英语表审计列/StudentRecord 对齐 DDL/student:supervision 权限点注册）
+  - `6f72426` docs: 会话上下文与项目记忆
+  - `429139f` chore: 清理上游 SurveyKing 残留（website/client/image/.gitee/根 application.properties/migration SQL/scripts H2 库）并重写根 README
+- git 身份（仓库级）：zhanghaiyang / 15717876985@163.com（docs 日志 3.1 惯例；云端 git 全局无身份）
+- **云端 push 偶发异常**：403 wisestarCode / non-fast-forward 为瞬态（GitHub 重定向/TLS），重试即可；origin=wisestar.git
 
 - 云端用 openjdk-17 + Maven 3.8.7 构建；分支含 3 处编译/映射缺陷已修复（见 SESSION 会话记录）：
   - ① rdbms：SurveySchema 类型/取 answer 列；StudentTask::getCreateTime 修正
@@ -36,8 +45,11 @@
 
 ## 3. git
 
-- 分支 `260810-feat-knowledge-mgmt-backend`；远程 `myfork`（wisestar2026/wisestar）；开发完 commit+push
-- 最近推送：`8065173`（日志 37 节）；工作区干净
+- **主线：`main`（76 提交，root `762e10d` → `429139f`）**；origin = `https://github.com/wisestar2026/wisestar.git`（HTTPS，公网可直连）
+- 原功能分支 `260810-feat-knowledge-mgmt-backend` 已 ff 并入 main 并删除（本地+远端）；仓库无子模块
+- 开发规范：新功能先在 main 上开 `YYMMDD-feat-xxx` 分支，完成 commit+push 后合回 main（参考 docs/开发维护日志.md 3.1）
+- 最近推送：`429139f`（2026-09-05 整合收尾）；工作区干净
+- 注意：`.gitignore` 已补 `*.mv.db` 与 `/application.properties`，勿再将 H2 运行库/生成文件入库
 
 ## 4. 验证脚本（/tmp/opencode/）
 
