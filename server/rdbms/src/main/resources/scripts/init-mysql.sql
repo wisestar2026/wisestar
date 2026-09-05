@@ -1767,6 +1767,8 @@ CREATE TABLE `t_section` (
   `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID(t_chapter.id)',
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节名称',
   `sort` int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
+  `grade` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级(如 一年级)',
+  `term` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期(上/下)',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '小节内容设置JSON(objective/overview/points)',
   `practice` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '小节练习设置JSON(questionCount/difficulty/types)',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
@@ -1792,6 +1794,22 @@ INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practic
 INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3009', '2005', '字母乐园', 1, '{"objective":"掌握 26 个字母","overview":"字母名称音、大小写与书写占格。","points":["26 个字母顺序","大小写对应","5 个元音字母"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3009');
 INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3010', '2005', '拼读魔法', 2, '{"objective":"掌握自然拼读","overview":"元音字母在单词中的短音规律。","points":["a→/æ/ e→/e/ i→/ɪ/","辅音发音","拼读练习"]}', '{"questionCount":8,"difficulty":"进阶","types":["Radio"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3010');
 INSERT INTO `t_section` (`id`, `chapter_id`, `name`, `sort`, `content`, `practice`, `is_deleted`, `create_at`, `create_by`) SELECT '3011', '2006', '校园词汇', 1, '{"objective":"掌握校园常用词汇","overview":"教室、文具、颜色等词汇。","points":["book/pen/ruler","red/blue/green"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, NOW(), '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM `t_section` WHERE `id` = '3011');
+
+-- 老库表结构升级（新库已由上方 CREATE 建列，此块幂等）
+ALTER TABLE `t_section` ADD COLUMN IF NOT EXISTS `grade` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级(如 一年级)';
+ALTER TABLE `t_section` ADD COLUMN IF NOT EXISTS `term` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期(上/下)';
+-- 小节种子历史数据补齐年级/学期（与所属章节一致；仅当年级为空时，避免覆盖用户后续修改）
+UPDATE `t_section` SET grade='一年级', term='上' WHERE id='3001' AND grade IS NULL;
+UPDATE `t_section` SET grade='一年级', term='上' WHERE id='3002' AND grade IS NULL;
+UPDATE `t_section` SET grade='三年级', term='上' WHERE id='3003' AND grade IS NULL;
+UPDATE `t_section` SET grade='三年级', term='上' WHERE id='3004' AND grade IS NULL;
+UPDATE `t_section` SET grade='一年级', term='下' WHERE id='3005' AND grade IS NULL;
+UPDATE `t_section` SET grade='一年级', term='下' WHERE id='3006' AND grade IS NULL;
+UPDATE `t_section` SET grade='一年级', term='下' WHERE id='3007' AND grade IS NULL;
+UPDATE `t_section` SET grade='一年级', term='下' WHERE id='3008' AND grade IS NULL;
+UPDATE `t_section` SET grade='三年级', term='上' WHERE id='3009' AND grade IS NULL;
+UPDATE `t_section` SET grade='三年级', term='上' WHERE id='3010' AND grade IS NULL;
+UPDATE `t_section` SET grade='三年级', term='上' WHERE id='3011' AND grade IS NULL;
 
 -- ----------------------------
 -- Table structure for t_knowledge_point（知识点：最小学习单元，含内容设置 JSON 与图片）

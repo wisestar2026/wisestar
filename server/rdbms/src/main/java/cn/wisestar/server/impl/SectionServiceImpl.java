@@ -36,7 +36,6 @@ import org.springframework.util.CollectionUtils;
 import javax.validation.ValidationException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -87,12 +86,15 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 	private final ChapterMapper chapterMapper;
 
 	/**
-	 * 小节列表（按章节过滤，sort 升序），并统计各小节下知识点数与已绑定题库数。
+	 * 小节列表（chapterId 可选，年级/学期可选等值过滤，sort 升序），
+	 * 并统计各小节下知识点数与已绑定题库数。
 	 */
 	@Override
 	public List<SectionView> listSections(SectionRequest query) {
 		List<Section> sections = list(Wrappers.<Section>lambdaQuery()
 				.eq(hasText(query.getChapterId()), Section::getChapterId, query.getChapterId())
+				.eq(hasText(query.getGrade()), Section::getGrade, query.getGrade())
+				.eq(hasText(query.getTerm()), Section::getTerm, query.getTerm())
 				.orderByAsc(Section::getSort));
 		List<String> sectionIds = sections.stream().map(Section::getId).collect(Collectors.toList());
 		Map<String, Long> knowledgePointCountMap = sectionIds.isEmpty() ? Collections.emptyMap()
@@ -112,17 +114,32 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 	}
 
 	/**
-	 * 新增小节。
+	 * 新增小节（sort 为空时自动追加到所属章节现有最大 sort 之后）。
 	 */
 	@Override
 	public String addSection(SectionRequest request) {
 		Section section = sectionViewMapper.fromRequest(request);
+		fillDefaults(section);
 		save(section);
 		return section.getId();
 	}
 
+	/** 新增小节时补齐系统默认值：sort 为空则追加到所属章节现有最大 sort 之后。 */
+	private void fillDefaults(Section section) {
+		if (section.getSort() == null) {
+			Integer maxSort = getBaseMapper().selectList(Wrappers.<Section>lambdaQuery()
+					.select(Section::getSort)
+					.eq(Section::getChapterId, section.getChapterId())
+					.orderByDesc(Section::getSort)
+					.last("limit 1"))
+					.stream().findFirst().map(Section::getSort).orElse(null);
+			section.setSort(maxSort == null ? 1 : maxSort + 1);
+		}
+	}
+
 	/**
-	 * 批量导入小节（Excel：小节名/排序；按 chapterId+name 去重）。
+	 * 批量导入小节（Excel：学科名/章节名/小节名/年级(选填)/学期(选填)；
+	 * 排序不参与导入，按所属章节自动追加；按 chapterId+name 去重）。
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -131,8 +148,16 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 				.collect(Collectors.toMap(Subject::getName, Subject::getId, (a, b) -> a));
 		Map<String, String> chapterCache = chapterMapper.selectList(null).stream()
 				.collect(Collectors.toMap(c -> c.getSubjectId() + "|" + c.getName(), Chapter::getId, (a, b) -> a));
-		Set<String> existing = this.baseMapper.selectList(null).stream()
+		List<Section> allSections = this.baseMapper.selectList(null);
+		Set<String> existing = allSections.stream()
 				.map(s -> s.getChapterId() + "|" + s.getName()).collect(Collectors.toSet());
+		// 每个章节的「下一个可用排序号」，初始 = 现有最大 sort + 1；同一章节逐行递增，跨章节互不影响
+		Map<String, AtomicInteger> nextSortByChapter = allSections.stream()
+				.filter(s -> s.getSort() != null && s.getChapterId() != null)
+				.collect(Collectors.groupingBy(Section::getChapterId,
+						Collectors.collectingAndThen(
+								Collectors.maxBy(java.util.Comparator.comparingInt(Section::getSort)),
+								max -> new AtomicInteger(max.get().getSort() + 1))));
 		AtomicInteger imported = new AtomicInteger(0);
 		AtomicInteger skipped = new AtomicInteger(0);
 		List<Section> toSave = new ArrayList<>();
@@ -143,9 +168,9 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						if (r.getRowNum() == 1) {
 							return; // 跳过表头
 						}
-						String subjectName = r.getCellText(0);
-						String chapterName = r.getCellText(1);
-						String name = r.getCellText(2);
+						String subjectName = cellText(r, 0);
+						String chapterName = cellText(r, 1);
+						String name = cellText(r, 2);
 						if (!hasText(subjectName) || !hasText(chapterName) || !hasText(name)) {
 							skipped.incrementAndGet();
 							return;
@@ -161,7 +186,11 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						Section section = new Section();
 						section.setChapterId(chapterId);
 						section.setName(name.trim());
-						section.setSort(r.getCellAsNumber(3).orElse(BigDecimal.ONE).intValue());
+						section.setGrade(normalizeBlank(cellText(r, 3)));
+						section.setTerm(normalizeBlank(cellText(r, 4)));
+						int nextSort = nextSortByChapter
+								.computeIfAbsent(chapterId, s -> new AtomicInteger(1)).getAndIncrement();
+						section.setSort(nextSort);
 						toSave.add(section);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -185,12 +214,46 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		return new ImportResultView(imported.get(), skipped.get());
 	}
 
+	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */
+	private String cellText(Row row, int index) {
+		return row.getOptionalCell(index).map(cell -> {
+			try {
+				return cell.getText();
+			}
+			catch (Exception e) {
+				return "";
+			}
+		}).orElse("");
+	}
+
+	/** 去掉前后空白；空文本归一为 null。 */
+	private String normalizeBlank(String text) {
+		return hasText(text) ? text.trim() : null;
+	}
+
 	/**
 	 * 更新小节（含内容设置/练习设置 JSON）。
+	 * grade/term 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null，
+	 * 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容/练习设置）不受影响）。
 	 */
 	@Override
 	public void updateSection(SectionRequest request) {
-		updateById(sectionViewMapper.fromRequest(request));
+		Section m = sectionViewMapper.fromRequest(request);
+		boolean touchGrade = m.getGrade() != null;
+		boolean touchTerm = m.getTerm() != null;
+		if (touchGrade) {
+			m.setGrade(null);
+		}
+		if (touchTerm) {
+			m.setTerm(null);
+		}
+		updateById(m);
+		if (touchGrade || touchTerm) {
+			update(Wrappers.<Section>lambdaUpdate()
+					.eq(Section::getId, request.getId())
+					.set(touchGrade, Section::getGrade, normalizeBlank(request.getGrade()))
+					.set(touchTerm, Section::getTerm, normalizeBlank(request.getTerm())));
+		}
 	}
 
 	/**

@@ -18,15 +18,15 @@ import java.util.List;
 public interface SectionService {
 
 	/**
-	 * 小节列表（按章节过滤，sort 升序）。
+	 * 小节列表（chapterId 可选，年级/学期可选等值过滤，sort 升序）。
 	 *
-	 * @param query 查询条件（chapterId 可选；为空返回全部小节）
+	 * @param query 查询条件（chapterId/grade/term 可选；为空返回全部小节）
 	 * @return 小节视图列表（含知识点数统计与已绑定题库数统计）
 	 */
 	List<SectionView> listSections(SectionRequest query);
 
 	/**
-	 * 新增小节。
+	 * 新增小节（sort 自动按所属章节末尾追加）。
 	 *
 	 * @param request 小节请求
 	 * @return 新小节 id
@@ -34,9 +34,10 @@ public interface SectionService {
 	String addSection(SectionRequest request);
 
 	/**
-	 * 批量导入小节（Excel：小节名/排序，首行表头跳过）。
+	 * 批量导入小节（Excel：学科名/章节名/小节名/年级/学期，首行表头跳过）。
 	 *
-	 * <p>按 chapterId + name 去重（已存在的同名小节跳过），返回实际新增条数。</p>
+	 * <p>按 chapterId + name 去重（已存在的同名小节跳过），返回实际新增条数。
+	 * 排序不参与导入，系统按所属章节自动追加。</p>
 	 *
 	 * @param request 导入请求（chapterId + Excel 文件）
 	 * @return 导入结果（新增/跳过条数）

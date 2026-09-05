@@ -42,6 +42,10 @@ import { usePermission } from '../../utils/usePermission';
 
 const { Text } = Typography;
 
+// 年级/学期可选项（与章节管理页一致）
+const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
+const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
+
 export default function SectionManagePage() {
   const { can } = usePermission();
   const navigate = useNavigate();
@@ -53,6 +57,9 @@ export default function SectionManagePage() {
   const [chapters, setChapters] = useState([]);
   const [subjectId, setSubjectId] = useState(urlSubjectId || undefined);
   const [chapterId, setChapterId] = useState(urlChapterId || undefined);
+  // 筛选栏过滤条件（年级/学期，任一变化即触发小节列表重查）
+  const [searchGrade, setSearchGrade] = useState(undefined);
+  const [searchTerm, setSearchTerm] = useState(undefined);
   const [sections, setSections] = useState([]);
   // 弹窗内「学科→章节」联动状态（与顶部筛选独立）
   const [dialogSubjectId, setDialogSubjectId] = useState(undefined);
@@ -110,14 +117,14 @@ export default function SectionManagePage() {
     }).catch(() => setChapters([]));
   }, [subjectId]);
 
-  // ---- 章节切换 → 加载小节 ----
+  // ---- 章节/年级/学期切换 → 加载小节 ----
   useEffect(() => {
     if (!chapterId) return;
     setLoading(true);
-    listSections({ chapterId }).then((res) => {
+    listSections({ chapterId, grade: searchGrade, term: searchTerm }).then((res) => {
       setSections(res?.data || []);
     }).catch(() => setSections([])).finally(() => setLoading(false));
-  }, [chapterId]);
+  }, [chapterId, searchGrade, searchTerm]);
 
   const subject = subjects.find((s) => s.id === subjectId);
   const chapter = chapters.find((c) => c.id === chapterId);
@@ -129,7 +136,7 @@ export default function SectionManagePage() {
       .then((res) => {
         const d = res?.data || {};
         message.success(`导入完成：新增 ${d.imported ?? 0} 个小节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
-        listSections({ chapterId }).then((res2) => setSections(res2?.data || [])).catch(() => setSections([]));
+        listSections({ chapterId, grade: searchGrade, term: searchTerm }).then((res2) => setSections(res2?.data || [])).catch(() => setSections([]));
       })
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));
@@ -142,7 +149,11 @@ export default function SectionManagePage() {
     setModalOpen(true);
     if (section) {
       form.resetFields();
-      form.setFieldsValue({ chapterId: section.chapterId, name: section.name, sort: section.sort });
+      form.setFieldsValue({
+        chapterId: section.chapterId, name: section.name,
+        sort: section.sort,
+        grade: section.grade || undefined, term: section.term || undefined,
+      });
       // 编辑：反查归属学科并加载该学科章节
       listChapters().then((res) => {
         const all = res?.data || [];
@@ -157,7 +168,7 @@ export default function SectionManagePage() {
       });
     } else {
       form.resetFields();
-      form.setFieldsValue({ chapterId: chapterId || undefined, sort: sections.length + 1 });
+      form.setFieldsValue({ chapterId: chapterId || undefined });
       setDialogSubjectId(subjectId || undefined);
       if (subjectId) {
         listChapters({ subjectId }).then((res) => setDialogChapters(res?.data || []));
@@ -184,17 +195,20 @@ export default function SectionManagePage() {
         message.warning('请选择所属学科与所属章节');
         return;
       }
+      // 年级/学期允许留空：空值归一为空串提交（后端将空串落为 null，表达清除）
+      const payload = { ...values, grade: values.grade || '', term: values.term || '' };
       if (editing) {
-        updateSection({ ...values, id: editing.id }).then(() => {
+        updateSection({ ...payload, id: editing.id }).then(() => {
           message.success('小节已更新');
           setModalOpen(false);
-          setSections((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...values } : s)));
+          setSections((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...payload } : s)));
         });
       } else {
-        createSection(values).then(() => {
+        createSection(payload).then(() => {
           message.success('小节已新增');
           setModalOpen(false);
-          listSections({ chapterId: values.chapterId }).then((res) => setSections(res?.data || []));
+          listSections({ chapterId: payload.chapterId, grade: searchGrade, term: searchTerm })
+            .then((res) => setSections(res?.data || []));
         });
       }
     });
@@ -296,6 +310,15 @@ export default function SectionManagePage() {
     },
     {
       title: '排序', dataIndex: 'sort', width: 70, align: 'center',
+      render: (s) => (s || '-'),
+    },
+    {
+      title: '年级', dataIndex: 'grade', width: 80, align: 'center',
+      render: (g) => (g || '-'),
+    },
+    {
+      title: '学期', dataIndex: 'term', width: 60, align: 'center',
+      render: (t) => (t || '-'),
     },
     {
       title: '内容设置', width: 110, align: 'center',
@@ -408,6 +431,22 @@ export default function SectionManagePage() {
           placeholder="选择章节"
           options={chapters.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))}
         />
+        <Select
+          style={{ width: 100 }}
+          placeholder="年级"
+          allowClear
+          value={searchGrade}
+          onChange={setSearchGrade}
+          options={GRADE_OPTIONS}
+        />
+        <Select
+          style={{ width: 90 }}
+          placeholder="学期"
+          allowClear
+          value={searchTerm}
+          onChange={setSearchTerm}
+          options={TERM_OPTIONS}
+        />
       </Space>
 
       <Table
@@ -441,8 +480,14 @@ export default function SectionManagePage() {
           <Form.Item name="name" label="小节名称" rules={[{ required: true, message: '请输入小节名称' }]}>
             <Input placeholder="如：加法小站" maxLength={30} />
           </Form.Item>
-          <Form.Item name="sort" label="排序（数字越小越靠前）">
-            <InputNumber min={1} style={{ width: '100%' }} />
+          <Form.Item name="sort" label="排序（数字越小越靠前，学员端按此顺序展示）">
+            <InputNumber min={1} style={{ width: '100%' }} placeholder="留空自动排到最后" />
+          </Form.Item>
+          <Form.Item name="grade" label="年级（选填）">
+            <Select allowClear placeholder="选择年级" options={GRADE_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="term" label="学期（选填）">
+            <Select allowClear placeholder="选择学期" options={TERM_OPTIONS} />
           </Form.Item>
         </Form>
       </Modal>

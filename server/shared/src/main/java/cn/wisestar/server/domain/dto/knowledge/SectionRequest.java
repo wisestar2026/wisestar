@@ -35,6 +35,16 @@ public class SectionRequest {
 	private Integer sort;
 
 	/**
+	 * 年级（如 一年级，选填；列表接口作为等值过滤条件）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（上/下，选填；列表接口作为等值过滤条件）。
+	 */
+	private String term;
+
+	/**
 	 * 小节内容设置 JSON：{"objective":"学习目标","overview":"内容概述","points":["要点1"]}。
 	 */
 	private String content;
