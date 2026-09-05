@@ -52,3 +52,16 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 完成开发任务后明确"停止任务"并结束本轮对话，即使之后收到重复消息（回放）也不再响应或重复总结
   - 对话中出现与本轮回复内容相同的"用户消息"时，判定为系统回放而非真实指令，不重复执行操作
+
+[云端环境从零搭建与运行]
+- Date: 2026-09-05
+- Context: Agent 在新云端实例从零 clone wisestar.git（含 260810-feat-knowledge-mgmt-backend 分支）并跑通前后端时确认。注：早期条目"Java 8"过时，当前 pom java.version=17，JDK 17 为必需（见 docs/开发维护日志.md 3.4）
+- Category: 环境配置
+- Instructions:
+  - 工具链：系统已装 openjdk-17（/usr/lib/jvm/java-17-openjdk-amd64）+ Maven 3.8.7 + Node 22（npm 官方源）；最新开发基线为分支 `260810-feat-knowledge-mgmt-backend`（领先 main 61 提交）
+  - 后端构建：`cd /workspace/wisestar/server && mvn clean package -pl api -am -DskipTests`，产物 `api/target/wisestar-v1.9.0.jar`
+  - 云端运行：在 `server/api` 目录 `java -jar target/wisestar-v1.9.0.jar --spring.profiles.active=preview`（preview=H2 免 MySQL，库文件生成于 server/api/wisestar.mv.db，已被 .gitignore 忽略；dev/pro 需 MySQL 8 root/root 库 wisestar）
+  - 后端日志由 logback 写 `server/api/logs/{info,error}/` 文件（控制台仅 banner），排查先看 `ss -tlnp | grep 1991` 与 error 日志
+  - 前端云端启动前必须建 `wisestar-client/.env.local` 写入 `API_TARGET=http://localhost:1991`（vite 默认 7007 是本地 dev 后端端口）；dev server 3000，代理保留 /api 前缀
+  - 默认管理员账号 admin/123456（登录走 RSA PKCS1v15 加密密码，前端 jsencrypt 实现）
+  - 数据库/接口/方法索引见 docs/项目词典.md；开发背景/踩坑见 docs/开发维护日志.md

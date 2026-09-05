@@ -1,6 +1,20 @@
 # 会话上下文摘要（压缩版，供后续任务快速参考，减少重新探索）
 
-> 更新：2026-08-26 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
+> 更新：2026-09-05 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
+
+## 0. 最近进展（2026-09-05 云端复现修复）
+
+- 云端用 openjdk-17 + Maven 3.8.7 构建；分支含 3 处编译/映射缺陷已修复（见 SESSION 会话记录）：
+  - ① rdbms：SurveySchema 类型/取 answer 列；StudentTask::getCreateTime 修正
+  - ② api：EnglishWordApi 重复 /record 映射删除（学生端重构版为 /study /record 权威）
+  - ③ 英语表 H2 缺 BaseModel 审计列 → h2/mysql 种子补列 + admin 补 english:* 权限点
+- 本次新增修复（已随 fat jar wisestar-v1.9.0.jar 重新构建验证）：
+  - `student:supervision` 权限点从未注册给任何角色 → 常量 PermissionConsts（权限点常量 + ADMIN_AUTHORITY + 权限树"督学"叶子）+ h2/mysql 种子 admin 收敛同步补齐
+  - StudentRecord 实体字段 createTime/updateTime/deleted 与 DDL create_at/update_at/is_deleted 不一致 → 实体对齐 DDL
+- 复测全 200：login / supervision/online-students / english word-manager create+list / subject create
+- 后端预览运行中：终端 term_1788580550762_20（1991，preview profile，H2 文件库 wisestar.mv.db 在 server/api 目录，已 gitignore）
+- 构建注意：**api fat jar 增量 package 不重写 jar**（maven-jar-plugin up-to-date 跳过 + repackage 保留），必须 `mvn clean package -pl api -am -DskipTests`
+
 
 ## 1. 环境与启动
 
