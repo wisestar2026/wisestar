@@ -53,3 +53,7 @@ server/api/application.properties
 
 ### Vite cache ###
 surveyking-client/.vite
+
+### H2 运行时库（禁止入库） ###
+*.mv.db
+/application.properties
