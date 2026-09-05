@@ -24,6 +24,21 @@ public class ChapterView {
 	private String name;
 
 	/**
+	 * 年级（一年级~六年级，筛选与展示用）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（上/下，筛选与展示用）。
+	 */
+	private String term;
+
+	/**
+	 * 教材版本（人教版/苏教版等，筛选与展示用）。
+	 */
+	private String version;
+
+	/**
 	 * 图标（emoji）。
 	 */
 	private String icon;

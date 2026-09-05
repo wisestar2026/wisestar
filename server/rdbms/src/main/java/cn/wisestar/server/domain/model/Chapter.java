@@ -29,6 +29,21 @@ public class Chapter extends BaseModel {
 	private String name;
 
 	/**
+	 * 年级（一年级~六年级）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（上/下）。
+	 */
+	private String term;
+
+	/**
+	 * 教材版本（人教版/苏教版/北师大版/外研版等）。
+	 */
+	private String version;
+
+	/**
 	 * 图标（emoji）。
 	 */
 	private String icon;

@@ -1500,8 +1500,8 @@ CREATE TABLE IF NOT EXISTS t_sys_info (
   avatar varchar(64) DEFAULT NULL COMMENT '图标',
   locale varchar(64) DEFAULT NULL COMMENT '默认语言',
   version varchar(64) DEFAULT NULL COMMENT '版本号',
-  setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置',
-  ai_setting varchar(1024) DEFAULT NULL COMMENT 'AI设置',
+
+  setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置',  ai_setting varchar(1024) DEFAULT NULL COMMENT 'AI设置',
   register_info varchar(1024) DEFAULT NULL COMMENT '注册信息',
   is_default tinyint(1) DEFAULT NULL COMMENT '是否默认设置',
   create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -1724,12 +1724,12 @@ CREATE TABLE IF NOT EXISTS t_chapter (
 -- ----------------------------
 -- Records of t_chapter
 -- ----------------------------
-INSERT INTO t_chapter (id, subject_id, name, icon, sort, is_deleted, create_at, create_by) SELECT '2001', '1001', '识字与写字', '🖋️', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2001');
-INSERT INTO t_chapter (id, subject_id, name, icon, sort, is_deleted, create_at, create_by) SELECT '2002', '1001', '古诗文诵读', '📜', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2002');
-INSERT INTO t_chapter (id, subject_id, name, icon, sort, is_deleted, create_at, create_by) SELECT '2003', '1002', '100以内加减法', '🧮', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2003');
-INSERT INTO t_chapter (id, subject_id, name, icon, sort, is_deleted, create_at, create_by) SELECT '2004', '1002', '图形的认识', '📐', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2004');
-INSERT INTO t_chapter (id, subject_id, name, icon, sort, is_deleted, create_at, create_by) SELECT '2005', '1003', '字母与拼读', '🔠', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2005');
-INSERT INTO t_chapter (id, subject_id, name, icon, sort, is_deleted, create_at, create_by) SELECT '2006', '1003', '基础单词', '🗣️', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2006');
+INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2001', '1001', '识字与写字', '一年级', '上', '人教版', '一年级', '上', '人教版', '🖋️', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2001');
+INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2002', '1001', '古诗文诵读', '三年级', '上', '人教版', '三年级', '上', '人教版', '📜', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2002');
+INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2003', '1002', '100以内加减法', '一年级', '下', '人教版', '一年级', '下', '人教版', '🧮', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2003');
+INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2004', '1002', '图形的认识', '一年级', '下', '人教版', '一年级', '下', '人教版', '📐', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2004');
+INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2005', '1003', '字母与拼读', '三年级', '上', '外研版', '三年级', '上', '外研版', '🔠', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2005');
+INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2006', '1003', '基础单词', '三年级', '上', '外研版', '三年级', '上', '外研版', '🗣️', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2006');
 
 -- ----------------------------
 -- Table structure for t_section（小节：章节下的学习小站，含内容/练习设置 JSON）
@@ -2083,6 +2083,13 @@ ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS deleted tinyint DEFAULT 0;
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级（一年级~六年级）';
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS term varchar(16) DEFAULT NULL COMMENT '学期（上/下）';
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS version varchar(64) DEFAULT NULL COMMENT '教材版本（人教版/苏教版等）';
+-- 章节种子历史数据补齐年级/学期/版本（仅当三字段为空时，避免覆盖用户后续修改）
+UPDATE t_chapter SET grade='一年级', term='上', version='人教版' WHERE id='2001' AND grade IS NULL;
+UPDATE t_chapter SET grade='三年级', term='上', version='人教版' WHERE id='2002' AND grade IS NULL;
+UPDATE t_chapter SET grade='一年级', term='下', version='人教版' WHERE id='2003' AND grade IS NULL;
+UPDATE t_chapter SET grade='一年级', term='下', version='人教版' WHERE id='2004' AND grade IS NULL;
+UPDATE t_chapter SET grade='三年级', term='上', version='外研版' WHERE id='2005' AND grade IS NULL;
+UPDATE t_chapter SET grade='三年级', term='上', version='外研版' WHERE id='2006' AND grade IS NULL;
 
 -- 英语学习模块
 CREATE TABLE IF NOT EXISTS t_english_word (

@@ -286,8 +286,9 @@ async function importExcel(url, formData) {
 }
 
 /**
- * 批量导入章节（Excel 列：学科名/章节名/图标(选填)/排序(选填)，首行表头跳过）
- * 后端接口: POST /api/chapter/import（按学科+章节名去重，归属由学科名列匹配）
+ * 批量导入章节（Excel 列：学科名/章节名称/年级(选填)/学期(选填)/版本(选填)，首行表头跳过）
+ * 后端接口: POST /api/chapter/import（按学科+章节名去重，归属由学科名列匹配；
+ *            图标与排序由系统默认维护）
  * @param {File} file - Excel 文件
  * @returns {Object} data: { imported, skipped }
  */
@@ -295,6 +296,29 @@ export async function importChapters(file) {
   const formData = new FormData();
   formData.append('file', file);
   return importExcel('/api/chapter/import', formData);
+}
+
+/**
+ * 导出章节列表为 Excel 文件（触发浏览器下载）
+ * 后端接口: GET /api/chapter/export?subjectId=&grade=&term=&version=
+ * 为什么这么写: 创建隐藏 <a> 标签直接访问下载 URL，浏览器原生处理二进制流，
+ *   携带登录 Cookie（同源 /api 路径），无需经过 JS 内存转换
+ * @param {Object} params - { subjectId, grade, term, version }（过滤条件与列表页一致，可选）
+ * @returns {void} 直接触发浏览器附件下载
+ * 调用方: ChapterManagePage.handleExport
+ */
+export async function exportChapters({ subjectId, grade, term, version } = {}) {
+  const params = new URLSearchParams();
+  if (subjectId) params.append('subjectId', subjectId);
+  if (grade) params.append('grade', grade);
+  if (term) params.append('term', term);
+  if (version) params.append('version', version);
+  const a = document.createElement('a');
+  a.href = `/api/chapter/export?${params.toString()}`;
+  a.download = `chapters_${Date.now()}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 /**

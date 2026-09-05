@@ -58,12 +58,31 @@ public class ChapterApi {
 	}
 
 	/**
+	 * 导出章节列表为 Excel（附件下载）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/chapter/export
+	 * （如 /api/chapter/export?subjectId=&amp;grade=&amp;term=&amp;version=）。</p>
+	 *
+	 * <p><b>功能</b>：导出 xlsx 文件，列结构：章节名称/年级/学期/版本/小节数/练习数；
+	 * 过滤条件与 {@link #listChapters(ChapterRequest)} 一致（subjectId/grade/term/version 可选）。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('knowledge:list')。</p>
+	 *
+	 * @param query 章节查询条件
+	 */
+	@GetMapping("/export")
+	@PreAuthorize("hasAuthority('knowledge:list')")
+	public void exportChapters(ChapterRequest query) {
+		chapterService.exportChapters(query);
+	}
+
+	/**
 	 * 新增章节。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/create（如 /api/chapter/create）。</p>
 	 *
 	 * <p><b>请求参数</b>：{@link ChapterRequest}（@RequestBody JSON：
-	 * subjectId/name/icon/sort）。</p>
+	 * subjectId/name/grade/term/version；icon/sort 由系统默认维护，可不传）。</p>
 	 *
 	 * <p><b>返回值结构</b>：新章节 id（String）。</p>
 	 *
@@ -82,8 +101,9 @@ public class ChapterApi {
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/import
 	 * （如 /api/chapter/import）。</p>
 	 *
-	 * <p><b>功能</b>：解析 Excel（列：章节名/图标(选填)/排序(选填)，
-	 * 首行为表头跳过），按 subjectId+name 去重后批量写入 t_chapter。</p>
+	 * <p><b>功能</b>：解析 Excel（列：学科名/章节名称/年级(选填)/学期(选填)/版本(选填)，
+	 * 首行为表头跳过），按「学科名+章节名」去重后批量写入 t_chapter；
+	 * 图标与排序由系统默认维护（图标 📖、排序追加至学科末尾）。</p>
 	 *
 	 * <p><b>权限</b>：hasAuthority('knowledge:create')。</p>
 	 *

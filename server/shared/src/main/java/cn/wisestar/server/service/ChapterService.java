@@ -18,12 +18,23 @@ import java.util.List;
 public interface ChapterService {
 
 	/**
-	 * 章节列表（按学科过滤，sort 升序）。
+	 * 章节列表（按学科/年级/学期/版本过滤，sort 升序）。
 	 *
-	 * @param query 查询条件（subjectId 可选；为空返回全部章节）
+	 * @param query 查询条件（subjectId/grade/term/version 可选；为空返回全部章节）
 	 * @return 章节视图列表（含小节数统计与已绑定题库数统计）
 	 */
 	List<ChapterView> listChapters(ChapterRequest query);
+
+	/**
+	 * 导出章节列表为 Excel 文件（写回当前 HTTP 响应，附件下载）。
+	 *
+	 * <p><b>导出列</b>：章节名称 / 年级 / 学期 / 版本 / 小节数 / 练习数；
+	 * 行数据与 {@link #listChapters(ChapterRequest)} 的过滤口径一致
+	 * （subjectId/grade/term/version 可选）。</p>
+	 *
+	 * @param query 查询条件（subjectId/grade/term/version 可选）
+	 */
+	void exportChapters(ChapterRequest query);
 
 	/**
 	 * 新增章节。

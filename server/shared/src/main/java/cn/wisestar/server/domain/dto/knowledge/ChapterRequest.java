@@ -29,6 +29,21 @@ public class ChapterRequest {
 	private String name;
 
 	/**
+	 * 年级（一年级~六年级，可选；GET /list 时作为筛选条件）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（上/下，可选；GET /list 时作为筛选条件）。
+	 */
+	private String term;
+
+	/**
+	 * 教材版本（人教版/苏教版等，可选；GET /list 时作为筛选条件）。
+	 */
+	private String version;
+
+	/**
 	 * 图标（emoji）。
 	 */
 	private String icon;

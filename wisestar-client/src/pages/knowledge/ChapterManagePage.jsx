@@ -23,19 +23,20 @@ const VERSION_OPTIONS = [{ value: '人教版', label: '人教版' }, { value: '�
 
 import { useEffect, useState } from 'react';
 import {
-  Table, Space, Button, Input, Select, InputNumber, Modal, Form, Tag, Typography, Popconfirm, message,
+  Table, Space, Button, Input, Select, Modal, Form, Tag, Typography, Popconfirm, message,
   Upload,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, LinkOutlined, EyeOutlined,
   ImportOutlined,
   DownloadOutlined,
+  ExportOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import {
   listSubjects, listChapters, createChapter, updateChapter, deleteChapter,
   listSections, saveChapterRepos, listChapterRepos,
-  importChapters,
+  importChapters, exportChapters,
 } from '../../api/knowledge';
 import { listRepo } from '../../api/repo';
 import { usePermission } from '../../utils/usePermission';
@@ -82,30 +83,7 @@ export default function ChapterManagePage() {
     }).catch(() => { /* request 拦截器已提示 */ });
   }, []);
 
-  // ---- 学科切换 → 加载章节 ----
-  useEffect(() => {
-    if (!subjectId) return;
-    setLoading(true);
-    listChapters({ subjectId }).then((res) => {
-      setChapters(res?.data || []);
-    }).catch(() => setChapters([])).finally(() => setLoading(false));
-  }, [subjectId]);
-
-  // ---- Excel 批量导入 ----
-  const handleImport = (file) => {
-    setImporting(true);
-    importChapters(file)
-      .then((res) => {
-        const d = res?.data || {};
-        message.success(`导入完成：新增 ${d.imported ?? 0} 个章节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
-        listChapters({ subjectId }).then((res2) => setChapters(res2?.data || [])).catch(() => setChapters([]));
-      })
-      .catch((err) => message.error(err?.message || '导入失败'))
-      .finally(() => setImporting(false));
-    return false; // 阻止 antd 自动上传
-  };
-
-  // ---- 搜索栏 ----
+  // ---- 搜索栏过滤条件（年级/学期/版本，任一变化即触发列表重查） ----
   const [searchGrade, setSearchGrade] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchVersion, setSearchVersion] = useState('');
@@ -116,15 +94,59 @@ export default function ChapterManagePage() {
     setSearchVersion('');
   };
 
+  // ---- 学科切换 → 加载章节（并清空过滤条件） ----
+  useEffect(() => {
+    if (!subjectId) return;
+    setLoading(true);
+    listChapters({
+      subjectId,
+      grade: searchGrade || undefined,
+      term: searchTerm || undefined,
+      version: searchVersion || undefined,
+    }).then((res) => {
+      setChapters(res?.data || []);
+    }).catch(() => setChapters([])).finally(() => setLoading(false));
+    // 过滤条件随学科切换重置，避免残留条件影响新学科
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjectId, searchGrade, searchTerm, searchVersion]);
+
+  // ---- Excel 批量导入 ----
+  const handleImport = (file) => {
+    setImporting(true);
+    importChapters(file)
+      .then((res) => {
+        const d = res?.data || {};
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个章节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
+        listChapters({ subjectId, grade: searchGrade || undefined, term: searchTerm || undefined, version: searchVersion || undefined })
+          .then((res2) => setChapters(res2?.data || [])).catch(() => setChapters([]));
+      })
+      .catch((err) => message.error(err?.message || '导入失败'))
+      .finally(() => setImporting(false));
+    return false; // 阻止 antd 自动上传
+  };
+
+  // ---- 导出当前列表（Excel，含当前学科与过滤条件） ----
+  const handleExport = () => {
+    exportChapters({
+      subjectId,
+      grade: searchGrade || undefined,
+      term: searchTerm || undefined,
+      version: searchVersion || undefined,
+    });
+  };
+
   // ---- 打开新增/编辑弹窗 ----
   const openModal = (chapter = null) => {
     setEditing(chapter);
     setModalOpen(true);
     if (chapter) {
-      form.setFieldsValue({ subjectId: chapter.subjectId, name: chapter.name, icon: chapter.icon, sort: chapter.sort });
+      form.setFieldsValue({
+        subjectId: chapter.subjectId, name: chapter.name,
+        grade: chapter.grade, term: chapter.term, version: chapter.version,
+      });
     } else {
       form.resetFields();
-      form.setFieldsValue({ subjectId: subjectId || undefined, icon: '📖', sort: chapters.length + 1 });
+      form.setFieldsValue({ subjectId: subjectId || undefined });
     }
   };
 
@@ -210,16 +232,9 @@ export default function ChapterManagePage() {
       title: '章节名称', dataIndex: 'name', width: 180,
       render: (n) => <Text strong>{n}</Text>,
     },
-    { title: '年级', dataIndex: 'grade', width: 80 },
-    { title: '学期', dataIndex: 'term', width: 60 },
-    { title: '版本', dataIndex: 'version', width: 100 },
-    {
-      title: '图标', dataIndex: 'icon', width: 80, align: 'center',
-      render: (icon) => <span style={{ fontSize: 18 }}>{icon}</span>,
-    },
-    {
-      title: '排序', dataIndex: 'sort', width: 70, align: 'center',
-    },
+    { title: '年级', dataIndex: 'grade', width: 80, render: (g) => (g || '-') },
+    { title: '学期', dataIndex: 'term', width: 60, render: (t) => (t || '-') },
+    { title: '教材版本', dataIndex: 'version', width: 100, render: (v) => (v || '-') },
     {
       title: '小节数', dataIndex: 'sectionCount', width: 100, align: 'center',
       render: (count, c) => (
@@ -270,6 +285,9 @@ export default function ChapterManagePage() {
           <Text type="secondary">管理各学科下的大单元（章节），进入后可管理小节</Text>
         </Space>
         <Space>
+          {can('knowledge:list') && (
+            <Button icon={<ExportOutlined />} onClick={handleExport}>Excel 导出</Button>
+          )}
           {can('knowledge:create') && (
             <Button icon={<DownloadOutlined />} href="/templates/chapter-import-template.xlsx" download>
               模板下载
@@ -287,9 +305,9 @@ export default function ChapterManagePage() {
       <Select
         style={{ width: 200, marginBottom: 16 }}
         value={subjectId}
-        onChange={setSubjectId}
+        onChange={(id) => { handleReset(); setSubjectId(id); }}
         placeholder="选择学科"
-        options={subjects.map((s) => ({ value: s.id, label: `${s.icon} ${s.name}` }))}
+        options={subjects.map((s) => ({ value: s.id, label: `${s.icon || ''} ${s.name}` }))}
       />
 
       {/* 搜索栏 */}
@@ -339,12 +357,7 @@ export default function ChapterManagePage() {
           <Form.Item name="version" label="教材版本">
             <Select allowClear placeholder="选择版本" options={VERSION_OPTIONS} />
           </Form.Item>
-          <Form.Item name="icon" label="章节图标（emoji）" rules={[{ required: true, message: '请输入图标' }]}>
-            <Input placeholder="如：🧮 / 📜 / 🖋️" maxLength={4} />
-          </Form.Item>
-          <Form.Item name="sort" label="排序（数字越小越靠前）">
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
+          <Text type="secondary">章节图标与排序由系统默认维护，无需手动设置。</Text>
         </Form>
       </Modal>
 

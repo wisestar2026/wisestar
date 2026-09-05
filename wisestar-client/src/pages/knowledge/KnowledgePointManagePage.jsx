@@ -440,7 +440,7 @@ export default function KnowledgePointManagePage() {
           value={subjectId}
           onChange={setSubjectId}
           placeholder="全部学科"
-          options={subjects.map((s) => ({ value: s.id, label: `${s.icon} ${s.name}` }))}
+          options={subjects.map((s) => ({ value: s.id, label: `${s.icon || ''} ${s.name}` }))}
         />
         <Select
           style={{ width: 200 }}
