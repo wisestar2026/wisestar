@@ -48,6 +48,10 @@ const QUESTION_TYPE_LABEL = {
   FillBlank: '填空',
 };
 
+// 年级/学期可选项（与章节/小节管理页一致）
+const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
+const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
+
 export default function KnowledgePointManagePage() {
   const { can } = usePermission();
   const navigate = useNavigate();
@@ -68,6 +72,9 @@ export default function KnowledgePointManagePage() {
   const [subjectId, setSubjectId] = useState(urlSubjectId || undefined);
   const [chapterId, setChapterId] = useState(urlChapterId || undefined);
   const [sectionId, setSectionId] = useState(urlSectionId || undefined);
+  // 筛选栏过滤条件（年级/学期，任一变化即触发列表重查）
+  const [searchGrade, setSearchGrade] = useState(undefined);
+  const [searchTerm, setSearchTerm] = useState(undefined);
 
   // ---- 知识点分页 ----
   const [kps, setKps] = useState([]);
@@ -132,20 +139,33 @@ export default function KnowledgePointManagePage() {
   // ---- 三级筛选变化 → 重置页码并刷新列表 ----
   useEffect(() => {
     setCurrent(1);
-  }, [subjectId, chapterId, sectionId]);
+  }, [subjectId, chapterId, sectionId, searchGrade, searchTerm]);
 
-  useEffect(() => {
-    if (!subjectId) return;
-    setLoading(true);
-    const params = { current, pageSize };
+  // 组装列表查询参数（三级任一 + 年级/学期）
+  const buildListParams = (page) => {
+    const params = { current: page, pageSize };
     if (sectionId) params.sectionId = sectionId;
     else if (chapterId) params.chapterId = chapterId;
     else if (subjectId) params.subjectId = subjectId;
-    listKnowledgePoints(params).then((res) => {
+    if (searchGrade) params.grade = searchGrade;
+    if (searchTerm) params.term = searchTerm;
+    return params;
+  };
+
+  // 拉取列表（供筛选 effect / 导入 / 新增后刷新复用）
+  const fetchKps = (page) => {
+    if (!subjectId) return;
+    setLoading(true);
+    listKnowledgePoints(buildListParams(page)).then((res) => {
       setKps(res?.data?.list || []);
       setTotal(res?.data?.total || 0);
     }).catch(() => { setKps([]); setTotal(0); }).finally(() => setLoading(false));
-  }, [subjectId, chapterId, sectionId, current, pageSize]);
+  };
+
+  useEffect(() => {
+    fetchKps(current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subjectId, chapterId, sectionId, searchGrade, searchTerm, current, pageSize]);
 
   const subject = useMemo(() => subjects.find((s) => s.id === subjectId), [subjects, subjectId]);
   const chapter = useMemo(() => chapters.find((c) => c.id === chapterId), [chapters, chapterId]);
@@ -160,7 +180,8 @@ export default function KnowledgePointManagePage() {
       .then((res) => {
         const d = res?.data || {};
         message.success(`导入完成：新增 ${d.imported ?? 0} 个知识点，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
-        listKnowledgePoints({ current: 1, pageSize, sectionId }).then((res2) => { setKps(res2?.data?.list || []); setTotal(res2?.data?.total || 0); }).catch(() => { setKps([]); setTotal(0); });
+        setCurrent(1);
+        fetchKps(1);
       })
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));
@@ -173,7 +194,7 @@ export default function KnowledgePointManagePage() {
     setModalOpen(true);
     if (kp) {
       form.resetFields();
-      form.setFieldsValue({ sectionId: kp.sectionId, name: kp.name, sort: kp.sort });
+      form.setFieldsValue({ sectionId: kp.sectionId, name: kp.name, sort: kp.sort, grade: kp.grade || undefined, term: kp.term || undefined });
       // 编辑：反查归属（小节→章节→学科）
       listSections().then((res) => {
         const allSec = res?.data || [];
@@ -201,7 +222,7 @@ export default function KnowledgePointManagePage() {
       });
     } else {
       form.resetFields();
-      form.setFieldsValue({ sectionId: sectionId || undefined, sort: kps.length + 1 });
+      form.setFieldsValue({ sectionId: sectionId || undefined, sort: kps.length + 1, grade: searchGrade || undefined, term: searchTerm || undefined });
       setDialogSubjectId(subjectId || undefined);
       setDialogChapterId(chapterId || undefined);
       if (subjectId) {
@@ -248,19 +269,21 @@ export default function KnowledgePointManagePage() {
         return;
       }
       if (editing) {
-        updateKnowledgePoint({ ...values, id: editing.id }).then(() => {
+        const payload = { ...values, id: editing.id };
+        if (values.grade === undefined) payload.grade = '';
+        if (values.term === undefined) payload.term = '';
+        updateKnowledgePoint(payload).then(() => {
           message.success('知识点已更新');
           setModalOpen(false);
-          setKps((prev) => prev.map((k) => (k.id === editing.id ? { ...k, ...values } : k)));
+          setKps((prev) => prev.map((k) => (k.id === editing.id ? { ...k, ...values, grade: values.grade || null, term: values.term || null } : k)));
         });
       } else {
-        createKnowledgePoint(values).then(() => {
+        const payload = { ...values, grade: values.grade || undefined, term: values.term || undefined };
+        createKnowledgePoint(payload).then(() => {
           message.success('知识点已新增');
           setModalOpen(false);
-          listKnowledgePoints({ current, pageSize, sectionId: values.sectionId }).then((res) => {
-            setKps(res?.data?.list || []);
-            setTotal(res?.data?.total || 0);
-          });
+          setCurrent(1);
+          fetchKps(1);
         });
       }
     });
@@ -358,6 +381,14 @@ export default function KnowledgePointManagePage() {
       render: (_, k) => (
         <Text type="secondary">{k.subjectName} / {k.chapterName} / {k.sectionName}</Text>
       ),
+    },
+    {
+      title: '年级', dataIndex: 'grade', width: 80, align: 'center',
+      render: (v) => (v ? <Tag>{v}</Tag> : <Text type="secondary">-</Text>),
+    },
+    {
+      title: '学期', dataIndex: 'term', width: 70, align: 'center',
+      render: (v) => (v ? <Tag>{v === '上' ? '上册' : '下册'}</Tag> : <Text type="secondary">-</Text>),
     },
     {
       title: '排序', dataIndex: 'sort', width: 60, align: 'center',
@@ -458,7 +489,23 @@ export default function KnowledgePointManagePage() {
           allowClear
           options={sections.map((s) => ({ value: s.id, label: s.name }))}
         />
-        <Text type="secondary">下拉可逐级筛选，全选「全部」可查看所有知识点</Text>
+        <Select
+          style={{ width: 120 }}
+          value={searchGrade}
+          onChange={setSearchGrade}
+          placeholder="全部年级"
+          allowClear
+          options={GRADE_OPTIONS}
+        />
+        <Select
+          style={{ width: 110 }}
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="全部学期"
+          allowClear
+          options={TERM_OPTIONS}
+        />
+        <Text type="secondary">下拉可逐级筛选并叠加年级/学期</Text>
       </Space>
 
       <Table
@@ -509,6 +556,20 @@ export default function KnowledgePointManagePage() {
           </Form.Item>
           <Form.Item name="sort" label="排序（数字越小越靠前）">
             <InputNumber min={1} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name="grade" label="年级">
+            <Select
+              placeholder="不限年级"
+              allowClear
+              options={GRADE_OPTIONS}
+            />
+          </Form.Item>
+          <Form.Item name="term" label="学期">
+            <Select
+              placeholder="不限学期"
+              allowClear
+              options={TERM_OPTIONS}
+            />
           </Form.Item>
         </Form>
       </Modal>
