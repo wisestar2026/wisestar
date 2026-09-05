@@ -175,7 +175,9 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 								Collectors.maxBy(java.util.Comparator.comparingInt(Chapter::getSort)),
 								max -> new AtomicInteger(max.get().getSort() + 1))));
 		AtomicInteger imported = new AtomicInteger(0);
-		AtomicInteger skipped = new AtomicInteger(0);
+		AtomicInteger missingRequired = new AtomicInteger(0);
+		AtomicInteger sectionNotFound = new AtomicInteger(0);
+		AtomicInteger duplicate = new AtomicInteger(0);
 		List<Chapter> toSave = new ArrayList<>();
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
@@ -187,13 +189,17 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 						String subjectName = cellText(r, 0);
 						String name = cellText(r, 1);
 						if (!hasText(subjectName) || !hasText(name)) {
-							skipped.incrementAndGet();
+							missingRequired.incrementAndGet();
 							return;
 						}
 						String subjectId = subjectCache.get(subjectName.trim());
 						String key = (subjectId == null ? "?" : subjectId) + "|" + name.trim();
-						if (subjectId == null || existing.contains(key)) {
-							skipped.incrementAndGet();
+						if (subjectId == null) {
+							sectionNotFound.incrementAndGet();
+							return;
+						}
+						if (existing.contains(key)) {
+							duplicate.incrementAndGet();
 							return;
 						}
 						existing.add(key);
@@ -227,7 +233,12 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 			saveBatch(toSave);
 			imported.addAndGet(toSave.size());
 		}
-		return new ImportResultView(imported.get(), skipped.get());
+		ImportResultView result = new ImportResultView(imported.get(),
+				missingRequired.get() + sectionNotFound.get() + duplicate.get());
+		result.setMissingRequired(missingRequired.get());
+		result.setSectionNotFound(sectionNotFound.get());
+		result.setDuplicate(duplicate.get());
+		return result;
 	}
 
 	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */

@@ -116,7 +116,12 @@ export default function ChapterManagePage() {
     importChapters(file)
       .then((res) => {
         const d = res?.data || {};
-        message.success(`导入完成：新增 ${d.imported ?? 0} 个章节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
+        const reason = [];
+        if ((d.missingRequired ?? 0) > 0) reason.push(`必填缺失 ${d.missingRequired}`);
+        if ((d.sectionNotFound ?? 0) > 0) reason.push(`学科未匹配 ${d.sectionNotFound}`);
+        if ((d.duplicate ?? 0) > 0) reason.push(`同学科下重名 ${d.duplicate}`);
+        const reasonText = reason.length ? `；跳过原因：${reason.join('、')}` : '';
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个章节，跳过 ${d.skipped ?? 0} 个${reasonText}`);
         listChapters({ subjectId, grade: searchGrade || undefined, term: searchTerm || undefined, version: searchVersion || undefined })
           .then((res2) => setChapters(res2?.data || [])).catch(() => setChapters([]));
       })

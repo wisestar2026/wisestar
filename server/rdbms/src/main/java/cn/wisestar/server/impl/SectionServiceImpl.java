@@ -159,7 +159,9 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 								Collectors.maxBy(java.util.Comparator.comparingInt(Section::getSort)),
 								max -> new AtomicInteger(max.get().getSort() + 1))));
 		AtomicInteger imported = new AtomicInteger(0);
-		AtomicInteger skipped = new AtomicInteger(0);
+		AtomicInteger missingRequired = new AtomicInteger(0);
+		AtomicInteger sectionNotFound = new AtomicInteger(0);
+		AtomicInteger duplicate = new AtomicInteger(0);
 		List<Section> toSave = new ArrayList<>();
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
@@ -172,14 +174,18 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						String chapterName = cellText(r, 1);
 						String name = cellText(r, 2);
 						if (!hasText(subjectName) || !hasText(chapterName) || !hasText(name)) {
-							skipped.incrementAndGet();
+							missingRequired.incrementAndGet();
 							return;
 						}
 						String subjectId = subjectCache.get(subjectName.trim());
 						String chapterId = subjectId == null ? null : chapterCache.get(subjectId + "|" + chapterName.trim());
 						String key = (chapterId == null ? "?" : chapterId) + "|" + name.trim();
-						if (chapterId == null || existing.contains(key)) {
-							skipped.incrementAndGet();
+						if (chapterId == null) {
+							sectionNotFound.incrementAndGet();
+							return;
+						}
+						if (existing.contains(key)) {
+							duplicate.incrementAndGet();
 							return;
 						}
 						existing.add(key);
@@ -211,7 +217,12 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 			saveBatch(toSave);
 			imported.addAndGet(toSave.size());
 		}
-		return new ImportResultView(imported.get(), skipped.get());
+		ImportResultView result = new ImportResultView(imported.get(),
+				missingRequired.get() + sectionNotFound.get() + duplicate.get());
+		result.setMissingRequired(missingRequired.get());
+		result.setSectionNotFound(sectionNotFound.get());
+		result.setDuplicate(duplicate.get());
+		return result;
 	}
 
 	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */

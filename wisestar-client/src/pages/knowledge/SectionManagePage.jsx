@@ -135,7 +135,12 @@ export default function SectionManagePage() {
     importSections(file)
       .then((res) => {
         const d = res?.data || {};
-        message.success(`导入完成：新增 ${d.imported ?? 0} 个小节，跳过 ${d.skipped ?? 0} 个（归属未匹配或重名）`);
+        const reason = [];
+        if ((d.missingRequired ?? 0) > 0) reason.push(`必填缺失 ${d.missingRequired}`);
+        if ((d.sectionNotFound ?? 0) > 0) reason.push(`学科/章节未匹配 ${d.sectionNotFound}`);
+        if ((d.duplicate ?? 0) > 0) reason.push(`同章节下重名 ${d.duplicate}`);
+        const reasonText = reason.length ? `；跳过原因：${reason.join('、')}` : '';
+        message.success(`导入完成：新增 ${d.imported ?? 0} 个小节，跳过 ${d.skipped ?? 0} 个${reasonText}`);
         listSections({ chapterId, grade: searchGrade, term: searchTerm }).then((res2) => setSections(res2?.data || [])).catch(() => setSections([]));
       })
       .catch((err) => message.error(err?.message || '导入失败'))
