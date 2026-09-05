@@ -32,6 +32,16 @@ public class KnowledgePointView {
 	private Integer sort;
 
 	/**
+	 * 年级（如 一年级）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（上/下）。
+	 */
+	private String term;
+
+	/**
 	 * 内容设置 JSON 原文（可能为空）。
 	 */
 	private String content;

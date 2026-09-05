@@ -1791,6 +1791,8 @@ CREATE TABLE IF NOT EXISTS t_knowledge_point (
   section_id varchar(64) DEFAULT NULL COMMENT '小节ID(t_section.id)',
   name varchar(64) DEFAULT NULL COMMENT '知识点名称',
   sort int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
+  grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)',
+  term varchar(32) DEFAULT NULL COMMENT '学期(上/下)',
   content text COMMENT '知识点内容设置JSON(points讲解要点数组)',
   image_url varchar(512) DEFAULT NULL COMMENT '知识点图片地址(FileView.previewUrl，可为空)',
   is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
@@ -1819,6 +1821,25 @@ INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, i
 INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4012', '3009', '26个字母', 1, '{"points":["A-Z 字母顺序","元音字母 A E I O U","书写占格规范"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4012');
 INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4013', '3010', '自然拼读', 1, '{"points":["短音发音规律","c-a-t 拼读","单词拼读训练"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4013');
 INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4014', '3011', '校园词汇', 1, '{"points":["学习用品词汇","颜色词汇","看图说词"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4014');
+
+-- 老库表结构升级（新库已由上方 CREATE 建列，此块幂等）
+ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)';
+ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS term varchar(32) DEFAULT NULL COMMENT '学期(上/下)';
+-- 知识点种子历史数据补齐年级/学期（继承所属小节；仅当年级为空时，避免覆盖用户后续修改）
+UPDATE t_knowledge_point SET grade='一年级', term='上' WHERE id='4001' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='上' WHERE id='4002' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='上' WHERE id='4003' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4004' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4005' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4006' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4007' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4008' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4009' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4010' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4011' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4012' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4013' AND grade IS NULL;
+UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4014' AND grade IS NULL;
 
 -- ----------------------------
 -- Table structure for t_knowledge_point_question（知识点-题目绑定：从题目库选题，多对多）

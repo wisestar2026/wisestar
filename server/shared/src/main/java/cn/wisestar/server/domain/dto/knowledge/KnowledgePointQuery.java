@@ -33,4 +33,14 @@ public class KnowledgePointQuery extends PageQuery {
 	 */
 	private String sectionId;
 
+	/**
+	 * 年级（可选等值过滤）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（可选等值过滤）。
+	 */
+	private String term;
+
 }

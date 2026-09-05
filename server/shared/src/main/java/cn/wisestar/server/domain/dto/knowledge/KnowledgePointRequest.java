@@ -35,6 +35,16 @@ public class KnowledgePointRequest {
 	private Integer sort;
 
 	/**
+	 * 年级（如 一年级，选填；列表接口作为等值过滤条件）。
+	 */
+	private String grade;
+
+	/**
+	 * 学期（上/下，选填；列表接口作为等值过滤条件）。
+	 */
+	private String term;
+
+	/**
 	 * 内容设置 JSON：{"points":["讲解要点1"]}。
 	 */
 	private String content;

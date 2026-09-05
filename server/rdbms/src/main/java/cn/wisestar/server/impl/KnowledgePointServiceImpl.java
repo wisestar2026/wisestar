@@ -37,7 +37,6 @@ import org.springframework.util.CollectionUtils;
 import javax.validation.ValidationException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -97,6 +96,8 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		List<String> sectionIds = resolveSectionIds(query);
 		Page<KnowledgePoint> page = pageByQuery(query, Wrappers.<KnowledgePoint>lambdaQuery()
 				.in(!sectionIds.isEmpty(), KnowledgePoint::getSectionId, sectionIds)
+				.eq(hasText(query.getGrade()), KnowledgePoint::getGrade, query.getGrade())
+				.eq(hasText(query.getTerm()), KnowledgePoint::getTerm, query.getTerm())
 				.orderByAsc(KnowledgePoint::getSort)
 				.orderByDesc(KnowledgePoint::getCreateAt));
 		List<KnowledgePointView> views = fillHierarchyAndQuestionCount(page.getRecords());
@@ -114,7 +115,9 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 	}
 
 	/**
-	 * 批量导入知识点（Excel：知识点名/排序；按 sectionId+name 去重）。
+	 * 批量导入知识点（Excel：学科名/章节名/小节名/知识点名/排序(选填)/内容设置(选填，仅文本)；
+	 * 内容设置不支持图片，整格文本作为一条讲解要点写入 content JSON；
+	 * 按 sectionId+name 去重）。
 	 */
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -137,10 +140,10 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 						if (r.getRowNum() == 1) {
 							return; // 跳过表头
 						}
-						String subjectName = r.getCellText(0);
-						String chapterName = r.getCellText(1);
-						String sectionName = r.getCellText(2);
-						String name = r.getCellText(3);
+						String subjectName = cellText(r, 0);
+						String chapterName = cellText(r, 1);
+						String sectionName = cellText(r, 2);
+						String name = cellText(r, 3);
 						if (!hasText(subjectName) || !hasText(chapterName) || !hasText(sectionName) || !hasText(name)) {
 							skipped.incrementAndGet();
 							return;
@@ -157,7 +160,8 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 						KnowledgePoint point = new KnowledgePoint();
 						point.setSectionId(sectionId);
 						point.setName(name.trim());
-						point.setSort(r.getCellAsNumber(4).orElse(BigDecimal.ONE).intValue());
+						point.setSort(cellAsInt(r, 4, 1));
+						point.setContent(buildContentJson(cellText(r, 5)));
 						toSave.add(point);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -181,12 +185,61 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		return new ImportResultView(imported.get(), skipped.get());
 	}
 
-	/**
-	 * 更新知识点（含内容设置 JSON 与图片地址）。
-	 */
+	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */
+	private String cellText(Row row, int index) {
+		return row.getOptionalCell(index).map(cell -> {
+			try {
+				return cell.getText();
+			}
+			catch (Exception e) {
+				return "";
+			}
+		}).orElse("");
+	}
+
+	/** 读取行中指定列数值，缺列/非数字返回默认值。 */
+	private int cellAsInt(Row row, int index, int defaultValue) {
+		return row.getOptionalCell(index).map(cell -> {
+			try {
+				return cell.asNumber().intValue();
+			}
+			catch (Exception e) {
+				return defaultValue;
+			}
+		}).orElse(defaultValue);
+	}
+
+	/** 把导入文本构建为内容设置 JSON：{"points":[整段文本]}；空文本返回 null（不写内容）。 */
+	private String buildContentJson(String text) {
+		if (!hasText(text)) {
+			return null;
+		}
+		String trimmed = text.trim();
+		return "{\"points\":[\"" + trimmed.replace("\\", "\\\\").replace("\"", "\\\"")
+				.replace("\r", "").replace("\n", "\\n") + "\"]}";
+	}
+
+	/** 更新知识点（含内容设置 JSON 与图片地址）。
+	 * grade/term 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null，
+	 * 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容设置）不受影响）。 */
 	@Override
 	public void updateKnowledgePoint(KnowledgePointRequest request) {
-		updateById(knowledgePointViewMapper.fromRequest(request));
+		KnowledgePoint m = knowledgePointViewMapper.fromRequest(request);
+		boolean touchGrade = m.getGrade() != null;
+		boolean touchTerm = m.getTerm() != null;
+		if (touchGrade) {
+			m.setGrade(null);
+		}
+		if (touchTerm) {
+			m.setTerm(null);
+		}
+		updateById(m);
+		if (touchGrade || touchTerm) {
+			update(Wrappers.<KnowledgePoint>lambdaUpdate()
+					.eq(KnowledgePoint::getId, request.getId())
+					.set(touchGrade, KnowledgePoint::getGrade, hasText(request.getGrade()) ? request.getGrade().trim() : null)
+					.set(touchTerm, KnowledgePoint::getTerm, hasText(request.getTerm()) ? request.getTerm().trim() : null));
+		}
 	}
 
 	/**
