@@ -86,7 +86,7 @@ public class StudentTaskServiceImpl implements StudentTaskService {
             new LambdaQueryWrapper<StudentTask>()
                 .eq(StudentTask::getStudentId, studentId)
                 .ge(StudentTask::getCreateTime, todayStart)
-                .orderByAsc(Chapter::getCreateTime)
+                .orderByAsc(StudentTask::getCreateTime)
         );
 
         List<StudentTaskView> result = new ArrayList<>();

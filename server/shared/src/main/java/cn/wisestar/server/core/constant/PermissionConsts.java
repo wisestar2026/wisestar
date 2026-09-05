@@ -76,6 +76,7 @@ public final class PermissionConsts {
 	public static final String STUDENT_CREATE = "student:create";
 	public static final String STUDENT_UPDATE = "student:update";
 	public static final String STUDENT_DELETE = "student:delete";
+	public static final String STUDENT_SUPERVISION = "student:supervision";
 
 	/** 订单管理 */
 	public static final String ORDER_LIST = "order:list";
@@ -220,7 +221,8 @@ public final class PermissionConsts {
 		tree.add(node("knowledge", "知识管理",
 				ops(KNOWLEDGE_LIST, "查看", KNOWLEDGE_CREATE, "新增", KNOWLEDGE_UPDATE, "修改", KNOWLEDGE_DELETE, "删除")));
 		tree.add(node("student", "学员管理",
-				ops(STUDENT_LIST, "查看", STUDENT_CREATE, "新增", STUDENT_UPDATE, "修改", STUDENT_DELETE, "删除")));
+				ops(STUDENT_LIST, "查看", STUDENT_CREATE, "新增", STUDENT_UPDATE, "修改", STUDENT_DELETE, "删除",
+						STUDENT_SUPERVISION, "督学")));
 		tree.add(node("order", "订单管理",
 				ops(ORDER_LIST, "查看", ORDER_CREATE, "新增", ORDER_UPDATE, "修改", ORDER_DELETE, "删除")));
 		tree.add(node("mall", "积分商城",
@@ -272,7 +274,7 @@ public final class PermissionConsts {
 			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,"
 			+ "template:list,template:create,template:update,template:delete,"
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
-			+ "student:list,student:create,student:update,student:delete,"
+			+ "student:list,student:create,student:update,student:delete,student:supervision,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"

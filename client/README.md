@@ -1,4 +1,0 @@
-# Wisestar client
-
-
-todo

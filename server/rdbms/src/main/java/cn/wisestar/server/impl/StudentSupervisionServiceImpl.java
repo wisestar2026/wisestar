@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.student.StudentSupervisionView;
 import cn.wisestar.server.domain.model.*;
 import cn.wisestar.server.mapper.*;
@@ -123,7 +124,7 @@ public class StudentSupervisionServiceImpl implements StudentSupervisionService 
     /**
      * 从题目模板中提取正确答案
      */
-    private String extractCorrectAnswer(String template) {
+    private String extractCorrectAnswer(SurveySchema template) {
         // TODO: 从 JSON 中提取正确答案
         return "答案";
     }
@@ -131,7 +132,7 @@ public class StudentSupervisionServiceImpl implements StudentSupervisionService 
     /**
      * 从题目模板中提取答案解析
      */
-    private String extractAnalysis(String template) {
+    private String extractAnalysis(SurveySchema template) {
         // TODO: 从 JSON 中提取答案解析
         return "解析";
     }

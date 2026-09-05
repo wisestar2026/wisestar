@@ -28,12 +28,12 @@ public class StudentRecord {
     private String lastActiveTime;
 
     @TableField(fill = FieldFill.INSERT)
-    private Date createTime;
+    private Date createAt;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date updateTime;
+    private Date updateAt;
 
     @TableLogic
-    private Integer deleted;
+    private Integer isDeleted;
 
 }
