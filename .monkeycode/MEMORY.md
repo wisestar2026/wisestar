@@ -66,6 +66,15 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 默认管理员账号 admin/123456（登录走 RSA PKCS1v15 加密密码，前端 jsencrypt 实现）
   - 数据库/接口/方法索引见 docs/项目词典.md；开发背景/踩坑见 docs/开发维护日志.md
 
+[题库导入导出回环冒烟经验]
+- Date: 2026-09-06
+- Context: Agent 为题库加「小节」列（21→22 列）做端到端冒烟时踩坑发现
+- Category: 排错调试
+- Instructions:
+  - fastexcel 生成 xlsx 中 sharedStrings 与内联中文字符串以 XML 实体（`&#x…;`）保存，按中文字面直接子串匹配表头/导出行必失败，解析 `<t>` 后须先 html.unescape
+  - 后端分页接口返回体键是 `data.list`（非 records），用 records 取分页记录恒为空
+  - 手工注入错行测试：直接改写模板 xlsx 的 `xl/worksheets/sheet1.xml`（在 `</sheetData>` 前插 `<row>`），复用表头与 inlineStr 写法即可单行验证行级导入校验
+
 [仓库布局与 git 操作边界]
 - Date: 2026-09-05
 - Context: Agent 核实"项目代码是否集中在一个仓库"时发现 /workspace 顶层是独立 git 仓库
