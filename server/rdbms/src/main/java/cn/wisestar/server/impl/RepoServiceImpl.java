@@ -2,6 +2,9 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.TagCategoryEnum;
+import cn.wisestar.server.core.constant.ErrorCode;
+import cn.wisestar.server.core.constant.ProjectModeEnum;
+import cn.wisestar.server.core.exception.ErrorCodeException;
 import cn.wisestar.server.core.uitls.AnswerScoreEvaluator;
 import cn.wisestar.server.core.uitls.RepoTemplateExcelParseHelper;
 import cn.wisestar.server.core.uitls.RepoTemplateI18n;
@@ -12,7 +15,11 @@ import cn.wisestar.server.domain.dto.*;
 import cn.wisestar.server.domain.mapper.RepoViewMapper;
 import cn.wisestar.server.domain.mapper.UserBookViewMapper;
 import cn.wisestar.server.domain.model.*;
+import cn.wisestar.server.mapper.ChapterMapper;
+import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.RepoMapper;
+import cn.wisestar.server.mapper.SectionMapper;
+import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.AnswerService;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.RepoService;
@@ -27,9 +34,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.Arrays;
+
+import org.dhatim.fastexcel.reader.ReadableWorkbook;
+import org.dhatim.fastexcel.reader.Row;
 
 import static cn.wisestar.server.impl.UserBookServiceImpl.BOOK_TYPE_WRONG;
 import static com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank;
@@ -42,9 +55,9 @@ import static com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank;
  * 2. 题库-题目批量管理：batchAddRepoTemplate（Excel 导入/批量保存，按"序号+题型"幂等更新）、
  *    batchUnBindTemplate 解绑题目
  * 3. 随机抽题：pickQuestionFromRepo（按题库/题型/标签条件随机选题，供考试随机抽题与练习使用）
- * 4. 题库导出增强：exportRepoQuestions（按题型分 sheet 导出 Excel，含知识点/正确答案/分值/
- *    解析/标签），配套辅助方法 questionTypeLabel / repoNameOf / knowledgePointText /
- *    extractCorrectAnswer
+ * 4. 题库导出增强：exportRepoQuestions（标准单表 22 列导出：学科/题型/章节/小节/知识点/题目/
+ *    选项A-H/难易程度/正确答案1-5/解析/标签），配套辅助方法 standardRowOf / answerCellsOf /
+ *    queryQuestionsForExport / buildGuideSheet；导入模板与导出共用列结构
  * 5. 错题本：listUserBook/createUserBook/updateUserBook/deleteUserBook
  *
  * 【被谁调用】
@@ -111,6 +124,26 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      * 用户服务：分配记录列表回填学员姓名时查询用户信息。
      */
     private final UserServiceImpl userService;
+
+    /**
+     * 学科表：Excel 标准模板导入时按「学科」列名称匹配已有学科。
+     */
+    private final SubjectMapper subjectMapper;
+
+    /**
+     * 章节表：Excel 标准模板导入时按「学科 + 章节」匹配已有章节。
+     */
+    private final ChapterMapper chapterMapper;
+
+    /**
+     * 小节表：Excel 标准模板导入时用于定位章节下的知识点集合。
+     */
+    private final SectionMapper sectionMapper;
+
+    /**
+     * 知识点表：Excel 标准模板导入时校验「知识点」列命中章节下已有知识点。
+     */
+    private final KnowledgePointMapper knowledgePointMapper;
 
     /**
      * 分页查询题库列表。
@@ -399,13 +432,46 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     /**
      * 解析题库导入 Excel 为模板请求列表。
      *
-     * @param file 上传的 xlsx 文件
-     * @return 模板请求列表
-     * @implNote 委托 RepoTemplateExcelParseHelper 解析（支持多题型 sheet）。
+     * <p>嗅探首 sheet 表头：命中标准单表模板（含「学科」「题型」表头）时走标准导入
+     * （逐行校验学科/章节/知识点归属与答案合法性，行级错误整体中止）；否则向后兼容
+     * 旧的多题型分 sheet 模板（RepoTemplateExcelParseHelper）。</p>
      */
     @SneakyThrows
     private List<TemplateRequest> parseExcelToTemplate(MultipartFile file) {
+        if (isStandardTemplate(file)) {
+            return parseStandardQuestions(file);
+        }
         return new RepoTemplateExcelParseHelper(file).parse();
+    }
+
+    /**
+     * 嗅探上传文件是否为标准单表模板（读取首个 sheet 首行表头是否含「学科」「题型」）。
+     */
+    private boolean isStandardTemplate(MultipartFile file) throws IOException {
+        try (InputStream is = file.getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
+            java.util.Optional<org.dhatim.fastexcel.reader.Sheet> first = wb.getSheets().findFirst();
+            if (!first.isPresent()) {
+                return false;
+            }
+            try (Stream<Row> rows = first.get().openStream()) {
+                Row header = rows.findFirst().orElse(null);
+                if (header == null) {
+                    return false;
+                }
+                boolean subject = false;
+                boolean type = false;
+                for (int c = 0; c < 15; c++) {
+                    String t = cellText(header, c);
+                    if (t.contains("学科")) {
+                        subject = true;
+                    }
+                    if (t.contains("题型")) {
+                        type = true;
+                    }
+                }
+                return subject && type;
+            }
+        }
     }
 
     /**
@@ -721,60 +787,144 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 导出题库题目为 Excel（按题型分 5 个 sheet：单选/多选/判断/填空/简答）。
+     * 导出题库题目为 Excel（标准单表模板，21 列单 sheet）。
      *
-     * 【导出列结构】（各题型略有差异）
-     * - 单选/多选：序号、题型、所属题库、题干、选项A~H、知识点（学科>章节>知识点+难度）、
-     *   正确答案、分值、解析、标签
-     * - 判断：序号、题型、所属题库、题干、选项A、选项B、知识点、正确答案、分值、解析、标签
-     * - 填空：序号、题型、所属题库、题干、空1~空8、知识点、正确答案、分值、解析、标签
-     * - 简答：序号、题型、所属题库、题干、答案、知识点、分值、解析、标签
+     * <p>列结构与「题目管理 → 导入模板」完全一致：学科/题型/章节/知识点/题目/选项A~H/
+     * 难易程度/正确答案1~5/解析/标签；题型仅含判断/单选/单项填空/多选/多项填空
+     * （Textarea 简答题随题型收窄不再导出）。</p>
      *
-     * 【内部逻辑步骤】
-     * 1. 按筛选条件查询题目（未指定 repoId 时导出全部；支持 name/questionType/
-     *    subject/chapter/difficulty 的 SQL 过滤 + knowledgePoint 的内存过滤），
-     *    限定 5 种常规题型、按题型+创建时间排序；
-     * 2. 按题型分组（groupingBy），每种题型构建行数据（列值来自辅助方法：
-     *    questionTypeLabel 题型中文、repoNameOf 所属题库名、knowledgePointText 知识点组合、
-     *    extractCorrectAnswer 正确答案、attribute.examScore 分值、attribute.examAnalysis 解析、
-     *    tag 数组 join）；
-     * 3. 空 sheet 兜底：没有任何题型数据时创建空白 sheet，避免 fastexcel 空工作簿 finish 报错；
-     * 4. 按题型创建 5 个 sheet，写表头 + 数据行，fitToWidth 适配列宽；
-     * 5. workbook.finish() 后把字节流写入 HTTP 响应（Content-Disposition 附件下载）。
+     * <p>当筛选结果为空（含未传 repoId 下载模板场景）时：第一个 sheet 只输出表头，
+     * 并附加「填写说明」sheet 展示列规则与格式示例，可直接作为导入模板使用。</p>
      *
      * 【数据流向】
-     * RepoController.exportRepoQuestions → exportRepoQuestions → TemplateMapper 查询 t_template
-     * → 内存组装行数据 → fastexcel 写流 → 浏览器下载 xlsx。
+     * RepoApi.exportRepoQuestions → exportRepoQuestions → queryQuestionsForExport（t_template）
+     * → standardRowOf 逐题装配 22 列 → fastexcel 写流 → 浏览器下载 xlsx。
      *
      * @param request 含题库 id（可空：空则导出全部题目）及题目维度筛选条件
-     *        （name/questionType/subject/chapter/knowledgePoint/difficulty）
+     *        （name/questionType/subject/chapter/section/knowledgePoint/difficulty）
      */
     @Override
     @SneakyThrows
     public void exportRepoQuestions(RepoRequest request) {
-        // 获取题库信息
         Repo repo = getById(request.getId());
         String fileName = (repo != null && repo.getName() != null ? repo.getName() : "题库") + ".xlsx";
 
-        // 设置响应头
         ContextHelper.getCurrentHttpResponse()
                 .setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        ContextHelper.getCurrentHttpResponse().setHeader("Content-Disposition", "attachment; filename=" +
-                java.net.URLEncoder.encode(fileName, "UTF-8"));
+        ContextHelper.getCurrentHttpResponse().setHeader("Content-Disposition", "attachment; filename="
+                + java.net.URLEncoder.encode(fileName, "UTF-8"));
 
-        // 查询题库中的各种题型（未指定题库时导出全部题目）
-        // 筛选条件与题目管理页一致（AND 关系）：repoId 题库、name 名称模糊、
-        // questionType 题型、subject/chapter/knowledgePoint/difficulty 知识点四维
+        List<Template> questions = queryQuestionsForExport(request);
+
+        try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
+            org.dhatim.fastexcel.Workbook workbook = new org.dhatim.fastexcel.Workbook(baos,
+                    RepoTemplateI18n.workbookName(), "1.0");
+
+            org.dhatim.fastexcel.Worksheet sheet = workbook.newWorksheet("题目列表");
+            writeHeaderRow(sheet);
+            int rowIndex = 1;
+            for (Template template : questions) {
+                List<String> row = standardRowOf(template);
+                for (int c = 0; c < row.size(); c++) {
+                    sheet.value(rowIndex, c, orEmpty(row.get(c)));
+                }
+                rowIndex++;
+            }
+            if (questions.isEmpty()) {
+                // 空结果（模板下载/空导出）：附加填写说明 sheet，便于按新模板格式录入
+                buildGuideSheet(workbook);
+            }
+            workbook.finish();
+            ContextHelper.getCurrentHttpResponse().getOutputStream().write(baos.toByteArray());
+        }
+    }
+
+    /**
+     * 下载题目导入模板（标准单表 22 列空模板 + 「填写说明」sheet）。
+     *
+     * <p>仅输出表头与说明页，不含任何题目数据，供「题目管理 → 导入 → 下载模板」使用；
+     * 与 exportRepoQuestions（无 repoId 导出全量题目）语义区分。</p>
+     *
+     * @implNote 调用链：RepoApi.downloadImportTemplate → downloadImportTemplate →
+     * writeHeaderRow + buildGuideSheet 写流。
+     */
+    @Override
+    @SneakyThrows
+    public void downloadImportTemplate() {
+        String fileName = "题目导入模板.xlsx";
+        ContextHelper.getCurrentHttpResponse()
+                .setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        ContextHelper.getCurrentHttpResponse().setHeader("Content-Disposition", "attachment; filename="
+                + java.net.URLEncoder.encode(fileName, "UTF-8"));
+        try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
+            org.dhatim.fastexcel.Workbook workbook = new org.dhatim.fastexcel.Workbook(baos,
+                    RepoTemplateI18n.workbookName(), "1.0");
+            org.dhatim.fastexcel.Worksheet sheet = workbook.newWorksheet("题目列表");
+            writeHeaderRow(sheet);
+            buildGuideSheet(workbook);
+            workbook.finish();
+            ContextHelper.getCurrentHttpResponse().getOutputStream().write(baos.toByteArray());
+        }
+    }
+
+    // ============================================================
+    // 标准单表模板（导入/导出共用的列结构、行装配、答案拆分）
+    // ============================================================
+
+    /**
+     * 标准单表模板列头（22 列，导入导出共用，顺序与用户约定模板一致）。
+     */
+    private static final List<String> STANDARD_HEADERS = Collections.unmodifiableList(Arrays.asList(
+            "学科", "题型", "章节", "小节", "知识点", "题目", "选项A", "选项B", "选项C", "选项D", "选项E", "选项F", "选项G", "选项H",
+            "难易程度", "正确答案1", "正确答案2", "正确答案3", "正确答案4", "正确答案5", "解析", "标签"));
+
+    /**
+     * 各列导出列宽（与 STANDARD_HEADERS 一一对应）。
+     */
+    private static final int[] STANDARD_WIDTHS = { 14, 12, 16, 14, 22, 50, 12, 12, 12, 12, 12, 12, 12, 12, 10, 12, 12,
+            12, 12, 12, 42, 24 };
+
+    /**
+     * 「填写说明」sheet 引导文案（下载模板时附在第二个 sheet，不参与导入解析）。
+     */
+    private static final List<String> GUIDE_LINES = Collections.unmodifiableList(Arrays.asList(
+            "填写说明（本页仅作格式指引，导入时只解析第一个 sheet「题目列表」）：",
+            "1. 学科：填写系统内已存在的学科名称（例如：数学），不会自动新建学科；",
+            "2. 题型：仅支持 判断 / 单选 / 单项填空 / 多选 / 多项填空 五种；",
+            "3. 章节：填写系统内该学科下已存在的章节名称，需与学科配套；",
+            "4. 小节：填写该章节下已存在的小节名称（可留空），需与学科/章节配套；",
+            "5. 知识点：可填多个，用中文顿号分隔；填写了小节时须属于该小节，",
+            "   小节留空时须属于该章节下的已有知识点；",
+            "6. 题目：题干文本，必填；",
+            "7. 选项A~H：单选/多选填写选项内容，其他题型留空；",
+            "8. 难易程度：简单 / 中等 / 困难，可留空；",
+            "9. 正确答案1~5：判断填“正确”或“错误”；单选填选项字母 A~H；",
+            "   多选依次填 1~5 个字母；单项填空填答案文本；多项填空按空位顺序依次填 1~5 个答案；",
+            "10. 解析：题目解析，可留空；",
+            "11. 标签：可填多个，用逗号或顿号分隔，可留空；",
+            "12. 任一行的学科/章节/小节/知识点/选项/答案校验不通过会中止整次导入并提示行号。",
+            "",
+            "下方为格式示例（位于本说明页，不会参与导入）："));
+
+    /**
+     * 查询导出的题目集合（筛选与题目管理页一致，题型限定五种业务题型）。
+     *
+     * @param request 导出筛选条件
+     * @return 命中题目列表（按题型 + 创建时间升序）
+     * @implNote 知识点按 JSON 数组文本做内存二次过滤（与旧导出一致）。
+     */
+    private List<Template> queryQuestionsForExport(RepoRequest request) {
         List<Template> questions = templateService.list(Wrappers.<Template>lambdaQuery()
                 .eq(request.getId() != null, Template::getRepoId, request.getId())
-                .like(request.getName() != null && !request.getName().isEmpty(), Template::getName,
-                        request.getName())
+                .like(request.getName() != null && !request.getName().isEmpty(), Template::getName, request.getName())
                 .eq(request.getQuestionType() != null && !request.getQuestionType().isEmpty(),
                         Template::getQuestionType, request.getQuestionType())
                 .eq(request.getSubject() != null && !request.getSubject().isEmpty(), Template::getSubject,
                         request.getSubject())
                 .eq(request.getChapter() != null && !request.getChapter().isEmpty(), Template::getChapter,
                         request.getChapter())
+                .eq(request.getSection() != null && !request.getSection().isEmpty(), Template::getSection,
+                        request.getSection())
                 .eq(request.getDifficulty() != null && !request.getDifficulty().isEmpty(), Template::getDifficulty,
                         request.getDifficulty())
                 .in(Template::getQuestionType, Arrays.asList(
@@ -782,552 +932,96 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                         SurveySchema.QuestionType.Checkbox,
                         SurveySchema.QuestionType.Judge,
                         SurveySchema.QuestionType.FillBlank,
-                        SurveySchema.QuestionType.Textarea))
+                        SurveySchema.QuestionType.MultipleBlank))
                 .orderByAsc(Template::getQuestionType, Template::getCreateAt));
-        // 知识点筛选：knowledge_point 存储为 JSON 数组字符串，无法用 SQL 等值匹配，
-        // 这里做内存二次过滤（like 查询）——只要题目 JSON 数组文本包含该知识点即命中
         if (request.getKnowledgePoint() != null && !request.getKnowledgePoint().isEmpty()) {
+            String kp = request.getKnowledgePoint();
             questions = questions.stream()
                     .filter(t -> t.getKnowledgePoint() != null
                             && Arrays.asList(t.getKnowledgePoint()).stream()
-                                    .anyMatch(kp -> kp != null && kp.contains(request.getKnowledgePoint())))
+                                    .anyMatch(x -> x != null && x.contains(kp)))
                     .collect(Collectors.toList());
         }
+        return questions;
+    }
 
-        // 准备导出数据 - 按题型分组
-        Map<SurveySchema.QuestionType, List<Template>> questionsByType = questions.stream()
-                .collect(Collectors.groupingBy(Template::getQuestionType));
-
-        // 先处理单选题
-        List<List<Object>> radioRows = new ArrayList<>();
-        List<Template> radioQuestions = questionsByType.getOrDefault(SurveySchema.QuestionType.Radio,
-                new ArrayList<>());
-        int radioIndex = 1;
-
-        for (Template template : radioQuestions) {
-            SurveySchema schema = template.getTemplate();
-            List<Object> row = new ArrayList<>();
-
-            // 序号
-            row.add(radioIndex++);
-
-            // 题型
-            row.add(questionTypeLabel(template.getQuestionType()));
-
-            // 所属题库
-            row.add(repoNameOf(template.getRepoId()));
-
-            // 题干
-            row.add(schema.getTitle());
-
-            // 选项A-H (单选题处理)
-            List<SurveySchema> options = schema.getChildren();
-            String[] optionTexts = new String[8];
-            Double examScore = schema.getAttribute() != null ? schema.getAttribute().getExamScore() : null;
-
-            if (options != null) {
-                for (int i = 0; i < Math.min(options.size(), 8); i++) {
-                    SurveySchema option = options.get(i);
-                    optionTexts[i] = option.getTitle();
-                }
-            }
-
-            // 添加选项A-H
-            for (int i = 0; i < 8; i++) {
-                row.add(optionTexts[i] != null ? optionTexts[i] : "");
-            }
-
-            // 知识点（学科>章节>知识点，含难度）
-            row.add(knowledgePointText(template));
-
-            // 正确答案
-            row.add(extractCorrectAnswer(template, false));
-
-            // 分值
-            row.add(examScore != null ? examScore : "");
-
-            // 解析
-            String analysis = schema.getAttribute() != null ? schema.getAttribute().getExamAnalysis() : "";
-            row.add(analysis != null ? analysis : "");
-
-            // 标签
-            String tags = "";
-            if (template.getTag() != null && template.getTag().length > 0) {
-                tags = String.join(",", template.getTag());
-            }
-            row.add(tags);
-
-            radioRows.add(row);
+    /**
+     * 输出标准模板表头行并设置列宽。
+     *
+     * @param sheet 目标 sheet（第 0 行）
+     */
+    private void writeHeaderRow(org.dhatim.fastexcel.Worksheet sheet) {
+        for (int c = 0; c < STANDARD_HEADERS.size(); c++) {
+            sheet.value(0, c, STANDARD_HEADERS.get(c));
         }
-
-        // 处理多选题
-        List<List<Object>> checkboxRows = new ArrayList<>();
-        List<Template> checkboxQuestions = questionsByType.getOrDefault(SurveySchema.QuestionType.Checkbox,
-                new ArrayList<>());
-        int checkboxIndex = 1;
-
-        for (Template template : checkboxQuestions) {
-            SurveySchema schema = template.getTemplate();
-            List<Object> row = new ArrayList<>();
-
-            // 序号
-            row.add(checkboxIndex++);
-
-            // 题型
-            row.add(questionTypeLabel(template.getQuestionType()));
-
-            // 所属题库
-            row.add(repoNameOf(template.getRepoId()));
-
-            // 题干
-            row.add(schema.getTitle());
-
-            // 选项A-H (多选题处理)
-            List<SurveySchema> options = schema.getChildren();
-            String[] optionTexts = new String[8];
-            Double examScore = schema.getAttribute() != null ? schema.getAttribute().getExamScore() : null;
-
-            if (options != null) {
-                for (int i = 0; i < Math.min(options.size(), 8); i++) {
-                    SurveySchema option = options.get(i);
-                    optionTexts[i] = option.getTitle();
-                }
+        for (int c = 0; c < STANDARD_WIDTHS.length; c++) {
+            try {
+                sheet.width(c, STANDARD_WIDTHS[c]);
+            } catch (RuntimeException ignore) {
+                // 列宽设置失败不影响模板可用
             }
-
-            // 添加选项A-H
-            for (int i = 0; i < 8; i++) {
-                row.add(optionTexts[i] != null ? optionTexts[i] : "");
-            }
-
-            // 知识点（学科>章节>知识点，含难度）
-            row.add(knowledgePointText(template));
-
-            // 正确答案（多选题多个答案用逗号分隔）
-            row.add(extractCorrectAnswer(template, true));
-
-            // 分值
-            row.add(examScore != null ? examScore : "");
-
-            // 解析
-            String analysis = schema.getAttribute() != null ? schema.getAttribute().getExamAnalysis() : "";
-            row.add(analysis != null ? analysis : "");
-
-            // 标签
-            String tags = "";
-            if (template.getTag() != null && template.getTag().length > 0) {
-                tags = String.join(",", template.getTag());
-            }
-            row.add(tags);
-
-            checkboxRows.add(row);
-        }
-
-        // 处理判断题
-        List<List<Object>> judgeRows = new ArrayList<>();
-        List<Template> judgeQuestions = questionsByType.getOrDefault(SurveySchema.QuestionType.Judge,
-                new ArrayList<>());
-        int judgeIndex = 1;
-
-        for (Template template : judgeQuestions) {
-            SurveySchema schema = template.getTemplate();
-            List<Object> row = new ArrayList<>();
-
-            // 序号
-            row.add(judgeIndex++);
-
-            // 题型
-            row.add(questionTypeLabel(template.getQuestionType()));
-
-            // 所属题库
-            row.add(repoNameOf(template.getRepoId()));
-
-            // 题干
-            row.add(schema.getTitle());
-
-            // 选项A、选项B（判断题一般是正确/错误）
-            List<SurveySchema> options = schema.getChildren();
-            String optionA = "";
-            String optionB = "";
-            Double examScore = schema.getAttribute() != null ? schema.getAttribute().getExamScore() : null;
-
-            if (options != null && options.size() >= 2) {
-                optionA = options.get(0).getTitle();
-                optionB = options.get(1).getTitle();
-            }
-
-            row.add(optionA);
-            row.add(optionB);
-
-            // 知识点（学科>章节>知识点，含难度）
-            row.add(knowledgePointText(template));
-
-            // 正确答案
-            row.add(extractCorrectAnswer(template, false));
-
-            // 分值
-            row.add(examScore != null ? examScore : "");
-
-            // 解析
-            String analysis = schema.getAttribute() != null ? schema.getAttribute().getExamAnalysis() : "";
-            row.add(analysis != null ? analysis : "");
-
-            // 标签
-            String tags = "";
-            if (template.getTag() != null && template.getTag().length > 0) {
-                tags = String.join(" ", template.getTag());
-            }
-            row.add(tags);
-
-            judgeRows.add(row);
-        }
-
-        // 处理填空题
-        List<List<Object>> fillBlankRows = new ArrayList<>();
-        List<Template> fillBlankQuestions = questionsByType.getOrDefault(SurveySchema.QuestionType.FillBlank,
-                new ArrayList<>());
-        int fillBlankIndex = 1;
-
-        for (Template template : fillBlankQuestions) {
-            SurveySchema schema = template.getTemplate();
-            List<Object> row = new ArrayList<>();
-
-            // 序号
-            row.add(fillBlankIndex++);
-
-            // 题型
-            row.add(questionTypeLabel(template.getQuestionType()));
-
-            // 所属题库
-            row.add(repoNameOf(template.getRepoId()));
-
-            // 题干
-            row.add(schema.getTitle());
-
-            // 空1-空8
-            List<SurveySchema> blanks = schema.getChildren();
-            String[] blankAnswers = new String[8];
-            Double examScore = schema.getAttribute() != null ? schema.getAttribute().getExamScore() : null;
-
-            if (blanks != null) {
-                for (int i = 0; i < Math.min(blanks.size(), 8); i++) {
-                    SurveySchema blank = blanks.get(i);
-                    if (blank.getAttribute() != null && blank.getAttribute().getExamCorrectAnswer() != null) {
-                        blankAnswers[i] = blank.getAttribute().getExamCorrectAnswer();
-                    }
-                }
-            }
-
-            // 添加空1-空8
-            for (int i = 0; i < 8; i++) {
-                row.add(blankAnswers[i] != null ? blankAnswers[i] : "");
-            }
-
-            // 知识点（学科>章节>知识点，含难度）
-            row.add(knowledgePointText(template));
-
-            // 正确答案（整题级答案文本）
-            row.add(extractCorrectAnswer(template, false));
-
-            // 分值
-            row.add(examScore != null ? examScore : "");
-
-            // 解析
-            String analysis = schema.getAttribute() != null ? schema.getAttribute().getExamAnalysis() : "";
-            row.add(analysis != null ? analysis : "");
-
-            // 标签
-            String tags = "";
-            if (template.getTag() != null && template.getTag().length > 0) {
-                tags = String.join(" ", template.getTag());
-            }
-            row.add(tags);
-
-            fillBlankRows.add(row);
-        }
-
-        // 处理简答题（Textarea）
-        List<List<Object>> textareaRows = new ArrayList<>();
-        List<Template> textareaQuestions = questionsByType.getOrDefault(SurveySchema.QuestionType.Textarea,
-                new ArrayList<>());
-        int textareaIndex = 1;
-
-        for (Template template : textareaQuestions) {
-            SurveySchema schema = template.getTemplate();
-            List<Object> row = new ArrayList<>();
-
-            // 序号
-            row.add(textareaIndex++);
-
-            // 题型
-            row.add(questionTypeLabel(template.getQuestionType()));
-
-            // 所属题库
-            row.add(repoNameOf(template.getRepoId()));
-
-            // 题干
-            row.add(schema.getTitle());
-
-            // 答案（对于简答题，可能存储在第一个子元素中）
-            String answer = "";
-            if (schema.getChildren() != null && !schema.getChildren().isEmpty()) {
-                SurveySchema firstChild = schema.getChildren().get(0);
-                if (firstChild.getAttribute() != null && firstChild.getAttribute().getExamCorrectAnswer() != null) {
-                    answer = firstChild.getAttribute().getExamCorrectAnswer();
-                }
-            }
-            row.add(answer);
-
-            // 知识点（学科>章节>知识点，含难度）
-            row.add(knowledgePointText(template));
-
-            // 分值
-            Double examScore = schema.getAttribute() != null ? schema.getAttribute().getExamScore() : null;
-            row.add(examScore != null ? examScore : "");
-
-            // 解析
-            String analysis = schema.getAttribute() != null ? schema.getAttribute().getExamAnalysis() : "";
-            row.add(analysis != null ? analysis : "");
-
-            // 标签
-            String tags = "";
-            if (template.getTag() != null && template.getTag().length > 0) {
-                tags = String.join(" ", template.getTag());
-            }
-            row.add(tags);
-
-            textareaRows.add(row);
-        }
-
-        // 准备不同题型的列标题（序号/题型/所属题库/题干/选项或空/知识点/正确答案/分值/解析/标签）
-        List<String> radioCheckboxHeaders = new ArrayList<>();
-        radioCheckboxHeaders.add(RepoTemplateI18n.HeaderLabel.SERIAL_NO.displayLabel());
-        radioCheckboxHeaders.add("题型");
-        radioCheckboxHeaders.add("所属题库");
-        radioCheckboxHeaders.add(RepoTemplateI18n.HeaderLabel.TITLE.displayLabel());
-        for (String suffix : Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H")) {
-            radioCheckboxHeaders.add(RepoTemplateI18n.optionLabel(suffix));
-        }
-        radioCheckboxHeaders.add("知识点");
-        radioCheckboxHeaders.add("正确答案");
-        radioCheckboxHeaders.add(RepoTemplateI18n.HeaderLabel.SCORE.displayLabel());
-        radioCheckboxHeaders.add(RepoTemplateI18n.HeaderLabel.ANALYSIS.displayLabel());
-        radioCheckboxHeaders.add(RepoTemplateI18n.HeaderLabel.TAGS.displayLabel());
-
-        List<String> judgeHeaders = new ArrayList<>();
-        judgeHeaders.add(RepoTemplateI18n.HeaderLabel.SERIAL_NO.displayLabel());
-        judgeHeaders.add("题型");
-        judgeHeaders.add("所属题库");
-        judgeHeaders.add(RepoTemplateI18n.HeaderLabel.TITLE.displayLabel());
-        judgeHeaders.add(RepoTemplateI18n.optionLabel("A"));
-        judgeHeaders.add(RepoTemplateI18n.optionLabel("B"));
-        judgeHeaders.add("知识点");
-        judgeHeaders.add("正确答案");
-        judgeHeaders.add(RepoTemplateI18n.HeaderLabel.SCORE.displayLabel());
-        judgeHeaders.add(RepoTemplateI18n.HeaderLabel.ANALYSIS.displayLabel());
-        judgeHeaders.add(RepoTemplateI18n.HeaderLabel.TAGS.displayLabel());
-
-        List<String> fillBlankHeaders = new ArrayList<>();
-        fillBlankHeaders.add(RepoTemplateI18n.HeaderLabel.SERIAL_NO.displayLabel());
-        fillBlankHeaders.add("题型");
-        fillBlankHeaders.add("所属题库");
-        fillBlankHeaders.add(RepoTemplateI18n.HeaderLabel.TITLE.displayLabel());
-        for (String index : Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8")) {
-            fillBlankHeaders.add(RepoTemplateI18n.blankLabel(index));
-        }
-        fillBlankHeaders.add("知识点");
-        fillBlankHeaders.add("正确答案");
-        fillBlankHeaders.add(RepoTemplateI18n.HeaderLabel.SINGLE_BLANK_SCORE.displayLabel());
-        fillBlankHeaders.add(RepoTemplateI18n.HeaderLabel.ANALYSIS.displayLabel());
-        fillBlankHeaders.add(RepoTemplateI18n.HeaderLabel.TAGS.displayLabel());
-
-        List<String> textareaHeaders = Arrays.asList(
-                RepoTemplateI18n.HeaderLabel.SERIAL_NO.displayLabel(),
-                "题型",
-                "所属题库",
-                RepoTemplateI18n.HeaderLabel.TITLE.displayLabel(),
-                RepoTemplateI18n.HeaderLabel.ANSWER.displayLabel(),
-                "知识点",
-                RepoTemplateI18n.HeaderLabel.SCORE.displayLabel(),
-                RepoTemplateI18n.HeaderLabel.ANALYSIS.displayLabel(),
-                RepoTemplateI18n.HeaderLabel.TAGS.displayLabel());
-
-        // 创建Excel工作簿，包含多个sheet
-        try (java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream()) {
-            org.dhatim.fastexcel.Workbook workbook = new org.dhatim.fastexcel.Workbook(baos, RepoTemplateI18n.workbookName(), "1.0");
-
-            // 兜底：没有任何题型数据时创建空白 sheet，避免空工作簿导致 finish 抛异常
-            if (radioRows.isEmpty() && checkboxRows.isEmpty() && judgeRows.isEmpty()
-                    && fillBlankRows.isEmpty() && textareaRows.isEmpty()) {
-                workbook.newWorksheet(RepoTemplateI18n.SheetType.SINGLE_CHOICE.displayName());
-            }
-
-            // 创建单选题sheet
-            if (!radioRows.isEmpty()) {
-                org.dhatim.fastexcel.Worksheet radioSheet = workbook.newWorksheet(RepoTemplateI18n.SheetType.SINGLE_CHOICE.displayName());
-                radioSheet.fitToWidth((short) 10);
-                radioSheet.setFitToPage(true);
-
-                // 添加表头
-                for (int i = 0; i < radioCheckboxHeaders.size(); i++) {
-                    radioSheet.value(0, i, radioCheckboxHeaders.get(i));
-                }
-
-                // 添加数据行
-                for (int r = 0; r < radioRows.size(); r++) {
-                    List<Object> rowData = radioRows.get(r);
-                    for (int c = 0; c < rowData.size(); c++) {
-                        Object value = rowData.get(c);
-                        if (value instanceof Integer) {
-                            radioSheet.value(r + 1, c, (Number) value);
-                        } else if (value instanceof String) {
-                            radioSheet.value(r + 1, c, (String) value);
-                        } else if (value != null) {
-                            radioSheet.value(r + 1, c, value.toString());
-                        }
-                    }
-                }
-            }
-
-            // 创建多选题sheet
-            if (!checkboxRows.isEmpty()) {
-                org.dhatim.fastexcel.Worksheet checkboxSheet = workbook.newWorksheet(RepoTemplateI18n.SheetType.MULTIPLE_CHOICE.displayName());
-                checkboxSheet.fitToWidth((short) 10);
-                checkboxSheet.setFitToPage(true);
-
-                // 添加表头
-                for (int i = 0; i < radioCheckboxHeaders.size(); i++) {
-                    checkboxSheet.value(0, i, radioCheckboxHeaders.get(i));
-                }
-
-                // 添加数据行
-                for (int r = 0; r < checkboxRows.size(); r++) {
-                    List<Object> rowData = checkboxRows.get(r);
-                    for (int c = 0; c < rowData.size(); c++) {
-                        Object value = rowData.get(c);
-                        if (value instanceof Integer) {
-                            checkboxSheet.value(r + 1, c, (Number) value);
-                        } else if (value instanceof String) {
-                            checkboxSheet.value(r + 1, c, (String) value);
-                        } else if (value != null) {
-                            checkboxSheet.value(r + 1, c, value.toString());
-                        }
-                    }
-                }
-            }
-
-            // 创建判断题sheet
-            if (!judgeRows.isEmpty()) {
-                org.dhatim.fastexcel.Worksheet judgeSheet = workbook.newWorksheet(RepoTemplateI18n.SheetType.TRUE_FALSE.displayName());
-                judgeSheet.fitToWidth((short) 10);
-                judgeSheet.setFitToPage(true);
-
-                // 添加表头
-                for (int i = 0; i < judgeHeaders.size(); i++) {
-                    judgeSheet.value(0, i, judgeHeaders.get(i));
-                }
-
-                // 添加数据行
-                for (int r = 0; r < judgeRows.size(); r++) {
-                    List<Object> rowData = judgeRows.get(r);
-                    for (int c = 0; c < rowData.size(); c++) {
-                        Object value = rowData.get(c);
-                        if (value instanceof Integer) {
-                            judgeSheet.value(r + 1, c, (Number) value);
-                        } else if (value instanceof String) {
-                            judgeSheet.value(r + 1, c, (String) value);
-                        } else if (value != null) {
-                            judgeSheet.value(r + 1, c, value.toString());
-                        }
-                    }
-                }
-            }
-
-            // 创建填空题sheet
-            if (!fillBlankRows.isEmpty()) {
-                org.dhatim.fastexcel.Worksheet fillBlankSheet = workbook.newWorksheet(RepoTemplateI18n.SheetType.FILL_BLANK.displayName());
-                fillBlankSheet.fitToWidth((short) 10);
-                fillBlankSheet.setFitToPage(true);
-
-                // 添加表头
-                for (int i = 0; i < fillBlankHeaders.size(); i++) {
-                    fillBlankSheet.value(0, i, fillBlankHeaders.get(i));
-                }
-
-                // 添加数据行
-                for (int r = 0; r < fillBlankRows.size(); r++) {
-                    List<Object> rowData = fillBlankRows.get(r);
-                    for (int c = 0; c < rowData.size(); c++) {
-                        Object value = rowData.get(c);
-                        if (value instanceof Integer) {
-                            fillBlankSheet.value(r + 1, c, (Number) value);
-                        } else if (value instanceof String) {
-                            fillBlankSheet.value(r + 1, c, (String) value);
-                        } else if (value != null) {
-                            fillBlankSheet.value(r + 1, c, value.toString());
-                        }
-                    }
-                }
-            }
-
-            // 创建简答题sheet
-            if (!textareaRows.isEmpty()) {
-                org.dhatim.fastexcel.Worksheet textareaSheet = workbook.newWorksheet(RepoTemplateI18n.SheetType.TEXTAREA.displayName());
-                textareaSheet.fitToWidth((short) 10);
-                textareaSheet.setFitToPage(true);
-
-                // 添加表头
-                for (int i = 0; i < textareaHeaders.size(); i++) {
-                    textareaSheet.value(0, i, textareaHeaders.get(i));
-                }
-
-                // 添加数据行
-                for (int r = 0; r < textareaRows.size(); r++) {
-                    List<Object> rowData = textareaRows.get(r);
-                    for (int c = 0; c < rowData.size(); c++) {
-                        Object value = rowData.get(c);
-                        if (value instanceof Integer) {
-                            textareaSheet.value(r + 1, c, (Number) value);
-                        } else if (value instanceof String) {
-                            textareaSheet.value(r + 1, c, (String) value);
-                        } else if (value != null) {
-                            textareaSheet.value(r + 1, c, value.toString());
-                        }
-                    }
-                }
-            }
-
-            workbook.finish();
-
-            // 写入响应流
-            ContextHelper.getCurrentHttpResponse().getOutputStream().write(baos.toByteArray());
         }
     }
 
-    // ============================================================
-    // 导出辅助方法
-    // ============================================================
+    /**
+     * 在 workbook 上追加「填写说明」sheet（仅模板下载/空导出时附加）。
+     *
+     * @param workbook 目标工作簿
+     */
+    private void buildGuideSheet(org.dhatim.fastexcel.Workbook workbook) {
+        org.dhatim.fastexcel.Worksheet guide = workbook.newWorksheet("填写说明");
+        int r = 0;
+        for (String line : GUIDE_LINES) {
+            guide.value(r++, 0, line);
+        }
+        r++;
+        for (int c = 0; c < STANDARD_HEADERS.size(); c++) {
+            guide.value(r, c, STANDARD_HEADERS.get(c));
+        }
+        r++;
+        for (List<String> demo : demoRows()) {
+            for (int c = 0; c < demo.size(); c++) {
+                guide.value(r, c, orEmpty(demo.get(c)));
+            }
+            r++;
+        }
+    }
 
     /**
-     * 题型中文标签（导出"题型"列使用）。
+     * 示例数据行（仅供格式展示，位于填写说明 sheet，不参与导入解析）。
+     */
+    private static List<List<String>> demoRows() {
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(Arrays.asList("数学", "判断", "有理数", "数轴", "相反数", "示例：0 的相反数是 0。",
+                "", "", "", "", "", "", "", "",
+                "简单", "正确", "", "", "", "", "示例解析：0 的相反数是其本身。", "示例标签"));
+        rows.add(Arrays.asList("数学", "多项填空", "整式加减", "去括号", "合并同类项", "示例：2x+3x 与 5y-2y 的结果分别是？",
+                "", "", "", "", "", "", "", "",
+                "简单", "5x", "3y", "", "", "", "示例解析：合并同类项系数相加减。", "示例标签"));
+        return rows;
+    }
+
+    /**
+     * 题型中文标签（标准模板「题型」列，五种业务题型）。
      *
      * @param type 题型枚举
-     * @return 中文标签：Radio→单选题、Checkbox→多选题、Judge→判断题、
-     *         FillBlank→填空题、Textarea→简答题；未知类型返回枚举名；null 返回空串
-     * @implNote 被 exportRepoQuestions 调用。
+     * @return 判断 / 单选 / 单项填空 / 多选 / 多项填空
      */
-    private String questionTypeLabel(SurveySchema.QuestionType type) {
+    private static String standardTypeLabel(SurveySchema.QuestionType type) {
         if (type == null) {
             return "";
         }
         switch (type) {
-            case Radio:
-                return "单选题";
-            case Checkbox:
-                return "多选题";
             case Judge:
-                return "判断题";
+                return "判断";
+            case Radio:
+                return "单选";
             case FillBlank:
-                return "填空题";
+                return "单项填空";
+            case Checkbox:
+                return "多选";
+            case MultipleBlank:
+                return "多项填空";
             case Textarea:
                 return "简答题";
             default:
@@ -1336,127 +1030,786 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 所属题库名称（导出"所属题库"列使用）：按 repoId 查询题库名，查不到返回空串。
+     * 难度中文化（标准模板「难易程度」列）。
      *
-     * @param repoId 题库 ID
-     * @return 题库名称
-     * @implNote 被 exportRepoQuestions 调用；未指定题库导出全部题目时该项可能是空。
+     * @param difficulty easy/medium/hard 或已有中文字样
+     * @return 简单 / 中等 / 困难；无法识别返回原文
      */
-    private String repoNameOf(String repoId) {
-        if (!StringUtils.hasText(repoId)) {
+    private static String difficultyLabelOf(String difficulty) {
+        if (!StringUtils.hasText(difficulty)) {
             return "";
         }
-        Repo repo = getById(repoId);
-        return repo != null && repo.getName() != null ? repo.getName() : "";
+        switch (difficulty.trim().toLowerCase()) {
+            case "easy":
+                return "简单";
+            case "medium":
+                return "中等";
+            case "hard":
+                return "困难";
+            default:
+                return difficulty.trim();
+        }
     }
 
-    /**
-     * 知识点组合文本（导出"知识点"列）：学科 > 章节 > 知识点（多值逗号连接），
-     * 难度以全角括号附加标注，如 "数学 > 函数 > 单调性,奇偶性（中等）"。
-     *
-     * 【数据来源双格式兼容】
-     * - 优先题目顶层字段（新数据格式）：template.subject/chapter/knowledgePoint/difficulty；
-     * - 回退题目 JSON attribute 快照（旧数据格式）：attr.subject/chapter/knowledgePoint/difficulty，
-     *   保证旧题库导出不丢维度信息。
-     *
-     * 【格式约定】
-     * - 各级间用 " > " 连接；知识点多值用英文逗号连接；
-     * - 难度映射：easy→简单、medium→中等、hard→困难，未知原样输出。
-     *
-     * @param template 题目模板实体
-     * @return 组装好的知识点文本
-     * @implNote 被 exportRepoQuestions 调用（五种题型 sheet 均使用）。
-     */
-    private String knowledgePointText(Template template) {
-        SurveySchema schema = template.getTemplate();
-        SurveySchema.Attribute attr = schema != null ? schema.getAttribute() : null;
-        String subject = template.getSubject() != null ? template.getSubject()
-                : (attr != null ? attr.getSubject() : null);
-        String chapter = template.getChapter() != null ? template.getChapter()
-                : (attr != null ? attr.getChapter() : null);
-        String kp = "";
-        if (template.getKnowledgePoint() != null && template.getKnowledgePoint().length > 0) {
-            kp = String.join(",", template.getKnowledgePoint());
-        } else if (attr != null && attr.getKnowledgePoint() != null && !attr.getKnowledgePoint().isEmpty()) {
-            kp = String.join(",", attr.getKnowledgePoint());
-        }
-        String difficulty = template.getDifficulty() != null ? template.getDifficulty()
-                : (attr != null ? attr.getDifficulty() : null);
-        StringBuilder sb = new StringBuilder();
-        if (StringUtils.hasText(subject)) {
-            sb.append(subject);
-        }
-        if (StringUtils.hasText(chapter)) {
-            if (sb.length() > 0) {
-                sb.append(" > ");
-            }
-            sb.append(chapter);
-        }
-        if (StringUtils.hasText(kp)) {
-            if (sb.length() > 0) {
-                sb.append(" > ");
-            }
-            sb.append(kp);
-        }
-        if (StringUtils.hasText(difficulty)) {
-            String label;
-            switch (difficulty) {
-                case "easy":
-                    label = "简单";
-                    break;
-                case "medium":
-                    label = "中等";
-                    break;
-                case "hard":
-                    label = "困难";
-                    break;
-                default:
-                    label = difficulty;
-            }
-            sb.append("（").append(label).append("）");
-        }
-        return sb.toString();
+    private static String orEmpty(String value) {
+        return value == null ? "" : value;
     }
 
-    /**
-     * 提取正确答案文本（导出"正确答案"列）。
-     *
-     * 【提取优先级】
-     * 1. 整题级答案：题目 attribute.examCorrectAnswer（多选题 \n 分隔多个时，
-     *    multi=true 会转成逗号分隔 "A,B"）；
-     * 2. 选项级答案：遍历子选项，attribute.examCorrectAnswer 非空的选项
-     *    按位置转成 A/B/C... 字母，多个用逗号连接。
-     *
-     * @param template 题目模板实体
-     * @param multi    是否多选题（true 时整题级答案按 \n 拆开转逗号分隔）
-     * @return 正确答案文本；无标准答案返回空串
-     * @implNote 被 exportRepoQuestions 调用：单选/判断/填空/简答传 false，多选传 true。
-     */
-    private String extractCorrectAnswer(Template template, boolean multi) {
-        SurveySchema schema = template.getTemplate();
-        if (schema == null) {
-            return "";
-        }
-        SurveySchema.Attribute attr = schema.getAttribute();
-        if (attr != null && StringUtils.hasText(attr.getExamCorrectAnswer())) {
-            String top = attr.getExamCorrectAnswer();
-            if (multi && top.contains("\n")) {
-                return Arrays.stream(top.split("\n")).map(String::trim)
-                        .filter(s -> !s.isEmpty()).collect(Collectors.joining(","));
-            }
-            return top;
-        }
-        List<String> letters = new ArrayList<>();
-        if (schema.getChildren() != null) {
-            for (int i = 0; i < schema.getChildren().size(); i++) {
-                SurveySchema option = schema.getChildren().get(i);
-                if (option.getAttribute() != null
-                        && StringUtils.hasText(option.getAttribute().getExamCorrectAnswer())) {
-                    letters.add(String.valueOf((char) ('A' + i)));
+    private static String firstText(String... values) {
+        if (values != null) {
+            for (String v : values) {
+                if (StringUtils.hasText(v)) {
+                    return v;
                 }
             }
         }
-        return letters.isEmpty() ? "" : String.join(",", letters);
+        return null;
     }
+
+    /**
+     * 单表导出的一行（22 列，顺序与 STANDARD_HEADERS 一致）。
+     *
+     * @param template 题目实体
+     * @return 导出行数据
+     * @implNote 学科/章节/小节/知识点/难度兼容顶层新格式与 attribute 旧快照两种存储。
+     */
+    private List<String> standardRowOf(Template template) {
+        SurveySchema schema = template.getTemplate();
+        SurveySchema.Attribute attr = schema != null ? schema.getAttribute() : null;
+        String subject = firstText(template.getSubject(), attr != null ? attr.getSubject() : null);
+        String chapter = firstText(template.getChapter(), attr != null ? attr.getChapter() : null);
+        String section = firstText(template.getSection(), attr != null ? attr.getSection() : null);
+        String difficulty = firstText(template.getDifficulty(), attr != null ? attr.getDifficulty() : null);
+        String[] topKps = template.getKnowledgePoint();
+        List<String> kpList = topKps != null && topKps.length > 0 ? Arrays.asList(topKps)
+                : (attr != null && attr.getKnowledgePoint() != null && !attr.getKnowledgePoint().isEmpty()
+                        ? new ArrayList<>(attr.getKnowledgePoint()) : null);
+        List<SurveySchema> children = schema != null && schema.getChildren() != null ? schema.getChildren()
+                : Collections.emptyList();
+
+        List<String> row = new ArrayList<>(STANDARD_HEADERS.size());
+        row.add(orEmpty(subject));
+        row.add(standardTypeLabel(template.getQuestionType()));
+        row.add(orEmpty(chapter));
+        row.add(orEmpty(section));
+        row.add(kpList == null ? "" : String.join("、", kpList));
+        row.add(orEmpty(schema != null ? schema.getTitle() : null));
+        for (int i = 0; i < 8; i++) {
+            row.add(i < children.size() && children.get(i) != null ? orEmpty(children.get(i).getTitle()) : "");
+        }
+        row.add(difficultyLabelOf(difficulty));
+        List<String> answers = answerCellsOf(template);
+        for (int i = 0; i < 5; i++) {
+            row.add(i < answers.size() ? answers.get(i) : "");
+        }
+        row.add(attr != null ? orEmpty(attr.getExamAnalysis()) : "");
+        row.add(template.getTag() != null && template.getTag().length > 0
+                ? String.join("、", template.getTag()) : "");
+        return row;
+    }
+
+    /**
+     * 提取题目正确答案，拆分到模板「正确答案1~5」列（最多 5 个单元）。
+     *
+     * <p>各题型取法：</p>
+     * <ul>
+     *   <li>判断：整题级或选项级答案统一归一为“正确/错误”，单个单元；</li>
+     *   <li>单选/多选：优先整题级答案（兼容 “A,B”/“B\nC”/选项文本/选项 id），逐项映射为
+     *       选项字母；无整题答案时按选项级答案标记顺序转字母；</li>
+     *   <li>单项填空/多项填空：整题级答案按 | 拆空位；无整题答案时取子空答案文本。</li>
+     * </ul>
+     *
+     * @param template 题目实体
+     * @return 答案单元列表（不超过 5 个）
+     */
+    private List<String> answerCellsOf(Template template) {
+        List<String> cells = new ArrayList<>();
+        SurveySchema schema = template.getTemplate();
+        if (schema == null) {
+            return cells;
+        }
+        SurveySchema.QuestionType type = template.getQuestionType() != null ? template.getQuestionType()
+                : schema.getType();
+        SurveySchema.Attribute attr = schema.getAttribute();
+        String top = attr != null ? attr.getExamCorrectAnswer() : null;
+        List<SurveySchema> children = schema.getChildren() != null ? schema.getChildren() : Collections.emptyList();
+
+        if (type == SurveySchema.QuestionType.Judge) {
+            String value = StringUtils.hasText(top) ? top : checkedChildText(children, "");
+            cells.add(normalizeJudgeAnswer(value));
+            return cells;
+        }
+        if (type == SurveySchema.QuestionType.Radio || type == SurveySchema.QuestionType.Checkbox) {
+            if (StringUtils.hasText(top)) {
+                String trimmed = top.trim();
+                Integer direct = indexOfOption(children, trimmed);
+                if (direct != null) {
+                    cells.add(letterOf(direct));
+                    return cells;
+                }
+                for (String token : splitAnswers(trimmed)) {
+                    Integer idx = indexOfOption(children, token);
+                    cells.add(idx != null ? letterOf(idx) : token);
+                }
+            } else {
+                for (int i = 0; i < children.size() && cells.size() < 5; i++) {
+                    SurveySchema option = children.get(i);
+                    if (option != null && option.getAttribute() != null
+                            && StringUtils.hasText(option.getAttribute().getExamCorrectAnswer())) {
+                        cells.add(letterOf(i));
+                    }
+                }
+            }
+            return cells.size() > 5 ? cells.subList(0, 5) : cells;
+        }
+        // FillBlank / MultipleBlank：整题级答案按 | 拆空位
+        if (StringUtils.hasText(top)) {
+            for (String piece : top.split("\\|")) {
+                cells.add(piece.trim());
+            }
+        } else {
+            for (SurveySchema child : children) {
+                if (child != null && child.getAttribute() != null
+                        && StringUtils.hasText(child.getAttribute().getExamCorrectAnswer())) {
+                    cells.add(child.getAttribute().getExamCorrectAnswer().trim());
+                }
+            }
+        }
+        return cells.size() > 5 ? cells.subList(0, 5) : cells;
+    }
+
+    /**
+     * 取首个带答案标记的子项文本（判断题选项级答案场景）。
+     */
+    private String checkedChildText(List<SurveySchema> children, String fallback) {
+        for (SurveySchema child : children) {
+            if (child != null && child.getAttribute() != null
+                    && StringUtils.hasText(child.getAttribute().getExamCorrectAnswer())) {
+                if (StringUtils.hasText(child.getTitle())) {
+                    return child.getTitle();
+                }
+                return child.getAttribute().getExamCorrectAnswer();
+            }
+        }
+        return fallback;
+    }
+
+    /**
+     * 判断题答案归一化（模板「正确答案」列输出 正确/错误）。
+     */
+    private static String normalizeJudgeAnswer(String value) {
+        if (!StringUtils.hasText(value)) {
+            return "";
+        }
+        String v = value.trim().toLowerCase();
+        if ("正确".equals(v) || "对".equals(v) || "true".equals(v) || "1".equals(v) || "t".equals(v)
+                || "√".equals(v) || "y".equals(v)) {
+            return "正确";
+        }
+        if ("错误".equals(v) || "错".equals(v) || "false".equals(v) || "0".equals(v) || "f".equals(v)
+                || "×".equals(v) || "n".equals(v)) {
+            return "错误";
+        }
+        return value.trim();
+    }
+
+    private static String letterOf(int index) {
+        return String.valueOf((char) ('A' + index));
+    }
+
+    /**
+     * 在选项中定位答案 token 对应下标（支持：选项字母 A~H、选项 id、选项标题精确匹配）。
+     *
+     * @return 命中下标；未命中返回 null
+     */
+    private Integer indexOfOption(List<SurveySchema> children, String token) {
+        if (children == null || token == null) {
+            return null;
+        }
+        String t = token.trim();
+        if (t.length() == 1 && Character.isLetter(t.charAt(0))) {
+            int letterIndex = Character.toUpperCase(t.charAt(0)) - 'A';
+            if (letterIndex >= 0 && letterIndex < children.size()) {
+                return letterIndex;
+            }
+        }
+        for (int i = 0; i < children.size(); i++) {
+            SurveySchema option = children.get(i);
+            if (option == null) {
+                continue;
+            }
+            if (option.getId() != null && t.equalsIgnoreCase(option.getId())) {
+                return i;
+            }
+            if (option.getTitle() != null && t.equals(option.getTitle().trim())) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 拆分答案文本为多个 token（兼容 
+ 与中英文逗号/顿号/分号/竖线分隔）。
+     */
+    private static List<String> splitAnswers(String text) {
+        List<String> result = new ArrayList<>();
+        if (text == null) {
+            return result;
+        }
+        for (String t : text.split("[\n,，、|;；]")) {
+            String v = t.trim();
+            if (!v.isEmpty()) {
+                result.add(v);
+            }
+        }
+        return result;
+    }
+
+
+    // ============================================================
+    // 标准单表模板导入解析（与导出共用列结构，逐行校验后整体入库）
+    // ============================================================
+
+    /** 标准模板「学科」列序号（0 起，与 STANDARD_HEADERS 对齐）。 */
+    private static final int COL_SUBJECT = 0;
+    /** 标准模板「题型」列序号。 */
+    private static final int COL_TYPE = 1;
+    /** 标准模板「章节」列序号。 */
+    private static final int COL_CHAPTER = 2;
+    /** 标准模板「小节」列序号（知识结构：学科→章节→小节→知识点）。 */
+    private static final int COL_SECTION = 3;
+    /** 标准模板「知识点」列序号。 */
+    private static final int COL_KNOWLEDGE_POINT = 4;
+    /** 标准模板「题目」列序号。 */
+    private static final int COL_TITLE = 5;
+    /** 标准模板选项列起始序号（选项A）。 */
+    private static final int COL_OPTION_START = 6;
+    /** 标准模板选项列结束序号（选项H）。 */
+    private static final int COL_OPTION_END = 13;
+    /** 标准模板「难易程度」列序号。 */
+    private static final int COL_DIFFICULTY = 14;
+    /** 标准模板答案列起始序号（正确答案1）。 */
+    private static final int COL_ANSWER_START = 15;
+    /** 标准模板答案列结束序号（正确答案5）。 */
+    private static final int COL_ANSWER_END = 19;
+    /** 标准模板「解析」列序号。 */
+    private static final int COL_ANALYSIS = 20;
+    /** 标准模板「标签」列序号。 */
+    private static final int COL_TAGS = 21;
+
+    /** 单次导入最多展示的行级错误条数。 */
+    private static final int MAX_SHOWN_ERRORS = 20;
+
+    /**
+     * 解析标准单表模板（首 sheet，22 列）。
+     *
+     * <p>逐行校验：学科/章节/小节按名称匹配系统已有体系（不自动新建）；知识点（多值，顿号
+     * 分隔）填了小节时须属于该小节、小节留空时须属于该章节下已有知识点；选项与答案按题型
+     * 规则校验。任一行有错即整体中止，抛错携带行级明细。全部通过才返回题目列表供
+     * batchAddRepoTemplate 落库。</p>
+     *
+     * @param file 上传文件（已确认首 sheet 表头为标准模板）
+     * @return 模板请求列表
+     */
+    @SneakyThrows
+    private List<TemplateRequest> parseStandardQuestions(MultipartFile file) {
+        List<String> errors = new ArrayList<>();
+        List<TemplateRequest> result = new ArrayList<>();
+        // 知识点归属缓存：key 为 "c:"+章节id 或 "s:"+小节id（填了小节按小节校验，否则按章节全集校验）
+        Map<String, Set<String>> kpCache = new HashMap<>();
+        try (InputStream is = file.getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
+            java.util.Optional<org.dhatim.fastexcel.reader.Sheet> first = wb.getSheets().findFirst();
+            if (first.isPresent()) {
+                try (Stream<Row> rows = first.get().openStream()) {
+                    Iterator<Row> it = rows.iterator();
+                    boolean headerPassed = false;
+                    while (it.hasNext()) {
+                        Row r = it.next();
+                        if (!headerPassed) {
+                            headerPassed = true;
+                            continue;
+                        }
+                        parseStandardRow(r, errors, result, kpCache);
+                    }
+                }
+            }
+        }
+        if (!errors.isEmpty()) {
+            List<String> shown = errors.size() > MAX_SHOWN_ERRORS
+                    ? new ArrayList<>(errors.subList(0, MAX_SHOWN_ERRORS)) : errors;
+            String summary = String.join("；", shown)
+                    + (errors.size() > MAX_SHOWN_ERRORS
+                            ? "；……等共" + errors.size() + "处问题（已中止导入）" : "（已中止导入）");
+            throw new ErrorCodeException(ErrorCode.FileParseError, "导入校验失败，请修正模板后重新上传。" + summary);
+        }
+        return result;
+    }
+
+    /**
+     * 解析标准模板的一行数据（行级校验，错误累计进 errors）。
+     */
+    private void parseStandardRow(Row r, List<String> errors, List<TemplateRequest> result,
+            Map<String, Set<String>> kpCache) {
+        int rowNum = r.getRowNum();
+        String subjectText = cellText(r, COL_SUBJECT);
+        String title = cellText(r, COL_TITLE);
+        // 学科与题目均为空 → 视为空行跳过
+        if (!StringUtils.hasText(subjectText) && !StringUtils.hasText(title)) {
+            return;
+        }
+        String typeText = cellText(r, COL_TYPE);
+        String chapterText = cellText(r, COL_CHAPTER);
+        String sectionText = cellText(r, COL_SECTION);
+        String kpText = cellText(r, COL_KNOWLEDGE_POINT);
+        String difficultyText = cellText(r, COL_DIFFICULTY);
+        String analysis = cellText(r, COL_ANALYSIS);
+        String tagsText = cellText(r, COL_TAGS);
+
+        List<String> rowErrors = new ArrayList<>();
+
+        // 学科（名称或编码匹配系统已有学科，不自动新建）
+        Subject subject = null;
+        if (!StringUtils.hasText(subjectText)) {
+            rowErrors.add("学科不能为空");
+        } else {
+            subject = findSubject(subjectText);
+            if (subject == null) {
+                rowErrors.add("学科不存在（不自动新建学科）：" + subjectText);
+            }
+        }
+        String subjectName = subject != null ? subject.getName() : subjectText;
+
+        // 题型（收窄为五种业务题型）
+        SurveySchema.QuestionType type = null;
+        if (!StringUtils.hasText(typeText)) {
+            rowErrors.add("题型不能为空");
+        } else {
+            type = typeFromLabel(typeText);
+            if (type == null) {
+                rowErrors.add("题型不支持：" + typeText + "（仅支持 判断/单选/单项填空/多选/多项填空）");
+            }
+        }
+
+        // 题干
+        if (!StringUtils.hasText(title)) {
+            rowErrors.add("题目内容不能为空");
+        }
+
+        // 章节（须属于该学科）
+        Chapter chapter = null;
+        if (StringUtils.hasText(chapterText)) {
+            if (subject == null) {
+                rowErrors.add("章节「" + chapterText + "」缺少可用的学科上下文");
+            } else {
+                chapter = findChapter(subject.getId(), chapterText);
+                if (chapter == null) {
+                    rowErrors.add("学科「" + subjectName + "」下不存在章节：" + chapterText);
+                }
+            }
+        } else if (StringUtils.hasText(sectionText) || StringUtils.hasText(kpText)) {
+            rowErrors.add("填写了小节或知识点但章节为空");
+        }
+        // 小节（须属于该章节，可留空）
+        Section section = null;
+        if (StringUtils.hasText(sectionText)) {
+            if (chapter == null) {
+                rowErrors.add("小节「" + sectionText + "」缺少可用的章节上下文");
+            } else {
+                section = findSection(chapter.getId(), sectionText);
+                if (section == null) {
+                    rowErrors.add("学科「" + subjectName + "」章节「" + chapterText + "」下不存在小节：" + sectionText);
+                }
+            }
+        }
+        // 知识点（多值，顿号分隔）：填了小节时须属于该小节；小节留空时须属于该章节
+        List<String> kpNames = splitAnswers(kpText);
+        if (chapter != null && !kpNames.isEmpty()) {
+            String cacheSectionId = section != null ? section.getId() : null;
+            String cacheChapterId = chapter.getId();
+            Set<String> names = cacheSectionId != null
+                    ? kpCache.computeIfAbsent("s:" + cacheSectionId,
+                            id -> kpNamesOfSection(cacheSectionId))
+                    : kpCache.computeIfAbsent("c:" + cacheChapterId,
+                            id -> kpNamesOfChapter(cacheChapterId));
+            for (String kp : kpNames) {
+                if (!names.contains(kp)) {
+                    if (section != null) {
+                        rowErrors.add("小节「" + sectionText + "」下不存在知识点：" + kp);
+                    } else {
+                        rowErrors.add("章节「" + chapterText + "」下不存在知识点：" + kp);
+                    }
+                }
+            }
+        }
+
+        // 难易程度
+        String difficulty = null;
+        if (StringUtils.hasText(difficultyText)) {
+            difficulty = difficultyOf(difficultyText);
+            if (difficulty == null) {
+                rowErrors.add("难易程度仅支持：简单/中等/困难");
+            }
+        }
+
+        // 选项列（仅 单选/多选 读取，需从选项A 起连续填写、无重复、至少 2 个）
+        List<String> options = new ArrayList<>();
+        if (type == SurveySchema.QuestionType.Radio || type == SurveySchema.QuestionType.Checkbox) {
+            boolean gap = false;
+            Set<String> seen = new HashSet<>();
+            for (int c = COL_OPTION_START; c <= COL_OPTION_END; c++) {
+                String t = cellText(r, c);
+                if (!StringUtils.hasText(t)) {
+                    gap = true;
+                    continue;
+                }
+                if (gap) {
+                    rowErrors.add("选项列存在空缺，请从选项A开始连续填写");
+                    gap = false;
+                }
+                if (!seen.add(t)) {
+                    rowErrors.add("选项内容重复：" + t);
+                }
+                options.add(t);
+            }
+            if (options.size() < 2) {
+                rowErrors.add("选择题至少需要填写 2 个选项");
+            }
+        }
+
+        // 正确答案列（正确答案1~5）
+        List<String> answerTokens = new ArrayList<>();
+        for (int c = COL_ANSWER_START; c <= COL_ANSWER_END; c++) {
+            String t = cellText(r, c);
+            if (StringUtils.hasText(t)) {
+                answerTokens.add(t);
+            }
+        }
+        List<SurveySchema> builtChildren = null;
+        List<String> marks = null;
+        String topAnswer = null;
+        if (type == SurveySchema.QuestionType.Radio) {
+            if (answerTokens.isEmpty()) {
+                rowErrors.add("单选题未填写正确答案");
+            } else if (answerTokens.size() > 1) {
+                rowErrors.add("单选题正确答案只需填写 1 个（列正确答案1）");
+            } else {
+                int idx = optionIndexOf(options, answerTokens.get(0));
+                if (idx < 0) {
+                    rowErrors.add("单选题正确答案需为选项字母或选项内容：" + answerTokens.get(0));
+                } else {
+                    marks = Collections.singletonList(String.valueOf((char) ('A' + idx)));
+                }
+            }
+        } else if (type == SurveySchema.QuestionType.Checkbox) {
+            if (answerTokens.isEmpty()) {
+                rowErrors.add("多选题未填写正确答案");
+            } else {
+                Set<String> letterSet = new HashSet<>();
+                for (String token : answerTokens) {
+                    int idx = optionIndexOf(options, token);
+                    if (idx < 0) {
+                        rowErrors.add("多选题正确答案需为选项字母或选项内容：" + token);
+                        continue;
+                    }
+                    String letter = String.valueOf((char) ('A' + idx));
+                    if (!letterSet.add(letter)) {
+                        rowErrors.add("多选题正确答案重复：" + token);
+                    }
+                }
+                if (rowErrors.isEmpty()) {
+                    marks = new ArrayList<>(letterSet);
+                }
+            }
+        } else if (type == SurveySchema.QuestionType.Judge) {
+            if (answerTokens.isEmpty()) {
+                rowErrors.add("判断题未填写正确答案");
+            } else if (answerTokens.size() > 1) {
+                rowErrors.add("判断题正确答案只需填写 1 个（正确答案1 填 正确 或 错误）");
+            } else {
+                String judge = normalizeJudgeAnswer(answerTokens.get(0));
+                if (!"正确".equals(judge) && !"错误".equals(judge)) {
+                    rowErrors.add("判断题正确答案需为 正确/错误（或其同义写法），当前值：" + answerTokens.get(0));
+                } else {
+                    topAnswer = judge;
+                }
+            }
+        } else if (type == SurveySchema.QuestionType.FillBlank) {
+            if (answerTokens.isEmpty()) {
+                rowErrors.add("填空题未填写正确答案");
+            } else if (answerTokens.size() > 1) {
+                rowErrors.add("单项填空仅 1 个空，正确答案填在「正确答案1」即可；多空请用「多项填空」题型");
+            } else {
+                topAnswer = answerTokens.get(0);
+            }
+        } else if (type == SurveySchema.QuestionType.MultipleBlank) {
+            if (answerTokens.isEmpty()) {
+                rowErrors.add("多项填空未填写正确答案");
+            } else if (answerTokens.size() > 5) {
+                rowErrors.add("多项填空答案不能超过 5 个空");
+            } else {
+                topAnswer = String.join("|", answerTokens);
+            }
+        }
+
+        if (!rowErrors.isEmpty()) {
+            for (String e : rowErrors) {
+                if (errors.size() < MAX_SHOWN_ERRORS) {
+                    errors.add("第" + rowNum + "行：" + e);
+                }
+            }
+            return;
+        }
+
+        // —— 行级校验通过，装配题目
+        List<String> tags = splitAnswers(tagsText);
+        List<SurveySchema> children = new ArrayList<>();
+        if (type == SurveySchema.QuestionType.Radio || type == SurveySchema.QuestionType.Checkbox) {
+            for (int i = 0; i < options.size(); i++) {
+                children.add(SurveySchema.builder().id(newQuestionId()).title(options.get(i))
+                        .attribute(SurveySchema.Attribute.builder().build()).build());
+            }
+            if (marks != null) {
+                for (String letter : marks) {
+                    int idx = letter.charAt(0) - 'A';
+                    children.get(idx).setAttribute(SurveySchema.Attribute.builder()
+                            .examCorrectAnswer(children.get(idx).getId()).build());
+                }
+            }
+        } else if (type == SurveySchema.QuestionType.Judge) {
+            children.add(SurveySchema.builder().id(newQuestionId()).title("正确")
+                    .attribute(SurveySchema.Attribute.builder().build()).build());
+            children.add(SurveySchema.builder().id(newQuestionId()).title("错误")
+                    .attribute(SurveySchema.Attribute.builder().build()).build());
+        } else if (type == SurveySchema.QuestionType.FillBlank) {
+            children.add(SurveySchema.builder().id(newQuestionId())
+                    .attribute(SurveySchema.Attribute.builder().build()).build());
+        } else if (type == SurveySchema.QuestionType.MultipleBlank) {
+            int blankCount = topAnswer.split("\\|", -1).length;
+            for (int i = 0; i < blankCount; i++) {
+                children.add(SurveySchema.builder().id(newQuestionId())
+                        .attribute(SurveySchema.Attribute.builder().build()).build());
+            }
+        }
+
+        SurveySchema.Attribute.AttributeBuilder attrBuilder = SurveySchema.Attribute.builder()
+                .subject(subjectName)
+                .difficulty(difficulty);
+        if (StringUtils.hasText(analysis)) {
+            attrBuilder.examAnalysis(analysis);
+        }
+        if (!kpNames.isEmpty()) {
+            attrBuilder.knowledgePoint(kpNames);
+        }
+        if (StringUtils.hasText(chapterText) && chapter != null) {
+            attrBuilder.chapter(chapter.getName());
+        }
+        if (section != null) {
+            attrBuilder.section(section.getName());
+        }
+        if (type == SurveySchema.QuestionType.Judge || type == SurveySchema.QuestionType.FillBlank
+                || type == SurveySchema.QuestionType.MultipleBlank) {
+            attrBuilder.examCorrectAnswer(topAnswer);
+        }
+        if (type == SurveySchema.QuestionType.Radio || type == SurveySchema.QuestionType.Judge) {
+            attrBuilder.examAnswerMode(SurveySchema.ExamScoreMode.onlyOne);
+        } else {
+            attrBuilder.examAnswerMode(SurveySchema.ExamScoreMode.selectAll);
+        }
+        if (type == SurveySchema.QuestionType.FillBlank || type == SurveySchema.QuestionType.MultipleBlank) {
+            attrBuilder.examMatchRule(SurveySchema.ExamMatchRule.completeSame);
+        }
+        SurveySchema schema = SurveySchema.builder()
+                .id(newQuestionId())
+                .title(title)
+                .type(type)
+                .attribute(attrBuilder.build())
+                .children(children)
+                .tags(tags.isEmpty() ? null : tags)
+                .build();
+
+        TemplateRequest request = TemplateRequest.builder()
+                .name(title)
+                .questionType(type)
+                .mode(ProjectModeEnum.exam)
+                .subject(subjectName)
+                .chapter(chapter != null ? chapter.getName() : null)
+                .section(section != null ? section.getName() : null)
+                .knowledgePoint(kpNames.isEmpty() ? null : kpNames.toArray(new String[0]))
+                .difficulty(difficulty)
+                .tag(tags.isEmpty() ? null : tags.toArray(new String[0]))
+                .template(schema)
+                .build();
+        result.add(request);
+    }
+
+    /**
+     * 安全读取单元格文本（越界/空返回空串）。
+     */
+    private static String cellText(Row row, int col) {
+        if (row == null) {
+            return "";
+        }
+        try {
+            return row.getCellAsString(col).orElse("").trim();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String newQuestionId() {
+        return UUID.randomUUID().toString().replace("-", "");
+    }
+
+    /**
+     * 按名称或编码查找学科。
+     */
+    private Subject findSubject(String nameOrCode) {
+        String v = nameOrCode.trim();
+        List<Subject> byName = subjectMapper.selectList(Wrappers.<Subject>lambdaQuery().eq(Subject::getName, v));
+        if (!byName.isEmpty()) {
+            return byName.get(0);
+        }
+        List<Subject> byCode = subjectMapper.selectList(Wrappers.<Subject>lambdaQuery().eq(Subject::getCode, v));
+        return byCode.isEmpty() ? null : byCode.get(0);
+    }
+
+    /**
+     * 按学科 + 名称查找章节。
+     */
+    private Chapter findChapter(String subjectId, String name) {
+        List<Chapter> list = chapterMapper.selectList(Wrappers.<Chapter>lambdaQuery()
+                .eq(Chapter::getSubjectId, subjectId).eq(Chapter::getName, name.trim()));
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    /**
+     * 按章节 + 名称查找小节。
+     */
+    private Section findSection(String chapterId, String name) {
+        List<Section> list = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+                .eq(Section::getChapterId, chapterId).eq(Section::getName, name.trim()));
+        return list.isEmpty() ? null : list.get(0);
+    }
+
+    /**
+     * 章节下全部知识点名称集合（经 章节→小节→知识点 两级查询；空则空集合）。
+     */
+    private Set<String> kpNamesOfChapter(String chapterId) {
+        Set<String> names = new HashSet<>();
+        List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+                .eq(Section::getChapterId, chapterId));
+        if (sections.isEmpty()) {
+            return names;
+        }
+        List<String> sectionIds = sections.stream().map(Section::getId).collect(Collectors.toList());
+        List<KnowledgePoint> kps = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+                .in(KnowledgePoint::getSectionId, sectionIds));
+        for (KnowledgePoint kp : kps) {
+            if (kp.getName() != null && !kp.getName().trim().isEmpty()) {
+                names.add(kp.getName().trim());
+            }
+        }
+        return names;
+    }
+
+    /**
+     * 小节下全部知识点名称集合（空则空集合）。
+     */
+    private Set<String> kpNamesOfSection(String sectionId) {
+        Set<String> names = new HashSet<>();
+        List<KnowledgePoint> kps = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+                .eq(KnowledgePoint::getSectionId, sectionId));
+        for (KnowledgePoint kp : kps) {
+            if (kp.getName() != null && !kp.getName().trim().isEmpty()) {
+                names.add(kp.getName().trim());
+            }
+        }
+        return names;
+    }
+
+    /**
+     * 题型中文/英文别名 → 枚举（五种业务题型）。
+     */
+    private static SurveySchema.QuestionType typeFromLabel(String label) {
+        String v = label.trim().toLowerCase();
+        switch (v) {
+            case "判断":
+            case "判断题":
+            case "judge":
+            case "truefalse":
+            case "tf":
+                return SurveySchema.QuestionType.Judge;
+            case "单选":
+            case "单选题":
+            case "单选择":
+            case "radio":
+            case "single":
+                return SurveySchema.QuestionType.Radio;
+            case "单项填空":
+            case "单选填空":
+            case "填空":
+            case "填空题":
+            case "fillblank":
+                return SurveySchema.QuestionType.FillBlank;
+            case "多选":
+            case "多选题":
+            case "多选择":
+            case "checkbox":
+                return SurveySchema.QuestionType.Checkbox;
+            case "多项填空":
+            case "多填空":
+            case "多选填空":
+            case "多空":
+            case "multipleblank":
+                return SurveySchema.QuestionType.MultipleBlank;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * 难易程度中文/英文 → easy/medium/hard；无法识别返回 null。
+     */
+    private static String difficultyOf(String text) {
+        String v = text.trim().toLowerCase();
+        if ("简单".equals(v) || "易".equals(v) || "easy".equals(v)) {
+            return "easy";
+        }
+        if ("中等".equals(v) || "中".equals(v) || "medium".equals(v) || "normal".equals(v)) {
+            return "medium";
+        }
+        if ("困难".equals(v) || "难".equals(v) || "hard".equals(v)) {
+            return "hard";
+        }
+        return null;
+    }
+
+    /**
+     * 在选项文本列表中定位答案（支持：字母 A~H 下标、选项内容精确匹配）。
+     *
+     * @param options 按 A~H 顺序的选项文本
+     * @param token   答案（字母或选项内容）
+     * @return 选项下标；未命中 -1
+     */
+    private static int optionIndexOf(List<String> options, String token) {
+        if (options == null || token == null) {
+            return -1;
+        }
+        String t = token.trim();
+        if (t.length() == 1 && Character.isLetter(t.charAt(0))) {
+            int letterIndex = Character.toUpperCase(t.charAt(0)) - 'A';
+            if (letterIndex >= 0 && letterIndex < options.size()) {
+                return letterIndex;
+            }
+        }
+        for (int i = 0; i < options.size(); i++) {
+            if (options.get(i) != null && t.equals(options.get(i).trim())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
 
 }

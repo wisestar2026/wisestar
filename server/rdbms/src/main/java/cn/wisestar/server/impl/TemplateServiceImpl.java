@@ -102,6 +102,7 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
                 .eq(query.getMode() != null, Template::getMode, query.getMode())
                 .eq(query.getSubject() != null, Template::getSubject, query.getSubject())
                 .eq(query.getChapter() != null, Template::getChapter, query.getChapter())
+                .eq(query.getSection() != null, Template::getSection, query.getSection())
                 .eq(query.getDifficulty() != null, Template::getDifficulty, query.getDifficulty())
                 .eq(query.getGrade() != null, Template::getGrade, query.getGrade())
                 .like(query.getKnowledgePoint() != null, Template::getKnowledgePoint, query.getKnowledgePoint())

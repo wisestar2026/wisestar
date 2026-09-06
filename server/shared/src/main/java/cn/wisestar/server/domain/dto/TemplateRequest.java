@@ -83,7 +83,12 @@ public class TemplateRequest {
 	private String chapter;
 
 	/**
-	 * 知识点（知识点三级维度，多值）
+	 * 小节（知识点三级维度，知识结构：学科→章节→小节→知识点）
+	 */
+	private String section;
+
+	/**
+	 * 知识点（知识点四级维度，多值）
 	 */
 	private String[] knowledgePoint;
 

@@ -1470,16 +1470,16 @@ UPDATE t_role SET authority = 'home,exercise:list,project:list,project:detail,an
 UPDATE t_role SET authority = 'home,exercise:list,project:list,project:detail,answer:list,answer:detail,repo:list,repo:detail,template:list,knowledge:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list' WHERE code = 'principal';
 -- 内置角色：教师（教学执行）
 INSERT INTO t_role (id, name, code, remark, authority, status, is_deleted, builtin, create_at, create_by, update_at, update_by)
-SELECT '2608130000000000002', '教师', 'teacher', '内置角色（不可删除）', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
+SELECT '2608130000000000002', '教师', 'teacher', '内置角色（不可删除）', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,student:supervision', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM t_role WHERE code = 'teacher');
-UPDATE t_role SET authority = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail' WHERE code = 'teacher';
-UPDATE t_role SET authority = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail' WHERE code = 'teacher';
+UPDATE t_role SET authority = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,student:supervision' WHERE code = 'teacher';
+UPDATE t_role SET authority = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,student:supervision' WHERE code = 'teacher';
 -- 内置角色：学管师（学员运营）
 INSERT INTO t_role (id, name, code, remark, authority, status, is_deleted, builtin, create_at, create_by, update_at, update_by)
-SELECT '2608130000000000003', '学管师', 'consultant', '内置角色（不可删除）', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
+SELECT '2608130000000000003', '学管师', 'consultant', '内置角色（不可删除）', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
 WHERE NOT EXISTS (SELECT 1 FROM t_role WHERE code = 'consultant');
-UPDATE t_role SET authority = 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail' WHERE code = 'consultant';
-UPDATE t_role SET authority = 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail' WHERE code = 'consultant';
+UPDATE t_role SET authority = 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision' WHERE code = 'consultant';
+UPDATE t_role SET authority = 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision' WHERE code = 'consultant';
 -- 内置角色：教务（教务管理）
 INSERT INTO t_role (id, name, code, remark, authority, status, is_deleted, builtin, create_at, create_by, update_at, update_by)
 SELECT '2608130000000000004', '教务', 'academic', '内置角色（不可删除）', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,system:dict:list,system:dictItem:list', 1, 0, 1, '2026-08-13 10:00:00', '1457995481966747649', NULL, NULL
@@ -1554,6 +1554,7 @@ CREATE TABLE IF NOT EXISTS t_template (
   preview_url varchar(512) DEFAULT NULL COMMENT '预览地址',
   subject varchar(256) DEFAULT NULL COMMENT '学科',
   chapter varchar(256) DEFAULT NULL COMMENT '章节',
+  section varchar(256) DEFAULT NULL COMMENT '小节',
   knowledge_point varchar(1024) DEFAULT NULL COMMENT '知识点（多值，逗号分隔）',
   difficulty varchar(32) DEFAULT NULL COMMENT '难度',
   grade varchar(32) DEFAULT NULL COMMENT '年级标签',
@@ -1568,6 +1569,9 @@ CREATE TABLE IF NOT EXISTS t_template (
 
 -- 兼容旧库升级：补齐题目年级标签列（新库建表已包含，已存在则跳过）
 ALTER TABLE t_template ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级标签';
+
+-- 兼容旧库升级：补齐题目小节列（知识结构：学科→章节→小节→知识点，已存在则跳过）
+ALTER TABLE t_template ADD COLUMN IF NOT EXISTS section varchar(256) DEFAULT NULL COMMENT '小节';
 
 -- ----------------------------
 -- Records of t_template

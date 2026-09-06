@@ -76,7 +76,7 @@ public class Template extends BaseModel {
 	 * 结构复用问卷 schema（SurveySchema）：title 题干、children 选项/空列表、
 	 * attribute 题目属性（含 examScore 分值、examCorrectAnswer 整题正确答案、
 	 * subject/chapter/knowledgePoint/difficulty 知识点旧快照、examAnalysis 解析等）。
-	 * 注意：同一题目存在两套知识点字段——本实体顶层 subject/chapter/knowledgePoint/difficulty
+	 * 注意：同一题目存在两套知识点字段——本实体顶层 subject/chapter/section/knowledgePoint/difficulty
 	 * 为新数据格式，attribute 内为兼容旧数据的快照格式（见 RepoServiceImpl.knowledgePointText 的兼容逻辑）。
 	 */
 	@TableField(typeHandler = JacksonTypeHandler.class, jdbcType = JdbcType.LONGVARCHAR)
@@ -136,6 +136,13 @@ public class Template extends BaseModel {
 	 * 与 subject 配合组成"学科 > 章节"两级定位。
 	 */
 	private String chapter;
+
+	/**
+	 * 小节（对应数据库列 section，知识点体系三级维度）。
+	 * 与 subject/chapter 配合组成"学科 > 章节 > 小节"三级定位（知识结构四级中的第三层，
+	 * 知识点为其下一级）。题目管理与导入导出沿用与 subject/chapter 相同的名称匹配策略。
+	 */
+	private String section;
 
 	/**
 	 * 知识点数组（对应数据库列 knowledge_point，VARCHAR，Jackson 序列化为 JSON 数组，

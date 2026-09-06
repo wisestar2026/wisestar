@@ -48,6 +48,11 @@ public class TemplateQuery extends PageQuery {
 	private String chapter;
 
 	/**
+	 * 小节筛选（知识结构：学科→章节→小节→知识点）
+	 */
+	private String section;
+
+	/**
 	 * 难度筛选
 	 */
 	private String difficulty;

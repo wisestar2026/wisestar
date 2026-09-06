@@ -3,11 +3,11 @@
  *
  * 功能:
  *   1. 题目标题（支持文字 + 内嵌图片）
- *   2. 题型选择（单选/多选/下拉/填空/多行文本/评分/备注/判断）
- *   3. 选项增删编辑
- *   4. 正确答案设置（选择题型下拉选择、填空自由输入）
+ *   2. 题型选择（题库限定五类: 判断题/单选题/单项填空/多选题/多项填空）
+ *   3. 选项增删编辑（判断题/单选/多选）
+ *   4. 正确答案设置（选择题型下拉选择、单项填空自由输入、多项填空多空位输入）
  *   5. 分值 & 计分方式
- *   6. 答案解析（支持 Markdown）
+ *   6. 答案解析
  *   7. 题目图片上传（通过 POST /api/file/create）
  *   8. 所属练习选择、标签、分类
  *   9. 知识点属性录入区（学科/章节/知识点多值/难度）
@@ -32,10 +32,18 @@
  *    - 为什么这么写: 后端 SurveySchema.Attribute.examCorrectAnswer 是单字符串字段，
  *      多选答案必须用分隔符串起来；\n 作为分隔符是因为选项文本理论上不含换行，安全
  *
- * 2. 知识点属性（学科/章节/知识点/难度）
- *    - 录入: 学科/章节为单行输入，知识点为 tags 多值输入，难度为下拉（easy/medium/hard）
- *    - 存储: 同时写入顶层 payload（subject/chapter/knowledgePoint[]/difficulty，存 t_template 表）
- *      和 template.attribute（subject/chapter/knowledgePoint/difficulty 快照，供入卷时随卷保存）
+ * 1.5 多项填空（MultipleBlank）答案的多空存取（| 分隔字符串）
+ *    - UI 层: 用 blanks 字符串数组状态渲染多个空位输入框，每框对应一个空位答案
+ *    - 落库层: attribute.examCorrectAnswer 存为 | 分隔的字符串（如 "m|a"）
+ *    - 回填层: 编辑时按 qType === 'MultipleBlank' 将字符串 split('|') 拆回数组
+ *    - 判分约定（与后端 AnswerJudgeUtil 一致）: 学生答案同样以 | 分隔并按空位顺序
+ *      逐个比对，因此空位数量必须与题干空位一致
+ *
+ * 2. 知识点属性（学科/章节/小节/知识点/难度）
+ *    - 录入: 学科/章节/小节为单行输入，知识点为 tags 多值输入，难度为下拉（easy/medium/hard）
+ *    - 知识结构四级归类: 学科 → 章节 → 小节 → 知识点
+ *    - 存储: 同时写入顶层 payload（subject/chapter/section/knowledgePoint[]/difficulty，存 t_template 表）
+ *      和 template.attribute（subject/chapter/section/knowledgePoint/difficulty 快照，供入卷时随卷保存）
  *    - 快照意义: 题目转入问卷后，历史答卷的分析依赖快照，题目后续修改不影响已发出的问卷
  *      （快照的读取方见 surveyHelpers.templateToQuestion）
  *
@@ -53,7 +61,8 @@ import {
 import {
   PlusOutlined, DeleteOutlined, UploadOutlined, BulbOutlined, CloseOutlined,
 } from '@ant-design/icons';
-import { QUESTION_TYPES, TYPES_WITH_OPTIONS, createQuestion } from '../../utils/surveyHelpers';
+import { TYPES_WITH_OPTIONS, createQuestion } from '../../utils/surveyHelpers';
+import { EXAM_TYPES, EXAM_TYPE_VALUES, typeLabel } from '../../utils/questionTypes';
 import { uploadImage } from '../../api/upload';
 
 const { Text } = Typography;
@@ -67,14 +76,12 @@ const JUDGE_OPTIONS_RAW = [
 ];
 
 // 需要展示正确答案选择器的题型（答案从选项里选，而非自由输入）
-const CHOICE_LIKE_TYPES = ['Radio', 'Checkbox', 'Select', 'Judge'];
+const CHOICE_LIKE_TYPES = ['Radio', 'Checkbox', 'Judge'];
 
-// 完整题型列表（含判断题）
-// QUESTION_TYPES 来自 surveyHelpers，只有 7 种；这里补充 Judge 形成 8 种
-const ALL_TYPES = [
-  ...QUESTION_TYPES,
-  { label: '判断题', value: 'Judge' },
-];
+// 完整题型列表（题库限定五类: 判断/单选/单项填空/多选/多项填空）
+// 为什么用 EXAM_TYPES 而非 surveyHelpers.QUESTION_TYPES: 题库题型按用户约定收窄到五类，
+// 下拉题/多行文本/评分/备注等问卷题型不可作为题库题目新建
+const ALL_TYPES = [...EXAM_TYPES];
 
 export default function QuestionEditModal({ open, onCancel, onSave, record, repos = [] }) {
   // ---- 基础字段 ----
@@ -91,16 +98,20 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   // answer 的类型随题型变化:
   //   - Checkbox（多选题）: 数组 ['选项文本A', '选项文本B']（Select mode="multiple"）
   //   - 其他选择题型: 单个选项文本字符串
-  //   - 填空/文本: 自由输入的字符串
+  //   - 填空: 自由输入的字符串
+  // blanks: 仅多项填空（MultipleBlank）使用，字符串数组，每项对应一个空位的答案；
+  //   保存时 join('|') 写入 examCorrectAnswer，回填时 split('|') 还原（见 handleSave/useEffect）
   const [answer, setAnswer] = useState('');
+  const [blanks, setBlanks] = useState(['', '']); // 多项填空各空位答案（数组长度=空位数量）
   const [analysis, setAnalysis] = useState(''); // 答案解析
   const [score, setScore] = useState(5);        // 分值，默认 5 分
   const [scoreMode, setScoreMode] = useState('onlyOne'); // 计分方式: onlyOne/selectCorrect/selectAll/manual
 
-  // ---- 知识点属性（学科/章节/知识点/难度/年级） ----
+  // ---- 知识点属性（学科/章节/小节/知识点/难度/年级） ----
   const [subject, setSubject] = useState('');         // 学科（如: 数学）
   const [grade, setGrade] = useState('');             // 年级（如: 三年级）
   const [chapter, setChapter] = useState('');         // 章节（如: 第三章 函数）
+  const [section, setSection] = useState('');         // 小节（如: 第一节 函数的概念）
   const [knowledgePoints, setKnowledgePoints] = useState([]); // 知识点（多值数组，tags 模式录入）
   const [difficulty, setDifficulty] = useState(undefined);    // 难度: easy/medium/hard
 
@@ -134,12 +145,22 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
       const attr = tmpl?.attribute || {};
       setRequired(attr.required || false);
-      // 多选题正确答案为多选（存 \n 分隔字符串，回填时拆分为数组）
-      // 为什么这么写: 后端 examCorrectAnswer 是单字符串字段，多选答案以 \n 连接；
-      // 回填时必须 split 还原为数组，才能正确渲染 Select mode="multiple"
-      setAnswer(qType === 'Checkbox'
-        ? (attr.examCorrectAnswer ? String(attr.examCorrectAnswer).split('\n').filter(Boolean) : [])
-        : (attr.examCorrectAnswer || ''));
+      // 多项填空: 答案存 | 分隔字符串，回填时按空位拆为数组
+      if (qType === 'MultipleBlank') {
+        const raw = attr.examCorrectAnswer ? String(attr.examCorrectAnswer) : '';
+        const parts = raw ? raw.split('|') : ['', ''];
+        // 空位至少 2 个，避免渲染时只有一个输入框
+        setBlanks(parts.length >= 2 ? parts : [...parts, '']);
+        setAnswer('');
+      } else {
+        setBlanks(['', '']);
+        // 多选题正确答案为多选（存 \n 分隔字符串，回填时拆分为数组）
+        // 为什么这么写: 后端 examCorrectAnswer 是单字符串字段，多选答案以 \n 连接；
+        // 回填时必须 split 还原为数组，才能正确渲染 Select mode="multiple"
+        setAnswer(qType === 'Checkbox'
+          ? (attr.examCorrectAnswer ? String(attr.examCorrectAnswer).split('\n').filter(Boolean) : [])
+          : (attr.examCorrectAnswer || ''));
+      }
       setAnalysis(attr.examAnalysis || '');
       setScore(attr.examScore || 5);
       setScoreMode(attr.examScoreMode || 'onlyOne');
@@ -148,6 +169,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setSubject(attr.subject || record.subject || '');
       setGrade(attr.grade || record.grade || '');
       setChapter(attr.chapter || '');
+      setSection(attr.section || record.section || '');
       setKnowledgePoints(Array.isArray(attr.knowledgePoint) ? attr.knowledgePoint : (attr.knowledgePoint ? [attr.knowledgePoint] : []));
       setDifficulty(attr.difficulty || undefined);
 
@@ -169,12 +191,14 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setCategory('');
       setRepoId(undefined);
       setAnswer('');
+      setBlanks(['', '']);
       setAnalysis('');
       setScore(5);
       setScoreMode('onlyOne');
       setSubject('');
       setGrade('');
       setChapter('');
+      setSection('');
       setKnowledgePoints([]);
       setDifficulty(undefined);
       setImages([]);
@@ -189,10 +213,11 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   // 避免残留的选项或数组型答案导致保存校验/渲染出错
   const handleTypeChange = (val) => {
     setQType(val);
-    if (val === 'Judge') { setOptions(['正确', '错误']); setAnswer(''); }
-    else if (val === 'Checkbox') { setOptions(['', '']); setAnswer([]); }       // 多选题答案初始化为空数组
-    else if (!TYPES_WITH_OPTIONS.includes(val)) { setOptions([]); setAnswer(''); } // 无选项题型
-    else if (!TYPES_WITH_OPTIONS.includes(qType) && TYPES_WITH_OPTIONS.includes(val)) { setOptions(['', '']); setAnswer(''); } // 填空→单选
+    if (val === 'Judge') { setOptions(['正确', '错误']); setBlanks(['', '']); setAnswer(''); }
+    else if (val === 'Checkbox') { setOptions(['', '']); setBlanks(['', '']); setAnswer([]); } // 多选题答案初始化为空数组
+    else if (val === 'MultipleBlank') { setOptions([]); setBlanks(['', '']); setAnswer(''); } // 多项填空: 多空位输入
+    else if (!TYPES_WITH_OPTIONS.includes(val)) { setOptions([]); setBlanks(['', '']); setAnswer(''); } // 无选项题型
+    else if (!TYPES_WITH_OPTIONS.includes(qType) && TYPES_WITH_OPTIONS.includes(val)) { setOptions(['', '']); setBlanks(['', '']); setAnswer(''); } // 填空→单选
   };
 
   // ---- 图片上传 ----
@@ -239,6 +264,10 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
     if (needsOptions && options.some((o) => !o.trim())) {
       message.warning('请填写所有选项'); return;
     }
+    // 多项填空: 每个空位答案必填（空位数量=输入框数量，答案按顺序以 | 拼接后判分）
+    if (qType === 'MultipleBlank' && blanks.some((b) => !String(b || '').trim())) {
+      message.warning('请填写每个空位的答案'); return;
+    }
 
     setSaving(true);
     try {
@@ -251,10 +280,12 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       // 空值用 undefined，后端序列化时会丢弃，避免存空串脏数据
       templateJson.attribute = {
         required,
-        // 多选题答案存 \n 分隔字符串，其余题型为字符串
+        // 多选题答案存 \n 分隔字符串；多项填空按空位存 | 分隔字符串；其余为字符串
         examCorrectAnswer: qType === 'Checkbox'
           ? (answer && answer.length ? answer.join('\n') : undefined)
-          : (answer || undefined),
+          : qType === 'MultipleBlank'
+            ? (blanks.map((b) => String(b).trim()).join('|') || undefined)
+            : (answer || undefined),
         examAnalysis: analysis || undefined,
         examScore: score,
         examScoreMode: scoreMode,
@@ -263,6 +294,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         subject: subject || undefined,
         grade: grade || undefined,
         chapter: chapter || undefined,
+        section: section || undefined,
         knowledgePoint: knowledgePoints.length > 0 ? knowledgePoints : undefined,
         difficulty: difficulty || undefined,
       };
@@ -290,11 +322,12 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         tag: tagArr,
         category: category || undefined,
         // 知识点属性（顶层字段存 t_template 表，attribute 内快照供入卷使用）
-        // 双写原因: 顶层字段供"题目管理"列表筛选（学科/章节/难度/知识点/年级筛选），
+        // 双写原因: 顶层字段供"题目管理"列表筛选（学科/章节/小节/难度/知识点/年级筛选），
         // attribute 快照供"从系统题目选择"入卷时随问卷保存
         subject: subject || undefined,
         grade: grade || undefined,
         chapter: chapter || undefined,
+        section: section || undefined,
         knowledgePoint: knowledgePoints.length > 0 ? knowledgePoints : undefined,
         difficulty: difficulty || undefined,
         // 如果选择了所属练习，传 repoId + mode='exam'（表示考试练习类型的题目）
@@ -321,6 +354,11 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   const answerOptions = (qType === 'Judge' ? ['正确', '错误'] : options.filter((o) => o.trim()))
     .map((title, i) => ({ label: `${String.fromCharCode(65 + i)}. ${title}`, value: title }));
 
+  // 题型下拉选项: 题库五类 + 存量历史题型（不在五类中时附加展示，避免编辑旧题回显异常）
+  const typeOptions = record?.questionType && !EXAM_TYPE_VALUES.includes(record.questionType)
+    ? [...ALL_TYPES, { label: `${typeLabel(record.questionType)}（历史题型）`, value: record.questionType }]
+    : ALL_TYPES;
+
   return (
     <Modal
       title={record?.id ? '编辑题目' : '新建题目'}
@@ -346,12 +384,17 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           maxLength={500}
           showCount
         />
+        {qType === 'MultipleBlank' && (
+          <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
+            多项填空提示：在题目文本中用（ ）标注空位，并在「正确答案」中按顺序填写各空位答案
+          </Text>
+        )}
 
         <div style={{ display: 'flex', gap: 12 }}>
           <Select
             value={qType}
             onChange={handleTypeChange}
-            options={ALL_TYPES}
+            options={typeOptions}
             style={{ width: 160 }}
           />
           {repos.length > 0 && (
@@ -406,13 +449,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
         <Divider style={{ margin: '4px 0' }} />
 
-        {/* ========== 知识点属性（学科/年级/章节/知识点/难度） ========== */}
-        {/* 重点: 三级归类（学科→章节→知识点）+ 年级 + 难度，用于学生答题情况分析；
+        {/* ========== 知识点属性（学科/年级/章节/小节/知识点/难度） ========== */}
+        {/* 重点: 四级归类（学科→章节→小节→知识点）+ 年级 + 难度，用于学生答题情况分析；
              题目入卷时由 templateToQuestion 快照到问卷节点 attribute，
              历史答卷的分析不受后续题目修改影响 */}
         <Text strong style={{ fontSize: 12 }}>知识点属性</Text>
         <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
-          学科 → 章节 → 知识点三级归类，附年级与难度，用于学生答题情况分析；入卷时自动快照，历史答卷不受题目修改影响
+          学科 → 章节 → 小节 → 知识点四级归类，附年级与难度，用于学生答题情况分析；入卷时自动快照，历史答卷不受题目修改影响
         </Text>
         <div style={{ display: 'flex', gap: 12 }}>
           {/* 学科: 单行文本录入（保存时写入顶层 subject + attribute.subject） */}
@@ -449,6 +492,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           onChange={(e) => setChapter(e.target.value)}
           placeholder="章节（如：第三章 函数）"
         />
+        {/* 小节: 单行文本录入（保存时写入顶层 section + attribute.section）
+             知识结构: 学科 → 章节 → 小节 → 知识点 */}
+        <Input
+          value={section}
+          onChange={(e) => setSection(e.target.value)}
+          placeholder="小节（如：第一节 函数的概念，可留空）"
+        />
         {/* 知识点: mode="tags" 多值输入，回车/逗号分隔确认
              状态为数组（knowledgePoints），保存时写入顶层 knowledgePoint[] + attribute.knowledgePoint */}
         <Select
@@ -469,7 +519,35 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           {/* 正确答案 */}
           <div style={{ flex: 1 }}>
             <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>正确答案</Text>
-            {CHOICE_LIKE_TYPES.includes(qType) ? (
+            {qType === 'MultipleBlank' ? (
+              /* 多项填空: 每个输入框对应一个空位，空位答案按顺序以 | 拼接落库 */
+              <div>
+                {blanks.map((b, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                    <Input
+                      value={b}
+                      onChange={(e) => { const n = [...blanks]; n[i] = e.target.value; setBlanks(n); }}
+                      placeholder={`第 ${i + 1} 个空位的答案`}
+                      style={{ flex: 1 }}
+                    />
+                    {blanks.length > 1 && (
+                      <Button danger size="small" icon={<DeleteOutlined />}
+                        onClick={() => setBlanks(blanks.filter((_, x) => x !== i))}
+                      />
+                    )}
+                  </div>
+                ))}
+                <Button type="dashed" size="small" icon={<PlusOutlined />}
+                  onClick={() => setBlanks([...blanks, ''])}
+                  style={{ width: '100%' }}
+                >
+                  添加空位
+                </Button>
+                <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>
+                  每个输入框对应题干中的一个空位（如「（ ）」），判分时按空位顺序逐个比对
+                </Text>
+              </div>
+            ) : CHOICE_LIKE_TYPES.includes(qType) ? (
               qType === 'Checkbox' ? (
                 /* 多选题答案: mode="multiple" 多选，state 为数组
                    保存时 handleSave 里 join('\n') 转字符串落库 */

@@ -394,6 +394,27 @@ public class RepoApi {
 	}
 
 	/**
+	 * 下载题目导入模板（标准单表 21 列，含「填写说明」sheet）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/repo/import/template
+	 * （如 /api/repo/import/template）。</p>
+	 *
+	 * <p><b>功能</b>：下载仅供导入使用的空模板（不包含任何题目数据，避免把存量题目
+	 * 当作模板行再次导入）。模板列：学科/题型/章节/知识点/题目/选项A~H/难易程度/
+	 * 正确答案1~5/解析/标签。</p>
+	 *
+	 * <p><b>返回值结构</b>：无方法返回值；服务层直接把 Excel 写入 HTTP 响应流。</p>
+	 *
+	 * <p><b>权限</b>：与导入接口一致，不设 @PreAuthorize（题目管理页导入入口已有页面权限）。
+	 *
+	 * <p><b>调用的下层 Service</b>：{@link RepoService#downloadImportTemplate()}。</p>
+	 */
+	@GetMapping("/import/template")
+	public void downloadImportTemplate() {
+		repoService.downloadImportTemplate();
+	}
+
+	/**
 	 * 学员端「我的题库」。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/repo/my（如 /api/repo/my）。</p>

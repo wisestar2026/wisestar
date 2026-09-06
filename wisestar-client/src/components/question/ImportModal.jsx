@@ -6,9 +6,11 @@
  *   2. 上传 Excel 文件（.xlsx / .xls）
  *   3. 提交到后端 /api/repo/import 接口
  *
- * Excel 格式要求:
- *   按 Sheet 区分题型：单选题 / 多选题 / 判断题 / 填空题 / 简答题
- *   每 Sheet 第一行为表头，后续行为数据；选项用独立列（A/B/C/D）
+ * Excel 格式要求（标准单表模板）:
+ *   一个工作表（首 sheet），第一行为表头（22 列），从第二行起每行一道题目。
+ *   表头顺序: 学科 / 题型 / 章节 / 小节 / 知识点 / 题目 / 选项A~H / 难易程度 / 正确答案1~5 / 解析 / 标签
+ *   题型填中文: 判断题 / 单选题 / 单项填空 / 多选题 / 多项填空
+ *   学科/章节/小节/知识点必须与系统中已建体系名称一致（名称不匹配的行会报错并中止导入）
  *
  * 被谁引用: QuestionListPage（题目管理页的"Excel 导入"按钮）
  *
@@ -27,7 +29,7 @@
 import { useState } from 'react';
 import { Modal, Select, Upload, Button, Space, Typography, message, Alert } from 'antd';
 import { InboxOutlined, DownloadOutlined } from '@ant-design/icons';
-import { importTemplate } from '../../api/repo';
+import { importTemplate, downloadImportTemplate } from '../../api/repo';
 
 const { Text } = Typography;
 const { Dragger } = Upload;
@@ -81,15 +83,10 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
   };
 
   // ---- 下载模板 ----
-  // 后端 /api/repo/export 不传 repoId 时返回空 Excel 模板（仅表头结构）
+  // 后端 /api/repo/import/template 返回空白标准模板（22 列表头 + 填写说明 sheet）
   // 同样用隐藏 a 标签触发下载，避免走 JS 二进制处理
   const handleDownloadTemplate = () => {
-    const a = document.createElement('a');
-    a.href = `/api/repo/export`;  // 导出空白模板（后端不传 repoId 时返回空结构）
-    a.download = 'question_template.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    downloadImportTemplate();
     message.info('正在下载模板...');
   };
 
@@ -112,9 +109,15 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
           message="Excel 格式要求"
           description={
             <div style={{ fontSize: 12 }}>
-              <p style={{ margin: '4px 0' }}>1. 按 Sheet 名称区分题型：<strong>单选题 / 多选题 / 判断题 / 填空题 / 简答题</strong></p>
-              <p style={{ margin: '4px 0' }}>2. 每 Sheet 第一行为表头，后续行为数据</p>
-              <p style={{ margin: '4px 0' }}>3. 每组选项用独立列（如 A、B、C、D）</p>
+              <p style={{ margin: '4px 0' }}>1. 使用<strong>标准单表模板</strong>：一个工作表，第一行为表头，第二行起每行一道题目</p>
+              <p style={{ margin: '4px 0' }}>2. 题型填中文：<strong>判断题 / 单选题 / 单项填空 / 多选题 / 多项填空</strong></p>
+              <p style={{ margin: '4px 0' }}>3. 选择题填「选项A~H」列，答案列填选项字母；多选题答案可填多个（如 AB）</p>
+              <p style={{ margin: '4px 0' }}>4. 多项填空的多个空位答案用 <strong>|</strong> 分隔（如 m|a）</p>
+              <p style={{ margin: '4px 0' }}>5. 学科 / 章节 / 小节 / 知识点需与系统中已建名称一致；小节可留空（填写时须匹配该学科/章节）</p>
+              <p style={{ margin: '4px 0' }}>6. 难易程度填：简单 / 中等 / 困难</p>
+              <p style={{ margin: '4px 0' }}>
+                7. 任一行的内容/归属校验失败会提示具体行号，并<strong>中止整次导入</strong>
+              </p>
               <Button type="link" size="small" icon={<DownloadOutlined />} onClick={handleDownloadTemplate} style={{ padding: 0 }}>
                 下载 Excel 导入模板
               </Button>

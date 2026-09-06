@@ -162,20 +162,22 @@ public class GlobalExceptionHandler {
 	/**
 	 * 处理带错误码的业务异常（ErrorCodeException）。
 	 *
-	 * <p>把 ErrorCode 枚举的 code 与 message 原样透传给前端，
-	 * 前端可据此做国际化或分支处理（如"问卷不存在"提示）。</p>
+	 * <p>透传 ErrorCode 的 code；消息取异常自定义 message（如 Excel 导入的行级
+	 * 校验明细），未携带自定义消息时回退 ErrorCode.message。</p>
 	 *
 	 * @param request 请求（仅用于记录日志）
 	 * @param ex      业务异常
-	 * @return errorCode.code + errorCode.message
+	 * @return errorCode.code + message
 	 */
 	@ExceptionHandler(ErrorCodeException.class)
 	public ResponseEntity<ApiResponse<String>> handleErrorCodeException(HttpServletRequest request,
 			ErrorCodeException ex) {
 		ErrorCode errorCode = ex.getErrorCode();
+		String message = ex.getMessage() != null && !ex.getMessage().isEmpty() ? ex.getMessage()
+				: errorCode.message;
 		log.error(String.format("handleErrorCodeError %s errorCode=%d, errorMessage=%s", request.getRequestURI(),
-				errorCode.code, errorCode.message));
-		return ResponseEntity.ok().body(new ApiResponse<>(errorCode.code, errorCode.message));
+				errorCode.code, message));
+		return ResponseEntity.ok().body(new ApiResponse<>(errorCode.code, message));
 	}
 
 	/**

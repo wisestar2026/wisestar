@@ -67,7 +67,10 @@ public class RepoRequest {
 	/** 章节筛选（导出用）：知识点体系二级维度 */
 	private String chapter;
 
-	/** 知识点筛选（导出用）：知识点体系三级维度 */
+	/** 小节筛选（导出用）：知识点体系三级维度（知识结构：学科→章节→小节→知识点） */
+	private String section;
+
+	/** 知识点筛选（导出用）：知识点体系四级维度 */
 	private String knowledgePoint;
 
 	/** 难度筛选（导出用，同时为题库难度标签）：easy 简单 / medium 中等 / hard 困难 */

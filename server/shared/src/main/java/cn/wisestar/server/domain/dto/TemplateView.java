@@ -49,6 +49,11 @@ public class TemplateView {
 
 	private String chapter;
 
+	/**
+	 * 小节（知识结构：学科→章节→小节→知识点）
+	 */
+	private String section;
+
 	private String[] knowledgePoint;
 
 	private String difficulty;

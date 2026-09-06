@@ -49,6 +49,17 @@ public class ErrorCodeException extends RuntimeException {
 	}
 
 	/**
+	 * 构造异常（附带面向用户的自定义消息）。
+	 *
+	 * @param errorCode 预定义错误码
+	 * @param message   自定义消息（如行级校验明细），全局异常处理器会优先透传
+	 */
+	public ErrorCodeException(ErrorCode errorCode, String message) {
+		super(message);
+		this.errorCode = errorCode;
+	}
+
+	/**
 	 * 获取错误码对象。
 	 *
 	 * @return 预定义错误码（含 code 与 message）

@@ -189,4 +189,12 @@ public interface RepoService {
 	 * @param request
 	 */
 	void exportRepoQuestions(RepoRequest request);
+
+	/**
+	 * 下载题目导入模板（标准单表 21 列空模板 + 填写说明 sheet，无任何题目数据）。
+	 *
+	 * <p>与 exportRepoQuestions 的差异：export 无 repoId 时导出全部题目；本方法
+	 * 永远输出仅含表头与填写说明的模板文件，供「题目管理 → 下载模板」使用。</p>
+	 */
+	void downloadImportTemplate();
 }

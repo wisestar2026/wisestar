@@ -9,6 +9,7 @@
  *   POST /api/repo/batchCreate    批量添加题目到题库
  *   POST /api/repo/unbind         从题库移除题目
  *   POST /api/repo/import         Excel 批量导入题目（multipart/form-data，原生 axios）
+ *   GET  /api/repo/import/template 下载空白导入模板（22 列标准单表，仅表头+填写说明）
  *   GET  /api/repo/export         导出题库题目为 Excel（文件下载，通过 a 标签触发）
  *
  * 调用方一览:
@@ -20,11 +21,13 @@
  *   - bindTemplate     : SelectTemplateModal（题库详情页「批量选择题目」）
  *   - unbindTemplate   : RepoDetailPage（题库详情页移除题目，解绑后题目保留在题目管理）
  *   - importTemplate   : ImportModal（Excel 批量导入题目弹窗）
+ *   - downloadImportTemplate : ImportModal（下载空白导入模板）
  *   - exportTemplate   : QuestionListPage.handleExport（导出当前筛选结果）
  *
  * 核心数据流:
  *   QuestionListPage → exportTemplate({repoId}) → GET /api/repo/export?id=xxx → 浏览器下载 xlsx
  *   ImportModal → importTemplate({file, repoId}) → POST /api/repo/import (FormData) → 后端解析 Excel 入库
+ *   ImportModal → downloadImportTemplate() → GET /api/repo/import/template → 浏览器下载空白模板
  */
 
 import request from './request';
@@ -116,15 +119,33 @@ export async function importTemplate({ file, repoId }) {
 }
 
 /**
+ * 下载空白 Excel 导入模板（浏览器下载）
+ * 后端接口: GET /api/repo/import/template
+ * 为什么这么写: 与 exportTemplate 相同，使用隐藏 <a> 标签触发浏览器原生下载，
+ *   避免经过 JS 二进制处理；同源请求自动携带登录 cookie
+ * 模板格式: 标准单表 22 列（学科/题型/章节/小节/知识点/题目/选项A~H/难易程度/正确答案1~5/解析/标签），
+ *   第一个工作表为表头 + 示例说明，第二个工作表为填写说明（导入时仅解析第一个工作表）
+ * 调用方: ImportModal.handleDownloadTemplate
+ */
+export async function downloadImportTemplate() {
+  const a = document.createElement('a');
+  a.href = '/api/repo/import/template';
+  a.download = 'question_import_template.xlsx';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+/**
  * 导出题库题目为 Excel 文件（触发浏览器下载）
- * 后端接口: GET /api/repo/export?id=repoId&name=xxx&questionType=xxx&subject=xxx&grade=xxx&chapter=xxx&knowledgePoint=xxx&difficulty=xxx
+ * 后端接口: GET /api/repo/export?id=repoId&name=xxx&questionType=xxx&subject=xxx&grade=xxx&chapter=xxx&section=xxx&knowledgePoint=xxx&difficulty=xxx
  * 为什么这么写: 不使用 axios，而是创建隐藏 <a> 标签直接访问下载 URL，
  *   这样浏览器会原生处理二进制流下载，避免经过 JS 内存转换
- * @param {Object} params - { repoId, name, questionType, subject, grade, chapter, knowledgePoint, difficulty }
+ * @param {Object} params - { repoId, name, questionType, subject, grade, chapter, section, knowledgePoint, difficulty }
  *   除 repoId（题库）外，其余为题目维度筛选条件（与题目管理页筛选栏一致，AND 关系）
  * 调用方: QuestionListPage.handleExport（导出当前筛选条件的题库题目）
  */
-export async function exportTemplate({ repoId, name, questionType, subject, grade, chapter, knowledgePoint, difficulty }) {
+export async function exportTemplate({ repoId, name, questionType, subject, grade, chapter, section, knowledgePoint, difficulty }) {
   const params = new URLSearchParams();
   if (repoId) params.append('id', repoId);
   if (name) params.append('name', name);
@@ -132,6 +153,7 @@ export async function exportTemplate({ repoId, name, questionType, subject, grad
   if (subject) params.append('subject', subject);
   if (grade) params.append('grade', grade);
   if (chapter) params.append('chapter', chapter);
+  if (section) params.append('section', section);
   if (knowledgePoint) params.append('knowledgePoint', knowledgePoint);
   if (difficulty) params.append('difficulty', difficulty);
   // 通过创建隐藏的 a 标签触发浏览器下载

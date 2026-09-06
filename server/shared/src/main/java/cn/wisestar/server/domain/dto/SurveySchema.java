@@ -322,7 +322,12 @@ public class SurveySchema implements Serializable {
 		private String chapter;
 
 		/**
-		 * 知识点（知识点三级维度，多值，问卷快照）
+		 * 小节（知识点三级维度，问卷快照）
+		 */
+		private String section;
+
+		/**
+		 * 知识点（知识点四级维度，多值，问卷快照）
 		 */
 		private List<String> knowledgePoint;
 
