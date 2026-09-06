@@ -607,6 +607,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			activity.setPage(request.getPage());
 			activity.setQuestionId(request.getQuestionId());
 			activity.setSectionId(request.getSectionId());
+			activity.setUpdateAt(new Date());
 			studentActivityMapper.insert(activity);
 		}
 		else {

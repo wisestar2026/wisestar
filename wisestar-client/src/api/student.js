@@ -168,6 +168,11 @@ export async function listActivities() {
   return request.get('/student/activities');
 }
 
+/** 学员督学在线列表（student:supervision 权限：仅最近 5 分钟活跃学员，含章节/小节与题目答案/解析） */
+export async function listSupervision() {
+  return request.get('/student/supervision/online-students');
+}
+
 /** 学员学习统计（首页真实化，基于练习记录聚合） */
 export async function getStudentStats() {
   return request.get('/student/stats');

@@ -295,19 +295,19 @@ public final class PermissionConsts {
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list";
 
-	/** 教师：教学执行，知识/题库维护 + 查看学员与订单 */
+	/** 教师：教学执行，知识/题库维护 + 查看学员与订单，含学员督学 */
 	public static final String TEACHER_AUTHORITY = "home,exercise:list,"
 			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,"
 			+ "template:list,template:create,template:update,template:delete,"
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
-			+ "student:list,order:list,"
+			+ "student:list,student:supervision,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"
 			+ "project:list,project:detail,answer:list,answer:detail";
 
-	/** 学管师：学员运营，学员/订单全操作 + 知识查看 */
+	/** 学管师：学员运营，学员/订单全操作 + 知识查看，含学员督学 */
 	public static final String CONSULTANT_AUTHORITY = "home,exercise:list,"
-			+ "student:list,student:create,student:update,student:delete,"
+			+ "student:list,student:create,student:update,student:delete,student:supervision,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,"
 			+ "task:list,"

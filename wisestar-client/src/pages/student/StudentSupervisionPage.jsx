@@ -1,154 +1,178 @@
 /**
- * StudentSupervisionPage.jsx - 学员督学页（教师端查看学员学习状态）
+ * StudentSupervisionPage.jsx - 学员督学页（学管师/老师/管理员查看学员实时学习状态）
  *
  * 功能:
- *   1. 显示在线学员列表（最近 5 分钟活跃）
- *   2. 显示学员当前学习位置（章节/小节/知识点）
- *   3. 显示学员当前做题状态（题目/答案/解析）
- *   4. 离线学员不显示
+ *   1. 实时展示「在线」学员（最近 5 分钟内活跃），自动 10 秒轮询
+ *   2. 展示当前研习位置：章节 / 小节 归属链（学员目录选中上报 / 知识点页上下文）
+ *   3. 学员在做题（练习/试炼/预习例题）时，直接行内展示题干、标准答案与解析
  *
- * URL: /student/supervision
+ * URL: /student/supervision 与 /students/activity（均受 AuthGuard student:supervision 保护）
+ * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「学员管理 → 学员督学」菜单
+ *
+ * 数据流:
+ *   listSupervision() → GET /student/supervision/online-students（后端只返回在线学员，
+ *     并已回填章节/小节名称与题目答案/解析字段）
  */
 
-import { useEffect, useState } from 'react';
-import { Table, Tag, Card, Space, Badge, Alert } from 'antd';
-import { UserOutlined, BookOutlined, CheckCircleOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Table, Tag, Button, Typography, Space, message, Badge } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
+import { listSupervision } from '../../api/student';
 
-const API_BASE = '/api/student/supervision';
+const { Title, Text, Paragraph } = Typography;
+
+// 题目类型 → 中文
+const TYPE_LABELS = { Radio: '单选', Checkbox: '多选', FillBlank: '填空', Judge: '判断', Text: '简答', MultipleBlank: '多项填空' };
+
+// 页面标识 → 场景描述（做题中时细分练习/试炼）
+const pageScene = (page) => {
+  if (!page) return '';
+  if (page.includes('tab=practice')) return '专项练习';
+  if (page.includes('tab=trial')) return '小节通关';
+  if (page.includes('tab=preview')) return '知识点预习';
+  if (page.includes('tab=lecture') || page.includes('tab=example')) return '知识点学习';
+  if (page.startsWith('/student/study')) return '学海研习';
+  return '';
+};
+
+const formatTime = (v) => {
+  if (!v) return '-';
+  const t = Number(v);
+  return t ? new Date(t).toLocaleString('zh-CN', { hour12: false }) : '-';
+};
 
 export default function StudentSupervisionPage() {
-  const [students, setStudents] = useState([]);
+  const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(null);
+  const timerRef = useRef(null);
 
-  // 加载在线学员列表
-  const loadOnlineStudents = () => {
-    setLoading(true);
-    fetch(`${API_BASE}/online-students`)
-      .then((res) => res.json())
+  const loadList = useCallback((silent = false) => {
+    if (!silent) setLoading(true);
+    listSupervision()
       .then((res) => {
-        if (res.code === 200) {
-          setStudents(res.data || []);
-        }
+        setList(res?.data || []);
+        setLastRefresh(new Date());
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    loadOnlineStudents();
-    // 每 30 秒刷新一次
-    const timer = setInterval(loadOnlineStudents, 30000);
-    return () => clearInterval(timer);
+      .catch(() => {
+        if (!silent) message.error('在线学员加载失败');
+        setList([]);
+      })
+      .finally(() => {
+        if (!silent) setLoading(false);
+      });
   }, []);
 
-  // 状态标签
-  const statusMap = {
-    learning: { color: 'blue', icon: <BookOutlined />, text: '学习中' },
-    exercising: { color: 'green', icon: <CheckCircleOutlined />, text: '做题中' },
-    offline: { color: 'default', icon: <ClockCircleOutlined />, text: '已离线' },
-  };
+  useEffect(() => {
+    loadList();
+    timerRef.current = setInterval(() => loadList(true), 10000);
+    return () => clearInterval(timerRef.current);
+  }, [loadList]);
 
-  // 表格列
+  const exercisingCount = list.filter((r) => r.status === 'exercising').length;
+
   const columns = [
     {
       title: '学员',
-      dataIndex: 'studentName',
+      key: 'student',
       width: 150,
-      render: (name, record) => (
-        <Space>
-          <UserOutlined />
-          <div>
-            <div>{name}</div>
-            <div style={{ fontSize: 12, color: '#999' }}>{record.studentNo}</div>
-          </div>
-        </Space>
+      render: (_, r) => (
+        <div>
+          <div style={{ fontWeight: 500 }}>{r.studentName || '-'}</div>
+          <Text type="secondary" style={{ fontSize: 12 }}>{r.studentNo || ''}</Text>
+        </div>
       ),
     },
     {
       title: '状态',
       dataIndex: 'status',
-      width: 100,
-      render: (status) => {
-        const config = statusMap[status] || statusMap.offline;
+      width: 130,
+      render: (status, r) => (
+        <Space direction="vertical" size={2}>
+          {status === 'exercising' ? (
+            <Badge color="purple" text="做题中" />
+          ) : (
+            <Badge color="green" text="学习中" />
+          )}
+          {pageScene(r.page) && <Text type="secondary" style={{ fontSize: 12 }}>{pageScene(r.page)}</Text>}
+        </Space>
+      ),
+    },
+    {
+      title: '研习位置',
+      key: 'location',
+      width: 220,
+      render: (_, r) => {
+        if (!r.chapterName && !r.sectionName) {
+          return <Text type="secondary">{r.currentLocation || '浏览中'}</Text>;
+        }
         return (
-          <Badge color={config.color} text={config.text} />
+          <Space size={4} wrap>
+            {r.chapterName && <Tag color="blue">{r.chapterName}</Tag>}
+            {r.sectionName && <Tag color="cyan">{r.sectionName}</Tag>}
+          </Space>
         );
       },
     },
     {
-      title: '当前学习位置',
-      dataIndex: 'currentLocation',
-      width: 200,
-      render: (_, record) => {
-        if (record.chapterName || record.sectionName || record.knowledgePointName) {
-          return (
-            <div>
-              {record.chapterName && <div>📖 {record.chapterName}</div>}
-              {record.sectionName && <div>📖 {record.sectionName}</div>}
-              {record.knowledgePointName && <div>💡 {record.knowledgePointName}</div>}
-            </div>
-          );
-        }
-        return record.currentLocation || '-';
-      },
-    },
-    {
-      title: '做题状态',
-      key: 'exercise',
-      width: 300,
-      render: (_, record) => {
-        if (record.status !== 'exercising' || !record.questionContent) {
-          return <span style={{ color: '#999' }}>-</span>;
+      title: '正在做的题目（含答案/解析）',
+      key: 'question',
+      render: (_, r) => {
+        if (!r.questionContent) {
+          return <Text type="secondary">-</Text>;
         }
         return (
-          <Card size="small" style={{ margin: 0 }}>
-            <div style={{ marginBottom: 8 }}>
-              <strong>题目：</strong>{record.questionContent}
+          <div>
+            <Space size={6} style={{ marginBottom: 6 }}>
+              <Tag color="geekblue">{TYPE_LABELS[r.questionType] || r.questionType || '题目'}</Tag>
+              <Paragraph strong style={{ margin: 0, flex: 1 }} ellipsis={{ rows: 2 }}>
+                {r.questionContent}
+              </Paragraph>
+            </Space>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ padding: '4px 10px', background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
+                <Text strong style={{ color: '#389e0d' }}>标准答案：</Text>
+                <Text style={{ color: '#389e0d' }}>{r.correctAnswer || '（未配置）'}</Text>
+              </div>
+              {r.answerAnalysis && (
+                <div style={{ padding: '4px 10px', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 6 }}>
+                  <Text strong style={{ color: '#d48806' }}>解析：</Text>
+                  <Text style={{ color: '#874d00' }} ellipsis={{ rows: 2 }}>{r.answerAnalysis}</Text>
+                </div>
+              )}
             </div>
-            {record.studentAnswer && (
-              <div style={{ marginBottom: 8, color: '#1890ff' }}>
-                <strong>学员答案：</strong>{record.studentAnswer}
-              </div>
-            )}
-            {record.correctAnswer && (
-              <div style={{ marginBottom: 8, color: '#52c41a' }}>
-                <strong>正确答案：</strong>{record.correctAnswer}
-              </div>
-            )}
-            {record.answerAnalysis && (
-              <div style={{ color: '#faad14' }}>
-                <strong>解析：</strong>{record.answerAnalysis}
-              </div>
-            )}
-          </Card>
+          </div>
         );
       },
     },
-    {
-      title: '最后活跃时间',
-      dataIndex: 'lastActiveTime',
-      width: 180,
-    },
+    { title: '最后活跃', dataIndex: 'lastActiveTime', width: 165, render: formatTime },
   ];
 
   return (
-    <div style={{ maxWidth: 1400, margin: '0 auto', padding: 20 }}>
-      <div style={{ marginBottom: 16 }}>
-        <Alert
-          message="学员督学"
-          description="显示最近 5 分钟内活跃的学员学习状态，每 30 秒自动刷新"
-          type="info"
-          showIcon
-        />
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={4} style={{ margin: 0 }}>
+          学员督学
+          <Text type="secondary" style={{ fontSize: 13, marginLeft: 12 }}>
+            仅显示最近 5 分钟在线学员 · 每 10 秒自动刷新 · 共 {list.length} 人
+            {exercisingCount > 0 && `，其中 ${exercisingCount} 人做题中`}
+          </Text>
+          {lastRefresh && (
+            <Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }}>· {formatTime(lastRefresh.getTime())} 刷新</Text>
+          )}
+        </Title>
+        <Button icon={<ReloadOutlined />} onClick={() => loadList()} loading={loading}>
+          立即刷新
+        </Button>
       </div>
 
       <Table
         rowKey="studentId"
         loading={loading}
         columns={columns}
-        dataSource={students}
+        dataSource={list}
         pagination={false}
-        locale={{ emptyText: '当前无在线学员' }}
+        locale={{ emptyText: '暂无在线学员（学员登录并浏览后实时展示）' }}
       />
     </div>
   );

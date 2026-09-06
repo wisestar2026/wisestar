@@ -57,7 +57,6 @@ import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
-import StudentActivityPage from './pages/student/StudentActivityPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import TaskManagePage from './pages/system/TaskManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
@@ -76,7 +75,6 @@ import WordBookManagePage from './pages/english/WordBookManagePage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
-import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
 import ExerciseListPage from './pages/exercise/ExerciseListPage';
 import WrongBookPage from './pages/exercise/WrongBookPage';
 import SentenceManagePage from './pages/english/SentenceManagePage';
@@ -235,8 +233,17 @@ export default function App() {
             <Route
               path="/students/activity"
               element={
-                <AuthGuard required={['student:list']}>
-                  <StudentActivityPage />
+                <AuthGuard required={['student:supervision']}>
+                  <StudentSupervisionPage />
+                </AuthGuard>
+              }
+            />
+            {/* 学员督学：学管师/老师/管理员实时查看在线学员学习位置与题目答案解析 */}
+            <Route
+              path="/student/supervision"
+              element={
+                <AuthGuard required={['student:supervision']}>
+                  <StudentSupervisionPage />
                 </AuthGuard>
               }
             />

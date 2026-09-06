@@ -23,6 +23,9 @@ public class StudentSupervisionView {
     /** 当前状态：learning-学习中，exercising-做题中，offline-离线 */
     private String status;
 
+    /** 当前页面标识（学员端路由，如 /student/study、/student/knowledge?tab=practice） */
+    private String page;
+
     /** 当前学习位置（章节/小节/知识点/题目 ID） */
     private String currentLocation;
 
@@ -34,6 +37,9 @@ public class StudentSupervisionView {
 
     /** 知识点名称（如果在学习知识点） */
     private String knowledgePointName;
+
+    /** 题目类型（Radio/Checkbox/FillBlank/Judge/Text 等，做题中才有值） */
+    private String questionType;
 
     /** 题目内容（如果在做题） */
     private String questionContent;

@@ -17,7 +17,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
-import { getStudySections } from '../../api/student';
+import { getStudySections, uploadActivity } from '../../api/student';
 import './StudyPage.css';
 
 // 四大核心功能按钮配置
@@ -78,6 +78,13 @@ export default function StudyPage() {
         .catch(() => setSectionsMap((m) => ({ ...m, [chId]: [] })));
     }
   };
+
+  // 真实模式选中小节 → 上报学习位置（章节/小节上下文，供后台督学定位）
+  useEffect(() => {
+    if (!realMode || !selectedSection?.id) return;
+    uploadActivity({ page: '/student/study', sectionId: selectedSection.id }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realMode, selectedSection]);
 
   // 章节完成度（mock）/ 小节数（真实）
   const avgProgress = chapters.length

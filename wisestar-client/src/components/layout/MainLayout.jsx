@@ -83,7 +83,7 @@ export default function MainLayout() {
       children: [
         { key: '/students', label: '学员列表' },
         { key: '/orders',   label: '订单管理', required: ['order:list'] },
-        { key: '/student/supervision', label: '学员督学' },
+        { key: '/student/supervision', label: '学员督学', required: ['student:supervision'] },
         { key: '/student/task-assignment', label: '任务分配' },
       ],
     },

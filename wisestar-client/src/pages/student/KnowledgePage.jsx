@@ -48,16 +48,19 @@ export default function KnowledgePage() {
   const [wrongReasons, setWrongReasons] = useState({});     // 各错题归因 {questionId: reason}
   const [wrongList, setWrongList] = useState([]);          // 当前错题列表（查看错题弹窗）
 
-  // 习题级上报：进入练习/试炼后上报「正在做哪道题」（供后台老师监控）
+  // 习题级上报：进入练习/试炼后上报「当前正在做的题」，随 currentQ 前进实时更新（供督学）
   useEffect(() => {
     if (!realMode || !realQuestions?.length) return;
+    // 预习为整页浏览（无逐题游标），取首题做上下文；练习/试炼跟随当前题游标
+    const q = tab === 'preview' ? realQuestions[0] : realQuestions[currentQ] || realQuestions[realQuestions.length - 1];
+    if (!q) return;
     uploadActivity({
       page: `/student/knowledge?tab=${tab}`,
       sectionId: sectionId || undefined,
-      questionId: realQuestions[0]?.id,
+      questionId: q.id,
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realMode, tab, realQuestions]);
+  }, [realMode, tab, realQuestions, currentQ]);
 
   useEffect(() => {
     if (!realMode) return;
