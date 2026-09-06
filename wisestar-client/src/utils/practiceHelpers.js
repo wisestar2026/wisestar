@@ -132,6 +132,26 @@ function setsEqual(a, b) {
 }
 
 /**
+ * 格式化标准答案用于展示。
+ * 多项填空（MultipleBlank）标准答案以 | 分隔多空（如 "m|a"），拆成 "空1: m；空2: a"；
+ * 其余题型直接将答案数组 join 为顿号分隔文本。
+ *
+ * @param {string} qtype 题型（Radio/Checkbox/MultipleBlank 等）
+ * @param {string[]} answers 标准答案数组
+ * @returns {string} 展示文本
+ */
+export function formatCorrectAnswers(qtype, answers) {
+  if (!answers || answers.length === 0) return '';
+  if (qtype === 'MultipleBlank') {
+    return answers
+      .flatMap((a) => String(a || '').split('|'))
+      .map((p, i) => `空${i + 1}: ${p}`)
+      .join('；');
+  }
+  return answers.join('、');
+}
+
+/**
  * 计算整卷得分。
  *
  * @param {Array<{question: Object, result: {correct: (1|0|null)}}>} items 每题判分结果

@@ -31,21 +31,12 @@ import {
 import { SearchOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { listTemplate } from '../../api/template';
 import { templateToQuestion } from '../../utils/surveyHelpers';
-import { QUESTION_TYPES } from '../../utils/surveyHelpers';
+import { EXAM_TYPES, TYPE_LABELS } from '../../utils/questionTypes';
 
 const { Text } = Typography;
 
-// 完整题型映射（含判断题）
-const TYPE_LABELS = {
-  Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
-  FillBlank: '填空题', Text: '多行文本', Score: '评分题',
-  Remark: '备注说明', Judge: '判断题',
-};
-
-const TYPE_OPTIONS = [
-  ...QUESTION_TYPES,
-  { label: '判断题', value: 'Judge' },
-];
+// 题库题型过滤选项（题库限定五类，见 utils/questionTypes.js）
+const TYPE_OPTIONS = EXAM_TYPES;
 
 export default function TemplatePickerModal({ open, onCancel, onAdd }) {
   // ---- 列表状态 ----

@@ -33,7 +33,7 @@ const { Title, Text } = Typography;
 // 练习场景题型映射（错题管理仅出现练习题型）
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Judge: '判断题',
-  FillBlank: '填空题', Textarea: '多行文本',
+  FillBlank: '填空题', Textarea: '多行文本', MultipleBlank: '多项填空',
 };
 const TYPE_OPTIONS = Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label }));
 

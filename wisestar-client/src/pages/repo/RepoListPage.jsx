@@ -43,7 +43,7 @@ const { Title, Text } = Typography;
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
   FillBlank: '填空题', Text: '多行文本', Score: '评分题',
-  Remark: '备注说明', Judge: '判断题',
+  Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
 
 // 练习类型映射

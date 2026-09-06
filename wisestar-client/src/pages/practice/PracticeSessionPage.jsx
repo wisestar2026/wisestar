@@ -39,7 +39,7 @@ import { submitPractice } from '../../api/practice';
 import QuestionCard from '../../components/practice/QuestionCard';
 import AnswerSheet from '../../components/practice/AnswerSheet';
 import ExamIntro from '../../components/practice/ExamIntro';
-import { evaluateAnswer, calculateScore } from '../../utils/practiceHelpers';
+import { evaluateAnswer, calculateScore, formatCorrectAnswers } from '../../utils/practiceHelpers';
 
 const { Title, Text } = Typography;
 
@@ -50,11 +50,11 @@ const MODE_LABELS = {
   random: '随机练习',
 };
 
-// 题型中文映射（结果页展示用）
+// 题型中文映射（结果页展示用，与 questionTypes 保持一致）
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
-  FillBlank: '填空题', Text: '多行文本', Score: '评分题',
-  Remark: '备注说明', Judge: '判断题',
+  FillBlank: '单项填空', Text: '多行文本', Score: '评分题',
+  Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
 
 // 套卷模拟默认时长: 每题 60 秒（可后续改为可配置）
@@ -329,7 +329,9 @@ export default function PracticeSessionPage() {
                 {wrong && result.correctAnswers.length > 0 && (
                   <div>
                     <Text type="secondary">正确答案：</Text>
-                    <Text strong style={{ color: '#52c41a' }}>{result.correctAnswers.join('、')}</Text>
+                    <Text strong style={{ color: '#52c41a' }}>
+                      {formatCorrectAnswers(question?.questionType, result.correctAnswers)}
+                    </Text>
                   </div>
                 )}
                 {qAttr.examAnalysis && (

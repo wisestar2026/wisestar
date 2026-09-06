@@ -6,7 +6,9 @@
  *   2. 按题型渲染交互控件:
  *      - 单选/判断 (Radio/Judge): 大按钮式单选
  *      - 多选 (Checkbox): 大按钮式多选（可连续勾选多个）
- *      - 填空/文本 (FillBlank/Text): 输入框
+ *      - 单项填空 (FillBlank): 单输入框
+ *      - 多项填空 (MultipleBlank): 多个输入框（空位数 = 标准答案按 | 拆分的空位数），
+ *        答案按空位顺序以 | 拼接后判分（与后端 AnswerJudgeUtil 语义一致）
  *   3. 两步作答交互（专项刷题/随机练习）:
  *      第一步「作答」: 选择/修改答案（多选可累积），不判题、不锁定
  *      第二步「确认提交」: 点击确认按钮后判题，锁定答案，显示对错/正确答案/解析
@@ -21,7 +23,7 @@
  *   value: Object     - 当前已选答案:
  *      单选/判断: { type: 'option', optionId }
  *      多选:      { type: 'options', optionIds: [] }
- *      填空/文本: { type: 'text', text }
+ *      填空/文本: { type: 'text', text }（多项填空的 text 为各空位答案以 | 拼接）
  *   onChange: (value) => void - 答案变化回调
  *   confirmed: Object   - 已确认判题结果缓存 { [questionId]: {correct, correctAnswers} }
  *   onConfirm: () => void - 确认提交回调（点击「确认提交」按钮触发判题）
@@ -38,14 +40,15 @@ import { Typography, Tag, Button, Space, Input, Image } from 'antd';
 import {
   CheckCircleOutlined, CloseCircleOutlined,
 } from '@ant-design/icons';
+import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 
 const { Title, Text, Paragraph } = Typography;
 
-// 题型中文映射
+// 题型中文映射（与 practiceHelpers / questionTypes 保持一致）
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
-  FillBlank: '填空题', Text: '多行文本', Score: '评分题',
-  Remark: '备注说明', Judge: '判断题',
+  FillBlank: '单项填空', Text: '多行文本', Score: '评分题',
+  Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
 
 // 难度映射
@@ -127,6 +130,29 @@ export default function QuestionCard({
     onChange({ type: 'text', text });
   };
 
+  // ---- 多项填空: 空位数与当前空位值 ----
+  // 空位数优先取标准答案按 | 拆分的数量（题目编辑时空位必须与答案一致），
+  // 无标准答案时回退到已填空位数 / 默认 2，保证练习端始终可作答
+  const stdAnswerRaw = String(attr.examCorrectAnswer || '');
+  const stdParts = stdAnswerRaw ? stdAnswerRaw.split('|') : [];
+  const blankCount = qtype === 'MultipleBlank'
+    ? (stdParts.length > 0 ? stdParts.length
+      : ((value?.type === 'text' && String(value.text || '').split('|').length > 0)
+        ? String(value.text).split('|').length : 2))
+    : 0;
+  const blankValues = qtype === 'MultipleBlank'
+    ? (value?.type === 'text' ? String(value.text || '') : '').split('|')
+    : [];
+
+  // 多项填空某个空位变更: 各空位按序拼成 "空1|空2|..." 存入 text（与后端判分分隔一致）
+  const handleBlankChange = (idx, text) => {
+    if (locked) return;
+    const arr = Array(blankCount).fill('');
+    blankValues.forEach((v, i) => { arr[i] = v || ''; });
+    arr[idx] = text;
+    onChange({ type: 'text', text: arr.join('|') });
+  };
+
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* ---- 题号 + 题型 + 难度 ---- */}
@@ -192,6 +218,26 @@ export default function QuestionCard({
         </div>
       )}
 
+      {(qtype === 'MultipleBlank') && (
+        <div>
+          {Array.from({ length: blankCount }).map((_, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <Input
+                size="large"
+                prefix={<span style={{ color: '#999', fontSize: 13 }}>空位 {i + 1}</span>}
+                placeholder={`请输入第 ${i + 1} 个空位的答案`}
+                value={blankValues[i] || ''}
+                onChange={(e) => handleBlankChange(i, e.target.value)}
+                disabled={locked}
+              />
+            </div>
+          ))}
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            按题目空位顺序作答，全部空位填写后提交判分
+          </Text>
+        </div>
+      )}
+
       {(qtype === 'FillBlank' || qtype === 'Text') && (
         <div>
           {qtype === 'FillBlank' ? (
@@ -253,7 +299,9 @@ export default function QuestionCard({
           {result.correct === 0 && result.correctAnswers.length > 0 && (
             <div style={{ marginBottom: 8 }}>
               <Text type="secondary">正确答案：</Text>
-              <Text strong style={{ color: '#52c41a' }}>{result.correctAnswers.join('、')}</Text>
+              <Text strong style={{ color: '#52c41a' }}>
+                {formatCorrectAnswers(qtype, result.correctAnswers)}
+              </Text>
             </div>
           )}
           {attr.examAnalysis && (

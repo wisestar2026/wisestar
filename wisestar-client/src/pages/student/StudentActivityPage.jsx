@@ -39,7 +39,7 @@ const pageLabel = (page) => {
   return page;
 };
 
-const TYPE_LABELS = { Radio: '单选', Checkbox: '多选', FillBlank: '填空', Judge: '判断', Text: '简答' };
+const TYPE_LABELS = { Radio: '单选', Checkbox: '多选', FillBlank: '填空', Judge: '判断', Text: '简答', MultipleBlank: '多项填空' };
 const formatTime = (v) => (v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '-');
 
 export default function StudentActivityPage() {

@@ -20,15 +20,12 @@ import { Modal, Table, Input, Select, Tag, Button, message, Typography, Space } 
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { listTemplate } from '../../api/template';
 import { bindTemplate } from '../../api/repo';
+import { EXAM_TYPES, TYPE_LABELS } from '../../utils/questionTypes';
 
 const { Text } = Typography;
 
-// 题型标签映射（与 QuestionListPage 一致）
-const TYPE_LABELS = {
-  Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
-  FillBlank: '填空题', Text: '多行文本', Score: '评分题',
-  Remark: '备注说明', Judge: '判断题',
-};
+// 题型筛选选项: 题库限定五类（题目管理只能新建五类，见 utils/questionTypes.js）
+const TYPE_OPTIONS = EXAM_TYPES;
 
 export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess }) {
   // ---- 状态 ----
@@ -162,7 +159,7 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
             onChange={setQType}
             placeholder="题型"
             style={{ width: 130 }}
-            options={Object.entries(TYPE_LABELS).map(([v, l]) => ({ label: l, value: v }))}
+            options={TYPE_OPTIONS.map((t) => ({ label: t.label, value: t.value }))}
           />
           <Button icon={<ReloadOutlined />} onClick={fetchAll}>刷新</Button>
         </Space>

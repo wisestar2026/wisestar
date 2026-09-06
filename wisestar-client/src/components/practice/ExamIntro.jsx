@@ -27,8 +27,8 @@ const { Title, Text } = Typography;
 // 题型中文映射（与 QuestionCard 保持一致）
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
-  FillBlank: '填空题', Text: '多行文本', Score: '评分题',
-  Remark: '备注说明', Judge: '判断题',
+  FillBlank: '单项填空', Text: '多行文本', Score: '评分题',
+  Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
 
 export default function ExamIntro({ questions, totalSeconds, totalScore, onStart, onBack }) {
