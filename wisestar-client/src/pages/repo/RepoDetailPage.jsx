@@ -30,10 +30,10 @@ import {
 } from 'antd';
 import {
   PlusOutlined, DeleteOutlined, ArrowLeftOutlined, EditOutlined, ImportOutlined,
-  BookOutlined, CheckCircleOutlined, BulbOutlined,
+  BookOutlined, CheckCircleOutlined, BulbOutlined, ApartmentOutlined, PartitionOutlined,
 } from '@ant-design/icons';
 import { listTemplate, updateTemplate } from '../../api/template';
-import { listRepo, unbindTemplate, importTemplate } from '../../api/repo';
+import { listRepo, unbindTemplate, importTemplate, listRepoLocations } from '../../api/repo';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
 import RepoEditorWizard from '../../components/repo/RepoEditorWizard';
 
@@ -58,6 +58,10 @@ export default function RepoDetailPage() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
+  // 知识绑定位置（本练习被投放到的章节/小节，用于从练习回钻到习题列表）
+  const [bindings, setBindings] = useState([]);
+  const [bindingsLoading, setBindingsLoading] = useState(false);
+
   // 批量选择题目弹窗
   const [selectOpen, setSelectOpen] = useState(false);
 
@@ -81,6 +85,22 @@ export default function RepoDetailPage() {
       } catch { /* silent */ }
     })();
   }, [repoId]);
+
+  // ---- 加载本练习的绑定位置（章节/小节） ----
+  useEffect(() => {
+    (async () => {
+      if (!repo?.id) return;
+      setBindingsLoading(true);
+      try {
+        const res = await listRepoLocations(repo.id);
+        setBindings(res?.data?.bindings || []);
+      } catch {
+        setBindings([]);
+      } finally {
+        setBindingsLoading(false);
+      }
+    })();
+  }, [repo?.id]);
 
   // ---- 加载题目列表 ----
   // 只加载当前练习（repoId）下的题目
@@ -300,6 +320,45 @@ export default function RepoDetailPage() {
           )}
         </Card>
       )}
+
+      {/* ---- 知识绑定（投放位置回显） ---- */}
+      <Card
+        size="small"
+        style={{ marginBottom: 12 }}
+        loading={bindingsLoading}
+        title={(
+          <Space>
+            <ApartmentOutlined />
+            <Text strong>知识绑定（该练习投放在哪些章节/小节）</Text>
+          </Space>
+        )}
+        extra={<a onClick={() => navigate('/exercise/list')}>在习题列表中管理绑定</a>}
+      >
+        {bindings.length === 0 ? (
+          <Text type="secondary">
+            暂未绑定到任何章节 / 小节。
+          </Text>
+        ) : (
+          bindings.map((b) => {
+            const isChap = b.nodeType === 'CHAP';
+            const link = isChap
+              ? `/exercise/list?chapterId=${b.nodeId}`
+              : `/exercise/list?chapterId=${b.parentNodeId || ''}&sectionId=${b.nodeId}`;
+            const ctx = [b.grade, b.term, b.version].filter(Boolean).join(' · ');
+            return (
+              <div key={`${b.nodeType}-${b.nodeId}`} style={{ marginBottom: 6 }}>
+                <Tag color={isChap ? 'geekblue' : 'purple'} icon={isChap ? <BookOutlined /> : <PartitionOutlined />}>
+                  {isChap ? '章节' : '小节'}
+                </Tag>
+                <a onClick={() => navigate(link)}>
+                  {isChap ? b.nodeName : `${b.parentNodeName || ''} / ${b.nodeName}`}
+                </a>
+                {ctx ? <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{ctx}</Text> : null}
+              </div>
+            );
+          })
+        )}
+      </Card>
 
       {/* ---- 题目列表 ---- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>

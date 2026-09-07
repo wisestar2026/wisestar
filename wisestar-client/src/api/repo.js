@@ -235,3 +235,27 @@ export async function getUserTags(userId) {
 export async function saveUserTags(data) {
   return request.post('/repo/user/tags', data);
 }
+
+/**
+ * 练习绑定位置反查（练习详情回显知识投放范围）
+ * 后端接口: GET /api/repo/locations?repoId=
+ * @param {String} repoId - 练习 ID
+ * @returns {Object} data: { bindings: [{ nodeType: CHAP|SECTION, nodeId, nodeName,
+ *           parentNodeId, parentNodeName, subjectId, grade, term, version }] }
+ * 调用方: RepoDetailPage（习题列表页知识回显）
+ */
+export async function listRepoLocations(repoId) {
+  return request.get('/repo/locations', { params: { repoId } });
+}
+
+/**
+ * 节点刷题内容预览（习题列表页，与学员端同语义）
+ * 后端接口: GET /api/repo/node/questions?nodeType=&nodeId=&withAnswer=
+ * @param {Object} params - { nodeType: chapter|section|knowledgePoint|repo, nodeId, withAnswer? }
+ * @returns {Object} data: [{ id, name, questionType, tag, difficulty, schema }]
+ *   schema: { title, attribute:{examCorrectAnswer,...}, children:[{id,title,...}] }
+ * 调用方: ExerciseListPage（节点题目预览弹窗）
+ */
+export async function listNodeQuestions(params) {
+  return request.get('/repo/node/questions', { params });
+}

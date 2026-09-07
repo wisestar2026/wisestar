@@ -18,6 +18,7 @@ import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionRepo;
 import cn.wisestar.server.domain.model.Subject;
+import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.ChapterRepoMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
@@ -25,6 +26,7 @@ import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
 import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
+import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.ChapterService;
@@ -95,6 +97,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 	private final RepoMapper repoMapper;
 
 	private final SubjectMapper subjectMapper;
+
+	private final TemplateMapper templateMapper;
 
 	/**
 	 * 章节列表（按学科/年级/学期/版本过滤，sort 升序），并统计各章节下小节数与已绑定题库数。
@@ -338,8 +342,16 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 				.collect(Collectors.toList());
 		Map<String, Repo> repoMap = repoMapper.selectBatchIds(repoIds).stream()
 				.collect(Collectors.toMap(Repo::getId, r -> r));
+		// 一次统计各练习题目数（t_template.repo_id 分组计数），供习题列表展示题量
+		Map<String, Long> totalMap = templateMapper.selectList(Wrappers.<Template>lambdaQuery()
+						.select(Template::getRepoId).in(Template::getRepoId, repoIds)).stream()
+				.collect(Collectors.groupingBy(Template::getRepoId, Collectors.counting()));
 		return bindings.stream().map(binding -> repoMap.get(binding.getRepoId()))
-				.filter(Objects::nonNull).map(repoViewMapper::toView).collect(Collectors.toList());
+				.filter(Objects::nonNull).map(repo -> {
+					RepoView view = repoViewMapper.toView(repo);
+					view.setTotal(totalMap.getOrDefault(repo.getId(), 0L));
+					return view;
+				}).collect(Collectors.toList());
 	}
 
 	/**

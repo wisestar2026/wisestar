@@ -12,13 +12,17 @@ import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.core.uitls.ContextHelper;
 import cn.wisestar.server.core.uitls.ExcelExporter;
 import cn.wisestar.server.domain.dto.*;
+import cn.wisestar.server.domain.dto.RepoBindLocationView.RepoNodeBinding;
 import cn.wisestar.server.domain.mapper.RepoViewMapper;
 import cn.wisestar.server.domain.mapper.UserBookViewMapper;
 import cn.wisestar.server.domain.model.*;
 import cn.wisestar.server.mapper.ChapterMapper;
+import cn.wisestar.server.mapper.ChapterRepoMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
+import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
 import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.SectionMapper;
+import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.AnswerService;
 import cn.wisestar.server.service.BaseService;
@@ -144,6 +148,21 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      * 知识点表：Excel 标准模板导入时校验「知识点」列命中章节下已有知识点。
      */
     private final KnowledgePointMapper knowledgePointMapper;
+
+    /**
+     * 章节-练习绑定表（习题列表页绑定位置反查/节点题聚合用）。
+     */
+    private final ChapterRepoMapper chapterRepoMapper;
+
+    /**
+     * 小节-练习绑定表（习题列表页绑定位置反查/节点题聚合用）。
+     */
+    private final SectionRepoMapper sectionRepoMapper;
+
+    /**
+     * 知识点-题目绑定表（习题列表页知识点节点题聚合用）。
+     */
+    private final KnowledgePointQuestionMapper knowledgePointQuestionMapper;
 
     /**
      * 分页查询题库列表。
@@ -1827,5 +1846,184 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         return -1;
     }
 
+    /**
+     * 练习绑定位置反查：返回该练习绑定的章节/小节及其知识上下文。
+     *
+     * @implNote 同时查询 t_chapter_repo 与 t_section_repo；章节上下文（学科/年级/学期/版本）
+     * 供前端回显与跳转习题列表页定位。
+     */
+    @Override
+    public RepoBindLocationView listRepoLocations(String repoId) {
+        RepoBindLocationView view = new RepoBindLocationView();
+        if (!StringUtils.hasText(repoId)) {
+            return view;
+        }
+        // 章节绑定
+        List<ChapterRepo> chapterBindings = chapterRepoMapper.selectList(Wrappers.<ChapterRepo>lambdaQuery()
+                .eq(ChapterRepo::getRepoId, repoId).orderByAsc(ChapterRepo::getCreateAt));
+        if (!chapterBindings.isEmpty()) {
+            List<String> chapterIds = chapterBindings.stream().map(ChapterRepo::getChapterId)
+                    .collect(Collectors.toList());
+            Map<String, Chapter> chapterMap = chapterMapper.selectBatchIds(chapterIds).stream()
+                    .collect(Collectors.toMap(Chapter::getId, c -> c));
+            chapterBindings.stream().map(b -> chapterMap.get(b.getChapterId()))
+                    .filter(Objects::nonNull).forEach(chapter -> {
+                        RepoNodeBinding item = new RepoNodeBinding();
+                        item.setNodeType("CHAP");
+                        item.setNodeId(chapter.getId());
+                        item.setNodeName(chapter.getName());
+                        item.setSubjectId(chapter.getSubjectId());
+                        item.setGrade(chapter.getGrade());
+                        item.setTerm(chapter.getTerm());
+                        item.setVersion(chapter.getVersion());
+                        view.getBindings().add(item);
+                    });
+        }
+        // 小节绑定（附所属章节上下文）
+        List<SectionRepo> sectionBindings = sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
+                .eq(SectionRepo::getRepoId, repoId).orderByAsc(SectionRepo::getCreateAt));
+        if (!sectionBindings.isEmpty()) {
+            List<String> sectionIds = sectionBindings.stream().map(SectionRepo::getSectionId)
+                    .collect(Collectors.toList());
+            Map<String, Section> sectionMap = sectionMapper.selectBatchIds(sectionIds).stream()
+                    .collect(Collectors.toMap(Section::getId, s -> s));
+            Set<String> parentChapterIds = sectionMap.values().stream().map(Section::getChapterId)
+                    .filter(Objects::nonNull).collect(Collectors.toSet());
+            Map<String, Chapter> parentChapterMap = parentChapterIds.isEmpty() ? Collections.emptyMap()
+                    : chapterMapper.selectBatchIds(parentChapterIds).stream()
+                    .collect(Collectors.toMap(Chapter::getId, c -> c));
+            sectionBindings.stream().map(b -> sectionMap.get(b.getSectionId()))
+                    .filter(Objects::nonNull).forEach(section -> {
+                        Chapter chapter = parentChapterMap.get(section.getChapterId());
+                        RepoNodeBinding item = new RepoNodeBinding();
+                        item.setNodeType("SECTION");
+                        item.setNodeId(section.getId());
+                        item.setNodeName(section.getName());
+                        item.setParentNodeId(chapter == null ? null : chapter.getId());
+                        item.setParentNodeName(chapter == null ? null : chapter.getName());
+                        item.setSubjectId(chapter == null ? null : chapter.getSubjectId());
+                        item.setGrade(chapter == null ? section.getGrade() : chapter.getGrade());
+                        item.setTerm(section.getTerm());
+                        view.getBindings().add(item);
+                    });
+        }
+        return view;
+    }
+
+    /**
+     * 节点刷题内容预览（习题列表页）：与学员端 study/questions 同语义聚合题目。
+     *
+     * @implNote nodeType 支持 chapter / section / knowledgePoint / repo；
+     * 练习题目按 t_template.repo_id 归属取题（覆盖种子与组题两套关联）；
+     * 知识点直绑题经 t_knowledge_point_question 取题；两类取题并集去重，
+     * 创建时间倒序取前 100。
+     */
+    @Override
+    public List<NodeQuestionView> listNodeQuestions(String nodeType, String nodeId, Boolean withAnswer) {
+        if (!StringUtils.hasText(nodeType) || !StringUtils.hasText(nodeId)) {
+            return Collections.emptyList();
+        }
+        List<String> templateIds = new ArrayList<>(collectNodeTemplateIds(nodeType, nodeId));
+        if (templateIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        boolean expose = Boolean.TRUE.equals(withAnswer);
+        return templateService.list(Wrappers.<Template>lambdaQuery()
+                        .in(Template::getId, templateIds)
+                        .orderByDesc(Template::getCreateAt))
+                .stream()
+                .sorted(Comparator.comparing(Template::getCreateAt,
+                        Comparator.nullsFirst(Comparator.reverseOrder())))
+                .limit(100)
+                .map(template -> toNodeQuestionView(template, expose))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 按节点聚合题目 id 集合（LinkedHashSet 保序去重）。
+     */
+    private Set<String> collectNodeTemplateIds(String nodeType, String nodeId) {
+        Set<String> ids = new LinkedHashSet<>();
+        List<String> repoIds = new ArrayList<>();
+        List<String> sectionIds = new ArrayList<>();
+        if ("repo".equals(nodeType)) {
+            repoIds.add(nodeId);
+        }
+        else if ("chapter".equals(nodeType)) {
+            chapterRepoMapper.selectList(Wrappers.<ChapterRepo>lambdaQuery()
+                            .eq(ChapterRepo::getChapterId, nodeId).select(ChapterRepo::getRepoId))
+                    .forEach(x -> repoIds.add(x.getRepoId()));
+            sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+                            .eq(Section::getChapterId, nodeId).select(Section::getId))
+                    .forEach(s -> sectionIds.add(s.getId()));
+        }
+        else if ("section".equals(nodeType)) {
+            sectionIds.add(nodeId);
+        }
+        else if ("knowledgePoint".equals(nodeType)) {
+            collectKnowledgePointQuestions(Collections.singletonList(nodeId), ids);
+            return ids;
+        }
+        if (!sectionIds.isEmpty()) {
+            sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
+                            .in(SectionRepo::getSectionId, sectionIds).select(SectionRepo::getRepoId))
+                    .forEach(x -> repoIds.add(x.getRepoId()));
+        }
+        if (!repoIds.isEmpty()) {
+            templateService.list(Wrappers.<Template>lambdaQuery()
+                            .in(Template::getRepoId, repoIds).select(Template::getId))
+                    .forEach(t -> ids.add(t.getId()));
+        }
+        // 章节/小节节点同时聚合其下知识点直绑题目
+        List<String> kpIds = sectionIds.isEmpty() ? Collections.emptyList()
+                : knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+                        .in(KnowledgePoint::getSectionId, sectionIds).select(KnowledgePoint::getId))
+                .stream().map(KnowledgePoint::getId).collect(Collectors.toList());
+        collectKnowledgePointQuestions(kpIds, ids);
+        return ids;
+    }
+
+    /**
+     * 收集知识点直绑题目 id（t_knowledge_point_question）。
+     */
+    private void collectKnowledgePointQuestions(List<String> knowledgePointIds, Set<String> ids) {
+        if (knowledgePointIds == null || knowledgePointIds.isEmpty()) {
+            return;
+        }
+        knowledgePointQuestionMapper.selectList(Wrappers.<KnowledgePointQuestion>lambdaQuery()
+                        .in(KnowledgePointQuestion::getKnowledgePointId, knowledgePointIds)
+                        .select(KnowledgePointQuestion::getQuestionId))
+                .forEach(x -> ids.add(x.getQuestionId()));
+    }
+
+    /**
+     * 模板转节点预览视图；withAnswer=false 时递归剥离标准答案字段。
+     */
+    private NodeQuestionView toNodeQuestionView(Template template, boolean expose) {
+        NodeQuestionView view = new NodeQuestionView();
+        view.setId(template.getId());
+        view.setName(template.getName());
+        view.setQuestionType(template.getQuestionType());
+        view.setTag(template.getTag());
+        view.setDifficulty(template.getDifficulty());
+        SurveySchema schema = template.getTemplate();
+        if (!expose && schema != null) {
+            stripAnswer(schema);
+        }
+        view.setSchema(schema);
+        return view;
+    }
+
+    /**
+     * 递归清除 schema 及其子题的答案字段（预览默认不泄题）。
+     */
+    private void stripAnswer(SurveySchema schema) {
+        if (schema.getAttribute() != null) {
+            schema.getAttribute().setExamCorrectAnswer(null);
+        }
+        if (schema.getChildren() != null) {
+            schema.getChildren().forEach(this::stripAnswer);
+        }
+    }
 
 }

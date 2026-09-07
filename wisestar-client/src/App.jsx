@@ -76,7 +76,6 @@ import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
 import ExerciseListPage from './pages/exercise/ExerciseListPage';
-import WrongBookPage from './pages/exercise/WrongBookPage';
 import SentenceManagePage from './pages/english/SentenceManagePage';
 import VerifyPage from './pages/mall/VerifyPage';
 import CampusManagePage from './pages/admin/CampusManagePage';
@@ -178,6 +177,16 @@ export default function App() {
               element={
                 <AuthGuard required={['template:list', 'template:create', 'template:update', 'template:delete']}>
                   <QuestionListPage />
+                </AuthGuard>
+              }
+            />
+
+            {/* 习题列表（知识树×练习总览：下钻查看绑定练习/题目 + 学员端刷题内容预览） */}
+            <Route
+              path="/exercise/list"
+              element={
+                <AuthGuard required={['repo:list', 'template:list']}>
+                  <ExerciseListPage />
                 </AuthGuard>
               }
             />

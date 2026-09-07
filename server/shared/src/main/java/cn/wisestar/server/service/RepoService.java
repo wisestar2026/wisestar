@@ -197,4 +197,29 @@ public interface RepoService {
 	 * 永远输出仅含表头与填写说明的模板文件，供「题目管理 → 下载模板」使用。</p>
 	 */
 	void downloadImportTemplate();
+
+	/**
+	 * 练习绑定位置反查（习题列表页练习详情回显用）。
+	 *
+	 * <p>按 t_chapter_repo / t_section_repo 反查某练习被挂载到的章节/小节，
+	 * 附带学科/年级/学期/教材版本上下文，便于前端回显与跳转定位。</p>
+	 *
+	 * @param repoId 练习 ID
+	 * @return 绑定位置集合（章节与小节，按绑定先后排序；无绑定返回空集合）
+	 */
+	RepoBindLocationView listRepoLocations(String repoId);
+
+	/**
+	 * 节点刷题内容预览（习题列表页，与学员端取题同一语义）。
+	 *
+	 * <p>聚合语义：section = 该节绑练习题目 ∪ 节下知识点直绑题目；
+	 * chapter = 该章直绑练习 + 下属各节绑练习的题目 ∪ 全章知识点直绑题目；
+	 * knowledgePoint = 知识点直绑题目；repo = 该练习内全部题目。按创建时间倒序，最多 100 题。</p>
+	 *
+	 * @param nodeType   节点类型：chapter / section / knowledgePoint / repo
+	 * @param nodeId     节点 ID
+	 * @param withAnswer 是否携带标准答案与解析（预览默认 false）
+	 * @return 题目视图列表（无内容返回空列表）
+	 */
+	List<NodeQuestionView> listNodeQuestions(String nodeType, String nodeId, Boolean withAnswer);
 }

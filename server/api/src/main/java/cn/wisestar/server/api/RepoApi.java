@@ -550,4 +550,50 @@ public class RepoApi {
 		repoService.saveUserTags(request.getUserId(), request.getTags());
 	}
 
+	/**
+	 * 练习绑定位置反查。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/repo/locations?repoId=（如 /api/repo/locations）。</p>
+	 *
+	 * <p><b>功能</b>：按 t_chapter_repo / t_section_repo 反查该练习绑定的章节/小节，
+	 * 供练习详情页回显知识投放范围并跳转习题列表页定位。</p>
+	 *
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('repo:list')")。</p>
+	 *
+	 * <p><b>调用的下层 Service</b>：{@link RepoService#listRepoLocations(String)}。</p>
+	 *
+	 * @param repoId 练习 ID
+	 * @return 绑定位置视图
+	 */
+	@GetMapping("/locations")
+	@PreAuthorize("hasAuthority('repo:list')")
+	public RepoBindLocationView listRepoLocations(@RequestParam("repoId") String repoId) {
+		return repoService.listRepoLocations(repoId);
+	}
+
+	/**
+	 * 节点刷题内容预览（习题列表页）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/repo/node/questions?nodeType=&amp;nodeId=&amp;withAnswer=。</p>
+	 *
+	 * <p><b>功能</b>：按节点聚合该节点刷题将命中的题目（练习题目 + 知识点直绑题目，
+	 * 与学员端 study/questions 同语义），供管理端核验绑定配置。</p>
+	 *
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('repo:list')")。</p>
+	 *
+	 * <p><b>调用的下层 Service</b>：{@link RepoService#listNodeQuestions(String, String, Boolean)}。</p>
+	 *
+	 * @param nodeType   节点类型：chapter / section / knowledgePoint / repo
+	 * @param nodeId     节点 ID
+	 * @param withAnswer 是否携带标准答案与解析
+	 * @return 题目视图列表
+	 */
+	@GetMapping("/node/questions")
+	@PreAuthorize("hasAuthority('repo:list')")
+	public List<NodeQuestionView> listNodeQuestions(@RequestParam("nodeType") String nodeType,
+			@RequestParam("nodeId") String nodeId,
+			@RequestParam(value = "withAnswer", required = false) Boolean withAnswer) {
+		return repoService.listNodeQuestions(nodeType, nodeId, withAnswer);
+	}
+
 }
