@@ -112,10 +112,17 @@ export async function importTemplate({ file, repoId }) {
   // repoId 可选：不传表示导入到系统全局题库（未绑定任何题库）
   if (repoId) formData.append('repoId', repoId);
   // 使用原生 axios 实例发送 multipart 请求（需要携带 cookie 维持登录态）
-  return axios.post('/api/repo/import', formData, {
+  // 注意: 后端业务错误（如行级校验失败）以 HTTP 200 + {code: 非200, message} 返回，
+  // axios 不会 reject，必须在响应里主动检查 code，否则调用方会误判导入成功
+  const res = await axios.post('/api/repo/import', formData, {
     withCredentials: true,
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+  const body = res?.data;
+  if (body && body.code !== undefined && body.code !== 200) {
+    throw new Error(body.message || '导入失败，请检查文件格式是否正确');
+  }
+  return res;
 }
 
 /**

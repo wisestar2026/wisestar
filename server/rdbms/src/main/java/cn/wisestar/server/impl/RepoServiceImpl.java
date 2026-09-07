@@ -893,7 +893,8 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
             "2. 题型：仅支持 判断 / 单选 / 单项填空 / 多选 / 多项填空 五种；",
             "3. 章节：填写系统内该学科下已存在的章节名称，需与学科配套；",
             "4. 小节：填写该章节下已存在的小节名称（可留空），需与学科/章节配套；",
-            "5. 知识点：可填多个，用中文顿号分隔；填写了小节时须属于该小节，",
+            "5. 知识点：整格按一个知识点名匹配（名称含顿号也可，如「单价、数量、总价的应用」）；",
+            "   整格未匹配到时才按顿号拆分多个知识点校验；填写了小节时须属于该小节，",
             "   小节留空时须属于该章节下的已有知识点；",
             "6. 题目：题干文本，必填；",
             "7. 选项A~H：单选/多选填写选项内容，其他题型留空；",
@@ -1304,8 +1305,9 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     /**
      * 解析标准单表模板（首 sheet，22 列）。
      *
-     * <p>逐行校验：学科/章节/小节按名称匹配系统已有体系（不自动新建）；知识点（多值，顿号
-     * 分隔）填了小节时须属于该小节、小节留空时须属于该章节下已有知识点；选项与答案按题型
+     * <p>逐行校验：学科/章节/小节按名称匹配系统已有体系（不自动新建）；知识点列整格优先
+     * 按一个知识点名匹配（名称可含顿号），整格未命中才按顿号等拆分多个知识点逐 token 校验，
+     * 填了小节时须属于该小节、小节留空时须属于该章节下已有知识点；选项与答案按题型
      * 规则校验。任一行有错即整体中止，抛错携带行级明细。全部通过才返回题目列表供
      * batchAddRepoTemplate 落库。</p>
      *
@@ -1422,9 +1424,12 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                 }
             }
         }
-        // 知识点（多值，顿号分隔）：填了小节时须属于该小节；小节留空时须属于该章节
-        List<String> kpNames = splitAnswers(kpText);
-        if (chapter != null && !kpNames.isEmpty()) {
+        // 知识点列归属校验：整格优先精确匹配（知识点名可含顿号，如「单价、数量、总价的应用」，
+        // 此时顿号是名称的一部分，不能拆分）；整格未命中时才按顿号/逗号等拆分为多个
+        // 知识点名逐 token 校验（兼容历史「一行多知识点」文件）。拆分不全命中时报未命中的名字。
+        String kpWhole = kpText == null ? null : kpText.trim();
+        List<String> kpNames = new ArrayList<>();
+        if (chapter != null && StringUtils.hasText(kpWhole)) {
             String cacheSectionId = section != null ? section.getId() : null;
             String cacheChapterId = chapter.getId();
             Set<String> names = cacheSectionId != null
@@ -1432,13 +1437,24 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                             id -> kpNamesOfSection(cacheSectionId))
                     : kpCache.computeIfAbsent("c:" + cacheChapterId,
                             id -> kpNamesOfChapter(cacheChapterId));
-            for (String kp : kpNames) {
-                if (!names.contains(kp)) {
-                    if (section != null) {
-                        rowErrors.add("小节「" + sectionText + "」下不存在知识点：" + kp);
-                    } else {
-                        rowErrors.add("章节「" + chapterText + "」下不存在知识点：" + kp);
+            if (names.contains(kpWhole)) {
+                // 整格命中：整个格子作为一个知识点名（含顿号也合法）
+                kpNames.add(kpWhole);
+            } else {
+                List<String> tokens = splitAnswers(kpWhole);
+                boolean allHit = true;
+                for (String kp : tokens) {
+                    if (!names.contains(kp)) {
+                        allHit = false;
+                        if (section != null) {
+                            rowErrors.add("小节「" + sectionText + "」下不存在知识点：" + kp);
+                        } else {
+                            rowErrors.add("章节「" + chapterText + "」下不存在知识点：" + kp);
+                        }
                     }
+                }
+                if (allHit) {
+                    kpNames.addAll(tokens);
                 }
             }
         }
