@@ -25,7 +25,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Select, Space, Spin, Tabs } from 'antd';
 import { listWrongQuestions } from '../../api/practice';
 import { getStudyChapters, getStudySections, getStudyPoints } from '../../api/student';
@@ -67,6 +67,7 @@ function WrongItem({ item, onEliminate }) {
 
 export default function WrongBookPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useUserStore();
   const { activeSubject, grade, getVisibleSubjects } = useStudentStore();
   const visibleSubjects = getVisibleSubjects();
@@ -86,6 +87,15 @@ export default function WrongBookPage() {
   const [sections, setSections] = useState([]);
   const [points, setPoints] = useState([]);
 
+  // ---- 深链预筛（研习页「知识点错题本」→ /student/wrong?chapterId=&sectionId=） ----
+  const urlChapter = searchParams.get('chapterId');
+  const urlSection = searchParams.get('sectionId');
+  const urlKp = searchParams.get('knowledgePointId');
+  const [scopeName, setScopeName] = useState(null);       // 预筛小节名（提示条展示）
+  // 已应用的深链标识（同一 scope key 只应用一次；清空/更换 URL 后 key 变化会重新应用）
+  const [appliedKey, setAppliedKey] = useState(null);
+  const scopeKey = urlSection ? `${urlSection}|${urlKp || ''}` : null;
+
   // 学科/年级变化 → 重置级联并重新拉章节
   useEffect(() => {
     setChapterId(undefined);
@@ -100,6 +110,65 @@ export default function WrongBookPage() {
       .catch(() => setChapters([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubject, grade]);
+
+  // 深链应用：等章节列表就绪后，把章节/小节/知识点级联值预置为 URL 指定值
+  useEffect(() => {
+    if (!scopeKey || appliedKey === scopeKey) return;
+    const applyScope = (chId, secList, kpIdVal) => {
+      setChapterId(chId);
+      setSections(secList || []);
+      setSectionId(urlSection);
+      if (kpIdVal) setKpId(kpIdVal);
+      const sec = (secList || []).find((s) => String(s.id) === String(urlSection));
+      setScopeName(sec?.name || null);
+      setAppliedKey(scopeKey);
+    };
+    const want = String(urlSection);
+    const chBelongs = (sl) => sl.some((s) => String(s.id) === want);
+    // 已知章节 → 直接用该章节的小节列表
+    if (urlChapter) {
+      if (!chapters.some((c) => String(c.id) === String(urlChapter))) return; // 章节尚未加载
+      if (sections.some((s) => String(s.id) === want)) {
+        applyScope(urlChapter, sections, urlKp || undefined);
+      } else {
+        getStudySections(urlChapter)
+          .then((res) => {
+            const sl = res?.data || [];
+            if (chBelongs(sl)) applyScope(urlChapter, sl, urlKp || undefined);
+            else setAppliedKey(scopeKey); // 小节不属于该章节 → 回退全量
+          })
+          .catch(() => setAppliedKey(scopeKey));
+      }
+      return;
+    }
+    // 未带章节 → 遍历当前年级章节定位小节归属
+    if (!chapters.length) return;
+    let idx = 0;
+    const findSection = () => {
+      const ch = chapters[idx++];
+      if (!ch) { setAppliedKey(scopeKey); return; }
+      getStudySections(ch.id)
+        .then((res) => {
+          const sl = res?.data || [];
+          if (chBelongs(sl)) applyScope(ch.id, sl, urlKp || undefined);
+          else findSection();
+        })
+        .catch(findSection);
+    };
+    findSection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapters, sections, scopeKey, appliedKey, urlSection, urlChapter, urlKp]);
+
+  // 提示条「查看全部错题」：清空 URL 预筛并重置级联
+  const clearScope = () => {
+    setChapterId(undefined);
+    setSectionId(undefined);
+    setKpId(undefined);
+    setSections([]);
+    setPoints([]);
+    setAppliedKey(scopeKey);
+    navigate('/student/wrong', { replace: true });
+  };
 
   // 筛选年级变化 → 刷新章节并重置下级
   const onGradeChange = (g) => {
@@ -283,6 +352,21 @@ export default function WrongBookPage() {
         <div className="wrong-sub">
           共 {list.length} 题 · 错题归属跟随研习学科（{subjectName}）
         </div>
+        {urlSection && sectionId && String(sectionId) === String(urlSection) && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexWrap: 'wrap', gap: 8, margin: '8px 0', padding: '8px 12px',
+            background: '#f3e8ff', border: '1px solid #e9d5ff', borderRadius: 8,
+            fontSize: 13, color: '#7c3aed',
+          }}>
+            <span>
+              📕 正在查看{scopeName ? `「${scopeName}」` : '当前研习'}小节的错题
+            </span>
+            <a onClick={clearScope} style={{ color: '#7c3aed', fontWeight: 600 }}>
+              查看全部错题 ›
+            </a>
+          </div>
+        )}
         {filterBar}
         <Tabs
           items={[

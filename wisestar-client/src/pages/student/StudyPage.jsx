@@ -118,6 +118,12 @@ export default function StudyPage() {
   // 当前小节练习掌握情况（上次结果 + 知识点维度；研习页顶部「上次掌握情况卡」）
   const [sectionMastery, setSectionMastery] = useState(null);
 
+  // 真实学科模式：已加载真实学科（有权限）且当前学科为真实学科 id
+  // （须在任何引用 realMode 的 hook 依赖数组之前完成声明，避免 TDZ）
+  const visibleSubjects = getVisibleSubjects();
+  const realMode = (studyContent.subjects?.length ?? 0) > 0;
+  const realSubject = visibleSubjects.find((s) => s.key === activeSubject);
+
   // 选中小节 → 拉取该小节掌握度汇总（无记录返回空视图）
   useEffect(() => {
     if (!realMode || !selectedSection?.id) {
@@ -132,11 +138,8 @@ export default function StudyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realMode, selectedSection]);
 
-  // 真实学科模式：已加载真实学科（有权限）且当前学科为真实学科 id
-  const visibleSubjects = getVisibleSubjects();
-  const realMode = (studyContent.subjects?.length ?? 0) > 0;
-  const realSubject = visibleSubjects.find((s) => s.key === activeSubject);
-  const realChapters = studyContent.chapters; // null=未加载 / [] = 无数据
+  // 当前学科真实章节（null=未加载 / [] = 无数据）
+  const realChapters = studyContent.chapters;
 
   // 章节数据：真实模式用真实章节；否则用 mock 学科章节
   const chapters = realMode ? (realChapters || []) : subject.chapters;
@@ -180,7 +183,19 @@ export default function StudyPage() {
     : { text: realMode ? `在「${realSubject?.name || subject.name}」的海域里，选择一个小节开始今天的研习吧。` : `在「${subject.name}」的海域里，挑选一个知识点开始今天的研习吧。` };
 
   // 右栏按钮 → 知识点页（真实模式按小节进入；mock 按知识点进入）
+  // 「知识点错题本」直接对接错题本页（/student/wrong），并按当前小节预筛
   const goAction = (action) => {
+    if (action.key === 'wrong') {
+      if (realMode) {
+        if (!selectedSection) return;
+        const chId = selectedSection.chapterId || '';
+        navigate(`/student/wrong?chapterId=${chId}&sectionId=${selectedSection.id}`);
+      } else {
+        if (!selectedKp) return;
+        navigate(`/student/wrong?knowledgePointId=${selectedKp.id}`);
+      }
+      return;
+    }
     if (realMode) {
       if (!selectedSection) return;
       navigate(`/student/knowledge?sectionId=${selectedSection.id}&tab=${action.key}`);
