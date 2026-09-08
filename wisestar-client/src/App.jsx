@@ -74,7 +74,7 @@ import WordBookManagePage from './pages/english/WordBookManagePage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
-import ExerciseListPage from './pages/exercise/ExerciseListPage';
+import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
 import SentenceManagePage from './pages/english/SentenceManagePage';
 import VerifyPage from './pages/mall/VerifyPage';
 import CampusManagePage from './pages/admin/CampusManagePage';
@@ -172,12 +172,12 @@ export default function App() {
               }
             />
 
-            {/* 习题列表（知识树×练习总览：下钻查看绑定练习/题目 + 学员端刷题内容预览） */}
+            {/* 教研平台（学科+年级→章节→小节→知识点；名称即改 + 知识点直绑题目编辑/加绑） */}
             <Route
               path="/exercise/list"
               element={
                 <AuthGuard required={['repo:list', 'template:list']}>
-                  <ExerciseListPage />
+                  <TeachingResearchPlatformPage />
                 </AuthGuard>
               }
             />

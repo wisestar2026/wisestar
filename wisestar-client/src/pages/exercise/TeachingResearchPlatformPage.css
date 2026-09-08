@@ -1,0 +1,77 @@
+/* TeachingResearchPlatformPage - 教研平台布局样式 */
+.trp-root {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.trp-tree-card {
+  flex: 1 1 420px;
+  min-width: 420px;
+}
+
+.trp-qpanel-card {
+  flex: 1 1 500px;
+  min-width: 460px;
+}
+
+.trp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.trp-panel-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 4px;
+}
+
+/* 知识点节点：名称 + 简介摘要 + 编辑按钮 */
+.trp-kp-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding-right: 4px;
+}
+
+.trp-kp-name {
+  font-weight: 500;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.trp-kp-desc {
+  color: #999;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.trp-node-edit {
+  color: #1677ff;
+  padding: 0 2px;
+  height: auto;
+  opacity: 0.55;
+}
+
+.trp-node-edit:hover {
+  opacity: 1;
+}
+
+/* 答案区 */
+.trp-q-answer {
+  background: #f6f8fa;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: #333;
+  font-size: 13px;
+  margin-top: 6px;
+  word-break: break-all;
+}

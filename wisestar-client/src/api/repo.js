@@ -190,19 +190,19 @@ export async function myRepos() {
  * @param {String} repoId - 练习 ID
  * @returns {Object} data: { bindings: [{ nodeType: CHAP|SECTION, nodeId, nodeName,
  *           parentNodeId, parentNodeName, subjectId, grade, term, version }] }
- * 调用方: RepoDetailPage（习题列表页知识回显）
+ * 调用方: RepoDetailPage（练习投放位置回显）
  */
 export async function listRepoLocations(repoId) {
   return request.get('/repo/locations', { params: { repoId } });
 }
 
 /**
- * 节点刷题内容预览（习题列表页，与学员端同语义）
+ * 节点刷题内容预览（原习题列表页遗留接口：按知识节点取学员端同语义题目，已不再由前端调用）
  * 后端接口: GET /api/repo/node/questions?nodeType=&nodeId=&withAnswer=
  * @param {Object} params - { nodeType: chapter|section|knowledgePoint|repo, nodeId, withAnswer? }
  * @returns {Object} data: [{ id, name, questionType, tag, difficulty, schema }]
  *   schema: { title, attribute:{examCorrectAnswer,...}, children:[{id,title,...}] }
- * 调用方: ExerciseListPage（节点题目预览弹窗）
+ * 调用方: 已废弃页面 ExerciseListPage（保留兼容）
  */
 export async function listNodeQuestions(params) {
   return request.get('/repo/node/questions', { params });

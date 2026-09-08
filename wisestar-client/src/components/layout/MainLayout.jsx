@@ -93,7 +93,7 @@ export default function MainLayout() {
       key: 'exercise-group', icon: <BookOutlined />, label: '习题管理',
       children: [
         { key: '/questions', label: '题目管理', required: ['template:list'] },
-        { key: '/exercise/list', label: '习题列表', required: ['repo:list'] },
+        { key: '/exercise/list', label: '教研平台', required: ['repo:list'] },
         { key: '/repos', label: '练习列表', required: ['repo:list'] },
         { key: '/practice', label: '在线练习', required: ['exercise:list'] },
         { key: '/wrong-questions', label: '错题管理', required: ['repo:list', 'exercise:list'] },

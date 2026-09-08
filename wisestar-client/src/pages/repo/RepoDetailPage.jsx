@@ -187,7 +187,7 @@ export default function RepoDetailPage() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
-  // 知识绑定位置（本练习被投放到的所属小节，用于从练习回钻到习题列表）
+  // 知识绑定位置（本练习被投放到的所属小节，回显用；绑定维护在小节管理/教研平台）
   const [bindings, setBindings] = useState([]);
   const [bindingsLoading, setBindingsLoading] = useState(false);
 
@@ -463,7 +463,7 @@ export default function RepoDetailPage() {
             <Text strong>知识绑定（该练习投放在哪些小节）</Text>
           </Space>
         )}
-        extra={<a onClick={() => navigate('/exercise/list')}>在习题列表中管理绑定</a>}
+        extra={<a onClick={() => navigate('/exercise/list')}>前往教研平台维护绑定</a>}
       >
         {bindings.length === 0 ? (
           <Text type="secondary">
