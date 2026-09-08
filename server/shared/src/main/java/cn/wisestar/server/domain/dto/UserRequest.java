@@ -43,6 +43,11 @@ public class UserRequest {
 
 	private List<UserPositionRequest> userPositions;
 
+	/**
+	 * 校区ID多选（校区数据权限范围；通常仅校长/教务/学管师角色账号维护）。
+	 */
+	private List<String> campusIds;
+
 	private MultipartFile file;
 
 	/**

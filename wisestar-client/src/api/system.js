@@ -140,3 +140,25 @@ export async function importDictItems(file, dictCode) {
 
 /** 角色列表（pageSize=-1 取全量，供下拉选择） */
 export const listAllRoles = (params = {}) => request.get('/system/role/list', { params: { pageSize: -1, ...params } });
+
+// ------------------------------------------------------------
+// 行政管理：校区管理（CampusApi）
+// ------------------------------------------------------------
+
+/** 校区列表（含各校区学员/绑定员工统计），返回数组 */
+export const listCampuses = () => request.get('/system/campus/list');
+
+/**
+ * 校区下拉选项（用于学员表单等）
+ * @param {boolean} includeDisabled 是否包含停用校区（编辑回显时传 true）
+ */
+export const listCampusOptions = (params = {}) => request.get('/system/campus/options', { params });
+
+/** 新增校区：{ name, remark } */
+export const createCampus = (data) => request.post('/system/campus/create', data);
+
+/** 更新校区：{ id, name, status, remark } */
+export const updateCampus = (data) => request.post('/system/campus/update', data);
+
+/** 删除校区：{ id } */
+export const deleteCampus = (data) => request.post('/system/campus/delete', data);

@@ -39,4 +39,9 @@ public class UserView {
 	/** 用户岗位 */
 	private List<UserPositionView> userPositions;
 
+	/**
+	 * 绑定校区（id/name/status；构成校长/教务/学管师的数据权限范围）。
+	 */
+	private List<CampusView> campuses;
+
 }

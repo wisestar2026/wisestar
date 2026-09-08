@@ -27,12 +27,16 @@ import {
 import { listDepts } from '../../api/system';
 import { listPositions } from '../../api/system';
 import { listAllRoles } from '../../api/system';
+import { listCampusOptions } from '../../api/system';
 import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
 
 /** 状态渲染：1 启用 / 0 禁用 */
 const STATUS_MAP = { 1: { text: '启用', color: 'green' }, 0: { text: '禁用', color: 'red' } };
+
+/** 按校区隔离业务数据的角色 code（校长/教务/学管师）；仅这些角色展示并需维护校区绑定 */
+const CAMPUS_SCOPE_ROLE_CODES = ['principal', 'consultant', 'academic'];
 
 /** 格式化时间（UserView.createAt 无 @JsonFormat，统一原生格式化） */
 const formatTime = (v) => (v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '-');
@@ -50,6 +54,7 @@ export default function UserManagePage() {
   const [deptOptions, setDeptOptions] = useState([]);
   const [positionOptions, setPositionOptions] = useState([]);
   const [roleOptions, setRoleOptions] = useState([]);
+  const [campusOptions, setCampusOptions] = useState([]);
 
   // 新增/编辑弹窗
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,6 +67,13 @@ export default function UserManagePage() {
   const [positionTarget, setPositionTarget] = useState(null);
   const [positionSaving, setPositionSaving] = useState(false);
   const [positionForm] = Form.useForm();
+
+  // 角色选中值（含 code），用于判断是否需要维护校区绑定
+  const watchedRoles = Form.useWatch('roles', form);
+  const campusScopeRoleIds = roleOptions
+    .filter((o) => CAMPUS_SCOPE_ROLE_CODES.includes(o.code))
+    .map((o) => o.value);
+  const needCampusBinding = (watchedRoles || []).some((id) => campusScopeRoleIds.includes(id));
 
   // ---- 加载分页列表 ----
   const loadList = useCallback(() => {
@@ -89,8 +101,14 @@ export default function UserManagePage() {
       setPositionOptions((res?.data?.list || []).map((p) => ({ value: p.id, label: p.name })));
     }).catch(() => setPositionOptions([]));
     listAllRoles().then((res) => {
-      setRoleOptions((res?.data?.list || []).map((r) => ({ value: r.id, label: r.name })));
+      setRoleOptions((res?.data?.list || []).map((r) => ({ value: r.id, label: r.name, code: r.code })));
     }).catch(() => setRoleOptions([]));
+    // 校区选项：includeDisabled=true 保证停用校区也能在编辑时回显
+    listCampusOptions({ includeDisabled: true }).then((res) => {
+      setCampusOptions((res?.data || []).map((c) => ({
+        value: c.id, label: c.status === 0 ? `${c.name}（停用）` : c.name,
+      })));
+    }).catch(() => setCampusOptions([]));
   }, []);
 
   // ---- 搜索 ----
@@ -117,6 +135,7 @@ export default function UserManagePage() {
         deptId: user.deptId,
         roles: (user.roles || []).map((r) => r.id),
         positions: (user.userPositions || []).map((p) => p.positionId),
+        campuses: (user.campuses || []).map((c) => c.id),
         status: user.status ?? 1,
       });
     } else {
@@ -143,6 +162,8 @@ export default function UserManagePage() {
       }));
       const payload = { ...values, userPositions };
       delete payload.positions;
+      // 校区绑定：仅角色含校长/教务/学管师时提交（空数组=清除绑定）；否则清空以防遗留值误绑
+      payload.campusIds = needCampusBinding ? (values.campuses || []) : [];
       if (editing) {
         // 编辑：密码留空不修改；用户名不提交（只读，避免查重误报）
         if (!payload.password) delete payload.password;
@@ -222,6 +243,12 @@ export default function UserManagePage() {
       title: '岗位', dataIndex: 'userPositions', width: 140,
       render: (positions) => (positions && positions.length > 0
         ? positions.map((p, i) => <Tag key={`${p.positionId}-${i}`}>{p.positionName}</Tag>)
+        : '-'),
+    },
+    {
+      title: '绑定校区', dataIndex: 'campuses', width: 160,
+      render: (campuses) => (campuses && campuses.length > 0
+        ? campuses.map((c) => <Tag key={c.id} color="geekblue">{c.status === 0 ? `${c.name}（停用）` : c.name}</Tag>)
         : '-'),
     },
     {
@@ -330,6 +357,14 @@ export default function UserManagePage() {
               showSearch optionFilterProp="label"
             />
           </Form.Item>
+          {needCampusBinding && (
+            <Form.Item name="campuses" label="绑定校区">
+              <Select
+                mode="multiple" allowClear placeholder="选择后该账号仅能查看所辖校区的学员/订单/督学数据"
+                options={campusOptions} showSearch optionFilterProp="label"
+              />
+            </Form.Item>
+          )}
           <Form.Item name="positions" label="岗位">
             <Select
               mode="multiple" allowClear placeholder="选填（与所选部门关联）" options={positionOptions}

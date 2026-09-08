@@ -22,17 +22,10 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant
 import {
   listStudents, createStudent, updateStudent, deleteStudent,
 } from '../../api/student';
+import { listCampusOptions } from '../../api/system';
 import { usePermission } from '../../utils/usePermission';
 
 const { Title } = Typography;
-
-// 校区下拉（本迭代仅占位，业务逻辑后续迭代）
-const CAMPUS_OPTIONS = [
-  { value: '城东校区', label: '城东校区' },
-  { value: '城西校区', label: '城西校区' },
-  { value: '城南校区', label: '城南校区' },
-  { value: '城北校区', label: '城北校区' },
-];
 
 export default function StudentManagePage() {
   const { can } = usePermission();
@@ -46,6 +39,11 @@ export default function StudentManagePage() {
   const [name, setName] = useState('');
   const [studentNo, setStudentNo] = useState('');
   const [phone, setPhone] = useState('');
+  const [campus, setCampus] = useState('');
+
+  // 校区选项（来自校区档案 t_campus；value 为校区名称）
+  const [enabledCampusOptions, setEnabledCampusOptions] = useState([]);
+  const [disabledCampusNames, setDisabledCampusNames] = useState([]);
 
   // 新增/编辑弹窗
   const [modalOpen, setModalOpen] = useState(false);
@@ -54,9 +52,9 @@ export default function StudentManagePage() {
   const [form] = Form.useForm();
 
   // ---- 加载学员分页 ----
-  const loadList = () => {
+  const doFetch = (params) => {
     setLoading(true);
-    listStudents({ current, pageSize, name: name || undefined, studentNo: studentNo || undefined, phone: phone || undefined })
+    listStudents(params)
       .then((res) => {
         setList(res?.data?.list || []);
         setTotal(res?.data?.total || 0);
@@ -65,10 +63,29 @@ export default function StudentManagePage() {
       .finally(() => setLoading(false));
   };
 
+  const loadList = () => {
+    doFetch({
+      current, pageSize,
+      name: name || undefined, studentNo: studentNo || undefined,
+      phone: phone || undefined, campus: campus || undefined,
+    });
+  };
+
   useEffect(() => {
     loadList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pageSize]);
+
+  // ---- 加载校区档案（含停用，供编辑回显；scope 账号仅拿到自己的校区） ----
+  useEffect(() => {
+    listCampusOptions({ includeDisabled: true })
+      .then((res) => {
+        const all = res?.data || [];
+        setEnabledCampusOptions(all.filter((c) => c.status === 1).map((c) => ({ value: c.name, label: c.name })));
+        setDisabledCampusNames(all.filter((c) => c.status === 0).map((c) => c.name));
+      })
+      .catch(() => { setEnabledCampusOptions([]); setDisabledCampusNames([]); });
+  }, []);
 
   // ---- 搜索 ----
   const handleSearch = () => {
@@ -80,6 +97,7 @@ export default function StudentManagePage() {
     setName('');
     setStudentNo('');
     setPhone('');
+    setCampus('');
     setCurrent(1);
   };
 
@@ -181,6 +199,12 @@ export default function StudentManagePage() {
     },
   ];
 
+  // 表单校区选项：启用校区可选；编辑对象所在校区已停用时，追加回显项
+  const modalCampusOptions = [...enabledCampusOptions];
+  if (editing && disabledCampusNames.includes(editing.campus)) {
+    modalCampusOptions.unshift({ value: editing.campus, label: `${editing.campus}（停用）` });
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -201,6 +225,19 @@ export default function StudentManagePage() {
         <Input
           placeholder="联系号码" allowClear style={{ width: 150 }} value={phone}
           onChange={(e) => setPhone(e.target.value)} onPressEnter={handleSearch}
+        />
+        <Select
+          placeholder="校区" allowClear style={{ width: 150 }} value={campus || undefined}
+          options={enabledCampusOptions} showSearch optionFilterProp="label"
+          onChange={(v) => {
+            setCampus(v || '');
+            setCurrent(1);
+            doFetch({
+              current: 1, pageSize,
+              name: name || undefined, studentNo: studentNo || undefined,
+              phone: phone || undefined, campus: v || undefined,
+            });
+          }}
         />
         <Button type="primary" onClick={handleSearch}>搜索</Button>
         <Button icon={<ReloadOutlined />} onClick={handleReset}>重置</Button>
@@ -245,9 +282,13 @@ export default function StudentManagePage() {
           <Form.Item name="school" label="学校">
             <Input placeholder="选填" maxLength={100} />
           </Form.Item>
-          <Form.Item name="campus" label="校区">
+          <Form.Item
+            name="campus" label="校区"
+            extra="数据按校区隔离：校长/教务/学管师仅能维护所辖校区的学员"
+          >
             <Select
-              allowClear placeholder="选填（本迭代仅占位）" options={CAMPUS_OPTIONS}
+              allowClear placeholder="请选择校区" options={modalCampusOptions}
+              showSearch optionFilterProp="label"
             />
           </Form.Item>
         </Form>

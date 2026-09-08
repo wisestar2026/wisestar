@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.domain.dto.CampusScope;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.student.StudentSupervisionView;
 import cn.wisestar.server.domain.model.Chapter;
@@ -12,6 +13,7 @@ import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.StudentActivityMapper;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
+import cn.wisestar.server.service.CampusScopeService;
 import cn.wisestar.server.service.StudentSupervisionService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +53,7 @@ public class StudentSupervisionServiceImpl implements StudentSupervisionService 
 	private final SectionMapper sectionMapper;
 	private final ChapterMapper chapterMapper;
 	private final TemplateMapper templateMapper;
+	private final CampusScopeService campusScopeService;
 
 	@Override
 	public List<StudentSupervisionView> getOnlineStudents() {
@@ -61,6 +64,29 @@ public class StudentSupervisionServiceImpl implements StudentSupervisionService 
 						.orderByDesc(StudentActivity::getUpdateAt));
 		if (activities.isEmpty()) {
 			return Collections.emptyList();
+		}
+
+		// 校区数据权限范围：EMPTY 无任何校区数据；SCOPED 仅保留绑定校区学员的活动
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isEmpty()) {
+			return Collections.emptyList();
+		}
+		if (scope.isScoped()) {
+			Set<String> campusNames = scope.getCampusNames();
+			if (campusNames.isEmpty()) {
+				return Collections.emptyList();
+			}
+			Set<String> allowedStudentIds = studentMapper.selectList(Wrappers.<Student>lambdaQuery()
+					.select(Student::getId).in(Student::getCampus, campusNames)).stream().map(Student::getId)
+					.collect(Collectors.toSet());
+			if (allowedStudentIds.isEmpty()) {
+				return Collections.emptyList();
+			}
+			activities = activities.stream().filter(a -> allowedStudentIds.contains(a.getStudentId()))
+					.collect(Collectors.toList());
+			if (activities.isEmpty()) {
+				return Collections.emptyList();
+			}
 		}
 
 		Map<String, Student> studentMap = toMap(activities.stream()

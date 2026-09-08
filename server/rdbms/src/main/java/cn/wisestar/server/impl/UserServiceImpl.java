@@ -13,6 +13,7 @@ import cn.wisestar.server.core.uitls.PinyinUtils;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.*;
 import cn.wisestar.server.domain.mapper.RoleViewMapper;
+import cn.wisestar.server.domain.mapper.CampusDtoMapper;
 import cn.wisestar.server.domain.mapper.UserPositionDtoMapper;
 import cn.wisestar.server.domain.mapper.UserViewMapper;
 import cn.wisestar.server.domain.model.*;
@@ -80,6 +81,12 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 	private final UserPositionMapper userPositionMapper;
 
 	private final UserPositionDtoMapper userPositionDtoMapper;
+
+	private final CampusDtoMapper campusDtoMapper;
+
+	private final UserCampusMapper userCampusMapper;
+
+	private final CampusMapper campusMapper;
 
 	private final MessageSource messageSource;
 
@@ -202,6 +209,11 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 				}
 			});
 			userView.setUserPositions(positionViews);
+			// 设置用户绑定校区（id/name/status，无统计列）
+			userView.setCampuses(userCampusMapper
+					.selectList(Wrappers.<UserCampus>lambdaQuery().eq(UserCampus::getUserId, x.getId())).stream()
+					.map(uc -> campusMapper.selectById(uc.getCampusId())).filter(u -> u != null)
+					.map(campusDtoMapper::toView).collect(Collectors.toList()));
 			return userView;
 		}).collect(Collectors.toList()));
 	}
@@ -237,6 +249,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		addUserRoles(request);
 		// 添加用户岗位
 		addUserPositions(request);
+		// 添加用户校区绑定
+		addUserCampuses(request);
 	}
 
 	private void addUserRoles(UserRequest request) {
@@ -257,6 +271,17 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 				UserPosition userPosition = userPositionDtoMapper.fromRequest(userPositionRequest);
 				userPosition.setUserId(request.getId());
 				userPositionMapper.insert(userPosition);
+			});
+		}
+	}
+
+	private void addUserCampuses(UserRequest request) {
+		if (!CollectionUtils.isEmpty(request.getCampusIds())) {
+			request.getCampusIds().forEach(campusId -> {
+				UserCampus binding = new UserCampus();
+				binding.setUserId(request.getId());
+				binding.setCampusId(campusId);
+				userCampusMapper.insert(binding);
 			});
 		}
 	}
@@ -302,6 +327,11 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 					.delete(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getUserId, request.getId()));
 			addUserPositions(request);
 		}
+		// 更新用户校区绑定
+		if (request.getCampusIds() != null) {
+			userCampusMapper.delete(Wrappers.<UserCampus>lambdaQuery().eq(UserCampus::getUserId, request.getId()));
+			addUserCampuses(request);
+		}
 	}
 
 	@Override
@@ -309,6 +339,7 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 	public void deleteUser(String id) {
 		removeById(id);
 		accountMapper.delete(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, id));
+		userCampusMapper.delete(Wrappers.<UserCampus>lambdaQuery().eq(UserCampus::getUserId, id));
 	}
 
 	@Override

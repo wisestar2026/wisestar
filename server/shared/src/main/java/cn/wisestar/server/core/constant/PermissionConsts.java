@@ -134,6 +134,12 @@ public final class PermissionConsts {
 	public static final String SYSTEM_DICT_ITEM_DELETE = "system:dictItem:delete";
 	public static final String SYSTEM_DICT_ITEM_IMPORT = "system:dictItem:import";
 
+	/** 行政管理-校区管理 */
+	public static final String CAMPUS_LIST = "campus:list";
+	public static final String CAMPUS_CREATE = "campus:create";
+	public static final String CAMPUS_UPDATE = "campus:update";
+	public static final String CAMPUS_DELETE = "campus:delete";
+
 	// ---------------------------------------------------------------
 	// 权限树结构
 	// ---------------------------------------------------------------
@@ -251,6 +257,11 @@ public final class PermissionConsts {
 				ops(SYSTEM_DICT_ITEM_LIST, "查看", SYSTEM_DICT_ITEM_CREATE, "新增", SYSTEM_DICT_ITEM_UPDATE, "修改",
 						SYSTEM_DICT_ITEM_DELETE, "删除", SYSTEM_DICT_ITEM_IMPORT, "导入")));
 		tree.add(system);
+		// 行政管理：二级子组（角色权限/校区管理）
+		Node campus = node("campus", "行政管理", new ArrayList<>());
+		campus.getChildren().add(node("campus-manage", "校区管理",
+				ops(CAMPUS_LIST, "查看", CAMPUS_CREATE, "新增", CAMPUS_UPDATE, "修改", CAMPUS_DELETE, "删除")));
+		tree.add(campus);
 		return tree;
 	}
 
@@ -285,7 +296,8 @@ public final class PermissionConsts {
 			+ "system:dict:list,system:dict:create,system:dict:update,system:dict:delete,"
 			+ "system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,"
 			+ "user:update,"
-			+ "english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai";
+			+ "english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,"
+			+ "campus:list,campus:create,campus:update,campus:delete";
 
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */
 	public static final String PRINCIPAL_AUTHORITY = "home,exercise:list,"
@@ -293,7 +305,8 @@ public final class PermissionConsts {
 			+ "repo:list,repo:detail,template:list,knowledge:list,"
 			+ "student:list,student:create,student:update,student:delete,"
 			+ "order:list,order:create,order:update,order:delete,"
-			+ "system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list";
+			+ "system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list,"
+			+ "campus:list";
 
 	/** 教师：教学执行，知识/题库维护 + 查看学员与订单，含学员督学 */
 	public static final String TEACHER_AUTHORITY = "home,exercise:list,"
@@ -310,8 +323,9 @@ public final class PermissionConsts {
 			+ "student:list,student:create,student:update,student:delete,student:supervision,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,"
-			+ "task:list,"
-			+ "knowledge:list,repo:list,repo:detail";
+			+ "task:list,task:create,task:update,task:delete,"
+			+ "knowledge:list,repo:list,repo:detail,"
+			+ "campus:list";
 
 	/** 教务：教务管理，知识/题库维护 + 查看学员与订单 */
 	public static final String ACADEMIC_AUTHORITY = "home,exercise:list,"
@@ -322,7 +336,8 @@ public final class PermissionConsts {
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"
 			+ "project:list,project:detail,answer:list,answer:detail,"
-			+ "system:dict:list,system:dictItem:list";
+			+ "system:dict:list,system:dictItem:list,"
+			+ "campus:list";
 
 	/**
 	 * 内置角色清单（名称 → 默认权限）。

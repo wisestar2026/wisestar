@@ -31,4 +31,9 @@ public class StudentQuery extends PageQuery {
 	 */
 	private String phone;
 
+	/**
+	 * 校区（精确匹配学员所属校区名称；结果不超出当前账号数据权限范围）。
+	 */
+	private String campus;
+
 }

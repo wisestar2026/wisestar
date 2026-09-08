@@ -1488,6 +1488,11 @@ UPDATE t_role SET authority = 'home,exercise:list,repo:list,repo:detail,repo:cre
 UPDATE t_role SET authority = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,system:dict:list,system:dictItem:list' WHERE code = 'academic';
 -- 收敛旧库：已有 admin 角色补充内置标记与新权限点
 UPDATE t_role SET name = '管理员', remark = '系统初始化角色（超管）', builtin = 1, update_at = '2026-08-13 10:00:00', update_by = '1457995481966747649', authority = 'home,exercise:list,project:list,project:detail,project:create,project:update,project:delete,project:report,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai' WHERE code = 'admin';
+-- 校区权限点收敛（幂等，避免旧库角色缺 campus:* 权限点）
+UPDATE t_role SET authority = authority || ',campus:list' WHERE code IN ('admin','principal','academic','consultant') AND authority NOT LIKE '%campus:list%';
+UPDATE t_role SET authority = authority || ',campus:create' WHERE code = 'admin' AND authority NOT LIKE '%campus:create%';
+UPDATE t_role SET authority = authority || ',campus:update' WHERE code = 'admin' AND authority NOT LIKE '%campus:update%';
+UPDATE t_role SET authority = authority || ',campus:delete' WHERE code = 'admin' AND authority NOT LIKE '%campus:delete%';
 COMMIT;
 
 -- ----------------------------
@@ -1681,6 +1686,48 @@ CREATE TABLE IF NOT EXISTS t_user_role (
 BEGIN;
 INSERT INTO t_user_role (id, user_type, user_id, role_id, create_at, create_by, update_at, update_by) VALUES ('1488542015867121666', 'SysUser', '1457995481966747649', '1457995481928998914', '2022-02-01 23:57:27', '1457995481966747649', NULL, NULL);
 COMMIT;
+
+-- ----------------------------
+-- 校区管理（行政管理）：校区档案 + 员工-校区绑定（2026-09-08 新增）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_campus (
+  id varchar(64) NOT NULL COMMENT 'ID',
+  name varchar(50) NOT NULL COMMENT '校区名称(唯一)',
+  status tinyint(1) NOT NULL DEFAULT '1' COMMENT '1启用 0停用',
+  remark varchar(256) DEFAULT NULL COMMENT '备注',
+  is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT uk_campus_name UNIQUE (name)
+);
+
+CREATE TABLE IF NOT EXISTS t_user_campus (
+  id varchar(64) NOT NULL COMMENT 'ID',
+  user_id varchar(64) NOT NULL COMMENT '员工用户ID',
+  campus_id varchar(64) NOT NULL COMMENT '校区ID',
+  create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_campus_user ON t_user_campus (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_campus_campus ON t_user_campus (campus_id);
+
+-- 兼容早期已建表（旧库 t_campus 缺失逻辑删除列等）：启动期幂等补列
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS status tinyint(1) NOT NULL DEFAULT '1';
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS remark varchar(256) DEFAULT NULL;
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS is_deleted tinyint(1) NOT NULL DEFAULT '0';
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS create_by varchar(256) DEFAULT NULL;
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS update_at timestamp DEFAULT NULL;
+ALTER TABLE t_campus ADD COLUMN IF NOT EXISTS update_by varchar(256) DEFAULT NULL;
+ALTER TABLE t_user_campus ADD COLUMN IF NOT EXISTS user_id varchar(64);
+ALTER TABLE t_user_campus ADD COLUMN IF NOT EXISTS campus_id varchar(64);
+ALTER TABLE t_user_campus ADD COLUMN IF NOT EXISTS is_deleted tinyint(1) NOT NULL DEFAULT '0';
 
 -- ----------------------------
 -- Table structure for t_subject（学科字典：知识管理板块一级维度）

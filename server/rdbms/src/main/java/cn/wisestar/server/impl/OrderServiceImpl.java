@@ -1,6 +1,7 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.CampusScope;
 import cn.wisestar.server.domain.dto.student.OrderQuery;
 import cn.wisestar.server.domain.dto.student.OrderRequest;
 import cn.wisestar.server.domain.dto.student.OrderView;
@@ -14,6 +15,7 @@ import cn.wisestar.server.mapper.StudentOrderMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.BaseService;
+import cn.wisestar.server.service.CampusScopeService;
 import cn.wisestar.server.service.OrderService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -86,6 +88,8 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 
 	private final SubjectMapper subjectMapper;
 
+	private final CampusScopeService campusScopeService;
+
 	/**
 	 * 创建订单：订单主表 + 权限展开行（同一事务）。
 	 */
@@ -97,6 +101,7 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 		if (student == null) {
 			throw new ValidationException("学员不存在");
 		}
+		assertStudentInScope(student);
 
 		StudentOrder order = orderViewMapper.fromRequest(request);
 		order.setExpireAt(calcExpireAt(request.getDuration(), request.getDurationUnit()));
@@ -115,6 +120,23 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 	 */
 	@Override
 	public PaginationResponse<OrderView> pageOrders(OrderQuery query) {
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isEmpty()) {
+			return new PaginationResponse<>(0L, Collections.emptyList());
+		}
+		Set<String> allowedStudentIds = null;
+		if (scope.isScoped()) {
+			Set<String> names = scope.getCampusNames();
+			if (names.isEmpty()) {
+				return new PaginationResponse<>(0L, Collections.emptyList());
+			}
+			allowedStudentIds = studentMapper
+					.selectList(Wrappers.<Student>lambdaQuery().select(Student::getId).in(Student::getCampus, names))
+					.stream().map(Student::getId).collect(Collectors.toSet());
+			if (allowedStudentIds.isEmpty()) {
+				return new PaginationResponse<>(0L, Collections.emptyList());
+			}
+		}
 		Set<String> studentIds = null;
 		if (StringUtils.hasText(query.getStudentName())) {
 			studentIds = studentMapper.selectList(
@@ -130,6 +152,7 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 						.eq(StringUtils.hasText(query.getStudentId()), StudentOrder::getStudentId,
 								query.getStudentId())
 						.in(studentIds != null, StudentOrder::getStudentId, studentIds)
+						.in(allowedStudentIds != null, StudentOrder::getStudentId, allowedStudentIds)
 						.eq(query.getStatus() != null, StudentOrder::getStatus, query.getStatus())
 						.orderByDesc(StudentOrder::getCreateAt));
 		return new PaginationResponse<>(page.getTotal(),
@@ -148,6 +171,7 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 		if (order == null) {
 			throw new ValidationException("订单不存在");
 		}
+		assertOrderStudentInScope(order.getStudentId());
 		StudentOrder update = new StudentOrder();
 		update.setId(order.getId());
 		update.setStatus(ORDER_STATUS_CANCELED);
@@ -160,8 +184,35 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 	 */
 	@Override
 	public void deleteOrder(OrderRequest request) {
+		StudentOrder order = getById(request.getId());
+		if (order == null) {
+			throw new ValidationException("订单不存在");
+		}
+		assertOrderStudentInScope(order.getStudentId());
 		removeById(request.getId());
 		removePermissionsByOrder(request.getId());
+	}
+
+	/**
+	 * 校验订单所属学员在数据权限范围内（create/update/cancel/delete 共用）。
+	 */
+	private void assertOrderStudentInScope(String studentId) {
+		Student student = studentMapper.selectById(studentId);
+		assertStudentInScope(student);
+	}
+
+	/**
+	 * 校验目标学员在当前账号校区数据权限范围内。
+	 */
+	private void assertStudentInScope(Student student) {
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isAll() || student == null) {
+			return;
+		}
+		if (scope.isEmpty() || student.getCampus() == null
+				|| !scope.getCampusNames().contains(student.getCampus())) {
+			throw new ValidationException("无权访问该学员（校区数据权限）");
+		}
 	}
 
 	/**

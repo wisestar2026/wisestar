@@ -4,6 +4,7 @@ import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.AppConsts;
 import cn.wisestar.server.core.security.PasswordEncoder;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.CampusScope;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
@@ -53,7 +54,10 @@ import cn.wisestar.server.mapper.StudentPermissionMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.BaseService;
+import cn.wisestar.server.service.CampusScopeService;
+import cn.wisestar.server.service.CampusService;
 import cn.wisestar.server.service.StudentService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +75,7 @@ import java.time.ZoneId;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -142,6 +147,10 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	private final KnowledgePointViewMapper knowledgePointViewMapper;
 
+	private final CampusScopeService campusScopeService;
+
+	private final CampusService campusService;
+
 	/**
 	 * 新增学员：自动生成学号 + 创建登录账号（同一事务）。
 	 */
@@ -159,6 +168,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (duplicateCount != null && duplicateCount > 0) {
 			throw new ValidationException("已存在同姓名、同联系号码的学员，请勿重复录入");
 		}
+		// 校区赋值校验：仅可分配到启用的校区
+		campusService.checkAssignable(request.getCampus(), null);
 
 		Student student = studentViewMapper.fromRequest(request);
 		student.setStudentNo(generateUniqueStudentNo());
@@ -499,14 +510,17 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (templateIds.isEmpty()) {
 			return Collections.emptyList();
 		}
-		int limit = count == null ? 10 : Math.min(count, 50);
+		// count 为空时返回全部命中题目（练习/小节通关应覆盖绑定题库的全部题）；
+		// 显式传 count（消灭错题等）时按指定数量截断（上限 50）
 		boolean expose = Boolean.TRUE.equals(exposeAnswer);
-		return templateMapper.selectBatchIds(templateIds).stream()
+		Stream<Template> stream = templateMapper.selectBatchIds(templateIds).stream()
 				.filter(t -> types == null || types.isEmpty()
 						|| (t.getQuestionType() != null && types.contains(t.getQuestionType().name())))
-				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()))
-				.limit(limit)
-				.map(t -> expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t))
+				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()));
+		if (count != null) {
+			stream = stream.limit(Math.min(count, 50));
+		}
+		return stream.map(t -> expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t))
 				.collect(Collectors.toList());
 	}
 
@@ -697,12 +711,24 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	 */
 	@Override
 	public PaginationResponse<StudentView> pageStudents(StudentQuery query) {
-		Page<Student> page = pageByQuery(query,
-				Wrappers.<Student>lambdaQuery().like(StringUtils.hasText(query.getName()), Student::getName,
-						query.getName())
-						.like(StringUtils.hasText(query.getStudentNo()), Student::getStudentNo, query.getStudentNo())
-						.like(StringUtils.hasText(query.getPhone()), Student::getPhone, query.getPhone())
-						.orderByDesc(Student::getCreateAt));
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isEmpty()) {
+			return new PaginationResponse<>(0L, Collections.emptyList());
+		}
+		LambdaQueryWrapper<Student> wrapper = Wrappers.<Student>lambdaQuery()
+				.like(StringUtils.hasText(query.getName()), Student::getName, query.getName())
+				.like(StringUtils.hasText(query.getStudentNo()), Student::getStudentNo, query.getStudentNo())
+				.like(StringUtils.hasText(query.getPhone()), Student::getPhone, query.getPhone())
+				.eq(StringUtils.hasText(query.getCampus()), Student::getCampus, query.getCampus())
+				.orderByDesc(Student::getCreateAt);
+		if (scope.isScoped()) {
+			Set<String> names = scope.getCampusNames();
+			if (names.isEmpty()) {
+				return new PaginationResponse<>(0L, Collections.emptyList());
+			}
+			wrapper.in(Student::getCampus, names);
+		}
+		Page<Student> page = pageByQuery(query, wrapper);
 		return new PaginationResponse<>(page.getTotal(), studentViewMapper.toView(page.getRecords()));
 	}
 
@@ -718,6 +744,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (exist == null) {
 			throw new ValidationException("学员不存在");
 		}
+		assertStudentInScope(exist);
+		// 校区赋值校验：可保留历史停用校区原值，其余必须为启用校区
+		campusService.checkAssignable(request.getCampus(), exist.getCampus());
 		// 组合查重（排除自身）
 		Long duplicateCount = count(Wrappers.<Student>lambdaQuery().eq(Student::getName, request.getName())
 				.eq(Student::getPhone, request.getPhone()).ne(Student::getId, request.getId()));
@@ -731,11 +760,30 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	}
 
 	/**
-	 * 删除学员（逻辑删除）。
+	 * 删除学员（逻辑删除；校区数据权限范围内）。
 	 */
 	@Override
 	public void deleteStudent(StudentRequest request) {
+		Student exist = getById(request.getId());
+		if (exist == null) {
+			throw new ValidationException("学员不存在");
+		}
+		assertStudentInScope(exist);
 		removeById(request.getId());
+	}
+
+	/**
+	 * 校验当前账号对该学员具备数据可见/操作权限（SCOPED/EMPTY 时执行校区匹配）。
+	 */
+	private void assertStudentInScope(Student student) {
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isAll()) {
+			return;
+		}
+		if (scope.isEmpty() || student.getCampus() == null
+				|| !scope.getCampusNames().contains(student.getCampus())) {
+			throw new ValidationException("无权访问该学员（校区数据权限）");
+		}
 	}
 
 	/**

@@ -138,7 +138,7 @@ export default function MainLayout() {
       key: 'admin-group', icon: <SolutionOutlined />, label: '行政管理',
       children: [
         { key: '/admin/roles', label: '角色权限', required: ['system:role:list'] },
-        { key: '/admin/campus', label: '校区管理' },
+        { key: '/admin/campus', label: '校区管理', required: ['campus:list'] },
       ],
     },
     
