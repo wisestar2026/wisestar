@@ -149,9 +149,11 @@ public interface StudentService {
 	 * @param count            返回题目数量（为空=全部，上限 50）
 	 * @param types            题型过滤（可选）
 	 * @param difficulty       难度过滤（可选）
+	 * @param exposeAnswer     是否回显正确答案（交卷制不再逐题即时判分，默认 false）
+	 * @param random           随机出题：count 为空时也打乱整卷顺序（再次练习重抽）
 	 * @return 题目列表（不含答案）；无数据返回空列表
 	 */
 	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
-			List<String> types, String difficulty, Boolean exposeAnswer);
+			List<String> types, String difficulty, Boolean exposeAnswer, Boolean random);
 
 }

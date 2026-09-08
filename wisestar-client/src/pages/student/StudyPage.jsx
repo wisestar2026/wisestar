@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
 import { getStudySections, uploadActivity } from '../../api/student';
+import { getPracticeMastery } from '../../api/practice';
 import './StudyPage.css';
 
 // 四大核心功能按钮配置
@@ -34,6 +35,72 @@ const stars = (rate) => {
   return '⭐'.repeat(n) + '☆'.repeat(5 - n);
 };
 
+const fmtMasteryTime = (v) => (v ? new Date(v).toLocaleString('zh-CN', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '');
+
+/** 小节「上次掌握情况卡」：上次练习结果 + 知识点维度掌握 + 再次练习入口（交卷制历史双粒度保留） */
+function SectionMasteryCard({ mastery, onPractice, onReplay }) {
+  const last = mastery?.lastRecord;
+  const hasHistory = (mastery?.practiceCount || 0) > 0 || !!last;
+  const kps = mastery?.kps || [];
+  return (
+    <div className="study-mastery-card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <b style={{ fontSize: 15 }}>📈 上次练习掌握情况</b>
+        <span style={{ fontSize: 12, color: '#90a4ae' }}>
+          练习 {mastery?.practiceCount || 0} 次 · 累计掌握度 {mastery?.accuracy ?? 0}%
+        </span>
+      </div>
+      {hasHistory ? (
+        <>
+          <div className="study-mastery-body">
+            <div className="study-mastery-stat">
+              <div className="study-mastery-num">{last?.rate != null ? `${last.rate}%` : '—'}</div>
+              <div className="study-mastery-label">上次正确率</div>
+            </div>
+            <div className="study-mastery-stat">
+              <div className="study-mastery-num">{last?.correctCount != null ? `${last.correctCount}/${last.totalQuestions || '-'}` : '—'}</div>
+              <div className="study-mastery-label">上次答对 / 题数</div>
+            </div>
+            <div className="study-mastery-stat">
+              <div className="study-mastery-num">{mastery?.accuracy ?? 0}%</div>
+              <div className="study-mastery-label">小节掌握度</div>
+            </div>
+            <div className="study-mastery-stat">
+              <div className="study-mastery-num" style={{ fontSize: 13, color: '#78909c' }}>{fmtMasteryTime(last?.createAt) || '—'}</div>
+              <div className="study-mastery-label">上次练习时间</div>
+            </div>
+          </div>
+          {kps.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {kps.slice(0, 8).map((kp) => (
+                <span key={kp.knowledgePointId} style={{
+                  fontSize: 12, padding: '2px 8px', borderRadius: 12,
+                  background: kp.accuracy >= 80 ? '#e8f5e9' : kp.accuracy >= 50 ? '#fff8e1' : '#ffebee',
+                  color: kp.accuracy >= 80 ? '#2e7d32' : kp.accuracy >= 50 ? '#b26a00' : '#c62828',
+                }}>
+                  {kp.knowledgePointName} {kp.accuracy}%
+                </span>
+              ))}
+            </div>
+          )}
+          <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+            <button className="study-action-btn study-action-green" style={{ width: 'auto', padding: '6px 14px' }} onClick={onPractice}>
+              ✏️ 开始练习
+            </button>
+            <button className="study-action-btn study-action-orange" style={{ width: 'auto', padding: '6px 14px' }} onClick={onReplay}>
+              🔁 再次练习（重新抽题）
+            </button>
+          </div>
+        </>
+      ) : (
+        <div style={{ marginTop: 8, fontSize: 13, color: '#90a4ae' }}>
+          本小节还没有练习记录，完成「专项练习湾」后这里会展示上次掌握情况与知识点总结
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StudyPage() {
   const navigate = useNavigate();
   const {
@@ -48,6 +115,22 @@ export default function StudyPage() {
   const [selectedKp, setSelectedKp] = useState(null);
   // 各章节的小节缓存（按章节 id 隔离，避免串数据）
   const [sectionsMap, setSectionsMap] = useState({});
+  // 当前小节练习掌握情况（上次结果 + 知识点维度；研习页顶部「上次掌握情况卡」）
+  const [sectionMastery, setSectionMastery] = useState(null);
+
+  // 选中小节 → 拉取该小节掌握度汇总（无记录返回空视图）
+  useEffect(() => {
+    if (!realMode || !selectedSection?.id) {
+      setSectionMastery(null);
+      return;
+    }
+    let alive = true;
+    getPracticeMastery({ sectionId: selectedSection.id })
+      .then((res) => { if (alive) setSectionMastery(res?.data || null); })
+      .catch(() => { if (alive) setSectionMastery(null); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realMode, selectedSection]);
 
   // 真实学科模式：已加载真实学科（有权限）且当前学科为真实学科 id
   const visibleSubjects = getVisibleSubjects();
@@ -223,6 +306,13 @@ export default function StudyPage() {
           ) : (
             /* 选中真实小节: 学习内容 */
             <div className="study-kp-detail">
+              {sectionMastery && realMode && (
+                <SectionMasteryCard
+                  mastery={sectionMastery}
+                  onPractice={() => navigate(`/student/knowledge?sectionId=${selectedSection.id}&tab=practice`)}
+                  onReplay={() => navigate(`/student/knowledge?sectionId=${selectedSection.id}&tab=practice&random=1`)}
+                />
+              )}
               <div className="study-kp-detail-title">🌊 {selectedSection.name}</div>
               {sectionContent ? (
                 <>

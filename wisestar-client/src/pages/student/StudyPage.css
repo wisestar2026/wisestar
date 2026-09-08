@@ -324,3 +324,29 @@
   .study-left, .study-center, .study-right { max-height: none; }
   .study-right { position: static; }
 }
+
+/* ---------- 上次掌握情况卡（小节学习页顶部） ---------- */
+.study-mastery-card {
+  border: 1px solid #d7e6f5;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #f5faff, #eef6ff);
+}
+.study-mastery-body {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.study-mastery-stat { min-width: 96px; }
+.study-mastery-num {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1976d2;
+}
+.study-mastery-label {
+  font-size: 12px;
+  color: #78909c;
+  margin-top: 2px;
+}

@@ -69,6 +69,7 @@ import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Date;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -460,7 +461,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	@Override
 	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
-			List<String> types, String difficulty, Boolean exposeAnswer) {
+			List<String> types, String difficulty, Boolean exposeAnswer, Boolean random) {
 		// 归属校验（学科须在学员有效权限内）
 		if (StringUtils.hasText(repoId)) {
 			Repo repo = repoMapper.selectById(repoId);
@@ -510,18 +511,88 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (templateIds.isEmpty()) {
 			return Collections.emptyList();
 		}
+		// 题目 → 知识点归属（交卷回顾按知识点归纳/掌握度统计用）：
+		// 优先取本次数据源上下文内的绑定（知识点练习=该知识点；小节练习=该小节知识点），
+		// 无上下文（纯题库）时取题目任意未删绑定；未绑定知识点返回空。
+		Map<String, KnowledgePoint> kpByQuestion = kpMapOfQuestions(templateIds, knowledgePointId, sectionId);
 		// count 为空时返回全部命中题目（练习/小节通关应覆盖绑定题库的全部题）；
-		// 显式传 count（消灭错题等）时按指定数量截断（上限 50）
+		// 显式传 count（消灭错题等）时按指定数量随机抽取（上限 50）；
+		// random=true 时即使全量出题也打乱顺序（小节「再次练习」重抽整卷）
 		boolean expose = Boolean.TRUE.equals(exposeAnswer);
-		Stream<Template> stream = templateMapper.selectBatchIds(templateIds).stream()
+		List<Template> templates = templateMapper.selectBatchIds(templateIds).stream()
 				.filter(t -> types == null || types.isEmpty()
 						|| (t.getQuestionType() != null && types.contains(t.getQuestionType().name())))
-				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()));
-		if (count != null) {
-			stream = stream.limit(Math.min(count, 50));
-		}
-		return stream.map(t -> expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t))
+				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()))
 				.collect(Collectors.toList());
+		if (count != null || Boolean.TRUE.equals(random)) {
+			// 随机抽取：消灭错题/再次练习每次命中题目不同
+			Collections.shuffle(templates);
+			if (count != null) {
+				templates = templates.stream().limit(Math.min(count, 50)).collect(Collectors.toList());
+			}
+		}
+		return templates.stream().map(t -> {
+			StudentQuestionView view = expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t);
+			KnowledgePoint kp = kpByQuestion.get(t.getId());
+			if (kp != null) {
+				view.setKnowledgePointId(kp.getId());
+				view.setKnowledgePointName(kp.getName());
+			}
+			return view;
+		}).collect(Collectors.toList());
+	}
+
+	/**
+	 * 题目 → 知识点归属映射（绑定取 t_knowledge_point_question 未删行）。
+	 *
+	 * @param questionIds        题目ID集合
+	 * @param knowledgePointId   知识点上下文（非空时仅认该知识点绑定）
+	 * @param sectionId          小节上下文（非空时仅认该小节下知识点的绑定）
+	 * @return 题目ID → 知识点；未绑定/不在上下文内返回不含该题
+	 */
+	private Map<String, KnowledgePoint> kpMapOfQuestions(Set<String> questionIds, String knowledgePointId,
+			String sectionId) {
+		Map<String, KnowledgePoint> result = new HashMap<>();
+		if (questionIds.isEmpty()) {
+			return result;
+		}
+		// 上下文内的知识点 id 白名单：知识点练习=自身；小节练习=小节下全部知识点；纯题库=不限定
+		Set<String> allowedKpIds = null;
+		if (StringUtils.hasText(knowledgePointId)) {
+			allowedKpIds = new HashSet<>(Collections.singletonList(knowledgePointId));
+		} else if (StringUtils.hasText(sectionId)) {
+			allowedKpIds = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+							.eq(KnowledgePoint::getSectionId, sectionId))
+					.stream().map(KnowledgePoint::getId).collect(Collectors.toSet());
+			if (allowedKpIds.isEmpty()) {
+				return result;
+			}
+		}
+		List<KnowledgePointQuestion> bindings = knowledgePointQuestionMapper.selectList(
+				Wrappers.<KnowledgePointQuestion>lambdaQuery().in(KnowledgePointQuestion::getQuestionId, questionIds));
+		Set<String> needKpIds = new HashSet<>();
+		for (KnowledgePointQuestion binding : bindings) {
+			if (allowedKpIds != null && !allowedKpIds.contains(binding.getKnowledgePointId())) {
+				continue;
+			}
+			needKpIds.add(binding.getKnowledgePointId());
+		}
+		if (needKpIds.isEmpty()) {
+			return result;
+		}
+		Map<String, KnowledgePoint> kpMap = knowledgePointMapper.selectBatchIds(needKpIds).stream()
+				.collect(Collectors.toMap(KnowledgePoint::getId, java.util.function.Function.identity(), (a, b) -> a));
+		for (KnowledgePointQuestion binding : bindings) {
+			if (allowedKpIds != null && !allowedKpIds.contains(binding.getKnowledgePointId())) {
+				continue;
+			}
+			KnowledgePoint kp = kpMap.get(binding.getKnowledgePointId());
+			// 同一题多知识点时取首个（绑定行顺序），保证单题归属唯一
+			if (kp != null && !result.containsKey(binding.getQuestionId())) {
+				result.put(binding.getQuestionId(), kp);
+			}
+		}
+		return result;
 	}
 
 	/**

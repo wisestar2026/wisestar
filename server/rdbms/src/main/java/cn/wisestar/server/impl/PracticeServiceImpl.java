@@ -3,7 +3,9 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.uitls.AnswerJudgeUtil;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.PracticeMasteryView;
 import cn.wisestar.server.domain.dto.PracticeResultView;
+import cn.wisestar.server.domain.dto.WrongReasonBatchRequest;
 import cn.wisestar.server.domain.dto.WrongReasonRequest;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.SurveySchema;
@@ -14,14 +16,20 @@ import cn.wisestar.server.domain.model.PracticeRecord;
 
 import javax.validation.ValidationException;
 import cn.wisestar.server.domain.model.Student;
-import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Template;
+import cn.wisestar.server.domain.model.KnowledgePoint;
+import cn.wisestar.server.domain.model.KnowledgePointQuestion;
+import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.mapper.PracticeDetailMapper;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
+import cn.wisestar.server.mapper.KnowledgePointMapper;
+import cn.wisestar.server.mapper.KnowledgePointQuestionMapper;
+import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.PracticeService;
 import cn.wisestar.server.impl.TemplateServiceImpl;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -32,8 +40,14 @@ import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -81,16 +95,35 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	private final TemplateServiceImpl templateService;
 
 	/**
+	 * 知识点 Mapper（掌握度/逐题知识点归属回填）。
+	 */
+	private final KnowledgePointMapper knowledgePointMapper;
+
+	/**
+	 * 知识点-题目绑定 Mapper（题目归属知识点反查）。
+	 */
+	private final KnowledgePointQuestionMapper knowledgePointQuestionMapper;
+
+	/**
+	 * 小节 Mapper（掌握度范围锚定/名称回填）。
+	 */
+	private final SectionMapper sectionMapper;
+
+	/**
 	 * 构造器注入。
 	 *
 	 * @param practiceDetailMapper 逐题明细 Mapper
 	 * @param templateService      题目服务
 	 */
 	public PracticeServiceImpl(PracticeDetailMapper practiceDetailMapper, TemplateServiceImpl templateService,
-			StudentMapper studentMapper) {
+			StudentMapper studentMapper, KnowledgePointMapper knowledgePointMapper,
+			KnowledgePointQuestionMapper knowledgePointQuestionMapper, SectionMapper sectionMapper) {
 		this.practiceDetailMapper = practiceDetailMapper;
 		this.templateService = templateService;
 		this.studentMapper = studentMapper;
+		this.knowledgePointMapper = knowledgePointMapper;
+		this.knowledgePointQuestionMapper = knowledgePointQuestionMapper;
+		this.sectionMapper = sectionMapper;
 	}
 
 	/**
@@ -204,8 +237,11 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		log.info("practice submitted: userId={}, mode={}, total={}, correct={}, score={}/{}",
 				userId, request.getMode(), details.size(), correctCount, record.getScore(), record.getTotalScore());
 
-		// 5. 组装判分结果（含标准答案，供学员端即时反馈）
+		// 5. 组装判分结果（含标准答案，供学员端交卷反馈；题目归属知识点供掌握度/错因归纳展示）
+		Map<String, KnowledgePoint> kpByQuestion = loadKpMap(questionIds, request.getKnowledgePointId(),
+				request.getSectionId());
 		PracticeResultView result = new PracticeResultView();
+		result.setRecordId(record.getId());
 		result.setScore(Math.round(score * 100) / 100.0);
 		result.setTotalScore(Math.round(totalScore * 100) / 100.0);
 		result.setCorrectCount(correctCount);
@@ -230,8 +266,14 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 			String detailId = details.stream()
 					.filter(d -> item.getQuestionId() != null && item.getQuestionId().equals(d.getQuestionId()))
 					.findFirst().map(PracticeDetail::getId).orElse(null);
-			result.getItems().add(new PracticeResultView.PracticeResultItem(
-					item.getQuestionId(), correct, correctAnswer, detailId));
+			PracticeResultView.PracticeResultItem resultItem = new PracticeResultView.PracticeResultItem(
+					item.getQuestionId(), correct, correctAnswer, detailId);
+			KnowledgePoint kp = item.getQuestionId() == null ? null : kpByQuestion.get(item.getQuestionId());
+			if (kp != null) {
+				resultItem.setKnowledgePointId(kp.getId());
+				resultItem.setKnowledgePointName(kp.getName());
+			}
+			result.getItems().add(resultItem);
 		}
 		return result;
 	}
@@ -262,6 +304,25 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	 */
 	@Override
 	public void saveWrongReason(WrongReasonRequest request) {
+		applyWrongReason(request);
+	}
+
+	/**
+	 * 批量保存错题错误归因（交卷后强制逐题归因：任一条目非法即整批失败）。
+	 */
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void saveWrongReasons(WrongReasonBatchRequest request) {
+		if (request == null || CollectionUtils.isEmpty(request.getItems())) {
+			throw new ValidationException("归因条目不能为空");
+		}
+		for (WrongReasonRequest item : request.getItems()) {
+			applyWrongReason(item);
+		}
+	}
+
+	/** 单条归因落库（明细存在 + 归属当前学员校验） */
+	private void applyWrongReason(WrongReasonRequest request) {
 		if (request.getDetailId() == null || !StringUtils.hasText(request.getReason())) {
 			throw new ValidationException("明细ID与归因不能为空");
 		}
@@ -276,5 +337,230 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		}
 		detail.setWrongReason(request.getReason());
 		practiceDetailMapper.updateById(detail);
+	}
+
+	/**
+	 * 学员练习掌握度汇总（小节/知识点范围二选一，基于该范围全部练习历史）。
+	 */
+	@Override
+	public PracticeMasteryView mastery(String sectionId, String knowledgePointId) {
+		boolean sectionScope = StringUtils.hasText(sectionId);
+		boolean kpScope = StringUtils.hasText(knowledgePointId);
+		if (sectionScope == kpScope) {
+			throw new ValidationException("小节与知识点范围必须二选一");
+		}
+		String userId = SecurityContextUtils.getUserId();
+		PracticeMasteryView view = new PracticeMasteryView();
+		// 范围锚定：知识点白名单 + 记录过滤列
+		Set<String> allowedKpIds = new HashSet<>();
+		LambdaQueryWrapper<PracticeRecord> recordQuery = Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId);
+		if (kpScope) {
+			KnowledgePoint point = knowledgePointMapper.selectById(knowledgePointId);
+			if (point == null) {
+				throw new ValidationException("知识点不存在");
+			}
+			view.setScopeType("knowledgePoint");
+			view.setScopeId(knowledgePointId);
+			view.setScopeName(point.getName());
+			allowedKpIds.add(knowledgePointId);
+			recordQuery.eq(PracticeRecord::getKnowledgePointId, knowledgePointId);
+		} else {
+			Section section = sectionMapper.selectById(sectionId);
+			if (section == null) {
+				throw new ValidationException("小节不存在");
+			}
+			view.setScopeType("section");
+			view.setScopeId(sectionId);
+			view.setScopeName(section.getName());
+			List<String> kpIds = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+							.eq(KnowledgePoint::getSectionId, sectionId))
+					.stream().map(KnowledgePoint::getId).collect(Collectors.toList());
+			allowedKpIds.addAll(kpIds);
+			recordQuery.eq(PracticeRecord::getSectionId, sectionId);
+		}
+		recordQuery.orderByDesc(PracticeRecord::getCreateAt);
+		List<PracticeRecord> records = this.baseMapper.selectList(recordQuery);
+		view.setPracticeCount((long) records.size());
+		if (records.isEmpty()) {
+			view.setQuestionCount(0L);
+			view.setRightCount(0L);
+			view.setAccuracy(0);
+			return view;
+		}
+		// 上次练习结果（最近一条锚定记录）
+		fillLastRecord(view, records.get(0));
+		// 明细级统计：判分题次（is_correct ∈ {0,1}）→ 按题目归属知识点聚合
+		List<String> recordIds = records.stream().map(PracticeRecord::getId).collect(Collectors.toList());
+		List<PracticeDetail> details = practiceDetailMapper.selectList(Wrappers.<PracticeDetail>lambdaQuery()
+				.in(PracticeDetail::getPracticeId, recordIds)
+				.in(PracticeDetail::getIsCorrect, 0, 1));
+		if (details.isEmpty()) {
+			view.setQuestionCount(0L);
+			view.setRightCount(0L);
+			view.setAccuracy(0);
+			return view;
+		}
+		Set<String> questionIds = details.stream().map(PracticeDetail::getQuestionId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		Map<String, KnowledgePoint> kpByQuestion = new HashMap<>();
+		if (!questionIds.isEmpty()) {
+			List<KnowledgePointQuestion> bindings = knowledgePointQuestionMapper.selectList(
+					Wrappers.<KnowledgePointQuestion>lambdaQuery().in(KnowledgePointQuestion::getQuestionId, questionIds));
+			Set<String> needKpIds = bindings.stream().map(KnowledgePointQuestion::getKnowledgePointId)
+					.filter(allowedKpIds::contains).collect(Collectors.toSet());
+			if (!needKpIds.isEmpty()) {
+				Map<String, KnowledgePoint> kpMap = knowledgePointMapper.selectBatchIds(needKpIds).stream()
+						.collect(Collectors.toMap(KnowledgePoint::getId, Function.identity(), (a, b) -> a));
+				for (KnowledgePointQuestion binding : bindings) {
+					if (!allowedKpIds.contains(binding.getKnowledgePointId())) {
+						continue;
+					}
+					KnowledgePoint kp = kpMap.get(binding.getKnowledgePointId());
+					if (kp != null && !kpByQuestion.containsKey(binding.getQuestionId())) {
+						kpByQuestion.put(binding.getQuestionId(), kp);
+					}
+				}
+			}
+		}
+		// 记录级汇总 + 知识点维度汇总（空绑定题只计入记录级）
+		Map<String, Date> recordTimeById = records.stream().filter(r -> r.getCreateAt() != null)
+				.collect(Collectors.toMap(PracticeRecord::getId, PracticeRecord::getCreateAt, (a, b) -> a));
+		Map<String, PracticeMasteryView.KpMastery> kpAgg = new HashMap<>();
+		long totalAttempts = 0;
+		long totalRight = 0;
+		for (PracticeDetail detail : details) {
+			if (detail.getIsCorrect() == null) {
+				continue;
+			}
+			totalAttempts++;
+			if (detail.getIsCorrect() == 1) {
+				totalRight++;
+			}
+			KnowledgePoint kp = detail.getQuestionId() == null ? null : kpByQuestion.get(detail.getQuestionId());
+			if (kp == null) {
+				continue;
+			}
+			PracticeMasteryView.KpMastery mastery = kpAgg.computeIfAbsent(kp.getId(),
+					k -> {
+						PracticeMasteryView.KpMastery m = new PracticeMasteryView.KpMastery();
+						m.setKnowledgePointId(kp.getId());
+						m.setKnowledgePointName(kp.getName());
+						m.setAttempts(0L);
+						m.setRight(0L);
+						m.setAccuracy(0);
+						return m;
+					});
+			mastery.setAttempts(mastery.getAttempts() + 1);
+			if (detail.getIsCorrect() == 1) {
+				mastery.setRight(mastery.getRight() + 1);
+			}
+			// 最近练习时间 = 所在记录创建时间（明细行无时间列）
+			Date ownerTime = detail.getPracticeId() == null ? null : recordTimeById.get(detail.getPracticeId());
+			if (ownerTime != null && (mastery.getLastPracticedAt() == null || ownerTime.after(mastery.getLastPracticedAt()))) {
+				mastery.setLastPracticedAt(ownerTime);
+			}
+		}
+		view.setQuestionCount(totalAttempts);
+		view.setRightCount(totalRight);
+		view.setAccuracy(totalAttempts == 0 ? 0 : (int) Math.round(totalRight * 100.0 / totalAttempts));
+		view.setKps(kpAgg.values().stream()
+				.peek(m -> m.setAccuracy(m.getAttempts() == 0 ? 0 : (int) Math.round(m.getRight() * 100.0 / m.getAttempts())))
+				.sorted(Comparator.comparing(PracticeMasteryView.KpMastery::getAttempts).reversed())
+				.collect(Collectors.toList()));
+		return view;
+	}
+
+	/** 上次练习结果摘要回填（最近一条记录） */
+	private void fillLastRecord(PracticeMasteryView view, PracticeRecord record) {
+		view.setLastRecord(toLastRecord(record));
+	}
+
+	/** 练习记录 → 结果摘要视图（掌握度「上次结果」与历史列表共用） */
+	private PracticeMasteryView.LastRecord toLastRecord(PracticeRecord record) {
+		PracticeMasteryView.LastRecord last = new PracticeMasteryView.LastRecord();
+		last.setRecordId(record.getId());
+		last.setMode(record.getMode());
+		last.setScore(record.getScore());
+		last.setTotalScore(record.getTotalScore());
+		last.setTotalQuestions(record.getTotalQuestions());
+		last.setCorrectCount(record.getCorrectCount());
+		last.setDurationMs(record.getDurationMs());
+		last.setCreateAt(record.getCreateAt());
+		if (record.getTotalScore() != null && record.getTotalScore() > 0) {
+			last.setRate((int) Math.round((record.getScore() == null ? 0 : record.getScore())
+					* 100.0 / record.getTotalScore()));
+		} else if (record.getTotalQuestions() != null && record.getTotalQuestions() > 0) {
+			int c = record.getCorrectCount() == null ? 0 : record.getCorrectCount();
+			last.setRate((int) Math.round(c * 100.0 / record.getTotalQuestions()));
+		}
+		return last;
+	}
+
+	/**
+	 * 范围内近期练习记录（掌握变化对比用，最多 20 条，倒序）。
+	 */
+	@Override
+	public List<PracticeMasteryView.LastRecord> history(String sectionId, String knowledgePointId) {
+		boolean sectionScope = StringUtils.hasText(sectionId);
+		boolean kpScope = StringUtils.hasText(knowledgePointId);
+		if (sectionScope == kpScope) {
+			throw new ValidationException("小节与知识点范围必须二选一");
+		}
+		String userId = SecurityContextUtils.getUserId();
+		LambdaQueryWrapper<PracticeRecord> recordQuery = Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId);
+		if (kpScope) {
+			recordQuery.eq(PracticeRecord::getKnowledgePointId, knowledgePointId);
+		} else {
+			recordQuery.eq(PracticeRecord::getSectionId, sectionId);
+		}
+		recordQuery.orderByDesc(PracticeRecord::getCreateAt).last("LIMIT 20");
+		return this.baseMapper.selectList(recordQuery).stream().map(this::toLastRecord)
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * 题目 → 知识点归属映射（提交结果/掌握度按知识点归纳展示用）。
+	 * 归属范围优先取数据源上下文（知识点练习=自身；小节练习=该小节知识点），
+	 * 无上下文时取题目任意未删绑定；未绑定返回空 Map。
+	 */
+	private Map<String, KnowledgePoint> loadKpMap(List<String> questionIds, String knowledgePointId, String sectionId) {
+		Map<String, KnowledgePoint> result = new HashMap<>();
+		if (CollectionUtils.isEmpty(questionIds)) {
+			return result;
+		}
+		Set<String> allowedKpIds = null;
+		if (StringUtils.hasText(knowledgePointId)) {
+			allowedKpIds = new HashSet<>(Collections.singletonList(knowledgePointId));
+		} else if (StringUtils.hasText(sectionId)) {
+			allowedKpIds = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+							.eq(KnowledgePoint::getSectionId, sectionId))
+					.stream().map(KnowledgePoint::getId).collect(Collectors.toSet());
+			if (allowedKpIds.isEmpty()) {
+				return result;
+			}
+		}
+		List<KnowledgePointQuestion> bindings = knowledgePointQuestionMapper.selectList(
+				Wrappers.<KnowledgePointQuestion>lambdaQuery().in(KnowledgePointQuestion::getQuestionId, questionIds));
+		final Set<String> kpWhitelist = allowedKpIds;
+		Set<String> needKpIds = bindings.stream().map(KnowledgePointQuestion::getKnowledgePointId)
+				.filter(kpId -> kpWhitelist == null || kpWhitelist.contains(kpId))
+				.collect(Collectors.toSet());
+		if (needKpIds.isEmpty()) {
+			return result;
+		}
+		Map<String, KnowledgePoint> kpMap = knowledgePointMapper.selectBatchIds(needKpIds).stream()
+				.collect(Collectors.toMap(KnowledgePoint::getId, Function.identity(), (a, b) -> a));
+		for (KnowledgePointQuestion binding : bindings) {
+			if (allowedKpIds != null && !allowedKpIds.contains(binding.getKnowledgePointId())) {
+				continue;
+			}
+			KnowledgePoint kp = kpMap.get(binding.getKnowledgePointId());
+			if (kp != null && !result.containsKey(binding.getQuestionId())) {
+				result.put(binding.getQuestionId(), kp);
+			}
+		}
+		return result;
 	}
 }

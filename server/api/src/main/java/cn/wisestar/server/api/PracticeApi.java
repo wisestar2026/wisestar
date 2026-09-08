@@ -1,7 +1,9 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.PracticeMasteryView;
 import cn.wisestar.server.domain.dto.PracticeResultView;
+import cn.wisestar.server.domain.dto.WrongReasonBatchRequest;
 import cn.wisestar.server.domain.dto.WrongReasonRequest;
 import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
@@ -13,7 +15,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 练习接口（学员端练习交卷落库）。
@@ -94,5 +99,44 @@ public class PracticeApi {
 	@PreAuthorize("isAuthenticated()")
 	public void saveWrongReason(@RequestBody WrongReasonRequest request) {
 		practiceService.saveWrongReason(request);
+	}
+
+	/**
+	 * 批量保存错题错误归因（交卷后强制逐题归因一次提交）。
+	 *
+	 * @param request 批量归因请求（items: [{detailId, reason}]）
+	 */
+	@PostMapping("/wrongReasons")
+	@PreAuthorize("isAuthenticated()")
+	public void saveWrongReasons(@RequestBody WrongReasonBatchRequest request) {
+		practiceService.saveWrongReasons(request);
+	}
+
+	/**
+	 * 学员练习掌握度汇总（小节/知识点范围二选一）。
+	 *
+	 * @param sectionId        小节ID（?sectionId=，与 knowledgePointId 二选一）
+	 * @param knowledgePointId 知识点ID（?knowledgePointId=，与 sectionId 二选一）
+	 * @return 掌握度汇总视图（全部历史统计 + 上次练习结果 + 知识点维度掌握）
+	 */
+	@GetMapping("/mastery")
+	@PreAuthorize("isAuthenticated()")
+	public PracticeMasteryView mastery(@RequestParam(required = false) String sectionId,
+			@RequestParam(required = false) String knowledgePointId) {
+		return practiceService.mastery(sectionId, knowledgePointId);
+	}
+
+	/**
+	 * 范围内近期练习记录列表（结果页掌握变化对比，最多 20 条倒序）。
+	 *
+	 * @param sectionId        小节ID（与 knowledgePointId 二选一）
+	 * @param knowledgePointId 知识点ID（与 sectionId 二选一）
+	 * @return 近期练习记录摘要列表
+	 */
+	@GetMapping("/history")
+	@PreAuthorize("isAuthenticated()")
+	public List<PracticeMasteryView.LastRecord> history(@RequestParam(required = false) String sectionId,
+			@RequestParam(required = false) String knowledgePointId) {
+		return practiceService.history(sectionId, knowledgePointId);
 	}
 }

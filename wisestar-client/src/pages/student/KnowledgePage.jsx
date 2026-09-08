@@ -5,20 +5,28 @@
  * 视觉规范: 大面积留白低干扰；题目选项全部大圆角卡片（摒弃单选框）；
  *           提交后逐题标记对错；顶部轻柔奖励提示 1.5s 自动消失（无弹窗）
  *
- * 奖励体系（基础首学奖励，7 天重复刷题无奖励——前端 mock 演示）:
- *   预习 币+5 积分+3 / 练习 币+12 积分+6 / 试炼 币+20 积分+10 / 错题订正 币+8 积分+4
- *   试炼正确率≥90% 额外 币+15 积分+8
+ * 交卷制（专项练习湾 practice / 小节通关 trial）:
+ *   1. 出题不带答案（exposeAnswer=false），逐题作答不即时判分
+ *   2. 末题出现「提交练习」：确认时提示未答题数，未答一律判错
+ *   3. 后端统一判分返回逐题对错 → 强制逐题错误归因（选完才能看结果）
+ *   4. 结果页：本次得分/正确率 + 逐题回顾（错因标签）+ 知识点掌握总结
+ *      + 掌握变化（与上次练习对比）；可「再次练习」重新抽题
  *
  * 被谁引用: App.jsx（/student/knowledge/:kpId）、研习页右栏四大按钮
  * 依赖: react-router-dom(useParams/useSearchParams/useNavigate)、useStudentStore、./KnowledgePage.css
  */
 
-import { useEffect, useState } from 'react';
-import { Input, Button, Modal, Select, Tabs } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { Input, Button, Modal, Select, Tabs, Tag, Progress, message } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/student';
-import { submitPractice, saveWrongReason } from '../../api/practice';
+import {
+  submitPractice, saveWrongReason, saveWrongReasons, getPracticeHistory,
+} from '../../api/practice';
 import './KnowledgePage.css';
+
+// 错误归因选项（交卷后强制逐题标注；与错题本错因口径一致）
+const WRONG_REASONS = ['知识点不熟', '题型不会', '计算错误', '粗心大意', '审题不清', '时间不足'];
 
 // 填空比较归一化（与后端 AnswerJudgeUtil / utils/practiceHelpers 对齐）:
 // 全角空格/零宽字符/全角字母数字符号（含 ＜＞＝）转半角、连续空白折叠、去首尾
@@ -38,6 +46,187 @@ function blankEq(a, b) {
   // 纯 ASCII 字母串（如选项字母 A/B/C）忽略大小写
   if (/^[A-Za-z]+$/.test(na) && /^[A-Za-z]+$/.test(nb)) return na.toLowerCase() === nb.toLowerCase();
   return false;
+}
+
+// 标准答案原始文本 → 展示文本（多行答案/多空 | 分隔美化）
+function prettyAnswer(raw) {
+  return String(raw == null ? '' : raw)
+    .split('\n')
+    .map((line) => (line.includes('|') ? line.split('|').map((s) => s.trim()).filter(Boolean).join('；') : line.trim()))
+    .filter(Boolean)
+    .join('；');
+}
+
+/**
+ * 交卷制结果页（专项练习湾/小节通关）
+ * 顶部: 本次得分/答对数 + 掌握变化（相对上次练习）
+ * 中部: 知识点掌握总结（按知识点聚合正确题数）
+ * 底部: 逐题回顾（对错 + 我的答案 + 正确答案 + 解析 + 错因标签）
+ */
+function SubmissionResultView({
+  result, questions, answers, history,
+  reasonOf, prettyAnswer, answerTextOf, onRetry, onBack,
+}) {
+  const items = result?.items || [];
+  const byId = {};
+  items.forEach((it) => { byId[it.questionId] = it; });
+  const total = questions.length || result?.total || 0;
+  const rightCount = items.filter((it) => it.correct === 1).length;
+  const wrongCount = total - rightCount;
+  const accuracy = total > 0 ? Math.round((rightCount / total) * 100) : 0;
+  const score = Number(result?.score);
+  const hasScore = Number.isFinite(score) && Number(result?.totalScore) > 0;
+  const totalScore = Number(result?.totalScore) || 0;
+  const fmtTime = (v) => (v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '-');
+
+  // 掌握变化：history[0]=本次练习；history[1]=上次练习（按记录 rate 对比）
+  let delta = null;
+  let prevRate = null;
+  if (Array.isArray(history) && history.length >= 2 && history[0]?.rate != null && history[1]?.rate != null) {
+    prevRate = history[1].rate;
+    delta = history[0].rate - history[1].rate;
+  }
+  const lastTime = Array.isArray(history) && history[0] ? history[0].createAt : null;
+
+  // 知识点掌握总结（结果题按后端归属知识点聚合：答对 x / 共 y）
+  const kpAgg = {};
+  items.forEach((it) => {
+    if (!it.knowledgePointId) return;
+    const key = it.knowledgePointId;
+    kpAgg[key] = kpAgg[key] || { name: it.knowledgePointName || '知识点', right: 0, attempts: 0 };
+    kpAgg[key].attempts += 1;
+    if (it.correct === 1) kpAgg[key].right += 1;
+  });
+  const kpList = Object.values(kpAgg);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* 本次结果统计 */}
+      <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 18, background: '#f8fcff' }}>
+        <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 14 }}>练习完成 · 本次结果</div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 48, textAlign: 'center' }}>
+          {hasScore && (
+            <div>
+              <div style={{ fontSize: 34, fontWeight: 700, color: '#1677ff' }}>{score}</div>
+              <div style={{ color: '#90a4ae', fontSize: 12 }}>得分 / {totalScore}</div>
+            </div>
+          )}
+          <div>
+            <div style={{ fontSize: 34, fontWeight: 700, color: '#52c41a' }}>{accuracy}%</div>
+            <div style={{ color: '#90a4ae', fontSize: 12 }}>正确率</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 34, fontWeight: 700, color: '#722ed1' }}>{rightCount}</div>
+            <div style={{ color: '#90a4ae', fontSize: 12 }}>答对 / {total}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 34, fontWeight: 700, color: '#ff4d4f' }}>{wrongCount}</div>
+            <div style={{ color: '#90a4ae', fontSize: 12 }}>答错（含未答）</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 掌握变化 + 知识点掌握总结 */}
+      {(delta != null || lastTime || kpList.length > 0) && (
+        <div style={{ border: '1px solid #ede7f6', borderRadius: 12, padding: 16, background: '#fcfaff' }}>
+          <div style={{ fontWeight: 700, marginBottom: 10 }}>掌握情况</div>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: kpList.length ? 12 : 0 }}>
+            {delta != null && (
+              <div style={{ fontSize: 14 }}>
+                <span style={{ color: '#90a4ae' }}>掌握变化（较上次）</span>{' '}
+                <b style={{ color: delta >= 0 ? '#52c41a' : '#ff4d4f' }}>
+                  {delta >= 0 ? '+' : ''}{delta}%
+                </b>
+              </div>
+            )}
+            {lastTime && (
+              <div style={{ fontSize: 14 }}>
+                <span style={{ color: '#90a4ae' }}>最近练习</span>{' '}
+                <b>{fmtTime(lastTime)}</b>
+              </div>
+            )}
+            {prevRate != null && (
+              <div style={{ fontSize: 14 }}>
+                <span style={{ color: '#90a4ae' }}>上次正确率</span>{' '}
+                <b>{prevRate}%</b>
+              </div>
+            )}
+          </div>
+          {kpList.length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, color: '#90a4ae', marginBottom: 8 }}>知识点掌握总结</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {kpList.map((kp) => (
+                  <span key={kp.name} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '4px 10px', borderRadius: 20,
+                    background: kp.right === kp.attempts ? '#e8f5e9' : kp.right > 0 ? '#fff8e1' : '#ffebee',
+                    color: kp.right === kp.attempts ? '#2e7d32' : kp.right > 0 ? '#b26a00' : '#c62828',
+                    fontSize: 13,
+                  }}>
+                    {kp.name} · {kp.right}/{kp.attempts}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 逐题回顾 */}
+      <div style={{ border: '1px solid #ececec', borderRadius: 12, padding: 16, background: '#fff' }}>
+        <div style={{ fontWeight: 700, marginBottom: 10 }}>逐题回顾</div>
+        {questions.map((q, idx) => {
+          const it = byId[q.id];
+          const schema = q.schema || {};
+          const right = it?.correct === 1;
+          const wrong = it?.correct === 0 || it?.correct == null;
+          const reason = it && reasonOf ? reasonOf(it) : null;
+          const analysis = schema.attribute?.examAnalysis;
+          return (
+            <div key={q.id} style={{
+              padding: '12px 14px', marginBottom: 10, borderRadius: 10,
+              border: `1px solid ${right ? '#c8e6c9' : '#ffcdd2'}`,
+              background: right ? '#fafff7' : '#fffafa',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 600 }}>{idx + 1}. {q.name || schema.title || '题目'}</span>
+                <span style={{ fontSize: 12, color: '#90a4ae' }}>{q.questionType}</span>
+                <Tag color={right ? 'green' : 'red'} style={{ marginInlineEnd: 0 }}>
+                  {right ? '回答正确' : '回答错误'}
+                </Tag>
+                {reason && <Tag color="orange">{reason}</Tag>}
+              </div>
+              <div style={{ fontSize: 13, marginBottom: 4 }}>
+                <b>我的答案：</b>
+                <span style={{ color: right ? '#2e7d32' : '#c62828' }}>{answerTextOf(q)}</span>
+              </div>
+              {wrong && it?.correctAnswer && (
+                <div style={{ fontSize: 13, marginBottom: 4 }}>
+                  <b>正确答案：</b>
+                  <span style={{ color: '#2e7d32' }}>{prettyAnswer(it.correctAnswer)}</span>
+                </div>
+              )}
+              {analysis && (
+                <div style={{ fontSize: 12, marginTop: 6, padding: '8px 10px', background: '#fffbe6', borderRadius: 6, color: '#6d4c00' }}>
+                  <b>解析：</b>
+                  <span style={{ whiteSpace: 'pre-wrap' }}>{analysis}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 操作 */}
+      <div style={{ textAlign: 'center', marginTop: 4 }}>
+        <Button type="primary" size="large" style={{ marginRight: 12 }} onClick={onRetry}>
+          再次练习
+        </Button>
+        <Button size="large" onClick={onBack}>返回研习页</Button>
+      </div>
+    </div>
+  );
 }
 
 // 四种模式 tab 配置
@@ -68,6 +257,16 @@ export default function KnowledgePage() {
   const [wrongReasons, setWrongReasons] = useState({});     // 各错题归因 {questionId: reason}
   const [wrongList, setWrongList] = useState([]);          // 当前错题列表（查看错题弹窗）
 
+  // ===== 交卷制（专项练习湾/小节通关）：提交 → 强制错因 → 结果 =====
+  const isSubmissionFlow = tab === 'practice' || tab === 'trial';
+  const submissionStart = useRef(null);        // 本次作答开始时间（交卷用时）
+  const [submitPhase, setSubmitPhase] = useState('idle'); // idle 答题 | cause 归因 | result 结果
+  const [practiceResult, setPracticeResult] = useState(null); // PracticeResultView（交卷判分结果）
+  const [causeOpen, setCauseOpen] = useState(false);        // 强制错因弹窗
+  const [causeDrafts, setCauseDrafts] = useState({});       // {detailId: reason}
+  const [causeItems, setCauseItems] = useState([]);         // 待归因错题（含题面快照）
+  const [resultHistory, setResultHistory] = useState(null); // 交卷结果页掌握变化（近 20 条记录）
+
   // 习题级上报：进入练习/试炼后上报「当前正在做的题」，随 currentQ 前进实时更新（供督学）
   useEffect(() => {
     if (!realMode || !realQuestions?.length) return;
@@ -81,6 +280,9 @@ export default function KnowledgePage() {
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realMode, tab, realQuestions, currentQ]);
+
+  // 交卷制「再次练习」重抽计数（>0 时向出题接口传 random=true 打乱整卷）
+  const [retryNo, setRetryNo] = useState(0);
 
   useEffect(() => {
     if (!realMode) return;
@@ -99,20 +301,34 @@ export default function KnowledgePage() {
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     } else if (tab === 'practice' || tab === 'trial') {
-      const params = { exposeAnswer: true }; // 练习/试炼本地即时判分（题目带答案）
+      // 交卷制（专项练习湾/小节通关）：题目不带答案，交卷后由后端统一判分；
+      // 交卷后再也不逐题即时判分。再次练习（retryNo>0）传 random 重抽整卷。
+      const params = {};
       if (countParam) params.count = Number(countParam);
       if (typesParam) params.types = typesParam.split(',');
       if (sectionId) params.sectionId = sectionId;
       if (repoId) params.repoId = repoId;
       if (kpIdParam) params.knowledgePointId = kpIdParam;
+      if (retryNo > 0 || searchParams.get('random') === '1') params.random = true;
       getStudyQuestions(params)
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     }
+    // 重进入答题态：清空作答/结果/归因，开始计时
     setRealAnswers({});
     setRealResult(null);
+    setJudgeState({});
+    setSubmitPhase('idle');
+    setPracticeResult(null);
+    setCauseOpen(false);
+    setCauseItems([]);
+    setCauseDrafts({});
+    setResultHistory(null);
+    if (isSubmissionFlow) {
+      submissionStart.current = Date.now();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realMode, tab, sectionId]);
+  }, [realMode, tab, sectionId, retryNo]);
 
   // 题目选项：判断题等无 children 时补「正确/错误」
   function questionOptions(question) {
@@ -243,6 +459,7 @@ export default function KnowledgePage() {
   // 真实模式：填空作答（单空/多空统一：按空位顺序以 | 拼接存入 text）
   const realInput = (q, blankIdx, text) => {
     if (realResult) return;
+    if (isSubmissionFlow && submitPhase !== 'idle') return;
     if (judgeState[q.id] || (tab === 'preview' && realJudge(q))) return;
     setRealAnswers((prev) => {
       const cur = prev[q.id] || { type: 'text', text: '' };
@@ -257,6 +474,7 @@ export default function KnowledgePage() {
   // 真实模式：选择选项（按题型单选/多选；试炼选后即时判分锁定）
   const realPick = (q, optId) => {
     if (realResult) return;
+    if (isSubmissionFlow && submitPhase !== 'idle') return;
     if (judgeState[q.id] || (tab === 'preview' && realJudge(q))) return;
     const multi = q.questionType === 'Checkbox' || q.questionType === 'Multiple';
     setRealAnswers((prev) => {
@@ -267,16 +485,16 @@ export default function KnowledgePage() {
     });
   };
 
-  // 全部题判定完成后自动落库（错题自动进错题本）
+  // 全部题判定完成后自动落库（旧即时判分流；交卷制不再逐题判定，该流不触发）
   useEffect(() => {
-    if (!realQuestions?.length || tab === 'preview') return;
+    if (!realQuestions?.length || tab === 'preview' || isSubmissionFlow) return;
     if (realQuestions.every((q) => judgeState[q.id]) && !realResult && !realSubmitting) {
       realSubmit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [judgeState]);
 
-  // 真实模式：交卷（后端判分，返回对错 + 标准答案）
+  // 真实模式：交卷（后端判分，返回对错 + 标准答案）——旧即时判分流末题「完成」用
   const realSubmit = () => {
     if (realSubmitting || !realQuestions?.length) return;
     const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
@@ -285,6 +503,113 @@ export default function KnowledgePage() {
       .then((res) => setRealResult(res?.data || { items: [] }))
       .catch(() => setRealResult({ items: [], score: 0 }))
       .finally(() => setRealSubmitting(false));
+  };
+
+  // ============================================================
+  // 交卷制（专项练习湾 practice / 小节通关 trial）
+  // 流程: 逐题作答（不判分）→ 末题「提交练习」（未答判错）
+  //       → 后端统一判分 → 强制逐题错因 → 结果页（掌握变化）
+  // ============================================================
+
+  // 某题是否已有效作答（选答有值/填空非空；空作答视为未答，交卷判错）
+  const isAnswered = (q) => {
+    const a = realAnswers[q.id];
+    if (!a) return false;
+    if (a.type === 'option') return !!a.optionId;
+    if (a.type === 'options') return (a.optionIds || []).length > 0;
+    if (a.type === 'text') return !!String(a.text || '').trim();
+    return false;
+  };
+
+  // 结果页「掌握变化」数据：范围内近 20 条练习记录（第 0 条=本次）
+  const loadHistory = () => {
+    const params = sectionId ? { sectionId }
+      : kpIdParam ? { knowledgePointId: kpIdParam } : null;
+    if (!params) return;
+    getPracticeHistory(params)
+      .then((res) => setResultHistory(res?.data || []))
+      .catch(() => setResultHistory([]));
+  };
+
+  // 交卷成功 → 归因弹窗（有错题）或直接结果页（全对）
+  const onSubmitDone = (result) => {
+    setRealSubmitting(false);
+    setPracticeResult(result || {});
+    const wrongs = (result?.items || []).filter((it) => it.correct === 0 || it.correct == null);
+    const snapshots = wrongs.map((it) => ({
+      ...it,
+      question: (realQuestions || []).find((q) => q.id === it.questionId),
+    }));
+    setCauseItems(snapshots);
+    setCauseDrafts({});
+    if (snapshots.length === 0) {
+      setSubmitPhase('result');
+      loadHistory();
+      return;
+    }
+    // 强制错因：未选完不允许进入结果页
+    setSubmitPhase('cause');
+    setCauseOpen(true);
+  };
+
+  // 末题「提交练习」：二次确认（提示未答题数，未答判错）后交卷
+  const requestSubmitPractice = () => {
+    if (realSubmitting || !realQuestions?.length || submitPhase !== 'idle') return;
+    const unanswered = realQuestions.filter((q) => !isAnswered(q)).length;
+    const tip = unanswered > 0
+      ? `还有 ${unanswered} 题未作答，交卷后按答错处理。确定提交练习吗？`
+      : '交卷后将由系统统一判分，并逐题确认错因。确定提交吗？';
+    Modal.confirm({
+      title: tab === 'practice' ? '提交练习' : '提交通关',
+      content: tip,
+      okText: '提交',
+      cancelText: '再检查一下',
+      onOk: performSubmitPractice,
+    });
+  };
+
+  // 调后端统一判分（本卷题目不带答案，判分以后端为准）
+  const performSubmitPractice = () => {
+    if (realSubmitting) return;
+    const durationMs = submissionStart.current ? Date.now() - submissionStart.current : 0;
+    const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
+    setRealSubmitting(true);
+    submitPractice({
+      mode: tab === 'trial' ? 'exam' : 'special',
+      sectionId: sectionId || undefined,
+      knowledgePointId: kpIdParam || undefined,
+      repoId: repoId || undefined,
+      durationMs,
+      items,
+    })
+      .then((res) => onSubmitDone(res?.data))
+      .catch(() => {
+        setRealSubmitting(false);
+        message.error('交卷失败，请稍后重试');
+      });
+  };
+
+  // 强制错因弹窗「保存并查看结果」：全部错题标注完成后放行
+  const confirmCauses = () => {
+    const missing = causeItems.filter((it) => !causeDrafts[it.detailId]);
+    if (missing.length > 0) {
+      message.warning(`还有 ${missing.length} 道错题未选择原因`);
+      return;
+    }
+    setCauseOpen(false);
+    saveWrongReasons({ items: causeItems.map((it) => ({ detailId: it.detailId, reason: causeDrafts[it.detailId] })) })
+      .then(() => { setSubmitPhase('result'); loadHistory(); })
+      .catch(() => {
+        // 归因保存失败不阻断结果（不影响判分展示），仅提示
+        message.warning('错因保存失败，仍可查看本次结果');
+        setSubmitPhase('result');
+        loadHistory();
+      });
+  };
+
+  // 再次练习：整卷重抽（random=true），回到答题态
+  const retryPractice = () => {
+    setRetryNo((n) => n + 1);
   };
 
   // ============================================================
@@ -340,6 +665,80 @@ export default function KnowledgePage() {
               );
             })}
           </Modal>
+
+          {/* ============ 交卷制：强制错因标注弹窗 ============ */}
+          {isSubmissionFlow && causeItems.length > 0 && (
+            <Modal
+              title={`交卷成功 · 请为 ${causeItems.length} 道错题选择错误原因`}
+              open={causeOpen}
+              maskClosable={false}
+              keyboard={false}
+              onCancel={() => {
+                if (submitPhase === 'cause') message.warning('请先完成错题原因标注，才能查看本次结果');
+              }}
+              footer={[
+                <Button key="view" type="primary" loading={realSubmitting} onClick={confirmCauses}>
+                  保存并查看结果
+                </Button>,
+              ]}
+              width={700}
+            >
+              <div style={{ color: '#8c8c8c', fontSize: 12, marginBottom: 12 }}>
+                错题原因将用于学习掌握度总结与错题本归纳，请逐题选择（共 {causeItems.length} 题）
+              </div>
+              <div style={{ maxHeight: 440, overflowY: 'auto', paddingRight: 8 }}>
+                {causeItems.map((it, idx) => {
+                  const q = it.question;
+                  if (!q) return null;
+                  return (
+                    <div key={it.detailId || it.questionId} style={{
+                      border: causeDrafts[it.detailId] ? '1px solid #b7eb8f' : '1px solid #ffa39e',
+                      borderRadius: 10, padding: 12, marginBottom: 10,
+                      background: causeDrafts[it.detailId] ? '#fcfff8' : '#fff8f8',
+                    }}>
+                      <div style={{ fontWeight: 600, marginBottom: 6, fontSize: 14 }}>
+                        {idx + 1}. {q.name || q.schema?.title || '（题目未加载）'}
+                      </div>
+                      <div style={{ fontSize: 13, marginBottom: 4 }}>
+                        <b>我的答案：</b>
+                        <span style={{ color: '#c62828' }}>{answerTextOf(q)}</span>
+                      </div>
+                      {it.correctAnswer && (
+                        <div style={{ fontSize: 13, marginBottom: 8 }}>
+                          <b>正确答案：</b>
+                          <span style={{ color: '#2e7d32' }}>{prettyAnswer(it.correctAnswer)}</span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <b style={{ fontSize: 13, flexShrink: 0 }}>错误原因：</b>
+                        <Select
+                          style={{ flex: 1 }} size="small" placeholder="请选择错误原因"
+                          value={causeDrafts[it.detailId]}
+                          onChange={(v) => setCauseDrafts((p) => ({ ...p, [it.detailId]: v }))}
+                          options={WRONG_REASONS.map((r) => ({ value: r, label: r }))}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Modal>
+          )}
+
+          {/* ============ 交卷制：结果页（掌握总结 + 掌握变化 + 逐题回顾） ============ */}
+          {isSubmissionFlow && submitPhase === 'result' && practiceResult && (
+            <SubmissionResultView
+              result={practiceResult}
+              questions={realQuestions}
+              answers={realAnswers}
+              history={resultHistory}
+              reasonOf={(item) => causeDrafts[item.detailId]}
+              prettyAnswer={prettyAnswer}
+              answerTextOf={answerTextOf}
+              onRetry={retryPractice}
+              onBack={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}
+            />
+          )}
 
           {/* 预习：后台配置的知识点讲解要点 */}
           {tab === 'preview' && (
@@ -398,8 +797,9 @@ export default function KnowledgePage() {
             </div>
           )}
 
-          {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial' || tab === 'example' || tab === 'preview_practice') && (
+          {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器；交卷制结果页时隐藏作答区） */}
+          {(tab === 'practice' || tab === 'trial' || tab === 'example' || tab === 'preview_practice')
+            && (!isSubmissionFlow || submitPhase !== 'result') && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
@@ -504,8 +904,8 @@ export default function KnowledgePage() {
                             )}
                           </div>
                         )}
-                        {/* 提交答案按钮：点击后才判定 */}
-                        {!showResult && picked && (
+                        {/* 提交答案按钮：旧即时判分流专用；交卷制不逐题判分 */}
+                        {!isSubmissionFlow && !showResult && picked && (
                           <Button type="primary" size="small" style={{ marginTop: 12 }} onClick={() => setJudgeState((p) => ({ ...p, [question.id]: true }))}>
                             提交答案
                           </Button>
@@ -514,10 +914,21 @@ export default function KnowledgePage() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
                           <button className="knowledge-back" disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)}>上一题</button>
                           <div style={{ fontSize: 13, color: '#90a4ae' }}>
-                            已判定 {Object.keys(judgeState).length}/{realQuestions.length} 题
+                            {isSubmissionFlow
+                              ? `已作答 ${realQuestions.filter((q) => isAnswered(q)).length}/${realQuestions.length} 题`
+                              : `已判定 ${Object.keys(judgeState).length}/${realQuestions.length} 题`}
                           </div>
                           {currentQ < realQuestions.length - 1 ? (
                             <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
+                          ) : isSubmissionFlow ? (
+                            <Button
+                              type="primary"
+                              size="small"
+                              disabled={realSubmitting || submitPhase !== 'idle'}
+                              onClick={requestSubmitPractice}
+                            >
+                              {realSubmitting ? '提交中…' : (tab === 'practice' ? '提交练习' : '提交通关')}
+                            </Button>
                           ) : (
                             realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' ? (
                               <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
@@ -528,12 +939,17 @@ export default function KnowledgePage() {
                             )
                           )}
                         </div>
-                        {!showResult && (
+                        {!isSubmissionFlow && !showResult && (
                           <div style={{ marginTop: 8, fontSize: 12, color: '#b26a00' }}>
                             选择题/填空作答后，点击「提交答案」才会判定
                           </div>
                         )}
-                        {currentQ === realQuestions.length - 1 && realQuestions.every((q) => judgeState[q.id]) && (
+                        {isSubmissionFlow && (
+                          <div style={{ marginTop: 8, fontSize: 12, color: '#90a4ae' }}>
+                            作答过程中不判分，完成全部题目后点击「提交练习」统一判分；未作答题目按答错处理
+                          </div>
+                        )}
+                        {!isSubmissionFlow && currentQ === realQuestions.length - 1 && realQuestions.every((q) => judgeState[q.id]) && (
                           (() => {
                             const st = localStats();
                             const wrongList = (realQuestions || []).filter((q) => realJudge(q)?.correct === 0);

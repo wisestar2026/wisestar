@@ -28,6 +28,9 @@ public class PracticeResultView {
 	/** 总题数 */
 	private int total;
 
+	/** 本次练习记录ID（t_practice_record.id，交卷后已落库；掌握度变化对比用） */
+	private String recordId;
+
 	/** 逐题结果 */
 	private List<PracticeResultItem> items = new ArrayList<>();
 
@@ -45,6 +48,12 @@ public class PracticeResultView {
 
 		/** 标准答案（判分后反馈） */
 		private String correctAnswer;
+
+		/** 所属知识点ID（题目未绑定知识点为空） */
+		private String knowledgePointId;
+
+		/** 所属知识点名称 */
+		private String knowledgePointName;
 
 		public PracticeResultItem() {
 		}

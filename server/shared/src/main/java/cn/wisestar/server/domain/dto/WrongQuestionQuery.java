@@ -44,4 +44,22 @@ public class WrongQuestionQuery extends PageQuery {
 	 * 做错时间范围止（含）
 	 */
 	private Date endTime;
+
+	/** 学科ID（研习章节归属学科，t_chapter.subject_id；学员端错题本按研习学科隔离） */
+	private String subjectId;
+
+	/** 章节ID（t_chapter.id） */
+	private String chapterId;
+
+	/** 小节ID（t_section.id） */
+	private String sectionId;
+
+	/** 知识点ID（t_knowledge_point.id） */
+	private String knowledgePointId;
+
+	/** 年级（如 一年级；取小节/章节配置年级） */
+	private String grade;
+
+	/** 错误归因精确筛选（大意/计算错误/知识点不熟/题型不会等；空=全部含未标注） */
+	private String wrongReason;
 }

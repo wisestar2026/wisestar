@@ -227,6 +227,8 @@ public class StudentApi {
 	 * @param count            返回题目数量（为空=返回绑定内容全部题目，显式传值时上限 50）
 	 * @param types            题型过滤（逗号分隔，可选）
 	 * @param difficulty       难度过滤（可选）
+	 * @param exposeAnswer     是否回显正确答案（交卷制不再逐题即时判分，默认 false）
+	 * @param random           随机出题：count 为空时也打乱整卷顺序（再次练习重抽）
 	 * @return 题目列表（不含答案）
 	 */
 	@GetMapping("/study/questions")
@@ -237,8 +239,10 @@ public class StudentApi {
 			@RequestParam(required = false) Integer count,
 			@RequestParam(required = false) List<String> types,
 			@RequestParam(required = false) String difficulty,
-			@RequestParam(required = false) Boolean exposeAnswer) {
-		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, count, types, difficulty, exposeAnswer);
+			@RequestParam(required = false) Boolean exposeAnswer,
+			@RequestParam(required = false) Boolean random) {
+		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, count, types, difficulty,
+				exposeAnswer, random);
 	}
 
 	/**

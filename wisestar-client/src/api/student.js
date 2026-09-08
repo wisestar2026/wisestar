@@ -148,7 +148,13 @@ export async function getStudyPoints(sectionId) {
 
 /**
  * 学员端练习/试炼题目（剥离标准答案）
- * @param {Object} params - { sectionId, knowledgePointId, count, types, difficulty }
+ * @param {Object} params - { sectionId, knowledgePointId, repoId, count, types, difficulty, exposeAnswer, random }
+ *   sectionId        小节 ID（小节练习/通关数据源，传此值出整卷题）
+ *   knowledgePointId 知识点 ID（知识点试炼数据源）
+ *   count            抽取数量（为空=整卷全部题；传值=随机抽 count 道，上限 50）
+ *   types/difficulty 题型/难度过滤（可选）
+ *   exposeAnswer     回显答案（交卷制不建议开启，默认 false）
+ *   random           整卷乱序重抽（再次练习传 true）
  */
 export async function getStudyQuestions(params) {
   return request.get('/student/study/questions', { params });

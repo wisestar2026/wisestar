@@ -1,6 +1,22 @@
 # 会话上下文摘要（压缩版，供后续任务快速参考，减少重新探索）
 
-> 更新：2026-09-05 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
+> 更新：2026-09-08 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
+
+## 0.2 最近进展（2026-09-08：专项练习交卷制重构，详见开发维护日志 39 节）
+
+**代码已完成并通过构建（前后端均未提交 git，改动量大）：**
+
+- 后端（全量 compile/package exit 0，fat jar 已重建并重启，1991 preview 运行中，终端 term_1788880119190_109）：
+  - submitPractice 落库 sectionId/knowledgePointId 锚定并返回 recordId
+  - 新增接口：`GET /practice/mastery`（双粒度掌握度：小节/知识点全部历史 + lastRecord + kps）、`GET /practice/history`（近 20 条记录，结果页对比掌握变化）、`POST /practice/wrongReasons`（交卷强制逐题归因批量）
+  - 错题库 SQL join 学科链路（subject/chapter/section/grade 回填）+ 筛选 subjectId/chapterId/sectionId/knowledgePointId/grade/wrongReason；WrongQuestionView 扩展
+  - `student/study/questions` 加 `random` 参数（整卷乱序重抽）；交卷制出题走 exposeAnswer=false
+- 前端（`npm run build` 通过两次）：
+  - KnowledgePage：专项练习湾/小节通关改交卷制（末题提交→未答判错→强制错因弹窗→结果页含掌握变化/知识点总结/逐题回顾/再次练习重抽）
+  - StudyPage：小节学习页顶部「上次掌握情况卡」（mastery 数据 + 开始/再次练习）
+  - WrongBookPage：注册 `/student/wrong` 路由；按研习学科隔离 + 年级/章节/小节/知识点/错因级联筛选；历史错题「错因待标注」承接
+- 已追加 docs/开发维护日志.md 第 39 节；接口冒烟通过（mastery 范围校验/history/wrong-list 新筛选/submit 返回 recordId+detailId）
+- **待办**：学员账号整链路 UI 走查复核；联调通过后 commit+push（改动含 server 8 文件 + client 8 文件，勿带 H2 库/日志文件）
 
 ## 0. 最近进展（2026-09-05：云端复现修复 + 全仓库整合收尾）
 

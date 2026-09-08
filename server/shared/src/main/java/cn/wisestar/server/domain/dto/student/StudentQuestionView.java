@@ -29,4 +29,10 @@ public class StudentQuestionView {
 	/** 题目内容（选项等；已剥离 attribute.examCorrectAnswer 与选项级答案标记） */
 	private SurveySchema schema;
 
+	/** 所属知识点ID（t_knowledge_point.id；题目未绑定知识点时为空） */
+	private String knowledgePointId;
+
+	/** 所属知识点名称（交卷回顾按知识点归纳、掌握度统计展示用） */
+	private String knowledgePointName;
+
 }

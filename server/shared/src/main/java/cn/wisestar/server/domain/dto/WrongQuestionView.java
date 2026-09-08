@@ -75,6 +75,27 @@ public class WrongQuestionView {
 	/** 所属知识点名称 */
 	private String knowledgePointName;
 
+	/** 归属学科ID（研习章节学科 t_chapter.subject_id，经 知识点→小节→章节 链路回填；未归属为空） */
+	private String subjectId;
+
+	/** 归属学科名称（t_subject.name） */
+	private String subjectName;
+
+	/** 归属章节ID（t_chapter.id） */
+	private String chapterId;
+
+	/** 归属章节名称 */
+	private String chapterName;
+
+	/** 归属小节ID（t_section.id） */
+	private String sectionId;
+
+	/** 归属小节名称 */
+	private String sectionName;
+
+	/** 年级（小节/章节配置年级） */
+	private String grade;
+
 	/**
 	 * 最近一次做错时的本题得分（答错恒为 0）
 	 */

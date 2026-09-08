@@ -54,6 +54,7 @@ import StudentLayout from './pages/student/StudentLayout';
 import StudentHomePage from './pages/student/StudentHomePage';
 import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
+import WrongBookPage from './pages/student/WrongBookPage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
@@ -125,7 +126,8 @@ export default function App() {
             {/* 知识点详情页: 预习 / 练习 / 试炼 / 错题（?tab=；?sectionId= 为后台配置内容真实模式） */}
             <Route path="knowledge" element={<KnowledgePage />} />
             <Route path="knowledge/:kpId" element={<KnowledgePage />} />
-            {/* 错题本: 练习错题自动收录（/api/practice/wrong-list） */}
+            {/* 错题本: 按研习学科隔离，支持年级/章节/小节/知识点/错因筛选 */}
+            <Route path="wrong" element={<WrongBookPage />} />
             {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}
             <Route path="profile" element={<ProfilePage />} />
             {/* 荣誉商城: 多科合并兑换 */}
