@@ -185,58 +185,6 @@ export async function myRepos() {
 }
 
 /**
- * 老师手动分配题库给学员
- * 后端接口: POST /api/repo/assign
- * @param {Object} data - { userId, repoIds: [] }
- * 调用方: RepoAssignPage.handleAssign
- */
-export async function assignRepo(data) {
-  return request.post('/repo/assign', data);
-}
-
-/**
- * 删除分配记录（批量）
- * 后端接口: POST /api/repo/assign/delete
- * @param {Object} data - { ids: [] }
- * 调用方: RepoAssignPage.handleDelete
- */
-export async function deleteAssign(data) {
-  return request.post('/repo/assign/delete', data);
-}
-
-/**
- * 查询学员分配记录（管理端）
- * 后端接口: GET /api/repo/assign/list?userId=xx
- * @param {String} userId - 学员用户 ID（可选，为空查全部）
- * @returns {Object} data: 分配记录列表 [{ id, userId, userName, username, repoId, repoName, assignType, createAt }]
- * 调用方: RepoAssignPage
- */
-export async function listAssign(userId) {
-  return request.get('/repo/assign/list', { params: { userId } });
-}
-
-/**
- * 查询学员标签
- * 后端接口: GET /api/repo/user/tags?userId=xx
- * @param {String} userId - 学员用户 ID
- * @returns {Object} data: 学员标签数组
- * 调用方: RepoAssignPage（自动分配规则设置）
- */
-export async function getUserTags(userId) {
-  return request.get('/repo/user/tags', { params: { userId } });
-}
-
-/**
- * 保存学员标签（覆盖式，category=user）
- * 后端接口: POST /api/repo/user/tags
- * @param {Object} data - { userId, tags: [] }
- * 调用方: RepoAssignPage（按标签自动分配题库）
- */
-export async function saveUserTags(data) {
-  return request.post('/repo/user/tags', data);
-}
-
-/**
  * 练习绑定位置反查（练习详情回显知识投放范围）
  * 后端接口: GET /api/repo/locations?repoId=
  * @param {String} repoId - 练习 ID

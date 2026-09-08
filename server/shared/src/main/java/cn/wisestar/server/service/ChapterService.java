@@ -21,7 +21,8 @@ public interface ChapterService {
 	 * 章节列表（按学科/年级/学期/版本过滤，sort 升序）。
 	 *
 	 * @param query 查询条件（subjectId/grade/term/version 可选；为空返回全部章节）
-	 * @return 章节视图列表（含小节数统计与已绑定题库数统计）
+	 * @return 章节视图列表（含小节数统计；练习数 = 章节下各小节直绑练习的去重数，
+	 *         章节自身不支持直接绑定练习）
 	 */
 	List<ChapterView> listChapters(ChapterRequest query);
 
@@ -69,19 +70,20 @@ public interface ChapterService {
 	void deleteChapter(ChapterRequest request);
 
 	/**
-	 * 保存章节-题库绑定（全量替换：先清空旧绑定再写入新绑定）。
+	 * 保存章节-题库绑定（已停用）。
 	 *
-	 * <p>章节题库只能从题库管理（t_repo）选择，不能在此新增。</p>
+	 * <p>业务规则：练习仅支持绑定到小节，章节不支持直接绑定练习。历史 t_chapter_repo
+	 * 数据已迁移到其下小节，本方法一律抛出业务异常拒绝写入。</p>
 	 *
 	 * @param request 绑定请求（chapterId + repoIds）
 	 */
 	void saveRepos(ChapterRepoRequest request);
 
 	/**
-	 * 查询章节已绑定的题库列表（题库管理 t_repo 数据，保持绑定顺序）。
+	 * 查询章节已绑定的题库列表（已停用，恒为空）。
 	 *
 	 * @param chapterId 章节ID
-	 * @return 已绑定题库视图列表
+	 * @return 恒为空列表（章节不再直接绑定题库）
 	 */
 	List<RepoView> listRepos(String chapterId);
 

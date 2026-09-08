@@ -69,6 +69,7 @@ export default function KnowledgePage() {
       if (sectionId) {
         getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
       }
+      // 预习讲解页：保持轻量探测题（默认 3 题，可显式 count 覆盖）
       const params = { count: Number(countParam) || 3, exposeAnswer: true };
       if (typesParam) params.types = typesParam.split(',');
       if (sectionId) params.sectionId = sectionId;
@@ -78,7 +79,8 @@ export default function KnowledgePage() {
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     } else if (tab === 'practice' || tab === 'trial') {
-      const params = { count: Number(countParam) || 3, exposeAnswer: true }; // 练习/试炼本地即时判分（题目带答案）
+      const params = { exposeAnswer: true }; // 练习/试炼本地即时判分（题目带答案）
+      if (countParam) params.count = Number(countParam);
       if (typesParam) params.types = typesParam.split(',');
       if (sectionId) params.sectionId = sectionId;
       if (repoId) params.repoId = repoId;
@@ -100,6 +102,22 @@ export default function KnowledgePage() {
       return [{ id: 'judge_true', title: '正确' }, { id: 'judge_false', title: '错误' }];
     }
     return [];
+  }
+
+  // 填空类题目的空位数：
+  //  - 多项填空(MultipleBlank)：schema.children 每个空位一个节点 → 空位数即 children 长度；
+  //    无 children（历史数据）时回退到标准答案按 | 拆分的数量（>1 视为多空）
+  //  - 其余填空(单空/文本)：attribute.blankCount || 1
+  function blankCountOf(question) {
+    const schema = question.schema || {};
+    const type = question.questionType;
+    const children = schema.children || [];
+    if (type === 'MultipleBlank') {
+      if (children.length > 0) return children.length;
+      const parts = String(schema.attribute?.examCorrectAnswer || '').split('|').filter(Boolean);
+      return parts.length > 1 ? parts.length : 1;
+    }
+    return schema.attribute?.blankCount || 1;
   }
 
   // 真实模式：试炼本地即时判分（题目带答案，比对选项文本）
@@ -162,19 +180,17 @@ export default function KnowledgePage() {
     return picked.text || '—';
   };
 
-  // 真实模式：填空作答
+  // 真实模式：填空作答（单空/多空统一：按空位顺序以 | 拼接存入 text）
   const realInput = (q, blankIdx, text) => {
     if (realResult) return;
     if (judgeState[q.id] || (tab === 'preview' && realJudge(q))) return;
     setRealAnswers((prev) => {
       const cur = prev[q.id] || { type: 'text', text: '' };
-      const texts = (cur.text || '').split('|');
-      if (blankIdx >= 0 && blankIdx < texts.length) {
-        texts[blankIdx] = text;
-      } else {
-        texts[0] = text;
-      }
-      return { ...prev, [q.id]: { type: 'text', text: texts.join('|') } };
+      const bc = blankCountOf(q);
+      const arr = Array.from({ length: bc }, () => '');
+      String(cur.text || '').split('|').forEach((v, i) => { if (i < bc) arr[i] = v; });
+      arr[Math.max(0, Math.min(blankIdx, bc - 1))] = text;
+      return { ...prev, [q.id]: { type: 'text', text: arr.join('|') } };
     });
   };
 
@@ -347,23 +363,31 @@ export default function KnowledgePage() {
                           <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '知识点预习' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
-                        {/* 填空题输入；判断题无选项时补 正确/错误 */}
-                        {(question.questionType === 'FillBlank' || question.questionType === 'Text') ? (() => {
-                          const blankCount = (schema.attribute?.blankCount || 1);
+                        {/* 填空类输入（单空/多行文本/多项填空）；判断题无选项时补 正确/错误，其余走选项 */}
+                        {['FillBlank', 'Text', 'MultipleBlank'].includes(question.questionType) ? (() => {
+                          const blankCount = blankCountOf(question);
+                          const isMultiBlank = question.questionType === 'MultipleBlank';
                           const curText = picked?.text || '';
                           const texts = curText.split('|');
                           return (
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              {Array.from({ length: blankCount }).map((_, idx) => (
-                                <Input
-                                  key={idx}
-                                  placeholder={`空${idx + 1}`}
-                                  disabled={showResult}
-                                  value={texts[idx] || ''}
-                                  onChange={(e) => realInput(question, idx, e.target.value)}
-                                  style={{ width: 120, fontSize: 15, padding: '8px 10px' }}
-                                />
-                              ))}
+                            <div>
+                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                {Array.from({ length: blankCount }).map((_, idx) => (
+                                  <Input
+                                    key={idx}
+                                    placeholder={`空${idx + 1}`}
+                                    disabled={showResult}
+                                    value={texts[idx] || ''}
+                                    onChange={(e) => realInput(question, idx, e.target.value)}
+                                    style={{ width: isMultiBlank ? 170 : 140, fontSize: 15, padding: '8px 10px' }}
+                                  />
+                                ))}
+                              </div>
+                              {isMultiBlank && (
+                                <div style={{ marginTop: 8, fontSize: 12, color: '#90a4ae' }}>
+                                  本题为多项填空，共 {blankCount} 个空位：请按题目空位顺序，在每个空位下方的输入框中填写答案
+                                </div>
+                              )}
                             </div>
                           );
                         })() : options.map((opt) => {

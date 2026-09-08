@@ -224,7 +224,7 @@ public class StudentApi {
 	 *
 	 * @param sectionId        小节ID（小节练习数据源）
 	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
-	 * @param count            返回题目数量（默认 10，上限 50）
+	 * @param count            返回题目数量（为空=返回绑定内容全部题目，显式传值时上限 50）
 	 * @param types            题型过滤（逗号分隔，可选）
 	 * @param difficulty       难度过滤（可选）
 	 * @return 题目列表（不含答案）

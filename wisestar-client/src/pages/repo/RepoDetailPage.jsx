@@ -2,14 +2,16 @@
  * RepoDetailPage.jsx - 练习详情 & 组题管理页面
  *
  * 功能:
- *   1. 练习信息展示（名称、类型、标签、题目总数）
- *   2. 题目列表（分页、显示是否有答案和解析）
- *   3. 批量选择题目：从题目管理（全局题目库）勾选已有题目加入本练习
- *   4. 移除题目：单个/批量解绑（题目保留在题目管理中，不删除模板本身）
+ *   1. 练习信息展示（名称、学科/年级/难度、标签、题目总数）
+ *   2. 题目列表（分页、显示答案/解析与分值）
+ *   3. 设置分值：分值列直接行内填写（整题类填整题分；多项填空按每空填，
+ *      失焦/回车自动保存，未设置时判分按 整题分÷空位数 均摊兜底）
+ *   4. 批量选择题目：从题目管理（全局题目库）勾选已有题目加入本练习
+ *   5. 移除题目：单个/批量解绑（题目保留在题目管理中，不删除模板本身）
  *
  * 题目来源约定（重要）:
  *   题目信息的创建/编辑/导入唯一入口是「题目管理」板块（QuestionListPage）。
- *   本页面不再提供"新建题目"入口，只负责组题（选择题目加入练习 / 从练习移除）。
+ *   本页面只负责组题（选择题目加入练习 / 从练习移除）与分值设置（写 template.attribute）。
  *
  * 被谁引用: App.jsx 路由表（/repos/:id）；从 RepoListPage 点击练习名称进入
  *
@@ -17,6 +19,8 @@
  *   练习信息: listRepo({id, pageSize:1}) → GET /api/repo/list → find 出当前练习
  *   题目列表: fetchTemplates → listTemplate({current, pageSize, repoId}) → GET /api/template/list
  *   批量选择: SelectTemplateModal → bindTemplate({repoId, ids}) → POST /api/repo/bind
+ *   设置分值: 分值列行内输入，失焦时 updateTemplate({id, template: {...schema, attribute}})
+ *            → POST /api/template/update
  *   移除: handleRemoveTemplate / handleBatchRemove → unbindTemplate({repoId, ids})
  *         → POST /api/repo/unbind（仅清空题目 repoId，题目保留在题目管理）
  *
@@ -27,15 +31,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Table, Space, Button, Popconfirm, Typography, Tag, message, Card, Descriptions, Upload,
+  InputNumber, Tooltip,
 } from 'antd';
 import {
-  PlusOutlined, DeleteOutlined, ArrowLeftOutlined, EditOutlined, ImportOutlined,
+  PlusOutlined, DeleteOutlined, ArrowLeftOutlined, ImportOutlined, LoadingOutlined,
   BookOutlined, CheckCircleOutlined, BulbOutlined, ApartmentOutlined, PartitionOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { listTemplate, updateTemplate } from '../../api/template';
 import { listRepo, unbindTemplate, importTemplate, listRepoLocations } from '../../api/repo';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
-import RepoEditorWizard from '../../components/repo/RepoEditorWizard';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -45,6 +50,130 @@ const TYPE_LABELS = {
   FillBlank: '填空题', Text: '多行文本', Score: '评分题',
   Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
+
+function round2(n) {
+  return Math.round(n * 100) / 100;
+}
+
+/**
+ * 分值列行内编辑器。
+ *
+ * - 整题类题型（单选/判断/普通填空等）: 一个输入框直接填整题分值；
+ * - 多项填空: 每个空一个输入框，全部填完失焦后自动保存（整题分=各空之和）。
+ *
+ * 未设置分值时输入框为空，判分端按 1 分（整题）或 整题分÷空位数（填空均摊）兜底。
+ */
+function ScoreCell({ record, onSaveAttr }) {
+  const attr = record.template?.attribute || {};
+  const isMB = record.questionType === 'MultipleBlank';
+  const answer = attr.examCorrectAnswer;
+  const blankCount = isMB ? Math.max(1, String(answer || '').split('|').filter(Boolean).length) : 1;
+
+  // 行内输入值（仅在题目首次进入本页时初始化一次；保存成功后本地值与后端一致）
+  const [whole, setWhole] = useState(() => {
+    if (isMB) return null;
+    return typeof attr.examScore === 'number' ? attr.examScore : null;
+  });
+  const [blanks, setBlanks] = useState(() => {
+    if (!isMB) return [];
+    if (Array.isArray(attr.examBlankScores) && attr.examBlankScores.length === blankCount) {
+      return attr.examBlankScores.map((n) => (typeof n === 'number' ? n : Number(n)));
+    }
+    // 旧数据未配每空分但有整题分: 预填均摊值，便于直接微调
+    if (typeof attr.examScore === 'number' && attr.examScore > 0) {
+      const per = round2(attr.examScore / blankCount);
+      return Array.from({ length: blankCount }, () => per);
+    }
+    return Array.from({ length: blankCount }, () => null);
+  });
+  const [saving, setSaving] = useState(false);
+
+  const prevWhole = typeof attr.examScore === 'number' ? attr.examScore : null;
+  const prevBlanks = Array.isArray(attr.examBlankScores) ? attr.examBlankScores : null;
+
+  // 写入后端（父组件负责局部更新当前行），结束后恢复输入态
+  const commit = async (nextAttr) => {
+    setSaving(true);
+    try {
+      await onSaveAttr(nextAttr);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 整题类型: 失焦/回车即保存
+  const handleWholeBlur = (val) => {
+    const next = typeof val === 'number' && val > 0 ? round2(val) : null;
+    if (next === prevWhole) return;
+    const nextAttr = { ...attr };
+    if (next) {
+      nextAttr.examScore = next;
+    } else {
+      delete nextAttr.examScore;
+    }
+    delete nextAttr.examBlankScores;
+    commit(nextAttr);
+  };
+
+  // 多项填空: 某一空失焦，若所有空均为有效值则整题保存
+  const handleBlankBlur = () => {
+    if (!blanks.length || blanks.some((v) => !(typeof v === 'number' && v > 0))) return;
+    const nums = blanks.map((v) => round2(v));
+    if (JSON.stringify(nums) === JSON.stringify(prevBlanks)) return;
+    const nextAttr = { ...attr, examBlankScores: nums, examScore: round2(nums.reduce((s, v) => s + v, 0)) };
+    commit(nextAttr);
+  };
+
+  const changeBlank = (i, val) => {
+    const next = [...blanks];
+    next[i] = typeof val === 'number' && val > 0 ? val : null;
+    setBlanks(next);
+  };
+
+  if (saving) {
+    return <LoadingOutlined style={{ color: '#1890ff' }} />;
+  }
+
+  if (isMB) {
+    const allSet = blanks.length > 0 && blanks.every((v) => typeof v === 'number' && v > 0);
+    const total = allSet ? round2(blanks.reduce((s, v) => s + v, 0)) : null;
+    return (
+      <Space size={4} wrap>
+        {blanks.map((v, i) => (
+          <InputNumber
+            key={i}
+            size="small"
+            controls={false}
+            min={0.01}
+            step={0.5}
+            precision={2}
+            value={v}
+            placeholder={`空${i + 1}`}
+            style={{ width: 62 }}
+            onChange={(val) => changeBlank(i, val)}
+            onBlur={() => handleBlankBlur()}
+          />
+        ))}
+        {allSet && <Text type="secondary" style={{ fontSize: 12 }}>= {total} 分</Text>}
+      </Space>
+    );
+  }
+
+  return (
+    <InputNumber
+      size="small"
+      controls={false}
+      min={0.01}
+      step={0.5}
+      precision={2}
+      value={whole}
+      placeholder="未设置"
+      style={{ width: 90 }}
+      onChange={(val) => setWhole(typeof val === 'number' && val > 0 ? round2(val) : null)}
+      onBlur={() => handleWholeBlur(whole)}
+    />
+  );
+}
 
 export default function RepoDetailPage() {
   const { id: repoId } = useParams();
@@ -58,16 +187,14 @@ export default function RepoDetailPage() {
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
-  // 知识绑定位置（本练习被投放到的章节/小节，用于从练习回钻到习题列表）
+  // 知识绑定位置（本练习被投放到的所属小节，用于从练习回钻到习题列表）
   const [bindings, setBindings] = useState([]);
   const [bindingsLoading, setBindingsLoading] = useState(false);
 
   // 批量选择题目弹窗
   const [selectOpen, setSelectOpen] = useState(false);
 
-  // 编辑题目弹窗 + 导入状态
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  // 导入状态
   const [importing, setImporting] = useState(false);
 
   // 表格勾选（批量移除）
@@ -179,15 +306,25 @@ export default function RepoDetailPage() {
     return false; // 阻止 antd 自动上传
   };
 
-  // ---- 编辑题目保存（复用题目管理编辑弹窗） ----
-  const handleEditSave = (payload) => {
-    updateTemplate(payload)
-      .then(() => {
-        message.success('题目已更新');
-        setEditOpen(false);
-        fetchTemplates(page);
-      })
-      .catch(() => message.error('保存失败'));
+  // ---- 保存分值（分值列行内编辑失焦触发，写题目 template.attribute） ----
+  // 返回是否保存成功；成功后仅局部更新当前行，避免整页刷新打断连续编辑
+  const persistScore = async (record, newAttr) => {
+    const schema = record.template || {};
+    try {
+      await updateTemplate({
+        id: record.id,
+        questionType: record.questionType,
+        template: { ...schema, attribute: newAttr },
+      });
+      setTemplates((prev) => prev.map((t) => (
+        t.id === record.id ? { ...t, template: { ...(t.template || {}), attribute: newAttr } } : t
+      )));
+      message.success('分值已保存');
+      return true;
+    } catch {
+      message.error('保存失败');
+      return false;
+    }
   };
 
   // ---- 渲染正确答案预览 ----
@@ -223,8 +360,16 @@ export default function RepoDetailPage() {
       render: (t) => <Tag>{TYPE_LABELS[t] || t}</Tag>,
     },
     {
-      title: '分值', width: 60, align: 'center',
-      render: (_, r) => r.template?.attribute?.examScore || '-',
+      title: (
+        <Space size={2}>
+          分值
+          <Tooltip title="直接在格内填写，失焦/回车自动保存。多项填空请按每个空分别填写，全部填完自动保存（整题分=各空之和）。">
+            <QuestionCircleOutlined style={{ color: '#999' }} />
+          </Tooltip>
+        </Space>
+      ),
+      width: 190,
+      render: (_, record) => <ScoreCell record={record} onSaveAttr={(attr) => persistScore(record, attr)} />,
     },
     {
       title: '正确答案', width: 120, render: (_, r) => renderAnswer(r),
@@ -234,24 +379,16 @@ export default function RepoDetailPage() {
       render: (tags) => (!tags?.length ? '-' : tags.slice(0, 2).map((t) => <Tag key={t} color="blue">{t}</Tag>)),
     },
     {
-      title: '操作', width: 160,
+      title: '操作', width: 90,
       render: (_, record) => (
-        <Space size={0}>
-          <Button
-            size="small" type="link" icon={<EditOutlined />}
-            onClick={() => { setEditRecord(record); setEditOpen(true); }}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定从练习移除该题？"
-            description="题目仍保留在「题目管理」中，可从练习重新选择加入"
-            onConfirm={() => handleRemoveTemplate(record.id)}
-            okText="移除" cancelText="取消"
-          >
-            <Button size="small" type="link" danger icon={<DeleteOutlined />}>移除</Button>
-          </Popconfirm>
-        </Space>
+        <Popconfirm
+          title="确定从练习移除该题？"
+          description="题目仍保留在「题目管理」中，可从练习重新选择加入"
+          onConfirm={() => handleRemoveTemplate(record.id)}
+          okText="移除" cancelText="取消"
+        >
+          <Button size="small" type="link" danger icon={<DeleteOutlined />}>移除</Button>
+        </Popconfirm>
       ),
     },
   ];
@@ -297,9 +434,6 @@ export default function RepoDetailPage() {
       {repo && (
         <Card size="small" style={{ marginBottom: 16 }}>
           <Descriptions size="small" column={4}>
-            <Descriptions.Item label="类型">
-              <Tag color={repo.mode === 'exam' ? 'red' : 'blue'}>{repo.mode === 'exam' ? '考试' : '问卷'}</Tag>
-            </Descriptions.Item>
             <Descriptions.Item label="题目总数">{repo.total || 0}</Descriptions.Item>
             <Descriptions.Item label="学科">{repo.subject ? <Tag color="geekblue">{repo.subject}</Tag> : '-'}</Descriptions.Item>
             <Descriptions.Item label="年级">{repo.grade ? <Tag color="purple">{repo.grade}</Tag> : '-'}</Descriptions.Item>
@@ -310,10 +444,7 @@ export default function RepoDetailPage() {
                 </Tag>
               ) : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="共享">
-              <Tag color={repo.shared ? 'green' : 'default'}>{repo.shared ? '是' : '否'}</Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="描述">{repo.description || '-'}</Descriptions.Item>
+            <Descriptions.Item label="描述" span={3}>{repo.description || '-'}</Descriptions.Item>
           </Descriptions>
           {repo.tag?.length > 0 && (
             <div style={{ marginTop: 8 }}>{repo.tag.map((t) => <Tag key={t} color="blue">{t}</Tag>)}</div>
@@ -329,29 +460,23 @@ export default function RepoDetailPage() {
         title={(
           <Space>
             <ApartmentOutlined />
-            <Text strong>知识绑定（该练习投放在哪些章节/小节）</Text>
+            <Text strong>知识绑定（该练习投放在哪些小节）</Text>
           </Space>
         )}
         extra={<a onClick={() => navigate('/exercise/list')}>在习题列表中管理绑定</a>}
       >
         {bindings.length === 0 ? (
           <Text type="secondary">
-            暂未绑定到任何章节 / 小节。
+            暂未绑定到任何小节。
           </Text>
         ) : (
           bindings.map((b) => {
-            const isChap = b.nodeType === 'CHAP';
-            const link = isChap
-              ? `/exercise/list?chapterId=${b.nodeId}`
-              : `/exercise/list?chapterId=${b.parentNodeId || ''}&sectionId=${b.nodeId}`;
             const ctx = [b.grade, b.term, b.version].filter(Boolean).join(' · ');
             return (
-              <div key={`${b.nodeType}-${b.nodeId}`} style={{ marginBottom: 6 }}>
-                <Tag color={isChap ? 'geekblue' : 'purple'} icon={isChap ? <BookOutlined /> : <PartitionOutlined />}>
-                  {isChap ? '章节' : '小节'}
-                </Tag>
-                <a onClick={() => navigate(link)}>
-                  {isChap ? b.nodeName : `${b.parentNodeName || ''} / ${b.nodeName}`}
+              <div key={`SECTION-${b.nodeId}`} style={{ marginBottom: 6 }}>
+                <Tag color="purple" icon={<PartitionOutlined />}>小节</Tag>
+                <a onClick={() => navigate(`/exercise/list?chapterId=${b.parentNodeId || ''}&sectionId=${b.nodeId}`)}>
+                  {b.parentNodeName ? `${b.parentNodeName} / ${b.nodeName}` : b.nodeName}
                 </a>
                 {ctx ? <Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>{ctx}</Text> : null}
               </div>
@@ -412,17 +537,6 @@ export default function RepoDetailPage() {
         repoId={repoId}
         onCancel={() => setSelectOpen(false)}
         onSuccess={handleSelectSuccess}
-      />
-
-      {/* ---- 编辑题目弹窗（复用题目管理编辑弹窗） ---- */}
-      <RepoEditorWizard
-        open={wizardOpen}
-        onCancel={() => setWizardOpen(false)}
-        repoId={repoId}
-        onSave={(info) => {
-          // 基本信息保存（编辑模式调用 updateRepo，新增模式调用 createRepo）
-        }}
-        onTemplatesSelect={handleWizardTemplatesSelect}
       />
     </div>
   );

@@ -2,11 +2,12 @@
  * ChapterManagePage.jsx - 章节管理页（知识管理板块）
  *
  * 功能:
- *   1. 顶部学科下拉 → 展示该学科下的章节列表（真实 API，含小节数/练习数统计）
+ *   1. 顶部学科下拉 → 展示该学科下的章节列表（真实 API，含小节数统计）
  *   2. 章节 CRUD（新增/编辑/删除，删除级联其后小节/知识点/绑定）
  *   3. 「小节数」列可点击 → 弹窗查看该章节下的小节列表（数据来自小节管理 t_section），
  *      弹窗内可直接跳转小节管理页维护
- *   4. 「绑定练习」→ 从练习库（t_repo）选择练习绑定到章节（全量替换保存）
+ *
+ * 绑定规则: 练习仅支持在小节上绑定，章节不支持直接绑定练习；练习绑定入口在小节管理/习题列表。
  *
  * URL: /knowledge/chapters（受 AuthGuard 保护）
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「知识管理 → 章节管理」菜单进入
@@ -14,7 +15,6 @@
  * 数据流:
  *   listSubjects() → 学科下拉；listChapters({ subjectId }) → 当前学科章节列表
  *   listSections({ chapterId }) → 小节查看弹窗（小节数据由小节管理表 t_section 提供）
- *   listRepo() → 绑定练习弹窗练习库；saveChapterRepos / listChapterRepos 绑定回显
  */
 
 const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
@@ -27,7 +27,7 @@ import {
   Upload,
 } from 'antd';
 import {
-  PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, LinkOutlined, EyeOutlined,
+  PlusOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, EyeOutlined,
   ImportOutlined,
   DownloadOutlined,
   ExportOutlined,
@@ -35,10 +35,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   listSubjects, listChapters, createChapter, updateChapter, deleteChapter,
-  listSections, saveChapterRepos, listChapterRepos,
+  listSections,
   importChapters, exportChapters,
 } from '../../api/knowledge';
-import { listRepo } from '../../api/repo';
 import { usePermission } from '../../utils/usePermission';
 
 const { Title, Text } = Typography;
@@ -56,17 +55,6 @@ export default function ChapterManagePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // null=新增, 对象=编辑
   const [form] = Form.useForm();
-
-  // ---- 绑定练习弹窗（练习库选择） ----
-  const [bindOpen, setBindOpen] = useState(false);
-  const [bindChapter, setBindChapter] = useState(null);
-  const [bindKeyword, setBindKeyword] = useState('');
-  const [repoList, setRepoList] = useState([]);
-  const [repoTotal, setRepoTotal] = useState(0);
-  const [repoCurrent, setRepoCurrent] = useState(1);
-  const [repoLoading, setRepoLoading] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]);
-  const [savingBind, setSavingBind] = useState(false);
 
   // ---- 小节查看弹窗（数据来自小节管理 t_section） ----
   const [secOpen, setSecOpen] = useState(false);
@@ -186,42 +174,6 @@ export default function ChapterManagePage() {
     });
   };
 
-  // ---- 绑定练习（从练习库选题，全量替换） ----
-  const openBind = (chapter) => {
-    setBindChapter(chapter);
-    setBindOpen(true);
-    setBindKeyword('');
-    setRepoCurrent(1);
-    setSelectedIds([]);
-    listChapterRepos(chapter.id).then((res) => {
-      setSelectedIds((res?.data || []).map((r) => r.id));
-    }).catch(() => { /* 已提示 */ });
-    fetchRepos(1, '');
-  };
-
-  const fetchRepos = (page, keyword) => {
-    setRepoLoading(true);
-    listRepo({ current: page, pageSize: 8, name: keyword || undefined })
-      .then((res) => {
-        setRepoList(res?.data?.list || []);
-        setRepoTotal(res?.data?.total || 0);
-      }).catch(() => { setRepoList([]); setRepoTotal(0); }).finally(() => setRepoLoading(false));
-  };
-
-  const onBindKeywordSearch = () => {
-    setRepoCurrent(1);
-    fetchRepos(1, bindKeyword);
-  };
-
-  const saveBind = () => {
-    setSavingBind(true);
-    saveChapterRepos({ chapterId: bindChapter.id, repoIds: selectedIds }).then(() => {
-      message.success('练习绑定已保存');
-      setBindOpen(false);
-      setChapters((prev) => prev.map((c) => (c.id === bindChapter.id ? { ...c, repoCount: selectedIds.length } : c)));
-    }).finally(() => setSavingBind(false));
-  };
-
   // ---- 查看章节下小节（数据来自小节管理 t_section） ----
   const openSecList = (chapter) => {
     setSecChapter(chapter);
@@ -255,11 +207,7 @@ export default function ChapterManagePage() {
       ),
     },
     {
-      title: '练习数', dataIndex: 'repoCount', width: 100, align: 'center',
-      render: (count) => (count > 0 ? <Tag color="blue">{count} 个练习</Tag> : <Tag>未绑定</Tag>),
-    },
-    {
-      title: '操作', key: 'action', width: 380,
+      title: '操作', key: 'action', width: 280,
       render: (_, c) => (
         <Space wrap>
           <Button
@@ -268,8 +216,7 @@ export default function ChapterManagePage() {
           >
             管理小节
           </Button>
-          <Button size="small" icon={<LinkOutlined />} onClick={() => openBind(c)}>绑定练习</Button>
-{can('knowledge:update') && (
+          {can('knowledge:update') && (
             <Button size="small" icon={<EditOutlined />} onClick={() => openModal(c)}>编辑</Button>
           )}
           {can('knowledge:delete') && (
@@ -372,67 +319,6 @@ export default function ChapterManagePage() {
           </Form.Item>
           <Text type="secondary">章节图标由系统默认维护；排序数字越小越靠前。</Text>
         </Form>
-      </Modal>
-
-      {/* 绑定练习弹窗（练习库选择，全量替换保存） */}
-      <Modal
-        title={`绑定练习 - ${bindChapter?.name || ''}`}
-        open={bindOpen}
-        onOk={saveBind}
-        onCancel={() => setBindOpen(false)}
-        okText="保存绑定"
-        cancelText="取消"
-        width={820}
-        confirmLoading={savingBind}
-        destroyOnClose
-      >
-        <Space style={{ marginBottom: 12 }} align="center">
-          <Input.Search
-            style={{ width: 320 }}
-            placeholder="按练习名称搜索练习库"
-            value={bindKeyword}
-            onChange={(e) => setBindKeyword(e.target.value)}
-            onSearch={onBindKeywordSearch}
-            allowClear
-          />
-          <Text type="secondary">已选 {selectedIds.length} 个练习（练习来自练习管理，不能在此新增）</Text>
-        </Space>
-        <Table
-          rowKey="id"
-          size="small"
-          loading={repoLoading}
-          dataSource={repoList}
-          rowSelection={{
-            selectedRowKeys: selectedIds,
-            onChange: (keys) => setSelectedIds(keys),
-          }}
-          pagination={{
-            current: repoCurrent,
-            pageSize: 8,
-            total: repoTotal,
-            size: 'small',
-            onChange: (c) => { setRepoCurrent(c); fetchRepos(c, bindKeyword); },
-          }}
-          columns={[
-            { title: '练习名称', dataIndex: 'name', ellipsis: true, render: (n) => <Text strong>{n}</Text> },
-            {
-              title: '学科', dataIndex: 'subject', width: 80, align: 'center',
-              render: (s) => (s ? <Tag color="geekblue">{s}</Tag> : '-'),
-            },
-            {
-              title: '年级', dataIndex: 'grade', width: 80, align: 'center',
-              render: (g) => (g ? <Tag color="purple">{g}</Tag> : '-'),
-            },
-            {
-              title: '难度', dataIndex: 'difficulty', width: 80, align: 'center',
-              render: (d) => (d ? <Tag>{d}</Tag> : '-'),
-            },
-            {
-              title: '题目数', dataIndex: 'total', width: 80, align: 'center',
-              render: (t) => (t > 0 ? t : 0),
-            },
-          ]}
-        />
       </Modal>
 
       {/* 小节查看弹窗（数据来自小节管理 t_section） */}

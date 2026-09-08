@@ -287,7 +287,18 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
             ? (blanks.map((b) => String(b).trim()).join('|') || undefined)
             : (answer || undefined),
         examAnalysis: analysis || undefined,
-        examScore: score,
+        // 编辑多项填空：若空位数与已有每空分值配置一致则保留练习内设置（空位数变化视为作废）；
+        // 保留配置时整题分=各空之和，避免与判分口径不一致
+        examBlankScores: (qType === 'MultipleBlank' && record?.id
+          && Array.isArray(record.template?.attribute?.examBlankScores)
+          && record.template.attribute.examBlankScores.length === blanks.length)
+          ? record.template.attribute.examBlankScores
+          : undefined,
+        examScore: (qType === 'MultipleBlank' && record?.id
+          && Array.isArray(record.template?.attribute?.examBlankScores)
+          && record.template.attribute.examBlankScores.length === blanks.length)
+          ? Math.round(record.template.attribute.examBlankScores.reduce((s, v) => s + (v || 0), 0) * 100) / 100
+          : score,
         examScoreMode: scoreMode,
         examImages: images.length > 0 ? images.map((i) => i.url) : undefined,
         // 知识点属性快照（写入 template.attribute，供题目转入问卷时随卷保存）

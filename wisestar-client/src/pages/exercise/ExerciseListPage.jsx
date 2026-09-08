@@ -5,17 +5,17 @@
  *
  * 功能:
  *   1. 学科 → 章节 → 小节 → 知识点 逐级下钻（级联选择器）
- *   2. 章节/小节节点：展示直绑练习（名称/题量/标签），支持绑定练习、解绑、进练习详情组题
+ *   2. 小节节点：展示直绑练习（名称/题量/标签），支持绑定练习、解绑、进练习详情组题
+ *      （业务规则：练习仅支持绑定到小节；章节只作为小节的分组维度，不支持直接绑定练习）
  *   3. 知识点节点：展示直绑题目，支持绑定/解绑题目
  *   4. 任一节点可「预览学员端刷题内容」（与学员端 study/questions 同一取题语义），
  *      预览支持开关标准答案，管理端核验绑定配置
- *   5. 练习详情回显（/repos/:id）的绑定位置点击后经 ?chapterId= 定位本页
+ *   5. 练习详情回显（/repos/:id）的绑定位置点击后经 ?chapterId=&sectionId= 定位本页
  *
  * 数据流:
  *   树: listSubjects → listChapters({subjectId}) → listSections({chapterId})
  *       → listKnowledgePoints({sectionId})
- *   绑练习: listChapterRepos / listSectionRepos 回显（含 total 题量）
- *           saveChapterRepos / saveSectionRepos 全量替换保存
+ *   绑练习: listSectionRepos 回显（含 total 题量）；saveSectionRepos 全量替换保存
  *   绑题目: listKnowledgePointQuestions 回显 / saveKnowledgePointQuestions 全量替换
  *   预览:   listNodeQuestions({nodeType, nodeId, withAnswer})
  *
@@ -32,7 +32,7 @@ import {
   EyeOutlined, LinkOutlined, DeleteOutlined, ReloadOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import { listSubjects, listChapters, listSections, listKnowledgePoints,
-  listChapterRepos, saveChapterRepos, listSectionRepos, saveSectionRepos,
+  listSectionRepos, saveSectionRepos,
   listKnowledgePointQuestions, saveKnowledgePointQuestions } from '../../api/knowledge';
 import { listRepo, listNodeQuestions } from '../../api/repo';
 import { listTemplate } from '../../api/template';
@@ -212,8 +212,8 @@ function PreviewModal({ open, scope, nodeId, nodeName, onClose }) {
   );
 }
 
-/** 绑定练习弹窗（章节/小节共用：练习库多选，全量替换） */
-function BindReposModal({ open, nodeType, node, onClose, onSaved }) {
+/** 绑定练习弹窗（小节：练习库多选，全量替换；练习仅支持绑定到小节） */
+function BindReposModal({ open, node, onClose, onSaved }) {
   const [repos, setRepos] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -235,24 +235,20 @@ function BindReposModal({ open, nodeType, node, onClose, onSaved }) {
     setSelected([]);
     setPage(1); setKeyword('');
     fetchRepos(1, '');
-    const loader = nodeType === 'chapter' ? listChapterRepos : listSectionRepos;
-    loader(node.id).then((res) => setSelected((res?.data || []).map((r) => r.id))).catch(() => {});
+    listSectionRepos(node.id).then((res) => setSelected((res?.data || []).map((r) => r.id))).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, node?.id, nodeType]);
+  }, [open, node?.id]);
 
   const save = () => {
     setSaving(true);
-    const data = nodeType === 'chapter'
-      ? { chapterId: node.id, repoIds: selected }
-      : { sectionId: node.id, repoIds: selected };
-    (nodeType === 'chapter' ? saveChapterRepos : saveSectionRepos)(data)
+    saveSectionRepos({ sectionId: node.id, repoIds: selected })
       .then(() => { message.success('练习绑定已保存'); onClose(); onSaved && onSaved(); })
       .finally(() => setSaving(false));
   };
 
   const columns = [{
     title: '练习名称', dataIndex: 'name',
-    render: (n, r) => <Space><BookOutlined /><Text strong>{n}</Text>{r?.isPractice ? <Tag color="gold">练习</Tag> : null}</Space>,
+    render: (n, r) => <Space><BookOutlined /><Text strong>{n}</Text></Space>,
   }, {
     title: '题量', dataIndex: 'total', width: 80, align: 'center',
     render: (t) => (t || 0),
@@ -260,7 +256,7 @@ function BindReposModal({ open, nodeType, node, onClose, onSaved }) {
 
   return (
     <Modal
-      title={`绑定练习${nodeType === 'chapter' ? '（章节「' + (node?.name || '') + '」）' : '（小节「' + (node?.name || '') + '」）'}`}
+      title={`绑定练习（小节「${node?.name || ''}」）`}
       open={open} onCancel={onClose} width={640} onOk={save} confirmLoading={saving}
       okText="保存（全量替换）"
     >
@@ -380,24 +376,16 @@ export default function ExerciseListPage() {
   const [kpId, setKpId] = useState(initKp);
 
   // ---- 内容状态 ----
-  const [chapterRepos, setChapterRepos] = useState([]);   // 章节直绑练习（含题量）
   const [sectionRepos, setSectionRepos] = useState([]);   // 小节直绑练习
   const [kpQuestions, setKpQuestions] = useState([]);     // 知识点直绑题目
   const [loading, setLoading] = useState(false);
 
   // ---- 弹窗状态 ----
   const [bindOpen, setBindOpen] = useState(false);
-  const [bindTarget, setBindTarget] = useState(null);     // { nodeType: chapter|section, node }
+  const [bindTarget, setBindTarget] = useState(null);     // { node: 小节 }
   const [bindQOpen, setBindQOpen] = useState(false);
   const [bindQKp, setBindQKp] = useState(null);
   const [preview, setPreview] = useState(null);           // { scope, nodeId, nodeName }
-
-  const loadChapterData = useCallback((id) => {
-    if (!id) return;
-    setLoading(true);
-    listChapterRepos(id).then((res) => setChapterRepos(res?.data || []))
-      .catch(() => setChapterRepos([])).finally(() => setLoading(false));
-  }, []);
 
   const loadSectionData = useCallback((id) => {
     if (!id) return;
@@ -442,7 +430,7 @@ export default function ExerciseListPage() {
   const changeSubject = (value) => {
     setSubjectId(value);
     setChapterId(''); setSectionId(''); setKpId('');
-    setChapterRepos([]); setSectionRepos([]); setKnowledgePoints([]); setKpQuestions([]);
+    setSectionRepos([]); setKnowledgePoints([]); setKpQuestions([]);
     setChapters([]);
     setSearchParams({}, { replace: true });
   };
@@ -453,13 +441,12 @@ export default function ExerciseListPage() {
     listChapters({ subjectId }).then((res) => setChapters(res?.data || [])).catch(() => setChapters([]));
   }, [subjectId]);
 
-  // 章节变化 → 载小节 + 章直绑练习
+  // 章节变化 → 载该章节下的小节（练习只在小节层级绑定，章节不再有直绑练习）
   useEffect(() => {
     if (!chapterId) return;
     listSections({ chapterId }).then((res) => setSections(res?.data || [])).catch(() => setSections([]));
-    loadChapterData(chapterId);
     setSearchParams({ chapterId }, { replace: true });
-  }, [chapterId, loadChapterData, setSearchParams]);
+  }, [chapterId, setSearchParams]);
 
   // 小节变化 → 载知识点 + 小节直绑练习
   useEffect(() => {
@@ -497,20 +484,12 @@ export default function ExerciseListPage() {
     setKpQuestions([]);
   };
 
-  // ---- 解绑（练习从当前节点移除；按当前所在层级确定操作对象） ----
+  // ---- 解绑（练习从小节移除；练习只在小节层级绑定） ----
   const unbindRepo = (repo) => {
-    const inChapterScope = !!chapterId && !sectionId;
-    const list = inChapterScope ? chapterRepos : sectionRepos;
-    const remainIds = list.filter((r) => r.id !== repo.id).map((r) => r.id);
-    if (inChapterScope) {
-      saveChapterRepos({ chapterId, repoIds: remainIds })
-        .then(() => { message.success('已解绑'); loadChapterData(chapterId); })
-        .catch(() => message.error('解绑失败'));
-    } else {
-      saveSectionRepos({ sectionId, repoIds: remainIds })
-        .then(() => { message.success('已解绑'); loadSectionData(sectionId); })
-        .catch(() => message.error('解绑失败'));
-    }
+    const remainIds = sectionRepos.filter((r) => r.id !== repo.id).map((r) => r.id);
+    saveSectionRepos({ sectionId, repoIds: remainIds })
+      .then(() => { message.success('已解绑'); loadSectionData(sectionId); })
+      .catch(() => message.error('解绑失败'));
   };
 
   const repoColumns = [
@@ -520,7 +499,6 @@ export default function ExerciseListPage() {
         <Space>
           <BookOutlined style={{ color: '#1677ff' }} />
           <Button type="link" style={{ padding: 0 }} onClick={() => navigate(`/repos/${r.id}`)}>{n}</Button>
-          {r?.isPractice ? <Tag color="gold">练习</Tag> : <Tag color="blue">{r?.mode === 'exam' ? '考试' : '练习'}</Tag>}
         </Space>
       ),
     },
@@ -534,7 +512,7 @@ export default function ExerciseListPage() {
           <Button size="small" icon={<EyeOutlined />}
             onClick={() => setPreview({ scope: 'repo', nodeId: r.id, nodeName: r.name })}>预览题目</Button>
           <Button size="small" type="link" style={{ padding: 0 }} onClick={() => navigate(`/repos/${r.id}`)}>进详情组题</Button>
-          <Popconfirm title={`将练习「${r.name}」从当前节点解绑？`} okText="解绑" cancelText="取消"
+          <Popconfirm title={`将练习「${r.name}」从小节解绑？`} okText="解绑" cancelText="取消"
             onConfirm={() => unbindRepo(r)}>
             <Button size="small" danger type="link" icon={<DeleteOutlined />} style={{ padding: 0 }}>解绑</Button>
           </Popconfirm>
@@ -555,7 +533,7 @@ export default function ExerciseListPage() {
         <Space>
           <Text type="secondary">绑定/解绑也可在知识管理中操作，两处实时一致</Text>
           <Button icon={<ReloadOutlined />}
-            onClick={() => { chapterId && loadChapterData(chapterId); sectionId && loadSectionData(sectionId); kpId && loadKpData(kpId); }}>
+            onClick={() => { sectionId && loadSectionData(sectionId); kpId && loadKpData(kpId); }}>
             刷新
           </Button>
         </Space>
@@ -600,14 +578,11 @@ export default function ExerciseListPage() {
           columns={[
             { title: '章节名称', dataIndex: 'name', render: (n, c) => <Space><ApartmentOutlined style={{ color: '#1677ff' }} /><Text strong>{n}</Text>{c?.grade ? <Tag>{c.grade}{c.term || ''}</Tag> : null}</Space> },
             { title: '小节数', dataIndex: 'sectionCount', width: 100, align: 'center', render: (v) => v || 0 },
-            { title: '直绑练习', dataIndex: 'repoCount', width: 110, align: 'center', render: (v) => (v ? <Tag color="blue">{v} 个</Tag> : <Tag>未绑定</Tag>) },
             {
-              title: '操作', key: 'act', width: 260,
+              title: '操作', key: 'act', width: 200,
               render: (_, c) => (
                 <Space wrap>
                   <Button type="primary" size="small" onClick={() => changeChapter(c.id)}>进入章节</Button>
-                  <Button size="small" icon={<LinkOutlined />}
-                    onClick={() => { setBindTarget({ nodeType: 'chapter', node: c }); setBindOpen(true); }}>绑定练习</Button>
                   <Button size="small" icon={<EyeOutlined />}
                     onClick={() => setPreview({ scope: 'chapter', nodeId: c.id, nodeName: c.name })}>预览刷题</Button>
                 </Space>
@@ -617,32 +592,26 @@ export default function ExerciseListPage() {
         />
       ) : (
         <Spin spinning={loading}>
-          {/* 章节层：直绑练习 + 小节列表 */}
+          {/* 章节层：展示下属小节（练习只在小节上绑定，章节不支持直绑） */}
           {!sectionId && (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '4px 0 8px' }}>
-                <Text strong><ApartmentOutlined /> 章节「{crumbChapter?.name}」直绑练习（{chapterRepos.length}）</Text>
+                <Text strong>
+                  <ApartmentOutlined /> 章节「{crumbChapter?.name}」下属小节（{sections.length}）
+                  <Text type="secondary" style={{ fontWeight: 400, marginLeft: 10, fontSize: 12 }}>
+                    练习仅支持绑定到小节：在下方小节中「进入小节」后绑定
+                  </Text>
+                </Text>
                 <Space>
-                  <Button type="primary" size="small" icon={<LinkOutlined />}
-                    onClick={() => { setBindTarget({ nodeType: 'chapter', node: crumbChapter }); setBindOpen(true); }}>
-                    绑定练习
-                  </Button>
                   <Button size="small" icon={<EyeOutlined />}
                     onClick={() => setPreview({ scope: 'chapter', nodeId: chapterId, nodeName: crumbChapter?.name })}>
-                    预览本章刷题
+                    预览本章刷题（聚合小节）
                   </Button>
                 </Space>
               </div>
-              <Table rowKey="id" size="middle" columns={repoColumns} dataSource={chapterRepos}
-                pagination={false} style={{ marginBottom: 16 }}
-                locale={{ emptyText: <Empty description="本章未绑定练习" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }} />
-
-              <Text strong style={{ display: 'block', marginBottom: 8 }}>
-                <PartitionOutlined /> 下属小节（{sections.length}）
-              </Text>
               <Table
                 rowKey="id" size="middle" dataSource={sections} pagination={false}
-                locale={{ emptyText: <Empty description="本章暂无小节" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+                locale={{ emptyText: <Empty description="本章暂无小节，请先在「小节管理」中创建" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
                 columns={[
                   { title: '小节名称', dataIndex: 'name', render: (n, s) => <Space><Text>{n}</Text>{s?.grade ? <Tag>{s.grade}{s.term || ''}</Tag> : null}</Space> },
                   { title: '绑练习', dataIndex: 'repoCount', width: 90, align: 'center', render: (v) => (v ? <Tag color="blue">{v}</Tag> : '-') },
@@ -669,7 +638,7 @@ export default function ExerciseListPage() {
                 <Text strong><PartitionOutlined /> 小节「{crumbSection?.name}」绑定练习（{sectionRepos.length}）</Text>
                 <Space>
                   <Button type="primary" size="small" icon={<LinkOutlined />}
-                    onClick={() => { setBindTarget({ nodeType: 'section', node: crumbSection }); setBindOpen(true); }}>
+                    onClick={() => { setBindTarget({ node: crumbSection }); setBindOpen(true); }}>
                     绑定练习
                   </Button>
                   <Button size="small" icon={<EyeOutlined />}
@@ -752,10 +721,9 @@ export default function ExerciseListPage() {
       {/* 弹窗区 */}
       <BindReposModal
         open={bindOpen}
-        nodeType={bindTarget?.nodeType}
         node={bindTarget?.node}
         onClose={() => setBindOpen(false)}
-        onSaved={() => { bindTarget?.nodeType === 'chapter' ? loadChapterData(chapterId) : loadSectionData(sectionId); }}
+        onSaved={() => { if (sectionId) loadSectionData(sectionId); }}
       />
       <BindQuestionsModal
         open={bindQOpen} kp={bindQKp}

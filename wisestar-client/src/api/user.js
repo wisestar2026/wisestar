@@ -123,13 +123,13 @@ export async function getUserOverview() {
 }
 
 // ============================================================
-// 分页查询用户列表（管理端：题库分配选学员）
+// 分页查询用户列表（管理端选学员）
 // ============================================================
 // 后端接口: GET /api/user/list
 // 参数: { current, pageSize, name?: 姓名模糊搜索 }
 // 返回: { code: 200, data: { list: [{ id, name, username, phone }], total } }
 // 权限: system:user:list（admin 角色已含）
-// 调用方: RepoAssignPage（题库分配管理页，选择学员）
+// 调用方: 学员管理/督学等管理端页面的学员选择（原练习分配页已下线）
 export async function listUser(params) {
   return request.get('/user/list', { params });
 }

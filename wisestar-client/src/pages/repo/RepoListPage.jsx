@@ -2,9 +2,9 @@
  * RepoListPage.jsx - 练习列表页面
  *
  * 功能:
- *   1. 分页展示练习（名称、类型、题目数、标签、创建时间）
+ *   1. 分页展示练习（名称、学科、年级、题目数、标签、创建时间）
  *   2. 搜索练习名称
- *   3. 创建练习（名称、类型、描述、标签、练习标记）
+ *   3. 创建练习（名称、描述、学科/年级/难度、标签）
  *   4. 编辑练习（属性编辑 + 组题：批量选择题目加入 / 移除题目）
  *   5. 删除练习（级联删除题目）
  *   6. 点击名称进入练习详情
@@ -33,6 +33,7 @@ import {
   BookOutlined, EditOutlined, CheckCircleOutlined,
 } from '@ant-design/icons';
 import { listRepo, createRepo, updateRepo, deleteRepo, unbindTemplate } from '../../api/repo';
+import { listSubjects } from '../../api/knowledge';
 import { listTemplate } from '../../api/template';
 import { usePermission } from '../../utils/usePermission';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
@@ -46,11 +47,9 @@ const TYPE_LABELS = {
   Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
 
-// 练习类型映射
-const MODE_MAP = {
-  survey: { color: 'blue', label: '问卷' },
-  exam: { color: 'red', label: '考试' },
-};
+// 年级选项（与知识管理各页保持一致，一年级 ~ 六年级）
+const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级']
+  .map((g) => ({ label: g, value: g }));
 
 export default function RepoListPage() {
   const { can } = usePermission();
@@ -70,10 +69,26 @@ export default function RepoListPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [editId, setEditId] = useState(null);
 
+  // 学科下拉选项（来源于知识管理学科列表）
+  const [subjectOptions, setSubjectOptions] = useState([]);
+
   // 编辑弹窗内组题（题目管理）
   const [editTemplates, setEditTemplates] = useState([]);   // 当前练习题目列表
   const [editLoading, setEditLoading] = useState(false);    // 题目列表加载
   const [selectOpen, setSelectOpen] = useState(false);      // 批量选择题目弹窗
+
+  // 首次挂载加载学科选项（知识管理维护的学科集合）
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await listSubjects();
+        const list = res.data || [];
+        setSubjectOptions(list.map((s) => ({ label: s.name, value: s.name })));
+      } catch {
+        // 学科下拉加载失败不阻塞练习管理（保持可自由使用输入或留空）
+      }
+    })();
+  }, []);
 
   // ---- 加载练习列表 ----
   // useCallback 依赖 searchName: 名称变化时重建函数；翻页/搜索/删除后复用
@@ -98,7 +113,7 @@ export default function RepoListPage() {
   }, [fetchRepos]);
 
   // ---- 创建/编辑练习 ----
-  // values 为表单提交值: { name, mode, description, tag, shared, isPractice }
+  // values 为表单提交值: { name, description, tag, subject, grade, difficulty }
   // tag 前端为逗号分隔字符串，提交时转换为数组（后端 RepoRequest.tag 为 String[]）
   // 数据流: 弹窗表单 → createRepo / updateRepo → 刷新列表
   const handleSave = async (values) => {
@@ -145,11 +160,8 @@ export default function RepoListPage() {
     setEditId(record.id);
     form.setFieldsValue({
       name: record.name,
-      mode: record.mode,
       description: record.description,
       tag: (record.tag || []).join(','),
-      shared: record.shared,
-      isPractice: record.isPractice,
       subject: record.subject,
       grade: record.grade,
       difficulty: record.difficulty,
@@ -204,15 +216,6 @@ export default function RepoListPage() {
       ),
     },
     {
-      title: '类型',
-      dataIndex: 'mode',
-      width: 80,
-      render: (mode) => {
-        const cfg = MODE_MAP[mode] || { color: 'default', label: mode };
-        return <Tag color={cfg.color}>{cfg.label}</Tag>;
-      },
-    },
-    {
       title: '学科',
       dataIndex: 'subject',
       width: 80,
@@ -250,13 +253,6 @@ export default function RepoListPage() {
         if (!tags || tags.length === 0) return '-';
         return tags.map((t) => <Tag key={t}>{t}</Tag>);
       },
-    },
-    {
-      title: '共享',
-      dataIndex: 'shared',
-      width: 70,
-      align: 'center',
-      render: (val) => <Tag color={val ? 'green' : 'default'}>{val ? '是' : '否'}</Tag>,
     },
     {
       title: '创建时间',
@@ -357,15 +353,6 @@ export default function RepoListPage() {
             <Input placeholder="例如：通用单选练习" />
           </Form.Item>
 
-          <Form.Item name="mode" label="练习类型" initialValue="survey">
-            <Select
-              options={[
-                { label: '调查问卷', value: 'survey' },
-                { label: '在线考试', value: 'exam' },
-              ]}
-            />
-          </Form.Item>
-
           <Form.Item name="description" label="描述">
             <Input.TextArea rows={2} placeholder="练习说明" />
           </Form.Item>
@@ -374,14 +361,24 @@ export default function RepoListPage() {
             <Input placeholder="例如：通用,单选,基础" />
           </Form.Item>
 
-          {/* 学科/年级/难度标签: 与题目管理知识点属性保持一致，
-              供章节/小节绑定练习时按学科/年级/难度识别；均为可选项 */}
+          {/* 学科/年级/难度: 均为非必选下拉，与知识管理/题目管理取值保持一致 */}
           <Form.Item name="subject" label="学科">
-            <Input placeholder="如：数学 / 语文" />
+            <Select
+              allowClear
+              showSearch
+              placeholder="选择学科（可留空）"
+              options={subjectOptions}
+              optionFilterProp="label"
+              notFoundContent="暂无学科选项"
+            />
           </Form.Item>
 
           <Form.Item name="grade" label="年级">
-            <Input placeholder="如：一年级 / 三年级" />
+            <Select
+              allowClear
+              placeholder="选择年级（可留空）"
+              options={GRADE_OPTIONS}
+            />
           </Form.Item>
 
           <Form.Item name="difficulty" label="难度">
@@ -392,29 +389,6 @@ export default function RepoListPage() {
                 { label: '简单', value: 'easy' },
                 { label: '中等', value: 'medium' },
                 { label: '困难', value: 'hard' },
-              ]}
-            />
-          </Form.Item>
-
-          <Form.Item name="shared" label="是否公开" initialValue={false}>
-            <Select
-              options={[
-                { label: '私有', value: false },
-                { label: '公开', value: true },
-              ]}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="isPractice"
-            label="练习练习"
-            extra="开启后该练习可供学员端练习使用"
-            initialValue={false}
-          >
-            <Select
-              options={[
-                { label: '否', value: false },
-                { label: '是', value: true },
               ]}
             />
           </Form.Item>

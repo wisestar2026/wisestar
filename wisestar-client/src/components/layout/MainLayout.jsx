@@ -95,7 +95,6 @@ export default function MainLayout() {
         { key: '/questions', label: '题目管理', required: ['template:list'] },
         { key: '/exercise/list', label: '习题列表', required: ['repo:list'] },
         { key: '/repos', label: '练习列表', required: ['repo:list'] },
-        { key: '/repo-assign', label: '练习分配', required: ['repo:list'] },
         { key: '/practice', label: '在线练习', required: ['exercise:list'] },
         { key: '/wrong-questions', label: '错题管理', required: ['repo:list', 'exercise:list'] },
       ],
@@ -192,9 +191,9 @@ export default function MainLayout() {
   // 从 URL 路径计算选中的 key（让子页面也能高亮对应菜单项）
   // ============================================================
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
-  // 子菜单项 key = 完整路径（如 /repo-assign、/knowledge/chapters）。
+  // 子菜单项 key = 完整路径（如 /knowledge/chapters）。
   // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
-  const SUB_PATH_KEYS = ['/tasks', '/mall/goods', '/students/activity', '/repo-assign', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
+  const SUB_PATH_KEYS = ['/tasks', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)

@@ -143,13 +143,14 @@ public class ChapterApi {
 	}
 
 	/**
-	 * 保存章节-题库绑定（全量替换）。
+	 * 保存章节-题库绑定（已停用）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/chapter/repos
 	 * （如 /api/chapter/repos）。</p>
 	 *
-	 * <p><b>功能</b>：将题库管理（t_repo）中选中的题库整体绑定到章节——
-	 * 先清空旧绑定再写入新绑定（事务内完成）。题库只能来自题库管理，不能在此新增。</p>
+	 * <p><b>功能</b>：练习仅支持绑定到小节，章节不支持直接绑定练习。历史章节绑定数据
+	 * 已展开迁移到其下小节，本接口不再接受写入，一律返回业务错误。前端章节级
+	 * 「绑定练习」入口已移除（绑定入口在小节管理 / 习题列表的小节层级）。</p>
 	 *
 	 * <p><b>请求参数</b>：{@link ChapterRepoRequest}（@RequestBody JSON：
 	 * chapterId + repoIds[]）。</p>
@@ -168,13 +169,13 @@ public class ChapterApi {
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/chapter/repos
 	 * （如 /api/chapter/repos?chapterId=xxx）。</p>
 	 *
-	 * <p><b>功能</b>：返回该章节已绑定的题库（保持绑定顺序），
-	 * 供前端编辑绑定弹窗回显已选题库。</p>
+	 * <p><b>功能</b>：章节不再支持直接绑定题库，表数据已清空，本接口始终返回空列表
+	 * （仅保留供兼容读取）。练习绑定关系请查询小节 /api/section/repos。</p>
 	 *
 	 * <p><b>返回值结构</b>：{@link RepoView} 列表。</p>
 	 *
 	 * @param chapterId 章节ID
-	 * @return 已绑定题库列表
+	 * @return 已绑定题库列表（恒为空）
 	 */
 	@GetMapping("/repos")
 	@PreAuthorize("hasAuthority('knowledge:list')")

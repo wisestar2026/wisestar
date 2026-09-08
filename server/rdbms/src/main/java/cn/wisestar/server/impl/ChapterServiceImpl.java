@@ -1,5 +1,7 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.ErrorCode;
+import cn.wisestar.server.core.exception.ErrorCodeException;
 import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.uitls.ContextHelper;
 import cn.wisestar.server.domain.dto.RepoView;
@@ -49,6 +51,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,9 +71,9 @@ import static org.springframework.util.StringUtils.hasText;
  * ChapterRepoMapper/SectionRepoMapper/RepoMapper（BaseMapper CRUD）、
  * ChapterViewMapper/RepoViewMapper（MapStruct 转换）。</p>
  * <p>【数据流】ChapterApi → ChapterServiceImpl → ChapterMapper（t_chapter）；列表返回时经
- * SectionMapper 统计各章节小节数、经 ChapterRepoMapper 统计已绑定题库数；
- * 章节题库经 t_chapter_repo 关联题库管理（t_repo），全量替换式保存；
- * 删除时级联逻辑删除其下小节/知识点/知识点题目绑定、章节题库绑定与各小节题库绑定。</p>
+ * SectionMapper 统计各章节小节数、经 SectionRepoMapper 统计章节下小节直绑练习去重数
+ * （业务规则：练习仅支持绑定到小节，章节自身不直接绑定练习）；
+ * 删除时级联逻辑删除其下小节/知识点/知识点题目绑定、章节级残留绑定与各小节题库绑定。</p>
  *
  * @author wisestar
  * @date 2026/8/10
@@ -101,7 +104,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 	private final TemplateMapper templateMapper;
 
 	/**
-	 * 章节列表（按学科/年级/学期/版本过滤，sort 升序），并统计各章节下小节数与已绑定题库数。
+	 * 章节列表（按学科/年级/学期/版本过滤，sort 升序），并统计各章节下小节数
+	 * 与练习数（章节自身不再直接绑定练习，练习数 = 该章节下各小节直绑练习的去重数）。
 	 */
 	@Override
 	public List<ChapterView> listChapters(ChapterRequest query) {
@@ -111,16 +115,32 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 				.eq(hasText(query.getTerm()), Chapter::getTerm, query.getTerm())
 				.eq(hasText(query.getVersion()), Chapter::getVersion, query.getVersion())
 				.orderByAsc(Chapter::getSort));
-		// 一次查出相关小节与章节题库绑定，按 chapterId 分组计数，避免逐条 N+1 查询
+		// 一次查出相关小节（含所属章节），按 chapterId 分组统计小节数
 		List<String> chapterIds = chapters.stream().map(Chapter::getId).collect(Collectors.toList());
-		Map<String, Long> sectionCountMap = chapterIds.isEmpty() ? Collections.emptyMap() : sectionMapper.selectList(
-				Wrappers.<Section>lambdaQuery().select(Section::getChapterId)
-						.in(Section::getChapterId, chapterIds)).stream()
+		List<Section> chapterSections = chapterIds.isEmpty() ? Collections.emptyList() : sectionMapper.selectList(
+				Wrappers.<Section>lambdaQuery().select(Section::getId, Section::getChapterId)
+						.in(Section::getChapterId, chapterIds));
+		Map<String, Long> sectionCountMap = chapterSections.stream()
+				.filter(s -> s.getChapterId() != null)
 				.collect(Collectors.groupingBy(Section::getChapterId, Collectors.counting()));
-		Map<String, Long> repoCountMap = chapterIds.isEmpty() ? Collections.emptyMap() : chapterRepoMapper.selectList(
-				Wrappers.<ChapterRepo>lambdaQuery().select(ChapterRepo::getChapterId)
-						.in(ChapterRepo::getChapterId, chapterIds)).stream()
-				.collect(Collectors.groupingBy(ChapterRepo::getChapterId, Collectors.counting()));
+		// 小节 → 章节 归属映射；小节直绑练习按章节去重计数（不再读 t_chapter_repo）
+		Map<String, String> chapterIdBySection = chapterSections.stream()
+				.filter(s -> s.getChapterId() != null)
+				.collect(Collectors.toMap(Section::getId, Section::getChapterId, (a, b) -> a));
+		Map<String, Long> repoCountMap = new HashMap<>();
+		if (!chapterIdBySection.isEmpty()) {
+			Map<String, Set<String>> reposByChapter = new HashMap<>();
+			sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
+							.select(SectionRepo::getSectionId, SectionRepo::getRepoId)
+							.in(SectionRepo::getSectionId, chapterIdBySection.keySet()))
+					.forEach(binding -> {
+						String chapterId = chapterIdBySection.get(binding.getSectionId());
+						if (chapterId != null && binding.getRepoId() != null) {
+							reposByChapter.computeIfAbsent(chapterId, k -> new HashSet<>()).add(binding.getRepoId());
+						}
+					});
+			reposByChapter.forEach((chapterId, repos) -> repoCountMap.put(chapterId, (long) repos.size()));
+		}
 		return chapters.stream().map(chapter -> {
 			ChapterView view = chapterViewMapper.toView(chapter);
 			view.setSectionCount(sectionCountMap.getOrDefault(chapter.getId(), 0L));
@@ -309,25 +329,22 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 	}
 
 	/**
-	 * 保存章节-题库绑定（全量替换：先清空旧绑定，再批量写入新绑定，事务内完成）。
+	 * 保存章节-题库绑定（已停用）。
+	 *
+	 * <p>业务规则：练习仅支持绑定到小节，章节不再作为练习的绑定对象。
+	 * 已迁移的历史章节绑定（t_chapter_repo 存量数据）已展开写入其下小节。
+	 * 本接口调用一律拒绝，前端不再暴露章节级「绑定练习」入口。</p>
 	 */
 	@Override
 	public void saveRepos(ChapterRepoRequest request) {
-		chapterRepoMapper.delete(Wrappers.<ChapterRepo>lambdaQuery()
-				.eq(ChapterRepo::getChapterId, request.getChapterId()));
-		if (CollectionUtils.isEmpty(request.getRepoIds())) {
-			return;
-		}
-		request.getRepoIds().stream().filter(Objects::nonNull).distinct().forEach(repoId -> {
-			ChapterRepo binding = new ChapterRepo();
-			binding.setChapterId(request.getChapterId());
-			binding.setRepoId(repoId);
-			chapterRepoMapper.insert(binding);
-		});
+		throw new ErrorCodeException(ErrorCode.ValidationError,
+				"练习仅支持绑定到小节，章节不能直接绑定练习。请在「小节管理 / 习题列表」中为章节下的小节绑定练习。");
 	}
 
 	/**
-	 * 查询章节已绑定的题库列表（题库管理 t_repo 数据，保持绑定顺序）。
+	 * 查询章节已绑定的题库列表（已停用，恒为空）。
+	 *
+	 * <p>章节不再支持直接绑定题库（历史数据已迁移到小节），本方法仅保留兼容读取。</p>
 	 */
 	@Override
 	public List<RepoView> listRepos(String chapterId) {

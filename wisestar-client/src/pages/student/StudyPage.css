@@ -97,7 +97,7 @@
   overflow: hidden;
   transition: max-height 0.4s ease;
 }
-.study-kp-list.open { max-height: 400px; }
+.study-kp-list.open { max-height: none; }
 .study-kp {
   display: flex;
   align-items: center;

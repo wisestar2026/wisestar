@@ -178,7 +178,9 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     @Override
     public PaginationResponse<RepoView> listRepo(RepoQuery query) {
         Page<Repo> page = pageByQuery(query,
-                Wrappers.<Repo>lambdaQuery().like(isNotBlank(query.getName()), Repo::getName, query.getName())
+                Wrappers.<Repo>lambdaQuery()
+                        .eq(StringUtils.hasText(query.getId()), Repo::getId, query.getId())
+                        .like(isNotBlank(query.getName()), Repo::getName, query.getName())
                         .eq(StringUtils.hasText(query.getCategory()), Repo::getCategory, query.getCategory())
                         .and(x -> x.eq(Repo::getCreateBy, SecurityContextUtils.getUserId())
                                 .or(y -> y.eq(Repo::getShared, true)))
@@ -357,6 +359,10 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      * <p>仅更新题目归属字段 repoId，不改动题目内容（名称/题型/答案/解析等）。
      * 已在目标题库的题目（repoId 已等于目标值）自动跳过，保证幂等。</p>
      *
+     * <p>注意：跳过条件必须写成 <code>repo_id IS NULL OR repo_id &lt;&gt; 目标</code>——
+     * 若只写 <code>repo_id &lt;&gt; 目标</code>，SQL 三值逻辑会把 repo_id 为 NULL
+     * （尚未绑定任何题库）的题目一并排除，导致题目管理中的新题目永远绑定不进来。</p>
+     *
      * @param request 含 repoId（目标题库 id）+ ids（题目 ID 列表）
      * @implNote 被 RepoController.bindTemplates 调用，供题库详情页"批量选择题目"使用。
      */
@@ -367,7 +373,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         }
         templateService.lambdaUpdate()
                 .in(Template::getId, request.getIds())
-                .ne(Template::getRepoId, request.getRepoId())
+                .and(w -> w.isNull(Template::getRepoId).or().ne(Template::getRepoId, request.getRepoId()))
                 .set(Template::getRepoId, request.getRepoId())
                 .update();
     }

@@ -141,11 +141,12 @@ public interface StudentService {
 	 * 学员端练习/试炼题目（剥离标准答案，防作弊）。
 	 *
 	 * <p>题目来源二选一：sectionId → 小节绑定题库题目；knowledgePointId → 知识点绑定题目。
-	 * 按题型/难度过滤，count 限制返回数量。</p>
+	 * 按题型/难度过滤。count 为空时返回全部命中题目（专项练习/小节通关覆盖绑定题库全部题）；
+	 * 显式传 count（消灭错题等场景）时按指定数量返回（上限 50）。</p>
 	 *
 	 * @param sectionId        小节ID（小节练习数据源）
 	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
-	 * @param count            返回题目数量（默认 10，上限 50）
+	 * @param count            返回题目数量（为空=全部，上限 50）
 	 * @param types            题型过滤（可选）
 	 * @param difficulty       难度过滤（可选）
 	 * @return 题目列表（不含答案）；无数据返回空列表

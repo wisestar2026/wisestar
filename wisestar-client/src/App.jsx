@@ -46,7 +46,6 @@ import RegisterPage from './pages/login/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import RepoListPage from './pages/repo/RepoListPage';
 import RepoDetailPage from './pages/repo/RepoDetailPage';
-import RepoAssignPage from './pages/repo/RepoAssignPage';
 import QuestionListPage from './pages/question/QuestionListPage';
 import PracticeHomePage from './pages/practice/PracticeHomePage';
 import PracticeSessionPage from './pages/practice/PracticeSessionPage';
@@ -160,14 +159,6 @@ export default function App() {
               path="/repos/:id"
               element={
                 <AuthGuard required={['repo:detail']}><RepoDetailPage /></AuthGuard>
-              }
-            />
-
-            {/* 题库分配（老师给学员分配练习题库） */}
-            <Route
-              path="/repo-assign"
-              element={
-                <AuthGuard required={['repo:list', 'repo:update']}><RepoAssignPage /></AuthGuard>
               }
             />
 

@@ -287,6 +287,12 @@ public class SurveySchema implements Serializable {
 		private Double examScore;
 
 		/**
+		 * 多项填空每空分值（练习内设置；顺序对应 examCorrectAnswer 的 | 分隔空位；
+		 * 未配置时判分兜底为 整题分 ÷ 空位数）
+		 */
+		private List<Double> examBlankScores;
+
+		/**
 		 * 计分方式
 		 */
 		private ExamScoreMode examAnswerMode;

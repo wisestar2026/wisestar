@@ -51,8 +51,12 @@ import java.util.stream.Collectors;
  *
  * <p><b>判分与计分约定</b>（与前端 practiceHelpers 一致）：</p>
  * - 每题分值 = attribute.examScore，无则 1 分；
- * - 答对得分 = 题分；答错/未作答 = 0 分；无标准答案 = 不计分也不当错题；
- * - total_score = 全部题分值之和；score = 答对题分值之和；correct_count = 判对题数。
+ * - 单项填空/多项填空：有标准答案时逐空判分（attribute.examBlankScores 为空时按
+ *   整题分 ÷ 空位数 均摊），按正确空位分值累加计分（部分给分）；其余题型整题判分：
+ *   答对得分 = 题分；答错/未作答 = 0 分；无标准答案 = 不计分也不当错题；
+ * - is_correct=1 仅表示该题全对（填空中每空均正确）；
+ * - total_score = 全部题分值之和；score = 各题得分之和（含填空部分分）；
+ *   correct_count = 判对（全对）题数。
  *
  * <p><b>健壮性</b>：某题回源失败/判分异常时跳过该题不阻断整单落库（练习记录是学习数据底座，
  * 不能因单题异常丢失整次练习）。</p>
@@ -124,19 +128,48 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 				continue;
 			}
 			SurveySchema schema = template.getTemplate();
-			Integer correct;
-			try {
-				correct = AnswerJudgeUtil.evaluate(schema, item.getAnswer());
-			} catch (Exception e) {
-				log.warn("practice submit: judge question {} failed, skipped", item.getQuestionId(), e);
-				continue;
-			}
 			// 每题分值：attribute.examScore，无则 1 分
 			double point = schema.getAttribute() != null && schema.getAttribute().getExamScore() != null
 					? schema.getAttribute().getExamScore() : 1;
 			totalScore += point;
+
+			// 计分：填空类题（有标准答案时）按逐空判分累加每空分值，实现部分给分；
+			// 其余题型维持整题判分（答对得整题分，否则 0 分）
+			double earned = 0;
+			Integer correct;
+			try {
+				int[] blankResult = AnswerJudgeUtil.evaluateBlanks(schema, item.getAnswer());
+				if (blankResult.length > 1) {
+					int totalBlanks = blankResult[0];
+					List<Double> blankScores = schema.getAttribute() == null ? null
+							: schema.getAttribute().getExamBlankScores();
+					boolean perBlankConfigured = blankScores != null && blankScores.size() == totalBlanks;
+					boolean allCorrect = true;
+					for (int i = 1; i < blankResult.length; i++) {
+						if (blankResult[i] != 1) {
+							allCorrect = false;
+							continue;
+						}
+						double blankPoint = perBlankConfigured
+								? (blankScores.get(i - 1) == null ? 0 : blankScores.get(i - 1))
+								: Math.round(point / totalBlanks * 100) / 100.0;
+						earned += blankPoint;
+					}
+					// 兜底防御：得分不超过该题整题分（避免均摊/配置导致的小数溢出）
+					earned = Math.min(earned, point);
+					correct = allCorrect ? 1 : 0;
+				} else {
+					correct = AnswerJudgeUtil.evaluate(schema, item.getAnswer());
+					if (Integer.valueOf(1).equals(correct)) {
+						earned = point;
+					}
+				}
+			} catch (Exception e) {
+				log.warn("practice submit: judge question {} failed, skipped", item.getQuestionId(), e);
+				continue;
+			}
+			score += earned;
 			if (Integer.valueOf(1).equals(correct)) {
-				score += point;
 				correctCount++;
 			}
 
@@ -145,7 +178,7 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 			detail.setQuestionType(template.getQuestionType() == null ? null : template.getQuestionType().name());
 			detail.setUserAnswer(AnswerJudgeUtil.formatAnswer(schema, item.getAnswer()));
 			detail.setIsCorrect(correct);
-			detail.setScore(Integer.valueOf(1).equals(correct) ? point : 0);
+			detail.setScore(Math.round(earned * 100) / 100.0);
 			details.add(detail);
 		}
 

@@ -42,13 +42,17 @@
 - 数据库：种子脚本 `init-h2.sql`/`init-mysql.sql` 幂等（`CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` + `INSERT ... WHERE NOT EXISTS` + 内置角色 `UPDATE` 收敛）；新增表需同时改 h2+mysql
 - 权限点/内置角色变更：`PermissionConsts`（shared）+ 两个 SQL 种子同步，重启后旧库自动收敛
 - 学员端内容接口按订单权限过滤（`t_student_permission` expire_at>NOW）；题目默认剥答案防作弊（studyQuestions `exposeAnswer` 参数控制）
+- 练习绑定规则：练习**仅支持绑定到小节**，章节不支持直绑（前端入口已删、后端 POST /api/chapter/repos 抛 4005、GET 恒空）；存量 t_chapter_repo 已迁移到其下小节（t_chapter_repo=0、t_section_repo=11，样例练习绑到「万以上数的认识」11 小节）。章节列表 repoCount 口径 = 该章节下小节直绑练习的去重 repo 数。
+- 学员学习页章下小节数量超过 9 被裁剪的根因是 CSS 非接口：StudyPage.css `.study-kp-list.open` 原 `max-height:400px;overflow:hidden` 恰 9 行，已改 `max-height:none`（study 接口本就全量返回，无 limit）。
+- 学员端做题页 KnowledgePage：`study/questions` 的 count 参数不传=返回绑定内容全部题（专项练习湾/小节通关应覆盖整卷；错题消灭等显式传 count 仍生效，上限 50）；多项填空(MultipleBlank)按 schema.children 空位数渲染 N 个输入框（勿落入选项渲染），答案按空位以 `|` 拼接判分。
+- 回归演示数据：题库 `9900000000000000009`（演示·单选多选回归，2 题 Radio/Checkbox）已绑到小节 2096157155131441153，供单选/多选回归肉眼验收；不想要时可由题库管理删除并解绑。
 
 ## 3. git
 
 - **主线：`main`（76 提交，root `762e10d` → `429139f`）**；origin = `https://github.com/wisestar2026/wisestar.git`（HTTPS，公网可直连）
 - 原功能分支 `260810-feat-knowledge-mgmt-backend` 已 ff 并入 main 并删除（本地+远端）；仓库无子模块
 - 开发规范：新功能先在 main 上开 `YYMMDD-feat-xxx` 分支，完成 commit+push 后合回 main（参考 docs/开发维护日志.md 3.1）
-- 最近推送：`aaacf08`（2026-09-05，仓库布局记忆）；工作区干净；本阶段"分支整合+清理"任务已全部收尾，可开启新开发任务
+- 最近推送：`aaacf08`（2026-09-05，仓库布局记忆）；本阶段"分支整合+清理"已收尾；当前工作区含未提交改动（章节绑练习停用 + 学员小节 9 上限 CSS 修复，前后端代码已改、后端 fat jar 已重打并在 1991 preview 运行验证，改动未提交）
 - 注意：`.gitignore` 已补 `*.mv.db` 与 `/application.properties`，勿再将 H2 运行库/生成文件入库
 
 ## 4. 验证脚本（/tmp/opencode/）

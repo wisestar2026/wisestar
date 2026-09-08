@@ -4,10 +4,8 @@
  * 接口（后端 KnowledgePointApi 等 4 个 Controller，前缀 /api）:
  *   学科:   GET  /subject/list         学科列表（含章节数）
  *           POST /subject/create|update|delete
- *   章节:   GET  /chapter/list         章节列表（?subjectId=，含小节数/题库数）
+ *   章节:   GET  /chapter/list         章节列表（?subjectId=，含小节数）
  *           POST /chapter/create|update|delete
- *           GET  /chapter/repos?chapterId=    已绑定题库列表
- *           POST /chapter/repos               保存题库绑定（全量替换）
  *   小节:   GET  /section/list         小节列表（?chapterId=，含知识点数/题库数）
  *           POST /section/create|update|delete
  *           GET  /section/repos?sectionId=   已绑定题库列表
@@ -18,12 +16,13 @@
  *           POST /knowledge-point/questions                    保存题目绑定（全量替换）
  *
  * 数据层级: 学科 → 章节 → 小节 → 知识点
- * 题目来源: 章节/小节绑定题库（t_repo，/api/repo/list）；知识点绑定题目来自题目库（t_template，
- *           /api/template/list），不能在此新增
+ * 题目来源: 小节绑定题库（t_repo，/api/repo/list）；知识点绑定题目来自题目库（t_template，
+ *           /api/template/list），不能在此新增。
+ * 绑定规则: 练习仅支持绑定到小节，章节不支持直接绑定练习（章节只作为小节的分组维度）。
  *
  * 调用方:
  *   - ChapterManagePage       : listSubjects / listChapters + 章节 CRUD
- *                               + 章节题库绑定 + 章节小节查看（数据来自小节管理）
+ *                               + 章节小节查看（数据来自小节管理）
  *   - SectionManagePage       : listSubjects / listChapters / listSections + 小节 CRUD
  *                               + 小节题库绑定 + 小节知识点查看
  *   - KnowledgePointManagePage: 三级下拉 + 知识点分页/CRUD + 题目绑定
@@ -108,33 +107,12 @@ export async function updateChapter(data) {
 }
 
 /**
- * 删除章节（级联逻辑删除其下小节/知识点/题目绑定/题库绑定）
+ * 删除章节（级联逻辑删除其下小节/知识点/题目绑定）
  * 后端接口: POST /api/chapter/delete
  * @param {Object} data - { id }
  */
 export async function deleteChapter(data) {
   return request.post('/chapter/delete', data);
-}
-
-/**
- * 保存章节-题库绑定（全量替换：传完整 repoIds，先清空旧绑定再写入）
- * 后端接口: POST /api/chapter/repos
- * @param {Object} data - { chapterId, repoIds: [题库ID] }
- * 调用方: ChapterManagePage 绑定题库弹窗保存
- */
-export async function saveChapterRepos(data) {
-  return request.post('/chapter/repos', data);
-}
-
-/**
- * 查询章节已绑定的题库列表（保持绑定顺序）
- * 后端接口: GET /api/chapter/repos
- * @param {String} chapterId - 章节ID
- * @returns {Object} data: [RepoView, ...]  { id, name, description, tag, subject, grade, difficulty, ... }
- * 调用方: ChapterManagePage 绑定题库弹窗回显
- */
-export async function listChapterRepos(chapterId) {
-  return request.get('/chapter/repos', { params: { chapterId } });
 }
 
 // ============================================================

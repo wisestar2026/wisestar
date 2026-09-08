@@ -131,6 +131,86 @@ public final class AnswerJudgeUtil {
 	}
 
 	/**
+	 * 填空类题目（单项填空/多项填空）逐空判分。
+	 *
+	 * <p><b>语义</b>：多项填空允许多个空位部分正确，返回每个空位的命中标记（1=对 / 0=错），
+	 * 供练习计分按"空位分值"累加（全对时与 evaluate=1 等价）。</p>
+	 *
+	 * <p><b>空位定义</b>：题目标准答案 examCorrectAnswer 以 {@code |} 分隔各空答案；
+	 * 单项填空无分隔符视为单空。学生答案同样按 {@code |} 拆空。</p>
+	 *
+	 * @param question      题目 schema
+	 * @param studentAnswer 前端提交的学生答案 Map
+	 * @return int[]：下标 0 = 空位总数（0 表示非填空题型 / 无标准答案 / 不可计分），
+	 *         下标 1..n = 各空位命中标记（1 正确 / 0 错误）；未作答时全部为 0 但总数保留
+	 */
+	public static int[] evaluateBlanks(SurveySchema question, Map<String, Object> studentAnswer) {
+		if (question == null || question.getAttribute() == null) {
+			return new int[] { 0 };
+		}
+		SurveySchema.QuestionType type = question.getType();
+		if (type != SurveySchema.QuestionType.FillBlank
+				&& type != SurveySchema.QuestionType.MultipleBlank) {
+			return new int[] { 0 };
+		}
+		List<String> correctAnswers = extractCorrectAnswers(question);
+		int total = correctAnswers == null ? 0 : countBlanks(correctAnswers);
+		if (total == 0) {
+			return new int[] { 0 };
+		}
+		int[] result = new int[total + 1];
+		result[0] = total;
+		String student = formatAnswer(question, studentAnswer);
+		if (student == null || student.trim().isEmpty()) {
+			return result; // 未作答：全部空位标记 0
+		}
+		String[] studentBlanks = student.split("\\|");
+		if (studentBlanks.length != total) {
+			// 空位数不一致：尝试整体等值兜底（兼容单空直答）
+			for (String correct : correctAnswers) {
+				if (correct != null && correct.trim().equals(student.trim())) {
+					result[1] = 1;
+					return result;
+				}
+			}
+			return result; // 空位数不一致且整体不等值：不得分
+		}
+		for (String correct : correctAnswers) {
+			if (correct == null) {
+				continue;
+			}
+			String[] correctBlanks = correct.split("\\|");
+			if (correctBlanks.length != total) {
+				continue;
+			}
+			for (int i = 0; i < total; i++) {
+				if (correctBlanks[i].trim().equals(studentBlanks[i].trim())) {
+					result[i + 1] = 1;
+				}
+			}
+			return result;
+		}
+		return result;
+	}
+
+	/**
+	 * 统计标准答案中的最大空位数（{@code |} 分隔的段数；无分隔为 1）。
+	 */
+	private static int countBlanks(List<String> correctAnswers) {
+		int max = 0;
+		for (String correct : correctAnswers) {
+			if (correct == null) {
+				continue;
+			}
+			int n = correct.split("\\|", -1).length;
+			if (n > max) {
+				max = n;
+			}
+		}
+		return max;
+	}
+
+	/**
 	 * 把前端答案 Map 格式化为可比较/可展示的文本。
 	 *
 	 * <p><b>映射规则</b>：</p>
