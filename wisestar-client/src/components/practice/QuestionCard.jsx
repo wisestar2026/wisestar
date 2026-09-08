@@ -220,18 +220,28 @@ export default function QuestionCard({
 
       {(qtype === 'MultipleBlank') && (
         <div>
-          {Array.from({ length: blankCount }).map((_, i) => (
-            <div key={i} style={{ marginBottom: 12 }}>
-              <Input
-                size="large"
-                prefix={<span style={{ color: '#999', fontSize: 13 }}>空位 {i + 1}</span>}
-                placeholder={`请输入第 ${i + 1} 个空位的答案`}
-                value={blankValues[i] || ''}
-                onChange={(e) => handleBlankChange(i, e.target.value)}
-                disabled={locked}
-              />
-            </div>
-          ))}
+          {Array.from({ length: blankCount }).map((_, i) => {
+            // 判题后逐空命中标记（1 对 / 0 错 / undefined 未判）
+            const hit = locked ? result?.blankHits?.[i] : undefined;
+            const inputStyle = hit === 1
+              ? { borderColor: '#52c41a', background: '#f6ffed' }
+              : hit === 0
+                ? { borderColor: '#ff4d4f', background: '#fff2f0' }
+                : undefined;
+            return (
+              <div key={i} style={{ marginBottom: 12 }}>
+                <Input
+                  size="large"
+                  style={inputStyle}
+                  prefix={<span style={{ color: '#999', fontSize: 13 }}>空位 {i + 1}</span>}
+                  placeholder={`请输入第 ${i + 1} 个空位的答案`}
+                  value={blankValues[i] || ''}
+                  onChange={(e) => handleBlankChange(i, e.target.value)}
+                  disabled={locked}
+                />
+              </div>
+            );
+          })}
           <Text type="secondary" style={{ fontSize: 12 }}>
             按题目空位顺序作答，全部空位填写后提交判分
           </Text>
@@ -275,42 +285,52 @@ export default function QuestionCard({
       )}
 
       {/* ---- 判题反馈区（确认后显示） ---- */}
-      {judgeMode && result && (
-        <div
-          style={{
-            marginTop: 20, padding: '14px 18px', borderRadius: 8,
-            background: result.correct === 1 ? '#f6ffed' : result.correct === 0 ? '#fff2f0' : '#fafafa',
-            border: `1px solid ${result.correct === 1 ? '#b7eb8f' : result.correct === 0 ? '#ffa39e' : '#e8e8e8'}`,
-          }}
-        >
-          <Space style={{ marginBottom: result.correctAnswers.length ? 8 : 0 }}>
-            {result.correct === 1 ? (
-              <Text strong style={{ color: '#52c41a', fontSize: 15 }}>
-                <CheckCircleOutlined /> 回答正确
-              </Text>
-            ) : result.correct === 0 ? (
-              <Text strong style={{ color: '#ff4d4f', fontSize: 15 }}>
-                <CloseCircleOutlined /> 回答错误
-              </Text>
-            ) : (
-              <Text strong style={{ color: '#faad14', fontSize: 15 }}>未判分（无标准答案）</Text>
+      {judgeMode && result && (() => {
+        // 多空填空部分命中（答对 ≥1 空但未全对）单独呈现为"部分正确"
+        const hitCount = result.blankTotal
+          ? (result.blankHits || []).filter((h) => h === 1).length : 0;
+        const partial = result.correct === 0 && result.blankTotal > 0 && hitCount > 0;
+        return (
+          <div
+            style={{
+              marginTop: 20, padding: '14px 18px', borderRadius: 8,
+              background: result.correct === 1 ? '#f6ffed' : partial ? '#fffbe6' : result.correct === 0 ? '#fff2f0' : '#fafafa',
+              border: `1px solid ${result.correct === 1 ? '#b7eb8f' : partial ? '#ffe58f' : result.correct === 0 ? '#ffa39e' : '#e8e8e8'}`,
+            }}
+          >
+            <Space style={{ marginBottom: result.correctAnswers.length ? 8 : 0 }}>
+              {result.correct === 1 ? (
+                <Text strong style={{ color: '#52c41a', fontSize: 15 }}>
+                  <CheckCircleOutlined /> 回答正确
+                </Text>
+              ) : partial ? (
+                <Text strong style={{ color: '#fa8c16', fontSize: 15 }}>
+                  部分正确：答对 {hitCount}/{result.blankTotal} 空，本题得分 {result.earnedScore ?? 0} 分
+                </Text>
+              ) : result.correct === 0 ? (
+                <Text strong style={{ color: '#ff4d4f', fontSize: 15 }}>
+                  <CloseCircleOutlined /> 回答错误
+                </Text>
+              ) : (
+                <Text strong style={{ color: '#faad14', fontSize: 15 }}>未判分（无标准答案）</Text>
+              )}
+            </Space>
+            {(partial || result.correct === 0) && result.correctAnswers.length > 0 && (
+              <div style={{ marginBottom: 8 }}>
+                <Text type="secondary">正确答案：</Text>
+                <Text strong style={{ color: '#52c41a' }}>
+                  {formatCorrectAnswers(qtype, result.correctAnswers)}
+                </Text>
+              </div>
             )}
-          </Space>
-          {result.correct === 0 && result.correctAnswers.length > 0 && (
-            <div style={{ marginBottom: 8 }}>
-              <Text type="secondary">正确答案：</Text>
-              <Text strong style={{ color: '#52c41a' }}>
-                {formatCorrectAnswers(qtype, result.correctAnswers)}
-              </Text>
-            </div>
-          )}
-          {attr.examAnalysis && (
-            <Paragraph style={{ margin: 0, color: '#666' }}>
-              <Text strong>解析：</Text>{attr.examAnalysis}
-            </Paragraph>
-          )}
-        </div>
-      )}
+            {attr.examAnalysis && (
+              <Paragraph style={{ margin: 0, color: '#666' }}>
+                <Text strong>解析：</Text>{attr.examAnalysis}
+              </Paragraph>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ---- 操作提示 ---- */}
       {judgeMode && !result && (

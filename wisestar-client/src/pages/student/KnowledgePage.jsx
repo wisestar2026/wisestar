@@ -20,6 +20,26 @@ import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/stu
 import { submitPractice, saveWrongReason } from '../../api/practice';
 import './KnowledgePage.css';
 
+// 填空比较归一化（与后端 AnswerJudgeUtil / utils/practiceHelpers 对齐）:
+// 全角空格/零宽字符/全角字母数字符号（含 ＜＞＝）转半角、连续空白折叠、去首尾
+function normBlank(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF]/g, ' ')
+    .replace(/[\u200B\u200C\u200D]/g, '')
+    .replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function blankEq(a, b) {
+  const na = normBlank(a);
+  const nb = normBlank(b);
+  if (na === nb) return true;
+  // 纯 ASCII 字母串（如选项字母 A/B/C）忽略大小写
+  if (/^[A-Za-z]+$/.test(na) && /^[A-Za-z]+$/.test(nb)) return na.toLowerCase() === nb.toLowerCase();
+  return false;
+}
+
 // 四种模式 tab 配置
 // 预习讲解内容（按知识点生成 mock 要点）
 export default function KnowledgePage() {
@@ -121,6 +141,8 @@ export default function KnowledgePage() {
   }
 
   // 真实模式：试炼本地即时判分（题目带答案，比对选项文本）
+  // 填空类（单项/多项填空）标准答案含 | 分隔多空时逐空判分（每空独立归一化比较），
+  // 返回 blankTotal/blankHits 供"答对部分空也给分"的展示与统计
   const realJudge = (q) => {
     const schema = q.schema || {};
     const answerText = schema.attribute?.examCorrectAnswer;
@@ -128,6 +150,34 @@ export default function KnowledgePage() {
     const correctAnswers = answerText.split('\n').map((x) => x.trim()).filter(Boolean);
     const picked = realAnswers[q.id];
     if (!picked) return null;
+
+    // ---- 填空多空：逐空判分 ----
+    const blankish = q.questionType === 'MultipleBlank' || q.questionType === 'FillBlank';
+    const joined = blankish ? correctAnswers.find((a) => a.includes('|')) : null;
+    if (joined) {
+      const stdBlanks = joined.split('|');
+      const total = stdBlanks.length;
+      const studentText = picked.type === 'text' ? String(picked.text || '') : '';
+      const stuBlanks = studentText.trim() ? studentText.split('|') : [];
+      const hits = Array(total).fill(0);
+      if (stuBlanks.length === total) {
+        for (let i = 0; i < total; i++) {
+          if (blankEq(stdBlanks[i], stuBlanks[i])) hits[i] = 1;
+        }
+      } else if (studentText.trim() && correctAnswers.some((ca) => blankEq(ca, studentText))) {
+        hits.fill(1);
+      }
+      const hitCount = hits.filter((h) => h === 1).length;
+      return {
+        correct: hitCount === total ? 1 : 0,
+        answer: answerText,
+        blankTotal: total,
+        blankHits: hits,
+        blankRight: hitCount,
+      };
+    }
+
+    // ---- 选择题 / 单空文本：归一化集合比对 ----
     const options = questionOptions(q);
     const titleOf = (id) => options.find((o) => o.id === id)?.title;
     const mine = picked.type === 'option'
@@ -135,21 +185,31 @@ export default function KnowledgePage() {
       : picked.type === 'options'
         ? (picked.optionIds || []).map(titleOf)
         : [picked.text || ''];
-    const mineSet = new Set(mine.map((x) => String(x).trim()));
+    const mineSet = new Set(mine.map((x) => normBlank(String(x))).filter(Boolean));
     // 标准答案归一化：支持 选项文本 / 选项字母(A/B/C…) / 选项序号(1/2/3…)
     const LETTERS = 'ABCDEFGHIJ';
     const answerSet = new Set();
     correctAnswers.forEach((ans) => {
-      const direct = options.find((o) => String(o.title || '').trim() === ans);
-      if (direct) { answerSet.add(String(direct.title).trim()); return; }
+      const direct = options.find((o) => normBlank(String(o.title || '')) === normBlank(ans));
+      if (direct) { answerSet.add(normBlank(String(direct.title))); return; }
       const li = LETTERS.indexOf(ans.trim().toUpperCase());
-      if (li >= 0 && options[li]) { answerSet.add(String(options[li].title || '').trim()); return; }
+      if (li >= 0 && options[li]) { answerSet.add(normBlank(String(options[li].title || ''))); return; }
       const ni = parseInt(ans.trim(), 10) - 1;
-      if (!Number.isNaN(ni) && options[ni]) { answerSet.add(String(options[ni].title || '').trim()); return; }
-      answerSet.add(ans);
+      if (!Number.isNaN(ni) && options[ni]) { answerSet.add(normBlank(String(options[ni].title || ''))); return; }
+      answerSet.add(normBlank(ans));
     });
-    const isRight = mineSet.size === answerSet.size && [...mineSet].every((x) => answerSet.has(x));
-    return { correct: isRight ? 1 : 0, answer: answerText };
+    const isRight = mineSet.size > 0 && mineSet.size === answerSet.size && [...mineSet].every((x) => answerSet.has(x));
+    return { correct: isRight ? 1 : 0, answer: answerText, blankTotal: 0 };
+  };
+
+  // 标准答案展示文本：多项填空按空位分行（空1: …；空2: …），其余原样
+  const answerDisplayOf = (judge) => {
+    if (!judge) return '—';
+    if (judge.blankTotal > 1 && judge.answer) {
+      const parts = String(judge.answer).split('|');
+      return parts.map((p, i) => `空${i + 1}: ${p.trim()}`).join('；');
+    }
+    return judge.answer;
   };
 
   // 本地判分统计（与后端判分对齐后展示一致）
@@ -257,7 +317,7 @@ export default function KnowledgePage() {
                     <b>你的答案：</b><span style={{ color: '#c62828' }}>{answerTextOf(q)}</span>
                   </div>
                   <div style={{ fontSize: 13, marginBottom: 4 }}>
-                    <b>正确答案：</b><span style={{ color: '#2e7d32' }}>{judge ? judge.answer : '—'}</span>
+                    <b>正确答案：</b><span style={{ color: '#2e7d32' }}>{answerDisplayOf(judge)}</span>
                   </div>
                   {analysis && (
                     <div style={{ fontSize: 13, marginBottom: 6, padding: 8, background: '#fffbe6', borderRadius: 6 }}>
@@ -372,16 +432,25 @@ export default function KnowledgePage() {
                           return (
                             <div>
                               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                {Array.from({ length: blankCount }).map((_, idx) => (
-                                  <Input
-                                    key={idx}
-                                    placeholder={`空${idx + 1}`}
-                                    disabled={showResult}
-                                    value={texts[idx] || ''}
-                                    onChange={(e) => realInput(question, idx, e.target.value)}
-                                    style={{ width: isMultiBlank ? 170 : 140, fontSize: 15, padding: '8px 10px' }}
-                                  />
-                                ))}
+                                {Array.from({ length: blankCount }).map((_, idx) => {
+                                  // 判题后按逐空命中标色（1 绿 / 0 红），未判或未命中映射不标
+                                  const hit = showResult ? (judge?.blankHits || [])[idx] : undefined;
+                                  const inputStyle = hit === 1
+                                    ? { borderColor: '#4caf50', background: '#e8f5e9' }
+                                    : hit === 0
+                                      ? { borderColor: '#ef5350', background: '#ffebee' }
+                                      : undefined;
+                                  return (
+                                    <Input
+                                      key={idx}
+                                      placeholder={`空${idx + 1}`}
+                                      disabled={showResult}
+                                      style={{ width: isMultiBlank ? 170 : 140, fontSize: 15, padding: '8px 10px', ...inputStyle }}
+                                      value={texts[idx] || ''}
+                                      onChange={(e) => realInput(question, idx, e.target.value)}
+                                    />
+                                  );
+                                })}
                               </div>
                               {isMultiBlank && (
                                 <div style={{ marginTop: 8, fontSize: 12, color: '#90a4ae' }}>
@@ -408,11 +477,25 @@ export default function KnowledgePage() {
                         {/* 答案与解析 */}
                         {showResult && (
                           <div style={{ marginTop: 12, fontSize: 13 }}>
-                            {correct === 1 ? (
-                              <div style={{ color: '#2e7d32', fontWeight: 600 }}>✅ 回答正确</div>
-                            ) : (
-                              <div style={{ color: '#c62828', fontWeight: 600 }}>❌ 回答错误 · 标准答案：{judge.answer}</div>
-                            )}
+                            {(() => {
+                              if (correct !== 1 && judge?.blankTotal > 1 && (judge.blankRight || 0) > 0) {
+                                // 多项填空部分命中：橙色提示答对空数，不再一律红叉
+                                return (
+                                  <div>
+                                    <div style={{ color: '#e65100', fontWeight: 600 }}>
+                                      ⚠️ 部分正确：答对 {judge.blankRight}/{judge.blankTotal} 空
+                                    </div>
+                                    <div style={{ color: '#2e7d32', marginTop: 4 }}>
+                                      标准答案：{answerDisplayOf(judge)}
+                                    </div>
+                                  </div>
+                                );
+                              }
+                              if (correct === 1) {
+                                return <div style={{ color: '#2e7d32', fontWeight: 600 }}>✅ 回答正确</div>;
+                              }
+                              return <div style={{ color: '#c62828', fontWeight: 600 }}>❌ 回答错误 · 标准答案：{answerDisplayOf(judge)}</div>;
+                            })()}
                             {analysis && (
                               <div style={{ marginTop: 6, padding: 10, background: '#fffbe6', borderRadius: 8 }}>
                                 <b style={{ color: '#b26a00' }}>📝 解析：</b>

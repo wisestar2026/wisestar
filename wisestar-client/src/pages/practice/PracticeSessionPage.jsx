@@ -310,19 +310,25 @@ export default function PracticeSessionPage() {
             const qAttr = question?.template?.attribute || {};
             const isCorrect = result.correct === 1;
             const wrong = result.correct === 0;
+            // 多空填空部分命中（答对 ≥1 空未全对）以橙色"部分正确"呈现
+            const hitCount = result.blankTotal
+              ? (result.blankHits || []).filter((h) => h === 1).length : 0;
+            const partial = wrong && result.blankTotal > 0 && hitCount > 0;
             return (
               <div
                 key={question.id}
                 style={{
                   padding: '14px 16px', marginBottom: 12, borderRadius: 8,
-                  border: `1px solid ${isCorrect ? '#b7eb8f' : wrong ? '#ffa39e' : '#d9d9d9'}`,
-                  background: isCorrect ? '#f6ffed' : wrong ? '#fff2f0' : '#fafafa',
+                  border: `1px solid ${isCorrect ? '#b7eb8f' : partial ? '#ffe58f' : wrong ? '#ffa39e' : '#d9d9d9'}`,
+                  background: isCorrect ? '#f6ffed' : partial ? '#fffbe6' : wrong ? '#fff2f0' : '#fafafa',
                 }}
               >
                 <Space style={{ marginBottom: 6 }}>
                   {isCorrect && <CheckCircleOutlined style={{ color: '#52c41a' }} />}
-                  {wrong && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                  {wrong && !partial && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                  {partial && <CheckCircleOutlined style={{ color: '#fa8c16' }} />}
                   {result.correct === null && <Tag>未判分</Tag>}
+                  {partial && <Tag color="orange">部分正确 {hitCount}/{result.blankTotal} 空</Tag>}
                   <Text strong>{idx + 1}. {question?.name || question?.template?.title}</Text>
                   <Tag color="blue">{TYPE_LABELS[question?.questionType] || question?.questionType}</Tag>
                 </Space>

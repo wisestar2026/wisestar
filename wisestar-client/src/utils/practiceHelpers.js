@@ -15,8 +15,11 @@
  *     填空/文本 = 用户输入文本
  *   - 判定:
  *     多选题（Checkbox）: 学生答案集合与标准答案集合相等（与顺序无关）
- *     其他题型（单选/判断/填空）: 学生答案与任一标准答案 trim 后文本等值
- *   - 返回值: 1 正确 / 0 错误 / null 无标准答案（不计分）
+ *     填空类（FillBlank/MultipleBlank）: 标准答案以 | 分隔多空时逐空判分（每空独立
+ *       归一化比较，答对 n 空累加 n 空得分，部分给分），单空按整体文本比较
+ *     其他题型（单选/判断/文本）: 学生答案与任一标准答案归一化后文本等值
+ *   - 比较归一化: trim、全角空格/字母/数字/符号（含 ＜＞）转半角、连续空白折叠
+ *   - 返回值: 1 正确 / 0 错误 / null 无标准答案（不计分）；多空题附 blankHits/earnedScore
  */
 
 /**
@@ -57,15 +60,105 @@ export function optionIdsToTitles(question, optionIds = []) {
 }
 
 /**
- * 判定题目对错（前端即时判分）。
+ * 答案归一化（填空/文本等值比较前对两边统一处理，避免全角/空格类格式差异误判）:
+ *   1. 全角空格/不间断空格/零宽字符等不可见空白 → 普通空格或移除；
+ *   2. 全角 ASCII（字母/数字/符号，含 ＜＞＝ 等）→ 半角；
+ *   3. 连续空白折叠为单个空格并去首尾。
+ *
+ * @param {*} s 待归一化文本
+ * @returns {string} 归一化后的比较串
+ */
+export function normalizeBlankText(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000\uFEFF]/g, ' ')
+    .replace(/[\u200B\u200C\u200D]/g, '')
+    .replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * 填空空位等值比较（两边先归一化；纯 ASCII 字母串如选项字母 A/B/C 忽略大小写）。
+ */
+export function blankEquals(a, b) {
+  const na = normalizeBlankText(a);
+  const nb = normalizeBlankText(b);
+  if (na === nb) return true;
+  if (/^[A-Za-z]+$/.test(na) && /^[A-Za-z]+$/.test(nb)) {
+    return na.toLowerCase() === nb.toLowerCase();
+  }
+  return false;
+}
+
+/**
+ * 填空类题目（单项填空/多项填空）逐空判分。
+ *
+ * <p>仅当题型为 FillBlank/MultipleBlank 且标准答案含 {@code |} 多空分隔时生效；
+ * 单空/文本题返回 null，走整体等值比较。</p>
+ *
+ * @param {Object} question 题目对象（questionType + template.attribute/children）
+ * @param {Object} userAnswer 学生答案 { type: 'text', text: '空1|空2|…' }
+ * @returns {null|{blankTotal:number, blankHits:number[], allCorrect:boolean,
+ *                 earnedScore:number, maxScore:number}}
+ *   - blankHits[i] = 1 表示第 i+1 空命中（含未作答的全 0）
+ *   - earnedScore: 按 attribute.examBlankScores（缺省整题分均摊）累加正确空位
+ */
+export function judgeBlankAnswers(question, userAnswer) {
+  const qtype = question?.questionType;
+  if (qtype !== 'MultipleBlank' && qtype !== 'FillBlank') return null;
+  const correctAnswers = extractCorrectAnswers(question);
+  if (!correctAnswers) return null;
+  const joined = correctAnswers.find((ca) => String(ca || '').includes('|'));
+  if (!joined) return null;
+
+  const stdBlanks = String(joined).split('|');
+  const total = stdBlanks.length;
+  const studentText = userAnswer?.type === 'text'
+    ? String(userAnswer.text == null ? '' : userAnswer.text) : '';
+  const stuBlanks = studentText.trim() ? String(studentText).split('|') : [];
+
+  const hits = Array(total).fill(0);
+  if (stuBlanks.length === total) {
+    // 空位数一致: 逐空等值比较（每空独立 trim/归一化，规避整串比较因单空尾随空格全判错）
+    for (let i = 0; i < total; i++) {
+      if (blankEquals(stdBlanks[i], stuBlanks[i])) hits[i] = 1;
+    }
+  } else if (studentText.trim()) {
+    // 空位数不一致（如把整串答案粘进单框/漏填空位）：整串等值兜底视为全对
+    if (correctAnswers.some((ca) => blankEquals(ca, studentText))) hits.fill(1);
+  }
+
+  const attr = question?.template?.attribute || {};
+  const point = Number(attr.examScore) || 1;
+  const blankScores = attr.examBlankScores;
+  const perBlank = Array.isArray(blankScores) && blankScores.length === total
+    ? blankScores.map((v) => Number(v) || 0)
+    : Array(total).fill(Math.round((point / total) * 100) / 100);
+  let earned = 0;
+  hits.forEach((h, i) => {
+    if (h === 1) earned += perBlank[i];
+  });
+  return {
+    blankTotal: total,
+    blankHits: hits,
+    allCorrect: hits.every((h) => h === 1),
+    earnedScore: Math.round(Math.min(earned, point) * 100) / 100,
+    maxScore: Math.round(point * 100) / 100,
+  };
+}
+
+/**
+ * 判定题目对错（前端即时判分，语义与后端 AnswerJudgeUtil 一致）。
  *
  * @param {Object} question 题目对象
  * @param {Object} userAnswer 学生答案:
  *   - 单选/判断: { type: 'option', optionId: 'opt_xxx' }
  *   - 多选:      { type: 'options', optionIds: ['opt_1','opt_2'] }
  *   - 填空/文本: { type: 'text', text: '用户输入' }
- * @returns {{correct: (1|0|null), correctAnswers: string[], userAnswerText: string}}
- *   - correct: 1 正确 / 0 错误 / null 无标准答案
+ * @returns {{correct: (1|0|null), correctAnswers: string[], userAnswerText: string,
+ *            blankTotal?: number, blankHits?: number[], earnedScore?: number}}
+ *   - correct: 1 全对 / 0 非全对 / null 无标准答案（多空题答对部分空时 correct=0，
+ *     但 earnedScore 反映部分得分、blankHits 反映逐空命中）
  *   - correctAnswers: 标准答案数组（供展示"正确答案"）
  *   - userAnswerText: 学生答案的可读文本（供展示"我的答案"）
  */
@@ -97,7 +190,7 @@ export function evaluateAnswer(question, userAnswer) {
     userAnswerText = studentValue || '未作答';
   }
 
-  if (!studentValue.trim()) {
+  if (!studentValue) {
     return { correct: 0, correctAnswers, userAnswerText };
   }
 
@@ -113,9 +206,25 @@ export function evaluateAnswer(question, userAnswer) {
     return { correct, correctAnswers, userAnswerText };
   }
 
-  // 其他: trim 文本等值（与任一标准答案相等即正确）
+  if (question?.questionType === 'MultipleBlank' || question?.questionType === 'FillBlank') {
+    // 填空: 标准答案含多空分隔（|）时逐空判分（部分给分 + 每空命中），单空整体比较
+    const blankResult = judgeBlankAnswers(question, userAnswer);
+    if (blankResult) {
+      return {
+        correct: blankResult.allCorrect ? 1 : 0,
+        correctAnswers,
+        userAnswerText,
+        blankTotal: blankResult.blankTotal,
+        blankHits: blankResult.blankHits,
+        earnedScore: blankResult.earnedScore,
+        maxScore: blankResult.maxScore,
+      };
+    }
+  }
+
+  // 单选/判断/单空填空/文本: 归一化后文本等值（与任一标准答案相等即正确）
   const correct = correctAnswers.some(
-    (ca) => String(ca).trim() === studentValue.trim(),
+    (ca) => blankEquals(ca, studentValue),
   ) ? 1 : 0;
   return { correct, correctAnswers, userAnswerText };
 }
@@ -178,6 +287,8 @@ export function calculateScore(items) {
       score += point;
       correctCount += 1;
     } else {
+      // 多空填空答对部分空: earnedScore 为部分得分（无则 0），仍计入答错题数
+      score += Number(result.earnedScore) || 0;
       wrongCount += 1;
     }
   });

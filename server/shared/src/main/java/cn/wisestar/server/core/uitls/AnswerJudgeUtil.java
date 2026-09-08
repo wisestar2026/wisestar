@@ -115,15 +115,15 @@ public final class AnswerJudgeUtil {
 			if (correctBlanks.length == studentBlanks.length) {
 				boolean allMatch = true;
 				for (int i = 0; i < correctBlanks.length; i++) {
-					if (!correctBlanks[i].trim().equals(studentBlanks[i].trim())) {
+					if (!blankEquals(correctBlanks[i], studentBlanks[i])) {
 						allMatch = false;
 						break;
 					}
 				}
 				if (allMatch) return 1;
 			}
-			// 兼容单空：直接比对
-			if (correct != null && correct.trim().equals(student.trim())) {
+			// 兼容单空：归一化后直接比对
+			if (correct != null && blankEquals(correct, student)) {
 				return 1;
 			}
 		}
@@ -168,8 +168,8 @@ public final class AnswerJudgeUtil {
 		if (studentBlanks.length != total) {
 			// 空位数不一致：尝试整体等值兜底（兼容单空直答）
 			for (String correct : correctAnswers) {
-				if (correct != null && correct.trim().equals(student.trim())) {
-					result[1] = 1;
+				if (correct != null && blankEquals(correct, student)) {
+					Arrays.fill(result, 1, result.length, 1);
 					return result;
 				}
 			}
@@ -184,7 +184,7 @@ public final class AnswerJudgeUtil {
 				continue;
 			}
 			for (int i = 0; i < total; i++) {
-				if (correctBlanks[i].trim().equals(studentBlanks[i].trim())) {
+				if (blankEquals(correctBlanks[i], studentBlanks[i])) {
 					result[i + 1] = 1;
 				}
 			}
@@ -278,6 +278,50 @@ public final class AnswerJudgeUtil {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * 填空/文本答案归一化（比较前对两侧统一处理，避免格式差异误判）:
+	 * 全角 ASCII 字母/数字/符号（含 ＜＞＝ 等）转半角、各类全角/不间断空白转普通空格、
+	 * 移除零宽字符、连续空白折叠、去首尾。
+	 */
+	private static String normalizeBlank(String s) {
+		if (s == null) {
+			return "";
+		}
+		StringBuilder sb = new StringBuilder(s.length());
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			if (c >= 0xFF01 && c <= 0xFF5E) {
+				sb.append((char) (c - 0xFEE0));
+			}
+			else if (c == 0x3000 || c == 0x00A0 || c == 0x1680 || c == 0x202F || c == 0x205F
+					|| (c >= 0x2000 && c <= 0x200A)) {
+				sb.append(' ');
+			}
+			else if (c == 0x200B || c == 0x200C || c == 0x200D || c == 0xFEFF) {
+				// 零宽字符直接移除
+			}
+			else {
+				sb.append(c);
+			}
+		}
+		return sb.toString().replaceAll("\\s+", " ").trim();
+	}
+
+	/**
+	 * 填空空位等值比较（两边先归一化；纯 ASCII 字母串如选项字母 A/B/C 忽略大小写）。
+	 */
+	private static boolean blankEquals(String a, String b) {
+		String na = normalizeBlank(a);
+		String nb = normalizeBlank(b);
+		if (na.equals(nb)) {
+			return true;
+		}
+		if (na.matches("[A-Za-z]+") && nb.matches("[A-Za-z]+")) {
+			return na.equalsIgnoreCase(nb);
+		}
+		return false;
 	}
 
 	/**
