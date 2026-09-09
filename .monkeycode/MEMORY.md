@@ -83,3 +83,15 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 用户项目代码全部集中于 `/workspace/wisestar` 一个仓库（remote origin = https://github.com/wisestar2026/wisestar.git，无子模块、无其他分布）；该目录是唯一可读写的项目仓库
   - 注意：`/workspace` 顶层本身是另一个 git 仓库（MonkeyCode 平台代码，fork 至 wisestar2026/wisestarCode，1132+ 提交，含 backend/frontend/mobile/desktop），与用户项目无关，属于平台环境；**任何 git 操作必须 workdir=/workspace/wisestar**，禁止在 /workspace 顶层执行 git 命令（会误操作平台仓库，曾导致 push 403 误报 wisestarCode）
   - git 身份：仓库级已配置 zhanghaiyang / 15717876985@163.com（docs/开发维护日志.md 3.1 惯例），同仓库内新会话不会再报 Author identity unknown
+
+[英语 AI 内容生成模块与系统 AI 设置排障]
+- Date: 2026-09-09
+- Context: Agent 实现「AI 单元内容包」功能并排查 /api/system/aiSetting 500 时发现
+- Category: 排错调试
+- Instructions:
+  - 系统 AI 配置（启用/模型/Token）只存于 `t_sys_info` 行 id=1 的 ai_setting JSON 列，管理员页在 `系统管理→AI 服务设置`（/system/ai，权限 system:role:list），接口 GET/POST /api/system/aiSetting、/api/system/update（token 永不下发，POST 空白 token 表示不改）
+  - 旧版 `SystemServiceImpl.getSystemAiSetting` 在 info 或 ai_setting 为 null 时返回 null，命中 commonCache「禁止缓存 null」直接 500（AI 问答与生成全不可用的历史根因）；现已兜底返回空 AiSetting 对象
+  - 英语「AI 内容生成」页（/english/word-ai）实际是 AI 单元内容包中心：POST /api/english/ai-pack/{generate,save,sync,delete}、GET list/detail；generate 需 AI 已启用，否则返回业务 code 400 的友好提示
+  - 词库去重更新语义：同 版本+年级+单元+spell 视为同一词更新、语法同 年级+title 覆盖；内容包 JSON 结构为 {title, words[], grammar{title,content,examples[],exercises[]}}
+  - 后端改动重打包：`mvn clean package -pl api -am -DskipTests`（产物 api/target/wisestar-v1.9.0.jar），必须用 `--spring.profiles.active=preview` 启动否则误连本地 MySQL 报 Connection refused
+
