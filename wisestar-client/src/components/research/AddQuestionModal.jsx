@@ -15,6 +15,11 @@ const TYPE_LABELS = {
   ShortAnswer: '简答', MultipleBlank: '多空填空', Select: '下拉', Essay: '作文', '': '',
 };
 
+/** 拦截器返回 { code, data } 整包 → 取业务 data */
+function unwrap(res) {
+  return res && res.code !== undefined ? res.data : res;
+}
+
 export default function AddQuestionModal({ open, onCancel, onAdd }) {
   const [repos, setRepos] = useState([]);
   const [repoId, setRepoId] = useState(undefined);
@@ -30,7 +35,10 @@ export default function AddQuestionModal({ open, onCancel, onAdd }) {
   useEffect(() => {
     if (!open) return;
     listRepo({ current: 1, pageSize: 200 })
-      .then((data) => setRepos((data && data.list) || []))
+      .then((res) => {
+        const d = unwrap(res);
+        setRepos((Array.isArray(d) ? d : d?.list) || []);
+      })
       .catch((e) => message.error('加载题库失败：' + (e?.message || e)));
   }, [open]);
 
@@ -45,8 +53,8 @@ export default function AddQuestionModal({ open, onCancel, onAdd }) {
     pageRef.current = page;
     setLoading(true);
     listTemplate({ repoId, current: page, pageSize: 8, name: keyword || undefined })
-      .then((data) => {
-        const d = data || {};
+      .then((res) => {
+        const d = unwrap(res) || {};
         const list = (Array.isArray(d) ? d : d.list) || [];
         setRows(list);
         setTotal(Array.isArray(d) ? list.length : d.total || 0);

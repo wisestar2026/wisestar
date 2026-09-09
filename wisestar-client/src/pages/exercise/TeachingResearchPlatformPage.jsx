@@ -49,6 +49,11 @@ function extractAttr(template) {
   } catch { return {}; }
 }
 
+/** 拦截器返回 { code, data } 整包 → 统一取业务 data 字段（兼容历史裸返回） */
+function unwrap(res) {
+  return res && res.code !== undefined ? res.data : res;
+}
+
 function buildAnswerText(qtype, answers) {
   if (!answers || answers.length === 0) return '';
   if (qtype === 'MultipleBlank') {
@@ -124,7 +129,7 @@ export default function TeachingResearchPlatformPage() {
   const [secMap, setSecMap] = useState({});   // chapterId -> 小节
   const [kpMap, setKpMap] = useState({});     // sectionId -> 知识点
   const [loadingRoot, setLoadingRoot] = useState(false);
-  const [loadingSubjects, setLoadingSubjects] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState([]);
 
   const [editState, setEditState] = useState(null); // { nodeType, record } | null
@@ -136,8 +141,9 @@ export default function TeachingResearchPlatformPage() {
   const loadSubjects = () => {
     setLoadingSubjects(true);
     listSubjects()
-      .then((data) => {
-        const arr = Array.isArray(data) ? data : data?.list || [];
+      .then((res) => {
+        const raw = unwrap(res);
+        const arr = Array.isArray(raw) ? raw : raw?.list || [];
         setSubjects(arr);
         if (arr.length > 0 && !subjectId) setSubjectId(arr[0].id);
       })
@@ -167,8 +173,9 @@ export default function TeachingResearchPlatformPage() {
   const loadChapters = (subject, keepGrade) => {
     setLoadingRoot(true);
     listChapters({ subjectId: subject })
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.list || [];
+      .then((res) => {
+        const raw = unwrap(res);
+        const list = Array.isArray(raw) ? raw : raw?.list || [];
         setChapters(list);
         const gs = [...new Set(list.map((c) => c.grade).filter(Boolean))];
         setGradeOptions(gs);
@@ -195,8 +202,9 @@ export default function TeachingResearchPlatformPage() {
   const ensureSections = (chapterId) => {
     if (secMap[chapterId]) return;
     listSections({ chapterId })
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.list || [];
+      .then((res) => {
+        const raw = unwrap(res);
+        const list = Array.isArray(raw) ? raw : raw?.list || [];
         setSecMap((m) => ({ ...m, [chapterId]: list }));
       })
       .catch((e) => message.error('加载小节失败：' + (e?.message || e)));
@@ -205,9 +213,10 @@ export default function TeachingResearchPlatformPage() {
   const ensureKps = (sectionId) => {
     if (kpMap[sectionId]) return;
     listKnowledgePoints({ sectionId })
-      .then((data) => {
+      .then((res) => {
         // 后端返回 { list, total }
-        const list = (data && (Array.isArray(data) ? data : data.list)) || [];
+        const raw = unwrap(res);
+        const list = Array.isArray(raw) ? raw : raw?.list || [];
         setKpMap((m) => ({ ...m, [sectionId]: list }));
       })
       .catch((e) => message.error('加载知识点失败：' + (e?.message || e)));
@@ -321,8 +330,9 @@ export default function TeachingResearchPlatformPage() {
     if (kpQuestions.pid === pid && kpQuestions.list.length) return;
     setKpQuestions((s) => ({ ...s, pid, loading: true }));
     listKnowledgePointQuestions(pid)
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.list || [];
+      .then((res) => {
+        const raw = unwrap(res);
+        const list = Array.isArray(raw) ? raw : raw?.list || [];
         setKpQuestions({ pid, list, loading: false, editing: null });
       })
       .catch((e) => {
@@ -336,8 +346,9 @@ export default function TeachingResearchPlatformPage() {
     if (!pid) return;
     setKpQuestions((s) => ({ ...s, loading: true }));
     listKnowledgePointQuestions(pid)
-      .then((data) => {
-        const list = Array.isArray(data) ? data : data?.list || [];
+      .then((res) => {
+        const raw = unwrap(res);
+        const list = Array.isArray(raw) ? raw : raw?.list || [];
         setKpQuestions({ pid, list, loading: false, editing: null });
       })
       .catch((e) => {
