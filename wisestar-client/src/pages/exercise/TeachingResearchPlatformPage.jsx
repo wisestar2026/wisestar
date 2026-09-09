@@ -124,6 +124,7 @@ export default function TeachingResearchPlatformPage() {
   const [secMap, setSecMap] = useState({});   // chapterId -> 小节
   const [kpMap, setKpMap] = useState({});     // sectionId -> 知识点
   const [loadingRoot, setLoadingRoot] = useState(false);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
   const [expandedKeys, setExpandedKeys] = useState([]);
 
   const [editState, setEditState] = useState(null); // { nodeType, record } | null
@@ -131,15 +132,24 @@ export default function TeachingResearchPlatformPage() {
   const [addOpen, setAddOpen] = useState(false);
   const expandedRef = useRef([]);
 
-  /* ---------- 初始化：学科 ---------- */
-  useEffect(() => {
+  /* ---------- 初始化：学科（失败给出空态 + 重试，避免无限转圈） ---------- */
+  const loadSubjects = () => {
+    setLoadingSubjects(true);
     listSubjects()
       .then((data) => {
         const arr = Array.isArray(data) ? data : data?.list || [];
         setSubjects(arr);
         if (arr.length > 0 && !subjectId) setSubjectId(arr[0].id);
       })
-      .catch((e) => message.error('加载学科失败：' + (e?.message || e)));
+      .catch((e) => {
+        message.error('加载学科失败：' + (e?.message || e));
+        setSubjects([]);
+      })
+      .finally(() => setLoadingSubjects(false));
+  };
+
+  useEffect(() => {
+    loadSubjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -403,18 +413,32 @@ export default function TeachingResearchPlatformPage() {
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', margin: '4px 8px 8px' }}>
           点「章节 / 小节」名称修改信息；点「知识点」查看直绑题目，右侧 ✎ 可编辑简介。
         </Typography.Text>
-        <Spin spinning={loadingRoot || !subjectId}>
-          {treeData.length ? (
-            <Tree
-              treeData={treeData}
-              expandedKeys={expandedKeys}
-              onExpand={onExpand}
-              onTitleClick={onTitleClick}
-              selectable
-              blockNode
-            />
+        <Spin spinning={loadingSubjects || (!!subjectId && loadingRoot)}>
+          {!loadingSubjects && subjects.length === 0 ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="学科加载失败或未配置"
+            >
+              <Button type="primary" size="small" onClick={loadSubjects}>重新加载</Button>
+            </Empty>
           ) : (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={subjectId ? '该学科暂无章节，请先在知识管理中录入' : '请选择学科'} />
+            <>
+              {treeData.length ? (
+                <Tree
+                  treeData={treeData}
+                  expandedKeys={expandedKeys}
+                  onExpand={onExpand}
+                  onTitleClick={onTitleClick}
+                  selectable
+                  blockNode
+                />
+              ) : (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={subjectId ? '该学科暂无章节，请先在知识管理中录入' : '请选择学科'}
+                />
+              )}
+            </>
           )}
         </Spin>
       </Card>

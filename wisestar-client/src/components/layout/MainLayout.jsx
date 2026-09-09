@@ -76,6 +76,8 @@ export default function MainLayout() {
   const menuItems = [
     { key: '/',              icon: <DashboardOutlined />, label: '仪表盘', required: ['home'] },
     { key: '/student',       icon: <CompassOutlined />,   label: '学生端主页' },
+    // 教研平台（一级菜单入口：学科年级 → 知识树 → 知识点直绑题目）
+    { key: '/exercise/list', icon: <AppstoreOutlined />, label: '教研平台', required: ['repo:list'] },
     
     // 学员管理
     {
@@ -93,7 +95,6 @@ export default function MainLayout() {
       key: 'exercise-group', icon: <BookOutlined />, label: '习题管理',
       children: [
         { key: '/questions', label: '题目管理', required: ['template:list'] },
-        { key: '/exercise/list', label: '教研平台', required: ['repo:list'] },
         { key: '/repos', label: '练习列表', required: ['repo:list'] },
         { key: '/practice', label: '在线练习', required: ['exercise:list'] },
         { key: '/wrong-questions', label: '错题管理', required: ['repo:list', 'exercise:list'] },
@@ -192,8 +193,8 @@ export default function MainLayout() {
   // ============================================================
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /knowledge/chapters）。
-  // 知识管理三个子页 key 为完整路径，需先精确匹配再回退到第一段路径。
-  const SUB_PATH_KEYS = ['/tasks', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
+  // 一级入口教研平台 key=/exercise/list，同样需要精确匹配到第一段路径规则之外
+  const SUB_PATH_KEYS = ['/exercise/list', '/tasks', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/hr/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)
