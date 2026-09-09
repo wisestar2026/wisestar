@@ -171,7 +171,8 @@ public class SystemServiceImpl implements SystemService {
 	public SystemInfo.AiSetting getSystemAiSetting() {
 		// 数据库只有一条记录，id为1
 		SysInfo info = sysInfoMapper.selectById("1");
-		return info != null ? info.getAiSetting() : new SystemInfo.AiSetting();
+		// info 或 ai_setting 列为空时返回空设置对象，避免命中缓存空值导致异常
+		return info != null && info.getAiSetting() != null ? info.getAiSetting() : new SystemInfo.AiSetting();
 	}
 
 	private void mergeSysInfo(SysInfo target, SystemInfoRequest request) {
