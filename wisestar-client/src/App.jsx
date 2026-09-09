@@ -69,6 +69,7 @@ import DeptManagePage from './pages/system/DeptManagePage';
 import PositionManagePage from './pages/system/PositionManagePage';
 import DictManagePage from './pages/system/DictManagePage';
 import DictItemManagePage from './pages/system/DictItemManagePage';
+import AiSettingPage from './pages/system/AiSettingPage';
 import WordStudyPage from './pages/english/WordStudyPage';
 import WordBookManagePage from './pages/english/WordBookManagePage';
 import WordManagePage from './pages/english/WordManagePage';
@@ -320,6 +321,14 @@ export default function App() {
               element={
                 <AuthGuard required={['system:dictItem:list', 'system:dictItem:create', 'system:dictItem:update', 'system:dictItem:delete', 'system:dictItem:import']}>
                   <DictItemManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/system/ai"
+              element={
+                <AuthGuard required={['system:role:list']}>
+                  <AiSettingPage />
                 </AuthGuard>
               }
             />

@@ -151,6 +151,7 @@ export default function MainLayout() {
         { key: '/system/positions', label: '岗位管理', required: ['system:position:list'] },
         { key: '/system/dicts', label: '字典管理', required: ['system:dict:list'] },
         { key: '/system/dict-items', label: '字典条目管理', required: ['system:dictItem:list'] },
+        { key: '/system/ai', label: 'AI 服务设置', required: ['system:role:list'] },
       ],
     },
   ];

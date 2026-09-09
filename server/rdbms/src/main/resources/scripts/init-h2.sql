@@ -2274,3 +2274,25 @@ CREATE TABLE IF NOT EXISTS t_student_task (
   is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (id)
 );
+
+-- AI 单元内容包（AI 为某 版本/年级/单元 生成的整套学习内容，供人工审核后同步入词库/语法库）
+CREATE TABLE IF NOT EXISTS t_english_ai_pack (
+  id varchar(64) NOT NULL,
+  version varchar(32) COMMENT '教材版本',
+  grade varchar(16) COMMENT '年级',
+  unit varchar(32) COMMENT '单元',
+  topic varchar(256) COMMENT '主题',
+  title varchar(256) COMMENT '内容包标题',
+  content text COMMENT 'AI 生成的整套内容 JSON',
+  word_count int DEFAULT 0 COMMENT '单词数量',
+  created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+);
+
+-- 补齐 BaseModel 审计列（与既有表结构一致）
+ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS create_at timestamp DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS create_by varchar(256);
+ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS update_at timestamp;
+ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS update_by varchar(256);
+ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
+UPDATE t_english_ai_pack SET create_at = created_at WHERE create_at IS NULL AND created_at IS NOT NULL;

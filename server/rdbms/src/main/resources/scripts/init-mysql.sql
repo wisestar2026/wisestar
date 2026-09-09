@@ -2233,3 +2233,25 @@ CREATE TABLE IF NOT EXISTS `t_student_task` (
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员任务分配表';
+
+-- AI 单元内容包（AI 为某 版本/年级/单元 生成的整套学习内容，供人工审核后同步入词库/语法库）
+CREATE TABLE IF NOT EXISTS `t_english_ai_pack` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `grade` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级',
+  `unit` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
+  `topic` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '主题',
+  `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '内容包标题',
+  `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'AI 生成的整套内容 JSON',
+  `word_count` int DEFAULT '0' COMMENT '单词数量',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='AI 单元内容包';
+
+-- 补齐 BaseModel 审计列（与既有表结构一致）
+ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `create_at` timestamp DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `create_by` varchar(64) DEFAULT NULL;
+ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_at` timestamp DEFAULT NULL;
+ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_by` varchar(64) DEFAULT NULL;
+ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
+UPDATE `t_english_ai_pack` SET `create_at` = `created_at` WHERE `create_at` IS NULL AND `created_at` IS NOT NULL;

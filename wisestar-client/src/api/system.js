@@ -162,3 +162,20 @@ export const updateCampus = (data) => request.post('/system/campus/update', data
 
 /** 删除校区：{ id } */
 export const deleteCampus = (data) => request.post('/system/campus/delete', data);
+
+// ------------------------------------------------------------
+// AI 服务设置（系统管理）
+// ------------------------------------------------------------
+
+/**
+ * 读取 AI 服务设置（enabled/models/prompt；token 接口已脱敏，恒不返回）
+ * 后端接口: GET /api/system/aiSetting
+ */
+export const getAiSetting = () => request.get('/system/aiSetting');
+
+/**
+ * 保存 AI 服务设置（只更新 AI 相关字段，不影响其他系统配置）
+ * body: { aiSetting: { enabled, models, token?, prompt? } }
+ * 后端接口: POST /api/system/update
+ */
+export const saveAiSetting = (aiSetting) => request.post('/system/update', { aiSetting });
