@@ -36,7 +36,10 @@ const useUserStore = create((set, get) => ({
   // ---- 状态 ----
   user: null,        // 当前登录用户信息
   isLoggedIn: false, // 登录状态标记
-  loading: false,    // 加载中标记
+  // 加载中标记：应用启动即置 true，表示"正在尝试恢复登录态"。
+  // 若初始为 false，App 首帧渲染时 AuthGuard 会因 isLoggedIn=false 直接跳 /login，
+  // 造成"刷新后需要重新登录"的假象（Cookie 其实仍有效）。
+  loading: true,
 
   // ============================================================
   // 从后端获取当前用户（用于页面刷新时恢复登录态）
@@ -44,6 +47,7 @@ const useUserStore = create((set, get) => ({
   // 原理: 之前登录时后端在 Cookie 中写入了 sk-token，
   //       刷新页面后通过 getCurrentUser() 携带 Cookie 验证身份
   fetchCurrentUser: async () => {
+    set({ loading: true });
     try {
       const res = await getCurrentUser();
       // 后端返回用户数据 → 恢复登录状态
@@ -67,7 +71,7 @@ const useUserStore = create((set, get) => ({
     // 登录成功后获取用户信息
     const res = await getCurrentUser();
     // 更新全局状态
-    set({ user: res.data, isLoggedIn: true });
+    set({ user: res.data, isLoggedIn: true, loading: false });
   },
 
   // ============================================================
