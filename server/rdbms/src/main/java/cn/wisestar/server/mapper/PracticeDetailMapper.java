@@ -62,7 +62,7 @@ public interface PracticeDetailMapper extends BaseMapper<PracticeDetail> {
 			+ "  LEFT JOIN t_repo rp ON COALESCE(r.repo_id, t.repo_id) = rp.id "
 			+ "  LEFT JOIN t_knowledge_point_question kpq ON d.question_id = kpq.question_id "
 			+ "  LEFT JOIN t_knowledge_point kp ON kpq.knowledge_point_id = kp.id AND kp.is_deleted = 0 " // t_repo 为遗留表，无 is_deleted 列，不做逻辑删除过滤
-			+ "  WHERE d.is_deleted = 0 AND d.is_correct = 0 "
+			+ "  WHERE d.is_deleted = 0 AND d.is_correct = 0 AND COALESCE(d.corrected, 0) = 0 "
 			+ "  <if test=\"query.repoId != null and query.repoId != ''\"> "
 			+ "    AND COALESCE(r.repo_id, t.repo_id) = #{query.repoId} "
 			+ "  </if> "

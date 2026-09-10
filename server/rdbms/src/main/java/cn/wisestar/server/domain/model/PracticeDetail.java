@@ -60,4 +60,12 @@ public class PracticeDetail extends BaseModel {
 	/** 错误归因（大意/计算错误/知识点不熟/题型不会等，学员标注） */
 	private String wrongReason;
 
+	/** 错题是否已订正（重做正确后置 true，从错题本移除） */
+	@TableField("corrected")
+	private Boolean corrected = false;
+
+	/** 订正时间 */
+	@TableField("corrected_at")
+	private java.util.Date correctedAt;
+
 }

@@ -2261,3 +2261,110 @@ ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_at` timestamp D
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_by` varchar(64) DEFAULT NULL;
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
 UPDATE `t_english_ai_pack` SET `create_at` = `created_at` WHERE `create_at` IS NULL AND `created_at` IS NOT NULL;
+
+-- ============================================================
+-- 学员积分·学币体系（双轨数值账本）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `t_user_points` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `points` int DEFAULT '0' COMMENT '累计学海积分(终身/全学科)',
+  `title_level` int DEFAULT '1' COMMENT '头衔等级1-5',
+  `title_name` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '初探者' COMMENT '头衔名称',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_points` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户学海积分/头衔';
+
+CREATE TABLE IF NOT EXISTS `t_subject_semester` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID',
+  `semester` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学期键',
+  `coins` int DEFAULT '0' COMMENT '本学期该学科学习币(0..3000)',
+  `reached_limit` tinyint(1) DEFAULT '0' COMMENT '是否已达单科上限',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_subject_semester` (`user_id`,`subject_id`,`semester`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学科学期学习币';
+
+CREATE TABLE IF NOT EXISTS `t_user_learning_record` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `knowledge_point_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点ID',
+  `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID',
+  `action_type` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学习行为类型',
+  `ref_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '业务关联ID',
+  `coins` int DEFAULT '0' COMMENT '本次发放学习币(上限裁剪后)',
+  `points` int DEFAULT '0' COMMENT '本次发放学海积分',
+  `semester` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期键',
+  `learned_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '行为发生时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_ulr_user_action` (`user_id`,`action_type`,`knowledge_point_id`,`learned_at`),
+  KEY `idx_ulr_ref` (`user_id`,`action_type`,`ref_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学习行为记录(防刷/奖励)';
+
+-- ============================================================
+-- 学员薄弱点·学习结果评价体系
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `t_user_knowledge_progress` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `version_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本ID',
+  `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID',
+  `knowledge_point_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '知识点ID',
+  `mastery` int DEFAULT '0' COMMENT '掌握度0-100',
+  `level` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '评级标签',
+  `times` int DEFAULT '0' COMMENT '练习会话次数',
+  `total_count` int DEFAULT '0' COMMENT '累计题数',
+  `correct_count` int DEFAULT '0' COMMENT '累计正确题数',
+  `last_correct_rate` int DEFAULT '0' COMMENT '最近一次正确率0-100',
+  `last_practice_at` timestamp NULL DEFAULT NULL COMMENT '最近练习时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_kp_progress` (`user_id`,`subject_id`,`version_id`,`knowledge_point_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='知识点掌握度';
+
+CREATE TABLE IF NOT EXISTS `t_user_weak_knowledge` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `knowledge_point_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '知识点ID',
+  `status` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'active' COMMENT 'active/conquered',
+  `conquer_times` int DEFAULT '0' COMMENT '攻克次数',
+  `first_weak_at` timestamp NULL DEFAULT NULL COMMENT '首次薄弱时间',
+  `conquered_at` timestamp NULL DEFAULT NULL COMMENT '最近攻克时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_weak` (`user_id`,`subject_id`,`knowledge_point_id`),
+  KEY `idx_weak_status` (`user_id`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='薄弱知识点研判';
+
+-- 错题订正标记 + 手动发币学科归集
+ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `corrected` tinyint(1) DEFAULT '0' COMMENT '错题是否已订正';
+ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `corrected_at` timestamp NULL DEFAULT NULL COMMENT '订正时间';
+ALTER TABLE `t_student_coin` ADD COLUMN IF NOT EXISTS `subject_id` varchar(64) DEFAULT NULL COMMENT '学科ID(手动发币按学科归集)';
+ALTER TABLE `t_user_knowledge_progress` ADD COLUMN IF NOT EXISTS `recent_rates` varchar(128) DEFAULT NULL COMMENT '最近5次练习正确率(逗号分隔,新到旧)';

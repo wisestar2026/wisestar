@@ -146,6 +146,11 @@ export async function getStudyPoints(sectionId) {
   return request.get('/student/study/points', { params: { sectionId } });
 }
 
+/** 学员端学科学习进度（章节 → 知识点掌握度/评级/薄弱） */
+export async function getStudyProgress(subjectId, versionId) {
+  return request.get('/student/study/progress', { params: { subjectId, versionId } });
+}
+
 /**
  * 学员端练习/试炼题目（剥离标准答案）
  * @param {Object} params - { sectionId, knowledgePointId, count, types, difficulty }
@@ -162,6 +167,55 @@ export async function getStudyQuestions(params) {
  */
 export async function completePreview(data) {
   return request.post('/student/preview/complete', data);
+}
+
+// ------------------------------------------------------------
+// 学员端积分·学币·评价（统一账本）
+// ------------------------------------------------------------
+
+/** 个人中心档案（姓名/学号/头衔/累计积分/知识点/薄弱数） */
+export async function getMyProfile() {
+  return request.get('/student/profile');
+}
+
+/** 个人中心-积分板块（积分/头衔/下一目标/规则/最近明细） */
+export async function getMyPoints() {
+  return request.get('/student/points');
+}
+
+/** 本学期学习币（分学科 + 手动发币，单科上限 3000） */
+export async function getMyCoins() {
+  return request.get('/student/coins');
+}
+
+/** 学员端主页今日总览 + 积分获取引导 */
+export async function getMyToday() {
+  return request.get('/student/today');
+}
+
+/** 薄弱知识点列表（含掌握度与攻克奖励） */
+export async function getWeakList() {
+  return request.get('/student/weak/list');
+}
+
+/** 知识点详情（掌握度/评级/薄弱/预习状态） */
+export async function getKnowledgeDetail(knowledgePointId) {
+  return request.get('/student/knowledge/detail', { params: { knowledgePointId } });
+}
+
+/** 学习完成统一结算（预习/练习/试炼/错题订正等） */
+export async function completeLearning(data) {
+  return request.post('/student/learning/complete', data);
+}
+
+/** 错题重做（答对则订正移出错题本并结算奖励） */
+export async function wrongRedo(data) {
+  return request.post('/student/wrong/redo', data);
+}
+
+/** 薄弱知识点攻克（复测达标后消除薄弱并结算奖励） */
+export async function weakConquer(data) {
+  return request.post('/student/weak/conquer', data);
 }
 
 // ------------------------------------------------------------

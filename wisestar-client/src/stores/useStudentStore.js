@@ -15,6 +15,7 @@ import { create } from 'zustand';
 import { getMyPermissions } from '../api/student';
 import {
   getStudySubjects, getStudyChapters, getStudySections, getStudyPoints, getStudyQuestions,
+  getStudyProgress,
 } from '../api/student';
 
 // ---- 年级枚举（与订单管理/后台内容年级一致，顺序即展示顺序） ----
@@ -22,11 +23,11 @@ export const GRADES = ['一年级', '二年级', '三年级', '四年级', '五�
 
 // ---- 五级头衔 + 证书体系（学海积分自动晋升，无降级） ----
 export const TITLES = [
-  { key: 'beginner', name: '学海初探者', need: 0,   cert: '学海初探·启航荣誉证书',   emoji: '🌱' },
-  { key: 'diligent', name: '学海勤学者', need: 300, cert: '学海勤学者·阶段荣誉证书', emoji: '🐬' },
-  { key: 'deep',     name: '学海深耕者', need: 1600, cert: '学海深耕者·阶段荣誉证书', emoji: '🪸' },
-  { key: 'thinker',  name: '学海善思者', need: 5500, cert: '学海善思者·阶段荣誉证书', emoji: '🌟' },
-  { key: 'pioneer',  name: '学海领航者', need: 9000, cert: '学海领航者·最高荣誉证书', emoji: '👑' },
+  { key: 'beginner', name: '初探者', need: 0,   cert: '学海初探·启航荣誉证书',   emoji: '🌱' },
+  { key: 'diligent', name: '勤学者', need: 300, cert: '学海勤学者·阶段荣誉证书', emoji: '🐬' },
+  { key: 'deep',     name: '深耕者', need: 1600, cert: '学海深耕者·阶段荣誉证书', emoji: '🪸' },
+  { key: 'thinker',  name: '善思者', need: 5500, cert: '学海善思者·阶段荣誉证书', emoji: '🌟' },
+  { key: 'pioneer',  name: '领航者', need: 9000, cert: '学海领航者·最高荣誉证书', emoji: '👑' },
 ];
 
 // ---- 知识掌握度评级 ----
@@ -284,6 +285,7 @@ const useStudentStore = create((set, get) => ({
     sections: null,    // 当前章节真实小节
     points: null,      // 当前小节真实知识点
     questions: null,   // 当前练习/试炼真实题目
+    progress: null,    // 当前学科真实掌握度（章节 → 知识点 mastery/level/weak）
     loadFailed: false, // 接口异常标记（回退 mock 提示）
   },
 
@@ -392,6 +394,15 @@ const useStudentStore = create((set, get) => ({
       set((s) => ({ studyContent: { ...s.studyContent, questions: res?.data || [] } }));
     } catch {
       set((s) => ({ studyContent: { ...s.studyContent, questions: [], loadFailed: true } }));
+    }
+  },
+  // 真实掌握度/薄弱（章节 → 知识点）：失败保留上次缓存，不静默回退 mock
+  fetchStudyProgress: async (subjectId, versionId) => {
+    try {
+      const res = await getStudyProgress(subjectId, versionId);
+      set((s) => ({ studyContent: { ...s.studyContent, progress: res?.data || null } }));
+    } catch {
+      set((s) => ({ studyContent: { ...s.studyContent, loadFailed: true } }));
     }
   },
 

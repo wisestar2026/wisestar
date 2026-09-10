@@ -2,22 +2,37 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.AppConsts;
+import cn.wisestar.server.core.constant.StudentRewardConstants;
 import cn.wisestar.server.core.security.PasswordEncoder;
+import cn.wisestar.server.core.uitls.AnswerJudgeUtil;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.CampusScope;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
+import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
+import cn.wisestar.server.domain.dto.student.StudentCoinsView;
+import cn.wisestar.server.domain.dto.student.StudentKnowledgeDetailView;
+import cn.wisestar.server.domain.dto.student.StudentLearningCompleteRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentPointsView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteRequest;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.domain.dto.student.StudentProfileView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentStatsView;
+import cn.wisestar.server.domain.dto.student.StudentStudyProgressView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
+import cn.wisestar.server.domain.dto.student.StudentTodayView;
+import cn.wisestar.server.domain.dto.student.StudentWeakView;
+import cn.wisestar.server.domain.dto.student.StudentWeakConquerRequest;
+import cn.wisestar.server.domain.dto.student.StudentWeakConquerView;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
 import cn.wisestar.server.domain.dto.student.StudentView;
@@ -30,6 +45,7 @@ import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.KnowledgePoint;
 import cn.wisestar.server.domain.model.KnowledgePointQuestion;
+import cn.wisestar.server.domain.model.PracticeDetail;
 import cn.wisestar.server.domain.model.RepoTemplate;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionRepo;
@@ -38,9 +54,15 @@ import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.StudentCoin;
 import cn.wisestar.server.domain.model.StudentPermission;
+import cn.wisestar.server.domain.model.SubjectSemester;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.Subject;
+import cn.wisestar.server.domain.model.UserKnowledgeProgress;
+import cn.wisestar.server.domain.model.UserLearningRecord;
+import cn.wisestar.server.domain.model.UserPoints;
+import cn.wisestar.server.domain.model.UserWeakKnowledge;
 import cn.wisestar.server.mapper.AccountMapper;
+import cn.wisestar.server.mapper.PracticeDetailMapper;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
@@ -53,16 +75,24 @@ import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.StudentActivityMapper;
 import cn.wisestar.server.mapper.StudentCoinMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;
-import cn.wisestar.server.mapper.TemplateMapper;
+import cn.wisestar.server.mapper.SubjectSemesterMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
+import cn.wisestar.server.mapper.TemplateMapper;
+import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
+import cn.wisestar.server.mapper.UserLearningRecordMapper;
+import cn.wisestar.server.mapper.UserPointsMapper;
+import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.CampusScopeService;
 import cn.wisestar.server.service.CampusService;
+import cn.wisestar.server.service.EvaluationService;
+import cn.wisestar.server.service.RewardService;
 import cn.wisestar.server.service.StudentService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -97,6 +127,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * @date 2026/8/12
  */
 @Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 public class StudentServiceImpl extends BaseService<StudentMapper, Student> implements StudentService {
@@ -110,20 +141,6 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	 * 学号生成最大重试次数（随机 8 位数字，冲突时重新生成直至唯一）。
 	 */
 	private static final int STUDENT_NO_RETRY_TIMES = 10;
-
-	/**
-	 * 预习完成奖励：学习币 +5 / 学海积分 +3。
-	 *
-	 * <p>沿用练习记录聚合口径：学习币按答对数累计、学海积分按得分累计，
-	 * 故预习完成记录记为「答对 5 题、得分 3 分、满分 3 分」，学习完成度即 100%。</p>
-	 */
-	private static final int PREVIEW_REWARD_COINS = 5;
-
-	/** 预习完成奖励积分（见 {@link #PREVIEW_REWARD_COINS}）。 */
-	private static final double PREVIEW_REWARD_POINTS = 3.0;
-
-	/** 预习完成记录模式标识。 */
-	private static final String MODE_PREVIEW = "preview";
 
 	private final StudentViewMapper studentViewMapper;
 
@@ -166,6 +183,22 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private final CampusScopeService campusScopeService;
 
 	private final CampusService campusService;
+
+	private final RewardService rewardService;
+
+	private final EvaluationService evaluationService;
+
+	private final UserPointsMapper userPointsMapper;
+
+	private final SubjectSemesterMapper subjectSemesterMapper;
+
+	private final UserLearningRecordMapper learningRecordMapper;
+
+	private final UserKnowledgeProgressMapper progressMapper;
+
+	private final UserWeakKnowledgeMapper weakMapper;
+
+	private final PracticeDetailMapper practiceDetailMapper;
 
 	/**
 	 * 新增学员：自动生成学号 + 创建登录账号（同一事务）。
@@ -474,9 +507,102 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.eq(KnowledgePoint::getSectionId, sectionId).orderByAsc(KnowledgePoint::getSort)));
 	}
 
+	/**
+	 * 学科学习进度：章节 → 知识点掌握度/评级/薄弱（真实评价值，不返回 mock）。
+	 */
 	@Override
-	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
-			List<String> types, String difficulty, Boolean exposeAnswer) {
+	public StudentStudyProgressView studyProgress(String subjectId, String versionId) {
+		String userId = currentStudentId();
+		StudentStudyProgressView view = new StudentStudyProgressView();
+		if (!StringUtils.hasText(subjectId) || validGrades(subjectId).isEmpty()) {
+			return view;
+		}
+		com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Chapter> cq = Wrappers
+				.<Chapter>lambdaQuery().eq(Chapter::getSubjectId, subjectId);
+		if (StringUtils.hasText(versionId)) {
+			cq.eq(Chapter::getVersion, versionId);
+		}
+		List<Chapter> chapters = chapterMapper.selectList(cq.orderByAsc(Chapter::getSort));
+		if (chapters.isEmpty()) {
+			return view;
+		}
+		// 学员该学科掌握度 + 活跃薄弱点
+		List<UserKnowledgeProgress> progresses = progressMapper.selectList(
+				Wrappers.<UserKnowledgeProgress>lambdaQuery().eq(UserKnowledgeProgress::getUserId, userId)
+						.eq(UserKnowledgeProgress::getSubjectId, subjectId));
+		Map<String, UserKnowledgeProgress> progressMap = new HashMap<>();
+		for (UserKnowledgeProgress p : progresses) {
+			if (StringUtils.hasText(p.getKnowledgePointId())) {
+				progressMap.put(p.getKnowledgePointId(), p);
+			}
+		}
+		Set<String> weakKpIds = weakMapper
+				.selectList(Wrappers.<UserWeakKnowledge>lambdaQuery()
+						.eq(UserWeakKnowledge::getUserId, userId)
+						.eq(UserWeakKnowledge::getStatus, "active"))
+				.stream().map(UserWeakKnowledge::getKnowledgePointId).filter(StringUtils::hasText)
+				.collect(Collectors.toSet());
+		for (Chapter chapter : chapters) {
+			StudentStudyProgressView.Chapter cv = new StudentStudyProgressView.Chapter();
+			cv.setId(chapter.getId());
+			cv.setName(chapter.getName());
+			cv.setIcon(chapter.getIcon());
+			List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+					.eq(Section::getChapterId, chapter.getId()).orderByAsc(Section::getSort));
+			for (Section section : sections) {
+				List<KnowledgePoint> kps = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+						.eq(KnowledgePoint::getSectionId, section.getId()).orderByAsc(KnowledgePoint::getSort));
+				for (KnowledgePoint kp : kps) {
+					StudentStudyProgressView.Kp kv = new StudentStudyProgressView.Kp();
+					kv.setId(kp.getId());
+					kv.setName(kp.getName());
+					kv.setSectionId(section.getId());
+					UserKnowledgeProgress p = progressMap.get(kp.getId());
+					int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
+					kv.setMastery(mastery);
+					kv.setLevel(p != null && StringUtils.hasText(p.getLevel()) ? p.getLevel() : levelOf(mastery));
+					kv.setWeak(weakKpIds.contains(kp.getId()));
+					cv.getKps().add(kv);
+				}
+			}
+			view.getChapters().add(cv);
+		}
+		return view;
+	}
+
+	/** 掌握度 → 五级评级。 */
+	private static String levelOf(int mastery) {
+		if (mastery >= 85) {
+			return "精通";
+		}
+		if (mastery >= 70) {
+			return "熟练";
+		}
+		if (mastery >= 55) {
+			return "夯实";
+		}
+		if (mastery >= 40) {
+			return "待巩固";
+		}
+		return "待攻克";
+	}
+
+	@Override
+	public List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, String questionId,
+			Integer count, List<String> types, String difficulty, Boolean exposeAnswer) {
+		boolean expose = Boolean.TRUE.equals(exposeAnswer);
+		// 单题重做：仅允许取本人未订正的错题（校验归属，防越权取题）
+		if (StringUtils.hasText(questionId)) {
+			if (findUncorrectedWrong(SecurityContextUtils.getUserId(), questionId) == null) {
+				return Collections.emptyList();
+			}
+			Template single = templateMapper.selectById(questionId);
+			if (single == null) {
+				return Collections.emptyList();
+			}
+			return Collections.singletonList(expose ? toStudentQuestionViewWithAnswer(single)
+					: toStudentQuestionView(single));
+		}
 		// 归属校验（学科须在学员有效权限内）
 		if (StringUtils.hasText(repoId)) {
 			Repo repo = repoMapper.selectById(repoId);
@@ -528,7 +654,6 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		}
 		// count 为空时返回全部命中题目（练习/小节通关应覆盖绑定题库的全部题）；
 		// 显式传 count（消灭错题等）时按指定数量截断（上限 50）
-		boolean expose = Boolean.TRUE.equals(exposeAnswer);
 		Stream<Template> stream = templateMapper.selectBatchIds(templateIds).stream()
 				.filter(t -> types == null || types.isEmpty()
 						|| (t.getQuestionType() != null && types.contains(t.getQuestionType().name())))
@@ -586,16 +711,25 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			String subject = repoSubjectMap.getOrDefault(record.getRepoId(), "综合练习");
 			coinsMap.merge(subject, c, Integer::sum);
 		}
-		view.setTotalPoints(Math.round(totalPoints * 100) / 100.0);
 		view.setPracticeCount(records.size());
 		view.setTotalQuestions(totalQuestions);
 		view.setTotalCorrect(totalCorrect);
 		view.setAccuracy(totalQuestions == 0 ? 0 : (int) Math.round(totalCorrect * 100.0 / totalQuestions));
 		today.setAccuracy(today.getQuestionCount() == 0 ? 0
 				: (int) Math.round(today.getCorrectCount() * 100.0 / today.getQuestionCount()));
-		today.setCoins(today.getCorrectCount());
-		coinsMap.forEach((name, coins) -> view.getCoinsBySubject().add(new StudentStatsView.SubjectCoins(name, coins)));
-		// 老师手动发放学币合计
+		// 积分/学币改读账本（唯一事实源）
+		UserPoints up = findPoints(userId);
+		view.setTotalPoints(up == null || up.getPoints() == null ? 0 : up.getPoints());
+		List<UserLearningRecord> ledger = learningRecordMapper.selectList(Wrappers.<UserLearningRecord>lambdaQuery()
+				.eq(UserLearningRecord::getUserId, userId).ge(UserLearningRecord::getLearnedAt, todayStart));
+		today.setPoints(ledger.stream().mapToInt(r -> r.getPoints() == null ? 0 : r.getPoints()).sum());
+		today.setCoins(ledger.stream().mapToInt(r -> r.getCoins() == null ? 0 : r.getCoins()).sum());
+		// 分科学币：本学期账本（手动发币单列 manualCoins）
+		String semester = StudentRewardConstants.currentSemester();
+		subjectSemesterMapper.selectList(Wrappers.<SubjectSemester>lambdaQuery()
+				.eq(SubjectSemester::getUserId, userId).eq(SubjectSemester::getSemester, semester))
+				.forEach(ss -> view.getCoinsBySubject().add(new StudentStatsView.SubjectCoins(
+						subjectName(ss.getSubjectId()), ss.getCoins() == null ? 0 : ss.getCoins())));
 		view.setManualCoins(studentCoinMapper.selectList(Wrappers.<StudentCoin>lambdaQuery()
 						.eq(StudentCoin::getStudentId, userId))
 				.stream().mapToInt(c -> c.getCoins() == null ? 0 : c.getCoins()).sum());
@@ -646,40 +780,15 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 			throw new ValidationException("预习内容不在权限范围");
 		}
-		// 防刷：同一小节/知识点仅首次结算（按知识点优先，其次小节）
-		LambdaQueryWrapper<PracticeRecord> existQuery = Wrappers.<PracticeRecord>lambdaQuery()
-				.eq(PracticeRecord::getUserId, userId)
-				.eq(PracticeRecord::getMode, MODE_PREVIEW);
-		if (byKp) {
-			existQuery.eq(PracticeRecord::getKnowledgePointId, request.getKnowledgePointId());
-		} else {
-			existQuery.eq(PracticeRecord::getSectionId, request.getSectionId());
-		}
-		StudentPreviewCompleteView view = new StudentPreviewCompleteView();
-		view.setOk(true);
-		if (practiceRecordMapper.selectCount(existQuery) > 0) {
-			// 此前已完成：进度已保留，不重复发放奖励
-			view.setFirstTime(false);
-			return view;
-		}
-		// 写入预习完成记录：完成度 100%（满分=得分）；答对数=学习币、得分=积分
-		PracticeRecord record = new PracticeRecord();
-		record.setUserId(userId);
-		record.setMode(MODE_PREVIEW);
-		record.setRepoId(request.getRepoId());
-		record.setSectionId(request.getSectionId());
-		record.setKnowledgePointId(request.getKnowledgePointId());
-		record.setTotalQuestions(PREVIEW_REWARD_COINS);
-		record.setCorrectCount(PREVIEW_REWARD_COINS);
-		record.setScore(PREVIEW_REWARD_POINTS);
-		record.setTotalScore(PREVIEW_REWARD_POINTS);
-		record.setDurationMs(0L);
-		practiceRecordMapper.insert(record);
-
-		view.setFirstTime(true);
-		view.setCoins(PREVIEW_REWARD_COINS);
-		view.setPoints((int) PREVIEW_REWARD_POINTS);
-		return view;
+		// 奖励结算：统一走积分·学币账本（refId 幂等 + 7 天防刷，与内容配置无关）
+		RewardContext context = new RewardContext();
+		context.setUserId(userId);
+		context.setActionType(StudentRewardConstants.ACTION_PREVIEW);
+		context.setSubjectId(chapter.getSubjectId());
+		context.setKnowledgePointId(byKp ? request.getKnowledgePointId() : null);
+		context.setSectionId(section.getId());
+		context.setRefId("preview:" + (byKp ? request.getKnowledgePointId() : section.getId()));
+		return rewardService.settle(context);
 	}
 
 	/**
@@ -875,6 +984,418 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			throw new ValidationException("当前用户不是学员");
 		}
 		return studentViewMapper.toView(student);
+	}
+
+	/**
+	 * 校验并返回当前登录学员ID。
+	 */
+	private String currentStudentId() {
+		String userId = SecurityContextUtils.getUserId();
+		if (userId == null || getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		return userId;
+	}
+
+	/**
+	 * 个人中心档案。
+	 */
+	@Override
+	public StudentProfileView profile() {
+		String userId = currentStudentId();
+		Student student = getById(userId);
+		StudentProfileView view = new StudentProfileView();
+		view.setName(student.getName());
+		view.setStudentNo(student.getStudentNo());
+		UserPoints up = findPoints(userId);
+		if (up != null) {
+			int level = up.getTitleLevel() == null ? 1 : up.getTitleLevel();
+			view.setPoints(up.getPoints() == null ? 0 : up.getPoints());
+			view.setTitleLevel(level);
+			view.setTitleName(up.getTitleName() == null
+					? StudentRewardConstants.titleName(level) : up.getTitleName());
+		}
+		List<UserKnowledgeProgress> progresses = progressMapper.selectList(
+				Wrappers.<UserKnowledgeProgress>lambdaQuery().eq(UserKnowledgeProgress::getUserId, userId));
+		view.setKps(progresses.size());
+		view.setChapters((int) progresses.stream()
+				.filter(p -> p.getChapterId() != null && p.getMastery() != null && p.getMastery() >= 55)
+				.map(UserKnowledgeProgress::getChapterId).distinct().count());
+		view.setWeak(activeWeakCount(userId));
+		return view;
+	}
+
+	/**
+	 * 个人中心-积分板块。
+	 */
+	@Override
+	public StudentPointsView points() {
+		String userId = currentStudentId();
+		UserPoints up = findPoints(userId);
+		int points = up == null || up.getPoints() == null ? 0 : up.getPoints();
+		int level = up == null || up.getTitleLevel() == null ? 1 : up.getTitleLevel();
+		StudentPointsView view = new StudentPointsView();
+		view.setPoints(points);
+		view.setTitleLevel(level);
+		view.setTitleName(up == null || up.getTitleName() == null
+				? StudentRewardConstants.titleName(level) : up.getTitleName());
+		int next = StudentRewardConstants.nextTitlePoints(level);
+		view.setNextTitlePoints(next);
+		if (next > 0) {
+			view.setNextTitleName(StudentRewardConstants.titleName(level + 1));
+			view.setPointsToNextTitle(Math.max(0, next - points));
+		}
+		for (String action : RULE_ACTIONS) {
+			int[] r = StudentRewardConstants.reward(action, null);
+			if (r == null) {
+				continue;
+			}
+			view.getRules().add(new StudentPointsView.RuleItem(action,
+					StudentRewardConstants.actionLabel(action), r[1], r[0]));
+		}
+		List<UserLearningRecord> records = learningRecordMapper.selectList(
+				Wrappers.<UserLearningRecord>lambdaQuery().eq(UserLearningRecord::getUserId, userId)
+						.orderByDesc(UserLearningRecord::getLearnedAt).last("limit 20"));
+		for (UserLearningRecord record : records) {
+			view.getRecent().add(new StudentPointsView.RecordItem(
+					StudentRewardConstants.actionLabel(record.getActionType()),
+					record.getPoints() == null ? 0 : record.getPoints(),
+					record.getCoins() == null ? 0 : record.getCoins(), record.getLearnedAt()));
+		}
+		return view;
+	}
+
+	/**
+	 * 本学期学习币（分学科 + 手动发币合计）。
+	 */
+	@Override
+	public StudentCoinsView coins() {
+		String userId = currentStudentId();
+		String semester = StudentRewardConstants.currentSemester();
+		StudentCoinsView view = new StudentCoinsView();
+		List<SubjectSemester> list = subjectSemesterMapper.selectList(Wrappers.<SubjectSemester>lambdaQuery()
+				.eq(SubjectSemester::getUserId, userId).eq(SubjectSemester::getSemester, semester));
+		int total = 0;
+		for (SubjectSemester ss : list) {
+			StudentCoinsView.SubjectCoin sc = new StudentCoinsView.SubjectCoin();
+			sc.setSubjectId(ss.getSubjectId());
+			sc.setSubjectName(subjectName(ss.getSubjectId()));
+			sc.setCoins(ss.getCoins() == null ? 0 : ss.getCoins());
+			sc.setReachedLimit(Boolean.TRUE.equals(ss.getReachedLimit()));
+			view.getList().add(sc);
+			total += sc.getCoins();
+		}
+		int manual = studentCoinMapper.selectList(Wrappers.<StudentCoin>lambdaQuery()
+						.eq(StudentCoin::getStudentId, userId)).stream()
+				.mapToInt(c -> c.getCoins() == null ? 0 : c.getCoins()).sum();
+		view.setTotal(total + manual);
+		return view;
+	}
+
+	/**
+	 * 学员端主页今日总览 + 积分获取引导。
+	 */
+	@Override
+	public StudentTodayView today() {
+		String userId = currentStudentId();
+		Date todayStart = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
+		List<PracticeRecord> records = practiceRecordMapper.selectList(Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId).ge(PracticeRecord::getCreateAt, todayStart));
+		List<UserLearningRecord> ledger = learningRecordMapper.selectList(Wrappers.<UserLearningRecord>lambdaQuery()
+				.eq(UserLearningRecord::getUserId, userId).ge(UserLearningRecord::getLearnedAt, todayStart));
+		StudentTodayView view = new StudentTodayView();
+		view.setMinutes(records.stream()
+				.mapToLong(r -> r.getDurationMs() == null ? 0 : r.getDurationMs() / 60000).sum());
+		view.setKps((int) records.stream()
+				.map(r -> StringUtils.hasText(r.getKnowledgePointId()) ? r.getKnowledgePointId() : r.getSectionId())
+				.filter(StringUtils::hasText).distinct().count());
+		view.setPoints(ledger.stream().mapToInt(r -> r.getPoints() == null ? 0 : r.getPoints()).sum());
+		view.setCoins(ledger.stream().mapToInt(r -> r.getCoins() == null ? 0 : r.getCoins()).sum());
+		Set<String> done = ledger.stream().map(UserLearningRecord::getActionType)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		view.getGuides().add(guide(StudentRewardConstants.ACTION_PREVIEW, "study", done));
+		view.getGuides().add(guide(StudentRewardConstants.ACTION_PRACTICE, "study", done));
+		view.getGuides().add(guide(StudentRewardConstants.ACTION_TRIAL, "study", done));
+		view.getGuides().add(guide(StudentRewardConstants.ACTION_WRONG_CORRECT, "wrong", done));
+		view.getGuides().add(guide(StudentRewardConstants.ACTION_WEAK_CONQUER, "weak", done));
+		return view;
+	}
+
+	/**
+	 * 薄弱知识点列表。
+	 */
+	@Override
+	public List<StudentWeakView> weakList() {
+		String userId = currentStudentId();
+		List<UserWeakKnowledge> weaks = weakMapper.selectList(Wrappers.<UserWeakKnowledge>lambdaQuery()
+				.eq(UserWeakKnowledge::getUserId, userId).eq(UserWeakKnowledge::getStatus, "active")
+				.orderByDesc(UserWeakKnowledge::getFirstWeakAt));
+		List<StudentWeakView> result = new ArrayList<>();
+		for (UserWeakKnowledge w : weaks) {
+			KnowledgePoint kp = knowledgePointMapper.selectById(w.getKnowledgePointId());
+			UserKnowledgeProgress p = progressMapper.selectOne(Wrappers.<UserKnowledgeProgress>lambdaQuery()
+					.eq(UserKnowledgeProgress::getUserId, userId)
+					.eq(UserKnowledgeProgress::getKnowledgePointId, w.getKnowledgePointId()).last("limit 1"));
+			int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
+			result.add(new StudentWeakView(w.getKnowledgePointId(), kp == null ? null : kp.getName(),
+					w.getSubjectId(), mastery));
+		}
+		return result;
+	}
+
+	/**
+	 * 知识点详情（掌握度/评级/薄弱/预习状态）。
+	 */
+	@Override
+	public StudentKnowledgeDetailView knowledgeDetail(String knowledgePointId) {
+		String userId = currentStudentId();
+		if (!StringUtils.hasText(knowledgePointId)) {
+			throw new ValidationException("知识点ID不能为空");
+		}
+		KnowledgePoint kp = knowledgePointMapper.selectById(knowledgePointId);
+		if (kp == null) {
+			throw new ValidationException("知识点不存在");
+		}
+		StudentKnowledgeDetailView view = new StudentKnowledgeDetailView();
+		view.setId(knowledgePointId);
+		view.setName(kp.getName());
+		view.setDesc(kp.getContent());
+		UserKnowledgeProgress p = progressMapper.selectOne(Wrappers.<UserKnowledgeProgress>lambdaQuery()
+				.eq(UserKnowledgeProgress::getUserId, userId)
+				.eq(UserKnowledgeProgress::getKnowledgePointId, knowledgePointId).last("limit 1"));
+		if (p != null) {
+			int mastery = p.getMastery() == null ? 0 : p.getMastery();
+			view.setMastery(mastery);
+			view.setLevel(StringUtils.hasText(p.getLevel()) ? p.getLevel() : levelOf(mastery));
+		}
+		else {
+			view.setMastery(0);
+			view.setLevel("待攻克");
+		}
+		Long weakCount = weakMapper.selectCount(Wrappers.<UserWeakKnowledge>lambdaQuery()
+				.eq(UserWeakKnowledge::getUserId, userId)
+				.eq(UserWeakKnowledge::getKnowledgePointId, knowledgePointId)
+				.eq(UserWeakKnowledge::getStatus, "active"));
+		view.setWeak(weakCount != null && weakCount > 0);
+		Long previewCount = learningRecordMapper.selectCount(Wrappers.<UserLearningRecord>lambdaQuery()
+				.eq(UserLearningRecord::getUserId, userId)
+				.eq(UserLearningRecord::getActionType, StudentRewardConstants.ACTION_PREVIEW)
+				.and(w -> w.eq(UserLearningRecord::getKnowledgePointId, knowledgePointId)
+						.or().eq(UserLearningRecord::getSectionId, kp.getSectionId())));
+		view.setPreviewed(previewCount != null && previewCount > 0);
+		return view;
+	}
+
+	/**
+	 * 学习完成统一结算。
+	 */
+	@Override
+	public StudentPreviewCompleteView completeLearning(StudentLearningCompleteRequest request) {
+		String userId = currentStudentId();
+		if (request == null || !StringUtils.hasText(request.getActionType())) {
+			throw new ValidationException("缺少学习行为类型");
+		}
+		RewardContext context = new RewardContext();
+		context.setUserId(userId);
+		context.setActionType(request.getActionType());
+		context.setKnowledgePointId(request.getKnowledgePointId());
+		context.setSectionId(request.getSectionId());
+		context.setChapterId(request.getChapterId());
+		context.setRefId(request.getRefId());
+		context.setDurationMs(request.getDurationMs());
+		context.setCorrectRate(request.getCorrectRate());
+		context.setSubjectId(resolveSubjectId(request.getKnowledgePointId(), request.getSectionId()));
+		return rewardService.settle(context);
+	}
+
+	/**
+	 * 错题重做：答对则订正、移出错题本、刷新薄弱并结算奖励。
+	 */
+	@Override
+	public StudentWrongRedoView wrongRedo(StudentWrongRedoRequest request) {
+		String userId = currentStudentId();
+		if (request == null || !StringUtils.hasText(request.getQuestionId())) {
+			throw new ValidationException("题目ID不能为空");
+		}
+		PracticeDetail detail = findUncorrectedWrong(userId, request.getQuestionId());
+		if (detail == null) {
+			throw new ValidationException("未找到该错题");
+		}
+		Template template = templateMapper.selectById(request.getQuestionId());
+		if (template == null || template.getTemplate() == null) {
+			throw new ValidationException("题目不存在");
+		}
+		StudentWrongRedoView view = new StudentWrongRedoView();
+		view.setOk(true);
+		Integer correct;
+		try {
+			correct = AnswerJudgeUtil.evaluate(template.getTemplate(), request.getAnswer());
+		}
+		catch (Exception e) {
+			throw new ValidationException("作答内容无法判分");
+		}
+		if (!Integer.valueOf(1).equals(correct)) {
+			return view;
+		}
+		detail.setCorrected(true);
+		detail.setCorrectedAt(new Date());
+		practiceDetailMapper.updateById(detail);
+		view.setRemoved(true);
+
+		PracticeRecord record = practiceRecordMapper.selectById(detail.getPracticeId());
+		String kpId = resolveKpIdFromTemplate(template, record);
+		if (StringUtils.hasText(kpId)) {
+			try {
+				evaluationService.refreshWeakAfterCorrection(userId, kpId);
+			}
+			catch (Exception e) {
+				log.warn("wrong redo refresh weak failed: user={}, kp={}", userId, kpId, e);
+			}
+		}
+		RewardContext rc = new RewardContext();
+		rc.setUserId(userId);
+		rc.setActionType(StudentRewardConstants.ACTION_WRONG_CORRECT);
+		rc.setKnowledgePointId(kpId);
+		rc.setSectionId(record == null ? null : record.getSectionId());
+		rc.setSubjectId(resolveSubjectId(kpId, record == null ? null : record.getSectionId()));
+		rc.setRefId(detail.getId());
+		try {
+			StudentPreviewCompleteView reward = rewardService.settle(rc);
+			view.setCoins(reward.getCoins());
+			view.setPoints(reward.getPoints());
+		}
+		catch (Exception e) {
+			log.warn("wrong redo reward failed", e);
+		}
+		return view;
+	}
+
+	/**
+	 * 薄弱知识点攻克。
+	 */
+	@Override
+	public StudentWeakConquerView weakConquer(StudentWeakConquerRequest request) {
+		String userId = currentStudentId();
+		if (request == null || !StringUtils.hasText(request.getKnowledgePointId())) {
+			throw new ValidationException("知识点ID不能为空");
+		}
+		StudentWeakConquerView view = new StudentWeakConquerView();
+		view.setOk(true);
+		Long active = weakMapper.selectCount(Wrappers.<UserWeakKnowledge>lambdaQuery()
+				.eq(UserWeakKnowledge::getUserId, userId)
+				.eq(UserWeakKnowledge::getKnowledgePointId, request.getKnowledgePointId())
+				.eq(UserWeakKnowledge::getStatus, "active"));
+		if (active == null || active == 0) {
+			return view;
+		}
+		int rate = request.getCorrectRate() == null ? 0 : request.getCorrectRate();
+		boolean cleared = evaluationService.conquer(userId, request.getKnowledgePointId(), rate);
+		view.setWeakCleared(cleared);
+		if (cleared) {
+			int[] r = StudentRewardConstants.reward(StudentRewardConstants.ACTION_WEAK_CONQUER, null);
+			if (r != null) {
+				view.setCoins(r[0]);
+				view.setPoints(r[1]);
+			}
+		}
+		return view;
+	}
+
+	/** 积分规则展示顺序。 */
+	private static final String[] RULE_ACTIONS = { StudentRewardConstants.ACTION_PREVIEW,
+			StudentRewardConstants.ACTION_PRACTICE, StudentRewardConstants.ACTION_TRIAL,
+			StudentRewardConstants.ACTION_TRIAL_BONUS, StudentRewardConstants.ACTION_WRONG_CORRECT,
+			StudentRewardConstants.ACTION_WEAK_CONQUER, StudentRewardConstants.ACTION_DAILY_KP,
+			StudentRewardConstants.ACTION_DAILY_WRONG, StudentRewardConstants.ACTION_DAILY_TIME,
+			StudentRewardConstants.ACTION_CHAPTER_STAGE };
+
+	/**
+	 * 生成首页积分引导项。
+	 */
+	private StudentTodayView.Guide guide(String action, String target, Set<String> done) {
+		int[] r = StudentRewardConstants.reward(action, null);
+		int coins = r == null ? 0 : r[0];
+		int points = r == null ? 0 : r[1];
+		return new StudentTodayView.Guide(action, StudentRewardConstants.actionLabel(action), points, coins,
+				done.contains(action), null, target);
+	}
+
+	private int activeWeakCount(String userId) {
+		Long count = weakMapper.selectCount(Wrappers.<UserWeakKnowledge>lambdaQuery()
+				.eq(UserWeakKnowledge::getUserId, userId).eq(UserWeakKnowledge::getStatus, "active"));
+		return count == null ? 0 : count.intValue();
+	}
+
+	private UserPoints findPoints(String userId) {
+		return userPointsMapper.selectOne(
+				Wrappers.<UserPoints>lambdaQuery().eq(UserPoints::getUserId, userId).last("limit 1"));
+	}
+
+	private String subjectName(String subjectId) {
+		if (!StringUtils.hasText(subjectId)) {
+			return "综合";
+		}
+		Subject subject = subjectMapper.selectById(subjectId);
+		return subject == null || !StringUtils.hasText(subject.getName()) ? "综合" : subject.getName();
+	}
+
+	/**
+	 * 由知识点/小节反查所属学科ID。
+	 */
+	private String resolveSubjectId(String knowledgePointId, String sectionId) {
+		String effectiveSectionId = sectionId;
+		if (StringUtils.hasText(knowledgePointId)) {
+			KnowledgePoint kp = knowledgePointMapper.selectById(knowledgePointId);
+			if (kp != null && StringUtils.hasText(kp.getSectionId())) {
+				effectiveSectionId = kp.getSectionId();
+			}
+		}
+		if (!StringUtils.hasText(effectiveSectionId)) {
+			return null;
+		}
+		Section section = sectionMapper.selectById(effectiveSectionId);
+		if (section == null || !StringUtils.hasText(section.getChapterId())) {
+			return null;
+		}
+		Chapter chapter = chapterMapper.selectById(section.getChapterId());
+		return chapter == null ? null : chapter.getSubjectId();
+	}
+
+	/**
+	 * 查找当前学员某题未订正的错题明细（最近一条）。
+	 */
+	private PracticeDetail findUncorrectedWrong(String userId, String questionId) {
+		List<PracticeRecord> records = practiceRecordMapper.selectList(
+				Wrappers.<PracticeRecord>lambdaQuery().eq(PracticeRecord::getUserId, userId));
+		if (records.isEmpty()) {
+			return null;
+		}
+		List<String> practiceIds = records.stream().map(PracticeRecord::getId).collect(Collectors.toList());
+		return practiceDetailMapper.selectOne(Wrappers.<PracticeDetail>lambdaQuery()
+				.in(PracticeDetail::getPracticeId, practiceIds)
+				.eq(PracticeDetail::getQuestionId, questionId)
+				.eq(PracticeDetail::getIsCorrect, 0)
+				.eq(PracticeDetail::getCorrected, false)
+				.orderByDesc(PracticeDetail::getCreateAt).last("limit 1"));
+	}
+
+	/**
+	 * 由题目知识点名解析知识点ID（回退到会话级知识点ID）。
+	 */
+	private String resolveKpIdFromTemplate(Template template, PracticeRecord record) {
+		if (template != null && template.getKnowledgePoint() != null) {
+			for (String name : template.getKnowledgePoint()) {
+				if (!StringUtils.hasText(name)) {
+					continue;
+				}
+				List<KnowledgePoint> list = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+						.eq(KnowledgePoint::getName, name.trim()).last("limit 1"));
+				if (!list.isEmpty() && StringUtils.hasText(list.get(0).getId())) {
+					return list.get(0).getId();
+				}
+			}
+		}
+		return record == null ? null : record.getKnowledgePointId();
 	}
 
 	/**

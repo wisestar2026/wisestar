@@ -9,13 +9,25 @@ import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
+import cn.wisestar.server.domain.dto.student.StudentCoinsView;
+import cn.wisestar.server.domain.dto.student.StudentKnowledgeDetailView;
+import cn.wisestar.server.domain.dto.student.StudentLearningCompleteRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentPointsView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteRequest;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.domain.dto.student.StudentProfileView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentStatsView;
+import cn.wisestar.server.domain.dto.student.StudentStudyProgressView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
+import cn.wisestar.server.domain.dto.student.StudentTodayView;
 import cn.wisestar.server.domain.dto.student.StudentView;
+import cn.wisestar.server.domain.dto.student.StudentWeakConquerRequest;
+import cn.wisestar.server.domain.dto.student.StudentWeakConquerView;
+import cn.wisestar.server.domain.dto.student.StudentWeakView;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 import cn.wisestar.server.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -220,12 +232,30 @@ public class StudentApi {
 	}
 
 	/**
+	 * 学员端学科学习进度（章节 → 知识点掌握度/评级/薄弱）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/progress?subjectId=&versionId=。</p>
+	 *
+	 * @param subjectId 学科ID
+	 * @param versionId 教材版本ID（可选）
+	 * @return 章节及其知识点的真实评价值
+	 */
+	@GetMapping("/study/progress")
+	@PreAuthorize("isAuthenticated()")
+	public StudentStudyProgressView studyProgress(@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String versionId) {
+		return studentService.studyProgress(subjectId, versionId);
+	}
+
+	/**
 	 * 学员端练习/试炼题目（剥离标准答案）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/questions?sectionId=&knowledgePointId=&count=&types=&difficulty=。</p>
 	 *
 	 * @param sectionId        小节ID（小节练习数据源）
 	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
+	 * @param repoId           题库ID（题库直练数据源）
+	 * @param questionId       题目ID（单题重做数据源，优先于其他来源）
 	 * @param count            返回题目数量（为空=返回绑定内容全部题目，显式传值时上限 50）
 	 * @param types            题型过滤（逗号分隔，可选）
 	 * @param difficulty       难度过滤（可选）
@@ -236,11 +266,13 @@ public class StudentApi {
 	public List<StudentQuestionView> studyQuestions(@RequestParam(required = false) String sectionId,
 			@RequestParam(required = false) String knowledgePointId,
 			@RequestParam(required = false) String repoId,
+			@RequestParam(required = false) String questionId,
 			@RequestParam(required = false) Integer count,
 			@RequestParam(required = false) List<String> types,
 			@RequestParam(required = false) String difficulty,
 			@RequestParam(required = false) Boolean exposeAnswer) {
-		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, count, types, difficulty, exposeAnswer);
+		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, questionId, count, types, difficulty,
+				exposeAnswer);
 	}
 
 	/**
@@ -301,6 +333,127 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentPreviewCompleteView completePreview(@RequestBody StudentPreviewCompleteRequest request) {
 		return studentService.completePreview(request);
+	}
+
+	/**
+	 * 个人中心档案（姓名/学号/头衔/累计积分/知识点/薄弱数）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/profile。</p>
+	 *
+	 * @return 学员档案视图
+	 */
+	@GetMapping("/profile")
+	@PreAuthorize("isAuthenticated()")
+	public StudentProfileView profile() {
+		return studentService.profile();
+	}
+
+	/**
+	 * 个人中心-积分板块（积分/头衔/下一目标/规则/最近明细）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/points。</p>
+	 *
+	 * @return 积分板块视图
+	 */
+	@GetMapping("/points")
+	@PreAuthorize("isAuthenticated()")
+	public StudentPointsView points() {
+		return studentService.points();
+	}
+
+	/**
+	 * 本学期学习币（分学科 + 手动发币，单科上限 3000）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/coins。</p>
+	 *
+	 * @return 学习币视图
+	 */
+	@GetMapping("/coins")
+	@PreAuthorize("isAuthenticated()")
+	public StudentCoinsView coins() {
+		return studentService.coins();
+	}
+
+	/**
+	 * 学员端主页今日总览 + 积分获取引导。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/today。</p>
+	 *
+	 * @return 今日总览与引导
+	 */
+	@GetMapping("/today")
+	@PreAuthorize("isAuthenticated()")
+	public StudentTodayView today() {
+		return studentService.today();
+	}
+
+	/**
+	 * 薄弱知识点列表。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/weak/list。</p>
+	 *
+	 * @return 薄弱知识点列表
+	 */
+	@GetMapping("/weak/list")
+	@PreAuthorize("isAuthenticated()")
+	public List<StudentWeakView> weakList() {
+		return studentService.weakList();
+	}
+
+	/**
+	 * 知识点详情（掌握度/评级/薄弱/预习状态）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/knowledge/detail?knowledgePointId=。</p>
+	 *
+	 * @param knowledgePointId 知识点ID
+	 * @return 知识点详情
+	 */
+	@GetMapping("/knowledge/detail")
+	@PreAuthorize("isAuthenticated()")
+	public StudentKnowledgeDetailView knowledgeDetail(@RequestParam String knowledgePointId) {
+		return studentService.knowledgeDetail(knowledgePointId);
+	}
+
+	/**
+	 * 学习完成统一结算（预习/练习/试炼/错题订正等）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/learning/complete。</p>
+	 *
+	 * @param request 结算请求
+	 * @return 结算结果
+	 */
+	@PostMapping("/learning/complete")
+	@PreAuthorize("isAuthenticated()")
+	public StudentPreviewCompleteView completeLearning(@RequestBody StudentLearningCompleteRequest request) {
+		return studentService.completeLearning(request);
+	}
+
+	/**
+	 * 错题重做（答对则订正、移出错题本、刷新薄弱并结算奖励）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/wrong/redo。</p>
+	 *
+	 * @param request 错题重做请求
+	 * @return 重做结果
+	 */
+	@PostMapping("/wrong/redo")
+	@PreAuthorize("isAuthenticated()")
+	public StudentWrongRedoView wrongRedo(@RequestBody StudentWrongRedoRequest request) {
+		return studentService.wrongRedo(request);
+	}
+
+	/**
+	 * 薄弱知识点攻克（复测达标后消除薄弱并结算奖励）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/weak/conquer。</p>
+	 *
+	 * @param request 攻克请求
+	 * @return 攻克结果
+	 */
+	@PostMapping("/weak/conquer")
+	@PreAuthorize("isAuthenticated()")
+	public StudentWeakConquerView weakConquer(@RequestBody StudentWeakConquerRequest request) {
+		return studentService.weakConquer(request);
 	}
 
 }

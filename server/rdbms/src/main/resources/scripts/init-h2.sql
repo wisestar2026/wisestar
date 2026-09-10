@@ -2303,3 +2303,111 @@ ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS update_at timestamp;
 ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS update_by varchar(256);
 ALTER TABLE t_english_ai_pack ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 UPDATE t_english_ai_pack SET create_at = created_at WHERE create_at IS NULL AND created_at IS NOT NULL;
+
+-- ============================================================
+-- 学员积分·学币体系（双轨数值账本）
+-- 学海积分：终身、全学科、只作荣誉评价；学习币：分学科、单学期上限 3000、只作商品兑换
+-- ============================================================
+CREATE TABLE IF NOT EXISTS t_user_points (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员ID',
+  points int DEFAULT 0 COMMENT '累计学海积分(终身/全学科)',
+  title_level int DEFAULT 1 COMMENT '头衔等级1-5',
+  title_name varchar(32) DEFAULT '初探者' COMMENT '头衔名称',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_user_points ON t_user_points (user_id);
+
+CREATE TABLE IF NOT EXISTS t_subject_semester (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员ID',
+  subject_id varchar(64) NOT NULL COMMENT '学科ID(t_subject.id)',
+  semester varchar(16) NOT NULL COMMENT '学期键，如 2026-1',
+  coins int DEFAULT 0 COMMENT '本学期该学科学习币(0..3000)',
+  reached_limit tinyint DEFAULT 0 COMMENT '是否已达单科上限',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_subject_semester ON t_subject_semester (user_id, subject_id, semester);
+
+CREATE TABLE IF NOT EXISTS t_user_learning_record (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员ID',
+  subject_id varchar(64) DEFAULT NULL COMMENT '学科ID，可空',
+  knowledge_point_id varchar(64) DEFAULT NULL COMMENT '知识点ID，可空',
+  section_id varchar(64) DEFAULT NULL COMMENT '小节ID，可空',
+  action_type varchar(32) NOT NULL COMMENT '学习行为类型',
+  ref_id varchar(64) DEFAULT NULL COMMENT '业务关联ID(练习会话/日期等)',
+  coins int DEFAULT 0 COMMENT '本次发放学习币(上限裁剪后)',
+  points int DEFAULT 0 COMMENT '本次发放学海积分',
+  semester varchar(16) DEFAULT NULL COMMENT '学期键',
+  learned_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '行为发生时间',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_ulr_user_action ON t_user_learning_record (user_id, action_type, knowledge_point_id, learned_at);
+CREATE INDEX IF NOT EXISTS idx_ulr_ref ON t_user_learning_record (user_id, action_type, ref_id);
+
+-- ============================================================
+-- 学员薄弱点·学习结果评价体系
+-- ============================================================
+CREATE TABLE IF NOT EXISTS t_user_knowledge_progress (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员ID',
+  subject_id varchar(64) DEFAULT NULL COMMENT '学科ID',
+  version_id varchar(64) DEFAULT NULL COMMENT '教材版本ID',
+  chapter_id varchar(64) DEFAULT NULL COMMENT '章节ID',
+  knowledge_point_id varchar(64) NOT NULL COMMENT '知识点ID',
+  mastery int DEFAULT 0 COMMENT '掌握度0-100',
+  level varchar(16) DEFAULT NULL COMMENT '评级标签',
+  times int DEFAULT 0 COMMENT '练习会话次数',
+  total_count int DEFAULT 0 COMMENT '累计题数',
+  correct_count int DEFAULT 0 COMMENT '累计正确题数',
+  last_correct_rate int DEFAULT 0 COMMENT '最近一次正确率0-100',
+  last_practice_at timestamp NULL DEFAULT NULL COMMENT '最近练习时间',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_kp_progress ON t_user_knowledge_progress (user_id, subject_id, version_id, knowledge_point_id);
+
+CREATE TABLE IF NOT EXISTS t_user_weak_knowledge (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员ID',
+  subject_id varchar(64) DEFAULT NULL COMMENT '学科ID',
+  knowledge_point_id varchar(64) NOT NULL COMMENT '知识点ID',
+  status varchar(16) DEFAULT 'active' COMMENT 'active/conquered',
+  conquer_times int DEFAULT 0 COMMENT '攻克次数',
+  first_weak_at timestamp NULL DEFAULT NULL COMMENT '首次薄弱时间',
+  conquered_at timestamp NULL DEFAULT NULL COMMENT '最近攻克时间',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_weak ON t_user_weak_knowledge (user_id, subject_id, knowledge_point_id);
+CREATE INDEX IF NOT EXISTS idx_weak_status ON t_user_weak_knowledge (user_id, status);
+
+-- 错题订正标记 + 手动发币学科归集
+ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS corrected tinyint DEFAULT 0 COMMENT '错题是否已订正';
+ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS corrected_at timestamp NULL DEFAULT NULL COMMENT '订正时间';
+ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS subject_id varchar(64) DEFAULT NULL COMMENT '学科ID(手动发币按学科归集)';
+ALTER TABLE t_user_knowledge_progress ADD COLUMN IF NOT EXISTS recent_rates varchar(128) DEFAULT NULL COMMENT '最近5次练习正确率(逗号分隔,新到旧)';

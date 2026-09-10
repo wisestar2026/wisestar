@@ -16,7 +16,7 @@
 import { useEffect, useState } from 'react';
 import { Input, Button, Modal, Select, Tabs, message } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getStudyPoints, getStudyQuestions, uploadActivity, completePreview } from '../../api/student';
+import { getStudyPoints, getStudyQuestions, uploadActivity, completePreview, getKnowledgeDetail, wrongRedo } from '../../api/student';
 import { submitPractice, saveWrongReason } from '../../api/practice';
 import './KnowledgePage.css';
 
@@ -48,9 +48,10 @@ export default function KnowledgePage() {
   const sectionId = searchParams.get('sectionId'); // 小节练习入口
   const repoId = searchParams.get('repoId');         // 练习（题库）任务/直接练习入口
   const kpIdParam = searchParams.get('kpId');        // 知识点任务入口
+  const questionIdParam = searchParams.get('questionId'); // 错题重做入口（单题）
   const typesParam = searchParams.get('types');      // 题型过滤（逗号分隔，消灭错题用）
   const countParam = searchParams.get('count');      // 出题数量（消灭易错知识点/错题用）
-  const realMode = !!(sectionId || repoId || kpIdParam);
+  const realMode = !!(sectionId || repoId || kpIdParam || questionIdParam);
   const navigate = useNavigate();
 
   // ============================================================
@@ -60,6 +61,7 @@ export default function KnowledgePage() {
   const [realQuestions, setRealQuestions] = useState(null); // 题目（练习/试炼）
   const [realAnswers, setRealAnswers] = useState({});       // 作答 {questionId: {type, optionId/optionIds}}
   const [realResult, setRealResult] = useState(null);       // 判分结果
+  const [redoResult, setRedoResult] = useState(null);       // 错题重做订正结果
   const [realSubmitting, setRealSubmitting] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);          // 逐题模式当前题索引
   const [judgeState, setJudgeState] = useState({}); // 每题是否已提交判定 {qid: true}
@@ -69,6 +71,17 @@ export default function KnowledgePage() {
   const [wrongList, setWrongList] = useState([]);          // 当前错题列表（查看错题弹窗）
   const [previewCompleting, setPreviewCompleting] = useState(false); // 预习完成提交中
   const [previewDone, setPreviewDone] = useState(false);             // 本次会话预习已完成（进度已保留）
+  const [kpDetail, setKpDetail] = useState(null);                    // 知识点真实掌握度/评级/薄弱
+
+  // 真实掌握度/薄弱：带知识点入口时按 kpId 拉取（失败保留展示，不影响答题）
+  useEffect(() => {
+    if (!realMode || !kpIdParam) {
+      setKpDetail(null);
+      return;
+    }
+    getKnowledgeDetail(kpIdParam).then((res) => setKpDetail(res?.data || null)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realMode, kpIdParam]);
 
   // 习题级上报：进入练习/试炼后上报「当前正在做的题」，随 currentQ 前进实时更新（供督学）
   useEffect(() => {
@@ -108,6 +121,11 @@ export default function KnowledgePage() {
       if (repoId) params.repoId = repoId;
       if (kpIdParam) params.knowledgePointId = kpIdParam;
       getStudyQuestions(params)
+        .then((res) => setRealQuestions(res?.data || []))
+        .catch(() => setRealQuestions([]));
+    } else if (tab === 'redo') {
+      // 错题重做：按题目ID取单题（含答案）本地即时判分
+      getStudyQuestions({ questionId: questionIdParam, exposeAnswer: true })
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     }
@@ -269,10 +287,15 @@ export default function KnowledgePage() {
     });
   };
 
-  // 全部题判定完成后自动落库（错题自动进错题本）
+  // 全部题判定完成后自动落库（错题自动进错题本；错题重做走 wrong/redo 订正）
   useEffect(() => {
     if (!realQuestions?.length || tab === 'preview') return;
-    if (realQuestions.every((q) => judgeState[q.id]) && !realResult && !realSubmitting) {
+    if (!realQuestions.every((q) => judgeState[q.id])) return;
+    if (tab === 'redo') {
+      if (!redoResult && !realSubmitting) realRedo();
+      return;
+    }
+    if (!realResult && !realSubmitting) {
       realSubmit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -286,6 +309,27 @@ export default function KnowledgePage() {
     submitPractice({ mode: tab, items, repoId: repoId || undefined, knowledgePointId: kpIdParam || undefined, sectionId: sectionId || undefined })
       .then((res) => setRealResult(res?.data || { items: [] }))
       .catch(() => setRealResult({ items: [], score: 0 }))
+      .finally(() => setRealSubmitting(false));
+  };
+
+  // 错题重做：提交单题到 wrong/redo 完成订正（答对则移出错题本并结算奖励）
+  const realRedo = () => {
+    if (realSubmitting || !realQuestions?.length) return;
+    const q = realQuestions[0];
+    const answer = realAnswers[q.id];
+    if (!answer) { setRedoResult({ ok: false, message: '请先作答' }); return; }
+    setRealSubmitting(true);
+    wrongRedo({ questionId: q.id, answer })
+      .then((res) => {
+        const d = res?.data || {};
+        setRedoResult(d);
+        if (d.removed) {
+          message.success(`订正成功！学习币 +${d.coins || 0} · 积分 +${d.points || 0}`);
+        } else {
+          message.warning('本次未订正正确，请再试一次');
+        }
+      })
+      .catch(() => setRedoResult({ ok: false, message: '提交失败，请重试' }))
       .finally(() => setRealSubmitting(false));
   };
 
@@ -321,8 +365,17 @@ export default function KnowledgePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               <h3 style={{ margin: 0, display: 'inline-block' }}>
-                {tab === 'preview' ? '📖 知识点讲解' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? ' 小节通关' : tab === 'wrong' ? ' 知识点错题本' : ' 知识点预习/复习'}
+                {tab === 'preview' ? '📖 知识点讲解' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? ' 小节通关' : tab === 'wrong' ? ' 知识点错题本' : tab === 'redo' ? ' 错题重做订正' : ' 知识点预习/复习'}
               </h3>
+              {kpDetail && (
+                <span style={{ marginLeft: 10, fontSize: 13 }}>
+                  <span className="sll-level" style={{ background: '#90a4ae', color: '#fff', padding: '1px 8px', borderRadius: 10 }}>
+                    {kpDetail.level || '待攻克'}
+                  </span>
+                  <span style={{ marginLeft: 8, color: '#607d8b' }}>掌握度 {kpDetail.mastery ?? 0}%</span>
+                  {kpDetail.weak && <span style={{ marginLeft: 8, color: '#e53935' }}>薄弱 ⚠️</span>}
+                </span>
+              )}
 
             </div>
             <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
@@ -422,8 +475,8 @@ export default function KnowledgePage() {
             </div>
           )}
 
-          {/* 专项练习湾 / 试炼检测：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial' || tab === 'example' || tab === 'preview_practice') && (
+          {/* 专项练习湾 / 试炼检测 / 错题重做：逐题模式（每题一页 + 答题指示器） */}
+          {(tab === 'practice' || tab === 'trial' || tab === 'example' || tab === 'preview_practice' || tab === 'redo') && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
@@ -444,7 +497,7 @@ export default function KnowledgePage() {
                       <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                           <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '知识点预习' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
+                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '知识点预习' : tab === 'redo' ? '错题重做' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
                         </div>
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空类输入（单空/多行文本/多项填空）；判断题无选项时补 正确/错误，其余走选项 */}
@@ -543,7 +596,7 @@ export default function KnowledgePage() {
                           {currentQ < realQuestions.length - 1 ? (
                             <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
                           ) : (
-                            realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' ? (
+                            realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' && tab !== 'redo' ? (
                               <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
                                 {realSubmitting ? '提交中…' : '完成'}
                               </button>
@@ -557,7 +610,7 @@ export default function KnowledgePage() {
                             选择题/填空作答后，点击「提交答案」才会判定
                           </div>
                         )}
-                        {currentQ === realQuestions.length - 1 && realQuestions.every((q) => judgeState[q.id]) && (
+                        {currentQ === realQuestions.length - 1 && realQuestions.every((q) => judgeState[q.id]) && tab !== 'redo' && (
                           (() => {
                             const st = localStats();
                             const wrongList = (realQuestions || []).filter((q) => realJudge(q)?.correct === 0);
@@ -595,6 +648,30 @@ export default function KnowledgePage() {
                               </div>
                             );
                           })()
+                        )}
+                        {/* 错题重做：订正结果 */}
+                        {tab === 'redo' && realQuestions.length > 0 && judgeState[realQuestions[0].id] && (
+                          <div style={{ marginTop: 12, padding: 12, borderRadius: 10, background: '#f1f8e9', textAlign: 'center' }}>
+                            {!redoResult ? (
+                              <div style={{ color: '#607d8b' }}>提交订正中…</div>
+                            ) : redoResult.removed ? (
+                              <>
+                                <div style={{ fontSize: 16, fontWeight: 700, color: '#2e7d32' }}>
+                                  ✅ 订正成功，已移出错题本
+                                </div>
+                                <div style={{ color: '#2e7d32', marginTop: 4 }}>
+                                  学习币 +{redoResult.coins || 0} · 积分 +{redoResult.points || 0}
+                                </div>
+                              </>
+                            ) : (
+                              <div style={{ fontSize: 15, fontWeight: 600, color: '#c62828' }}>
+                                ❌ 本次未订正正确，请返回错题本再次挑战
+                              </div>
+                            )}
+                            <Button type="primary" size="small" style={{ marginTop: 10 }} onClick={() => navigate('/student/wrong')}>
+                              返回错题本
+                            </Button>
+                          </div>
                         )}
                       </div>
                     );

@@ -227,3 +227,61 @@
   .profile-certs { grid-template-columns: repeat(2, 1fr); }
   .profile-info { flex-wrap: wrap; }
 }
+
+/* ---- 积分板块（简单明了） ---- */
+.profile-points { padding: 18px 20px; }
+.profile-points-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.profile-points-now { display: flex; align-items: baseline; gap: 8px; }
+.profile-points-num {
+  font-size: 34px;
+  font-weight: 900;
+  color: #ff8a3d;
+  line-height: 1;
+}
+.profile-points-label { font-size: 13px; color: #90a4ae; font-weight: 700; }
+.profile-points-next { font-size: 13px; color: #607d8b; }
+.profile-points-next b { color: #ff8a3d; font-size: 15px; }
+.profile-points-bar {
+  margin: 12px 0;
+  height: 10px;
+  border-radius: 999px;
+  background: #eef3f7;
+  overflow: hidden;
+}
+.profile-points-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd36b, #ff8a3d);
+  transition: width 0.4s;
+}
+.profile-points-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+.profile-points-rule {
+  font-size: 12px;
+  font-weight: 700;
+  color: #546e7a;
+  background: #f2f7fb;
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.profile-points-recent { border-top: 1px dashed #e3ebf1; padding-top: 10px; }
+.profile-points-empty { font-size: 13px; color: #90a4ae; padding: 6px 0; }
+.profile-points-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f4f8fb;
+}
+.profile-points-item-label { color: #37474f; font-weight: 700; }
+.profile-points-item-val { color: #ff8a3d; font-weight: 800; }

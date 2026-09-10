@@ -26,8 +26,8 @@ const TYPE_LABEL = {
 };
 const formatTime = (v) => (v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '-');
 
-/** 错题卡片（含消灭错题按钮） */
-function WrongItem({ item, onEliminate }) {
+/** 错题卡片（含重做订正 / 消灭错题按钮） */
+function WrongItem({ item, onEliminate, onRedo }) {
   return (
     <div className="wrong-item">
       <div className="wrong-item-head">
@@ -43,9 +43,14 @@ function WrongItem({ item, onEliminate }) {
         错误 {item.wrongCount ?? 0} 次 · 最后错误 {formatTime(item.lastWrongTime)}
         {item.wrongReason && <span className="wrong-reason-tag">归因：{item.wrongReason}</span>}
       </div>
-      <Button type="primary" size="small" style={{ marginTop: 8 }} onClick={() => onEliminate(item)}>
-        🎯 消灭错题（3 道同题型）
-      </Button>
+      <Space style={{ marginTop: 8 }} wrap>
+        <Button type="primary" size="small" onClick={() => onRedo(item)}>
+          ✍️ 重做订正
+        </Button>
+        <Button size="small" onClick={() => onEliminate(item)}>
+          🎯 消灭错题（3 道同题型）
+        </Button>
+      </Space>
     </div>
   );
 }
@@ -75,6 +80,11 @@ export default function WrongBookPage() {
     navigate(`/student/knowledge?${base}&types=${encodeURIComponent(item.questionType || 'Radio')}&count=3&tab=practice`);
   };
 
+  // 重做订正：进入单题重做页，答对后调用 wrong/redo 移出错题本并结算奖励
+  const redoWrong = (item) => {
+    navigate(`/student/knowledge?questionId=${item.questionId}&tab=redo`);
+  };
+
   // 消灭易错知识点：5 道该知识点题目
   const eliminateKp = (kpId) => {
     navigate(`/student/knowledge?kpId=${kpId}&count=5&tab=practice`);
@@ -102,7 +112,7 @@ export default function WrongBookPage() {
           <div>暂无错题，继续保持！</div>
         </div>
       )}
-      {list.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} />)}
+      {list.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} onRedo={redoWrong} />)}
     </div>
   );
 
@@ -118,7 +128,7 @@ export default function WrongBookPage() {
               🎯 消灭易错知识点（5 道）
             </Button>
           </div>
-          {group.items.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} />)}
+          {group.items.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} onRedo={redoWrong} />)}
         </div>
       ))}
     </div>
@@ -133,7 +143,7 @@ export default function WrongBookPage() {
             <b>🔍 {reason}</b>
             <span style={{ fontSize: 12, color: '#90a4ae' }}>{items.length} 题</span>
           </div>
-          {items.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} />)}
+          {items.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} onRedo={redoWrong} />)}
         </div>
       ))}
     </div>

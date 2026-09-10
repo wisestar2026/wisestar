@@ -25,7 +25,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
-import { getMyStudentInfo, getStudentStats } from '../../api/student';
+import { getMyStudentInfo, getStudentStats, getMyToday } from '../../api/student';
 import { studentTasks } from '../../api/task';
 import { listMyStudentTasks } from '../../api/studentTask';
 import './StudentHomePage.css';
@@ -52,6 +52,14 @@ export default function StudentHomePage() {
   useEffect(() => {
     getStudentStats().then((res) => setStats(res?.data || null)).catch(() => setStats(null));
   }, []);
+
+  // 今日总览 + 积分获取引导（统一账本）
+  const [todayView, setTodayView] = useState(null);
+  useEffect(() => {
+    getMyToday().then((res) => setTodayView(res?.data || null)).catch(() => setTodayView(null));
+  }, []);
+  // 引导跳转目标 → 学员端路由
+  const guideRoute = (target) => (target === 'wrong' || target === 'weak' ? '/student/wrong' : '/student/study');
 
   // 今日任务（老师布置，含完成状态）
   const [tasks, setTasks] = useState([]);
@@ -192,6 +200,27 @@ export default function StudentHomePage() {
             )}
           </div>
         </div>
+
+        {/* 积分获取引导（主动预习/练习/试炼/订正错题/攻克薄弱） */}
+        {!pureMode && todayView?.guides?.length > 0 && (
+          <div className="sll-card sh-home-todo">
+            <div className="sh-home-section-title">⭐ 今日积分获取引导</div>
+            {todayView.guides.map((g) => (
+              <div
+                key={g.actionType}
+                className="sh-home-todo-item"
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate(guideRoute(g.target))}
+              >
+                <span className="sh-home-todo-dot done">{g.done ? '✅' : '➕'}</span>
+                <span className="sh-home-todo-label">
+                  {g.label}
+                  <span className="sh-home-todo-desc"> · 积分+{g.points} 币+{g.coins}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* 今日任务（老师布置，交卷且及格判定完成） */}
         <div className="sll-card sh-home-todo">

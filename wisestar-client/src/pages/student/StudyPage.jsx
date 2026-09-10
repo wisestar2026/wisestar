@@ -14,7 +14,7 @@
  * 被谁引用: App.jsx 路由表（/student/study）；StudentLayout 子路由
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
 import { getStudySections, uploadActivity } from '../../api/student';
@@ -38,7 +38,7 @@ export default function StudyPage() {
   const navigate = useNavigate();
   const {
     activeSubject, version, grade, pureMode,
-    studyContent, fetchStudyChapters, getVisibleSubjects,
+    studyContent, fetchStudyChapters, fetchStudyProgress, getVisibleSubjects,
   } = useStudentStore();
   const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
 
@@ -68,6 +68,41 @@ export default function StudyPage() {
     setSelectedKp(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubject, grade, realMode]);
+
+  // 学科/版本切换 → 加载真实掌握度/薄弱（章节 → 知识点）
+  useEffect(() => {
+    if (realMode) {
+      fetchStudyProgress(activeSubject, version);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSubject, version, realMode]);
+
+  // 真实评价值索引：知识点 / 小节（掌握度均值+薄弱） / 章节（薄弱）
+  const progressChapters = useMemo(() => studyContent.progress?.chapters || [], [studyContent.progress]);
+  const sectionEvalMap = useMemo(() => {
+    const map = {};
+    progressChapters.forEach((ch) => {
+      const bySection = {};
+      (ch.kps || []).forEach((kp) => {
+        const cur = bySection[kp.sectionId] || (bySection[kp.sectionId] = { sum: 0, n: 0, weak: 0 });
+        cur.sum += kp.mastery || 0;
+        cur.n += 1;
+        if (kp.weak) cur.weak += 1;
+      });
+      Object.entries(bySection).forEach(([sid, v]) => {
+        map[sid] = { mastery: v.n ? Math.round(v.sum / v.n) : 0, weak: v.weak > 0 };
+      });
+    });
+    return map;
+  }, [progressChapters]);
+  const chapterEvalMap = useMemo(() => {
+    const map = {};
+    progressChapters.forEach((ch) => {
+      const kps = ch.kps || [];
+      map[ch.id] = { weak: kps.some((k) => k.weak) };
+    });
+    return map;
+  }, [progressChapters]);
 
   // 展开章节：真实模式加载该章节的小节（按章节缓存）
   const toggleChapter = (chId) => {
@@ -141,7 +176,10 @@ export default function StudyPage() {
                       {realMode && <span className="study-chapter-stars">{stars(ch.progress || 0)}</span>}
                     </div>
                     {realMode ? (
-                      <div className="study-chapter-sub">学习完成度 {ch.progress || 0}%</div>
+                      <div className="study-chapter-sub">
+                        学习完成度 {ch.progress || 0}%
+                        {chapterEvalMap[ch.id]?.weak && <span style={{ color: '#e53935' }}> · 含薄弱点 ⚠️</span>}
+                      </div>
                     ) : (
                       <div className="study-chapter-progress">
                         <div className="study-chapter-progress-bar" style={{ width: `${ch.progress}%` }} />
@@ -154,19 +192,25 @@ export default function StudyPage() {
                 {/* 展开区：真实=小节列表；mock=知识点条目 */}
                 <div className={`study-kp-list ${open ? 'open' : ''}`}>
                   {realMode ? (
-                    (sectionsMap[ch.id] || []).map((sec) => (
-                      <div
-                        key={sec.id}
-                        className={`study-kp ${selectedSection && selectedSection.id === sec.id ? 'selected' : ''}`}
-                        onClick={() => setSelectedSection(sec)}
-                      >
-                        <span className="study-kp-name">🌊 {sec.name}</span>
-                        <span className="study-kp-meta">
-                          <span className="study-kp-stars">{stars(sec.progress || 0)}</span>
-                          <span className="study-kp-pct">{sec.progress || 0}%</span>
-                        </span>
-                      </div>
-                    ))
+                    (sectionsMap[ch.id] || []).map((sec) => {
+                      const ev = sectionEvalMap[sec.id];
+                      const lv = masteryLevel(ev ? ev.mastery : (sec.progress || 0));
+                      return (
+                        <div
+                          key={sec.id}
+                          className={`study-kp ${selectedSection && selectedSection.id === sec.id ? 'selected' : ''}`}
+                          onClick={() => setSelectedSection(sec)}
+                        >
+                          <span className="study-kp-name">
+                            🌊 {sec.name}{ev?.weak ? ' ⚠️' : ''}
+                          </span>
+                          <span className="study-kp-meta">
+                            <span className="study-kp-pct">{ev ? ev.mastery : 0}%</span>
+                            <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
+                          </span>
+                        </div>
+                      );
+                    })
                   ) : (
                     ch.kps.map((kp) => {
                       const lv = masteryLevel(kp.mastery);

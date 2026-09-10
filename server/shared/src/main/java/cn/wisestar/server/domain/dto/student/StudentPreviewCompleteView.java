@@ -23,4 +23,22 @@ public class StudentPreviewCompleteView {
 	/** 本次发放学海积分 */
 	private int points;
 
+	/** 头衔是否晋升 */
+	private boolean titleUpgraded;
+
+	/** 当前头衔等级 1-5 */
+	private int titleLevel = 1;
+
+	/** 当前头衔名称 */
+	private String titleName;
+
+	/** 学习币是否因单科上限被裁剪 */
+	private boolean coinsCapped;
+
+	/** 累计学海积分 */
+	private int totalPoints;
+
+	/** 提示信息（上限/防刷等） */
+	private String message;
+
 }

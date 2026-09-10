@@ -28,6 +28,24 @@ public class PracticeResultView {
 	/** 总题数 */
 	private int total;
 
+	/** 本次发放学习币 */
+	private int coins;
+
+	/** 本次发放学海积分 */
+	private int points;
+
+	/** 头衔是否晋升 */
+	private boolean titleUpgraded;
+
+	/** 当前头衔名称 */
+	private String titleName;
+
+	/** 学习币是否因单科上限被裁剪 */
+	private boolean coinsCapped;
+
+	/** 奖励提示信息（上限/防刷等） */
+	private String message;
+
 	/** 逐题结果 */
 	private List<PracticeResultItem> items = new ArrayList<>();
 
