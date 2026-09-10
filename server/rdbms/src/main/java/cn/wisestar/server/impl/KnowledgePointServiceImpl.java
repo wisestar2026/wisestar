@@ -3,6 +3,7 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.domain.dto.TemplateView;
+import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
@@ -315,6 +316,53 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 				.collect(Collectors.toMap(Template::getId, t -> t));
 		return bindings.stream().map(binding -> templateMap.get(binding.getQuestionId()))
 				.filter(Objects::nonNull).map(templateViewMapper::toView).collect(Collectors.toList());
+	}
+
+	/**
+	 * 查询题库中「知识点标签」匹配该知识点的题目（无论是否已绑定）。
+	 *
+	 * <p>先用 LIKE 对 knowledge_point 列与 template JSON 文本做粗筛，再在内存中按知识点名
+	 * 精确匹配（忽略大小写/首尾空格），避免 JSON 内其它字段（如解析文字）出现同名造成误命中。</p>
+	 */
+	@Override
+	public List<TemplateView> listMatchedQuestions(String knowledgePointId) {
+		KnowledgePoint knowledgePoint = this.baseMapper.selectById(knowledgePointId);
+		if (knowledgePoint == null || !hasText(knowledgePoint.getName())) {
+			return Collections.emptyList();
+		}
+		String name = knowledgePoint.getName().trim();
+		List<Template> candidates = templateMapper.selectList(Wrappers.<Template>lambdaQuery()
+				.and(w -> w.like(Template::getKnowledgePoint, name)
+						.or().like(Template::getTemplate, name)));
+		if (CollectionUtils.isEmpty(candidates)) {
+			return Collections.emptyList();
+		}
+		return candidates.stream().filter(template -> matchesKnowledgePoint(template, name))
+				.map(templateViewMapper::toView).collect(Collectors.toList());
+	}
+
+	/** 题目顶层 knowledge_point 列或 template JSON 内 attribute.knowledgePoint 命中该名称即视为匹配。 */
+	private boolean matchesKnowledgePoint(Template template, String name) {
+		if (containsName(template.getKnowledgePoint(), name)) {
+			return true;
+		}
+		SurveySchema schema = template.getTemplate();
+		return schema != null && schema.getAttribute() != null
+				&& containsName(schema.getAttribute().getKnowledgePoint(), name);
+	}
+
+	private boolean containsName(String[] values, String name) {
+		if (values == null) {
+			return false;
+		}
+		return Stream.of(values).anyMatch(value -> value != null && name.equalsIgnoreCase(value.trim()));
+	}
+
+	private boolean containsName(List<String> values, String name) {
+		if (CollectionUtils.isEmpty(values)) {
+			return false;
+		}
+		return values.stream().anyMatch(value -> value != null && name.equalsIgnoreCase(value.trim()));
 	}
 
 	/**

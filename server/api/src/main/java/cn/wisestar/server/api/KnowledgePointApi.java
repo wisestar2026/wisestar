@@ -169,4 +169,25 @@ public class KnowledgePointApi {
 		return knowledgePointService.listQuestions(knowledgePointId);
 	}
 
+	/**
+	 * 查询题库中「知识点标签」匹配该知识点的题目（无论是否已绑定）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/knowledge-point/questions/matched
+	 * （如 /api/knowledge-point/questions/matched?knowledgePointId=xxx）。</p>
+	 *
+	 * <p><b>功能</b>：题目在入库时带 subject/chapter/section/knowledgePoint 标签
+	 * （或旧数据 template JSON 内 attribute.knowledgePoint 快照），本接口按知识点名称
+	 * 精确匹配这些标签，供教研平台「点击知识点自动列出关联题目并一键绑定」使用。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@link TemplateView} 列表（含未绑定的匹配题目，前端据此去重）。</p>
+	 *
+	 * @param knowledgePointId 知识点ID
+	 * @return 标签匹配该知识点的题目列表
+	 */
+	@GetMapping("/questions/matched")
+	@PreAuthorize("hasAuthority('knowledge:list')")
+	public List<TemplateView> listMatchedQuestions(@RequestParam("knowledgePointId") String knowledgePointId) {
+		return knowledgePointService.listMatchedQuestions(knowledgePointId);
+	}
+
 }

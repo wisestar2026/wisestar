@@ -20,6 +20,7 @@ import {
   listSubjects, listChapters, listSections, listKnowledgePoints,
   updateChapter, updateSection, updateKnowledgePoint,
   listKnowledgePointQuestions, saveKnowledgePointQuestions,
+  listMatchedKnowledgePointQuestions,
 } from '../../api/knowledge';
 import { updateTemplate } from '../../api/template';
 import NodeEditModal from '../../components/research/NodeEditModal';
@@ -63,7 +64,7 @@ function buildAnswerText(qtype, answers) {
 }
 
 /* ---------- 题目卡片（顶层组件，答案显隐状态独立） ---------- */
-function ResearchQuestionCard({ q, onEdit }) {
+function ResearchQuestionCard({ q, onEdit, action }) {
   const [show, setShow] = useState(false);
   const attr = extractAttr(q.template);
   const qtype = q.questionType;
@@ -82,6 +83,7 @@ function ResearchQuestionCard({ q, onEdit }) {
       title={<div style={{ wordBreak: 'break-all' }}>{q.name || '（未命名题目）'}</div>}
       extra={(
         <Space>
+          {action}
           <Button size="small" type="link" icon={show ? <EyeInvisibleOutlined /> : <EyeOutlined />}
             onClick={() => setShow(!show)}>
             {show ? '收起答案' : '查看答案'}
@@ -133,7 +135,7 @@ export default function TeachingResearchPlatformPage() {
   const [expandedKeys, setExpandedKeys] = useState([]);
 
   const [editState, setEditState] = useState(null); // { nodeType, record } | null
-  const [kpQuestions, setKpQuestions] = useState({ pid: null, list: [], loading: false, editing: null });
+  const [kpQuestions, setKpQuestions] = useState({ pid: null, list: [], matched: [], loading: false, editing: null });
   const [addOpen, setAddOpen] = useState(false);
   const expandedRef = useRef([]);
 
@@ -278,8 +280,8 @@ export default function TeachingResearchPlatformPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapters, secMap, kpMap, grade]);
 
-  const onTitleClick = (_, info) => {
-    const key = String(info.key);
+  const onNodeSelect = (_keys, info) => {
+    const key = String(info?.node?.key ?? '');
     if (key.startsWith('ch:')) {
       const ch = chapters.find((c) => c.id === key.slice(3));
       if (ch) setEditState({ nodeType: 'chapter', record: ch });
@@ -326,14 +328,19 @@ export default function TeachingResearchPlatformPage() {
   };
 
   /* ---------- 右侧：知识点直绑题目 ---------- */
-  const openQuestions = (pid) => {
-    if (kpQuestions.pid === pid && kpQuestions.list.length) return;
+  // 同时拉两批：已显式绑定的题目 + 题库中知识点标签匹配的题目（用于自动关联）
+  const loadQuestions = (pid) => {
     setKpQuestions((s) => ({ ...s, pid, loading: true }));
-    listKnowledgePointQuestions(pid)
-      .then((res) => {
-        const raw = unwrap(res);
-        const list = Array.isArray(raw) ? raw : raw?.list || [];
-        setKpQuestions({ pid, list, loading: false, editing: null });
+    Promise.all([
+      listKnowledgePointQuestions(pid),
+      listMatchedKnowledgePointQuestions(pid).catch(() => null),
+    ])
+      .then(([boundRes, matchedRes]) => {
+        const boundRaw = unwrap(boundRes);
+        const list = Array.isArray(boundRaw) ? boundRaw : boundRaw?.list || [];
+        const matchedRaw = matchedRes ? unwrap(matchedRes) : [];
+        const matched = Array.isArray(matchedRaw) ? matchedRaw : matchedRaw?.list || [];
+        setKpQuestions({ pid, list, matched, loading: false, editing: null });
       })
       .catch((e) => {
         message.error('加载题目失败：' + (e?.message || e));
@@ -341,21 +348,20 @@ export default function TeachingResearchPlatformPage() {
       });
   };
 
-  const refreshQuestions = () => {
-    const pid = kpQuestions.pid;
-    if (!pid) return;
-    setKpQuestions((s) => ({ ...s, loading: true }));
-    listKnowledgePointQuestions(pid)
-      .then((res) => {
-        const raw = unwrap(res);
-        const list = Array.isArray(raw) ? raw : raw?.list || [];
-        setKpQuestions({ pid, list, loading: false, editing: null });
-      })
-      .catch((e) => {
-        message.error('加载题目失败：' + (e?.message || e));
-        setKpQuestions((s) => ({ ...s, loading: false }));
-      });
+  const openQuestions = (pid) => {
+    if (kpQuestions.pid === pid && kpQuestions.list.length) return;
+    loadQuestions(pid);
   };
+
+  const refreshQuestions = () => {
+    if (kpQuestions.pid) loadQuestions(kpQuestions.pid);
+  };
+
+  // 题库标签匹配、但尚未显式绑定的题目（用于一键/逐题绑定）
+  const unboundMatched = useMemo(() => {
+    const boundIds = new Set((kpQuestions.list || []).map((q) => q.id));
+    return (kpQuestions.matched || []).filter((q) => !boundIds.has(q.id));
+  }, [kpQuestions.list, kpQuestions.matched]);
 
   const selectedKp = useMemo(() => {
     if (!kpQuestions.pid) return null;
@@ -366,19 +372,27 @@ export default function TeachingResearchPlatformPage() {
     return found || null;
   }, [kpMap, kpQuestions.pid]);
 
-  const handleAddQuestions = async (ids) => {
-    if (!kpQuestions.pid || ids.length === 0) return;
+  const bindQuestionIds = async (ids) => {
+    const pid = kpQuestions.pid;
+    if (!pid || !ids || ids.length === 0) return;
     const old = kpQuestions.list.map((q) => q.id);
     const merged = [...old, ...ids.filter((i) => !old.includes(i))];
+    const added = merged.length - old.length;
+    if (added === 0) {
+      message.info('所选题目已在绑定列表中');
+      return;
+    }
     try {
-      await saveKnowledgePointQuestions({ knowledgePointId: kpQuestions.pid, questionIds: merged });
-      message.success(`已绑定 ${ids.length} 道题目`);
+      await saveKnowledgePointQuestions({ knowledgePointId: pid, questionIds: merged });
+      message.success(`已绑定 ${added} 道题目`);
       setAddOpen(false);
-      refreshQuestions();
+      loadQuestions(pid);
     } catch (e) {
       message.error('绑定失败：' + (e?.message || e));
     }
   };
+
+  const handleAddQuestions = (ids) => bindQuestionIds(ids);
 
   const handleEditQuestionSaved = async (data) => {
     const row = kpQuestions.list.find((q) => q.id === kpQuestions.editing);
@@ -439,7 +453,7 @@ export default function TeachingResearchPlatformPage() {
                   treeData={treeData}
                   expandedKeys={expandedKeys}
                   onExpand={onExpand}
-                  onTitleClick={onTitleClick}
+                  onSelect={onNodeSelect}
                   selectable
                   blockNode
                 />
@@ -493,12 +507,42 @@ export default function TeachingResearchPlatformPage() {
         ) : (
           <Spin spinning={kpQuestions.loading}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {kpQuestions.list.length === 0 && (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="该知识点还没有绑定题目，可点右上角「绑定新题」从题库加入" />
+              {kpQuestions.list.length === 0 && unboundMatched.length === 0 && (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="该知识点还没有关联题目，可点右上角「绑定新题」从题库加入" />
               )}
               {kpQuestions.list.map((q) => (
                 <ResearchQuestionCard key={q.id} q={q} onEdit={(row) => setKpQuestions((s) => ({ ...s, editing: row.id }))} />
               ))}
+
+              {unboundMatched.length > 0 && (
+                <div className="trp-matched-block">
+                  <div className="trp-matched-head">
+                    <Typography.Text type="secondary">
+                      题库中标记了该知识点的题目（{unboundMatched.length} 题未绑定）
+                    </Typography.Text>
+                    <Button
+                      size="small"
+                      type="primary"
+                      ghost
+                      onClick={() => bindQuestionIds(unboundMatched.map((q) => q.id))}
+                    >
+                      全部绑定
+                    </Button>
+                  </div>
+                  {unboundMatched.map((q) => (
+                    <ResearchQuestionCard
+                      key={q.id}
+                      q={q}
+                      onEdit={(row) => setKpQuestions((s) => ({ ...s, editing: row.id }))}
+                      action={(
+                        <Button size="small" type="link" onClick={() => bindQuestionIds([q.id])}>
+                          绑定
+                        </Button>
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </Spin>
         )}
@@ -526,7 +570,7 @@ export default function TeachingResearchPlatformPage() {
           open
           onCancel={() => setKpQuestions((s) => ({ ...s, editing: null }))}
           onSave={handleEditQuestionSaved}
-          record={kpQuestions.list.find((q) => q.id === kpQuestions.editing)}
+          record={[...kpQuestions.list, ...(kpQuestions.matched || [])].find((q) => q.id === kpQuestions.editing)}
           repos={[]}
         />
       )}

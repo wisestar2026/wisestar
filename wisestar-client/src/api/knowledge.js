@@ -247,6 +247,17 @@ export async function listKnowledgePointQuestions(knowledgePointId) {
   return request.get('/knowledge-point/questions', { params: { knowledgePointId } });
 }
 
+/**
+ * 查询题库中「知识点标签」匹配该知识点的题目（无论是否已绑定）
+ * 后端接口: GET /api/knowledge-point/questions/matched
+ * @param {String} knowledgePointId - 知识点ID
+ * @returns {Object} data: [TemplateView, ...]
+ * 调用方: TeachingResearchPlatformPage 知识点自动关联题目
+ */
+export async function listMatchedKnowledgePointQuestions(knowledgePointId) {
+  return request.get('/knowledge-point/questions/matched', { params: { knowledgePointId } });
+}
+
 // ------------------------------------------------------------
 // 知识批量导入（Excel，multipart）
 // ------------------------------------------------------------

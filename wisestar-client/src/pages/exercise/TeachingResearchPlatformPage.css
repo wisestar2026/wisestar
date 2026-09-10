@@ -75,3 +75,19 @@
   margin-top: 6px;
   word-break: break-all;
 }
+
+/* 题库标签自动匹配区 */
+.trp-matched-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px dashed #e5e6eb;
+  padding-top: 12px;
+}
+
+.trp-matched-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

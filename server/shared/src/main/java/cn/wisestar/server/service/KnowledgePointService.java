@@ -81,4 +81,16 @@ public interface KnowledgePointService {
 	 */
 	List<TemplateView> listQuestions(String knowledgePointId);
 
+	/**
+	 * 查询题库中「知识点标签」匹配该知识点的题目（无论是否已绑定）。
+	 *
+	 * <p>兼容两套题目存储：顶层 knowledge_point 列（新格式）与 template JSON 内
+	 * attribute.knowledgePoint（旧数据快照）。供教研平台按知识点标签自动关联展示、
+	 * 一键批量绑定，避免逐题手工勾选。</p>
+	 *
+	 * @param knowledgePointId 知识点ID
+	 * @return 题目标签匹配该知识点的题目视图列表（按知识点名精确匹配，忽略大小写与首尾空格）
+	 */
+	List<TemplateView> listMatchedQuestions(String knowledgePointId);
+
 }
