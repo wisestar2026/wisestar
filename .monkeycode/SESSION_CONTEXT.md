@@ -2,7 +2,20 @@
 
 > 更新：2026-09-05 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
 
-## 0. 最近进展（2026-09-05：云端复现修复 + 全仓库整合收尾）
+## 0. 最近进展
+
+### 2026-09-10：角色权限页恢复 + 角色数据范围配置
+
+- 角色页路由失配修复：菜单 key `/admin/roles` 与路由 `/hr/roles` 不一致 → `App.jsx` 路由改 `/admin/roles`（`required=['system:role:list/create/update/delete']`）并加 `/hr/roles` → `<Navigate to="/admin/roles">` 兼容重定向；`MainLayout` SUB_PATH_KEYS 同步为 `/admin/roles`。
+- 登录页英文提示去除：`api/request.js` 响应拦截器对 `code===401` 静默 `reject`，不再弹 `message.error`；登录失败（`ErrorCode.UsernameOrPasswordError`=1024）仍提示"账号或者密码错误"。
+- 角色新增 `data_scope`（`ALL` 全校可见 / `CAMPUS` 仅本人绑定校区）：`Role`/`RoleRequest`/`RoleView` 加字段，`CampusScope` 加 `DATA_SCOPE_ALL`/`DATA_SCOPE_CAMPUS` 常量；`SystemServiceImpl.createRole` 缺省置 `ALL`；`RoleManagePage.jsx` 加下拉/列表列/提交/回填。
+- `CampusScopeServiceImpl` 删除写死 `SCOPED_ROLE_CODES`，改为按各角色 `data_scope` 解析：多角色取更宽松者（任一 `ALL` 即全校），全部 `CAMPUS` 才按 `t_user_campus` 过滤，未绑定返回 `EMPTY`；注入 `RoleMapper`。
+- `init-h2.sql`/`init-mysql.sql` 加 `data_scope` 列 + 幂等种子（principal/academic/consultant=CAMPUS，admin/teacher 等=ALL）。
+- 验证（2026-09-10）：`mvn clean package -pl api -am -DskipTests` 重打 fat jar 并重启；H2 查 `t_role.data_scope` 种子正确；curl 登录后 `role/list` 返回 dataScope；create 显式 CAMPUS / 缺省 ALL、update、delete 闭环通过（测试角色已清理）；前端 oxlint 无新增错误。预览：前端 3000 + 后端 1991。
+- 学员错题本 404 修复：`/student/wrong` 路由缺失（`WrongBookPage` 组件与底部导航都在，仅 App.jsx 未注册）→ 补 `import WrongBookPage` + `<Route path="wrong">`。后端 `GET /api/practice/wrong-list` 存在。
+- 预习完成（`POST /api/student/preview/complete`）：`StudentApi`/`StudentService`/`StudentServiceImpl.completePreview` + DTO `StudentPreviewCompleteRequest/View`。语义=标记小节/知识点预习完成（完成度 100%）并结算奖励（学习币+5/积分+3），复用 `t_practice_record`（mode=preview，答对数=币、得分=积分、满分=得分→100%）；同一小节/知识点仅首次发放（防刷）+ 校验目标归属学科年级在订单权限内。前端 `KnowledgePage` 预习例题全部判定后显示「预习完成」按钮，成功后提示奖励并「返回研习页」；`api/student.js` 加 `completePreview`。
+
+### 2026-09-05：云端复现修复 + 全仓库整合收尾
 
 **整合已完成：main 为唯一主线（76 提交，root 762e10d → 429139f），功能分支已删。**
 

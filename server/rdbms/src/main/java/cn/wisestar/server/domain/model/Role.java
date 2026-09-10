@@ -40,4 +40,12 @@ public class Role extends BaseModel {
 	 */
 	private Integer builtin;
 
+	/**
+	 * 数据范围：ALL 全校可见（不施加校区过滤）；CAMPUS 仅本人绑定校区可见。
+	 * 见 {@link cn.wisestar.server.domain.dto.CampusScope#DATA_SCOPE_ALL} /
+	 * {@link cn.wisestar.server.domain.dto.CampusScope#DATA_SCOPE_CAMPUS}。
+	 * 为空按 ALL 处理（兼容历史数据）。
+	 */
+	private String dataScope;
+
 }

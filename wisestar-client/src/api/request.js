@@ -52,6 +52,12 @@ request.interceptors.response.use(
         // 成功：直接返回 response.data（调用方通过 .data 获取业务数据）
         return response.data;
       }
+      if (response.data.code === 401) {
+        // 未登录 / 登录态失效：静默拒绝，不弹出后端原始英文提示
+        // （登录页挂载时会调用 /api/currentUser 恢复登录态，未登录属正常情况，
+        //  由 AuthGuard 负责跳转登录页）
+        return Promise.reject(new Error(response.data.message || '未登录'));
+      }
       // 业务逻辑错误（如参数校验失败），弹出错误提示
       message.error(response.data.message || '请求失败');
       return Promise.reject(new Error(response.data.message));

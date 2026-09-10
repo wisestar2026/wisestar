@@ -31,6 +31,16 @@ public class CampusScope {
 	public static final String MODE_SCOPED = "SCOPED";
 
 	/**
+	 * 角色数据范围配置值：全校可见（不施加校区过滤）。
+	 */
+	public static final String DATA_SCOPE_ALL = "ALL";
+
+	/**
+	 * 角色数据范围配置值：仅本人绑定校区可见（启用校区数据隔离）。
+	 */
+	public static final String DATA_SCOPE_CAMPUS = "CAMPUS";
+
+	/**
 	 * 模式：ALL / EMPTY / SCOPED。
 	 */
 	private String mode;

@@ -14,9 +14,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Input, Button, Modal, Select, Tabs } from 'antd';
+import { Input, Button, Modal, Select, Tabs, message } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getStudyPoints, getStudyQuestions, uploadActivity } from '../../api/student';
+import { getStudyPoints, getStudyQuestions, uploadActivity, completePreview } from '../../api/student';
 import { submitPractice, saveWrongReason } from '../../api/practice';
 import './KnowledgePage.css';
 
@@ -67,6 +67,8 @@ export default function KnowledgePage() {
   const [wrongOpen, setWrongOpen] = useState(false);        // 查看错题弹窗
   const [wrongReasons, setWrongReasons] = useState({});     // 各错题归因 {questionId: reason}
   const [wrongList, setWrongList] = useState([]);          // 当前错题列表（查看错题弹窗）
+  const [previewCompleting, setPreviewCompleting] = useState(false); // 预习完成提交中
+  const [previewDone, setPreviewDone] = useState(false);             // 本次会话预习已完成（进度已保留）
 
   // 习题级上报：进入练习/试炼后上报「当前正在做的题」，随 currentQ 前进实时更新（供督学）
   useEffect(() => {
@@ -285,6 +287,28 @@ export default function KnowledgePage() {
       .then((res) => setRealResult(res?.data || { items: [] }))
       .catch(() => setRealResult({ items: [], score: 0 }))
       .finally(() => setRealSubmitting(false));
+  };
+
+  // 预习完成：标记该小节/知识点预习完成（完成度 100%）并结算奖励，进度落库保留
+  const finishPreview = () => {
+    if (previewCompleting || previewDone) return;
+    setPreviewCompleting(true);
+    completePreview({
+      sectionId: sectionId || undefined,
+      knowledgePointId: kpIdParam || undefined,
+      repoId: repoId || undefined,
+    })
+      .then((res) => {
+        const d = res?.data || {};
+        setPreviewDone(true);
+        if (d.firstTime) {
+          message.success(`预习完成！学习币 +${d.coins} · 积分 +${d.points}`);
+        } else {
+          message.info('预习已完成，进度已保留');
+        }
+      })
+      .catch(() => message.error('预习完成失败，请重试'))
+      .finally(() => setPreviewCompleting(false));
   };
 
   // ============================================================
@@ -546,6 +570,27 @@ export default function KnowledgePage() {
                                   <Button type="primary" size="small" style={{ marginTop: 10 }} onClick={() => { setWrongList(wrongList); setWrongOpen(true); }}>
                                     📕 查看错题（{st.wrong}）
                                   </Button>
+                                )}
+                                {/* 预习完成：标记完成度 100% 并结算奖励，进度落库保留 */}
+                                {tab === 'preview' && (
+                                  previewDone ? (
+                                    <div style={{ marginTop: 10 }}>
+                                      <div style={{ color: '#2e7d32', fontWeight: 600 }}>✅ 预习已完成 · 进度已保留</div>
+                                      <Button type="primary" size="small" style={{ marginTop: 8 }} onClick={() => navigate('/student/study')}>
+                                        返回研习页
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      type="primary"
+                                      size="large"
+                                      loading={previewCompleting}
+                                      onClick={finishPreview}
+                                      style={{ marginTop: 12, height: 44, borderRadius: 8, fontSize: 15 }}
+                                    >
+                                      📖 预习完成
+                                    </Button>
+                                  )
                                 )}
                               </div>
                             );

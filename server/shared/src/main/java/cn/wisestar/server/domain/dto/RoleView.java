@@ -31,4 +31,9 @@ public class RoleView {
 
 	private Integer status;
 
+	/**
+	 * 数据范围：ALL 全校可见；CAMPUS 仅本人绑定校区可见。
+	 */
+	private String dataScope;
+
 }

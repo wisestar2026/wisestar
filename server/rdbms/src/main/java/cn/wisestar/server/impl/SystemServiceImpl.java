@@ -95,7 +95,12 @@ public class SystemServiceImpl implements SystemService {
 				throw new ValidationException("角色编码已存在");
 			}
 		}
-		roleService.save(roleViewMapper.fromRequest(request));
+		Role role = roleViewMapper.fromRequest(request);
+		if (!isNotBlank(role.getDataScope())) {
+			// 数据范围未显式指定时默认全校可见，兼容历史调用方
+			role.setDataScope(CampusScope.DATA_SCOPE_ALL);
+		}
+		roleService.save(role);
 	}
 
 	@Override

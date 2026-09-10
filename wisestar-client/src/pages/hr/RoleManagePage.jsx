@@ -2,28 +2,39 @@
  * RoleManagePage.jsx - 人事管理 · 角色权限管理页
  *
  * 功能:
- *   - 角色列表（名称/编码/备注/权限点数量/内置标识/创建时间）
- *   - 新增角色（名称 + 编码 + 备注 + 权限树勾选）
- *   - 编辑角色（基础信息 + 权限树勾选；内置角色编码不可改、不可删；管理员权限不可编辑）
+ *   - 角色列表（名称/编码/数据范围/备注/权限点数量/内置标识/创建时间）
+ *   - 新增角色（名称 + 编码 + 备注 + 数据范围 + 权限树勾选）
+ *   - 编辑角色（基础信息 + 数据范围 + 权限树勾选；内置角色编码不可改、不可删；管理员权限不可编辑）
  *   - 删除角色（内置角色禁用，Popconfirm 二次确认）
+ *
+ * 数据范围（校区数据隔离）:
+ *   - ALL 全校可见（不施加校区过滤）
+ *   - CAMPUS 仅本人绑定校区可见（配合「系统管理-用户管理」中的校区绑定生效）
  *
  * 权限树:
  *   - 数据源 GET /api/system/permissionTree（按功能模块分组：模块 → 操作点）
  *   - 父子节点联动勾选；保存时仅提交叶节点（权限点编码）
  *
- * 被谁引用: App.jsx 路由（/hr/roles），MainLayout 侧边菜单「人事管理」
+ * 被谁引用: App.jsx 路由（/admin/roles），MainLayout 侧边菜单「行政管理 → 角色权限」
  * 数据来源/去向: api/hr.js（listRole/createRole/updateRole/deleteRole/getPermissionTree）
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Table, Space, Button, Input, Modal, Form, Tree, Typography, Popconfirm, message, Tag,
+  Table, Space, Button, Input, Modal, Form, Tree, Typography, Popconfirm, message, Tag, Select,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { listRole, createRole, updateRole, deleteRole, getPermissionTree } from '../../api/hr';
 import { usePermission } from '../../utils/usePermission';
 
 const { Text } = Typography;
+
+// 数据范围取值与展示文案（与后端 CampusScope.DATA_SCOPE_* 对齐）
+const DATA_SCOPE_OPTIONS = [
+  { value: 'ALL', label: '全校可见' },
+  { value: 'CAMPUS', label: '仅本人绑定校区' },
+];
+const DATA_SCOPE_LABELS = { ALL: '全校可见', CAMPUS: '仅绑定校区' };
 
 export default function RoleManagePage() {
   const { can } = usePermission();
@@ -100,8 +111,8 @@ export default function RoleManagePage() {
     setCheckedKeys(role ? (role.authorities || []) : []);
     form.setFieldsValue(
       role
-        ? { name: role.name, code: role.code, remark: role.remark }
-        : { name: '', code: '', remark: '' },
+        ? { name: role.name, code: role.code, remark: role.remark, dataScope: role.dataScope || 'ALL' }
+        : { name: '', code: '', remark: '', dataScope: 'ALL' },
     );
     setModalOpen(true);
   };
@@ -110,13 +121,14 @@ export default function RoleManagePage() {
     const values = await form.validateFields();
     // 仅提交叶节点（权限点编码）
     const authorities = Array.from(new Set(checkedKeys.filter((k) => leafKeys.has(k))));
+    const dataScope = values.dataScope || 'ALL';
     setSaving(true);
     try {
       if (editing) {
-        await updateRole({ id: editing.id, name: values.name, code: editing.code, remark: values.remark, authorities });
+        await updateRole({ id: editing.id, name: values.name, code: editing.code, remark: values.remark, dataScope, authorities });
         message.success('角色已更新');
       } else {
-        await createRole({ name: values.name, code: values.code, remark: values.remark, authorities });
+        await createRole({ name: values.name, code: values.code, remark: values.remark, dataScope, authorities });
         message.success('角色已创建');
       }
       setModalOpen(false);
@@ -144,6 +156,16 @@ export default function RoleManagePage() {
   const columns = [
     { title: '角色名称', dataIndex: 'name', width: 130 },
     { title: '编码', dataIndex: 'code', width: 130, render: (v) => <Text code>{v}</Text> },
+    {
+      title: '数据范围',
+      dataIndex: 'dataScope',
+      width: 130,
+      render: (v) => (
+        <Tag color={v === 'CAMPUS' ? 'orange' : 'green'}>
+          {DATA_SCOPE_LABELS[v] || DATA_SCOPE_LABELS.ALL}
+        </Tag>
+      ),
+    },
     {
       title: '内置角色',
       dataIndex: 'builtin',
@@ -269,6 +291,13 @@ export default function RoleManagePage() {
           </Form.Item>
           <Form.Item name="remark" label="备注">
             <Input placeholder="角色职责说明（可选）" maxLength={100} />
+          </Form.Item>
+          <Form.Item
+            name="dataScope"
+            label="数据范围"
+            tooltip="全校可见：不受校区限制；仅本人绑定校区：只能看到绑定校区的学员/订单/督学数据（未绑定校区则看不到任何校区数据）"
+          >
+            <Select options={DATA_SCOPE_OPTIONS} />
           </Form.Item>
           <Form.Item label="功能权限" required>
             <div

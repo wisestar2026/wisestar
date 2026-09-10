@@ -8,6 +8,8 @@ import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteRequest;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
@@ -153,5 +155,16 @@ public interface StudentService {
 	 */
 	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, Integer count,
 			List<String> types, String difficulty, Boolean exposeAnswer);
+
+	/**
+	 * 学员预习完成（「预习完成」按钮）：标记该小节/知识点预习完成（学习完成度 100%）
+	 * 并结算奖励（学习币 +5 / 学海积分 +3）。
+	 *
+	 * <p>防刷：同一小节/知识点仅首次结算奖励，重复调用返回 firstTime=false 且不再发放。</p>
+	 *
+	 * @param request 预习完成请求（sectionId 或 knowledgePointId 至少其一）
+	 * @return 奖励结算结果（firstTime/coins/points）
+	 */
+	StudentPreviewCompleteView completePreview(StudentPreviewCompleteRequest request);
 
 }

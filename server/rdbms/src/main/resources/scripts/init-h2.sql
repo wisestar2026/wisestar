@@ -1445,6 +1445,7 @@ CREATE TABLE IF NOT EXISTS t_role (
   status tinyint(1) DEFAULT '1' COMMENT '1激活 0失活',
   is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   builtin tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否内置角色 1内置不可删 0普通',
+  data_scope varchar(16) DEFAULT NULL COMMENT '数据范围 ALL全校可见 CAMPUS仅绑定校区',
   create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   create_by varchar(256) DEFAULT NULL,
   update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -1453,6 +1454,8 @@ CREATE TABLE IF NOT EXISTS t_role (
 );
 -- 兼容已存在的 H2 文件库：为旧表补充 builtin 列
 ALTER TABLE t_role ADD COLUMN IF NOT EXISTS builtin tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否内置角色 1内置不可删 0普通';
+-- 兼容已存在的 H2 文件库：为旧表补充 data_scope 列
+ALTER TABLE t_role ADD COLUMN IF NOT EXISTS data_scope varchar(16) DEFAULT NULL COMMENT '数据范围 ALL全校可见 CAMPUS仅绑定校区';
 
 -- ----------------------------
 -- Records of t_role
@@ -1493,6 +1496,10 @@ UPDATE t_role SET authority = authority || ',campus:list' WHERE code IN ('admin'
 UPDATE t_role SET authority = authority || ',campus:create' WHERE code = 'admin' AND authority NOT LIKE '%campus:create%';
 UPDATE t_role SET authority = authority || ',campus:update' WHERE code = 'admin' AND authority NOT LIKE '%campus:update%';
 UPDATE t_role SET authority = authority || ',campus:delete' WHERE code = 'admin' AND authority NOT LIKE '%campus:delete%';
+-- 数据范围默认值（幂等：仅对未配置的行赋默认值，不覆盖用户后续修改）
+-- 校长/教务/学管师默认“仅绑定校区”，其余角色默认“全校可见”
+UPDATE t_role SET data_scope = 'CAMPUS' WHERE code IN ('principal','academic','consultant') AND data_scope IS NULL;
+UPDATE t_role SET data_scope = 'ALL' WHERE data_scope IS NULL;
 COMMIT;
 
 -- ----------------------------

@@ -39,7 +39,8 @@ export async function listRole(params) {
 // 新增角色
 // ============================================================
 // 后端接口: POST /api/system/role/create
-// 参数: { name, code, remark, authorities: [权限点...] }
+// 参数: { name, code, remark, dataScope, authorities: [权限点...] }
+// 说明: dataScope 为数据范围 ALL 全校可见 / CAMPUS 仅本人绑定校区
 export async function createRole(data) {
   return request.post('/system/role/create', data);
 }
@@ -48,8 +49,8 @@ export async function createRole(data) {
 // 编辑角色
 // ============================================================
 // 后端接口: POST /api/system/role/update
-// 参数: { id, name, code, remark, authorities: [权限点...] }
-// 说明: 内置角色编码不可修改；管理员角色权限不可编辑
+// 参数: { id, name, code, remark, dataScope, authorities: [权限点...] }
+// 说明: 内置角色编码不可修改；管理员角色权限不可编辑；dataScope 为空时不改动原值
 export async function updateRole(data) {
   return request.post('/system/role/update', data);
 }

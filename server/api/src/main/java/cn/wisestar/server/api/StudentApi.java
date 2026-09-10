@@ -10,6 +10,8 @@ import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteRequest;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentStatsView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
@@ -280,6 +282,25 @@ public class StudentApi {
 	@PreAuthorize("hasAuthority('student:update')")
 	public void addCoin(@RequestBody StudentCoinRequest request) {
 		studentService.addCoin(request);
+	}
+
+	/**
+	 * 学员预习完成（知识点预习讲完后的「预习完成」按钮）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/preview/complete。</p>
+	 *
+	 * <p><b>功能</b>：标记该小节/知识点预习完成（学习完成度 100%）并结算奖励
+	 * （学习币 +5 / 学海积分 +3）；同一目标仅首次结算，重复调用不重复发放。</p>
+	 *
+	 * <p><b>权限</b>：isAuthenticated()（服务层校验学员身份）。</p>
+	 *
+	 * @param request 预习完成请求（sectionId 或 knowledgePointId 至少其一）
+	 * @return 奖励结算结果（firstTime/coins/points）
+	 */
+	@PostMapping("/preview/complete")
+	@PreAuthorize("isAuthenticated()")
+	public StudentPreviewCompleteView completePreview(@RequestBody StudentPreviewCompleteRequest request) {
+		return studentService.completePreview(request);
 	}
 
 }

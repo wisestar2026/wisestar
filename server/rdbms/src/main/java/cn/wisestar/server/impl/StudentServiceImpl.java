@@ -13,6 +13,8 @@ import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
 import cn.wisestar.server.domain.dto.student.StudentCoinRequest;
 import cn.wisestar.server.domain.dto.student.StudentPermissionView;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteRequest;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentStatsView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
@@ -108,6 +110,20 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	 * 学号生成最大重试次数（随机 8 位数字，冲突时重新生成直至唯一）。
 	 */
 	private static final int STUDENT_NO_RETRY_TIMES = 10;
+
+	/**
+	 * 预习完成奖励：学习币 +5 / 学海积分 +3。
+	 *
+	 * <p>沿用练习记录聚合口径：学习币按答对数累计、学海积分按得分累计，
+	 * 故预习完成记录记为「答对 5 题、得分 3 分、满分 3 分」，学习完成度即 100%。</p>
+	 */
+	private static final int PREVIEW_REWARD_COINS = 5;
+
+	/** 预习完成奖励积分（见 {@link #PREVIEW_REWARD_COINS}）。 */
+	private static final double PREVIEW_REWARD_POINTS = 3.0;
+
+	/** 预习完成记录模式标识。 */
+	private static final String MODE_PREVIEW = "preview";
 
 	private final StudentViewMapper studentViewMapper;
 
@@ -602,6 +618,68 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		coin.setCoins(request.getCoins());
 		coin.setReason(request.getReason());
 		studentCoinMapper.insert(coin);
+	}
+
+	/**
+	 * 学员预习完成：标记该小节/知识点预习完成并结算奖励（同一目标仅首次发放）。
+	 */
+	@Override
+	public StudentPreviewCompleteView completePreview(StudentPreviewCompleteRequest request) {
+		String userId = SecurityContextUtils.getUserId();
+		if (userId == null || getById(userId) == null) {
+			throw new ValidationException("当前用户不是学员");
+		}
+		boolean byKp = StringUtils.hasText(request.getKnowledgePointId());
+		boolean bySection = StringUtils.hasText(request.getSectionId());
+		if (!byKp && !bySection) {
+			throw new ValidationException("缺少小节或知识点");
+		}
+		// 权限收敛：预习目标必须落在学员有效订单权限内（防止越权刷奖励）
+		Section section;
+		if (byKp) {
+			KnowledgePoint kp = knowledgePointMapper.selectById(request.getKnowledgePointId());
+			section = kp == null ? null : sectionMapper.selectById(kp.getSectionId());
+		} else {
+			section = sectionMapper.selectById(request.getSectionId());
+		}
+		Chapter chapter = section == null ? null : chapterMapper.selectById(section.getChapterId());
+		if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
+			throw new ValidationException("预习内容不在权限范围");
+		}
+		// 防刷：同一小节/知识点仅首次结算（按知识点优先，其次小节）
+		LambdaQueryWrapper<PracticeRecord> existQuery = Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId)
+				.eq(PracticeRecord::getMode, MODE_PREVIEW);
+		if (byKp) {
+			existQuery.eq(PracticeRecord::getKnowledgePointId, request.getKnowledgePointId());
+		} else {
+			existQuery.eq(PracticeRecord::getSectionId, request.getSectionId());
+		}
+		StudentPreviewCompleteView view = new StudentPreviewCompleteView();
+		view.setOk(true);
+		if (practiceRecordMapper.selectCount(existQuery) > 0) {
+			// 此前已完成：进度已保留，不重复发放奖励
+			view.setFirstTime(false);
+			return view;
+		}
+		// 写入预习完成记录：完成度 100%（满分=得分）；答对数=学习币、得分=积分
+		PracticeRecord record = new PracticeRecord();
+		record.setUserId(userId);
+		record.setMode(MODE_PREVIEW);
+		record.setRepoId(request.getRepoId());
+		record.setSectionId(request.getSectionId());
+		record.setKnowledgePointId(request.getKnowledgePointId());
+		record.setTotalQuestions(PREVIEW_REWARD_COINS);
+		record.setCorrectCount(PREVIEW_REWARD_COINS);
+		record.setScore(PREVIEW_REWARD_POINTS);
+		record.setTotalScore(PREVIEW_REWARD_POINTS);
+		record.setDurationMs(0L);
+		practiceRecordMapper.insert(record);
+
+		view.setFirstTime(true);
+		view.setCoins(PREVIEW_REWARD_COINS);
+		view.setPoints((int) PREVIEW_REWARD_POINTS);
+		return view;
 	}
 
 	/**

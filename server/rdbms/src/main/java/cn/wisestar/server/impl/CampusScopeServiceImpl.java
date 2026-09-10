@@ -1,12 +1,13 @@
 package cn.wisestar.server.impl;
 
-import cn.wisestar.server.core.constant.PermissionConsts;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.CampusScope;
 import cn.wisestar.server.domain.dto.UserInfo;
 import cn.wisestar.server.domain.model.Campus;
+import cn.wisestar.server.domain.model.Role;
 import cn.wisestar.server.domain.model.UserCampus;
 import cn.wisestar.server.mapper.CampusMapper;
+import cn.wisestar.server.mapper.RoleMapper;
 import cn.wisestar.server.mapper.UserCampusMapper;
 import cn.wisestar.server.service.CampusScopeService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,8 +25,9 @@ import java.util.stream.Collectors;
 /**
  * 校区数据权限解析实现。
  *
- * <p>依据当前登录用户的角色（authorities 中的 {@code ROLE_<code>}）与
- * t_user_campus 绑定计算可见范围，供学员/订单/督学服务统一过滤。</p>
+ * <p>依据当前登录用户的角色配置的 {@code data_scope}（ALL 全校可见 /
+ * CAMPUS 仅绑定校区）与 t_user_campus 绑定计算可见范围，供学员/订单/督学
+ * 服务统一过滤。多个角色并存时取更宽松者：只要有一个角色为 ALL 即全校可见。</p>
  *
  * @author wisestar
  * @date 2026/9/8
@@ -35,21 +36,27 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CampusScopeServiceImpl implements CampusScopeService {
 
-	/** 参与校区数据隔离的内置角色编码 */
-	private static final Set<String> SCOPED_ROLE_CODES = new LinkedHashSet<>(
-			Arrays.asList(PermissionConsts.ROLE_PRINCIPAL, PermissionConsts.ROLE_CONSULTANT,
-					PermissionConsts.ROLE_ACADEMIC));
-
 	private final UserCampusMapper userCampusMapper;
 
 	private final CampusMapper campusMapper;
+
+	private final RoleMapper roleMapper;
 
 	@Override
 	public CampusScope resolveScope() {
 		UserInfo user = SecurityContextUtils.getUser();
 		Set<String> roleCodes = roleCodes(user);
-		if (roleCodes.contains(PermissionConsts.ROLE_ADMIN) || roleCodes.stream().noneMatch(SCOPED_ROLE_CODES::contains)) {
-			// 管理员 / 教师 / 自定义角色 / 学员与匿名：不施加校区过滤
+		if (roleCodes.isEmpty()) {
+			// 无角色（学员/匿名）：不施加校区过滤
+			return CampusScope.all();
+		}
+		List<Role> roles = roleMapper.selectList(Wrappers.<Role>lambdaQuery().in(Role::getCode, roleCodes));
+		boolean hasCampusOnlyRole = roles.stream()
+				.anyMatch(role -> CampusScope.DATA_SCOPE_CAMPUS.equals(role.getDataScope()));
+		boolean hasAllScopeRole = roles.stream()
+				.anyMatch(role -> !CampusScope.DATA_SCOPE_CAMPUS.equals(role.getDataScope()));
+		if (!hasCampusOnlyRole || hasAllScopeRole) {
+			// 无“仅绑定校区”角色，或存在“全校可见”角色：不施加校区过滤
 			return CampusScope.all();
 		}
 		String userId = user.getUserId();
@@ -59,7 +66,7 @@ public class CampusScopeServiceImpl implements CampusScopeService {
 		List<UserCampus> bindings = userCampusMapper
 				.selectList(Wrappers.<UserCampus>lambdaQuery().eq(UserCampus::getUserId, userId));
 		if (CollectionUtils.isEmpty(bindings)) {
-			// 三类角色未绑定任何校区：看不到任何校区数据
+			// 全部角色均为“仅绑定校区”但未绑定任何校区：看不到任何校区数据
 			return CampusScope.empty();
 		}
 		Set<String> campusIds = bindings.stream().map(UserCampus::getCampusId).collect(Collectors.toSet());

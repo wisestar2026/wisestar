@@ -1413,6 +1413,7 @@ CREATE TABLE `t_role` (
   `status` tinyint(1) DEFAULT '1' COMMENT '1激活 0失活',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `builtin` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否内置角色 1内置不可删 0普通',
+  `data_scope` varchar(16) DEFAULT NULL COMMENT '数据范围 ALL全校可见 CAMPUS仅绑定校区',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(256) DEFAULT NULL,
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -1454,6 +1455,11 @@ UPDATE `t_role` SET `authority` = 'home,exercise:list,repo:list,repo:detail,repo
 UPDATE `t_role` SET `authority` = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,system:dict:list,system:dictItem:list' WHERE `code` = 'academic';
 -- 收敛旧库：已有 admin 角色补充内置标记与新权限点
 UPDATE `t_role` SET `name` = '管理员', `remark` = '系统初始化角色（超管）', `builtin` = 1, `update_at` = '2026-08-13 10:00:00', `update_by` = '1457995481966747649', `authority` = 'home,exercise:list,project:list,project:detail,project:create,project:update,project:delete,project:report,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai' WHERE `code` = 'admin';
+-- 兼容已存在的 MySQL 库：补充 data_scope 列
+ALTER TABLE `t_role` ADD COLUMN IF NOT EXISTS `data_scope` varchar(16) DEFAULT NULL COMMENT '数据范围 ALL全校可见 CAMPUS仅绑定校区';
+-- 数据范围默认值（幂等：仅对未配置的行赋默认值，不覆盖用户后续修改）
+UPDATE `t_role` SET `data_scope` = 'CAMPUS' WHERE `code` IN ('principal','academic','consultant') AND `data_scope` IS NULL;
+UPDATE `t_role` SET `data_scope` = 'ALL' WHERE `data_scope` IS NULL;
 COMMIT;
 
 -- ----------------------------

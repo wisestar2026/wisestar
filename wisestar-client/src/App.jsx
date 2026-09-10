@@ -33,7 +33,7 @@
  *   4. 失败 → isLoggedIn = false → AuthGuard 重定向到 /login
  */
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN'; // Ant Design 中文语言包
 import { useEffect } from 'react';
@@ -56,6 +56,7 @@ import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
+import WrongBookPage from './pages/student/WrongBookPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import TaskManagePage from './pages/system/TaskManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
@@ -128,6 +129,7 @@ export default function App() {
             <Route path="knowledge" element={<KnowledgePage />} />
             <Route path="knowledge/:kpId" element={<KnowledgePage />} />
             {/* 错题本: 练习错题自动收录（/api/practice/wrong-list） */}
+            <Route path="wrong" element={<WrongBookPage />} />
             {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}
             <Route path="profile" element={<ProfilePage />} />
             {/* 荣誉商城: 多科合并兑换 */}
@@ -283,15 +285,17 @@ export default function App() {
               }
             />
 
-            {/* 人事管理（角色权限） */}
+            {/* 行政管理（角色权限）：菜单 key 为 /admin/roles，此处保持一致 */}
             <Route
-              path="/hr/roles"
+              path="/admin/roles"
               element={
                 <AuthGuard required={['system:role:list', 'system:role:create', 'system:role:update', 'system:role:delete']}>
                   <RoleManagePage />
                 </AuthGuard>
               }
             />
+            {/* 兼容旧路径 /hr/roles（历史书签） */}
+            <Route path="/hr/roles" element={<Navigate to="/admin/roles" replace />} />
 
             {/* 系统管理：用户/部门/岗位/字典/字典条目 */}
             <Route

@@ -154,6 +154,16 @@ export async function getStudyQuestions(params) {
   return request.get('/student/study/questions', { params });
 }
 
+/**
+ * 预习完成（「预习完成」按钮）：标记该小节/知识点预习完成（完成度 100%）并结算奖励
+ * 后端接口: POST /api/student/preview/complete
+ * @param {Object} data - { sectionId?, knowledgePointId?, repoId? }
+ * @returns {Object} data: { ok, firstTime, coins, points }
+ */
+export async function completePreview(data) {
+  return request.post('/student/preview/complete', data);
+}
+
 // ------------------------------------------------------------
 // 学员实时位置（后台老师监控：学员在哪个页面/哪道习题）
 // ------------------------------------------------------------

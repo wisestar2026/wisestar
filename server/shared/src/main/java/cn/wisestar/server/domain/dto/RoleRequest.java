@@ -28,4 +28,10 @@ public class RoleRequest {
 
 	private Integer status;
 
+	/**
+	 * 数据范围：ALL 全校可见；CAMPUS 仅本人绑定校区可见。
+	 * 为空时新增默认 ALL，编辑时不改动原值。
+	 */
+	private String dataScope;
+
 }
