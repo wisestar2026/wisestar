@@ -19,7 +19,7 @@
  *   /repos                  → RepoListPage（题库列表，受保护）
  *   /repos/:id              → RepoDetailPage（题库详情&题目管理，受保护）
  *   /questions              → QuestionListPage（题目管理，受保护）
- *   /register               → RegisterPage（注册，公开）
+ *   /register               → 重定向到 /login（管理端不允许自主注册）
  *   /system/users          → UserManagePage（用户管理，受保护）
  *   /system/depts          → DeptManagePage（部门管理，受保护）
  *   /system/positions      → PositionManagePage（岗位管理，受保护）
@@ -42,7 +42,6 @@ import AuthGuard from './components/common/AuthGuard';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/login/LoginPage';
 import StudentLoginPage from './pages/student/StudentLoginPage';
-import RegisterPage from './pages/login/RegisterPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import RepoListPage from './pages/repo/RepoListPage';
 import RepoDetailPage from './pages/repo/RepoDetailPage';
@@ -107,11 +106,11 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/student-login" element={<StudentLoginPage />} />
 
-          {/* 注册页（POST /api/public/register，是否开放由后端配置） */}
-          <Route path="/register" element={<RegisterPage />} />
+          {/* 管理端不允许自主注册：/register 直接回到登录页 */}
+          <Route path="/register" element={<Navigate to="/login" replace />} />
 
 
-          {/* 学生端（海底AI自习室 · 学海智习系统 V2.0 纯前端原型，独立全屏路由） */}
+          {/* 学生端（海洋智学 · 学海智习系统 V2.0 纯前端原型，独立全屏路由） */}
           {/* 公共布局 StudentLayout 提供海洋背景 + 顶部通栏（学科 Tab/版本/纯净模式） */}
           <Route
             path="/student"

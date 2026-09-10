@@ -1,9 +1,9 @@
 /**
- * StudentLayout.jsx - 学生端公共布局（海底AI自习室 · 学海智习系统 V2.0 顶部通栏）
+ * StudentLayout.jsx - 学生端公共布局（海洋智学 · 学海智习系统 V2.0 顶部通栏）
  *
  * 结构（学海智习系统 V2.0 全局顶部通栏规范 + 海底童趣视觉）:
  *   +--------------------------------------------------------------+
- *   | [LOGO] 海底AI自习室     [🐚学习币] [⭐总积分] [🔔] [⚙] 头像  |
+ *   | [LOGO] 海洋智学         [🐚学习币] [⭐总积分] [🔔] [⚙] 头像  |
  *   | [语文][数学][英语] 教材版本 ▾        [返回管理端]             |
  *   +--------------------------------------------------------------+
  *   |                        <Outlet 页面内容区>                    |
@@ -128,7 +128,7 @@ export default function StudentLayout() {
         <div className="sll-left">
           <div className="sll-brand">
             <img src="/student-assets/logo-flower.webp" alt="logo" className="sll-logo" />
-            <span className="sll-title">海底AI自习室</span>
+            <span className="sll-title">海洋智学</span>
           </div>
           {/* 学科下拉（语文-数学-英语顺序；默认展示拥有学科，可切换）+ 版本/年级下拉 */}
           <div className="sll-tabs">

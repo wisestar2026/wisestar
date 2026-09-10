@@ -9,7 +9,7 @@
  * 页面布局:
  *   - 全屏渐变背景（紫色渐变）
  *   - 居中白色卡片（400px 宽）
- *   - 表单包含：用户名输入框、密码输入框、登录按钮、注册链接
+ *   - 表单包含：用户名输入框、密码输入框、登录按钮、学员端登录入口
  *
  * 被谁引用: App.jsx（公开路由 /login，无需登录）
  *
@@ -21,13 +21,11 @@
  * 安全说明:
  *   - 密码在 api/user.js login() 中用 RSA 公钥加密后传输，不落明文
  *   - 登录态由后端 sk-token Cookie 维持，刷新页面后由 fetchCurrentUser 恢复
- *
- * 已知说明（非本次修改）:
- *   - 底部"立即注册"链接指向 /register，但 App.jsx 未注册该路由
+ *   - 管理端登录入口不提供自主注册，账号由管理员在后台创建
  */
 
 import { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message, Space } from 'antd';
+import { Form, Input, Button, Card, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import useUserStore from '../../stores/useUserStore';
@@ -108,14 +106,6 @@ export default function LoginPage() {
               登录
             </Button>
           </Form.Item>
-
-          {/* 注册链接 */}
-          <div style={{ textAlign: 'center' }}>
-            <Space>
-              <Text type="secondary">还没有账号？</Text>
-              <Link to="/register">立即注册</Link>
-            </Space>
-          </div>
 
           {/* 学员端登录入口（海洋智学） */}
           <div style={{ textAlign: 'center', marginTop: 12 }}>

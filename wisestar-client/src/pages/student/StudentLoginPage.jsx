@@ -22,7 +22,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import useUserStore from '../../stores/useUserStore';
 import './studentLogin.css';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export default function StudentLoginPage() {
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,6 @@ export default function StudentLoginPage() {
         <div className="sl-brand">
           <div className="sl-brand-logo">🌊</div>
           <Title level={2} className="sl-title">海洋智学</Title>
-          <Text className="sl-subtitle">海底 AI 自习室 · 学员端</Text>
         </div>
 
         <Form name="student-login" onFinish={onFinish} size="large">
