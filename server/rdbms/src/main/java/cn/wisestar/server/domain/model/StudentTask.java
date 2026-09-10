@@ -38,13 +38,14 @@ public class StudentTask {
     /** 创建人（教师 ID） */
     private String createBy;
 
-    @TableField(fill = FieldFill.INSERT)
+    @TableField(value = "create_at", fill = FieldFill.INSERT)
     private Date createTime;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "update_at", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     @TableLogic
+    @TableField("is_deleted")
     private Integer deleted;
 
 }

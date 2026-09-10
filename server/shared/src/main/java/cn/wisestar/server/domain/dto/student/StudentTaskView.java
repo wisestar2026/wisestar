@@ -20,6 +20,9 @@ public class StudentTaskView {
     /** 学员姓名 */
     private String studentName;
 
+    /** 学员学号 */
+    private String studentNo;
+
     /** 任务内容 */
     private String taskContent;
 

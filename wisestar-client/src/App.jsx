@@ -75,6 +75,7 @@ import WordBookManagePage from './pages/english/WordBookManagePage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
+import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
 import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
 import SentenceManagePage from './pages/english/SentenceManagePage';
 import VerifyPage from './pages/mall/VerifyPage';
@@ -245,6 +246,15 @@ export default function App() {
               element={
                 <AuthGuard required={['student:supervision']}>
                   <StudentSupervisionPage />
+                </AuthGuard>
+              }
+            />
+            {/* 任务发布：学管师向学员下发纯文本任务，学员端首页右下角展示 */}
+            <Route
+              path="/student/task-assignment"
+              element={
+                <AuthGuard required={['task:list']}>
+                  <TaskAssignmentPage />
                 </AuthGuard>
               }
             />

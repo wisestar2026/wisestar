@@ -27,6 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
 import { getMyStudentInfo, getStudentStats } from '../../api/student';
 import { studentTasks } from '../../api/task';
+import { listMyStudentTasks } from '../../api/studentTask';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -56,6 +57,12 @@ export default function StudentHomePage() {
   const [tasks, setTasks] = useState([]);
   useEffect(() => {
     studentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
+  }, []);
+
+  // 学管师发布的任务（右下角文本 Label 展示）
+  const [myTasks, setMyTasks] = useState([]);
+  useEffect(() => {
+    listMyStudentTasks().then((res) => setMyTasks(res?.data || [])).catch(() => setMyTasks([]));
   }, []);
 
   // 真实学习统计：学海积分 = 累计练习得分；总学币 = 分科学币合计
@@ -203,56 +210,19 @@ export default function StudentHomePage() {
           ))}
         </div>
       </div>
-    </div>
-  );
-}
 
-// 学员端首页添加今日任务组件
-function TodayTaskCard() {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // 获取当前学员 ID
-    const studentId = localStorage.getItem('studentId');
-    if (!studentId) return;
-
-    setLoading(true);
-    fetch(`${API_BASE}/list?studentId=${studentId}`)
-      .then((res) => res.json())
-      .then((res) => {
-        if (res.code === 200) {
-          setTasks(res.data || []);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (tasks.length === 0) {
-    return null;
-  }
-
-  return (
-    <Card
-      title="今日任务"
-      style={{ marginTop: 20, position: 'fixed', bottom: 20, right: 20, width: 300, zIndex: 1000 }}
-    >
-      {tasks.map((task, index) => (
-        <Card
-          key={task.id}
-          size="small"
-          style={{ marginBottom: 8 }}
-          title={`任务 ${index + 1}`}
-        >
-          <div>{task.taskContent}</div>
-          {task.createTime && (
-            <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-              发布时间：{task.createTime}
+      {/* ---- 右下角任务 Label（位于悬浮 AI 按钮上方，避免遮挡）---- */}
+      {myTasks.length > 0 && (
+        <div className="sh-home-task-fab">
+          <div className="sh-home-task-fab-title">📌 任务</div>
+          {myTasks.map((t) => (
+            <div key={t.id} className="sh-home-task-fab-item" title={t.taskContent}>
+              <span className="sh-home-task-fab-dot" />
+              <span className="sh-home-task-fab-text">{t.taskContent}</span>
             </div>
-          )}
-        </Card>
-      ))}
-    </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

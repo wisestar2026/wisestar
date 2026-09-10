@@ -1,182 +1,215 @@
 /**
- * TaskAssignmentPage.jsx - 任务分配页（教师端）
+ * TaskAssignmentPage.jsx - 任务发布页（学管师后台）
  *
  * 功能:
- *   1. 选择学员
- *   2. 添加任务（最多 3 个任务给同一学员）
- *   3. 任务类型选择（章节/小节/知识点/习题）
- *   4. 批量分配（一次可添加最多 3 个任务）
+ *   1. 选择一名或多名学员
+ *   2. 填写一条纯文本任务内容（不绑定任何练习/章节）
+ *   3. 一键发布（每个学员各生成一条任务记录）
+ *   4. 查看 / 撤回已发布任务
  *
- * URL: /student/task-assignment
+ * URL: /student/task-assignment（学员管理 → 任务发布）
  */
 
-import { useState } from 'react';
-import { Form, Input, Select, Button, message, Card, Space, InputNumber } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import { Form, Input, Select, Button, message, Card, Space, Table, Popconfirm, Tag } from 'antd';
+import { listStudents } from '../../api/student';
+import {
+  publishStudentTask,
+  pageStudentTasks,
+  deleteStudentTask,
+} from '../../api/studentTask';
 
-const API_BASE = '/api/student/task';
+const STATUS_MAP = {
+  pending: { color: 'processing', text: '待完成' },
+  completed: { color: 'success', text: '已完成' },
+};
 
 export default function TaskAssignmentPage() {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
-  const [taskCount, setTaskCount] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
 
-  // 任务类型选项
-  const taskTypes = [
-    { value: 'chapter', label: '章节学习' },
-    { value: 'section', label: '小节学习' },
-    { value: 'knowledge', label: '知识点学习' },
-    { value: 'exercise', label: '习题练习' },
-  ];
+  // 学员下拉数据
+  const [students, setStudents] = useState([]);
+  const [studentLoading, setStudentLoading] = useState(false);
 
-  // 提交任务
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
-      // 构建任务数组
-      const taskContents = [];
-      const taskTypes = [];
-      const taskTargets = [];
+  // 发布记录
+  const [tasks, setTasks] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [keyword, setKeyword] = useState('');
 
-      for (let i = 0; i < taskCount; i++) {
-        if (values[`taskContent_${i}`]) {
-          taskContents.push(values[`taskContent_${i}`]);
-          taskTypes.push(values[`taskType_${i}`]);
-          taskTargets.push(values[`taskTarget_${i}`]);
-        }
-      }
+  // 加载学员列表
+  useEffect(() => {
+    setStudentLoading(true);
+    listStudents({ current: 1, pageSize: 1000 })
+      .then((res) => setStudents(res?.data?.list || []))
+      .catch(() => setStudents([]))
+      .finally(() => setStudentLoading(false));
+  }, []);
 
-      if (taskContents.length === 0) {
-        message.warning('请至少填写一个任务');
-        return;
-      }
-
-      setLoading(true);
-      fetch(`${API_BASE}/assign`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentId: values.studentId,
-          taskContents,
-          taskTypes,
-          taskTargets,
-        }),
+  // 加载发布记录
+  const loadTasks = useCallback(() => {
+    setTableLoading(true);
+    pageStudentTasks({ current: page, pageSize, content: keyword || undefined })
+      .then((res) => {
+        setTasks(res?.data?.list || []);
+        setTotal(res?.data?.total || 0);
       })
-        .then((res) => res.json())
+      .catch(() => {
+        setTasks([]);
+        setTotal(0);
+      })
+      .finally(() => setTableLoading(false));
+  }, [page, pageSize, keyword]);
+
+  useEffect(() => {
+    loadTasks();
+  }, [loadTasks]);
+
+  const handlePublish = () => {
+    form.validateFields().then((values) => {
+      setSubmitting(true);
+      publishStudentTask({
+        studentIds: values.studentIds,
+        content: values.content,
+      })
         .then((res) => {
-          if (res) {
-            message.success('任务分配成功');
-            form.resetFields();
-            setTaskCount(1);
-          } else {
-            message.error('任务分配失败，该学员今日任务已达上限（最多 3 个）');
-          }
+          const count = res?.data ?? values.studentIds.length;
+          message.success(`已发布任务，共 ${count} 名学员`);
+          form.resetFields();
+          setPage(1);
+          loadTasks();
         })
-        .catch(() => message.error('任务分配失败'))
-        .finally(() => setLoading(false));
+        .catch((err) => {
+          message.error(err?.response?.data?.message || '发布失败，请重试');
+        })
+        .finally(() => setSubmitting(false));
     });
   };
 
-  // 增加任务
-  const addTask = () => {
-    if (taskCount < 3) {
-      setTaskCount(taskCount + 1);
-    } else {
-      message.warning('最多只能给同一学员分配 3 个任务');
-    }
+  const handleDelete = (id) => {
+    deleteStudentTask(id)
+      .then(() => {
+        message.success('已撤回任务');
+        loadTasks();
+      })
+      .catch(() => message.error('撤回失败，请重试'));
   };
 
-  // 删除任务
-  const removeTask = (index) => {
-    if (taskCount > 1) {
-      setTaskCount(taskCount - 1);
-      form.setFieldsValue({
-        [`taskContent_${index}`]: undefined,
-        [`taskType_${index}`]: undefined,
-        [`taskTarget_${index}`]: undefined,
-      });
-    }
-  };
+  const columns = [
+    {
+      title: '学员',
+      dataIndex: 'studentName',
+      key: 'studentName',
+      width: 180,
+      render: (_, record) => (
+        <span>
+          {record.studentName || '—'}
+          {record.studentNo && <span style={{ color: '#999' }}>（{record.studentNo}）</span>}
+        </span>
+      ),
+    },
+    { title: '任务内容', dataIndex: 'taskContent', key: 'taskContent' },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (status) => {
+        const item = STATUS_MAP[status] || { color: 'default', text: status || '—' };
+        return <Tag color={item.color}>{item.text}</Tag>;
+      },
+    },
+    { title: '发布时间', dataIndex: 'createTime', key: 'createTime', width: 160 },
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      render: (_, record) => (
+        <Popconfirm title="确认撤回该任务？" onConfirm={() => handleDelete(record.id)}>
+          <Button type="link" danger size="small">
+            撤回
+          </Button>
+        </Popconfirm>
+      ),
+    },
+  ];
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
-      <Card title="任务分配">
+    <div style={{ padding: 20 }}>
+      <Card title="任务发布" style={{ marginBottom: 16 }}>
         <Form form={form} layout="vertical">
           <Form.Item
-            name="studentId"
+            name="studentIds"
             label="选择学员"
-            rules={[{ required: true, message: '请选择学员' }]}
+            rules={[{ required: true, message: '请至少选择一名学员' }]}
           >
-            <Select placeholder="选择学员">
-              {/* TODO: 从 API 加载学员列表 */}
-              <Select.Option value="student1">学员 1</Select.Option>
-              <Select.Option value="student2">学员 2</Select.Option>
-            </Select>
+            <Select
+              mode="multiple"
+              allowClear
+              showSearch
+              loading={studentLoading}
+              placeholder="可搜索并多选学员"
+              optionFilterProp="label"
+              options={students.map((s) => ({
+                value: s.id,
+                label: `${s.name}${s.studentNo ? `（${s.studentNo}）` : ''}`,
+              }))}
+            />
           </Form.Item>
 
-          {/* 任务列表 */}
-          {[...Array(taskCount)].map((_, index) => (
-            <Card
-              key={index}
-              size="small"
-              title={`任务 ${index + 1}`}
-              style={{ marginBottom: 16 }}
-              extra={
-                taskCount > 1 && (
-                  <Button
-                    type="link"
-                    danger
-                    size="small"
-                    onClick={() => removeTask(index)}
-                  >
-                    删除此任务
-                  </Button>
-                )
-              }
-            >
-              <Form.Item
-                name={`taskContent_${index}`}
-                label="任务内容"
-                rules={[{ required: true, message: '请填写任务内容' }]}
-              >
-                <Input.TextArea
-                  rows={2}
-                  placeholder="请输入任务内容（文本形式，如：完成第 1 章节的学习）"
-                />
-              </Form.Item>
+          <Form.Item
+            name="content"
+            label="任务内容"
+            rules={[{ required: true, message: '请填写任务内容' }]}
+          >
+            <Input.TextArea
+              rows={3}
+              maxLength={500}
+              showCount
+              placeholder="请输入任务内容（纯文本，如：完成第 1 单元单词背诵并朗读三遍）"
+            />
+          </Form.Item>
 
-              <Form.Item
-                name={`taskType_${index}`}
-                label="任务类型"
-              >
-                <Select placeholder="选择任务类型">
-                  {taskTypes.map((type) => (
-                    <Select.Option key={type.value} value={type.value}>
-                      {type.label}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name={`taskTarget_${index}`}
-                label="任务目标 ID"
-              >
-                <Input placeholder="请输入章节/小节/知识点/习题 ID（可选）" />
-              </Form.Item>
-            </Card>
-          ))}
-
-          {taskCount < 3 && (
-            <Button type="dashed" block onClick={addTask} style={{ marginBottom: 16 }}>
-              + 添加另一个任务（最多 3 个）
-            </Button>
-          )}
-
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block>
-              分配任务
+          <Form.Item style={{ marginBottom: 0 }}>
+            <Button type="primary" loading={submitting} onClick={handlePublish}>
+              发布任务
             </Button>
           </Form.Item>
         </Form>
+      </Card>
+
+      <Card title="发布记录">
+        <Space style={{ marginBottom: 12 }}>
+          <Input.Search
+            allowClear
+            placeholder="按任务内容搜索"
+            style={{ width: 260 }}
+            onSearch={(value) => {
+              setKeyword(value.trim());
+              setPage(1);
+            }}
+          />
+        </Space>
+        <Table
+          rowKey="id"
+          loading={tableLoading}
+          columns={columns}
+          dataSource={tasks}
+          pagination={{
+            current: page,
+            pageSize,
+            total,
+            showSizeChanger: true,
+            showTotal: (t) => `共 ${t} 条`,
+            onChange: (p, ps) => {
+              setPage(p);
+              setPageSize(ps);
+            },
+          }}
+        />
       </Card>
     </div>
   );
