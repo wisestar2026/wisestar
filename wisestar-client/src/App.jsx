@@ -57,7 +57,6 @@ import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
-import TaskManagePage from './pages/system/TaskManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
@@ -250,7 +249,7 @@ export default function App() {
                 </AuthGuard>
               }
             />
-            {/* 任务发布：学管师向学员下发纯文本任务，学员端首页右下角展示 */}
+            {/* 任务发布：学管师向学员下发纯文本任务（每日最多 3 条），学员端首页今日任务卡片展示 */}
             <Route
               path="/student/task-assignment"
               element={
@@ -264,14 +263,6 @@ export default function App() {
               element={
                 <AuthGuard required={['mall:list', 'mall:create', 'mall:update', 'mall:delete']}>
                   <MallGoodsManagePage />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/tasks"
-              element={
-                <AuthGuard required={['task:list', 'task:create', 'task:update', 'task:delete']}>
-                  <TaskManagePage />
                 </AuthGuard>
               }
             />

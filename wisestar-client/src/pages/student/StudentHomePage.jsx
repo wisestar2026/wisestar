@@ -26,8 +26,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
 import { getMyStudentInfo, getStudentStats, getMyToday } from '../../api/student';
-import { studentTasks } from '../../api/task';
 import { listMyStudentTasks } from '../../api/studentTask';
+import { getMyStudySummary } from '../../api/studentStudy';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -61,16 +61,16 @@ export default function StudentHomePage() {
   // 引导跳转目标 → 学员端路由
   const guideRoute = (target) => (target === 'wrong' || target === 'weak' ? '/student/wrong' : '/student/study');
 
-  // 今日任务（老师布置，含完成状态）
+  // 今日任务（学管师/老师当天发布，按发布时间升序）
   const [tasks, setTasks] = useState([]);
   useEffect(() => {
-    studentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
+    listMyStudentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
   }, []);
 
-  // 学管师发布的任务（右下角文本 Label 展示）
-  const [myTasks, setMyTasks] = useState([]);
+  // 今日学习总结（会话累计满 60 分钟后由系统生成）
+  const [summary, setSummary] = useState(null);
   useEffect(() => {
-    listMyStudentTasks().then((res) => setMyTasks(res?.data || [])).catch(() => setMyTasks([]));
+    getMyStudySummary().then((res) => setSummary(res?.data || null)).catch(() => setSummary(null));
   }, []);
 
   // 真实学习统计：学海积分 = 累计练习得分；总学币 = 分科学币合计
@@ -222,7 +222,7 @@ export default function StudentHomePage() {
           </div>
         )}
 
-        {/* 今日任务（老师布置，交卷且及格判定完成） */}
+        {/* 今日任务（学管师/老师当日发布） */}
         <div className="sll-card sh-home-todo">
           <div className="sh-home-section-title">🗓️ 今日任务</div>
           {tasks.length === 0 && (
@@ -231,27 +231,22 @@ export default function StudentHomePage() {
           {tasks.map((t) => (
             <div key={t.id} className="sh-home-todo-item">
               <span className="sh-home-todo-dot done">📋</span>
-              <span className="sh-home-todo-label">
-                {t.name || '今日任务'}
-                {t.description && <span className="sh-home-todo-desc"> · {t.description}</span>}
-              </span>
+              <span className="sh-home-todo-label">{t.taskContent || '今日任务'}</span>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* ---- 右下角任务 Label（位于悬浮 AI 按钮上方，避免遮挡）---- */}
-      {myTasks.length > 0 && (
-        <div className="sh-home-task-fab">
-          <div className="sh-home-task-fab-title">📌 任务</div>
-          {myTasks.map((t) => (
-            <div key={t.id} className="sh-home-task-fab-item" title={t.taskContent}>
-              <span className="sh-home-task-fab-dot" />
-              <span className="sh-home-task-fab-text">{t.taskContent}</span>
+        {/* 今日学习总结（学习时长累计满 1 小时后自动生成） */}
+        {summary?.content && (
+          <div className="sll-card sh-home-todo">
+            <div className="sh-home-section-title">📝 今日学习总结</div>
+            <div className="sh-home-todo-item">
+              <span className="sh-home-todo-dot done">✨</span>
+              <span className="sh-home-todo-label" style={{ whiteSpace: 'pre-wrap' }}>{summary.content}</span>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

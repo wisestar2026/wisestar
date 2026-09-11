@@ -21,9 +21,11 @@ import javax.validation.ValidationException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,9 @@ public class StudentTaskServiceImpl implements StudentTaskService {
 
     /** 任务内容最大长度（与 t_student_task.task_content varchar(500) 对齐） */
     private static final int MAX_CONTENT_LENGTH = 500;
+
+    /** 单个学员每日最多任务数 */
+    private static final int MAX_DAILY_TASKS = 3;
 
     private final StudentTaskMapper studentTaskMapper;
     private final StudentMapper studentMapper;
@@ -114,32 +119,64 @@ public class StudentTaskServiceImpl implements StudentTaskService {
         if (request == null || request.getStudentIds() == null || request.getStudentIds().isEmpty()) {
             throw new ValidationException("请至少选择一名学员");
         }
-        String content = request.getContent() == null ? "" : request.getContent().trim();
-        if (content.isEmpty()) {
-            throw new ValidationException("任务内容不能为空");
+        // 清洗任务内容：去空白、丢弃空条目
+        List<String> contents = new ArrayList<>();
+        if (request.getContents() != null) {
+            for (String raw : request.getContents()) {
+                String text = raw == null ? "" : raw.trim();
+                if (!text.isEmpty()) {
+                    contents.add(text);
+                }
+            }
         }
-        if (content.length() > MAX_CONTENT_LENGTH) {
-            throw new ValidationException("任务内容不能超过 " + MAX_CONTENT_LENGTH + " 字");
+        if (contents.isEmpty()) {
+            throw new ValidationException("请至少填写一条任务内容");
+        }
+        if (contents.size() > MAX_DAILY_TASKS) {
+            throw new ValidationException("单个学员每日最多发布 " + MAX_DAILY_TASKS + " 个任务");
+        }
+        for (String text : contents) {
+            if (text.length() > MAX_CONTENT_LENGTH) {
+                throw new ValidationException("任务内容不能超过 " + MAX_CONTENT_LENGTH + " 字");
+            }
         }
 
         String operator = SecurityContextUtils.getUserId();
         // 去重且保持前端选择顺序
         Set<String> studentIds = new LinkedHashSet<>(request.getStudentIds());
 
-        int count = 0;
+        // 任一学员当日配额将超限则整批拒绝（事务回滚）
+        Date todayStart = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
         for (String studentId : studentIds) {
             if (studentId == null || studentId.trim().isEmpty()) {
                 continue;
             }
-            StudentTask task = new StudentTask();
-            task.setId(UUID.randomUUID().toString().replace("-", ""));
-            task.setStudentId(studentId.trim());
-            task.setTaskContent(content);
-            task.setStatus("pending");
-            task.setCreateBy(operator);
-            task.setCreateTime(new java.sql.Timestamp(System.currentTimeMillis()));
-            studentTaskMapper.insert(task);
-            count++;
+            Long todayCount = studentTaskMapper.selectCount(new LambdaQueryWrapper<StudentTask>()
+                    .eq(StudentTask::getStudentId, studentId.trim())
+                    .ge(StudentTask::getCreateTime, todayStart));
+            long existing = todayCount == null ? 0L : todayCount;
+            if (existing + contents.size() > MAX_DAILY_TASKS) {
+                throw new ValidationException("存在学员今日任务已达上限（每人每日最多 " + MAX_DAILY_TASKS + " 个），请调整后重试");
+            }
+        }
+
+        int count = 0;
+        java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+        for (String studentId : studentIds) {
+            if (studentId == null || studentId.trim().isEmpty()) {
+                continue;
+            }
+            for (String content : contents) {
+                StudentTask task = new StudentTask();
+                task.setId(UUID.randomUUID().toString().replace("-", ""));
+                task.setStudentId(studentId.trim());
+                task.setTaskContent(content);
+                task.setStatus("pending");
+                task.setCreateBy(operator);
+                task.setCreateTime(now);
+                studentTaskMapper.insert(task);
+                count++;
+            }
         }
         return count;
     }
@@ -174,10 +211,13 @@ public class StudentTaskServiceImpl implements StudentTaskService {
         if (studentId == null || studentId.isEmpty()) {
             return new ArrayList<>();
         }
+        // 仅返回当日任务，按创建时间升序
+        Date todayStart = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
         List<StudentTask> tasks = studentTaskMapper.selectList(
             new LambdaQueryWrapper<StudentTask>()
                 .eq(StudentTask::getStudentId, studentId)
-                .orderByDesc(StudentTask::getCreateTime)
+                .ge(StudentTask::getCreateTime, todayStart)
+                .orderByAsc(StudentTask::getCreateTime)
         );
         return toViews(tasks);
     }

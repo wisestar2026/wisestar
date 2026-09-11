@@ -16,7 +16,7 @@ public class StudentTaskPublishDTO {
     /** 目标学员 ID 列表（支持一次发布给多个学员） */
     private List<String> studentIds;
 
-    /** 任务内容（纯文本，不绑定任何练习/章节） */
-    private String content;
+    /** 任务内容列表（每条对应一个独立任务，最多 3 条） */
+    private List<String> contents;
 
 }

@@ -3,8 +3,8 @@
  *
  * 功能:
  *   1. 选择一名或多名学员
- *   2. 填写一条纯文本任务内容（不绑定任何练习/章节）
- *   3. 一键发布（每个学员各生成一条任务记录）
+ *   2. 逐条填写最多 3 条任务内容（每个输入框一条独立任务）
+ *   3. 一键发布（每个学员 × 每条任务各生成一条记录，每人每日最多 3 条）
  *   4. 查看 / 撤回已发布任务
  *
  * URL: /student/task-assignment（学员管理 → 任务发布）
@@ -70,15 +70,19 @@ export default function TaskAssignmentPage() {
 
   const handlePublish = () => {
     form.validateFields().then((values) => {
+      const contents = (values.contents || [])
+        .map((c) => (c || '').trim())
+        .filter(Boolean);
       setSubmitting(true);
       publishStudentTask({
         studentIds: values.studentIds,
-        content: values.content,
+        contents,
       })
         .then((res) => {
-          const count = res?.data ?? values.studentIds.length;
-          message.success(`已发布任务，共 ${count} 名学员`);
+          const count = res?.data ?? (contents.length * values.studentIds.length);
+          message.success(`已发布 ${contents.length} 条任务，共 ${count} 条记录`);
           form.resetFields();
+          form.setFieldsValue({ contents: [''] });
           setPage(1);
           loadTasks();
         })
@@ -140,7 +144,7 @@ export default function TaskAssignmentPage() {
   return (
     <div style={{ padding: 20 }}>
       <Card title="任务发布" style={{ marginBottom: 16 }}>
-        <Form form={form} layout="vertical">
+        <Form form={form} layout="vertical" initialValues={{ contents: [''] }}>
           <Form.Item
             name="studentIds"
             label="选择学员"
@@ -160,18 +164,45 @@ export default function TaskAssignmentPage() {
             />
           </Form.Item>
 
-          <Form.Item
-            name="content"
-            label="任务内容"
-            rules={[{ required: true, message: '请填写任务内容' }]}
-          >
-            <Input.TextArea
-              rows={3}
-              maxLength={500}
-              showCount
-              placeholder="请输入任务内容（纯文本，如：完成第 1 单元单词背诵并朗读三遍）"
-            />
-          </Form.Item>
+          <Form.List name="contents">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name }, index) => (
+                  <Form.Item
+                    key={key}
+                    label={index === 0 ? '任务内容（每个输入框一条任务，最多 3 条）' : ''}
+                    required
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Space align="baseline" style={{ display: 'flex' }}>
+                      <Form.Item
+                        name={name}
+                        noStyle
+                        rules={[{ required: true, whitespace: true, message: '请填写任务内容' }]}
+                      >
+                        <Input
+                          maxLength={500}
+                          placeholder="请输入任务内容（如：完成第 1 单元单词背诵并朗读三遍）"
+                        />
+                      </Form.Item>
+                      {fields.length > 1 && (
+                        <Button danger type="text" onClick={() => remove(name)}>
+                          删除
+                        </Button>
+                      )}
+                    </Space>
+                  </Form.Item>
+                ))}
+                {fields.length < 3 && (
+                  <Form.Item style={{ marginBottom: 16 }}>
+                    <Button type="dashed" block onClick={() => add('')}>
+                      + 添加任务
+                    </Button>
+                  </Form.Item>
+                )}
+              </>
+            )}
+          </Form.List>
 
           <Form.Item style={{ marginBottom: 0 }}>
             <Button type="primary" loading={submitting} onClick={handlePublish}>

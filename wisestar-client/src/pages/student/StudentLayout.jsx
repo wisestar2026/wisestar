@@ -29,6 +29,7 @@ import {
 import useStudentStore, { TITLES, PROFILE } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
 import { uploadActivity, getStudentStats } from '../../api/student';
+import { sendStudyHeartbeat } from '../../api/studentStudy';
 import './student.css';
 
 // 底部导航配置
@@ -66,6 +67,22 @@ export default function StudentLayout() {
     lastReport.current = { page, ts: now };
     uploadActivity({ page }).catch(() => {});
   }, [location.pathname]);
+
+  // 学习会话心跳：进入学员端后每 5 分钟上报一次，页面重新可见时补报（累计满 60 分钟生成当日总结）
+  useEffect(() => {
+    const beat = () => {
+      if (document.hidden) return;
+      sendStudyHeartbeat().catch(() => {});
+    };
+    beat();
+    const timer = setInterval(beat, 5 * 60 * 1000);
+    const onVisible = () => { if (!document.hidden) beat(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
 
   // 真实学习统计（学海积分/学习币，从 0 开始）
   const [stats, setStats] = useState(null);

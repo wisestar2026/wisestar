@@ -6,12 +6,15 @@
  *   题目信息统一来源于题目管理板块，本弹窗只做"选择 + 绑定"，不提供创建/编辑题目入口。
  *
  * 筛选:
- *   级联维度按题目行实际取值逐级收窄: 学科 → 年级 → 章节 → 小节 → 知识点
+ *   级联维度按题目"有效归属"逐级收窄: 学科 → 年级 → 章节 → 小节 → 知识点
  *   （题目行无"上下册"字段，该级不设；每一级选项都从当前可选题目中统计真实出现的值并带数量）
+ *   有效归属 = 题目自身 subject/chapter/section 与「其知识点名称回溯到的知识结构」的并集，
+ *   因此按小节名也能筛出仅通过知识点关联到该小节的题目。
  *   另支持名称关键词 / 题型筛选。
  *
  * 数据流:
- *   打开: listTemplate({current:1, pageSize:500}) → GET /api/template/list（全量题目）
+ *   打开: 并行 listTemplate({current:1, pageSize:500}) + listKnowledgePoints({current:1,pageSize:10000})
+ *         → 用知识点列表构建 kpName → {subject,chapter,section} 映射并计算每题有效归属
  *   过滤: 前端排除已绑定当前练习的题目（record.repoId === repoId → 不在列表中）
  *   确认: bindTemplate({repoId, ids}) → POST /api/repo/bind → onSuccess() 刷新练习题目列表
  *
@@ -24,6 +27,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Modal, Table, Input, Select, Tag, Button, message, Typography, Space } from 'antd';
 import { SearchOutlined, ReloadOutlined, ClearOutlined } from '@ant-design/icons';
 import { listTemplate } from '../../api/template';
+import { listKnowledgePoints } from '../../api/knowledge';
 import { bindTemplate } from '../../api/repo';
 import { EXAM_TYPES, TYPE_LABELS } from '../../utils/questionTypes';
 
@@ -36,11 +40,15 @@ const TYPE_OPTIONS = EXAM_TYPES;
 const LEVEL_KEYS = ['subject', 'grade', 'chapter', 'section', 'knowledgePoint'];
 const LEVEL_LABELS = { subject: '学科', grade: '年级', chapter: '章节', section: '小节', knowledgePoint: '知识点' };
 
-// 统计给定字段在列表中出现的去重取值及数量（知识点为数组字段，逐条命中计次）
+// 有效归属字段：学科/章节/小节在自身值基础上并集知识点回溯到的知识结构值
+const EFFECTIVE_FIELD = { subject: '_effSubject', chapter: '_effChapter', section: '_effSection' };
+
+// 统计给定字段在列表中出现的去重取值及数量（多值字段逐条命中计次）
 function distinctValues(list, field) {
+  const key = EFFECTIVE_FIELD[field] || field;
   const map = {};
   list.forEach((t) => {
-    const raw = t[field];
+    const raw = t[key];
     const vals = Array.isArray(raw) ? raw : [raw];
     (vals || []).forEach((v) => {
       const s = (v || '').toString().trim();
@@ -52,12 +60,42 @@ function distinctValues(list, field) {
     .map((v) => ({ value: v, count: map[v] }));
 }
 
-// 行内字段是否命中某个值（知识点为多值数组，任一命中即算匹配）
+// 行内字段是否命中某个值（多值字段任一命中即算匹配）
 function matchField(t, field, val) {
   if (!val) return true;
-  const raw = t[field];
+  const key = EFFECTIVE_FIELD[field] || field;
+  const raw = t[key];
   if (Array.isArray(raw)) return raw.some((x) => (x || '').toString().trim() === val);
   return (raw || '').toString().trim() === val;
+}
+
+// 构建 知识点名称 → 知识结构（学科/章节/小节）映射
+function buildKpMap(points) {
+  const map = {};
+  (points || []).forEach((p) => {
+    const name = (p.name || '').trim();
+    if (!name) return;
+    if (!map[name]) map[name] = [];
+    map[name].push({ subject: p.subjectName || '', chapter: p.chapterName || '', section: p.sectionName || '' });
+  });
+  return map;
+}
+
+// 计算题目有效归属：自身字段 ∪ 知识点回溯字段（按名称去重）
+function enrichTemplate(t, kpMap) {
+  const kpVals = Array.isArray(t.knowledgePoint) ? t.knowledgePoint : [t.knowledgePoint];
+  const subjects = new Set([t.subject].filter(Boolean));
+  const chapters = new Set([t.chapter].filter(Boolean));
+  const sections = new Set([t.section].filter(Boolean));
+  kpVals.forEach((k) => {
+    const name = (k || '').toString().trim();
+    (kpMap[name] || []).forEach((m) => {
+      if (m.subject) subjects.add(m.subject);
+      if (m.chapter) chapters.add(m.chapter);
+      if (m.section) sections.add(m.section);
+    });
+  });
+  return { ...t, _effSubject: [...subjects], _effChapter: [...chapters], _effSection: [...sections] };
 }
 
 export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess }) {
@@ -70,14 +108,18 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
-  // ---- 加载全量题目（题目管理全局库） ----
+  // ---- 加载全量题目 + 知识点结构（题目管理全局库） ----
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const res = await listTemplate({ current: 1, pageSize: 500 });
-      const list = res.data?.list || [];
+      const [tplRes, kpRes] = await Promise.all([
+        listTemplate({ current: 1, pageSize: 500 }),
+        listKnowledgePoints({ current: 1, pageSize: 10000 }).catch(() => ({ data: { list: [] } })),
+      ]);
+      const kpMap = buildKpMap(kpRes.data?.list || []);
+      const list = tplRes.data?.list || [];
       // 排除已绑定当前练习的题目（前端过滤；数据量可控时一次性加载更利于勾选跨页）
-      const others = list.filter((t) => t.repoId !== repoId);
+      const others = list.filter((t) => t.repoId !== repoId).map((t) => enrichTemplate(t, kpMap));
       setAllTemplates(others);
       // 关闭已有选中（题目归属可能已变化）
       setSelectedRowKeys((prev) => prev.filter((id) => others.some((t) => t.id === id)));

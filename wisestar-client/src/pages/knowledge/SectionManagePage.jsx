@@ -22,7 +22,7 @@
 import { useEffect, useState } from 'react';
 import {
   Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, Divider, message,
-  Upload,
+  Upload, Radio,
 } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, FileTextOutlined, SettingOutlined,
@@ -80,6 +80,8 @@ export default function SectionManagePage() {
   const [practiceOpen, setPracticeOpen] = useState(false);
   const [practiceSection, setPracticeSection] = useState(null);
   const [practiceForm] = Form.useForm();
+  // 出题模式：normal=常规（沿用练习本身），random=随机出题（需配置题量/难度/题型）
+  const practiceMode = Form.useWatch('mode', practiceForm) || 'normal';
   const [bindKeyword, setBindKeyword] = useState('');
   const [repoList, setRepoList] = useState([]);
   const [repoTotal, setRepoTotal] = useState(0);
@@ -253,6 +255,7 @@ export default function SectionManagePage() {
     let practice = {};
     try { practice = section.practice ? JSON.parse(section.practice) : {}; } catch { practice = {}; }
     practiceForm.setFieldsValue({
+      mode: practice.mode || 'normal',
       questionCount: practice.questionCount ?? 10,
       difficulty: practice.difficulty || '基础',
       types: practice.types || ['Radio'],
@@ -339,9 +342,11 @@ export default function SectionManagePage() {
       render: (_, s) => {
         let practice = null;
         try { practice = s.practice ? JSON.parse(s.practice) : null; } catch { practice = null; }
-        return practice
-          ? <Tag color="blue">{practice.questionCount}题 / {practice.difficulty}</Tag>
-          : <Tag>未设置</Tag>;
+        if (!practice) return <Tag>未设置</Tag>;
+        const mode = practice.mode || 'normal';
+        return mode === 'random'
+          ? <Tag color="blue">随机 / {practice.questionCount || '-'}题</Tag>
+          : <Tag color="green">常规</Tag>;
       },
     },
     {
@@ -595,17 +600,29 @@ export default function SectionManagePage() {
             },
           ]}
         />
-        <Divider orientation="left" plain>自动出题配置</Divider>
+        <Divider orientation="left" plain>出题模式</Divider>
         <Form form={practiceForm} layout="vertical">
-          <Form.Item name="questionCount" label="练习题量" rules={[{ required: true, message: '请输入题量' }]}>
-            <InputNumber min={1} max={100} style={{ width: '100%' }} />
+          <Form.Item name="mode" label="模式" initialValue="normal">
+            <Radio.Group>
+              <Radio.Button value="normal">常规</Radio.Button>
+              <Radio.Button value="random">随机出题</Radio.Button>
+            </Radio.Group>
           </Form.Item>
-          <Form.Item name="difficulty" label="难度" rules={[{ required: true, message: '请选择难度' }]}>
-            <Select options={DIFFICULTY_OPTIONS.map((d) => ({ value: d, label: d }))} />
-          </Form.Item>
-          <Form.Item name="types" label="题型组合" rules={[{ required: true, message: '请至少选择一种题型' }]}>
-            <Select mode="multiple" options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))} />
-          </Form.Item>
+          {practiceMode === 'random' ? (
+            <>
+              <Form.Item name="questionCount" label="练习题量" rules={[{ required: true, message: '请输入题量' }]}>
+                <InputNumber min={1} max={100} style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item name="difficulty" label="难度" rules={[{ required: true, message: '请选择难度' }]}>
+                <Select options={DIFFICULTY_OPTIONS.map((d) => ({ value: d, label: d }))} />
+              </Form.Item>
+              <Form.Item name="types" label="题型组合" rules={[{ required: true, message: '请至少选择一种题型' }]}>
+                <Select mode="multiple" options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))} />
+              </Form.Item>
+            </>
+          ) : (
+            <Text type="secondary">常规模式：直接沿用所绑定练习自身的题量与题型，无需额外配置。</Text>
+          )}
         </Form>
       </Modal>
 

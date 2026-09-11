@@ -365,9 +365,10 @@ export default function ChapterManagePage() {
               render: (_, s) => {
                 let practice = null;
                 try { practice = s.practice ? JSON.parse(s.practice) : null; } catch { practice = null; }
-                return practice
-                  ? <Tag color="blue">{practice.questionCount}题 / {practice.difficulty}</Tag>
-                  : <Tag>未设置</Tag>;
+                if (!practice) return <Tag>未设置</Tag>;
+                return (practice.mode || 'normal') === 'random'
+                  ? <Tag color="blue">随机 / {practice.questionCount || '-'}题</Tag>
+                  : <Tag color="green">常规</Tag>;
               },
             },
             {

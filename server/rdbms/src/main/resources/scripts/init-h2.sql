@@ -2411,3 +2411,42 @@ ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS corrected tinyint DEFAULT
 ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS corrected_at timestamp NULL DEFAULT NULL COMMENT '订正时间';
 ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS subject_id varchar(64) DEFAULT NULL COMMENT '学科ID(手动发币按学科归集)';
 ALTER TABLE t_user_knowledge_progress ADD COLUMN IF NOT EXISTS recent_rates varchar(128) DEFAULT NULL COMMENT '最近5次练习正确率(逗号分隔,新到旧)';
+
+-- 学习会话（学员端心跳续会话，累计时长触发学习总结）
+CREATE TABLE IF NOT EXISTS t_study_session (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) NOT NULL COMMENT '学员ID',
+  subject_id varchar(64) DEFAULT NULL COMMENT '学科ID',
+  session_date varchar(10) NOT NULL COMMENT '会话日期 yyyy-MM-dd',
+  start_at timestamp NULL DEFAULT NULL COMMENT '会话开始时间',
+  last_heartbeat_at timestamp NULL DEFAULT NULL COMMENT '最近心跳时间',
+  end_at timestamp NULL DEFAULT NULL COMMENT '会话结束时间',
+  duration_ms bigint DEFAULT 0 COMMENT '累计时长(毫秒)',
+  status varchar(20) DEFAULT 'active' COMMENT 'active/ended',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_study_session_student_date ON t_study_session (student_id, session_date);
+
+-- 当日学习总结（AI 生成，按学员+日期唯一，更新覆盖）
+CREATE TABLE IF NOT EXISTS t_study_summary (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) NOT NULL COMMENT '学员ID',
+  summary_date varchar(10) NOT NULL COMMENT '总结日期 yyyy-MM-dd',
+  session_id varchar(64) DEFAULT NULL COMMENT '触发总结的会话ID',
+  content text COMMENT '总结正文',
+  model varchar(100) DEFAULT NULL COMMENT '生成模型，规则模板为 rule',
+  status varchar(20) DEFAULT 'success' COMMENT 'success/failed',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp NULL DEFAULT NULL,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_study_summary_student_date ON t_study_summary (student_id, summary_date);
+

@@ -2368,3 +2368,42 @@ ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `corrected` tinyint(1) 
 ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `corrected_at` timestamp NULL DEFAULT NULL COMMENT '订正时间';
 ALTER TABLE `t_student_coin` ADD COLUMN IF NOT EXISTS `subject_id` varchar(64) DEFAULT NULL COMMENT '学科ID(手动发币按学科归集)';
 ALTER TABLE `t_user_knowledge_progress` ADD COLUMN IF NOT EXISTS `recent_rates` varchar(128) DEFAULT NULL COMMENT '最近5次练习正确率(逗号分隔,新到旧)';
+
+-- 学习会话（学员端心跳续会话，累计时长触发学习总结）
+CREATE TABLE IF NOT EXISTS `t_study_session` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `session_date` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '会话日期 yyyy-MM-dd',
+  `start_at` timestamp NULL DEFAULT NULL COMMENT '会话开始时间',
+  `last_heartbeat_at` timestamp NULL DEFAULT NULL COMMENT '最近心跳时间',
+  `end_at` timestamp NULL DEFAULT NULL COMMENT '会话结束时间',
+  `duration_ms` bigint DEFAULT '0' COMMENT '累计时长(毫秒)',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'active' COMMENT 'active/ended',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_study_session_student_date` (`student_id`,`session_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学习会话';
+
+-- 当日学习总结（AI 生成，按学员+日期唯一，更新覆盖）
+CREATE TABLE IF NOT EXISTS `t_study_summary` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `summary_date` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '总结日期 yyyy-MM-dd',
+  `session_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '触发总结的会话ID',
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '总结正文',
+  `model` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '生成模型，规则模板为 rule',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'success' COMMENT 'success/failed',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_study_summary_student_date` (`student_id`,`summary_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='当日学习总结';
+

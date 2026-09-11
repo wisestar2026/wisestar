@@ -15,9 +15,10 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Table, Tag, Button, Typography, Space, message, Badge } from 'antd';
+import { Table, Tag, Button, Typography, Space, message, Badge, Modal, Empty, Spin } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { listSupervision } from '../../api/student';
+import { getStudentStudySummary } from '../../api/studentStudy';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -46,6 +47,23 @@ export default function StudentSupervisionPage() {
   const [loading, setLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
   const timerRef = useRef(null);
+
+  // 学习总结弹窗（教师查看指定学员当日总结）
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryStudent, setSummaryStudent] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const openSummary = (student) => {
+    setSummaryStudent(student);
+    setSummaryData(null);
+    setSummaryOpen(true);
+    setSummaryLoading(true);
+    getStudentStudySummary({ studentId: student.studentId })
+      .then((res) => setSummaryData(res?.data || null))
+      .catch(() => setSummaryData(null))
+      .finally(() => setSummaryLoading(false));
+  };
 
   const loadList = useCallback((silent = false) => {
     if (!silent) setLoading(true);
@@ -146,6 +164,14 @@ export default function StudentSupervisionPage() {
       },
     },
     { title: '最后活跃', dataIndex: 'lastActiveTime', width: 165, render: formatTime },
+    {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      render: (_, r) => (
+        <Button size="small" onClick={() => openSummary(r)}>学习总结</Button>
+      ),
+    },
   ];
 
   return (
@@ -174,6 +200,33 @@ export default function StudentSupervisionPage() {
         pagination={false}
         locale={{ emptyText: '暂无在线学员（学员登录并浏览后实时展示）' }}
       />
+
+      {/* 学习总结弹窗（当日会话累计满 1 小时后由系统生成） */}
+      <Modal
+        title={`学习总结 - ${summaryStudent?.studentName || ''}`}
+        open={summaryOpen}
+        onCancel={() => setSummaryOpen(false)}
+        footer={<Button onClick={() => setSummaryOpen(false)}>关闭</Button>}
+        width={640}
+        destroyOnHidden
+      >
+        {summaryLoading ? (
+          <div style={{ textAlign: 'center', padding: 32 }}><Spin /></div>
+        ) : summaryData?.content ? (
+          <div>
+            <Space size={8} style={{ marginBottom: 12 }} wrap>
+              <Tag color="blue">{summaryData.summaryDate}</Tag>
+              {summaryData.durationMs > 0 && <Tag color="cyan">学习 {Math.round(summaryData.durationMs / 60000)} 分钟</Tag>}
+              {summaryData.model && <Tag>{summaryData.model === 'rule' ? '规则模板' : summaryData.model}</Tag>}
+            </Space>
+            <Typography.Paragraph style={{ whiteSpace: 'pre-wrap', marginBottom: 0 }}>
+              {summaryData.content}
+            </Typography.Paragraph>
+          </div>
+        ) : (
+          <Empty description="该学员今日学习时长尚未满 1 小时，暂无学习总结" />
+        )}
+      </Modal>
     </div>
   );
 }

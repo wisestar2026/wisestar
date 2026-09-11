@@ -95,3 +95,12 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 词库去重更新语义：同 版本+年级+单元+spell 视为同一词更新、语法同 年级+title 覆盖；内容包 JSON 结构为 {title, words[], grammar{title,content,examples[],exercises[]}}
   - 后端改动重打包：`mvn clean package -pl api -am -DskipTests`（产物 api/target/wisestar-v1.9.0.jar），必须用 `--spring.profiles.active=preview` 启动否则误连本地 MySQL 报 Connection refused
 
+[提交与测试数据行为指令]
+- Date: 2026-09-11
+- Context: 用户对代码提交方式与测试数据处理的明确要求
+- Category: 工作流协作
+- Instructions:
+  - 提交时逐文件 `git add <file>`，禁止 `git add -A` / `git add .`
+  - 验证过程产生的测试号数据保留、不清理
+  - 本仓库远程为 GitHub（非 GitLab），push 不要带 `-o merge_request.*` 参数
+
