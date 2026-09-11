@@ -50,7 +50,7 @@ graph TD
 ### 2. 练习选题（需求 3）
 
 - **前端** `SelectTemplateModal.jsx`
-  - 打开时并行加载：`listTemplate({current:1,pageSize:500})` 与 `listKnowledgePoints({current:1,pageSize:10000})`。
+  - 打开时分页拉全量：`listTemplate(current=1..N, pageSize=500)`（超过单页上限时循环补齐，避免小节因翻页遗漏）+ `listKnowledgePoints({current:1,pageSize:10000})`。
   - 由知识点列表构建 `kpName → {subjectName, chapterName, sectionName}` 映射。
   - 对每道题计算有效归属：自身 `subject/chapter/section` 与「由其 `knowledgePoint` 名称回溯到的章节/小节」取并集（按名称去重）。
   - 级联下拉选项与匹配均基于有效归属，章节/小节值的来源为知识结构。

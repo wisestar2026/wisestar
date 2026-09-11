@@ -13,8 +13,8 @@
  *   另支持名称关键词 / 题型筛选。
  *
  * 数据流:
- *   打开: 并行 listTemplate({current:1, pageSize:500}) + listKnowledgePoints({current:1,pageSize:10000})
- *         → 用知识点列表构建 kpName → {subject,chapter,section} 映射并计算每题有效归属
+ *   打开: 分页 listTemplate(current=1..N, pageSize=500) 拉全量题目（超过单页上限时循环补齐）
+ *         + listKnowledgePoints({current:1,pageSize:10000}) 构建 kpName → {subject,chapter,section} 映射并计算每题有效归属
  *   过滤: 前端排除已绑定当前练习的题目（record.repoId === repoId → 不在列表中）
  *   确认: bindTemplate({repoId, ids}) → POST /api/repo/bind → onSuccess() 刷新练习题目列表
  *
@@ -112,12 +112,21 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [tplRes, kpRes] = await Promise.all([
-        listTemplate({ current: 1, pageSize: 500 }),
+      // 题目总量可能超过单页上限，循环分页拉全量，避免小节/知识点因翻页遗漏而不在筛选项中
+      const pageSize = 500;
+      const [first, kpRes] = await Promise.all([
+        listTemplate({ current: 1, pageSize }),
         listKnowledgePoints({ current: 1, pageSize: 10000 }).catch(() => ({ data: { list: [] } })),
       ]);
+      const total = first.data?.total || 0;
+      let list = first.data?.list || [];
+      const pageCount = Math.ceil(total / pageSize);
+      for (let p = 2; p <= pageCount; p += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await listTemplate({ current: p, pageSize });
+        list = list.concat(res.data?.list || []);
+      }
       const kpMap = buildKpMap(kpRes.data?.list || []);
-      const list = tplRes.data?.list || [];
       // 排除已绑定当前练习的题目（前端过滤；数据量可控时一次性加载更利于勾选跨页）
       const others = list.filter((t) => t.repoId !== repoId).map((t) => enrichTemplate(t, kpMap));
       setAllTemplates(others);
