@@ -46,6 +46,13 @@ const { Text } = Typography;
 const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
 const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
 
+// 绑定题库用途：预习专用 / 练习专用 / 通用（决定学员端预习与练习的题源）
+const REPO_USAGE_OPTIONS = [
+  { value: 'preview', label: '预习专用' },
+  { value: 'practice', label: '练习专用' },
+  { value: 'both', label: '通用' },
+];
+
 export default function SectionManagePage() {
   const { can } = usePermission();
   const navigate = useNavigate();
@@ -88,6 +95,7 @@ export default function SectionManagePage() {
   const [repoCurrent, setRepoCurrent] = useState(1);
   const [repoLoading, setRepoLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [repoUsage, setRepoUsage] = useState({});
   const [savingBind, setSavingBind] = useState(false);
 
   // ---- 知识点查看弹窗（数据来自知识点管理 t_knowledge_point） ----
@@ -259,13 +267,22 @@ export default function SectionManagePage() {
       questionCount: practice.questionCount ?? 10,
       difficulty: practice.difficulty || '基础',
       types: practice.types || ['Radio'],
+      preview: {
+        questionCount: practice.preview?.questionCount ?? 3,
+        types: practice.preview?.types || [],
+      },
     });
     // 回显已绑定练习 + 加载练习库（数据来自练习管理 t_repo）
     setBindKeyword('');
     setRepoCurrent(1);
     setSelectedIds([]);
+    setRepoUsage({});
     listSectionRepos(section.id).then((res) => {
-      setSelectedIds((res?.data || []).map((r) => r.id));
+      const list = res?.data || [];
+      setSelectedIds(list.map((r) => r.id));
+      const usage = {};
+      list.forEach((r) => { usage[r.id] = r.usageType || 'both'; });
+      setRepoUsage(usage);
     }).catch(() => { /* 已提示 */ });
     fetchRepos(1, '');
   };
@@ -276,7 +293,7 @@ export default function SectionManagePage() {
       setSavingBind(true);
       Promise.all([
         updateSection({ id: sectionId, chapterId, practice: payload }),
-        saveSectionRepos({ sectionId, repoIds: selectedIds }),
+        saveSectionRepos({ sectionId, repoIds: selectedIds, usageByRepo: repoUsage }),
       ]).then(() => {
         message.success('练习设置已保存');
         setPracticeOpen(false);
@@ -571,7 +588,14 @@ export default function SectionManagePage() {
           dataSource={repoList}
           rowSelection={{
             selectedRowKeys: selectedIds,
-            onChange: (keys) => setSelectedIds(keys),
+            onChange: (keys) => {
+              setSelectedIds(keys);
+              setRepoUsage((prev) => {
+                const next = { ...prev };
+                keys.forEach((k) => { if (!next[k]) next[k] = 'both'; });
+                return next;
+              });
+            },
           }}
           pagination={{
             current: repoCurrent,
@@ -598,6 +622,19 @@ export default function SectionManagePage() {
               title: '题目数', dataIndex: 'total', width: 80, align: 'center',
               render: (t) => (t > 0 ? t : 0),
             },
+            {
+              title: '用途', key: 'usage', width: 130, align: 'center',
+              render: (_, r) => (
+                <Select
+                  size="small"
+                  style={{ width: 110 }}
+                  disabled={!selectedIds.includes(r.id)}
+                  value={repoUsage[r.id] || 'both'}
+                  options={REPO_USAGE_OPTIONS}
+                  onChange={(v) => setRepoUsage((prev) => ({ ...prev, [r.id]: v }))}
+                />
+              ),
+            },
           ]}
         />
         <Divider orientation="left" plain>出题模式</Divider>
@@ -623,6 +660,21 @@ export default function SectionManagePage() {
           ) : (
             <Text type="secondary">常规模式：直接沿用所绑定练习自身的题量与题型，无需额外配置。</Text>
           )}
+          <Divider orientation="left" plain>预习例题</Divider>
+          <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+            预习只从「预习专用 / 通用」题库取题，与专项练习、小节通关的题源区分。
+          </Text>
+          <Form.Item name={['preview', 'questionCount']} label="预习题量">
+            <InputNumber min={1} max={50} style={{ width: '100%' }} />
+          </Form.Item>
+          <Form.Item name={['preview', 'types']} label="预习题型（留空表示不限）">
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="不限题型"
+              options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+            />
+          </Form.Item>
         </Form>
       </Modal>
 

@@ -14,11 +14,22 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Input, Button, Modal, Select, Tabs, message } from 'antd';
+import { Input, Button, Modal, Select, Image, Progress, message } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { getStudyPoints, getStudyQuestions, uploadActivity, completePreview, getKnowledgeDetail, wrongRedo } from '../../api/student';
+import { getStudyPoints, getStudyQuestions, getSectionPracticeConfig, uploadActivity, completePreview, getKnowledgeDetail, wrongRedo } from '../../api/student';
 import { submitPractice, saveWrongReason } from '../../api/practice';
+import { extractCorrectAnswers } from '../../utils/practiceHelpers';
+import WrongBookPanel from '../../components/student/WrongBookPanel';
 import './KnowledgePage.css';
+
+// 专项练习可选题型（与后端 questionTypes 对齐）
+const DRILL_TYPE_OPTIONS = [
+  { value: 'Judge', label: '判断题' },
+  { value: 'Radio', label: '单选题' },
+  { value: 'FillBlank', label: '填空题' },
+  { value: 'Checkbox', label: '多选题' },
+  { value: 'MultipleBlank', label: '多空填空' },
+];
 
 // 填空比较归一化（与后端 AnswerJudgeUtil / utils/practiceHelpers 对齐）:
 // 全角空格/零宽字符/全角字母数字符号（含 ＜＞＝）转半角、连续空白折叠、去首尾
@@ -38,6 +49,24 @@ function blankEq(a, b) {
   // 纯 ASCII 字母串（如选项字母 A/B/C）忽略大小写
   if (/^[A-Za-z]+$/.test(na) && /^[A-Za-z]+$/.test(nb)) return na.toLowerCase() === nb.toLowerCase();
   return false;
+}
+
+// 讲解要点富文本高亮：步骤标记 ①②③ / 引号内术语 “xx” / 数字（含千分位）加粗
+function renderRichText(text) {
+  const s = String(text == null ? '' : text);
+  const re = /(“[^”]{1,24}”|「[^」]{1,24}」|\d[\d,.·]*)|(①|②|③|④|⑤|⑥|⑦|⑧|⑨)/g;
+  const nodes = [];
+  let last = 0;
+  let m;
+  let k = 0;
+  while ((m = re.exec(s)) !== null) {
+    if (m.index > last) nodes.push(s.slice(last, m.index));
+    if (m[2]) nodes.push(<em key={k++} className="kp-mark-step">{m[2]}</em>);
+    else nodes.push(<strong key={k++} className="kp-mark-key">{m[1]}</strong>);
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) nodes.push(s.slice(last));
+  return nodes.length ? nodes : s;
 }
 
 // 四种模式 tab 配置
@@ -65,7 +94,8 @@ export default function KnowledgePage() {
   const [realSubmitting, setRealSubmitting] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);          // 逐题模式当前题索引
   const [judgeState, setJudgeState] = useState({}); // 每题是否已提交判定 {qid: true}
-  const [activeTab, setActiveTab] = useState('lecture'); // 预习：lecture 讲解 | example 例题
+  const [activeKpIdx, setActiveKpIdx] = useState(0);   // 预习：当前知识点索引
+  const [readKpIds, setReadKpIds] = useState(() => new Set()); // 预习：已浏览过的知识点
   const [wrongOpen, setWrongOpen] = useState(false);        // 查看错题弹窗
   const [wrongReasons, setWrongReasons] = useState({});     // 各错题归因 {questionId: reason}
   const [wrongList, setWrongList] = useState([]);          // 当前错题列表（查看错题弹窗）
@@ -73,13 +103,107 @@ export default function KnowledgePage() {
   const [previewDone, setPreviewDone] = useState(false);             // 本次会话预习已完成（进度已保留）
   const [kpDetail, setKpDetail] = useState(null);                    // 知识点真实掌握度/评级/薄弱
 
+  // 专项练习（按知识点为单位逐个过题）与小节通关（按后台配置组卷）
+  const [drillStarted, setDrillStarted] = useState(false);           // 专项练习是否已开始答题
+  const [trialStarted, setTrialStarted] = useState(false);          // 小节通关是否已开始答题
+  const [practiceConfig, setPracticeConfig] = useState(null);       // 小节练习配置（题量/难度/题型/通过线）
+
+  // 预习（含例题检测）为同一学习闭环
+  const isPreviewFlow = tab === 'preview' || tab === 'preview_practice';
+  const sectionNameParam = searchParams.get('name');
+  const previewTitle = sectionNameParam
+    || (realPoints?.length === 1 ? realPoints[0].name : '知识点预习');
+
+  // 预习讲解 ↔ 例题检测（保留小节/知识点上下文与标题）
+  const goKnowledgeTab = (targetTab) => {
+    const qs = new URLSearchParams();
+    if (sectionId) qs.set('sectionId', sectionId);
+    if (repoId) qs.set('repoId', repoId);
+    if (kpIdParam) qs.set('kpId', kpIdParam);
+    if (sectionNameParam) qs.set('name', sectionNameParam);
+    qs.set('tab', targetTab);
+    navigate(`/student/knowledge?${qs.toString()}`);
+  };
+  const goPreviewPractice = () => goKnowledgeTab('preview_practice');
+  const goPreviewLecture = () => goKnowledgeTab('preview');
+
+  // 统一取题：数组参数用逗号拼接（后端 @RequestParam List<String> 绑定）
+  const fetchQuestions = (params) => {
+    const query = { ...params };
+    if (Array.isArray(query.knowledgePointIds)) query.knowledgePointIds = query.knowledgePointIds.join(',');
+    if (Array.isArray(query.types)) query.types = query.types.join(',');
+    setRealQuestions(null);
+    return getStudyQuestions(query)
+      .then((res) => {
+        setRealQuestions(res?.data || []);
+        setRealResult(null);
+        setRealAnswers({});
+        setJudgeState({});
+        setCurrentQ(0);
+      })
+      .catch(() => setRealQuestions([]));
+  };
+
+  // 小节练习配置是否随机模式（兼容后端 mode 字段与派生的 random 布尔）
+  const isRandomMode = (cfg) => String(cfg?.mode || '').toLowerCase() === 'random' || cfg?.random === true;
+
+  // 开始专项练习：以知识点为单位，逐个知识点抽题（每个知识点至少 1 题，全部覆盖）
+  const startDrill = () => {
+    const kpIds = (realPoints || []).map((p) => p.id);
+    if (kpIds.length === 0) {
+      message.warning('该小节暂未配置知识点，无法进行专项练习');
+      return;
+    }
+    setDrillStarted(true);
+    fetchQuestions({
+      exposeAnswer: true,
+      knowledgePointIds: kpIds,
+      perKp: 1,
+      random: true,
+      sectionId: sectionId || undefined,
+      repoId: repoId || undefined,
+      usage: 'practice',
+    });
+  };
+
+  // 开始小节通关：按后台配置组卷（常规=整节全部题；随机=按配置题量/难度/题型）
+  const startTrial = () => {
+    const cfg = practiceConfig || {};
+    const random = isRandomMode(cfg);
+    setTrialStarted(true);
+    fetchQuestions({
+      exposeAnswer: true,
+      sectionId: sectionId || undefined,
+      repoId: repoId || undefined,
+      knowledgePointId: kpIdParam || undefined,
+      random,
+      types: random ? (cfg.types || []) : [],
+      difficulty: random ? (cfg.difficulty || undefined) : undefined,
+      count: random && cfg.questionCount ? cfg.questionCount : undefined,
+      usage: 'trial',
+    });
+  };
+
+  // 浏览过的知识点打勾（当前卡自动标记）
+  useEffect(() => {
+    if (tab !== 'preview' || !realPoints?.length) return;
+    const cur = realPoints[activeKpIdx];
+    if (cur) setReadKpIds((prev) => (prev.has(cur.id) ? prev : new Set(prev).add(cur.id)));
+  }, [tab, activeKpIdx, realPoints]);
+
   // 真实掌握度/薄弱：带知识点入口时按 kpId 拉取（失败保留展示，不影响答题）
   useEffect(() => {
     if (!realMode || !kpIdParam) {
       setKpDetail(null);
       return;
     }
-    getKnowledgeDetail(kpIdParam).then((res) => setKpDetail(res?.data || null)).catch(() => {});
+    getKnowledgeDetail(kpIdParam)
+      .then((res) => {
+        const d = res?.data || null;
+        setKpDetail(d);
+        if (d?.previewed) setPreviewDone(true);
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realMode, kpIdParam]);
 
@@ -99,13 +223,17 @@ export default function KnowledgePage() {
 
   useEffect(() => {
     if (!realMode) return;
-    if (tab === 'preview') {
-      // 预习/复习：讲解要点 + 知识点预习检测（实时判分）
+    if (tab === 'preview' || tab === 'preview_practice' || tab === 'practice') {
+      // 知识点列表（预习导学 / 专项练习选题）
       if (sectionId) {
         getStudyPoints(sectionId).then((res) => setRealPoints(res?.data || [])).catch(() => setRealPoints([]));
       }
-      // 预习讲解页：保持轻量探测题（默认 3 题，可显式 count 覆盖）
-      const params = { count: Number(countParam) || 3, exposeAnswer: true };
+    }
+    if (tab === 'preview' || tab === 'preview_practice') {
+      // 预习讲解页与例题检测：题材来自「预习专用/通用」题库，题量/题型缺省由后端按小节预习配置补全
+      const params = { exposeAnswer: true, usage: 'preview' };
+      const explicitCount = Number(countParam);
+      if (Number.isFinite(explicitCount) && explicitCount > 0) params.count = explicitCount;
       if (typesParam) params.types = typesParam.split(',');
       if (sectionId) params.sectionId = sectionId;
       if (repoId) params.repoId = repoId;
@@ -113,24 +241,26 @@ export default function KnowledgePage() {
       getStudyQuestions(params)
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
-    } else if (tab === 'practice' || tab === 'trial') {
-      const params = { exposeAnswer: true }; // 练习/试炼本地即时判分（题目带答案）
-      if (countParam) params.count = Number(countParam);
-      if (typesParam) params.types = typesParam.split(',');
-      if (sectionId) params.sectionId = sectionId;
-      if (repoId) params.repoId = repoId;
-      if (kpIdParam) params.knowledgePointId = kpIdParam;
-      getStudyQuestions(params)
-        .then((res) => setRealQuestions(res?.data || []))
-        .catch(() => setRealQuestions([]));
+    } else if (tab === 'trial') {
+      // 小节通关：进入先读取后台配置，学员点击「开始通关」后再组卷
+      if (sectionId) {
+        getSectionPracticeConfig(sectionId)
+          .then((res) => setPracticeConfig(res?.data || null))
+          .catch(() => setPracticeConfig(null));
+      }
     } else if (tab === 'redo') {
       // 错题重做：按题目ID取单题（含答案）本地即时判分
       getStudyQuestions({ questionId: questionIdParam, exposeAnswer: true })
         .then((res) => setRealQuestions(res?.data || []))
         .catch(() => setRealQuestions([]));
     }
+    // 切换 tab 时重置练习状态；practice/trial 由「开始」按钮触发取题，此处不自动拉题
+    setDrillStarted(false);
+    setTrialStarted(false);
     setRealAnswers({});
     setRealResult(null);
+    setJudgeState({});
+    setCurrentQ(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realMode, tab, sectionId]);
 
@@ -165,9 +295,10 @@ export default function KnowledgePage() {
   // 返回 blankTotal/blankHits 供"答对部分空也给分"的展示与统计
   const realJudge = (q) => {
     const schema = q.schema || {};
-    const answerText = schema.attribute?.examCorrectAnswer;
-    if (!answerText) return null;
-    const correctAnswers = answerText.split('\n').map((x) => x.trim()).filter(Boolean);
+    // 标准答案提取与后端 AnswerJudgeUtil 一致：优先整题级 examCorrectAnswer，
+    // 缺省回退选项级（收集带 examCorrectAnswer 的选项标题），避免漏判/标准答案显示为空
+    const correctAnswers = extractCorrectAnswers({ template: schema });
+    if (!correctAnswers || correctAnswers.length === 0) return null;
     const picked = realAnswers[q.id];
     if (!picked) return null;
 
@@ -190,7 +321,7 @@ export default function KnowledgePage() {
       const hitCount = hits.filter((h) => h === 1).length;
       return {
         correct: hitCount === total ? 1 : 0,
-        answer: answerText,
+        answer: joined,
         blankTotal: total,
         blankHits: hits,
         blankRight: hitCount,
@@ -219,7 +350,7 @@ export default function KnowledgePage() {
       answerSet.add(normBlank(ans));
     });
     const isRight = mineSet.size > 0 && mineSet.size === answerSet.size && [...mineSet].every((x) => answerSet.has(x));
-    return { correct: isRight ? 1 : 0, answer: answerText, blankTotal: 0 };
+    return { correct: isRight ? 1 : 0, answer: [...answerSet].join('、'), blankTotal: 0 };
   };
 
   // 标准答案展示文本：多项填空按空位分行（空1: …；空2: …），其余原样
@@ -289,7 +420,7 @@ export default function KnowledgePage() {
 
   // 全部题判定完成后自动落库（错题自动进错题本；错题重做走 wrong/redo 订正）
   useEffect(() => {
-    if (!realQuestions?.length || tab === 'preview') return;
+    if (!realQuestions?.length || tab === 'preview' || tab === 'preview_practice') return;
     if (!realQuestions.every((q) => judgeState[q.id])) return;
     if (tab === 'redo') {
       if (!redoResult && !realSubmitting) realRedo();
@@ -305,8 +436,16 @@ export default function KnowledgePage() {
   const realSubmit = () => {
     if (realSubmitting || !realQuestions?.length) return;
     const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
+    // 专项练习以 special 记录（练习奖励）；小节通关保持 trial（试炼奖励+通关判定）
+    const mode = tab === 'practice' ? 'special' : tab;
     setRealSubmitting(true);
-    submitPractice({ mode: tab, items, repoId: repoId || undefined, knowledgePointId: kpIdParam || undefined, sectionId: sectionId || undefined })
+    submitPractice({
+      mode,
+      items,
+      repoId: repoId || undefined,
+      knowledgePointId: kpIdParam || realPoints?.[0]?.id || undefined,
+      sectionId: sectionId || undefined,
+    })
       .then((res) => setRealResult(res?.data || { items: [] }))
       .catch(() => setRealResult({ items: [], score: 0 }))
       .finally(() => setRealSubmitting(false));
@@ -360,14 +499,16 @@ export default function KnowledgePage() {
   // ============================================================
   if (realMode) {
     return (
-      <div className="sll-page-enter knowledge-page">
-        <div className="sll-card" style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
+      <div className={`sll-page-enter knowledge-page${tab === 'preview' ? ' knowledge-page-wide' : ''}`}>
+        <div className="sll-card" style={{ padding: 24, maxWidth: tab === 'preview' ? 960 : 720, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
-              <h3 style={{ margin: 0, display: 'inline-block' }}>
-                {tab === 'preview' ? '📖 知识点讲解' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? ' 小节通关' : tab === 'wrong' ? ' 知识点错题本' : tab === 'redo' ? ' 错题重做订正' : ' 知识点预习/复习'}
-              </h3>
-              {kpDetail && (
+              {tab !== 'preview' && (
+                <h3 style={{ margin: 0, display: 'inline-block' }}>
+                  {tab === 'preview_practice' ? '📝 例题检测' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 小节通关' : tab === 'wrong' ? '📕 知识点错题本' : tab === 'redo' ? '✏️ 错题重做订正' : '📖 知识点预习/复习'}
+                </h3>
+              )}
+              {kpDetail && tab !== 'preview' && (
                 <span style={{ marginLeft: 10, fontSize: 13 }}>
                   <span className="sll-level" style={{ background: '#90a4ae', color: '#fff', padding: '1px 8px', borderRadius: 10 }}>
                     {kpDetail.level || '待攻克'}
@@ -378,7 +519,15 @@ export default function KnowledgePage() {
               )}
 
             </div>
-            <button className="knowledge-back" onClick={() => navigate(kpIdParam || repoId ? '/student' : '/student/study')}>返回</button>
+            <button
+              className="knowledge-back"
+              onClick={() => {
+                if (tab === 'preview_practice') { goPreviewLecture(); return; }
+                navigate(kpIdParam || repoId ? '/student' : '/student/study');
+              }}
+            >
+              {tab === 'preview_practice' ? '← 回顾讲解' : '返回'}
+            </button>
           </div>
 
           {/* 查看错题弹窗（学生答案/正确答案/解析/错误归因） */}
@@ -418,65 +567,212 @@ export default function KnowledgePage() {
             })}
           </Modal>
 
-          {/* 预习：后台配置的知识点讲解要点 */}
+          {/* 预习：知识点导学（概览头 + 步骤 + 目录/讲解卡 + 检测入口） */}
           {tab === 'preview' && (
-            <div style={{ marginBottom: 12, fontWeight: 600 }}>📖 知识点讲解（预习/复习）</div>
-          )}
-          {tab === 'preview' && (
-            realPoints === null ? <div>加载中…</div> : realPoints.length === 0 ? (
-              <div className="knowledge-empty">该小节暂未配置知识点，请联系管理员</div>
-            ) : (
-              realPoints.map((p) => {
-                let content = null;
-                try { content = p.content ? JSON.parse(p.content) : null; } catch { content = null; }
-                return (
-                  <div key={p.id} style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 14, marginBottom: 12, background: '#f8fcff' }}>
-                    <div style={{ fontWeight: 600, marginBottom: 8 }}>🌊 {p.name}</div>
-                    {p.imageUrl && <img src={p.imageUrl} alt={p.name} style={{ maxWidth: '100%', borderRadius: 8, marginBottom: 8 }} />}
-                    {(content?.points || []).map((pt, i) => (
-                      <div key={i} style={{ color: '#455a64', marginBottom: 4 }}>• {pt}</div>
-                    ))}
-                    {(!content?.points || content.points.length === 0) && (
-                      <div style={{ color: '#90a4ae' }}>该知识点暂未配置讲解要点</div>
+            <div className="kp-preview">
+              {/* 概览头 */}
+              <div className="kp-hero">
+                <div className="kp-hero-main">
+                  <div className="kp-hero-kicker">知识点预习</div>
+                  <h2 className="kp-hero-title">{previewTitle}</h2>
+                  <div className="kp-hero-meta">
+                    <span className="kp-chip">📚 {realPoints?.length || 0} 个知识点</span>
+                    {(realPoints?.[0]?.grade || realPoints?.[0]?.term) && (
+                      <span className="kp-chip">
+                        🎓 {realPoints[0].grade || ''}{realPoints[0].term ? ` · ${realPoints[0].term}学期` : ''}
+                      </span>
                     )}
+                    <span className={`kp-chip ${previewDone ? 'done' : 'pending'}`}>
+                      {previewDone ? '✅ 已完成预习' : '⏳ 待完成'}
+                    </span>
+                    {kpDetail?.weak && <span className="kp-chip weak">⚠️ 薄弱知识点</span>}
                   </div>
-                );
-              })
-            )
-          )}
+                </div>
+                <div className="kp-hero-ring">
+                  <Progress
+                    type="circle"
+                    size={96}
+                    strokeWidth={8}
+                    percent={kpDetail?.mastery ?? 0}
+                    strokeColor={{ '0%': '#64b5f6', '100%': '#1976d2' }}
+                    format={(p) => <span className="kp-ring-num">{p}<i>%</i></span>}
+                  />
+                  <div className="kp-ring-label">当前掌握度</div>
+                  {kpDetail?.level && <span className="kp-ring-level">{kpDetail.level}</span>}
+                </div>
+              </div>
 
-          {/* 预习：知识点讲解 + 例题展示（tabs 切换） */}
-          {tab === 'preview' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {realPoints === null || realPoints.length === 0 ? (
-                <div className="knowledge-empty">该小节暂未配置知识点</div>
+              {/* 学习步骤 */}
+              <div className="kp-steps">
+                <div className="kp-step active"><b>1</b><span>讲解导读</span></div>
+                <div className="kp-step-line" />
+                <div className="kp-step"><b>2</b><span>例题检测</span></div>
+                <div className="kp-step-line" />
+                <div className="kp-step"><b>3</b><span>完成预习</span></div>
+              </div>
+
+              {/* 讲解区：左目录 + 右讲解卡 */}
+              {realPoints === null ? (
+                <div className="kp-loading">内容加载中…</div>
+              ) : realPoints.length === 0 ? (
+                <div className="knowledge-empty">该小节暂未配置知识点，请联系管理员</div>
               ) : (
-                realPoints.slice(0, 2).map((p, i) => (
-                  <div
-                    key={p.id}
-                    style={{
-                      border: '1px solid #e3f2fd', borderRadius: 12, padding: 20, background: '#f8fcff',
-                      cursor: 'pointer', minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                    onClick={() => {}}
-                  >
-                    <div style={{ fontWeight: 600, fontSize: 16, color: '#1890ff' }}>🌊 {p.name || `知识点${i + 1}`}</div>
+                <div className="kp-body">
+                  <aside className="kp-catalog">
+                    <div className="kp-catalog-title">本节知识点</div>
+                    {realPoints.map((p, i) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className={`kp-catalog-item ${i === activeKpIdx ? 'active' : ''}`}
+                        onClick={() => setActiveKpIdx(i)}
+                      >
+                        <span className="kp-catalog-num">{i + 1}</span>
+                        <span className="kp-catalog-name">{p.name}</span>
+                        {readKpIds.has(p.id) && <span className="kp-catalog-done">✓</span>}
+                      </button>
+                    ))}
+                  </aside>
+
+                  <div className="kp-detail">
+                    {(() => {
+                      const p = realPoints[activeKpIdx] || realPoints[0];
+                      let content = null;
+                      try { content = p.content ? JSON.parse(p.content) : null; } catch { content = null; }
+                      const pts = content?.points || [];
+                      return (
+                        <>
+                          {p.imageUrl && (
+                            <div className="kp-detail-img">
+                              <Image src={p.imageUrl} alt={p.name} />
+                            </div>
+                          )}
+                          <div className="kp-detail-head">
+                            <span className="kp-detail-badge">知识点 {activeKpIdx + 1}</span>
+                            <h3 className="kp-detail-name">{p.name}</h3>
+                          </div>
+                          {pts.length > 0 ? (
+                            <div className="kp-points">
+                              {pts.map((pt, i) => (
+                                <div className="kp-point-card" key={i}>
+                                  <span className="kp-point-index">{i + 1}</span>
+                                  <div className="kp-point-text">{renderRichText(pt)}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="kp-point-empty">该知识点暂未配置讲解要点</div>
+                          )}
+                          <div className="kp-whale">
+                            <span className="kp-whale-icon">🐳</span>
+                            <div className="kp-whale-body">
+                              <b>小鲸导读</b>
+                              <p>先理解上面每一条要点；读完本节后点击「开始例题检测」，检测通过即可完成预习并领取学习币。</p>
+                            </div>
+                          </div>
+                          <div className="kp-detail-nav">
+                            <button
+                              type="button"
+                              className="kp-nav-btn"
+                              disabled={activeKpIdx === 0}
+                              onClick={() => setActiveKpIdx((i) => Math.max(0, i - 1))}
+                            >
+                              上一个
+                            </button>
+                            <span className="kp-nav-pos">{activeKpIdx + 1} / {realPoints.length}</span>
+                            {activeKpIdx < realPoints.length - 1 ? (
+                              <button
+                                type="button"
+                                className="kp-nav-btn primary"
+                                onClick={() => setActiveKpIdx((i) => Math.min(realPoints.length - 1, i + 1))}
+                              >
+                                下一个知识点
+                              </button>
+                            ) : (
+                              <button type="button" className="kp-nav-btn primary" onClick={goPreviewPractice}>
+                                开始例题检测
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                ))
+                </div>
               )}
-              <Button
-                type="primary"
-                size="large"
-                onClick={() => navigate(`/student/knowledge?sectionId=${sectionId}&tab=preview_practice`)}
-                style={{ width: 180, height: 44, borderRadius: 8, fontSize: 15, marginTop: 8, alignSelf: 'center' }}
-              >
-                 例题练习
-              </Button>
+
+              {/* 底部 CTA */}
+              {realPoints?.length > 0 && (
+                <div className="kp-cta">
+                  <div className="kp-cta-text">读完讲解后，做 3 道小检测巩固一下吧</div>
+                  <Button type="primary" size="large" className="kp-cta-btn" onClick={goPreviewPractice}>
+                    开始例题检测
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* 专项练习湾 / 试炼检测 / 错题重做：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'practice' || tab === 'trial' || tab === 'example' || tab === 'preview_practice' || tab === 'redo') && (
+          {/* 专项练习：按知识点为单位逐个过关（无需选择知识点/题型） */}
+          {tab === 'practice' && !drillStarted && (
+            <div className="drill-panel">
+              <div className="drill-panel-head">
+                <h3>✏️ 专项练习湾</h3>
+                <p>按知识点逐个练习，每个知识点至少 1 题，全部知识点都会过一遍。</p>
+              </div>
+              {(realPoints?.length || 0) > 0 ? (
+                <div className="drill-section">
+                  <div className="drill-label">本节知识点（共 {realPoints.length} 个 · 全部覆盖）</div>
+                  <div className="drill-kp-list">
+                    {realPoints.map((p, idx) => (
+                      <span key={p.id} className="drill-kp-chip active">
+                        {idx + 1}. {p.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="knowledge-empty">该小节暂未配置知识点，无法进行专项练习，请联系管理员配置</div>
+              )}
+              <div className="drill-footer">
+                <Button type="primary" size="large" className="kp-cta-btn" onClick={startDrill}>开始专项练习</Button>
+              </div>
+            </div>
+          )}
+
+          {/* 小节通关：配置摘要 + 开始 */}
+          {tab === 'trial' && !trialStarted && (
+            <div className="drill-panel">
+              <div className="drill-panel-head">
+                <h3>🎯 小节通关</h3>
+                <p>按老师配置对小节进行通关检验，正确率达标即可通关。</p>
+              </div>
+              <div className="trial-summary">
+                <div className="trial-summary-item">
+                  <span>出题模式</span>
+                  <b>{isRandomMode(practiceConfig) ? '随机出题' : '常规（整节全部题）'}</b>
+                </div>
+                {isRandomMode(practiceConfig) && (
+                  <>
+                    <div className="trial-summary-item"><span>题量</span><b>{practiceConfig?.questionCount || '不限'}</b></div>
+                    <div className="trial-summary-item"><span>难度</span><b>{practiceConfig?.difficulty || '不限'}</b></div>
+                    <div className="trial-summary-item">
+                      <span>题型</span>
+                      <b>{(practiceConfig?.types || []).map((t) => DRILL_TYPE_OPTIONS.find((o) => o.value === t)?.label || t).join('、') || '不限'}</b>
+                    </div>
+                  </>
+                )}
+                <div className="trial-summary-item pass"><span>通关线</span><b>{practiceConfig?.passRate ?? 80}%</b></div>
+              </div>
+              <div className="drill-footer">
+                <Button type="primary" size="large" className="kp-cta-btn" onClick={startTrial}>开始通关</Button>
+              </div>
+            </div>
+          )}
+
+          {/* 例题检测 / 错题重做 / 已开始的专项练习与小节通关：逐题模式（每题一页 + 答题指示器） */}
+          {(tab === 'example' || tab === 'preview_practice' || tab === 'redo'
+            || (tab === 'practice' && drillStarted) || (tab === 'trial' && trialStarted)) && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
@@ -497,8 +793,17 @@ export default function KnowledgePage() {
                       <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                           <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '知识点预习' : tab === 'redo' ? '错题重做' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
+                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '例题检测' : tab === 'redo' ? '错题重做' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
                         </div>
+                        {tab === 'practice' && question.knowledgePointId && (() => {
+                          const kpIndex = (realPoints || []).findIndex((p) => p.id === question.knowledgePointId);
+                          const kpName = kpIndex >= 0 ? realPoints[kpIndex].name : '';
+                          return (
+                            <div style={{ display: 'inline-block', marginBottom: 10, padding: '2px 10px', borderRadius: 10, background: '#e3f2fd', color: '#1565c0', fontSize: 13 }}>
+                              {kpIndex >= 0 ? `知识点 ${kpIndex + 1}/${realPoints.length}` : '知识点'}：{kpName || '未命名'}
+                            </div>
+                          );
+                        })()}
                         <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
                         {/* 填空类输入（单空/多行文本/多项填空）；判断题无选项时补 正确/错误，其余走选项 */}
                         {['FillBlank', 'Text', 'MultipleBlank'].includes(question.questionType) ? (() => {
@@ -596,7 +901,7 @@ export default function KnowledgePage() {
                           {currentQ < realQuestions.length - 1 ? (
                             <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
                           ) : (
-                            realQuestions.every((q) => judgeState[q.id]) && tab !== 'preview' && tab !== 'redo' ? (
+                            realQuestions.every((q) => judgeState[q.id]) && !isPreviewFlow && tab !== 'redo' ? (
                               <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
                                 {realSubmitting ? '提交中…' : '完成'}
                               </button>
@@ -624,25 +929,57 @@ export default function KnowledgePage() {
                                     📕 查看错题（{st.wrong}）
                                   </Button>
                                 )}
-                                {/* 预习完成：标记完成度 100% 并结算奖励，进度落库保留 */}
-                                {tab === 'preview' && (
-                                  previewDone ? (
-                                    <div style={{ marginTop: 10 }}>
-                                      <div style={{ color: '#2e7d32', fontWeight: 600 }}>✅ 预习已完成 · 进度已保留</div>
-                                      <Button type="primary" size="small" style={{ marginTop: 8 }} onClick={() => navigate('/student/study')}>
-                                        返回研习页
-                                      </Button>
+                                {/* 小节通关：通关判定结果 + 星级 + 再练/返回 */}
+                                {tab === 'trial' && (
+                                  realResult ? (
+                                    <div className="trial-result">
+                                      <div className={`trial-result-title ${realResult.passed ? 'pass' : 'fail'}`}>
+                                        {realResult.passed ? '🎉 通关成功' : '💪 本次未通关'}
+                                      </div>
+                                      <div className="trial-stars">
+                                        {'⭐'.repeat(realResult.stars || 0)}{'☆'.repeat(5 - (realResult.stars || 0))}
+                                      </div>
+                                      <div className="trial-result-meta">
+                                        正确率 {realResult.rate ?? 0}% · 通关线 {realResult.passRate ?? 80}% · 历史最佳 {realResult.bestRate ?? 0}%（{realResult.bestStars ?? 0} 星）
+                                      </div>
+                                      <div className="trial-result-tags">
+                                        {realResult.firstPass && <span className="trial-tag first">首次通关</span>}
+                                        {realResult.passed && realResult.unlockedNext && <span className="trial-tag unlock">已解锁下一小节</span>}
+                                      </div>
+                                      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12, flexWrap: 'wrap' }}>
+                                        {!realResult.passed && <Button type="primary" onClick={startTrial}>再练一次</Button>}
+                                        <Button onClick={() => navigate('/student/study')}>返回研习页</Button>
+                                      </div>
                                     </div>
                                   ) : (
-                                    <Button
-                                      type="primary"
-                                      size="large"
-                                      loading={previewCompleting}
-                                      onClick={finishPreview}
-                                      style={{ marginTop: 12, height: 44, borderRadius: 8, fontSize: 15 }}
-                                    >
-                                      📖 预习完成
-                                    </Button>
+                                    <div style={{ marginTop: 8, color: '#607d8b' }}>通关判定中…</div>
+                                  )
+                                )}
+                                {/* 预习完成：标记完成度 100% 并结算奖励，进度落库保留 */}
+                                {isPreviewFlow && (
+                                  previewDone ? (
+                                    <div style={{ marginTop: 12 }}>
+                                      <div style={{ color: '#2e7d32', fontWeight: 600 }}>✅ 预习已完成 · 进度已保留</div>
+                                      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 10, flexWrap: 'wrap' }}>
+                                        <Button type="primary" onClick={() => navigate('/student/study')}>返回研习页</Button>
+                                        <Button onClick={goPreviewPractice}>再练一遍</Button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div style={{ marginTop: 12 }}>
+                                      <div style={{ color: '#5b7a99', fontSize: 13, marginBottom: 6 }}>
+                                        完成例题检测即可结束本次预习并领取奖励
+                                      </div>
+                                      <Button
+                                        type="primary"
+                                        size="large"
+                                        loading={previewCompleting}
+                                        onClick={finishPreview}
+                                        style={{ height: 44, borderRadius: 8, fontSize: 15 }}
+                                      >
+                                        📖 完成预习
+                                      </Button>
+                                    </div>
                                   )
                                 )}
                               </div>
@@ -703,10 +1040,8 @@ export default function KnowledgePage() {
               </div>
             )
           )}
-          {/* 错题本：真实错题（/api/practice/wrong-list）后续接入 */}
-          {tab === 'wrong' && (
-            <div className="knowledge-empty">错题本功能建设中，练习错题已自动记录</div>
-          )}
+          {/* 知识点错题本：本人错题（/api/practice/wrong-list），与底部导航「错题本」同源 */}
+          {tab === 'wrong' && <WrongBookPanel />}
         </div>
       </div>
     );

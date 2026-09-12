@@ -16,6 +16,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { message } from 'antd';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
 import { getStudySections, uploadActivity } from '../../api/student';
 import './StudyPage.css';
@@ -135,10 +136,12 @@ export default function StudyPage() {
   const goAction = (action) => {
     if (realMode) {
       if (!selectedSection) return;
-      navigate(`/student/knowledge?sectionId=${selectedSection.id}&tab=${action.key}`);
+      const nm = selectedSection.name ? `&name=${encodeURIComponent(selectedSection.name)}` : '';
+      navigate(`/student/knowledge?sectionId=${selectedSection.id}${nm}&tab=${action.key}`);
     } else {
       if (!selectedKp) return;
-      navigate(`/student/knowledge/${selectedKp.id}?tab=${action.key}`);
+      const nm = selectedKp.name ? `?name=${encodeURIComponent(selectedKp.name)}` : '';
+      navigate(`/student/knowledge/${selectedKp.id}${nm}${nm ? '&' : '?'}tab=${action.key}`);
     }
   };
 
@@ -195,14 +198,24 @@ export default function StudyPage() {
                     (sectionsMap[ch.id] || []).map((sec) => {
                       const ev = sectionEvalMap[sec.id];
                       const lv = masteryLevel(ev ? ev.mastery : (sec.progress || 0));
+                      const locked = !!sec.locked;
+                      const secStars = sec.stars || 0;
                       return (
                         <div
                           key={sec.id}
-                          className={`study-kp ${selectedSection && selectedSection.id === sec.id ? 'selected' : ''}`}
-                          onClick={() => setSelectedSection(sec)}
+                          className={`study-kp ${selectedSection && selectedSection.id === sec.id ? 'selected' : ''} ${locked ? 'locked' : ''}`}
+                          onClick={() => {
+                            if (locked) {
+                              message.warning('请先通关上一小节');
+                              return;
+                            }
+                            setSelectedSection(sec);
+                          }}
                         >
                           <span className="study-kp-name">
-                            🌊 {sec.name}{ev?.weak ? ' ⚠️' : ''}
+                            {locked ? '🔒' : '🌊'} {sec.name}{ev?.weak ? ' ⚠️' : ''}
+                            {secStars > 0 && <span className="study-kp-stars">{'⭐'.repeat(secStars)}</span>}
+                            {sec.passed && <span className="study-kp-pass">已通关</span>}
                           </span>
                           <span className="study-kp-meta">
                             <span className="study-kp-pct">{ev ? ev.mastery : 0}%</span>

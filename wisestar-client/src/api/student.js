@@ -153,10 +153,18 @@ export async function getStudyProgress(subjectId, versionId) {
 
 /**
  * 学员端练习/试炼题目（剥离标准答案）
- * @param {Object} params - { sectionId, knowledgePointId, count, types, difficulty }
+ * @param {Object} params - { sectionId, knowledgePointId, knowledgePointIds, count, perKp, types, difficulty, random, exposeAnswer }
  */
 export async function getStudyQuestions(params) {
   return request.get('/student/study/questions', { params });
+}
+
+/**
+ * 学员端小节练习配置（出题模式/题量/难度/题型/通关阈值/解锁开关）
+ * @param {string} sectionId - 小节ID
+ */
+export async function getSectionPracticeConfig(sectionId) {
+  return request.get('/student/practice/config', { params: { sectionId } });
 }
 
 /**
