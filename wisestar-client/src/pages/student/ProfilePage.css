@@ -19,23 +19,12 @@
     radial-gradient(circle at 92% 15%, rgba(100, 181, 246, 0.18) 0%, transparent 40%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(236, 248, 255, 0.97));
 }
-.profile-avatar {
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #4fc3f7, #2196f3);
-  border: 4px solid #fff;
-  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 50px;
-  flex-shrink: 0;
-}
 .profile-info-main { flex: 1; min-width: 0; }
 .profile-name { font-size: 24px; font-weight: 900; color: #1d3a5f; }
 .profile-title-chip {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 6px;
   background: linear-gradient(135deg, #fff3d0, #ffe4a3);
   color: #9a6a00;
@@ -76,6 +65,9 @@
 
 /* 区块标题 */
 .profile-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   font-weight: 800;
   color: #2b4a6b;
@@ -113,7 +105,7 @@
   opacity: 0.75;
   cursor: default;
 }
-.profile-cert-emoji { font-size: 40px; }
+.profile-cert-emoji { margin-bottom: 6px; }
 .profile-cert-name { font-size: 14px; font-weight: 800; color: #2b4a6b; }
 .profile-cert-desc { font-size: 11px; color: #5b7a99; line-height: 1.5; }
 .profile-cert-require {

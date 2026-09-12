@@ -14,13 +14,14 @@
  */
 
 import WrongBookPanel from '../../components/student/WrongBookPanel';
+import IconTile from '../../components/common/IconTile';
 import './WrongBookPage.css';
 
 export default function WrongBookPage() {
   return (
     <div className="sll-page-enter wrong-book">
       <div className="sll-card wrong-card">
-        <div className="wrong-title">📕 我的错题本</div>
+        <div className="wrong-title"><IconTile emoji="📕" tone="pink" size="sm" /> 我的错题本</div>
         <WrongBookPanel />
       </div>
     </div>

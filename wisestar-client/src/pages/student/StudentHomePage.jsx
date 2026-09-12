@@ -28,6 +28,7 @@ import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStud
 import { getMyStudentInfo, getStudentStats, getMyToday } from '../../api/student';
 import { listMyStudentTasks } from '../../api/studentTask';
 import { getMyStudySummary } from '../../api/studentStudy';
+import IconTile from '../../components/common/IconTile';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -100,11 +101,11 @@ export default function StudentHomePage() {
             onClick={() => navigate('/student/profile')}
           >
             <div className="sh-home-card-head">
-              <span className="sh-home-card-icon">📋</span>
+              <IconTile emoji="📋" tone="blue" size="sm" />
               <span className="sh-home-card-tag">我的档案</span>
             </div>
             <div className="sh-home-archive">
-              <div className="sh-home-avatar">{PROFILE.emoji}</div>
+              <IconTile emoji={PROFILE.emoji} tone="sky" size="2xl" round />
               <div className="sh-home-archive-info">
                 <div className="sh-home-archive-name">{displayName}</div>
                 <div className="sh-home-title">{currentTitle.emoji} {currentTitle.name}</div>
@@ -125,12 +126,12 @@ export default function StudentHomePage() {
           className={`sll-card sll-card-hover sh-home-card sh-home-card-study sh-home-card-${subject.theme}`}
           onClick={() => navigate('/student/study')}
         >
-          <div className="sh-home-card-head">
-            <span className="sh-home-card-icon">{subject.icon}</span>
-            <span className="sh-home-card-tag">学海研习</span>
-          </div>
+            <div className="sh-home-card-head">
+              <IconTile emoji={subject.icon} tone={subject.theme} size="sm" />
+              <span className="sh-home-card-tag">学海研习</span>
+            </div>
           <div className="sh-home-study">
-            <div className="sh-home-study-book">📖</div>
+            <IconTile emoji="📖" tone="blue" size="2xl" />
             <div className="sh-home-study-text">
               <div className="sh-home-study-title">开启{subject.name}研习</div>
               <div className="sh-home-study-desc">潜入「{(subject.chapters?.[0]?.name) || '今日研习'}」的知识海洋</div>
@@ -146,11 +147,11 @@ export default function StudentHomePage() {
             onClick={() => navigate('/student/mall')}
           >
             <div className="sh-home-card-head">
-              <span className="sh-home-card-icon">🎁</span>
+              <IconTile emoji="🎁" tone="orange" size="sm" />
               <span className="sh-home-card-tag">荣誉商城</span>
             </div>
             <div className="sh-home-mall">
-              <div className="sh-home-mall-coin">🐚</div>
+              <IconTile emoji="🐚" tone="gold" size="2xl" round />
               <div>
                 <div className="sh-home-mall-num">{totalCoins}</div>
                 <div className="sh-home-mall-label">本学期可兑换总学习币</div>
@@ -172,27 +173,27 @@ export default function StudentHomePage() {
       {/* ---- 下半部: 今日学习数据总览 ---- */}
       <div className="sh-home-bottom">
         <div className="sll-card sh-home-data">
-          <div className="sh-home-section-title">🌊 今日学习数据总览</div>
+          <div className="sh-home-section-title"><IconTile emoji="🌊" tone="sky" size="xs" /> 今日学习数据总览</div>
           <div className="sh-home-data-grid">
             <div className="sh-home-data-item">
-              <div className="sh-home-data-icon sh-home-data-time">⏱️</div>
+              <IconTile emoji="⏱️" tone="sky" size="lg" />
               <div className="sh-home-data-num">{(stats?.today?.minutes) ?? 0}<small>分钟</small></div>
               <div className="sh-home-data-label">今日学习时长</div>
             </div>
             <div className="sh-home-data-item">
-              <div className="sh-home-data-icon sh-home-data-kp">🧩</div>
+              <IconTile emoji="🧩" tone="green" size="lg" />
               <div className="sh-home-data-num">{(stats?.today?.questionCount) ?? 0}<small>题</small></div>
               <div className="sh-home-data-label">今日答题</div>
             </div>
             {!pureMode && (
               <>
                 <div className="sh-home-data-item">
-                  <div className="sh-home-data-icon sh-home-data-points">⭐</div>
+                  <IconTile emoji="⭐" tone="gold" size="lg" />
                   <div className="sh-home-data-num">+{(stats?.today?.points) ?? 0}<small>积分</small></div>
                   <div className="sh-home-data-label">今日获得积分</div>
                 </div>
                 <div className="sh-home-data-item">
-                  <div className="sh-home-data-icon sh-home-data-coins">🐚</div>
+                  <IconTile emoji="🐚" tone="orange" size="lg" />
                   <div className="sh-home-data-num">+{(stats?.today?.coins) ?? 0}<small>币</small></div>
                   <div className="sh-home-data-label">今日获得学习币</div>
                 </div>
@@ -204,7 +205,7 @@ export default function StudentHomePage() {
         {/* 积分获取引导（主动预习/练习/试炼/订正错题/攻克薄弱） */}
         {!pureMode && todayView?.guides?.length > 0 && (
           <div className="sll-card sh-home-todo">
-            <div className="sh-home-section-title">⭐ 今日积分获取引导</div>
+            <div className="sh-home-section-title"><IconTile emoji="⭐" tone="gold" size="xs" /> 今日积分获取引导</div>
             {todayView.guides.map((g) => (
               <div
                 key={g.actionType}
@@ -212,7 +213,7 @@ export default function StudentHomePage() {
                 style={{ cursor: 'pointer' }}
                 onClick={() => navigate(guideRoute(g.target))}
               >
-                <span className="sh-home-todo-dot done">{g.done ? '✅' : '➕'}</span>
+                <IconTile emoji={g.done ? '✅' : '➕'} tone={g.done ? 'green' : 'slate'} size="xs" round />
                 <span className="sh-home-todo-label">
                   {g.label}
                   <span className="sh-home-todo-desc"> · 积分+{g.points} 币+{g.coins}</span>
@@ -224,13 +225,13 @@ export default function StudentHomePage() {
 
         {/* 今日任务（学管师/老师当日发布） */}
         <div className="sll-card sh-home-todo">
-          <div className="sh-home-section-title">🗓️ 今日任务</div>
+          <div className="sh-home-section-title"><IconTile emoji="🗓️" tone="teal" size="xs" /> 今日任务</div>
           {tasks.length === 0 && (
             <div className="sh-home-todo-item"><span className="sh-home-todo-label" style={{ color: '#90a4ae' }}>今日暂无任务，自由研习吧</span></div>
           )}
           {tasks.map((t) => (
             <div key={t.id} className="sh-home-todo-item">
-              <span className="sh-home-todo-dot done">📋</span>
+              <IconTile emoji="📋" tone="blue" size="xs" round />
               <span className="sh-home-todo-label">{t.taskContent || '今日任务'}</span>
             </div>
           ))}
@@ -239,9 +240,9 @@ export default function StudentHomePage() {
         {/* 今日学习总结（学习时长累计满 1 小时后自动生成） */}
         {summary?.content && (
           <div className="sll-card sh-home-todo">
-            <div className="sh-home-section-title">📝 今日学习总结</div>
+            <div className="sh-home-section-title"><IconTile emoji="📝" tone="blue" size="xs" /> 今日学习总结</div>
             <div className="sh-home-todo-item">
-              <span className="sh-home-todo-dot done">✨</span>
+              <IconTile emoji="✨" tone="gold" size="xs" round />
               <span className="sh-home-todo-label" style={{ whiteSpace: 'pre-wrap' }}>{summary.content}</span>
             </div>
           </div>

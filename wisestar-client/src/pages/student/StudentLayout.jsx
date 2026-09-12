@@ -30,14 +30,15 @@ import useStudentStore, { TITLES, PROFILE } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
 import { uploadActivity, getStudentStats } from '../../api/student';
 import { sendStudyHeartbeat } from '../../api/studentStudy';
+import IconTile from '../../components/common/IconTile';
 import './student.css';
 
-// 底部导航配置
+// 底部导航配置（tone 用于 3D 黏土图标底座色调）
 const TABS = [
-  { path: '/student', icon: '🏠', label: '首页' },
-  { path: '/student/study', icon: '📖', label: '学习' },
-  { path: '/student/wrong', icon: '📕', label: '错题本' },
-  { path: '/student/profile', icon: '👤', label: '个人中心' },
+  { path: '/student', icon: '🏠', tone: 'sky', label: '首页' },
+  { path: '/student/study', icon: '📖', tone: 'blue', label: '学习' },
+  { path: '/student/wrong', icon: '📕', tone: 'pink', label: '错题本' },
+  { path: '/student/profile', icon: '👤', tone: 'purple', label: '个人中心' },
 ];
 
 export default function StudentLayout() {
@@ -186,7 +187,7 @@ export default function StudentLayout() {
           {/* 学习币（学期消费币，多科合并） */}
           {!pureMode && (
             <button className="sll-badge" onClick={() => message.info(`本学期可兑换学习币 ${totalCoins} 枚`)}>
-              <span>🐚</span>
+              <IconTile emoji="🐚" tone="orange" size="sm" />
               <b>{totalCoins}</b>
               <span className="sll-badge-label">学习币</span>
             </button>
@@ -194,7 +195,7 @@ export default function StudentLayout() {
           {/* 学海积分（终身成长值） */}
           {!pureMode && (
             <button className="sll-badge sll-badge-points" onClick={() => navigate('/student/profile')}>
-              <span>⭐</span>
+              <IconTile emoji="⭐" tone="gold" size="sm" />
               <b>{totalPoints}</b>
               <span className="sll-badge-label">学海积分</span>
             </button>
@@ -209,7 +210,7 @@ export default function StudentLayout() {
           </Dropdown>
           {/* 头像 + 头衔 */}
           <button className="sll-user" onClick={() => navigate('/student/profile')}>
-            <span className="sll-avatar">🐬</span>
+            <IconTile emoji="🐬" tone="sky" size="lg" round />
             {!pureMode && <span className="sll-title-chip">{currentTitle.emoji} {currentTitle.name}</span>}
           </button>
           {/* 退出登录（学员账号无管理端权限） */}
@@ -235,7 +236,7 @@ export default function StudentLayout() {
               className={`sll-tabbar-item ${active ? 'active' : ''}`}
               onClick={() => navigate(t.path)}
             >
-              <span className="sll-tabbar-icon">{t.icon}</span>
+              <IconTile emoji={t.icon} tone={t.tone} size="sm" dim={!active} className="sll-tabbar-tile" />
               <span className="sll-tabbar-label">{t.label}</span>
             </button>
           );

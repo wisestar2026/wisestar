@@ -20,6 +20,8 @@ import { getStudyPoints, getStudyQuestions, getSectionPracticeConfig, uploadActi
 import { submitPractice, saveWrongReason } from '../../api/practice';
 import { extractCorrectAnswers } from '../../utils/practiceHelpers';
 import WrongBookPanel from '../../components/student/WrongBookPanel';
+import RichContent from '../../components/common/RichContent';
+import IconTile from '../../components/common/IconTile';
 import './KnowledgePage.css';
 
 // 专项练习可选题型（与后端 questionTypes 对齐）
@@ -30,6 +32,26 @@ const DRILL_TYPE_OPTIONS = [
   { value: 'Checkbox', label: '多选题' },
   { value: 'MultipleBlank', label: '多空填空' },
 ];
+
+// 题型标签（题面卡片标题，参考 image-2 的题型标题布局）
+const QUESTION_TYPE_LABELS = {
+  Judge: '判断题',
+  Radio: '单选题',
+  Checkbox: '多选题',
+  FillBlank: '填空题',
+  MultipleBlank: '多空填空',
+  Text: '简答题',
+};
+
+// 各 tab 头部标题图标（3D 黏土底座：emoji + 色调 + 文案）
+const TAB_META = {
+  preview: { icon: '📖', tone: 'blue', title: '知识点预习/复习' },
+  preview_practice: { icon: '📝', tone: 'blue', title: '例题检测' },
+  practice: { icon: '✏️', tone: 'orange', title: '专项练习湾' },
+  trial: { icon: '🎯', tone: 'green', title: '小节通关' },
+  wrong: { icon: '📕', tone: 'pink', title: '知识点错题本' },
+  redo: { icon: '✏️', tone: 'orange', title: '错题重做订正' },
+};
 
 // 填空比较归一化（与后端 AnswerJudgeUtil / utils/practiceHelpers 对齐）:
 // 全角空格/零宽字符/全角字母数字符号（含 ＜＞＝）转半角、连续空白折叠、去首尾
@@ -113,6 +135,8 @@ export default function KnowledgePage() {
   const sectionNameParam = searchParams.get('name');
   const previewTitle = sectionNameParam
     || (realPoints?.length === 1 ? realPoints[0].name : '知识点预习');
+  // 当前 tab 的头部图标文案（3D 黏土图标底座）
+  const tabMeta = TAB_META[tab] || TAB_META.preview;
 
   // 预习讲解 ↔ 例题检测（保留小节/知识点上下文与标题）
   const goKnowledgeTab = (targetTab) => {
@@ -504,8 +528,8 @@ export default function KnowledgePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               {tab !== 'preview' && (
-                <h3 style={{ margin: 0, display: 'inline-block' }}>
-                  {tab === 'preview_practice' ? '📝 例题检测' : tab === 'practice' ? '✏️ 专项练习湾' : tab === 'trial' ? '🎯 小节通关' : tab === 'wrong' ? '📕 知识点错题本' : tab === 'redo' ? '✏️ 错题重做订正' : '📖 知识点预习/复习'}
+                <h3 style={{ margin: 0, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  <IconTile emoji={tabMeta.icon} tone={tabMeta.tone} size="sm" /> {tabMeta.title}
                 </h3>
               )}
               {kpDetail && tab !== 'preview' && (
@@ -531,14 +555,14 @@ export default function KnowledgePage() {
           </div>
 
           {/* 查看错题弹窗（学生答案/正确答案/解析/错误归因） */}
-          <Modal title="📕 错题详情" open={wrongOpen} onCancel={() => setWrongOpen(false)} footer={null} width={640}>
+          <Modal title={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}><IconTile emoji="📕" tone="pink" size="xs" /> 错题详情</span>} open={wrongOpen} onCancel={() => setWrongOpen(false)} footer={null} width={640}>
             {wrongList.map((q) => {
               const judge = realJudge(q);
               const schema = q.schema || {};
               const analysis = schema.attribute?.examAnalysis;
               return (
                 <div key={q.id} style={{ border: '1px solid #ffcdd2', borderRadius: 10, padding: 12, marginBottom: 10, background: '#fff8f8' }}>
-                  <div style={{ fontWeight: 600, marginBottom: 6 }}>{q.name || schema.title}</div>
+                  <div style={{ fontWeight: 600, marginBottom: 6 }}><RichContent text={q.name || schema.title} /></div>
                   <div style={{ fontSize: 13, marginBottom: 4 }}>
                     <b>你的答案：</b><span style={{ color: '#c62828' }}>{answerTextOf(q)}</span>
                   </div>
@@ -547,7 +571,7 @@ export default function KnowledgePage() {
                   </div>
                   {analysis && (
                     <div style={{ fontSize: 13, marginBottom: 6, padding: 8, background: '#fffbe6', borderRadius: 6 }}>
-                      <b>📝 解析：</b><span style={{ whiteSpace: 'pre-wrap' }}>{analysis}</span>
+                      <b>📝 解析：</b><span style={{ whiteSpace: 'pre-wrap' }}><RichContent text={analysis} /></span>
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -664,7 +688,7 @@ export default function KnowledgePage() {
                             <div className="kp-point-empty">该知识点暂未配置讲解要点</div>
                           )}
                           <div className="kp-whale">
-                            <span className="kp-whale-icon">🐳</span>
+                            <IconTile emoji="🐳" tone="sky" size="md" />
                             <div className="kp-whale-body">
                               <b>小鲸导读</b>
                               <p>先理解上面每一条要点；读完本节后点击「开始例题检测」，检测通过即可完成预习并领取学习币。</p>
@@ -717,7 +741,7 @@ export default function KnowledgePage() {
           {tab === 'practice' && !drillStarted && (
             <div className="drill-panel">
               <div className="drill-panel-head">
-                <h3>✏️ 专项练习湾</h3>
+                <h3><IconTile emoji="✏️" tone="orange" size="sm" /> 专项练习湾</h3>
                 <p>按知识点逐个练习，每个知识点至少 1 题，全部知识点都会过一遍。</p>
               </div>
               {(realPoints?.length || 0) > 0 ? (
@@ -744,7 +768,7 @@ export default function KnowledgePage() {
           {tab === 'trial' && !trialStarted && (
             <div className="drill-panel">
               <div className="drill-panel-head">
-                <h3>🎯 小节通关</h3>
+                <h3><IconTile emoji="🎯" tone="green" size="sm" /> 小节通关</h3>
                 <p>按老师配置对小节进行通关检验，正确率达标即可通关。</p>
               </div>
               <div className="trial-summary">
@@ -790,10 +814,10 @@ export default function KnowledgePage() {
                     const correct = judge ? judge.correct : null;
                     const analysis = schema.attribute?.examAnalysis;
                     return (
-                      <div style={{ border: '1px solid #e3f2fd', borderRadius: 12, padding: 16, background: '#f8fcff' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                          <span style={{ fontWeight: 700 }}>第 {currentQ + 1} / {realQuestions.length} 题</span>
-                          <span style={{ color: '#90a4ae', fontSize: 13 }}>{tab === 'practice' ? '专项练习湾' : tab === 'example' ? '知识点例题' : tab === 'preview_practice' ? '例题检测' : tab === 'redo' ? '错题重做' : tab === 'preview' ? '预习练习' : '小节通关'}</span>
+                      <div className="knowledge-question-card">
+                        <div className="knowledge-q-head">
+                          <span className="knowledge-q-type">{QUESTION_TYPE_LABELS[question.questionType] || '题目'}</span>
+                          <span className="knowledge-q-progress">第 {currentQ + 1} / {realQuestions.length} 题</span>
                         </div>
                         {tab === 'practice' && question.knowledgePointId && (() => {
                           const kpIndex = (realPoints || []).findIndex((p) => p.id === question.knowledgePointId);
@@ -804,7 +828,15 @@ export default function KnowledgePage() {
                             </div>
                           );
                         })()}
-                        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>{question.name || schema.title}</div>
+                        <div className="knowledge-q-text">{currentQ + 1}. <RichContent text={question.name || schema.title} /></div>
+                        {/* 老师配图（题干图片，与题干 Markdown 图片互补） */}
+                        {schema.attribute?.examImages?.length > 0 && (
+                          <div className="knowledge-q-images">
+                            {schema.attribute.examImages.map((img, i) => (
+                              <Image key={i} src={img} alt="题目配图" style={{ maxWidth: 480, marginBottom: 8 }} />
+                            ))}
+                          </div>
+                        )}
                         {/* 填空类输入（单空/多行文本/多项填空）；判断题无选项时补 正确/错误，其余走选项 */}
                         {['FillBlank', 'Text', 'MultipleBlank'].includes(question.questionType) ? (() => {
                           const blankCount = blankCountOf(question);
@@ -841,56 +873,56 @@ export default function KnowledgePage() {
                               )}
                             </div>
                           );
-                        })() : options.map((opt) => {
-                          const selected = picked?.type === 'option'
-                            ? picked.optionId === opt.id
-                            : (picked?.optionIds || []).includes(opt.id);
-                          const showRight = showResult && correct === 1 && selected;
-                          const showWrong = showResult && correct === 0 && selected;
-                          return (
-                            <div key={opt.id} onClick={() => realPick(question, opt.id)}
-                              style={{ padding: '10px 14px', marginBottom: 8, borderRadius: 8, cursor: showResult ? 'default' : 'pointer',
-                                border: selected ? '2px solid #29b6f6' : '1px solid #e0e0e0',
-                                background: showRight ? '#e8f5e9' : showWrong ? '#ffebee' : selected ? '#e1f5fe' : '#fff' }}>
-                              {multi ? (selected ? '☑ ' : '☐ ') : (selected ? '● ' : '○ ')}{opt.title}
-                            </div>
-                          );
-                        })}
-                        {/* 答案与解析 */}
+                        })() : (
+                          <div className={`knowledge-options ${showResult ? 'readonly' : ''}`}>
+                            {options.map((opt, oi) => {
+                              const selected = picked?.type === 'option'
+                                ? picked.optionId === opt.id
+                                : (picked?.optionIds || []).includes(opt.id);
+                              const showRight = showResult && correct === 1 && selected;
+                              const showWrong = showResult && correct === 0 && selected;
+                              return (
+                                <div
+                                  key={opt.id}
+                                  className={`knowledge-option ${selected ? 'selected' : ''} ${showRight ? 'right' : ''} ${showWrong ? 'wrong' : ''}`}
+                                  onClick={() => realPick(question, opt.id)}
+                                >
+                                  <span className={`knowledge-opt-key ${multi ? 'multi' : ''}`}>{String.fromCharCode(65 + oi)}</span>
+                                  <span className="knowledge-opt-text"><RichContent text={opt.title} /></span>
+                                  {showRight && <span className="knowledge-opt-mark">✓</span>}
+                                  {showWrong && <span className="knowledge-opt-mark wrong">✗</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {/* 答案与解析：先答案，再解析，字号与题目一致 */}
                         {showResult && (
-                          <div style={{ marginTop: 12, fontSize: 13 }}>
-                            {(() => {
-                              if (correct !== 1 && judge?.blankTotal > 1 && (judge.blankRight || 0) > 0) {
-                                // 多项填空部分命中：橙色提示答对空数，不再一律红叉
-                                return (
-                                  <div>
-                                    <div style={{ color: '#e65100', fontWeight: 600 }}>
-                                      ⚠️ 部分正确：答对 {judge.blankRight}/{judge.blankTotal} 空
-                                    </div>
-                                    <div style={{ color: '#2e7d32', marginTop: 4 }}>
-                                      标准答案：{answerDisplayOf(judge)}
-                                    </div>
-                                  </div>
-                                );
-                              }
-                              if (correct === 1) {
-                                return <div style={{ color: '#2e7d32', fontWeight: 600 }}>✅ 回答正确</div>;
-                              }
-                              return <div style={{ color: '#c62828', fontWeight: 600 }}>❌ 回答错误 · 标准答案：{answerDisplayOf(judge)}</div>;
-                            })()}
+                          <div className="knowledge-q-analysis">
+                            <div className={`knowledge-q-verdict ${correct === 1 ? 'right' : (judge?.blankTotal > 1 && (judge.blankRight || 0) > 0) ? 'part' : 'wrong'}`}>
+                              {correct === 1
+                                ? '✅ 回答正确'
+                                : (judge?.blankTotal > 1 && (judge.blankRight || 0) > 0)
+                                  ? `⚠️ 部分正确：答对 ${judge.blankRight}/${judge.blankTotal} 空`
+                                  : '❌ 回答错误'}
+                            </div>
+                            <div className="knowledge-q-answer">
+                              <b>正确答案：</b>{answerDisplayOf(judge)}
+                            </div>
                             {analysis && (
-                              <div style={{ marginTop: 6, padding: 10, background: '#fffbe6', borderRadius: 8 }}>
-                                <b style={{ color: '#b26a00' }}>📝 解析：</b>
-                                <div style={{ whiteSpace: 'pre-wrap' }}>{analysis}</div>
+                              <div className="knowledge-q-analysis-body">
+                                <b>📝 解析：</b><RichContent text={analysis} />
                               </div>
                             )}
                           </div>
                         )}
-                        {/* 提交答案按钮：点击后才判定 */}
-                        {!showResult && picked && (
-                          <Button type="primary" size="small" style={{ marginTop: 12 }} onClick={() => setJudgeState((p) => ({ ...p, [question.id]: true }))}>
-                            提交答案
-                          </Button>
+                        {/* 提交答案按钮：点击后才判定（参考 image-2：右下角常驻，未作答置灰） */}
+                        {!showResult && (
+                          <div className="knowledge-q-submit">
+                            <Button type="primary" disabled={!picked} onClick={() => setJudgeState((p) => ({ ...p, [question.id]: true }))}>
+                              提交答案
+                            </Button>
+                          </div>
                         )}
                         {/* 导航 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>

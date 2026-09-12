@@ -21,6 +21,7 @@ import { Collapse } from 'antd';
 import useStudentStore, { SUBJECTS, GOODS } from '../../stores/useStudentStore';
 import { listGoods } from '../../api/mall';
 import { getStudentStats } from '../../api/student';
+import IconTile from '../../components/common/IconTile';
 import './MallPage.css';
 
 export default function MallPage() {
@@ -74,7 +75,7 @@ export default function MallPage() {
     return (
       <div className="sll-page-enter mall-pure">
         <div className="sll-card mall-pure-card">
-          <div className="mall-pure-icon">🔒</div>
+          <IconTile emoji="🔒" tone="slate" size="2xl" />
           <div className="mall-pure-title">纯净学习模式已开启</div>
           <div className="mall-pure-desc">迎检模式下荣誉商城已隐藏，可安心专注学习。</div>
           <button className="knowledge-back" onClick={() => navigate('/student/study')}>
@@ -89,7 +90,7 @@ export default function MallPage() {
   const collapseItems = [
     {
       key: 'detail',
-      label: <span className="mall-collapse-label">📋 各学科剩余学习币明细</span>,
+      label: <span className="mall-collapse-label"><IconTile emoji="📋" tone="blue" size="xs" /> 各学科剩余学习币明细</span>,
       children: (
         <div className="mall-detail-list">
           {SUBJECTS.map((s) => (
@@ -118,7 +119,7 @@ export default function MallPage() {
 
       {/* ---- 顶部数据区 ---- */}
       <div className="sll-card mall-top">
-        <div className="mall-top-coin">🐚</div>
+        <IconTile emoji="🐚" tone="gold" size="2xl" style={{ '--it-size': '76px' }} />
         <div className="mall-top-info">
           <div className="mall-top-label">本学期可兑换总学习币</div>
           <div className="mall-top-num">{totalCoins}</div>
@@ -132,7 +133,7 @@ export default function MallPage() {
       </div>
 
       {/* ---- 商品网格 ---- */}
-      <div className="mall-section-title">🎁 荣誉商品</div>
+      <div className="mall-section-title"><IconTile emoji="🎁" tone="pink" size="sm" /> 荣誉商品</div>
       <div className="mall-grid">
         {displayGoods.length === 0 && (
           <div className="mall-goods-desc" style={{ textAlign: 'center', padding: 24 }}>暂无上架商品，敬请期待</div>

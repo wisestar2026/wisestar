@@ -19,15 +19,19 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
 import { getStudySections, uploadActivity } from '../../api/student';
+import IconTile from '../../components/common/IconTile';
 import './StudyPage.css';
 
-// 四大核心功能按钮配置
+// 四大核心功能按钮配置（short 用于小节行内的紧凑按钮；tone 为 3D 黏土图标色调）
 const ACTION_BUTTONS = [
-  { key: 'preview', label: '知识点预习', icon: '📖', color: 'blue' },
-  { key: 'practice', label: '专项练习湾', icon: '✏️', color: 'orange' },
-  { key: 'trial', label: '小节通关', icon: '🎯', color: 'green' },
-  { key: 'wrong', label: '知识点错题本', icon: '📕', color: 'purple' },
+  { key: 'preview', label: '知识点预习', short: '预习', icon: '📖', color: 'blue', tone: 'blue' },
+  { key: 'practice', label: '专项练习湾', short: '练习', icon: '✏️', color: 'orange', tone: 'orange' },
+  { key: 'trial', label: '小节通关', short: '通关', icon: '🎯', color: 'green', tone: 'green' },
+  { key: 'wrong', label: '知识点错题本', short: '错题', icon: '📕', color: 'purple', tone: 'purple' },
 ];
+
+// 章节图标底座循环色调（让左栏章节有层次、不单调）
+const CHAPTER_TONES = ['blue', 'orange', 'green', 'purple', 'teal', 'pink'];
 
 // 完成度 → 星星（5 颗，金色点亮；完成练习且正确率达标：≥80 五颗 / ≥60 四颗 / ≥40 三颗 / ≥20 两颗 / >0 一颗）
 const stars = (rate) => {
@@ -43,8 +47,8 @@ export default function StudyPage() {
   } = useStudentStore();
   const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
 
-  // 展开的章节（可多开）+ 选中的小节/知识点
-  const [openChapters, setOpenChapters] = useState([]);
+  // 当前选中的章节（章节列表在中栏展开其小节）+ 选中的小节/知识点
+  const [selectedChapterId, setSelectedChapterId] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedKp, setSelectedKp] = useState(null);
   // 各章节的小节缓存（按章节 id 隔离，避免串数据）
@@ -64,7 +68,7 @@ export default function StudyPage() {
     if (realMode) {
       fetchStudyChapters(activeSubject, grade);
     }
-    setOpenChapters([]);
+    setSelectedChapterId(null);
     setSelectedSection(null);
     setSelectedKp(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,9 +109,13 @@ export default function StudyPage() {
     return map;
   }, [progressChapters]);
 
-  // 展开章节：真实模式加载该章节的小节（按章节缓存）
-  const toggleChapter = (chId) => {
-    setOpenChapters((prev) => (prev.includes(chId) ? prev.filter((id) => id !== chId) : [...prev, chId]));
+  // 选中章节：章节列表只负责选中，小节改由中栏以行列表展示（按章节缓存小节）
+  const selectChapter = (chId) => {
+    if (selectedChapterId !== chId) {
+      setSelectedSection(null);
+      setSelectedKp(null);
+    }
+    setSelectedChapterId(chId);
     if (realMode && !sectionsMap[chId]) {
       getStudySections(chId)
         .then((res) => setSectionsMap((m) => ({ ...m, [chId]: res?.data || [] })))
@@ -129,19 +137,18 @@ export default function StudyPage() {
 
   // AI 建议
   const advice = (realMode ? selectedSection : selectedKp)
-    ? { text: realMode ? '选中小节后，点击右侧按钮进入「知识点预习 / 专项练习 / 试炼检测」。' : '已选中知识点，点击右侧按钮开始学习。' }
+    ? { text: realMode ? '选中小节后，点击该行右侧的「预习 / 练习 / 通关 / 错题」进入对应功能。' : '已选中知识点，点击该行右侧的「预习 / 练习 / 通关 / 错题」开始学习。' }
     : { text: realMode ? `在「${realSubject?.name || subject.name}」的海域里，选择一个小节开始今天的研习吧。` : `在「${subject.name}」的海域里，挑选一个知识点开始今天的研习吧。` };
 
-  // 右栏按钮 → 知识点页（真实模式按小节进入；mock 按知识点进入）
-  const goAction = (action) => {
+  // 小节行内快捷操作 → 知识点页（真实模式按小节进入；mock 按知识点进入）
+  const navigateToAction = (target, action) => {
+    if (!target) return;
     if (realMode) {
-      if (!selectedSection) return;
-      const nm = selectedSection.name ? `&name=${encodeURIComponent(selectedSection.name)}` : '';
-      navigate(`/student/knowledge?sectionId=${selectedSection.id}${nm}&tab=${action.key}`);
+      const nm = target.name ? `&name=${encodeURIComponent(target.name)}` : '';
+      navigate(`/student/knowledge?sectionId=${target.id}${nm}&tab=${action.key}`);
     } else {
-      if (!selectedKp) return;
-      const nm = selectedKp.name ? `?name=${encodeURIComponent(selectedKp.name)}` : '';
-      navigate(`/student/knowledge/${selectedKp.id}${nm}${nm ? '&' : '?'}tab=${action.key}`);
+      const nm = target.name ? `?name=${encodeURIComponent(target.name)}` : '';
+      navigate(`/student/knowledge/${target.id}${nm}${nm ? '&' : '?'}tab=${action.key}`);
     }
   };
 
@@ -151,12 +158,19 @@ export default function StudyPage() {
     try { return JSON.parse(selectedSection.content); } catch { return null; }
   })();
 
+  // 中栏当前章节与其小节（真实=接口缓存；mock=章节自带知识点）
+  const activeChapter = chapters.find((c) => c.id === selectedChapterId) || null;
+  const activeSections = realMode
+    ? (selectedChapterId ? (sectionsMap[selectedChapterId] || []) : [])
+    : (activeChapter?.kps || []);
+  const sectionsLoading = realMode && !!selectedChapterId && sectionsMap[selectedChapterId] === undefined;
+
   return (
     <div className="sll-page-enter study-page">
       {/* ---- 左栏: 章节学海洲岛导航 ---- */}
       <aside className="sll-card study-left">
         <div className="study-left-title">
-          <span className="study-left-icon">🗺️</span> 学海洲岛 · {realSubject?.name || subject.name}
+          <IconTile emoji="🗺️" tone="teal" size="sm" /> 学海洲岛 · {realSubject?.name || subject.name}
           {!pureMode && <span className="study-left-sub">{realMode ? `${chapters.length} 个章节` : `进度 ${avgProgress}%`}</span>}
         </div>
         {realMode && studyContent.loadFailed && (
@@ -166,13 +180,13 @@ export default function StudyPage() {
           {realMode && realChapters !== null && realChapters.length === 0 && (
             <div className="study-empty">该学科暂无章节内容，请联系管理员配置</div>
           )}
-          {chapters.map((ch) => {
-            const open = openChapters.includes(ch.id);
+          {chapters.map((ch, ci) => {
+            const active = selectedChapterId === ch.id;
             return (
-              <div key={ch.id} className={`sll-chapter study-chapter ${open ? 'open' : ''}`}>
-                {/* 章节卡片头 */}
-                <div className="study-chapter-head" onClick={() => toggleChapter(ch.id)}>
-                  <span className="study-chapter-icon">{ch.icon || '📖'}</span>
+              <div key={ch.id} className={`sll-chapter study-chapter ${active ? 'open' : ''}`}>
+                {/* 章节卡片头（点击选中，小节在中栏展开） */}
+                <div className="study-chapter-head" onClick={() => selectChapter(ch.id)}>
+                  <IconTile emoji={ch.icon || '📖'} tone={CHAPTER_TONES[ci % CHAPTER_TONES.length]} size="md" />
                   <div className="study-chapter-info">
                     <div className="study-chapter-name">
                       {ch.name}
@@ -190,62 +204,7 @@ export default function StudyPage() {
                     )}
                   </div>
                   {!realMode && <span className="study-chapter-pct">{ch.progress}%</span>}
-                  <span className={`study-chapter-arrow ${open ? 'open' : ''}`}>▾</span>
-                </div>
-                {/* 展开区：真实=小节列表；mock=知识点条目 */}
-                <div className={`study-kp-list ${open ? 'open' : ''}`}>
-                  {realMode ? (
-                    (sectionsMap[ch.id] || []).map((sec) => {
-                      const ev = sectionEvalMap[sec.id];
-                      const lv = masteryLevel(ev ? ev.mastery : (sec.progress || 0));
-                      const locked = !!sec.locked;
-                      const secStars = sec.stars || 0;
-                      return (
-                        <div
-                          key={sec.id}
-                          className={`study-kp ${selectedSection && selectedSection.id === sec.id ? 'selected' : ''} ${locked ? 'locked' : ''}`}
-                          onClick={() => {
-                            if (locked) {
-                              message.warning('请先通关上一小节');
-                              return;
-                            }
-                            setSelectedSection(sec);
-                          }}
-                        >
-                          <span className="study-kp-name">
-                            {locked ? '🔒' : '🌊'} {sec.name}{ev?.weak ? ' ⚠️' : ''}
-                            {secStars > 0 && <span className="study-kp-stars">{'⭐'.repeat(secStars)}</span>}
-                            {sec.passed && <span className="study-kp-pass">已通关</span>}
-                          </span>
-                          <span className="study-kp-meta">
-                            <span className="study-kp-pct">{ev ? ev.mastery : 0}%</span>
-                            <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
-                          </span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    ch.kps.map((kp) => {
-                      const lv = masteryLevel(kp.mastery);
-                      const sel = selectedKp && selectedKp.id === kp.id;
-                      return (
-                        <div
-                          key={kp.id}
-                          className={`study-kp ${sel ? 'selected' : ''}`}
-                          onClick={() => setSelectedKp(kp)}
-                        >
-                          <span className="study-kp-name">🌊 {kp.name}</span>
-                          <span className="study-kp-meta">
-                            <span className="study-kp-pct">{kp.mastery}%</span>
-                            <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
-                          </span>
-                        </div>
-                      );
-                    })
-                  )}
-                  {realMode && open && (sectionsMap[ch.id] || []).length === 0 && (
-                    <div className="study-empty">该章节暂无小节内容</div>
-                  )}
+                  <span className={`study-chapter-arrow ${active ? 'open' : ''}`}>▾</span>
                 </div>
               </div>
             );
@@ -255,12 +214,12 @@ export default function StudyPage() {
 
       {/* ---- 中栏: 主内容展示区 ---- */}
       <main className="sll-card study-center">
-        {realMode ? (
-          !selectedSection ? (
-            /* 真实模式未选中小节: 学科概览 */
+        {!selectedChapterId ? (
+          realMode ? (
+            /* 真实模式未选章节: 学科概览 */
             <div className="study-overview">
               <div className="study-overview-title">
-                🌊 {realSubject?.name || subject.name} · 研习概览（{version}）
+                <IconTile emoji="🌊" tone="sky" size="sm" /> {realSubject?.name || subject.name} · 研习概览（{version}）
               </div>
               <div className="study-overview-body">
                 <div className="study-ring-stats" style={{ width: '100%', justifyContent: 'center' }}>
@@ -270,7 +229,7 @@ export default function StudyPage() {
                 <div className="study-overview-chapters" style={{ width: '100%' }}>
                   {chapters.map((ch) => (
                     <div key={ch.id} className="study-ov-chapter">
-                      <span className="study-ov-name">{ch.icon || '📖'} {ch.name}</span>
+                      <span className="study-ov-name"><IconTile emoji={ch.icon || '📖'} tone="blue" size="xs" /> {ch.name}</span>
                       <span className="study-ov-pct">小节 {ch.sectionCount ?? 0}</span>
                     </div>
                   ))}
@@ -278,45 +237,10 @@ export default function StudyPage() {
               </div>
             </div>
           ) : (
-            /* 选中真实小节: 学习内容 */
-            <div className="study-kp-detail">
-              <div className="study-kp-detail-title">🌊 {selectedSection.name}</div>
-              {sectionContent ? (
-                <>
-                  <div className="study-kp-detail-desc">
-                    <b>学习目标：</b>{sectionContent.objective || '—'}
-                  </div>
-                  <div className="study-kp-detail-desc">
-                    <b>内容概述：</b>{sectionContent.overview || '—'}
-                  </div>
-                  <div className="study-kp-detail-guide">
-                    <div className="study-kp-guide-title">📖 讲解要点</div>
-                    {(sectionContent.points || []).map((p, i) => (
-                      <div key={i} className="study-kp-guide-step">• {p}</div>
-                    ))}
-                    {(!sectionContent.points || sectionContent.points.length === 0) && (
-                      <div className="study-empty">该小节暂未配置讲解要点</div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="study-empty">该小节暂未配置学习内容</div>
-              )}
-              <div className="study-kp-detail-guide" style={{ marginTop: 16 }}>
-                <div className="study-kp-guide-title">🧭 学习引导</div>
-                <div className="study-kp-guide-step">① 点击右侧「知识点预习」了解核心内容</div>
-                <div className="study-kp-guide-step">② 进入「专项练习湾」完成练习获得学习币</div>
-                <div className="study-kp-guide-step">③ 掌握度达标后「试炼检测」检验成果</div>
-                <div className="study-kp-guide-step">④ 订正「知识点错题本」中的错题</div>
-              </div>
-            </div>
-          )
-        ) : (
-          !selectedKp ? (
             /* mock 模式: 学科整体学习进度大图 + 环形统计 */
             <div className="study-overview">
               <div className="study-overview-title">
-                🌊 {subject.name} · 整体学习进度（{version}）
+                <IconTile emoji="🌊" tone="sky" size="sm" /> {subject.name} · 整体学习进度（{version}）
               </div>
               <div className="study-overview-body">
                 <div className="study-ring">
@@ -342,7 +266,7 @@ export default function StudyPage() {
                 <div className="study-overview-chapters">
                   {subject.chapters.map((ch) => (
                     <div key={ch.id} className="study-ov-chapter">
-                      <span className="study-ov-name">{ch.icon} {ch.name}</span>
+                      <span className="study-ov-name"><IconTile emoji={ch.icon} tone="blue" size="xs" /> {ch.name}</span>
                       <div className="study-ov-bar">
                         <div
                           className={`study-ov-bar-inner ${subject.theme}`}
@@ -355,69 +279,209 @@ export default function StudyPage() {
                 </div>
               </div>
             </div>
-          ) : (
-            /* mock 选中知识点详情 */
-            <div className="study-kp-detail">
-              <div className="study-kp-detail-title">
-                🌊 {selectedKp.name}
-                <span className="sll-level" style={{ background: masteryLevel(selectedKp.mastery).color }}>
-                  {masteryLevel(selectedKp.mastery).label}
-                </span>
+          )
+        ) : (
+          /* 已选章节: 中栏以横向行列出小节，选中小节后在其下方展开学习内容 */
+          <div className="study-section-panel">
+            <div className="study-section-head">
+              <div className="study-section-title">
+                <IconTile emoji={activeChapter?.icon || '📖'} tone="blue" size="md" /> {activeChapter?.name}
               </div>
-              <div className="study-kp-detail-desc">{selectedKp.desc}</div>
-              <div className="study-kp-detail-state">
-                <div className="study-kp-state-item">
-                  <span className="study-kp-state-label">掌握度</span>
-                  <div className="study-kp-state-bar">
+              <span className="study-section-count">
+                共 {activeSections.length} 个{realMode ? '小节' : '知识点'}
+              </span>
+            </div>
+
+            <div className="study-sections">
+              {sectionsLoading ? (
+                <div className="study-empty">小节加载中…</div>
+              ) : activeSections.length === 0 ? (
+                <div className="study-empty">该章节暂无{realMode ? '小节' : '知识点'}内容</div>
+              ) : realMode ? (
+                activeSections.map((sec) => {
+                  const ev = sectionEvalMap[sec.id];
+                  const mastery = ev ? ev.mastery : (sec.progress || 0);
+                  const lv = masteryLevel(mastery);
+                  const locked = !!sec.locked;
+                  const secStars = sec.stars || 0;
+                  const sel = selectedSection && selectedSection.id === sec.id;
+                  return (
                     <div
-                      className={`study-kp-state-fill ${subject.theme}`}
-                      style={{ width: `${selectedKp.mastery}%` }}
-                    />
-                  </div>
-                  <span className="study-kp-state-val">{selectedKp.mastery}%</span>
+                      key={sec.id}
+                      className={`study-kp ${sel ? 'selected' : ''} ${locked ? 'locked' : ''}`}
+                      onClick={() => {
+                        if (locked) {
+                          message.warning('请先通关上一小节');
+                          return;
+                        }
+                        setSelectedSection(sec);
+                      }}
+                    >
+                      <div className="study-kp-main">
+                        <span className="study-kp-name">
+                          <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="xs" />
+                          <span className="study-kp-name-text">{sec.name}{ev?.weak ? ' ⚠️' : ''}</span>
+                        </span>
+                        <span className="study-kp-tags">
+                          {secStars > 0 && <span className="study-kp-stars">{'⭐'.repeat(secStars)}</span>}
+                          {sec.passed && <span className="study-kp-pass">已通关</span>}
+                        </span>
+                      </div>
+                      <div className="study-kp-bar">
+                        <div className="study-kp-bar-fill" style={{ width: `${mastery}%`, background: lv.color }} />
+                      </div>
+                      <span className="study-kp-pct">{mastery}%</span>
+                      <span className="study-kp-meta">
+                        <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
+                        <span className="study-kp-actions">
+                          {ACTION_BUTTONS.map((a) => (
+                            <button
+                              key={a.key}
+                              type="button"
+                              title={a.label}
+                              className={`study-kp-act ${a.color} ${locked ? 'disabled' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (locked) {
+                                  message.warning('请先通关上一小节');
+                                  return;
+                                }
+                                navigateToAction(sec, a);
+                              }}
+                            >
+                              <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
+                              <span>{a.short}</span>
+                            </button>
+                          ))}
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                activeSections.map((kp) => {
+                  const lv = masteryLevel(kp.mastery);
+                  const sel = selectedKp && selectedKp.id === kp.id;
+                  return (
+                    <div
+                      key={kp.id}
+                      className={`study-kp ${sel ? 'selected' : ''}`}
+                      onClick={() => setSelectedKp(kp)}
+                    >
+                      <div className="study-kp-main">
+                        <span className="study-kp-name"><IconTile emoji="🌊" tone="teal" size="xs" /><span className="study-kp-name-text">{kp.name}</span></span>
+                      </div>
+                      <div className="study-kp-bar">
+                        <div className="study-kp-bar-fill" style={{ width: `${kp.mastery}%`, background: lv.color }} />
+                      </div>
+                      <span className="study-kp-pct">{kp.mastery}%</span>
+                      <span className="study-kp-meta">
+                        <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
+                        <span className="study-kp-actions">
+                          {ACTION_BUTTONS.map((a) => (
+                            <button
+                              key={a.key}
+                              type="button"
+                              title={a.label}
+                              className={`study-kp-act ${a.color}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigateToAction(kp, a);
+                              }}
+                            >
+                              <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
+                              <span>{a.short}</span>
+                            </button>
+                          ))}
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* 选中小节（真实）/ 知识点（mock）：下方展开既有学习内容 */}
+            {realMode && selectedSection && (
+              <div className="study-kp-detail study-kp-detail-inline">
+                <div className="study-kp-detail-title"><IconTile emoji="🌊" tone="teal" size="sm" /> {selectedSection.name}</div>
+                {sectionContent ? (
+                  <>
+                    <div className="study-kp-detail-desc">
+                      <b>学习目标：</b>{sectionContent.objective || '—'}
+                    </div>
+                    <div className="study-kp-detail-desc">
+                      <b>内容概述：</b>{sectionContent.overview || '—'}
+                    </div>
+                    <div className="study-kp-detail-guide">
+                      <div className="study-kp-guide-title"><IconTile emoji="📖" tone="blue" size="xs" /> 讲解要点</div>
+                      {(sectionContent.points || []).map((p, i) => (
+                        <div key={i} className="study-kp-guide-step">• {p}</div>
+                      ))}
+                      {(!sectionContent.points || sectionContent.points.length === 0) && (
+                        <div className="study-empty">该小节暂未配置讲解要点</div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="study-empty">该小节暂未配置学习内容</div>
+                )}
+                <div className="study-kp-detail-guide" style={{ marginTop: 16 }}>
+                  <div className="study-kp-guide-title"><IconTile emoji="🧭" tone="teal" size="xs" /> 学习引导</div>
+                  <div className="study-kp-guide-step">① 点击该小节行内的「预习」了解核心内容</div>
+                  <div className="study-kp-guide-step">② 进入「专项练习湾」完成练习获得学习币</div>
+                  <div className="study-kp-guide-step">③ 掌握度达标后「试炼检测」检验成果</div>
+                  <div className="study-kp-guide-step">④ 订正「知识点错题本」中的错题</div>
                 </div>
-                <div className="study-kp-state-item">
-                  <span className="study-kp-state-label">学习状态</span>
-                  <span className="study-kp-state-tag">
-                    {selectedKp.mastery >= 85 ? '🟢 建议进入试炼冲高分' : selectedKp.mastery >= 55 ? '🟡 建议专项练习巩固' : '🔴 建议先预习再练习'}
+              </div>
+            )}
+            {!realMode && selectedKp && (
+              <div className="study-kp-detail study-kp-detail-inline">
+                <div className="study-kp-detail-title">
+                  <IconTile emoji="🌊" tone="teal" size="sm" /> {selectedKp.name}
+                  <span className="sll-level" style={{ background: masteryLevel(selectedKp.mastery).color }}>
+                    {masteryLevel(selectedKp.mastery).label}
                   </span>
                 </div>
+                <div className="study-kp-detail-desc">{selectedKp.desc}</div>
+                <div className="study-kp-detail-state">
+                  <div className="study-kp-state-item">
+                    <span className="study-kp-state-label">掌握度</span>
+                    <div className="study-kp-state-bar">
+                      <div
+                        className={`study-kp-state-fill ${subject.theme}`}
+                        style={{ width: `${selectedKp.mastery}%` }}
+                      />
+                    </div>
+                    <span className="study-kp-state-val">{selectedKp.mastery}%</span>
+                  </div>
+                  <div className="study-kp-state-item">
+                    <span className="study-kp-state-label">学习状态</span>
+                    <span className="study-kp-state-tag">
+                      {selectedKp.mastery >= 85 ? '🟢 建议进入试炼冲高分' : selectedKp.mastery >= 55 ? '🟡 建议专项练习巩固' : '🔴 建议先预习再练习'}
+                    </span>
+                  </div>
+                </div>
+                <div className="study-kp-detail-guide">
+                  <div className="study-kp-guide-title"><IconTile emoji="🧭" tone="teal" size="xs" /> 学习引导</div>
+                  <div className="study-kp-guide-step">① 点击该小节行内的「预习」了解核心内容</div>
+                  <div className="study-kp-guide-step">② 进入「专项练习湾」完成练习获得学习币</div>
+                  <div className="study-kp-guide-step">③ 掌握度达标后「试炼检测」检验成果</div>
+                  <div className="study-kp-guide-step">④ 订正「知识点错题本」中的错题</div>
+                </div>
               </div>
-              <div className="study-kp-detail-guide">
-                <div className="study-kp-guide-title">🧭 学习引导</div>
-                <div className="study-kp-guide-step">① 点击右侧「知识点预习」了解核心内容</div>
-                <div className="study-kp-guide-step">② 进入「专项练习湾」完成练习获得学习币</div>
-                <div className="study-kp-guide-step">③ 掌握度达标后「试炼检测」检验成果</div>
-                <div className="study-kp-guide-step">④ 订正「知识点错题本」中的错题</div>
-              </div>
-            </div>
-          )
+            )}
+          </div>
         )}
       </main>
 
-      {/* ---- 右栏: 悬浮快捷操作面板（固定跟随） ---- */}
+      {/* ---- 右栏: 学习助手（四个快捷操作已移入各小节行内） ---- */}
       <aside className="sll-card study-right">
-        <div className="study-right-title">🎯 快捷操作</div>
-        <div className="study-actions">
-          {ACTION_BUTTONS.map((a) => (
-            <button
-              key={a.key}
-              className={`study-action-btn study-action-${a.color} ${(realMode ? !selectedSection : !selectedKp) ? 'disabled' : ''}`}
-              onClick={goAction.bind(null, a)}
-            >
-              <span className="study-action-icon">{a.icon}</span>
-              <span>{a.label}</span>
-              <span className="study-action-arrow">›</span>
-            </button>
-          ))}
-        </div>
-        {(realMode ? !selectedSection : !selectedKp) && (
-          <div className="study-action-hint">👆 请先选择左侧{realMode ? '小节' : '知识点'}</div>
-        )}
+        <div className="study-right-title"><IconTile emoji="🐬" tone="sky" size="sm" /> 学习助手</div>
 
         {/* AI 小鲸向导 */}
         <div className="study-ai">
-          <div className="study-ai-title">🐬 AI 小鲸向导</div>
+          <div className="study-ai-title"><IconTile emoji="🐬" tone="sky" size="xs" /> AI 小鲸向导</div>
           <div className="study-ai-text">{advice.text}</div>
         </div>
       </aside>

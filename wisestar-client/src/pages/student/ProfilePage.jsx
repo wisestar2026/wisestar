@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { Modal } from 'antd';
 import useStudentStore, { TITLES, PROFILE } from '../../stores/useStudentStore';
 import { getMyProfile, getMyPoints } from '../../api/student';
+import IconTile from '../../components/common/IconTile';
 import './ProfilePage.css';
 
 export default function ProfilePage() {
@@ -58,19 +59,19 @@ export default function ProfilePage() {
     <div className="sll-page-enter profile-page">
       {/* ---- 顶部: 个人信息大卡 ---- */}
       <div className="sll-card profile-info">
-        <div className="profile-avatar">{PROFILE.emoji}</div>
+        <IconTile emoji={PROFILE.emoji} tone="blue" size="2xl" round style={{ '--it-size': '88px' }} />
         <div className="profile-info-main">
           <div className="profile-name">{name}</div>
-          <div className="profile-title-chip">🏆 最高头衔 · {titleName}</div>
+          <div className="profile-title-chip"><IconTile emoji="🏆" tone="gold" size="xs" /> 最高头衔 · {titleName}</div>
           <div className="profile-meta">
             <span className="profile-meta-item">
-              <b>⭐</b> 学海积分 <b className="profile-num">{points}</b>
+              <IconTile emoji="⭐" tone="gold" size="xs" /> 学海积分 <b className="profile-num">{points}</b>
             </span>
             <span className="profile-meta-item">
-              <b>🏅</b> 已解锁证书 <b className="profile-num">{unlockedCount}/{PROFILE.certTotal}</b>
+              <IconTile emoji="🏅" tone="orange" size="xs" /> 已解锁证书 <b className="profile-num">{unlockedCount}/{PROFILE.certTotal}</b>
             </span>
             <span className="profile-meta-item">
-              <b>📚</b> 绑定学科 <b className="profile-num">{PROFILE.subjects}</b> 门
+              <IconTile emoji="📚" tone="blue" size="xs" /> 绑定学科 <b className="profile-num">{PROFILE.subjects}</b> 门
             </span>
           </div>
         </div>
@@ -82,7 +83,7 @@ export default function ProfilePage() {
       {/* ---- 积分板块（简单明了：当前积分/下一目标/获取规则/最近明细） ---- */}
       {!pureMode && (
         <>
-          <div className="profile-section-title">⭐ 学海积分（荣誉评价）</div>
+          <div className="profile-section-title"><IconTile emoji="⭐" tone="gold" size="sm" /> 学海积分（荣誉评价）</div>
           <div className="sll-card profile-points">
             <div className="profile-points-head">
               <div className="profile-points-now">
@@ -124,7 +125,7 @@ export default function ProfilePage() {
       )}
 
       {/* ---- 中部: 证书网格陈列墙 ---- */}
-      <div className="profile-section-title">🏅 证书荣誉墙（解锁永久保留）</div>
+      <div className="profile-section-title"><IconTile emoji="🏅" tone="orange" size="sm" /> 证书荣誉墙（解锁永久保留）</div>
       <div className="profile-certs">
         {certs.map((c) => (
           <div
@@ -132,7 +133,7 @@ export default function ProfilePage() {
             className={`sll-card sll-card-hover profile-cert ${c.unlocked ? 'unlocked' : 'locked'}`}
             onClick={() => c.unlocked && setPreviewCert(c)}
           >
-            <div className="profile-cert-emoji">{c.unlocked ? c.emoji : '🔒'}</div>
+            <IconTile emoji={c.unlocked ? c.emoji : '🔒'} tone={c.unlocked ? 'gold' : 'slate'} size="xl" round dim={!c.unlocked} className="profile-cert-emoji" />
             <div className="profile-cert-name">{c.name}</div>
             <div className="profile-cert-desc">{c.cert}</div>
             <div className="profile-cert-require">
@@ -146,7 +147,7 @@ export default function ProfilePage() {
       </div>
 
       {/* ---- 底部: 成长数据统计 ---- */}
-      <div className="profile-section-title">📊 成长数据统计</div>
+      <div className="profile-section-title"><IconTile emoji="📊" tone="teal" size="sm" /> 成长数据统计</div>
       <div className="sll-card profile-growth">
         {growthStats.map((g) => (
           <div key={g.label} className="profile-growth-item">
@@ -176,7 +177,7 @@ export default function ProfilePage() {
         {previewCert && (
           <div className="profile-cert-modal">
             <div className="profile-cert-modal-card">
-              <div className="profile-cert-modal-title">🎓 荣誉证书</div>
+              <div className="profile-cert-modal-title"><IconTile emoji="🎓" tone="purple" size="sm" /> 荣誉证书</div>
               <div className="profile-cert-modal-emoji">{previewCert.emoji}</div>
               <div className="profile-cert-modal-name">{previewCert.cert}</div>
               <div className="profile-cert-modal-to">

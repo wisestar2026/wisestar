@@ -15,6 +15,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, Button, Space } from 'antd';
 import { listWrongQuestions } from '../../api/practice';
+import IconTile from '../common/IconTile';
 import '../../pages/student/WrongBookPage.css';
 
 const TYPE_LABEL = {
@@ -30,7 +31,7 @@ function WrongItem({ item, onEliminate, onRedo }) {
         <Space size={6}>
           <span className="wrong-type">{TYPE_LABEL[item.questionType] || item.questionType || '题目'}</span>
           <span className="wrong-repo">{item.repoName || '练习'}</span>
-          {item.knowledgePointName && <span className="wrong-kp">📌 {item.knowledgePointName}</span>}
+          {item.knowledgePointName && <span className="wrong-kp"><IconTile emoji="📌" tone="purple" size="xs" /> {item.knowledgePointName}</span>}
         </Space>
       </div>
       <div className="wrong-question">{item.questionTitle}</div>
@@ -41,10 +42,10 @@ function WrongItem({ item, onEliminate, onRedo }) {
       </div>
       <Space style={{ marginTop: 8 }} wrap>
         <Button type="primary" size="small" onClick={() => onRedo(item)}>
-          ✍️ 重做订正
+          <IconTile emoji="✍️" tone="orange" size="xs" /> 重做订正
         </Button>
         <Button size="small" onClick={() => onEliminate(item)}>
-          🎯 消灭错题（3 道同题型）
+          <IconTile emoji="🎯" tone="green" size="xs" /> 消灭错题（3 道同题型）
         </Button>
       </Space>
     </div>
@@ -104,7 +105,7 @@ export default function WrongBookPanel() {
       {loading && <div className="wrong-empty">加载中…</div>}
       {!loading && list.length === 0 && (
         <div className="wrong-empty">
-          <div className="wrong-empty-icon">🎉</div>
+          <IconTile emoji="🎉" tone="green" size="2xl" />
           <div>暂无错题，继续保持！</div>
         </div>
       )}
@@ -118,10 +119,10 @@ export default function WrongBookPanel() {
       {Object.entries(byKp).map(([name, group]) => (
         <div key={name} className="wrong-group">
           <div className="wrong-group-head">
-            <b>📌 {name}</b>
+            <b><IconTile emoji="📌" tone="purple" size="xs" /> {name}</b>
             <span style={{ fontSize: 12, color: '#90a4ae' }}>{group.items.length} 题</span>
             <Button type="primary" size="small" onClick={() => eliminateKp(group.id)} disabled={!group.id}>
-              🎯 消灭易错知识点（5 道）
+              <IconTile emoji="🎯" tone="green" size="xs" /> 消灭易错知识点（5 道）
             </Button>
           </div>
           {group.items.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} onRedo={redoWrong} />)}
@@ -136,7 +137,7 @@ export default function WrongBookPanel() {
       {Object.entries(byReason).map(([reason, items]) => (
         <div key={reason} className="wrong-group">
           <div className="wrong-group-head">
-            <b>🔍 {reason}</b>
+            <b><IconTile emoji="🔍" tone="sky" size="xs" /> {reason}</b>
             <span style={{ fontSize: 12, color: '#90a4ae' }}>{items.length} 题</span>
           </div>
           {items.map((item) => <WrongItem key={item.questionId} item={item} onEliminate={eliminateWrong} onRedo={redoWrong} />)}

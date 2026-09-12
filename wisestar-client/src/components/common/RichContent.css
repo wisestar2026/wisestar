@@ -1,0 +1,33 @@
+/* RichContent 富内容渲染样式（题干/选项/解析通用） */
+
+.rich-content-img {
+  display: block;
+  max-width: min(100%, 520px);
+  height: auto;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: 1px solid #eef1f4;
+  background: #fff;
+}
+
+.rich-content-math {
+  font-size: 1.05em;
+}
+
+.rich-content-math-block {
+  display: block;
+  margin: 8px 0;
+  overflow-x: auto;
+}
+
+.rich-content-math-fallback {
+  color: #c62828;
+  word-break: break-all;
+}
+
+/* 选项内图片/公式不超出选项卡片 */
+.knowledge-opt-text .rich-content-img,
+.question-opt-text .rich-content-img {
+  max-width: 100%;
+  margin: 6px 0;
+}

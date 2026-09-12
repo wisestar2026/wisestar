@@ -41,6 +41,7 @@ import {
   CheckCircleOutlined, CloseCircleOutlined,
 } from '@ant-design/icons';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
+import RichContent from '../common/RichContent';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -167,7 +168,7 @@ export default function QuestionCard({
 
       {/* ---- 题干 ---- */}
       <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6 }}>
-        {index}. {schema.title || question?.name || '(未命名题目)'}
+        {index}. <RichContent text={schema.title || question?.name || '(未命名题目)'} />
       </Title>
 
       {/* 配图（如有） */}
@@ -192,7 +193,7 @@ export default function QuestionCard({
                     {selected && !result.correctAnswers.includes(opt.title) && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
                   </>
                 )}
-                <span>{opt.title}</span>
+                <span><RichContent text={opt.title} /></span>
               </div>
             );
           })}
@@ -211,7 +212,7 @@ export default function QuestionCard({
                     {selected && !result.correctAnswers.includes(opt.title) && <CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
                   </>
                 )}
-                <span>{opt.title}</span>
+                <span><RichContent text={opt.title} /></span>
               </div>
             );
           })}
@@ -325,7 +326,7 @@ export default function QuestionCard({
             )}
             {attr.examAnalysis && (
               <Paragraph style={{ margin: 0, color: '#666' }}>
-                <Text strong>解析：</Text>{attr.examAnalysis}
+                <Text strong>解析：</Text><RichContent text={attr.examAnalysis} />
               </Paragraph>
             )}
           </div>

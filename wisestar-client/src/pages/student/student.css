@@ -181,18 +181,6 @@
   cursor: pointer;
   padding: 2px;
 }
-.sll-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #4fc3f7, #2196f3);
-  border: 3px solid #fff;
-  box-shadow: 0 4px 10px rgba(33, 150, 243, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-}
 .sll-title-chip {
   background: linear-gradient(135deg, #fff3d0, #ffe4a3);
   color: #9a6a00;
@@ -456,10 +444,8 @@
   color: #0288d1;
   font-weight: 600;
 }
-.sll-tabbar-icon {
-  font-size: 20px;
-  line-height: 1;
-}
+.sll-tabbar-tile { margin-bottom: 1px; }
+.sll-tabbar-item.active .sll-tabbar-tile { transform: translateY(-1px) scale(1.08); }
 .sll-tabbar-label {
   font-size: 11px;
 }
