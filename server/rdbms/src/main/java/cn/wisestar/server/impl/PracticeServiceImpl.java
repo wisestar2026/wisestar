@@ -12,6 +12,8 @@ import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
 import cn.wisestar.server.domain.dto.student.PracticeEvaluationContext;
 import cn.wisestar.server.domain.dto.student.RewardContext;
+import cn.wisestar.server.domain.dto.student.SectionPassResult;
+import cn.wisestar.server.domain.dto.knowledge.SectionPracticeConfig;
 import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.KnowledgePoint;
 import cn.wisestar.server.domain.model.PracticeDetail;
@@ -32,6 +34,8 @@ import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.EvaluationService;
 import cn.wisestar.server.service.PracticeService;
 import cn.wisestar.server.service.RewardService;
+import cn.wisestar.server.service.SectionPassService;
+import cn.wisestar.server.service.SectionPracticeService;
 import cn.wisestar.server.impl.TemplateServiceImpl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -106,6 +110,12 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	/** 章节 Mapper（学科归属解析）。 */
 	private final ChapterMapper chapterMapper;
 
+	/** 小节练习配置服务（通关阈值来源）。 */
+	private final SectionPracticeService sectionPracticeService;
+
+	/** 小节通关服务（通关记录写入）。 */
+	private final SectionPassService sectionPassService;
+
 	/**
 	 * 构造器注入。
 	 *
@@ -117,10 +127,13 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	 * @param knowledgePointMapper 知识点 Mapper
 	 * @param sectionMapper        小节 Mapper
 	 * @param chapterMapper        章节 Mapper
+	 * @param sectionPracticeService 小节练习配置服务
+	 * @param sectionPassService   小节通关服务
 	 */
 	public PracticeServiceImpl(PracticeDetailMapper practiceDetailMapper, TemplateServiceImpl templateService,
 			StudentMapper studentMapper, EvaluationService evaluationService, RewardService rewardService,
-			KnowledgePointMapper knowledgePointMapper, SectionMapper sectionMapper, ChapterMapper chapterMapper) {
+			KnowledgePointMapper knowledgePointMapper, SectionMapper sectionMapper, ChapterMapper chapterMapper,
+			SectionPracticeService sectionPracticeService, SectionPassService sectionPassService) {
 		this.practiceDetailMapper = practiceDetailMapper;
 		this.templateService = templateService;
 		this.studentMapper = studentMapper;
@@ -129,6 +142,8 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		this.knowledgePointMapper = knowledgePointMapper;
 		this.sectionMapper = sectionMapper;
 		this.chapterMapper = chapterMapper;
+		this.sectionPracticeService = sectionPracticeService;
+		this.sectionPassService = sectionPassService;
 	}
 
 	/**
@@ -300,12 +315,36 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 			log.warn("practice submit: reward settle failed, ignored", e);
 		}
 
+		// 4.3 小节通关判定与记录（trial 且携带小节；异常不阻断交卷）
+		SectionPassResult sectionPass = null;
+		if (trial && StringUtils.hasText(record.getSectionId())) {
+			try {
+				SectionPracticeConfig practiceConfig = sectionPracticeService.getConfig(record.getSectionId());
+				sectionPass = sectionPassService.record(userId, record.getSectionId(), rate, record.getScore(),
+						record.getTotalScore(), practiceConfig.getPassRate(),
+						Boolean.TRUE.equals(practiceConfig.getUnlockNext()));
+			}
+			catch (Exception e) {
+				log.warn("practice submit: section pass record failed, ignored", e);
+			}
+		}
+
 		// 5. 组装判分结果（含标准答案，供学员端即时反馈）
 		PracticeResultView result = new PracticeResultView();
 		result.setScore(Math.round(score * 100) / 100.0);
 		result.setTotalScore(Math.round(totalScore * 100) / 100.0);
 		result.setCorrectCount(correctCount);
 		result.setTotal(details.size());
+		if (sectionPass != null) {
+			result.setPassed(sectionPass.isPassed());
+			result.setRate(sectionPass.getRate());
+			result.setStars(sectionPass.getStars());
+			result.setBestRate(sectionPass.getBestRate());
+			result.setBestStars(sectionPass.getBestStars());
+			result.setFirstPass(sectionPass.isFirstPass());
+			result.setPassRate(sectionPass.getPassRate());
+			result.setUnlockedNext(sectionPass.isUnlockedNext());
+		}
 		if (reward != null) {
 			result.setCoins(reward.getCoins());
 			result.setPoints(reward.getPoints());

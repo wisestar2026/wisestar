@@ -1906,6 +1906,7 @@ CREATE TABLE `t_section_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
   `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID(t_repo.id，仅能从题库管理选择)',
+  `usage_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT 'both' COMMENT '用途(preview预习/practice练习/both通用)',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
@@ -2406,4 +2407,26 @@ CREATE TABLE IF NOT EXISTS `t_study_summary` (
   PRIMARY KEY (`id`),
   KEY `idx_study_summary_student_date` (`student_id`,`summary_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='当日学习总结';
+
+-- 小节通关记录（每学员每小节唯一，保留历史最佳正确率/星级/首次通关）
+CREATE TABLE IF NOT EXISTS `t_section_pass` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学员ID',
+  `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
+  `best_rate` int DEFAULT '0' COMMENT '历史最佳正确率(百分比)',
+  `best_score` double DEFAULT '0' COMMENT '历史最佳得分',
+  `stars` tinyint NOT NULL DEFAULT '0' COMMENT '历史最佳星级0-5',
+  `passed` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否已通关',
+  `attempt_count` int NOT NULL DEFAULT '0' COMMENT '交卷次数',
+  `first_pass_at` timestamp NULL DEFAULT NULL COMMENT '首次通关时间',
+  `last_attempt_at` timestamp NULL DEFAULT NULL COMMENT '最近交卷时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_section_pass` (`user_id`,`section_id`),
+  KEY `idx_section_pass_section` (`section_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='小节通关记录';
 

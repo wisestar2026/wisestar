@@ -1,9 +1,9 @@
 package cn.wisestar.server.service;
 
-import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
+import cn.wisestar.server.domain.dto.knowledge.SectionRepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 
@@ -64,7 +64,7 @@ public interface SectionService {
 	 * <p>传入完整的题库ID列表，先清空该小节的旧绑定再写入新绑定；
 	 * 题库仅能来自题库管理（t_repo），本接口不提供新增题库能力。</p>
 	 *
-	 * @param request 绑定请求（sectionId + repoIds）
+	 * @param request 绑定请求（sectionId + repoIds + usageByRepo）
 	 */
 	void saveRepos(SectionRepoRequest request);
 
@@ -72,8 +72,8 @@ public interface SectionService {
 	 * 查询小节已绑定的题库列表。
 	 *
 	 * @param sectionId 小节ID
-	 * @return 题库视图列表（t_repo 数据，含题库名/标签/学科/年级/难度）
+	 * @return 题库视图列表（t_repo 数据，含题库名/标签/学科/年级/难度与用途标记）
 	 */
-	List<RepoView> listRepos(String sectionId);
+	List<SectionRepoView> listRepos(String sectionId);
 
 }

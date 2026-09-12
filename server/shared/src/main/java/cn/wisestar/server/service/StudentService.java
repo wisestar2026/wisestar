@@ -3,6 +3,7 @@ package cn.wisestar.server.service;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.SectionPracticeConfig;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
@@ -163,21 +164,35 @@ public interface StudentService {
 	/**
 	 * 学员端练习/试炼题目（剥离标准答案，防作弊）。
 	 *
-	 * <p>题目来源二选一：sectionId → 小节绑定题库题目；knowledgePointId → 知识点绑定题目。
-	 * 按题型/难度过滤。count 为空时返回全部命中题目（专项练习/小节通关覆盖绑定题库全部题）；
-	 * 显式传 count（消灭错题等场景）时按指定数量返回（上限 50）。</p>
+	 * <p>题目来源可组合：sectionId → 小节绑定题库题目；knowledgePointIds → 知识点绑定题目并集；
+	 * repoId → 题库直练。按题型/难度过滤。count 为空时返回全部命中题目；显式传 count 时按指定数量返回（上限 50）。
+	 * perKp 有值时按每个知识点抽取指定题数（专项练习多知识点场景）。</p>
 	 *
 	 * @param sectionId        小节ID（小节练习数据源）
-	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
+	 * @param knowledgePointIds 知识点ID集合（专项练习多选，可空）
 	 * @param repoId           题库ID（题库直练数据源）
 	 * @param questionId       题目ID（单题重做数据源，优先于其他来源）
 	 * @param count            返回题目数量（为空=全部，上限 50）
+	 * @param perKp            每个知识点抽取题数（可空）
 	 * @param types            题型过滤（可选）
 	 * @param difficulty       难度过滤（可选）
-	 * @return 题目列表（不含答案）；无数据返回空列表
+	 * @param random           是否随机排序
+	 * @param exposeAnswer     是否返回标准答案
+	 * @param usage            用途场景（preview 预习 / practice 专项练习 / trial 小节通关），
+	 *                         用于按做题库用途收敛范围；为空表示不过滤（历史行为）
+	 * @return 题目列表；无数据返回空列表
 	 */
-	List<StudentQuestionView> studyQuestions(String sectionId, String knowledgePointId, String repoId, String questionId,
-			Integer count, List<String> types, String difficulty, Boolean exposeAnswer);
+	List<StudentQuestionView> studyQuestions(String sectionId, List<String> knowledgePointIds, String repoId,
+			String questionId, Integer count, Integer perKp, List<String> types, String difficulty,
+			Boolean random, Boolean exposeAnswer, String usage);
+
+	/**
+	 * 学员端小节练习配置（出题策略来源）。
+	 *
+	 * @param sectionId 小节ID
+	 * @return 练习配置（缺失或非法时返回缺省配置）
+	 */
+	SectionPracticeConfig sectionPracticeConfig(String sectionId);
 
 	/**
 	 * 学员预习完成（「预习完成」按钮）：标记该小节/知识点预习完成（学习完成度 100%）

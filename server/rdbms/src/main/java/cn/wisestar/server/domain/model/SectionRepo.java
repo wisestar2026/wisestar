@@ -29,4 +29,9 @@ public class SectionRepo extends BaseModel {
 	 */
 	private String repoId;
 
+	/**
+	 * 用途标记（preview 预习专用 / practice 练习专用 / both 通用）。
+	 */
+	private String usageType;
+
 }

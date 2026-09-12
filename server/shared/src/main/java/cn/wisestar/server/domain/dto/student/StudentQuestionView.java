@@ -26,6 +26,11 @@ public class StudentQuestionView {
 	/** 标签 */
 	private String[] tag;
 
+	/**
+	 * 所属知识点ID（专项练习按知识点分组时返回，用于学员端展示「当前知识点」单元）
+	 */
+	private String knowledgePointId;
+
 	/** 题目内容（选项等；已剥离 attribute.examCorrectAnswer 与选项级答案标记） */
 	private SurveySchema schema;
 

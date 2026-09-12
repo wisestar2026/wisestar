@@ -1,9 +1,9 @@
 package cn.wisestar.server.api;
 
-import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
+import cn.wisestar.server.domain.dto.knowledge.SectionRepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.service.SectionService;
@@ -150,14 +150,14 @@ public class SectionApi {
 	 * <p><b>功能</b>：返回该小节已绑定的题库（保持绑定顺序），
 	 * 供前端编辑绑定弹窗回显已选题库。</p>
 	 *
-	 * <p><b>返回值结构</b>：{@link RepoView} 列表。</p>
+	 * <p><b>返回值结构</b>：{@link SectionRepoView} 列表。</p>
 	 *
 	 * @param sectionId 小节ID
 	 * @return 已绑定题库列表
 	 */
 	@GetMapping("/repos")
 	@PreAuthorize("hasAuthority('knowledge:list')")
-	public List<RepoView> listRepos(@RequestParam("sectionId") String sectionId) {
+	public List<SectionRepoView> listRepos(@RequestParam("sectionId") String sectionId) {
 		return sectionService.listRepos(sectionId);
 	}
 

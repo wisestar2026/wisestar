@@ -5,6 +5,7 @@ import cn.wisestar.server.domain.dto.student.StudentQuery;
 import cn.wisestar.server.domain.dto.student.StudentRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.SectionPracticeConfig;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
@@ -38,6 +39,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -250,29 +252,59 @@ public class StudentApi {
 	/**
 	 * 学员端练习/试炼题目（剥离标准答案）。
 	 *
-	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/questions?sectionId=&knowledgePointId=&count=&types=&difficulty=。</p>
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/questions?sectionId=&knowledgePointIds=&count=&types=&difficulty=&random=&perKp=。</p>
 	 *
-	 * @param sectionId        小节ID（小节练习数据源）
-	 * @param knowledgePointId 知识点ID（知识点试炼数据源）
-	 * @param repoId           题库ID（题库直练数据源）
-	 * @param questionId       题目ID（单题重做数据源，优先于其他来源）
-	 * @param count            返回题目数量（为空=返回绑定内容全部题目，显式传值时上限 50）
-	 * @param types            题型过滤（逗号分隔，可选）
-	 * @param difficulty       难度过滤（可选）
+	 * @param sectionId         小节ID（小节练习数据源）
+	 * @param knowledgePointId  知识点ID（兼容单值调用）
+	 * @param knowledgePointIds 知识点ID集合（专项练习多选，逗号分隔或重复参数）
+	 * @param repoId            题库ID（题库直练数据源）
+	 * @param questionId        题目ID（单题重做数据源，优先于其他来源）
+	 * @param count             返回题目数量（为空=返回绑定内容全部题目，显式传值时上限 50）
+	 * @param perKp             每个知识点抽取题数（可空）
+	 * @param types             题型过滤（逗号分隔，可选）
+	 * @param difficulty        难度过滤（可选）
+	 * @param random            是否随机排序
+	 * @param usage             用途场景（preview 预习 / practice 专项练习 / trial 小节通关），
+	 *                          按做题库用途收敛范围；为空时不过滤
 	 * @return 题目列表（不含答案）
 	 */
 	@GetMapping("/study/questions")
 	@PreAuthorize("isAuthenticated()")
 	public List<StudentQuestionView> studyQuestions(@RequestParam(required = false) String sectionId,
 			@RequestParam(required = false) String knowledgePointId,
+			@RequestParam(required = false) List<String> knowledgePointIds,
 			@RequestParam(required = false) String repoId,
 			@RequestParam(required = false) String questionId,
 			@RequestParam(required = false) Integer count,
+			@RequestParam(required = false) Integer perKp,
 			@RequestParam(required = false) List<String> types,
 			@RequestParam(required = false) String difficulty,
-			@RequestParam(required = false) Boolean exposeAnswer) {
-		return studentService.studyQuestions(sectionId, knowledgePointId, repoId, questionId, count, types, difficulty,
-				exposeAnswer);
+			@RequestParam(required = false) Boolean random,
+			@RequestParam(required = false) Boolean exposeAnswer,
+			@RequestParam(required = false) String usage) {
+		List<String> kpIds = new ArrayList<>();
+		if (knowledgePointIds != null) {
+			kpIds.addAll(knowledgePointIds);
+		}
+		if (knowledgePointId != null && !knowledgePointId.isEmpty() && !kpIds.contains(knowledgePointId)) {
+			kpIds.add(knowledgePointId);
+		}
+		return studentService.studyQuestions(sectionId, kpIds, repoId, questionId, count, perKp, types, difficulty,
+				random, exposeAnswer, usage);
+	}
+
+	/**
+	 * 学员端小节练习配置（出题策略来源）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/practice/config?sectionId=。</p>
+	 *
+	 * @param sectionId 小节ID
+	 * @return 练习配置（模式/题量/难度/题型/通关阈值/解锁开关）
+	 */
+	@GetMapping("/practice/config")
+	@PreAuthorize("isAuthenticated()")
+	public SectionPracticeConfig practiceConfig(@RequestParam(required = false) String sectionId) {
+		return studentService.sectionPracticeConfig(sectionId);
 	}
 
 	/**

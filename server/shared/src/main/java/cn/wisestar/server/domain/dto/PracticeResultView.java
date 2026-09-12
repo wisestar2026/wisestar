@@ -46,6 +46,30 @@ public class PracticeResultView {
 	/** 奖励提示信息（上限/防刷等） */
 	private String message;
 
+	/** 小节通关：本次是否通关（仅 trial 模式填充） */
+	private Boolean passed;
+
+	/** 小节通关：本次正确率（百分比） */
+	private Integer rate;
+
+	/** 小节通关：本次星级 0-5 */
+	private Integer stars;
+
+	/** 小节通关：历史最佳正确率（百分比） */
+	private Integer bestRate;
+
+	/** 小节通关：历史最佳星级 0-5 */
+	private Integer bestStars;
+
+	/** 小节通关：本次是否首次通关 */
+	private Boolean firstPass;
+
+	/** 小节通关：通关阈值（百分比） */
+	private Integer passRate;
+
+	/** 小节通关：是否已解锁下一小节 */
+	private Boolean unlockedNext;
+
 	/** 逐题结果 */
 	private List<PracticeResultItem> items = new ArrayList<>();
 

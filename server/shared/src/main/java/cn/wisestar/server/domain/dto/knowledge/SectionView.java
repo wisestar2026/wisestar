@@ -61,4 +61,16 @@ public class SectionView {
 	/** 学习完成度（0-100，学员维度：相关练习最高正确率） */
 	private Integer progress;
 
+	/** 学员是否已通关该小节（t_section_pass.passed） */
+	private Boolean passed;
+
+	/** 学员历史最佳星级 0-5 */
+	private Integer stars;
+
+	/** 学员历史最佳正确率（百分比） */
+	private Integer bestRate;
+
+	/** 是否锁定（上一小节开启解锁开关且未通关时为 true） */
+	private Boolean locked;
+
 }

@@ -1,9 +1,11 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.exception.InternalServerError;
+import cn.wisestar.server.core.constant.SectionRepoUsage;
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
+import cn.wisestar.server.domain.dto.knowledge.SectionRepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
 import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
@@ -31,6 +33,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import org.dhatim.fastexcel.reader.ReadableWorkbook;
 import org.dhatim.fastexcel.reader.Row;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -295,6 +298,16 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 	 */
 	@Override
 	public void saveRepos(SectionRepoRequest request) {
+		// 先留存既有用途：未在 request.usageByRepo 中显式给出的 repoId 复用其原有用途，
+		// 避免习题列表页等仅提交 repoIds 的调用方误将用途重置为通用。
+		List<SectionRepo> existing = sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
+				.eq(SectionRepo::getSectionId, request.getSectionId()));
+		Map<String, String> existingUsage = existing.stream()
+				.filter(b -> hasText(b.getRepoId()))
+				.collect(Collectors.toMap(SectionRepo::getRepoId,
+						b -> SectionRepoUsage.normalize(b.getUsageType()), (a, b) -> a));
+		Map<String, String> requestedUsage = request.getUsageByRepo() == null
+				? Collections.emptyMap() : request.getUsageByRepo();
 		sectionRepoMapper.delete(Wrappers.<SectionRepo>lambdaQuery()
 				.eq(SectionRepo::getSectionId, request.getSectionId()));
 		if (CollectionUtils.isEmpty(request.getRepoIds())) {
@@ -304,15 +317,20 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 			SectionRepo binding = new SectionRepo();
 			binding.setSectionId(request.getSectionId());
 			binding.setRepoId(repoId);
+			String usage = requestedUsage.get(repoId);
+			if (!hasText(usage)) {
+				usage = existingUsage.get(repoId);
+			}
+			binding.setUsageType(SectionRepoUsage.normalize(usage));
 			sectionRepoMapper.insert(binding);
 		});
 	}
 
 	/**
-	 * 查询小节已绑定的题库列表（题库管理 t_repo 数据，保持绑定顺序）。
+	 * 查询小节已绑定的题库列表（题库管理 t_repo 数据，保持绑定顺序，附带用途标记）。
 	 */
 	@Override
-	public List<RepoView> listRepos(String sectionId) {
+	public List<SectionRepoView> listRepos(String sectionId) {
 		List<SectionRepo> bindings = sectionRepoMapper.selectList(
 				Wrappers.<SectionRepo>lambdaQuery()
 						.eq(SectionRepo::getSectionId, sectionId)
@@ -328,12 +346,19 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		Map<String, Long> totalMap = templateMapper.selectList(Wrappers.<Template>lambdaQuery()
 						.select(Template::getRepoId).in(Template::getRepoId, repoIds)).stream()
 				.collect(Collectors.groupingBy(Template::getRepoId, Collectors.counting()));
-		return bindings.stream().map(binding -> repoMap.get(binding.getRepoId()))
-				.filter(Objects::nonNull).map(repo -> {
-					RepoView view = repoViewMapper.toView(repo);
-					view.setTotal(totalMap.getOrDefault(repo.getId(), 0L));
-					return view;
-				}).collect(Collectors.toList());
+		List<SectionRepoView> result = new ArrayList<>();
+		for (SectionRepo binding : bindings) {
+			Repo repo = repoMap.get(binding.getRepoId());
+			if (repo == null) {
+				continue;
+			}
+			RepoView repoView = repoViewMapper.toView(repo);
+			SectionRepoView view = new SectionRepoView();
+			BeanUtils.copyProperties(repoView, view);
+			view.setTotal(totalMap.getOrDefault(repo.getId(), 0L));
+			view.setUsageType(SectionRepoUsage.normalize(binding.getUsageType()));
+			result.add(view);
+		}
+		return result;
 	}
-
 }
