@@ -33,6 +33,7 @@ export default function WordManagePage() {
   // 筛选条件
   const [version, setVersion] = useState('');
   const [grade, setGrade] = useState('');
+  const [term, setTerm] = useState('');
   const [unit, setUnit] = useState('');
   const [spell, setSpell] = useState('');
 
@@ -54,6 +55,7 @@ export default function WordManagePage() {
       pageSize,
       ...(version && { version }),
       ...(grade && { grade }),
+      ...(term && { term }),
       ...(unit && { unit }),
       ...(spell && { spell }),
     });
@@ -78,6 +80,7 @@ export default function WordManagePage() {
   const handleReset = () => {
     setVersion('');
     setGrade('');
+    setTerm('');
     setUnit('');
     setSpell('');
     setCurrent(1);
@@ -91,7 +94,7 @@ export default function WordManagePage() {
       form.setFieldsValue(record);
     } else {
       form.resetFields();
-      form.setFieldsValue({ version: '人教版', grade: '三年级' });
+      form.setFieldsValue({ version: '人教版', grade: '三年级', term: '上册' });
     }
   };
 
@@ -165,8 +168,8 @@ export default function WordManagePage() {
   // 下载模板
   const downloadTemplate = () => {
     const template = [
-      ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元'],
-      ['apple', '/æpl/', '苹果', 'https://example.com/apple.jpg', 'https://example.com/apple.mp3', 'This is an apple.', '人教版', '三年级', 'Unit 1'],
+      ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元', '学期'],
+      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '人教版', '四年级', 'Unit 1 Helping at home', '上册'],
     ];
     const csv = template.map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -183,6 +186,7 @@ export default function WordManagePage() {
     { title: '释义', dataIndex: 'meaning', width: 200, ellipsis: true },
     { title: '版本', dataIndex: 'version', width: 80 },
     { title: '年级', dataIndex: 'grade', width: 80 },
+    { title: '册别', dataIndex: 'term', width: 70 },
     { title: '单元', dataIndex: 'unit', width: 80 },
     {
       title: '操作',
@@ -249,6 +253,10 @@ export default function WordManagePage() {
           { value: '五年级', label: '五年级' },
           { value: '六年级', label: '六年级' },
         ]} />
+        <Select placeholder="册别" allowClear style={{ width: 90 }} value={term} onChange={setTerm} options={[
+          { value: '上册', label: '上册' },
+          { value: '下册', label: '下册' },
+        ]} />
         <Input placeholder="单元" allowClear style={{ width: 100 }} value={unit} onChange={(e) => setUnit(e.target.value)} />
         <Input placeholder="单词拼写" allowClear style={{ width: 150 }} value={spell} onChange={(e) => setSpell(e.target.value)} onPressEnter={loadList} />
         <Button type="primary" onClick={loadList}>查询</Button>
@@ -305,7 +313,7 @@ export default function WordManagePage() {
           <Form.Item name="exampleSentence" label="例句">
             <Input.TextArea rows={2} />
           </Form.Item>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
             <Form.Item name="version" label="版本">
               <Select options={[
                 { value: '人教版', label: '人教版' },
@@ -322,6 +330,12 @@ export default function WordManagePage() {
                 { value: '四年级', label: '四年级' },
                 { value: '五年级', label: '五年级' },
                 { value: '六年级', label: '六年级' },
+              ]} />
+            </Form.Item>
+            <Form.Item name="term" label="册别">
+              <Select allowClear options={[
+                { value: '上册', label: '上册' },
+                { value: '下册', label: '下册' },
               ]} />
             </Form.Item>
             <Form.Item name="unit" label="单元">

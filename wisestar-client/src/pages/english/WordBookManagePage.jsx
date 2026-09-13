@@ -40,6 +40,7 @@ export default function WordBookManagePage() {
   // 筛选条件
   const [version, setVersion] = useState('');
   const [grade, setGrade] = useState('');
+  const [term, setTerm] = useState('');
   const [unit, setUnit] = useState('');
   const [familiarity, setFamiliarity] = useState('');
 
@@ -58,6 +59,7 @@ export default function WordBookManagePage() {
       pageSize,
       ...(version && { version }),
       ...(grade && { grade }),
+      ...(term && { term }),
       ...(unit && { unit }),
     });
 
@@ -75,7 +77,7 @@ export default function WordBookManagePage() {
 
   useEffect(() => {
     loadList();
-  }, [current, pageSize, version, grade, unit]);
+  }, [current, pageSize, version, grade, term, unit]);
 
   // 加载统计数据
   useEffect(() => {
@@ -182,6 +184,17 @@ export default function WordBookManagePage() {
             { value: '四年级', label: '四年级' },
             { value: '五年级', label: '五年级' },
             { value: '六年级', label: '六年级' },
+          ]}
+        />
+        <Select
+          placeholder="册别"
+          allowClear
+          style={{ width: 90 }}
+          value={term}
+          onChange={setTerm}
+          options={[
+            { value: '上册', label: '上册' },
+            { value: '下册', label: '下册' },
           ]}
         />
         <Input

@@ -15,7 +15,7 @@
  *   POST /api/english/word/record → 记录学习结果
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Input, Radio, message, Progress, Tag } from 'antd';
 import { SoundOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
@@ -58,6 +58,19 @@ export default function WordStudyPage() {
 
   // 当前单词
   const currentWord = words[currentIndex];
+
+  // 听音辨词选项：当前单词 + 从本批单词中取的干扰项，随机排序
+  const listenOptions = useMemo(() => {
+    if (!currentWord) return [];
+    const others = [...new Set(words.filter((w) => w.id !== currentWord.id).map((w) => w.spell))];
+    const picks = others.slice(0, 3);
+    const all = [currentWord.spell, ...picks];
+    for (let i = all.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [all[i], all[j]] = [all[j], all[i]];
+    }
+    return all;
+  }, [currentWord, words]);
 
   // 播放发音
   const playAudio = () => {
@@ -231,7 +244,7 @@ export default function WordStudyPage() {
                 disabled={!!selectedAnswer}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {[currentWord.spell, 'option1', 'option2', 'option3'].map((opt, i) => (
+                  {listenOptions.map((opt, i) => (
                     <Radio.Button key={i} value={opt} style={{ fontSize: 16 }}>
                       {opt}
                     </Radio.Button>
