@@ -22,11 +22,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 ## 条目
 
 [工作目录结构]
-- Date: 2026-08-09
-- Context: Agent 在开发学生端各页面时发现，早期记录中的相对路径易与实际混淆
+- Date: 2026-08-09（2026-09-13 更新路径）
+- Context: Agent 在开发学生端各页面时发现，早期记录中的相对路径易与实际混淆；2026-09-13 会话已将仓库克隆到工作区根
 - Category: 环境配置
 - Instructions:
-  - 本仓库实际位于 `/workspace/wisestar`：前端 `wisestar-client/`、后端 `server/api`（Java 8，mvn 构建）、文档在 `docs/`；工作区根目录 `/workspace` 下的 wisestar.mv.db 等是数据库文件，勿当项目根
+  - 自 2026-09-13 起，本仓库直接位于 `/workspace` 根：前端 `wisestar-client/`、后端 `server/`（JDK 17，mvn 构建）、文档在 `docs/`；工作区根 `/workspace` 即项目根，运行后端生成的 H2 库位于 `server/api/wisestar.mv.db`（已 gitignore）
   - 学生端纯前端原型全部 mock 数据集中在 `src/stores/useStudentStore.js`，新页面视觉必须延续海洋童趣风格（浅蓝渐变+波浪+3D 圆角卡片），公共样式在 `src/pages/student/student.css`
 
 [前端构建与预览]
@@ -34,7 +34,7 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Context: Agent 在执行学生端页面开发任务时确认
 - Category: 构建方法
 - Instructions:
-  - 前端构建验证：`cd /workspace/wisestar/wisestar-client && npm run build`；dev 服务 `npm run dev`（vite，3000 端口，代理 /api → 1991）
+  - 前端构建验证：`cd /workspace/wisestar-client && npm run build`；dev 服务 `npm run dev`（vite，3000 端口，代理 /api → 1991）
   - 预览地址由 `request_preview` 申请，重启前端后需重新申请
 
 [管理端页面验证经验]
@@ -59,8 +59,8 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Category: 环境配置
 - Instructions:
   - 工具链：系统已装 openjdk-17（/usr/lib/jvm/java-17-openjdk-amd64）+ Maven 3.8.7 + Node 22（npm 官方源）；开发基线为 `main`（2026-09-05 已将原 `260810-feat-knowledge-mgmt-backend` 分支 ff 并入并删除，76+ 提交，main 唯一主线）
-  - 后端构建：`cd /workspace/wisestar/server && mvn clean package -pl api -am -DskipTests`，产物 `api/target/wisestar-v1.9.0.jar`
-  - 云端运行：在 `server/api` 目录 `java -jar target/wisestar-v1.9.0.jar --spring.profiles.active=preview`（preview=H2 免 MySQL，库文件生成于 server/api/wisestar.mv.db，已被 .gitignore 忽略；dev/pro 需 MySQL 8 root/root 库 wisestar）
+  - 后端构建：`cd /workspace/server && mvn clean package -pl api -am -DskipTests`，产物 `api/target/wisestar-v1.9.0.jar`
+  - 云端运行：在 `/workspace/server/api` 目录 `java -jar target/wisestar-v1.9.0.jar --spring.profiles.active=preview`（preview=H2 免 MySQL，库文件生成于 server/api/wisestar.mv.db，已被 .gitignore 忽略；dev/pro 需 MySQL 8 root/root 库 wisestar）
   - 后端日志由 logback 写 `server/api/logs/{info,error}/` 文件（控制台仅 banner），排查先看 `ss -tlnp | grep 1991` 与 error 日志
   - 前端云端启动前必须建 `wisestar-client/.env.local` 写入 `API_TARGET=http://localhost:1991`（vite 默认 7007 是本地 dev 后端端口）；dev server 3000，代理保留 /api 前缀
   - 默认管理员账号 admin/123456（登录走 RSA PKCS1v15 加密密码，前端 jsencrypt 实现）
@@ -80,9 +80,9 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Context: Agent 核实"项目代码是否集中在一个仓库"时发现 /workspace 顶层是独立 git 仓库
 - Category: 环境配置
 - Instructions:
-  - 用户项目代码全部集中于 `/workspace/wisestar` 一个仓库（remote origin = https://github.com/wisestar2026/wisestar.git，无子模块、无其他分布）；该目录是唯一可读写的项目仓库
-  - 注意：`/workspace` 顶层本身是另一个 git 仓库（MonkeyCode 平台代码，fork 至 wisestar2026/wisestarCode，1132+ 提交，含 backend/frontend/mobile/desktop），与用户项目无关，属于平台环境；**任何 git 操作必须 workdir=/workspace/wisestar**，禁止在 /workspace 顶层执行 git 命令（会误操作平台仓库，曾导致 push 403 误报 wisestarCode）
-  - git 身份：仓库级已配置 zhanghaiyang / 15717876985@163.com（docs/开发维护日志.md 3.1 惯例），同仓库内新会话不会再报 Author identity unknown
+  - 用户项目代码全部集中于 `/workspace` 一个仓库（remote origin = https://github.com/wisestar2026/wisestar.git，无子模块、无其他分布）；`/workspace` 即唯一可读写的项目仓库
+  - 2026-09-13 会话已重构工作区布局：将 `/workspace` 顶层原 MonkeyCode 平台仓库（wisestar2026/wisestarCode）整体移到 `/tmp/opencode/backup-wisestarCode-*`，再把 wisestar.git 重新克隆到 `/workspace` 根；此后 git 操作直接在 `/workspace` 执行，旧记录中的 `/workspace/wisestar/...` 路径已等价为 `/workspace/...`
+  - git 身份：新克隆默认无 user.name/email；按 docs/开发维护日志.md 3.1 惯例使用 zhanghaiyang / 15717876985@163.com，提交前先配置 `git -C /workspace config user.name/email`
 
 [英语 AI 内容生成模块与系统 AI 设置排障]
 - Date: 2026-09-09
@@ -103,4 +103,25 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 提交时逐文件 `git add <file>`，禁止 `git add -A` / `git add .`
   - 验证过程产生的测试号数据保留、不清理
   - 本仓库远程为 GitHub（非 GitLab），push 不要带 `-o merge_request.*` 参数
+
+[本次云端实例工具链安装（2026-09-13）]
+- Date: 2026-09-13
+- Context: Agent 为用户从零拉取 wisestar.git 并配置运行环境时发现该实例初始无 Java/Maven
+- Category: 环境配置
+- Instructions:
+  - 本实例（Debian 12 / root / 2C / 约 8GB，含内存气球）初始未装 Java 与 Maven；装法：`apt-get update` 后 `DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk maven`（得 openjdk 17.0.20、Maven 3.8.7）
+  - Node 22.22 / npm 10.9.4 预装；前端依赖用 `cd /workspace/wisestar-client && npm ci`（仓库含 package-lock.json，npm 官方源）；该分支新增 katex 依赖，切换分支后需重新 npm ci
+  - 资源紧张时编译/启动一律用 background terminal（`cpu_percent`/`memory_percent` 限流），Maven 构建加 `MAVEN_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m"`；完整 clean package 约 3 分钟
+  - 开发主线：`260908-feat-teaching-research-platform`（2026-09-13 时为最新，含教研平台、学币体系重构、在线宝箱；领先 main 24 提交）
+
+[预览库 H2 快照备份与恢复（2026-09-13）]
+- Date: 2026-09-13
+- Context: 用户云端预览数据随容器重建丢失（原 H2 库未持久化），Agent 落地 git SQL 快照方案时确认
+- Category: 运维部署
+- Instructions:
+  - 云端预览环境无持久化卷（`/` 为 /dev/vda 临时盘，无独立挂载点），容器重建后 `server/api/wisestar.mv.db` 必丢；且 `*.mv.db`/`*.trace.db` 被 .gitignore 忽略，不会随 git 保留
+  - 持久化方案：`server/db-export.sh` 将当前 H2 全量（DDL+DML，`Script -options DROP`）导出到 `server/db-snapshot/wisestar.sql`，人工 commit；`server/start-preview.sh` 在库文件缺失且快照存在时先 `RunScript` 导入快照再启动（并置 `--spring.sql.init.mode=never`），否则按种子脚本初始化
+  - 导出前必须先停预览后端：H2 文件库单进程独占；不要启用 AUTO_SERVER（本容器主机名为 UUID，`InetAddress.getLocalHost()` 解析失败会导致启动直接报错）
+  - 约定流程：每次会话结束前「停后端 → 跑 server/db-export.sh → git add 快照并提交」，新环境用 server/start-preview.sh 启动即自动恢复
+  - 判断后端是否在跑不要用 `pgrep -f 'wisestar-v1.9.0.jar'`（会误匹配正在执行该命令的 shell），改用 `ps -eo args | grep -E '[j]ava .*wisestar-v1\.9\.0\.jar'`
 
