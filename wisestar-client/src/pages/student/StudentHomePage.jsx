@@ -24,11 +24,13 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, message } from 'antd';
 import useStudentStore, { SUBJECTS, TITLES, PROFILE } from '../../stores/useStudentStore';
-import { getMyStudentInfo, getStudentStats, getMyToday } from '../../api/student';
-import { listMyStudentTasks } from '../../api/studentTask';
+import { getMyStudentInfo, getStudentStats, getMyToday, getCheckin, doCheckin } from '../../api/student';
+import { listMyStudentTasks, completeStudentTask } from '../../api/studentTask';
 import { getMyStudySummary } from '../../api/studentStudy';
 import IconTile from '../../components/common/IconTile';
+import OnlineChestFloat from './OnlineChestFloat';
 import './StudentHomePage.css';
 
 export default function StudentHomePage() {
@@ -67,6 +69,47 @@ export default function StudentHomePage() {
   useEffect(() => {
     listMyStudentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
   }, []);
+  const [completingTaskId, setCompletingTaskId] = useState(null);
+
+  // 每日签到状态（固定学习币，每自然日一次）
+  const [checkin, setCheckin] = useState(null);
+  const [checkinLoading, setCheckinLoading] = useState(false);
+  useEffect(() => {
+    getCheckin().then((res) => setCheckin(res?.data || null)).catch(() => setCheckin(null));
+  }, []);
+
+  // 领取签到奖励
+  const handleCheckin = async () => {
+    setCheckinLoading(true);
+    try {
+      const res = await doCheckin();
+      const data = res?.data || null;
+      setCheckin(data);
+      if (data?.firstTime) message.success(data.message || `签到成功，学习币 +${data.coins}`);
+      else message.info(data?.message || '今日已签到');
+    } catch (e) {
+      message.error(e?.message || '签到失败，请稍后重试');
+    } finally {
+      setCheckinLoading(false);
+    }
+  };
+
+  // 完成任务并结算学习币
+  const handleCompleteTask = async (task) => {
+    if (!task || task.status === 'completed') return;
+    setCompletingTaskId(task.id);
+    try {
+      const res = await completeStudentTask(task.id);
+      const data = res?.data || null;
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: 'completed' } : t)));
+      if (data?.firstTime) message.success(data.message || `任务完成，学习币 +${data.coins}`);
+      else message.info(data?.message || '任务已完成');
+    } catch (e) {
+      message.error(e?.message || '操作失败，请稍后重试');
+    } finally {
+      setCompletingTaskId(null);
+    }
+  };
 
   // 今日学习总结（会话累计满 60 分钟后由系统生成）
   const [summary, setSummary] = useState(null);
@@ -223,6 +266,24 @@ export default function StudentHomePage() {
           </div>
         )}
 
+        {/* 每日签到（固定学习币，每自然日一次） */}
+        {!pureMode && (
+          <div className="sll-card sh-home-todo">
+            <div className="sh-home-section-title"><IconTile emoji="📅" tone="gold" size="xs" /> 每日签到</div>
+            <div className="sh-home-todo-item" style={{ cursor: 'default' }}>
+              <IconTile emoji={checkin?.checkedToday ? '✅' : '➕'} tone={checkin?.checkedToday ? 'green' : 'slate'} size="xs" round />
+              <span className="sh-home-todo-label">
+                {checkin?.checkedToday
+                  ? '今日已签到，明天再来'
+                  : `签到即可领取学习币 +${checkin?.coins ?? 10}`}
+              </span>
+              {!checkin?.checkedToday && (
+                <Button type="primary" size="small" loading={checkinLoading} onClick={handleCheckin}>签到</Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* 今日任务（学管师/老师当日发布） */}
         <div className="sll-card sh-home-todo">
           <div className="sh-home-section-title"><IconTile emoji="🗓️" tone="teal" size="xs" /> 今日任务</div>
@@ -230,9 +291,17 @@ export default function StudentHomePage() {
             <div className="sh-home-todo-item"><span className="sh-home-todo-label" style={{ color: '#90a4ae' }}>今日暂无任务，自由研习吧</span></div>
           )}
           {tasks.map((t) => (
-            <div key={t.id} className="sh-home-todo-item">
-              <IconTile emoji="📋" tone="blue" size="xs" round />
-              <span className="sh-home-todo-label">{t.taskContent || '今日任务'}</span>
+            <div key={t.id} className="sh-home-todo-item" style={{ cursor: 'default' }}>
+              <IconTile emoji={t.status === 'completed' ? '✅' : '📋'} tone={t.status === 'completed' ? 'green' : 'blue'} size="xs" round />
+              <span
+                className="sh-home-todo-label"
+                style={t.status === 'completed' ? { color: '#90a4ae', textDecoration: 'line-through' } : undefined}
+              >
+                {t.taskContent || '今日任务'}
+              </span>
+              {t.status !== 'completed' && (
+                <Button size="small" loading={completingTaskId === t.id} onClick={() => handleCompleteTask(t)}>完成</Button>
+              )}
             </div>
           ))}
         </div>
@@ -248,6 +317,9 @@ export default function StudentHomePage() {
           </div>
         )}
       </div>
+
+      {/* 在线时长宝箱悬浮窗（纯净学习模式隐藏） */}
+      {!pureMode && <OnlineChestFloat />}
     </div>
   );
 }

@@ -4,7 +4,7 @@
  * 管理: 当前学科 / 教材版本 / 纯净学习模式开关 + 各学科教学数据
  * 数值体系（学海智习系统 V2.0 核心底层）:
  *   - 学海积分: 全学科永久累计，仅用于头衔晋升与证书
- *   - 学习币: 分学科产出，单科单学期上限 3000，学期清零，多科合并兑换
+ *   - 学习币: 分学科产出，单科单学期上限 10000，学期清零，多科合并兑换
  *
  * 被谁引用: StudentLayout（学科 Tab / 版本下拉 / 纯净模式）、
  *           学生端各页面（首页/研习/知识点/档案/商城）
@@ -174,9 +174,9 @@ export const DAILY_TASKS = [
 // ---- 知识点学习奖励（基础首学奖励） ----
 export const REWARDS = {
   preview:  { coins: 5,  points: 3,  label: '知识点预习' },
-  practice: { coins: 12, points: 6,  label: '专项练习' },
-  trial:    { coins: 20, points: 10, label: '试炼检测' },
-  wrong:    { coins: 8,  points: 4,  label: '错题订正' },
+  practice: { coins: 20, points: 6,  label: '专项练习' },
+  trial:    { coins: 30, points: 10, label: '试炼检测' },
+  wrong:    { coins: 5,  points: 4,  label: '错题订正' },
 };
 
 // ---- 知识点 mock 题目（练习/试炼共用，大圆角卡片选项） ----

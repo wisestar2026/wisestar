@@ -92,8 +92,8 @@
 /* 小节/知识点横向行（中栏列表）：名称+掌握度 | 进度条 | 状态/操作 */
 .study-kp {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 10px;
   padding: 12px 16px;
   border-radius: 14px;
@@ -112,10 +112,13 @@
   background: linear-gradient(135deg, #dff0ff, #eaf6ff);
   box-shadow: inset 0 0 0 2px #64b5f6;
 }
+.study-kp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .study-kp-main {
-  order: 1;
-  width: 200px;
-  flex-shrink: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -136,26 +139,38 @@
   text-overflow: ellipsis;
 }
 .study-kp-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.study-kp-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #8299ad;
+}
+.study-kp-stat b { font-size: 15px; font-weight: 800; color: #2b4a6b; }
+.study-kp-stat.correct b { color: #2e9a52; }
+.study-kp-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .study-kp-bar {
-  order: 3;
   flex: 1;
-  height: 10px;
+  height: 6px;
   border-radius: 999px;
   background: #e8f2fa;
   overflow: hidden;
 }
 .study-kp-bar-fill { height: 100%; border-radius: 999px; transition: width 0.6s ease; }
 .study-kp-pct {
-  order: 2;
-  width: 44px;
   flex-shrink: 0;
-  text-align: right;
-  font-size: 13px;
-  font-weight: 800;
-  color: #5b7a99;
+  min-width: 66px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7b93a8;
 }
-.study-kp-meta { order: 4; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-.study-kp-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.study-kp-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .study-kp-act {
   display: inline-flex;
   align-items: center;

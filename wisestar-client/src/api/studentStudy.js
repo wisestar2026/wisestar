@@ -5,11 +5,13 @@
  *   POST /student/study/heartbeat          学习心跳（累积会话时长，满 60 分钟生成总结）
  *   GET  /student/study/summary            学员查看本人当日学习总结
  *   GET  /student/study/summary/student    教师查看指定学员总结（?studentId=&date=）
+ *   POST /student/online/chest/claim       领取在线时长宝箱（30/60/120 分钟三档）
  *
  * 调用方:
  *   - StudentLayout       : 学员端统一心跳上报
  *   - StudentHomePage     : 学员端首页今日学习总结卡片
  *   - StudentSupervisionPage : 学员督学页教师查看学习总结
+ *   - OnlineChestFloat    : 首页在线时长宝箱悬浮窗（心跳取状态 + 领取）
  */
 
 import request from './request';
@@ -18,10 +20,20 @@ import request from './request';
  * 学习心跳（每 5 分钟及页面可见性变化时上报）
  * 后端接口: POST /api/student/study/heartbeat
  * @param {Object} data - { subjectId?: string }
- * @returns {Object} data: { durationMs, generated }
+ * @returns {Object} data: { durationMs, generated, onlineChest }
  */
 export async function sendStudyHeartbeat(data) {
   return request.post('/student/study/heartbeat', data || {});
+}
+
+/**
+ * 领取在线时长宝箱
+ * 后端接口: POST /api/student/online/chest/claim
+ * @param {Object} data - { tier: 30|60|120, subjectId?: string }
+ * @returns {Object} data: { ok, coins, coinsCapped, firstTime, message, onlineChest }
+ */
+export async function claimOnlineChest(data) {
+  return request.post('/student/online/chest/claim', data || {});
 }
 
 /**

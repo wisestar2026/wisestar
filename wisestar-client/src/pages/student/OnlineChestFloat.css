@@ -1,0 +1,212 @@
+/* OnlineChestFloat.css - 学员端首页「在线时长宝箱」悬浮窗样式（海洋童趣风格） */
+
+.ocf-root {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  font-family: inherit;
+}
+
+/* ---- 悬浮球 ---- */
+.ocf-fab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4fc3f7 0%, #2196f3 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(33, 150, 243, 0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ocf-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(33, 150, 243, 0.45);
+}
+
+.ocf-fab-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.ocf-fab-min {
+  font-size: 16px;
+}
+
+.ocf-fab-min small {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.ocf-fab-hot {
+  background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
+  box-shadow: 0 8px 20px rgba(255, 152, 0, 0.45);
+  animation: ocf-pulse 1.6s ease-in-out infinite;
+}
+
+.ocf-fab-dot {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff5252;
+  box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.25);
+}
+
+@keyframes ocf-pulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* ---- 展开面板 ---- */
+.ocf-panel {
+  width: 320px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 40px rgba(13, 71, 161, 0.22);
+  animation: ocf-pop 0.2s ease-out;
+}
+
+@keyframes ocf-pop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ocf-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ocf-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0d47a1;
+}
+
+.ocf-online {
+  margin-left: auto;
+  font-size: 12px;
+  color: #607d8b;
+}
+
+.ocf-close {
+  border: none;
+  background: transparent;
+  color: #90a4ae;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+.ocf-close:hover {
+  color: #546e7a;
+}
+
+.ocf-msg {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff8e1;
+  color: #ef6c00;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ocf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ocf-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f5f9ff;
+  border: 1px solid #e3f0ff;
+}
+
+.ocf-item.ocf-claimable {
+  background: #fff8e1;
+  border-color: #ffe0a3;
+}
+
+.ocf-item.ocf-claimed {
+  background: #f2fbf4;
+  border-color: #d7f0dd;
+}
+
+.ocf-tier {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.ocf-tier-locked {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.ocf-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ocf-tier-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #263238;
+}
+
+.ocf-tier-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: #78909c;
+}
+
+.ocf-grab {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #ffb74d 0%, #ff9800 100%);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 152, 0, 0.35);
+}
+
+.ocf-grab:hover {
+  filter: brightness(1.05);
+}
+
+.ocf-grab:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.ocf-done {
+  color: #34c759;
+  font-size: 18px;
+  font-weight: 700;
+}

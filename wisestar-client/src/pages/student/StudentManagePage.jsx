@@ -11,7 +11,7 @@
  *
  * 数据流:
  *   listStudents(params) → 分页表格；createStudent/updateStudent/deleteStudent → CRUD
- *   学号 8 位数字由后端自动生成，前端不可编辑；初始密码固定 123456（学员端登录用）
+ *   学号（字母 + 6 位数字，如 a000001）由后端自动生成，前端不可编辑；初始密码固定 123456（学员端登录用）
  */
 
 import { useEffect, useState } from 'react';

@@ -66,7 +66,7 @@ export default function StudentLoginPage() {
 
         <Form name="student-login" onFinish={onFinish} size="large">
           <Form.Item name="username" rules={[{ required: true, message: '请输入学号' }]}>
-            <Input prefix={<UserOutlined />} placeholder="学号（8 位数字）" />
+            <Input prefix={<UserOutlined />} placeholder="学号（如 a000001）" />
           </Form.Item>
           <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
             <Input.Password prefix={<LockOutlined />} placeholder="密码" />

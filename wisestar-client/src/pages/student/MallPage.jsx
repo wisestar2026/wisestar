@@ -24,6 +24,9 @@ import { getStudentStats } from '../../api/student';
 import IconTile from '../../components/common/IconTile';
 import './MallPage.css';
 
+/** 单科单学期学习币上限（与后端 StudentRewardConstants.SUBJECT_COIN_LIMIT 保持一致） */
+const COIN_LIMIT = 10000;
+
 export default function MallPage() {
   const navigate = useNavigate();
   const { pureMode } = useStudentStore();
@@ -102,10 +105,10 @@ export default function MallPage() {
               <div className="mall-detail-bar">
                 <div
                   className={`mall-detail-bar-inner ${s.theme}`}
-                  style={{ width: `${Math.min(100, (subjectCoins[s.key] / 3000) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (subjectCoins[s.key] / COIN_LIMIT) * 100)}%` }}
                 />
               </div>
-              <span className="mall-detail-num">{subjectCoins[s.key]}<small>/3000</small></span>
+              <span className="mall-detail-num">{subjectCoins[s.key]}<small>/{COIN_LIMIT}</small></span>
             </div>
           ))}
         </div>
@@ -124,7 +127,7 @@ export default function MallPage() {
           <div className="mall-top-label">本学期可兑换总学习币</div>
           <div className="mall-top-num">{totalCoins}</div>
           <div className="mall-top-tip">
-            单科单学期上限 3000 · 同一学期多科学习币可合并兑换 · 学期结束自动清零
+            单科单学期上限 {COIN_LIMIT} · 同一学期多科学习币可合并兑换 · 学期结束自动清零
           </div>
         </div>
         <div className="mall-top-collapse">

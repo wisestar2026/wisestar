@@ -300,7 +300,8 @@ export default function StudyPage() {
               ) : realMode ? (
                 activeSections.map((sec) => {
                   const ev = sectionEvalMap[sec.id];
-                  const mastery = ev ? ev.mastery : (sec.progress || 0);
+                  // 小节完成率 = 该小节专项练习/通关的正确率（不再用知识点掌握度平均，避免串小节）
+                  const mastery = Math.max(sec.progress || 0, sec.bestRate || 0);
                   const lv = masteryLevel(mastery);
                   const locked = !!sec.locked;
                   const secStars = sec.stars || 0;
@@ -317,44 +318,51 @@ export default function StudyPage() {
                         setSelectedSection(sec);
                       }}
                     >
-                      <div className="study-kp-main">
-                        <span className="study-kp-name">
-                          <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="xs" />
-                          <span className="study-kp-name-text">{sec.name}{ev?.weak ? ' ⚠️' : ''}</span>
-                        </span>
-                        <span className="study-kp-tags">
-                          {secStars > 0 && <span className="study-kp-stars">{'⭐'.repeat(secStars)}</span>}
-                          {sec.passed && <span className="study-kp-pass">已通关</span>}
+                      <div className="study-kp-head">
+                        <div className="study-kp-main">
+                          <span className="study-kp-name">
+                            <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="xs" />
+                            <span className="study-kp-name-text">{sec.name}{ev?.weak ? ' ⚠️' : ''}</span>
+                          </span>
+                          <span className="study-kp-tags">
+                            {secStars > 0 && <span className="study-kp-stars">{'⭐'.repeat(secStars)}</span>}
+                            {sec.passed && <span className="study-kp-pass">已通关</span>}
+                          </span>
+                        </div>
+                        <span className="study-kp-stats">
+                          <span className="study-kp-stat">共 <b>{sec.questionCount ?? 0}</b> 题</span>
+                          <span className="study-kp-stat">已答 <b>{sec.answeredCount ?? 0}</b></span>
+                          <span className="study-kp-stat correct">答对 <b>{sec.correctCount ?? 0}</b></span>
                         </span>
                       </div>
-                      <div className="study-kp-bar">
-                        <div className="study-kp-bar-fill" style={{ width: `${mastery}%`, background: lv.color }} />
-                      </div>
-                      <span className="study-kp-pct">{mastery}%</span>
-                      <span className="study-kp-meta">
+                      <div className="study-kp-progress">
+                        <span className="study-kp-pct">掌握率 {mastery}%</span>
+                        <div className="study-kp-bar">
+                          <div className="study-kp-bar-fill" style={{ width: `${mastery}%`, background: lv.color }} />
+                        </div>
                         <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
-                        <span className="study-kp-actions">
-                          {ACTION_BUTTONS.map((a) => (
-                            <button
-                              key={a.key}
-                              type="button"
-                              title={a.label}
-                              className={`study-kp-act ${a.color} ${locked ? 'disabled' : ''}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (locked) {
-                                  message.warning('请先通关上一小节');
-                                  return;
-                                }
-                                navigateToAction(sec, a);
-                              }}
-                            >
-                              <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
-                              <span>{a.short}</span>
-                            </button>
-                          ))}
-                        </span>
-                      </span>
+                      </div>
+                      <div className="study-kp-actions">
+                        {ACTION_BUTTONS.map((a) => (
+                          <button
+                            key={a.key}
+                            type="button"
+                            title={a.label}
+                            className={`study-kp-act ${a.color} ${locked ? 'disabled' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (locked) {
+                                message.warning('请先通关上一小节');
+                                return;
+                              }
+                              navigateToAction(sec, a);
+                            }}
+                          >
+                            <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
+                            <span>{a.short}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   );
                 })
@@ -368,33 +376,35 @@ export default function StudyPage() {
                       className={`study-kp ${sel ? 'selected' : ''}`}
                       onClick={() => setSelectedKp(kp)}
                     >
-                      <div className="study-kp-main">
-                        <span className="study-kp-name"><IconTile emoji="🌊" tone="teal" size="xs" /><span className="study-kp-name-text">{kp.name}</span></span>
+                      <div className="study-kp-head">
+                        <div className="study-kp-main">
+                          <span className="study-kp-name"><IconTile emoji="🌊" tone="teal" size="xs" /><span className="study-kp-name-text">{kp.name}</span></span>
+                        </div>
                       </div>
-                      <div className="study-kp-bar">
-                        <div className="study-kp-bar-fill" style={{ width: `${kp.mastery}%`, background: lv.color }} />
-                      </div>
-                      <span className="study-kp-pct">{kp.mastery}%</span>
-                      <span className="study-kp-meta">
+                      <div className="study-kp-progress">
+                        <span className="study-kp-pct">掌握率 {kp.mastery}%</span>
+                        <div className="study-kp-bar">
+                          <div className="study-kp-bar-fill" style={{ width: `${kp.mastery}%`, background: lv.color }} />
+                        </div>
                         <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
-                        <span className="study-kp-actions">
-                          {ACTION_BUTTONS.map((a) => (
-                            <button
-                              key={a.key}
-                              type="button"
-                              title={a.label}
-                              className={`study-kp-act ${a.color}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigateToAction(kp, a);
-                              }}
-                            >
-                              <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
-                              <span>{a.short}</span>
-                            </button>
-                          ))}
-                        </span>
-                      </span>
+                      </div>
+                      <div className="study-kp-actions">
+                        {ACTION_BUTTONS.map((a) => (
+                          <button
+                            key={a.key}
+                            type="button"
+                            title={a.label}
+                            className={`study-kp-act ${a.color}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigateToAction(kp, a);
+                            }}
+                          >
+                            <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
+                            <span>{a.short}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   );
                 })

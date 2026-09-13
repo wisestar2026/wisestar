@@ -191,9 +191,19 @@ export async function getMyPoints() {
   return request.get('/student/points');
 }
 
-/** 本学期学习币（分学科 + 手动发币，单科上限 3000） */
+/** 本学期学习币（分学科 + 手动发币，单科上限 10000） */
 export async function getMyCoins() {
   return request.get('/student/coins');
+}
+
+/** 每日签到状态（今日是否已签到 + 签到可得学习币） */
+export async function getCheckin() {
+  return request.get('/student/checkin');
+}
+
+/** 领取每日签到奖励（固定学习币，每自然日一次） */
+export async function doCheckin() {
+  return request.post('/student/checkin');
 }
 
 /** 学员端主页今日总览 + 积分获取引导 */

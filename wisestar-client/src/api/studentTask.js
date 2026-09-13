@@ -51,3 +51,13 @@ export async function deleteStudentTask(id) {
 export async function listMyStudentTasks() {
   return request.get('/student/task/my');
 }
+
+/**
+ * 学员完成一条任务并结算学习币（每学期每任务只发一次）
+ * 后端接口: POST /api/student/task/complete?id=
+ * @param {string} id - 任务 ID
+ * @returns {Object} data: { ok, taskId, status, coins, coinsCapped, firstTime, message }
+ */
+export async function completeStudentTask(id) {
+  return request.post('/student/task/complete', null, { params: { id } });
+}
