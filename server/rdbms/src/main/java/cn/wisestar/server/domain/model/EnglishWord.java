@@ -40,6 +40,9 @@ public class EnglishWord extends BaseModel {
 	/** 年级（一年级~六年级） */
 	private String grade;
 
+	/** 学期/册别（上册/下册） */
+	private String term;
+
 	/** 单元 */
 	private String unit;
 

@@ -21,6 +21,15 @@ public interface EnglishWordService {
 	PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query);
 
 	/**
+	 * 单词本（按版本/年级/册别/单元/拼写筛选，并带当前学员熟练度）。
+	 *
+	 * @param userId 用户 ID
+	 * @param query 查询条件（含分页）
+	 * @return 分页单词本
+	 */
+	PaginationResponse<EnglishWordView> wordBook(String userId, EnglishWordQuery query);
+
+	/**
 	 * 获取待学习/复习单词。
 	 *
 	 * @param userId 用户 ID

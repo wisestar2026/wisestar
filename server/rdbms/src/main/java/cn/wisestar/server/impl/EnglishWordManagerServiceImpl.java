@@ -38,9 +38,11 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 		LambdaQueryWrapper<EnglishWord> wrapper = Wrappers.<EnglishWord>lambdaQuery()
 				.eq(query.getVersion() != null, EnglishWord::getVersion, query.getVersion())
 				.eq(query.getGrade() != null, EnglishWord::getGrade, query.getGrade())
+				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
 				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
 				.orderByAsc(EnglishWord::getGrade)
+				.orderByAsc(EnglishWord::getTerm)
 				.orderByAsc(EnglishWord::getUnit)
 				.orderByAsc(EnglishWord::getSpell);
 
@@ -104,6 +106,7 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 					word.setVersion(getCellValue(row.getCell(6)));
 					word.setGrade(getCellValue(row.getCell(7)));
 					word.setUnit(getCellValue(row.getCell(8)));
+					word.setTerm(getCellValue(row.getCell(9)));
 
 					englishWordMapper.insert(word);
 					success++;
@@ -151,6 +154,7 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 		entity.setVersion(view.getVersion());
 		entity.setGrade(view.getGrade());
 		entity.setUnit(view.getUnit());
+		entity.setTerm(view.getTerm());
 		return entity;
 	}
 
@@ -169,6 +173,7 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 		view.setVersion(entity.getVersion());
 		view.setGrade(entity.getGrade());
 		view.setUnit(entity.getUnit());
+		view.setTerm(entity.getTerm());
 		return view;
 	}
 

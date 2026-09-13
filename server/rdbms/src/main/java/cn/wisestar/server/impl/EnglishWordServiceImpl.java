@@ -36,9 +36,11 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		LambdaQueryWrapper<EnglishWord> wrapper = Wrappers.<EnglishWord>lambdaQuery()
 				.eq(query.getVersion() != null, EnglishWord::getVersion, query.getVersion())
 				.eq(query.getGrade() != null, EnglishWord::getGrade, query.getGrade())
+				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
 				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
 				.orderByAsc(EnglishWord::getGrade)
+				.orderByAsc(EnglishWord::getTerm)
 				.orderByAsc(EnglishWord::getUnit)
 				.orderByAsc(EnglishWord::getSpell);
 
@@ -53,6 +55,48 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	}
 
 	@Override
+	public PaginationResponse<EnglishWordView> wordBook(String userId, EnglishWordQuery query) {
+		LambdaQueryWrapper<EnglishWord> wrapper = Wrappers.<EnglishWord>lambdaQuery()
+				.eq(query.getVersion() != null, EnglishWord::getVersion, query.getVersion())
+				.eq(query.getGrade() != null, EnglishWord::getGrade, query.getGrade())
+				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
+				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
+				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
+				.orderByAsc(EnglishWord::getGrade)
+				.orderByAsc(EnglishWord::getTerm)
+				.orderByAsc(EnglishWord::getUnit)
+				.orderByAsc(EnglishWord::getSpell);
+
+		Page<EnglishWord> page = new Page<>(query.getCurrent(), query.getPageSize());
+		Page<EnglishWord> result = englishWordMapper.selectPage(page, wrapper);
+
+		List<EnglishWordView> views = result.getRecords().stream()
+				.map(this::toView)
+				.collect(Collectors.toList());
+		fillFamiliarity(userId, views);
+
+		return new PaginationResponse<>(result.getTotal(), views);
+	}
+
+	/**
+	 * 为单词视图回填当前学员在单词本中的熟练度（未学习默认 0）。
+	 */
+	private void fillFamiliarity(String userId, List<EnglishWordView> views) {
+		if (userId == null || views.isEmpty()) {
+			return;
+		}
+		List<String> wordIds = views.stream().map(EnglishWordView::getId).collect(Collectors.toList());
+		java.util.Map<String, Integer> familiarityByWord = englishWordBookMapper.selectList(
+						Wrappers.<EnglishWordBook>lambdaQuery()
+								.eq(EnglishWordBook::getUserId, userId)
+								.in(EnglishWordBook::getWordId, wordIds))
+				.stream()
+				.collect(Collectors.toMap(EnglishWordBook::getWordId,
+						b -> b.getFamiliarity() == null ? 0 : b.getFamiliarity(), (a, b) -> b));
+		views.forEach(v -> v.setFamiliarity(familiarityByWord.getOrDefault(v.getId(), 0)));
+	}
+
+	@Override
 	public List<EnglishWordView> getStudyWords(String userId, int limit) {
 		// 查询用户单词本
 		List<EnglishWordBook> wordBooks = englishWordBookMapper.selectList(
@@ -62,22 +106,24 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 						.orderByAsc(EnglishWordBook::getNextReviewTime)
 						.last("LIMIT " + limit));
 
+		List<EnglishWordView> views;
 		if (wordBooks.isEmpty()) {
-			// 无待复习单词，返回新单词
-			List<EnglishWord> newWords = englishWordMapper.selectList(
-					Wrappers.<EnglishWord>lambdaQuery()
-							.orderByDesc(EnglishWord::getCreateAt)
-							.last("LIMIT " + limit));
-			return newWords.stream().map(this::toView).collect(Collectors.toList());
+			// 无待复习单词，返回最新入库的新单词
+			views = englishWordMapper.selectList(
+							Wrappers.<EnglishWord>lambdaQuery()
+									.orderByDesc(EnglishWord::getCreateAt)
+									.last("LIMIT " + limit))
+					.stream().map(this::toView).collect(Collectors.toList());
+		} else {
+			List<String> wordIds = wordBooks.stream()
+					.map(EnglishWordBook::getWordId)
+					.collect(Collectors.toList());
+			views = englishWordMapper.selectBatchIds(wordIds).stream()
+					.map(this::toView)
+					.collect(Collectors.toList());
 		}
-
-		List<String> wordIds = wordBooks.stream()
-				.map(EnglishWordBook::getWordId)
-				.collect(Collectors.toList());
-
-		return englishWordMapper.selectBatchIds(wordIds).stream()
-				.map(this::toView)
-				.collect(Collectors.toList());
+		fillFamiliarity(userId, views);
+		return views;
 	}
 
 	@Override
@@ -140,6 +186,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		view.setExampleSentence(word.getExampleSentence());
 		view.setVersion(word.getVersion());
 		view.setGrade(word.getGrade());
+		view.setTerm(word.getTerm());
 		view.setUnit(word.getUnit());
 		return view;
 	}

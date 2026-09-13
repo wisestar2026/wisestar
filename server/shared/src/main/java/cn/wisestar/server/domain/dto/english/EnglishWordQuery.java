@@ -20,6 +20,9 @@ public class EnglishWordQuery extends PageQuery {
 	/** 年级 */
 	private String grade;
 
+	/** 学期/册别（上册/下册） */
+	private String term;
+
 	/** 单元 */
 	private String unit;
 

@@ -57,22 +57,14 @@ public class EnglishWordStudentApi {
 	 * @param version 版本
 	 * @param grade 年级
 	 * @param unit 单元
-	 * @return 单词列表
+	 * @param query 查询条件（版本/年级/册别/单元 + 分页）
+	 * @return 分页单词本
 	 */
 	@GetMapping("/word-book")
 	@PreAuthorize("isAuthenticated()")
-	public List<EnglishWordView> getWordBook(
-		@RequestParam(required = false) String version,
-		@RequestParam(required = false) String grade,
-		@RequestParam(required = false) String unit
-	) {
-		EnglishWordQuery query = new EnglishWordQuery();
-		query.setVersion(version);
-		query.setGrade(grade);
-		query.setUnit(unit);
-		query.setPageSize(100); // 学生端返回全部
-
-		return englishWordService.listWords(query).getList(); // List<EnglishWordView>
+	public PaginationResponse<EnglishWordView> getWordBook(EnglishWordQuery query) {
+		String userId = SecurityContextUtils.getUserId();
+		return englishWordService.wordBook(userId, query);
 	}
 
 }
