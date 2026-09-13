@@ -112,7 +112,7 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 本实例（Debian 12 / root / 2C / 约 8GB，含内存气球）初始未装 Java 与 Maven；装法：`apt-get update` 后 `DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk maven`（得 openjdk 17.0.20、Maven 3.8.7）
   - Node 22.22 / npm 10.9.4 预装；前端依赖用 `cd /workspace/wisestar-client && npm ci`（仓库含 package-lock.json，npm 官方源）；该分支新增 katex 依赖，切换分支后需重新 npm ci
   - 资源紧张时编译/启动一律用 background terminal（`cpu_percent`/`memory_percent` 限流），Maven 构建加 `MAVEN_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m"`；完整 clean package 约 3 分钟
-  - 开发主线：`260908-feat-teaching-research-platform`（2026-09-13 时为最新，含教研平台、学币体系重构、在线宝箱；领先 main 24 提交）
+  - 开发主线：`main`（2026-09-13 已将 `260908-feat-teaching-research-platform` 快进并入 main 并删除该功能的本地/远端分支，含教研平台、学币体系重构、在线宝箱等全部功能；此后 clone 默认分支即最新，仓库仅保留 main 与未合并的 `260908-feat-practice-submit-refactor`）
 
 [预览库 H2 快照备份与恢复（2026-09-13）]
 - Date: 2026-09-13
