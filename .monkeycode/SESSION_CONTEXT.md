@@ -1,88 +1,77 @@
 # 会话上下文摘要（压缩版，供后续任务快速参考，减少重新探索）
 
-> 更新：2026-09-05 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
+> 更新：2026-09-13 ｜ 用途：替代冗长对话历史，后续任务先读此文件 + docs/开发维护日志.md
+> 本次已把默认分支 `main` 对齐到最新开发线，clone 即得最新进展，无需再手动切分支。
 
-## 0. 最近进展
+## 0. 最近进展（2026-09-13）
 
-### 2026-09-10：角色权限页恢复 + 角色数据范围配置
+### 工作区与分支整理
 
-- 角色页路由失配修复：菜单 key `/admin/roles` 与路由 `/hr/roles` 不一致 → `App.jsx` 路由改 `/admin/roles`（`required=['system:role:list/create/update/delete']`）并加 `/hr/roles` → `<Navigate to="/admin/roles">` 兼容重定向；`MainLayout` SUB_PATH_KEYS 同步为 `/admin/roles`。
-- 登录页英文提示去除：`api/request.js` 响应拦截器对 `code===401` 静默 `reject`，不再弹 `message.error`；登录失败（`ErrorCode.UsernameOrPasswordError`=1024）仍提示"账号或者密码错误"。
-- 角色新增 `data_scope`（`ALL` 全校可见 / `CAMPUS` 仅本人绑定校区）：`Role`/`RoleRequest`/`RoleView` 加字段，`CampusScope` 加 `DATA_SCOPE_ALL`/`DATA_SCOPE_CAMPUS` 常量；`SystemServiceImpl.createRole` 缺省置 `ALL`；`RoleManagePage.jsx` 加下拉/列表列/提交/回填。
-- `CampusScopeServiceImpl` 删除写死 `SCOPED_ROLE_CODES`，改为按各角色 `data_scope` 解析：多角色取更宽松者（任一 `ALL` 即全校），全部 `CAMPUS` 才按 `t_user_campus` 过滤，未绑定返回 `EMPTY`；注入 `RoleMapper`。
-- `init-h2.sql`/`init-mysql.sql` 加 `data_scope` 列 + 幂等种子（principal/academic/consultant=CAMPUS，admin/teacher 等=ALL）。
-- 验证（2026-09-10）：`mvn clean package -pl api -am -DskipTests` 重打 fat jar 并重启；H2 查 `t_role.data_scope` 种子正确；curl 登录后 `role/list` 返回 dataScope；create 显式 CAMPUS / 缺省 ALL、update、delete 闭环通过（测试角色已清理）；前端 oxlint 无新增错误。预览：前端 3000 + 后端 1991。
-- 学员错题本 404 修复：`/student/wrong` 路由缺失（`WrongBookPage` 组件与底部导航都在，仅 App.jsx 未注册）→ 补 `import WrongBookPage` + `<Route path="wrong">`。后端 `GET /api/practice/wrong-list` 存在。
-- 预习完成（`POST /api/student/preview/complete`）：`StudentApi`/`StudentService`/`StudentServiceImpl.completePreview` + DTO `StudentPreviewCompleteRequest/View`。语义=标记小节/知识点预习完成（完成度 100%）并结算奖励（学习币+5/积分+3），复用 `t_practice_record`（mode=preview，答对数=币、得分=积分、满分=得分→100%）；同一小节/知识点仅首次发放（防刷）+ 校验目标归属学科年级在订单权限内。前端 `KnowledgePage` 预习例题全部判定后显示「预习完成」按钮，成功后提示奖励并「返回研习页」；`api/student.js` 加 `completePreview`。
+- 本会话把 `/workspace` 顶层从误配的 MonkeyCode 平台仓库（wisestar2026/wisestarCode）换成 `wisestar.git` 克隆；原平台内容完整备份在 `/tmp/opencode/backup-wisestarCode-20260913-120558`（未删除，可还原）。
+- 主线对齐：`main` 快进（ff）到 `260908-feat-teaching-research-platform` 最新提交（覆盖 2026-09-08 ~ 2026-09-13 全部功能），并删除已并入的功能分支，仓库只保留 `main`。
+- 旧分支 `260908-feat-practice-submit-refactor`（2026-09-08，2 提交）**保留在 origin 不动**：其与最新线冲突 11 个文件且功能与最新线的练习/错题本重构重叠，未合并（用户确认保留）。
+- 此后 `git clone` / `git pull` 默认分支即最新，不再依赖人工提醒切换分支。
 
-### 2026-09-05：云端复现修复 + 全仓库整合收尾
+### 预览数据持久化（H2 快照方案）
 
-**整合已完成：main 为唯一主线（76 提交，root 762e10d → 429139f），功能分支已删。**
+- 背景：云端预览环境无持久化卷，`server/api/wisestar.mv.db`（H2，已 gitignore）随容器重建必然丢失。
+- 方案：`server/db-export.sh` 在后端停止时把 H2 全量（DDL+DML）导出到 `server/db-snapshot/wisestar.sql`（commit 进 git）；`server/start-preview.sh` 在库文件缺失且快照存在时先 `RunScript` 导入快照再启动（置 `--spring.sql.init.mode=never`）。
+- 约定流程：**会话结束前「停后端 → 跑 server/db-export.sh → 提交快照」**，新环境用 `server/start-preview.sh` 启动即自动恢复。
+- 注意：不要启用 H2 的 AUTO_SERVER（本容器主机名为 UUID，`InetAddress.getLocalHost()` 解析失败会让启动直接报错）。
 
-- 三段收尾提交（已推送 origin/main）：
-  - `93c4a50` fix: 知识管理/督学/英语模块云端编译与运行缺陷（SurveySchema 类型/StudentTask::getCreateTime/EnglishWordApi 重复映射/英语表审计列/StudentRecord 对齐 DDL/student:supervision 权限点注册）
-  - `6f72426` docs: 会话上下文与项目记忆
-  - `429139f` chore: 清理上游 SurveyKing 残留（website/client/image/.gitee/根 application.properties/migration SQL/scripts H2 库）并重写根 README
-- git 身份（仓库级）：zhanghaiyang / 15717876985@163.com（docs 日志 3.1 惯例；云端 git 全局无身份）
-- **云端 push 偶发异常**：403 wisestarCode / non-fast-forward 为瞬态（GitHub 重定向/TLS），重试即可；origin=wisestar.git
+### 工具链安装
 
-- 云端用 openjdk-17 + Maven 3.8.7 构建；分支含 3 处编译/映射缺陷已修复（见 SESSION 会话记录）：
-  - ① rdbms：SurveySchema 类型/取 answer 列；StudentTask::getCreateTime 修正
-  - ② api：EnglishWordApi 重复 /record 映射删除（学生端重构版为 /study /record 权威）
-  - ③ 英语表 H2 缺 BaseModel 审计列 → h2/mysql 种子补列 + admin 补 english:* 权限点
-- 本次新增修复（已随 fat jar wisestar-v1.9.0.jar 重新构建验证）：
-  - `student:supervision` 权限点从未注册给任何角色 → 常量 PermissionConsts（权限点常量 + ADMIN_AUTHORITY + 权限树"督学"叶子）+ h2/mysql 种子 admin 收敛同步补齐
-  - StudentRecord 实体字段 createTime/updateTime/deleted 与 DDL create_at/update_at/is_deleted 不一致 → 实体对齐 DDL
-- 复测全 200：login / supervision/online-students / english word-manager create+list / subject create
-- 后端预览运行中：终端 term_1788580550762_20（1991，preview profile，H2 文件库 wisestar.mv.db 在 server/api 目录，已 gitignore）
-- 构建注意：**api fat jar 增量 package 不重写 jar**（maven-jar-plugin up-to-date 跳过 + repackage 保留），必须 `mvn clean package -pl api -am -DskipTests`
+- 本实例初始无 Java/Maven；已装 `openjdk-17-jdk` + Maven 3.8.7（`DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-17-jdk maven`）。Node 22.22 / npm 10.9.4 预装。
 
+### 功能进展（2026-09-08 ~ 2026-09-13）
+
+- 教研平台、英语 AI 单元内容生成、任务发布、积分·学币账本、薄弱点·学习评价、专项练习/小节通关/预习例题配置、学币体系重构、在线时长宝箱、题目富内容渲染与学员端 3D 黏土图标。详见 `docs/开发维护日志.md` 第 43 节及 `.monkeycode/specs/`。
 
 ## 1. 环境与启动
 
-- 项目：`/workspace/wisestar`；前端 `wisestar-client`（vite，3000 端口，proxy `/api`→1991）；后端 `server`（Spring Boot 2.7.7，**Java 8**，preview profile 用 H2 文件库，端口 1991）
-- 启动后端：`cd server/api && java -jar target/wisestar-v1.9.0.jar --spring.profiles.active=preview`（后台终端管理）
-- 启动前端：`cd wisestar-client && npm run dev`
-- 构建：后端 `cd server && mvn clean package -DskipTests`（**必须 clean**，防 ~/.m2 旧 jar）；前端 `cd wisestar-client && npm run lint / build`
-- 登录：admin/123456（RSA 加密后 POST /api/public/login，Cookie sk-token 持久 7 天；JWT 密钥固定 wisestar.jwt.secret）
+- 项目根：`/workspace`（仓库直接位于工作区根）；前端 `wisestar-client/`（Vite 5，端口 3000，proxy `/api`→1991，`strictPort`）；后端 `server/`（Spring Boot 2.7.7 + Undertow，**JDK 17**，preview profile 用 H2 端口 1991；dev profile 用 MySQL 8 端口 7007）。
+- 后端构建：`cd /workspace/server && MAVEN_OPTS="-Xmx768m -XX:MaxMetaspaceSize=256m" mvn clean package -pl api -am -DskipTests`，产物 `api/target/wisestar-v1.9.0.jar`（**必须 clean**，增量 package 可能不重写 jar）。
+- 启动后端（优先用脚本，可自动恢复快照）：
+  - `server/start-preview.sh`
+  - 或 `cd server/api && java -Xms256m -Xmx768m -jar target/wisestar-v1.9.0.jar --spring.profiles.active=preview`
+- 启动前端：`cd /workspace/wisestar-client && npm ci && npm run dev`；需 `wisestar-client/.env.local` 写 `API_TARGET=http://localhost:1991`（gitignore）。
+- 登录：`admin / 123456`（RSA 加密后 POST `/api/public/login`，Cookie `sk-token` 持久 7 天）。
 
 ## 2. 关键约定
 
-- 响应格式 `{code, data, message}`；分页 `PaginationResponse{total, list}`，**前端取 `res.data.list`**
-- 全局异常包装：越权 403 / 未登录 401 返回 **HTTP 200 + body.code**（测试断言解析 body.code）
-- **node fetch 手工 Cookie 头不可靠**（undici 不携带）——接口验证用 curl cookie jar
-- 权限：`t_role.authority`（逗号分隔权限点）+ `builtin`（内置不可删）；后端 `@PreAuthorize hasAuthority('module:action')`；前端菜单 `required` 过滤 + AuthGuard 路由校验 + `usePermission` 按钮级
-- 数据库：种子脚本 `init-h2.sql`/`init-mysql.sql` 幂等（`CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` + `INSERT ... WHERE NOT EXISTS` + 内置角色 `UPDATE` 收敛）；新增表需同时改 h2+mysql
-- 权限点/内置角色变更：`PermissionConsts`（shared）+ 两个 SQL 种子同步，重启后旧库自动收敛
-- 学员端内容接口按订单权限过滤（`t_student_permission` expire_at>NOW）；题目默认剥答案防作弊（studyQuestions `exposeAnswer` 参数控制）
-- 练习绑定规则：练习**仅支持绑定到小节**，章节不支持直绑（前端入口已删、后端 POST /api/chapter/repos 抛 4005、GET 恒空）；存量 t_chapter_repo 已迁移到其下小节（t_chapter_repo=0、t_section_repo=11，样例练习绑到「万以上数的认识」11 小节）。章节列表 repoCount 口径 = 该章节下小节直绑练习的去重 repo 数。
-- 学员学习页章下小节数量超过 9 被裁剪的根因是 CSS 非接口：StudyPage.css `.study-kp-list.open` 原 `max-height:400px;overflow:hidden` 恰 9 行，已改 `max-height:none`（study 接口本就全量返回，无 limit）。
-- 学员端做题页 KnowledgePage：`study/questions` 的 count 参数不传=返回绑定内容全部题（专项练习湾/小节通关应覆盖整卷；错题消灭等显式传 count 仍生效，上限 50）；多项填空(MultipleBlank)按 schema.children 空位数渲染 N 个输入框（勿落入选项渲染），答案按空位以 `|` 拼接判分。
-- 回归演示数据：题库 `9900000000000000009`（演示·单选多选回归，2 题 Radio/Checkbox）已绑到小节 2096157155131441153，供单选/多选回归肉眼验收；不想要时可由题库管理删除并解绑。
+- 响应格式 `{code, data, message}`；分页 `PaginationResponse{total, list}`，前端取 `res.data.list`。
+- 全局异常包装：越权 403 / 未登录 401 返回 **HTTP 200 + body.code**（测试断言解析 body.code）。
+- **node fetch 手工 Cookie 头不可靠**（undici 不携带）——接口验证用 curl cookie jar，或自行管理 `set-cookie`。
+- 权限：`t_role.authority`（逗号分隔权限点）+ `builtin`（内置不可删）；后端 `@PreAuthorize hasAuthority('module:action')`；前端菜单 `required` 过滤 + AuthGuard 路由校验 + `usePermission` 按钮级。
+- 数据库：种子脚本 `init-h2.sql`/`init-mysql.sql` 幂等（`CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` + `INSERT ... WHERE NOT EXISTS` + 内置角色 `UPDATE` 收敛）；新增表/权限点需同时改 h2 + mysql + `PermissionConsts`。注意 mysql 脚本当前缺 `t_campus`/`t_user_campus`（仅 H2 有）。
+- 学员端内容接口按订单权限过滤（`t_student_permission` expire_at > NOW）；题目默认剥答案防作弊（studyQuestions `exposeAnswer` 参数控制）。
+- 学员端纯前端页面的视觉必须延续海洋童趣风格（浅蓝渐变 + 波浪 + 3D 圆角卡片），公共样式在 `src/pages/student/student.css`；管理端页面为裸 div + `Title level={4}`，不要用 Card 包裹。
+- 练习绑定规则：练习仅支持绑定到小节（章节直绑已停用）；出题统一走 `StudentServiceImpl.studyQuestions`，按用途 `preview/special/trial` 收敛题源。
 
 ## 3. git
 
-- **主线：`main`（76 提交，root `762e10d` → `429139f`）**；origin = `https://github.com/wisestar2026/wisestar.git`（HTTPS，公网可直连）
-- 原功能分支 `260810-feat-knowledge-mgmt-backend` 已 ff 并入 main 并删除（本地+远端）；仓库无子模块
-- 开发规范：新功能先在 main 上开 `YYMMDD-feat-xxx` 分支，完成 commit+push 后合回 main（参考 docs/开发维护日志.md 3.1）
-- 最近推送：`aaacf08`（2026-09-05，仓库布局记忆）；本阶段"分支整合+清理"已收尾；当前工作区含未提交改动（章节绑练习停用 + 学员小节 9 上限 CSS 修复，前后端代码已改、后端 fat jar 已重打并在 1991 preview 运行验证，改动未提交）
-- 注意：`.gitignore` 已补 `*.mv.db` 与 `/application.properties`，勿再将 H2 运行库/生成文件入库
+- **默认/唯一主线：`main`**，origin = `https://github.com/wisestar2026/wisestar.git`（HTTPS，公网可直连）；仓库无子模块。
+- 旧分支 `260908-feat-practice-submit-refactor` 保留在 origin（未合并，勿误当最新）。
+- 提交规范：逐文件 `git add <file>`，禁止 `git add -A` / `git add .`；本仓库远程为 GitHub，push 不要带 `-o merge_request.*`。
+- 开发规范：新功能在 main 上开 `YYMMDD-feat-xxx`，完成 commit+push 后合回 main（详见 docs/开发维护日志.md 3.1）。
+- git 身份（仓库级）：`zhanghaiyang / 15717876985@163.com`。
+- 数据持久化：H2 快照 `server/db-snapshot/wisestar.sql` 需 commit；`*.mv.db` / `*.trace.db` 已在 `.gitignore`，勿入库。
 
-## 4. 验证脚本（/tmp/opencode/）
+## 4. 验证脚本（/tmp/opencode/，临时）
 
-- `test-role-permission.mjs`：回归（18/18，角色/权限树/内置角色）
-- `test-api-permission.mjs`：接口级权限
-- `test-system-api.mjs`：系统管理 CRUD（25/25）
-- `test-knowledge-import.mjs` / `test-study-api.mjs` / `test-student-perm.mjs`（过期）等
+- `db-state.mjs`：登录后统计学员/题库/章节/知识点数量
+- `student-test.mjs`：`create` 新建测试学员并列表
+- 历史：`test-role-permission.mjs` / `test-api-permission.mjs` / `test-system-api.mjs` 等（可能已过期）
 
-## 5. 已完成功能（详见开发维护日志 19-37 节）
+## 5. 已完成功能（详见开发维护日志 19-43 节）
 
-角色权限管理、系统管理前端（用户/部门/岗位/字典/条目）、按钮级权限、知识批量导入（名称层级归属+模板下载）、学员端内容对接（study 接口/真实呈现/即时判分）、学员端登录页、底部导航、刷新不登出、练习管理（导入/编辑/组题）、分页 20、学员动态监控、首页统计真实化、积分商城、今日任务（绑定学员/批量/内容展示/完成判定）、研习完成度+星星、试炼/练习逐题（答题指示器/判断题/填空题/提交答案）、判分一致（字母/序号映射）、错题查看+归因、预习开始练习、错题本修复
+角色权限管理、系统管理前端、按钮级权限、知识批量导入、学员端内容对接、练习管理、学员动态监控、首页统计真实化、积分商城、今日任务、研习完成度+星星、试炼/练习逐题、判分一致、错题查看与归因、错题本、教研平台、英语 AI 单元内容生成、任务发布、角色数据范围、学员积分·学币账本、薄弱点·学习评价、专项练习/小节通关/预习例题配置、学币体系重构（单科学期上限 10000、内容每学期一次幂等）、在线时长宝箱、每日签到、题目富内容渲染、学员端 3D 黏土图标。
 
 ## 6. 未完成/待办
 
-- 题目难度/题型按练习设置前端下发（接口已支持参数）
-- 问卷/答案后端接口与权限点保留（前端已删，可彻底清理）
-- 校区业务逻辑（占位）
-- 秒级实时（学员动态当前 10 秒轮询，可接 WebSocket）
-- 任务完成奖励发放（当前按练习得分聚合学习币/积分）
+- 旧分支 `260908-feat-practice-submit-refactor` 的「专项练习交卷制重构」是否合并主线待定（当前保留）。
+- mysql 种子脚本补 `t_campus`/`t_user_campus`（切 MySQL 前必须）。
+- 题目难度/题型按练习设置前端下发（接口已支持）。
+- 校区业务逻辑（占位）。
+- 学员动态当前 10 秒轮询，可接 WebSocket 实现秒级实时。
+- 问卷/答案后端接口与权限点保留（前端已删，可彻底清理）。

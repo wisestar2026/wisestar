@@ -33,7 +33,10 @@ wisestar/
 # 1) 构建后端（注意必须 clean，防止旧 jar 残留）
 cd server && mvn clean package -DskipTests
 
-# 2) 启动后端（云端/本地均可：preview 内置 H2，自动建表播种）
+# 2) 启动后端（preview 内置 H2；库文件缺失且存在快照时自动恢复，否则按种子初始化）
+./start-preview.sh
+
+# 或手动启动（不自动恢复快照）
 cd server/api && java -jar target/wisestar-v1.9.0.jar --spring.profiles.active=preview
 
 # 3) 启动前端（另开终端；本地开发走 dev profile + MySQL 时后端端口为 7007）
@@ -46,7 +49,7 @@ cd wisestar-client && npm ci && npm run dev
 
 ## 运行环境与配置
 
-- **云端（preview profile）**：H2 文件库，种子脚本幂等（`CREATE TABLE IF NOT EXISTS` + `ALTER ... ADD COLUMN IF NOT EXISTS` + 内置角色 `UPDATE` 收敛），重启即自动补齐结构与权限。
+- **云端（preview profile）**：H2 文件库，种子脚本幂等（`CREATE TABLE IF NOT EXISTS` + `ALTER ... ADD COLUMN IF NOT EXISTS` + 内置角色 `UPDATE` 收敛），重启即自动补齐结构与权限。云端预览无持久化卷，H2 库会随容器重建丢失；数据持久化靠 **H2 SQL 快照**：停止后端后执行 `server/db-export.sh` 导出到 `server/db-snapshot/wisestar.sql`（需提交），新环境用 `server/start-preview.sh` 启动时自动导入。注意勿启用 H2 `AUTO_SERVER`（容器主机名解析会导致启动失败）。
 - **本地（dev profile）**：MySQL 8，`server/rdbms/src/main/resources/scripts/init-mysql.sql` 为完整种子脚本；H2 版为 `init-h2.sql`。**改动数据库结构或权限时两份脚本需同步修改**。
 - 端口：前端 3000，后端 1991（preview）/ 7007（dev）。
 
@@ -57,8 +60,11 @@ cd wisestar-client && npm ci && npm run dev
 | `docs/开发维护日志.md` | 改造全过程逐节记录（背景/改动/踩坑/验证），后续开发优先阅读 |
 | `docs/AI自习室系统开发路线图.md` | 五大板块蓝图与现状盘点，规划依据 |
 | `docs/Wisestar智习系统学生端需求文档V2.0-完善版.md` | 学生端需求规格 |
+| `docs/学员积分与学币规则说明.md` / `docs/学员学习评价与薄弱点规则说明.md` | 积分·学币账本、学习评价与薄弱点规则 |
+| `docs/题目批量导入模板说明.md` / `docs/AI教辅资料结构化任务模板.md` | 题库批量导入与 AI 教辅内容结构化模板 |
 | `docs/完整操作链路-登录答题评分.md` | 端到端操作链路说明 |
-| `docs/项目词典.md` / `docs/源码讲解-问卷创建与管理模块.md` | 术语与源码导读 |
+| `docs/源码讲解-英语AI单元内容生成模块.md` / `docs/源码讲解-问卷创建与管理模块.md` | 核心模块源码导读 |
+| `docs/项目词典.md` | 术语表 |
 | `.monkeycode/` | AI 协作会话上下文与项目记忆（非产品文档） |
 
 ## 来源与许可
