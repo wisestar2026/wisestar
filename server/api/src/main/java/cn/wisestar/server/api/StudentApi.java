@@ -46,7 +46,7 @@ import java.util.List;
  * 学员管理接口（学员管理模块）。
  *
  * <p><b>定位</b>：管理端「学员管理 → 学员列表」页面数据源——学员 CRUD；
- * 新增学员自动生成 8 位学号并创建学员登录账号（初始密码 123456）。</p>
+ * 新增学员自动生成「字母 + 6 位数字」学号（如 a000001）并创建学员登录账号（初始密码 123456）。</p>
  */
 @RestController
 @RequestMapping("${api.prefix}/student")
@@ -63,7 +63,7 @@ public class StudentApi {
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/create（如 /api/student/create）。</p>
 	 *
-	 * <p><b>功能</b>：校验姓名/联系号码必填与组合查重 → 自动生成 8 位唯一学号 →
+	 * <p><b>功能</b>：校验姓名/联系号码必填与组合查重 → 自动生成「字母 + 6 位数字」唯一学号 →
 	 * 同一事务内写入学员主数据与登录账号（学号即账号，初始密码 123456）。</p>
 	 *
 	 * <p><b>请求参数</b>：{@link StudentRequest}（@RequestBody JSON：name/age/phone/school/campus）。</p>
@@ -394,7 +394,7 @@ public class StudentApi {
 	}
 
 	/**
-	 * 本学期学习币（分学科 + 手动发币，单科上限 3000）。
+	 * 本学期学习币（分学科 + 手动发币，单科上限 10000）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/coins。</p>
 	 *

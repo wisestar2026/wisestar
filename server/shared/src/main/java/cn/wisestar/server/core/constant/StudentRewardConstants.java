@@ -49,13 +49,34 @@ public final class StudentRewardConstants {
 	/** 章节阶段达成 */
 	public static final String ACTION_CHAPTER_STAGE = "chapter_stage";
 
+	/** 在线宝箱：在线满 30 分钟 */
+	public static final String ACTION_ONLINE_CHEST_30 = "online_chest_30";
+
+	/** 在线宝箱：在线满 60 分钟 */
+	public static final String ACTION_ONLINE_CHEST_60 = "online_chest_60";
+
+	/** 在线宝箱：在线满 120 分钟 */
+	public static final String ACTION_ONLINE_CHEST_120 = "online_chest_120";
+
+	/** 消灭知识点（掌握度达精通） */
+	public static final String ACTION_KP_MASTER = "kp_master";
+
+	/** 每日签到 */
+	public static final String ACTION_DAILY_CHECKIN = "daily_checkin";
+
+	/** 任务完成 */
+	public static final String ACTION_TASK_DONE = "task_done";
+
 	// ---------------- 奖励数值 ----------------
 
-	/** 单科单学期学习币上限 */
-	public static final int SUBJECT_COIN_LIMIT = 3000;
+	/** 在线宝箱档位（分钟），与 {@link #reward} 学币一一对应 */
+	public static final int[] ONLINE_CHEST_TIERS = { 30, 60, 120 };
 
-	/** 7 天防刷窗口（天） */
-	public static final int ANTI_CHEAT_DAYS = 7;
+	/** 单科单学期学习币上限 */
+	public static final int SUBJECT_COIN_LIMIT = 10000;
+
+	/** 消灭知识点（掌握度精通）阈值 */
+	public static final int MASTER_THRESHOLD = 85;
 
 	/** 试炼额外奖励的正确率门槛（% ） */
 	public static final int TRIAL_BONUS_RATE = 90;
@@ -74,15 +95,21 @@ public final class StudentRewardConstants {
 			case ACTION_PREVIEW:
 				return new int[] { 5, 3 };
 			case ACTION_PRACTICE:
-				return new int[] { 12, 6 };
+				return new int[] { 20, 6 };
 			case ACTION_TRIAL:
-				return new int[] { 20, 10 };
+				return new int[] { 30, 10 };
 			case ACTION_TRIAL_BONUS:
 				return new int[] { 15, 8 };
 			case ACTION_WRONG_CORRECT:
-				return new int[] { 8, 4 };
+				return new int[] { 5, 4 };
 			case ACTION_WEAK_CONQUER:
 				return new int[] { 25, 12 };
+			case ACTION_KP_MASTER:
+				return new int[] { 60, 0 };
+			case ACTION_DAILY_CHECKIN:
+				return new int[] { 10, 0 };
+			case ACTION_TASK_DONE:
+				return new int[] { 15, 0 };
 			case ACTION_DAILY_KP:
 				return new int[] { 8, 5 };
 			case ACTION_DAILY_WRONG:
@@ -91,21 +118,37 @@ public final class StudentRewardConstants {
 				return new int[] { 7, 4 };
 			case ACTION_CHAPTER_STAGE:
 				int s = stage == null ? 1 : Math.max(1, Math.min(6, stage));
-				int[] coins = { 80, 100, 120, 150, 180, 200 };
+				int[] coins = { 300, 350, 400, 450, 500, 600 };
 				int[] points = { 40, 50, 60, 75, 90, 100 };
 				return new int[] { coins[s - 1], points[s - 1] };
+			case ACTION_ONLINE_CHEST_30:
+				return new int[] { 5, 0 };
+			case ACTION_ONLINE_CHEST_60:
+				return new int[] { 10, 0 };
+			case ACTION_ONLINE_CHEST_120:
+				return new int[] { 20, 0 };
 			default:
 				return null;
 		}
 	}
 
 	/**
-	 * 是否为「按知识点 7 天防刷」的行为。
+	 * 在线宝箱档位对应的行为类型。
+	 *
+	 * @param tierMinutes 档位分钟数（30/60/120）
+	 * @return 行为类型；非法档位返回 null
 	 */
-	public static boolean isTargetBased(String actionType) {
-		return ACTION_PREVIEW.equals(actionType) || ACTION_PRACTICE.equals(actionType)
-				|| ACTION_TRIAL.equals(actionType) || ACTION_WRONG_CORRECT.equals(actionType)
-				|| ACTION_WEAK_CONQUER.equals(actionType);
+	public static String onlineChestAction(int tierMinutes) {
+		switch (tierMinutes) {
+			case 30:
+				return ACTION_ONLINE_CHEST_30;
+			case 60:
+				return ACTION_ONLINE_CHEST_60;
+			case 120:
+				return ACTION_ONLINE_CHEST_120;
+			default:
+				return null;
+		}
 	}
 
 	/**
@@ -204,6 +247,18 @@ public final class StudentRewardConstants {
 				return "每日有效学习";
 			case ACTION_CHAPTER_STAGE:
 				return "章节阶段达成";
+			case ACTION_ONLINE_CHEST_30:
+				return "在线宝箱（30 分钟）";
+			case ACTION_ONLINE_CHEST_60:
+				return "在线宝箱（60 分钟）";
+			case ACTION_ONLINE_CHEST_120:
+				return "在线宝箱（120 分钟）";
+			case ACTION_KP_MASTER:
+				return "消灭知识点";
+			case ACTION_DAILY_CHECKIN:
+				return "每日签到";
+			case ACTION_TASK_DONE:
+				return "任务完成";
 			default:
 				return actionType;
 		}

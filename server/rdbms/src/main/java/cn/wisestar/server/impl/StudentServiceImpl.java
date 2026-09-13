@@ -142,9 +142,15 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private static final String DEFAULT_PASSWORD = "123456";
 
 	/**
-	 * 学号生成最大重试次数（随机 8 位数字，冲突时重新生成直至唯一）。
+	 * 学号生成最大重试次数（顺序递增，冲突时顺延直至唯一）。
 	 */
 	private static final int STUDENT_NO_RETRY_TIMES = 10;
+
+	/** 学号首位字母（从 a 开始）。 */
+	private static final char STUDENT_NO_FIRST_LETTER = 'a';
+
+	/** 学号序号上限（6 位，000001-999999，满则进位到下一字母）。 */
+	private static final int STUDENT_NO_SEQ_MAX = 999999;
 
 	private final StudentViewMapper studentViewMapper;
 
@@ -412,6 +418,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		fillProgress(views);
 		// 通关状态/星级/解锁
 		fillSectionPass(views);
+		// 小节题目统计：题量 / 已答 / 答对
+		fillQuestionStats(views);
 		return views;
 	}
 
@@ -446,7 +454,12 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		}
 	}
 
-	/** 按小节绑定练习 + 小节知识点练习计算学员学习完成度（最高正确率） */
+	/**
+	 * 按「该小节发起的练习/通关正确率」计算学员学习完成度（最高正确率）。
+	 *
+	 * <p>练习归属以 {@code practice_record.section_id} 为准，不再按绑定题库/知识点反查，
+	 * 避免同题库绑多小节或知识点名称跨小节时把完成度串到别的小节。历史无 section_id 的记录才回退匹配。</p>
+	 */
 	private void fillProgress(List<SectionView> views) {
 		if (views.isEmpty()) {
 			return;
@@ -466,10 +479,12 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		Set<String> allRepoIds = reposBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
 		Set<String> allKpIds = kpsBySection.values().stream().flatMap(List::stream).collect(Collectors.toSet());
 		// 学员练习记录：按小节/练习/知识点任一匹配（一次查询）
+		// 该小节发起的练习记录正确率（权威口径，不按题库/知识点串到别的小节）
 		Map<String, Integer> sectionRate = new HashMap<>();
-		Map<String, Integer> repoRate = new HashMap<>();
-		Map<String, Integer> kpRate = new HashMap<>();
-		if (userId != null && (!allRepoIds.isEmpty() || !allKpIds.isEmpty())) {
+		// 历史数据未记录小节时，才回退按题库/知识点匹配
+		Map<String, Integer> fallbackRepoRate = new HashMap<>();
+		Map<String, Integer> fallbackKpRate = new HashMap<>();
+		if (userId != null && !sectionIds.isEmpty()) {
 			com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<PracticeRecord> wrapper =
 					Wrappers.<PracticeRecord>lambdaQuery().eq(PracticeRecord::getUserId, userId);
 			boolean or = false;
@@ -482,18 +497,158 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			for (PracticeRecord r : records) {
 				if (r.getTotalScore() == null || r.getTotalScore() <= 0) continue;
 				int rate = (int) Math.round((r.getScore() == null ? 0 : r.getScore()) * 100.0 / r.getTotalScore());
-				if (r.getSectionId() != null) sectionRate.merge(r.getSectionId(), rate, Math::max);
-				if (r.getRepoId() != null) repoRate.merge(r.getRepoId(), rate, Math::max);
-				if (r.getKnowledgePointId() != null) kpRate.merge(r.getKnowledgePointId(), rate, Math::max);
+				if (StringUtils.hasText(r.getSectionId())) {
+					sectionRate.merge(r.getSectionId(), rate, Math::max);
+				}
+				else {
+					if (StringUtils.hasText(r.getRepoId())) fallbackRepoRate.merge(r.getRepoId(), rate, Math::max);
+					if (StringUtils.hasText(r.getKnowledgePointId())) fallbackKpRate.merge(r.getKnowledgePointId(), rate, Math::max);
+				}
 			}
 		}
 		views.forEach(v -> {
-			int sectionBest = sectionRate.getOrDefault(v.getId(), 0);
+			if (sectionRate.containsKey(v.getId())) {
+				v.setProgress(sectionRate.get(v.getId()));
+				return;
+			}
 			int repoBest = reposBySection.getOrDefault(v.getId(), Collections.emptyList()).stream()
-					.mapToInt(r -> repoRate.getOrDefault(r, 0)).max().orElse(0);
+					.mapToInt(r -> fallbackRepoRate.getOrDefault(r, 0)).max().orElse(0);
 			int kpBest = kpsBySection.getOrDefault(v.getId(), Collections.emptyList()).stream()
-					.mapToInt(k -> kpRate.getOrDefault(k, 0)).max().orElse(0);
-			v.setProgress(Math.max(sectionBest, Math.max(repoBest, kpBest)));
+					.mapToInt(k -> fallbackKpRate.getOrDefault(k, 0)).max().orElse(0);
+			v.setProgress(Math.max(repoBest, kpBest));
+		});
+	}
+
+	/**
+	 * 填充小节题目统计：题量（绑定题库 + 知识点绑定/标签匹配，去重）、
+	 * 学员已作答的不同题目数、其中答对的不同题目数。
+	 */
+	private void fillQuestionStats(List<SectionView> views) {
+		if (views.isEmpty()) {
+			return;
+		}
+		String userId = SecurityContextUtils.getUserId();
+		List<String> sectionIds = views.stream().map(SectionView::getId).collect(Collectors.toList());
+		// 小节 → 绑定题库
+		Map<String, List<String>> reposBySection = sectionRepoMapper.selectList(
+						Wrappers.<SectionRepo>lambdaQuery().in(SectionRepo::getSectionId, sectionIds))
+				.stream().filter(b -> StringUtils.hasText(b.getRepoId()))
+				.collect(Collectors.groupingBy(SectionRepo::getSectionId,
+						Collectors.mapping(SectionRepo::getRepoId, Collectors.toList())));
+		Set<String> allRepoIds = reposBySection.values().stream().flatMap(List::stream)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		// 小节 → 知识点
+		Map<String, List<KnowledgePoint>> kpsBySection = knowledgePointMapper.selectList(
+						Wrappers.<KnowledgePoint>lambdaQuery().in(KnowledgePoint::getSectionId, sectionIds))
+				.stream().collect(Collectors.groupingBy(KnowledgePoint::getSectionId));
+		Set<String> allKpIds = kpsBySection.values().stream().flatMap(List::stream)
+				.map(KnowledgePoint::getId).collect(Collectors.toCollection(LinkedHashSet::new));
+		// 题库 → 题目（t_template.repo_id 回源）
+		Map<String, Set<String>> questionIdsByRepo = new HashMap<>();
+		if (!allRepoIds.isEmpty()) {
+			templateMapper.selectList(Wrappers.<Template>lambdaQuery().in(Template::getRepoId, allRepoIds))
+					.forEach(t -> questionIdsByRepo
+							.computeIfAbsent(t.getRepoId(), k -> new LinkedHashSet<>()).add(t.getId()));
+		}
+		// 知识点 → 题目（显式绑定 + 名称标签匹配）
+		Map<String, Set<String>> questionIdsByKp = new HashMap<>();
+		for (KnowledgePoint kp : kpsBySection.values().stream().flatMap(List::stream)
+				.collect(Collectors.toList())) {
+			Set<String> ids = new LinkedHashSet<>();
+			knowledgePointQuestionMapper.selectList(Wrappers.<KnowledgePointQuestion>lambdaQuery()
+							.eq(KnowledgePointQuestion::getKnowledgePointId, kp.getId()))
+					.stream().map(KnowledgePointQuestion::getQuestionId).filter(StringUtils::hasText)
+					.forEach(ids::add);
+			if (StringUtils.hasText(kp.getName())) {
+				String name = kp.getName().trim();
+				templateMapper.selectList(Wrappers.<Template>lambdaQuery()
+								.and(w -> w.like(Template::getKnowledgePoint, name)
+										.or().like(Template::getTemplate, name)))
+						.stream().filter(t -> matchesKnowledgePointName(t, name))
+						.forEach(t -> ids.add(t.getId()));
+			}
+			questionIdsByKp.put(kp.getId(), ids);
+		}
+		// 小节 → 可练习题集合；同时建立题库/知识点 → 小节反查
+		Map<String, Set<String>> sectionQuestionIds = new HashMap<>();
+		Map<String, List<String>> sectionsByRepo = new HashMap<>();
+		Map<String, List<String>> sectionsByKp = new HashMap<>();
+		for (SectionView v : views) {
+			Set<String> ids = new LinkedHashSet<>();
+			for (String repoId : reposBySection.getOrDefault(v.getId(), Collections.emptyList())) {
+				ids.addAll(questionIdsByRepo.getOrDefault(repoId, Collections.emptySet()));
+				sectionsByRepo.computeIfAbsent(repoId, k -> new ArrayList<>()).add(v.getId());
+			}
+			for (KnowledgePoint kp : kpsBySection.getOrDefault(v.getId(), Collections.emptyList())) {
+				ids.addAll(questionIdsByKp.getOrDefault(kp.getId(), Collections.emptySet()));
+				sectionsByKp.computeIfAbsent(kp.getId(), k -> new ArrayList<>()).add(v.getId());
+			}
+			sectionQuestionIds.put(v.getId(), ids);
+			v.setQuestionCount(ids.size());
+			v.setAnsweredCount(0);
+			v.setCorrectCount(0);
+		}
+		if (userId == null) {
+			return;
+		}
+		// 学员练习记录：小节/题库/知识点任一命中（一次查询）
+		LambdaQueryWrapper<PracticeRecord> wrapper = Wrappers.<PracticeRecord>lambdaQuery()
+				.eq(PracticeRecord::getUserId, userId);
+		wrapper.and(w -> {
+			w.in(PracticeRecord::getSectionId, sectionIds);
+			if (!allRepoIds.isEmpty()) {
+				w.or().in(PracticeRecord::getRepoId, allRepoIds);
+			}
+			if (!allKpIds.isEmpty()) {
+				w.or().in(PracticeRecord::getKnowledgePointId, allKpIds);
+			}
+		});
+		List<PracticeRecord> records = practiceRecordMapper.selectList(wrapper);
+		if (records.isEmpty()) {
+			return;
+		}
+		// 练习记录 → 归属小节
+		Map<String, Set<String>> sectionsByPractice = new HashMap<>();
+		for (PracticeRecord r : records) {
+			Set<String> secs = new LinkedHashSet<>();
+			if (StringUtils.hasText(r.getSectionId()) && sectionQuestionIds.containsKey(r.getSectionId())) {
+				// 练习归属以发起小节为准，避免按题库/知识点串到别的小节
+				secs.add(r.getSectionId());
+			}
+			else {
+				if (StringUtils.hasText(r.getRepoId())) {
+					secs.addAll(sectionsByRepo.getOrDefault(r.getRepoId(), Collections.emptyList()));
+				}
+				if (StringUtils.hasText(r.getKnowledgePointId())) {
+					secs.addAll(sectionsByKp.getOrDefault(r.getKnowledgePointId(), Collections.emptyList()));
+				}
+			}
+			if (!secs.isEmpty()) {
+				sectionsByPractice.put(r.getId(), secs);
+			}
+		}
+		if (sectionsByPractice.isEmpty()) {
+			return;
+		}
+		// 逐题明细 → 各小节已答/答对题目集合
+		List<PracticeDetail> details = practiceDetailMapper.selectList(Wrappers.<PracticeDetail>lambdaQuery()
+				.in(PracticeDetail::getPracticeId, sectionsByPractice.keySet()));
+		Map<String, Set<String>> answeredBySection = new HashMap<>();
+		Map<String, Set<String>> correctBySection = new HashMap<>();
+		for (PracticeDetail d : details) {
+			if (!StringUtils.hasText(d.getQuestionId())) {
+				continue;
+			}
+			for (String sid : sectionsByPractice.getOrDefault(d.getPracticeId(), Collections.emptySet())) {
+				answeredBySection.computeIfAbsent(sid, k -> new LinkedHashSet<>()).add(d.getQuestionId());
+				if (Integer.valueOf(1).equals(d.getIsCorrect())) {
+					correctBySection.computeIfAbsent(sid, k -> new LinkedHashSet<>()).add(d.getQuestionId());
+				}
+			}
+		}
+		views.forEach(v -> {
+			v.setAnsweredCount(answeredBySection.getOrDefault(v.getId(), Collections.emptySet()).size());
+			v.setCorrectCount(correctBySection.getOrDefault(v.getId(), Collections.emptySet()).size());
 		});
 	}
 
@@ -1497,7 +1652,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		rc.setKnowledgePointId(kpId);
 		rc.setSectionId(record == null ? null : record.getSectionId());
 		rc.setSubjectId(resolveSubjectId(kpId, record == null ? null : record.getSectionId()));
-		rc.setRefId(detail.getId());
+		rc.setRefId("wrong:" + request.getQuestionId());
 		try {
 			StudentPreviewCompleteView reward = rewardService.settle(rc);
 			view.setCoins(reward.getCoins());
@@ -1543,10 +1698,11 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	/** 积分规则展示顺序。 */
 	private static final String[] RULE_ACTIONS = { StudentRewardConstants.ACTION_PREVIEW,
 			StudentRewardConstants.ACTION_PRACTICE, StudentRewardConstants.ACTION_TRIAL,
-			StudentRewardConstants.ACTION_TRIAL_BONUS, StudentRewardConstants.ACTION_WRONG_CORRECT,
-			StudentRewardConstants.ACTION_WEAK_CONQUER, StudentRewardConstants.ACTION_DAILY_KP,
-			StudentRewardConstants.ACTION_DAILY_WRONG, StudentRewardConstants.ACTION_DAILY_TIME,
-			StudentRewardConstants.ACTION_CHAPTER_STAGE };
+			StudentRewardConstants.ACTION_TRIAL_BONUS, StudentRewardConstants.ACTION_KP_MASTER,
+			StudentRewardConstants.ACTION_WRONG_CORRECT, StudentRewardConstants.ACTION_WEAK_CONQUER,
+			StudentRewardConstants.ACTION_DAILY_CHECKIN, StudentRewardConstants.ACTION_TASK_DONE,
+			StudentRewardConstants.ACTION_DAILY_KP, StudentRewardConstants.ACTION_DAILY_WRONG,
+			StudentRewardConstants.ACTION_DAILY_TIME, StudentRewardConstants.ACTION_CHAPTER_STAGE };
 
 	/**
 	 * 生成首页积分引导项。
@@ -1638,20 +1794,70 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	}
 
 	/**
-	 * 生成 8 位唯一学号：随机 [10000000, 99999999]，与已有学号冲突则重新生成，
-	 * 最多重试 {@value #STUDENT_NO_RETRY_TIMES} 次（数据库唯一索引 uk_student_no 兜底）。
+	 * 生成「字母 + 6 位数字」的唯一学号：从 a000001 起顺序递增
+	 * （a000001 → a000002 → … → a999999 → b000001 → …），冲突自动顺延，
+	 * 数据库唯一索引 uk_student_no 兜底。
 	 *
 	 * @return 唯一学号
 	 */
 	private String generateUniqueStudentNo() {
+		String candidate = nextStudentNo(findMaxStudentNo());
 		for (int i = 0; i < STUDENT_NO_RETRY_TIMES; i++) {
-			String studentNo = String.valueOf(ThreadLocalRandom.current().nextInt(10000000, 100000000));
-			Long existCount = count(Wrappers.<Student>lambdaQuery().eq(Student::getStudentNo, studentNo));
+			Long existCount = count(Wrappers.<Student>lambdaQuery().eq(Student::getStudentNo, candidate));
 			if (existCount == null || existCount == 0) {
-				return studentNo;
+				return candidate;
 			}
+			candidate = incrementStudentNo(candidate);
 		}
 		throw new ValidationException("学号生成失败，请重试");
+	}
+
+	/** 取当前最大字母格式学号（字母 > 数字，降序首条即字母序列最大值）。 */
+	private String findMaxStudentNo() {
+		Student last = getOne(Wrappers.<Student>lambdaQuery()
+				.orderByDesc(Student::getStudentNo)
+				.last("limit 1"), false);
+		return last == null ? null : last.getStudentNo();
+	}
+
+	/** 由当前学号推算下一个；非「字母 + 6 位数字」或为空时从 a000001 开始。 */
+	private String nextStudentNo(String current) {
+		return isLetterStudentNo(current) ? incrementStudentNo(current)
+				: STUDENT_NO_FIRST_LETTER + "000001";
+	}
+
+	/** 学号序号 +1；满 6 位则进位到下一个字母（a999999 → b000001）。 */
+	private String incrementStudentNo(String current) {
+		if (!isLetterStudentNo(current)) {
+			return STUDENT_NO_FIRST_LETTER + "000001";
+		}
+		char letter = current.charAt(0);
+		int seq = Integer.parseInt(current.substring(1));
+		if (seq >= STUDENT_NO_SEQ_MAX) {
+			if (letter >= 'z') {
+				throw new ValidationException("学号已用尽");
+			}
+			return (char) (letter + 1) + "000001";
+		}
+		return letter + String.format("%06d", seq + 1);
+	}
+
+	/** 是否形如「字母 + 6 位数字」的学号（如 a000001）。 */
+	private boolean isLetterStudentNo(String value) {
+		if (value == null || value.length() != 7) {
+			return false;
+		}
+		char letter = value.charAt(0);
+		if (letter < 'a' || letter > 'z') {
+			return false;
+		}
+		for (int i = 1; i < 7; i++) {
+			char digit = value.charAt(i);
+			if (digit < '0' || digit > '9') {
+				return false;
+			}
+		}
+		return true;
 	}
 
 }

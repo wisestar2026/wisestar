@@ -15,8 +15,10 @@ import cn.wisestar.server.service.RewardService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
@@ -27,8 +29,8 @@ import java.util.List;
 /**
  * 学员积分·学币统一结算实现。
  *
- * <p>【核心逻辑】校验行为 → 幂等/7 天防刷判定 → 单科 3000 上限裁剪 → 写行为记录 →
- * 累加学海积分并重算头衔 → 检查每日里程碑。奖励金额只由行为类型决定，与内容配置无关。</p>
+ * <p>【核心逻辑】校验行为 → 学期幂等判定（ref_id 统一加学期前缀）→ 单科 10000 上限裁剪 →
+ * 写行为记录 → 累加学海积分并重算头衔 → 检查每日里程碑。奖励金额只由行为类型决定，与内容配置无关。</p>
  *
  * @author wisestar
  * @date 2026/9/10
@@ -64,24 +66,24 @@ public class RewardServiceImpl implements RewardService {
 			return view;
 		}
 		String semester = StudentRewardConstants.currentSemester();
-
-		// 幂等：同一业务关联ID不重复发放
-		if (StringUtils.hasText(context.getRefId()) && existsRef(context.getUserId(), action, context.getRefId())) {
-			return blocked(view, context.getUserId(), "该奖励已发放");
+		// 学期幂等键：ref_id 统一加学期前缀，使内容型奖励「每学期每内容一次」，跨学期自动可再发
+		String effectiveRef = null;
+		if (StringUtils.hasText(context.getRefId())) {
+			effectiveRef = semester + ":" + context.getRefId();
+			if (effectiveRef.length() > 64) {
+				throw new IllegalArgumentException("奖励幂等键超长：" + effectiveRef);
+			}
 		}
-		// 7 天防刷：同一知识点/目标 7 天内只发一次
-		String targetId = StringUtils.hasText(context.getKnowledgePointId()) ? context.getKnowledgePointId()
-				: context.getSectionId();
-		if (StudentRewardConstants.isTargetBased(action) && StringUtils.hasText(targetId)
-				&& existsWithinDays(context.getUserId(), action, context.getKnowledgePointId(),
-						context.getSectionId(), StudentRewardConstants.ANTI_CHEAT_DAYS)) {
-			return blocked(view, context.getUserId(), "7 天内已获得过该奖励");
+
+		// 幂等：同一学期同一业务关联ID不重复发放
+		if (StringUtils.hasText(effectiveRef) && existsRef(context.getUserId(), action, effectiveRef)) {
+			return blocked(view, context.getUserId(), "该奖励本学期已发放");
 		}
 
 		int baseCoins = reward[0];
 		int basePoints = reward[1];
 
-		// 单科 3000 上限裁剪（只影响学习币，积分照发）
+		// 单科 10000 上限裁剪（只影响学习币，积分照发）
 		int actualCoins = baseCoins;
 		boolean coinsCapped = false;
 		if (StringUtils.hasText(context.getSubjectId()) && baseCoins > 0) {
@@ -122,12 +124,20 @@ public class RewardServiceImpl implements RewardService {
 		record.setKnowledgePointId(context.getKnowledgePointId());
 		record.setSectionId(context.getSectionId());
 		record.setActionType(action);
-		record.setRefId(context.getRefId());
+		record.setRefId(effectiveRef);
 		record.setCoins(actualCoins);
 		record.setPoints(basePoints);
 		record.setSemester(semester);
 		record.setLearnedAt(new Date());
-		learningRecordMapper.insert(record);
+		try {
+			learningRecordMapper.insert(record);
+		}
+		catch (DuplicateKeyException e) {
+			// 并发穿透：唯一索引兜底，回滚本次余额与积分变更，按「已发放」返回
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			log.warn("reward settle duplicate: user={}, action={}, ref={}", context.getUserId(), action, effectiveRef);
+			return blocked(view, context.getUserId(), "该奖励本学期已发放");
+		}
 
 		view.setOk(true);
 		view.setFirstTime(true);
@@ -181,25 +191,6 @@ public class RewardServiceImpl implements RewardService {
 		Long count = learningRecordMapper.selectCount(Wrappers.<UserLearningRecord>lambdaQuery()
 				.eq(UserLearningRecord::getUserId, userId).eq(UserLearningRecord::getActionType, action)
 				.eq(UserLearningRecord::getRefId, refId));
-		return count != null && count > 0;
-	}
-
-	private boolean existsWithinDays(String userId, String action, String kpId, String sectionId, int days) {
-		Date since = Date.from(LocalDate.now().minusDays(days).atStartOfDay(ZoneId.systemDefault()).toInstant());
-		com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<UserLearningRecord> q = Wrappers
-				.<UserLearningRecord>lambdaQuery().eq(UserLearningRecord::getUserId, userId)
-				.eq(UserLearningRecord::getActionType, action)
-				.ge(UserLearningRecord::getLearnedAt, since);
-		if (StringUtils.hasText(kpId)) {
-			q.eq(UserLearningRecord::getKnowledgePointId, kpId);
-		}
-		else if (StringUtils.hasText(sectionId)) {
-			q.eq(UserLearningRecord::getSectionId, sectionId);
-		}
-		else {
-			return false;
-		}
-		Long count = learningRecordMapper.selectCount(q);
 		return count != null && count > 0;
 	}
 

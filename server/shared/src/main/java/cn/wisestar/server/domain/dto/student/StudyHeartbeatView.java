@@ -17,4 +17,7 @@ public class StudyHeartbeatView {
 	/** 本次心跳是否触发生成了当日学习总结 */
 	private Boolean generated;
 
+	/** 在线时长宝箱（当日在线分钟 + 三档状态） */
+	private StudentOnlineChestView onlineChest;
+
 }

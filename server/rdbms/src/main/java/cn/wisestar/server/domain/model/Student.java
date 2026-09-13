@@ -20,7 +20,7 @@ import lombok.EqualsAndHashCode;
 public class Student extends BaseModel {
 
 	/**
-	 * 学号（8 位数字，系统自动生成，全局唯一，登录账号）。
+	 * 学号（字母 + 6 位数字，系统自动生成，全局唯一，登录账号，如 a000001）。
 	 */
 	private String studentNo;
 

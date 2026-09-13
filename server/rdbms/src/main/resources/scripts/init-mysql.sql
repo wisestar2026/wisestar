@@ -1971,7 +1971,7 @@ INSERT INTO `t_template` (`id`, `repo_id`, `serial_no`, `name`, `question_type`,
 -- ----------------------------
 CREATE TABLE `t_student` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
-  `student_no` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学号(8位数字，系统自动生成，全局唯一)',
+  `student_no` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学号(字母+6位数字，系统自动生成，全局唯一，如 a000001)',
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '姓名',
   `age` int DEFAULT NULL COMMENT '年龄',
   `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '联系号码',
@@ -2286,7 +2286,7 @@ CREATE TABLE IF NOT EXISTS `t_subject_semester` (
   `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
   `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID',
   `semester` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学期键',
-  `coins` int DEFAULT '0' COMMENT '本学期该学科学习币(0..3000)',
+  `coins` int DEFAULT '0' COMMENT '本学期该学科学习币(0..10000)',
   `reached_limit` tinyint(1) DEFAULT '0' COMMENT '是否已达单科上限',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `create_by` varchar(64) DEFAULT NULL,
@@ -2316,7 +2316,8 @@ CREATE TABLE IF NOT EXISTS `t_user_learning_record` (
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   PRIMARY KEY (`id`),
   KEY `idx_ulr_user_action` (`user_id`,`action_type`,`knowledge_point_id`,`learned_at`),
-  KEY `idx_ulr_ref` (`user_id`,`action_type`,`ref_id`)
+  KEY `idx_ulr_ref` (`user_id`,`action_type`,`ref_id`),
+  UNIQUE KEY `uk_ulr_user_action_ref` (`user_id`,`action_type`,`ref_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学习行为记录(防刷/奖励)';
 
 -- ============================================================

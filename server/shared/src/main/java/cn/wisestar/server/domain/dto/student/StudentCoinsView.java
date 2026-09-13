@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 学员本学期学习币视图（分学科，单科上限 3000）。
+ * 学员本学期学习币视图（分学科，单科上限 10000）。
  *
  * @author wisestar
  * @date 2026/9/10
@@ -18,7 +18,7 @@ public class StudentCoinsView {
 	private int total;
 
 	/** 单科上限 */
-	private int limit = 3000;
+	private int limit = 10000;
 
 	/** 分科学币 */
 	private List<SubjectCoin> list = new ArrayList<>();

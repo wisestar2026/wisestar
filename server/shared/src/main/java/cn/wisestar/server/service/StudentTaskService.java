@@ -1,6 +1,7 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.student.StudentTaskCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentTaskDTO;
 import cn.wisestar.server.domain.dto.student.StudentTaskPublishDTO;
 import cn.wisestar.server.domain.dto.student.StudentTaskQuery;
@@ -63,5 +64,13 @@ public interface StudentTaskService {
      * @return 任务列表
      */
     List<StudentTaskView> listMyTasks();
+
+    /**
+     * 学员完成一条任务并结算奖励（每学期每任务只发一次）。
+     *
+     * @param taskId 任务 ID
+     * @return 完成结果（含到账学习币）
+     */
+    StudentTaskCompleteView completeTask(String taskId);
 
 }

@@ -6,6 +6,7 @@ import cn.wisestar.server.domain.dto.student.StudyHeartbeatView;
 import cn.wisestar.server.domain.dto.student.StudySummaryView;
 import cn.wisestar.server.domain.model.StudySession;
 import cn.wisestar.server.mapper.StudySessionMapper;
+import cn.wisestar.server.service.OnlineChestService;
 import cn.wisestar.server.service.StudySessionService;
 import cn.wisestar.server.service.StudySummaryService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -41,6 +42,7 @@ public class StudySessionServiceImpl implements StudySessionService {
 
 	private final StudySessionMapper studySessionMapper;
 	private final StudySummaryService studySummaryService;
+	private final OnlineChestService onlineChestService;
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -50,6 +52,7 @@ public class StudySessionServiceImpl implements StudySessionService {
 		if (studentId == null || studentId.isEmpty()) {
 			view.setDurationMs(0L);
 			view.setGenerated(false);
+			view.setOnlineChest(onlineChestService.view(null));
 			return view;
 		}
 
@@ -107,6 +110,7 @@ public class StudySessionServiceImpl implements StudySessionService {
 				}
 			}
 		}
+		view.setOnlineChest(onlineChestService.view(studentId));
 		return view;
 	}
 

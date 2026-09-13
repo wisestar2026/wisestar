@@ -1998,7 +1998,7 @@ INSERT INTO t_template (id, repo_id, serial_no, name, question_type, template, m
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS t_student (
   id varchar(64) NOT NULL COMMENT 'ID',
-  student_no varchar(8) NOT NULL COMMENT '学号(8位数字，系统自动生成，全局唯一)',
+  student_no varchar(8) NOT NULL COMMENT '学号(字母+6位数字，系统自动生成，全局唯一，如 a000001)',
   name varchar(50) NOT NULL COMMENT '姓名',
   age int DEFAULT NULL COMMENT '年龄',
   phone varchar(20) NOT NULL COMMENT '联系号码',
@@ -2311,7 +2311,7 @@ UPDATE t_english_ai_pack SET create_at = created_at WHERE create_at IS NULL AND 
 
 -- ============================================================
 -- 学员积分·学币体系（双轨数值账本）
--- 学海积分：终身、全学科、只作荣誉评价；学习币：分学科、单学期上限 3000、只作商品兑换
+-- 学海积分：终身、全学科、只作荣誉评价；学习币：分学科、单学期上限 10000、只作商品兑换
 -- ============================================================
 CREATE TABLE IF NOT EXISTS t_user_points (
   id varchar(64) NOT NULL,
@@ -2333,7 +2333,7 @@ CREATE TABLE IF NOT EXISTS t_subject_semester (
   user_id varchar(64) NOT NULL COMMENT '学员ID',
   subject_id varchar(64) NOT NULL COMMENT '学科ID(t_subject.id)',
   semester varchar(16) NOT NULL COMMENT '学期键，如 2026-1',
-  coins int DEFAULT 0 COMMENT '本学期该学科学习币(0..3000)',
+  coins int DEFAULT 0 COMMENT '本学期该学科学习币(0..10000)',
   reached_limit tinyint DEFAULT 0 COMMENT '是否已达单科上限',
   create_at timestamp DEFAULT CURRENT_TIMESTAMP,
   create_by varchar(256),
@@ -2365,6 +2365,8 @@ CREATE TABLE IF NOT EXISTS t_user_learning_record (
 );
 CREATE INDEX IF NOT EXISTS idx_ulr_user_action ON t_user_learning_record (user_id, action_type, knowledge_point_id, learned_at);
 CREATE INDEX IF NOT EXISTS idx_ulr_ref ON t_user_learning_record (user_id, action_type, ref_id);
+-- 学期幂等兜底：同一学员同一行为同一 ref_id 只允许一条记录
+CREATE UNIQUE INDEX IF NOT EXISTS uk_ulr_user_action_ref ON t_user_learning_record (user_id, action_type, ref_id);
 
 -- ============================================================
 -- 学员薄弱点·学习结果评价体系

@@ -73,4 +73,13 @@ public class SectionView {
 	/** 是否锁定（上一小节开启解锁开关且未通关时为 true） */
 	private Boolean locked;
 
+	/** 该小节可练习题目总数（绑定题库 + 知识点绑定/标签匹配，去重） */
+	private Integer questionCount;
+
+	/** 学员在该小节已作答的不同题目数 */
+	private Integer answeredCount;
+
+	/** 学员在该小节答对的不同题目数 */
+	private Integer correctCount;
+
 }

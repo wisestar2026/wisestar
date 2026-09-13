@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.student.StudentTaskCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentTaskDTO;
 import cn.wisestar.server.domain.dto.student.StudentTaskPublishDTO;
 import cn.wisestar.server.domain.dto.student.StudentTaskQuery;
@@ -95,6 +96,18 @@ public class StudentTaskApi {
     @PreAuthorize("isAuthenticated()")
     public List<StudentTaskView> listMyTasks() {
         return taskService.listMyTasks();
+    }
+
+    /**
+     * 学员端：完成一条任务并结算学习币。
+     *
+     * @param id 任务 ID
+     * @return 完成结果（含到账学习币）
+     */
+    @PostMapping("/complete")
+    @PreAuthorize("isAuthenticated()")
+    public StudentTaskCompleteView completeTask(@RequestParam String id) {
+        return taskService.completeTask(id);
     }
 
 }

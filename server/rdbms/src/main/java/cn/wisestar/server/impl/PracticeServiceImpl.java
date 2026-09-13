@@ -283,19 +283,22 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		// 4.2 积分·学币结算（练习/试炼；异常不阻断交卷）
 		int rate = details.isEmpty() ? 0 : (int) Math.round(correctCount * 100.0 / details.size());
 		boolean trial = "trial".equalsIgnoreCase(request.getMode());
+		// 内容幂等目标：优先知识点，其次小节，使同一内容每学期只发一次
+		String targetId = StringUtils.hasText(record.getKnowledgePointId()) ? record.getKnowledgePointId()
+				: record.getSectionId();
 		RewardContext rc = new RewardContext();
 		rc.setUserId(userId);
 		rc.setActionType(trial ? StudentRewardConstants.ACTION_TRIAL : StudentRewardConstants.ACTION_PRACTICE);
 		rc.setSubjectId(resolveSubjectId(record.getKnowledgePointId(), record.getSectionId()));
 		rc.setKnowledgePointId(record.getKnowledgePointId());
 		rc.setSectionId(record.getSectionId());
-		rc.setRefId(record.getId());
+		rc.setRefId((trial ? "trial:" : "practice:") + targetId);
 		rc.setDurationMs(record.getDurationMs());
 		rc.setCorrectRate(rate);
 		cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView reward = null;
 		try {
 			reward = rewardService.settle(rc);
-			// 试炼优秀额外奖励（正确率≥90%），独立幂等键
+			// 试炼优秀额外奖励（正确率≥90%），独立学期幂等键
 			if (trial && rate >= StudentRewardConstants.TRIAL_BONUS_RATE) {
 				RewardContext bonusCtx = new RewardContext();
 				bonusCtx.setUserId(userId);
@@ -303,7 +306,7 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 				bonusCtx.setSubjectId(rc.getSubjectId());
 				bonusCtx.setKnowledgePointId(record.getKnowledgePointId());
 				bonusCtx.setSectionId(record.getSectionId());
-				bonusCtx.setRefId(record.getId() + ":bonus");
+				bonusCtx.setRefId("trial_bonus:" + targetId);
 				cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView bonus = rewardService.settle(bonusCtx);
 				if (bonus != null && bonus.isOk()) {
 					reward.setCoins(reward.getCoins() + bonus.getCoins());

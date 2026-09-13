@@ -35,7 +35,7 @@ import java.util.List;
 /**
  * 学员管理服务（学员管理模块）。
  *
- * <p><b>定位</b>：学员主数据 CRUD。新增学员时自动生成 8 位学号并创建
+ * <p><b>定位</b>：学员主数据 CRUD。新增学员时自动生成「字母 + 6 位数字」学号并创建
  * 学员登录账号（t_account，user_type=Student，初始密码 123456）。</p>
  *
  * @author wisestar
@@ -216,7 +216,7 @@ public interface StudentService {
 	StudentPointsView points();
 
 	/**
-	 * 本学期学习币（分学科 + 手动发币合计，单科上限 3000）。
+	 * 本学期学习币（分学科 + 手动发币合计，单科上限 10000）。
 	 */
 	StudentCoinsView coins();
 

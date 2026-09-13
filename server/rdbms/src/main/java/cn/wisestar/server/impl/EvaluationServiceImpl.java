@@ -133,6 +133,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 		KpContext ctx = resolveContext(knowledgePointId, null);
 		String subjectId = ctx == null ? null : ctx.subjectId;
 		recordConquerRate(userId, knowledgePointId, ctx, correctRate);
+		settleKpMaster(userId, ctx, knowledgePointId);
 		markConquered(userId, subjectId, knowledgePointId);
 		if (StringUtils.hasText(subjectId)) {
 			checkChapterStage(userId, subjectId);
@@ -267,6 +268,34 @@ public class EvaluationServiceImpl implements EvaluationService {
 				markConquered(userId, subjectId, kpId);
 			}
 		}
+		// 掌握度达精通即「消灭知识点」，每学期每知识点结算一次
+		settleKpMaster(userId, ctx, kpId);
+	}
+
+	/**
+	 * 掌握度达精通（≥85）时结算「消灭知识点」奖励，按 {@code {semester}:master:{kpId}} 幂等。
+	 */
+	private void settleKpMaster(String userId, KpContext ctx, String kpId) {
+		if (ctx == null || !StringUtils.hasText(ctx.subjectId)) {
+			return;
+		}
+		UserKnowledgeProgress p = findProgress(userId, ctx, kpId);
+		int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
+		if (mastery < StudentRewardConstants.MASTER_THRESHOLD) {
+			return;
+		}
+		try {
+			RewardContext rc = new RewardContext();
+			rc.setUserId(userId);
+			rc.setSubjectId(ctx.subjectId);
+			rc.setKnowledgePointId(kpId);
+			rc.setActionType(StudentRewardConstants.ACTION_KP_MASTER);
+			rc.setRefId("master:" + kpId);
+			rewardService.settle(rc);
+		}
+		catch (Exception e) {
+			log.warn("kp master reward failed: user={}, kp={}", userId, kpId, e);
+		}
 	}
 
 	private void markConquered(String userId, String subjectId, String kpId) {
@@ -298,7 +327,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 				rc.setSubjectId(subjectId);
 				rc.setKnowledgePointId(kpId);
 				rc.setActionType(StudentRewardConstants.ACTION_WEAK_CONQUER);
-				rc.setRefId(kpId);
+				rc.setRefId("weak:" + kpId);
 				rewardService.settle(rc);
 			}
 			catch (Exception e) {
@@ -310,7 +339,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 	/**
 	 * 章节阶段里程碑：按学科累计「达标章节数」（掌握度 ≥55 的不同章节）结算 1..6 阶段奖励。
 	 *
-	 * <p>以 {@code ref_id={subjectId}:{stage}} 终身幂等，补齐所有已达成阶段，教学内容调整不重复发放也不追回。</p>
+	 * <p>以 {@code {semester}:chapter_stage:{subjectId}:{stage}} 学期幂等，补齐所有已达成阶段，教学内容调整不重复发放也不追回。</p>
 	 */
 	private void checkChapterStage(String userId, String subjectId) {
 		if (!StringUtils.hasText(subjectId)) {
@@ -331,7 +360,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 				rc.setSubjectId(subjectId);
 				rc.setActionType(StudentRewardConstants.ACTION_CHAPTER_STAGE);
 				rc.setStage(stage);
-				rc.setRefId(subjectId + ":" + stage);
+				rc.setRefId("chapter_stage:" + subjectId + ":" + stage);
 				rewardService.settle(rc);
 			}
 			catch (Exception e) {

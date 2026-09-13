@@ -1,7 +1,11 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.constant.StudentRewardConstants;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.student.RewardContext;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.domain.dto.student.StudentTaskCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentTaskDTO;
 import cn.wisestar.server.domain.dto.student.StudentTaskPublishDTO;
 import cn.wisestar.server.domain.dto.student.StudentTaskQuery;
@@ -10,12 +14,14 @@ import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.StudentTask;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.StudentTaskMapper;
+import cn.wisestar.server.service.RewardService;
 import cn.wisestar.server.service.StudentTaskService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.validation.ValidationException;
 import java.text.SimpleDateFormat;
@@ -52,6 +58,8 @@ public class StudentTaskServiceImpl implements StudentTaskService {
 
     private final StudentTaskMapper studentTaskMapper;
     private final StudentMapper studentMapper;
+    private final StudentSubjectResolver subjectResolver;
+    private final RewardService rewardService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -220,6 +228,59 @@ public class StudentTaskServiceImpl implements StudentTaskService {
                 .orderByAsc(StudentTask::getCreateTime)
         );
         return toViews(tasks);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public StudentTaskCompleteView completeTask(String taskId) {
+        String studentId = SecurityContextUtils.getUserId();
+        if (!StringUtils.hasText(studentId)) {
+            throw new ValidationException("当前用户不是学员");
+        }
+        if (!StringUtils.hasText(taskId)) {
+            throw new ValidationException("任务 ID 不能为空");
+        }
+        StudentTask task = studentTaskMapper.selectById(taskId);
+        if (task == null || !studentId.equals(task.getStudentId())) {
+            throw new ValidationException("任务不存在");
+        }
+        StudentTaskCompleteView view = new StudentTaskCompleteView();
+        view.setOk(true);
+        view.setTaskId(taskId);
+        view.setStatus("completed");
+        if ("completed".equals(task.getStatus())) {
+            view.setFirstTime(false);
+            view.setCoins(0);
+            view.setMessage("任务已完成");
+            return view;
+        }
+        task.setStatus("completed");
+        studentTaskMapper.updateById(task);
+
+        String subject = subjectResolver.firstActiveSubject(studentId);
+        if (!StringUtils.hasText(subject)) {
+            view.setMessage("任务已完成（当前无有效学科权限，未发放学习币）");
+            return view;
+        }
+        RewardContext rc = new RewardContext();
+        rc.setUserId(studentId);
+        rc.setSubjectId(subject);
+        rc.setActionType(StudentRewardConstants.ACTION_TASK_DONE);
+        rc.setRefId("task:" + taskId);
+        StudentPreviewCompleteView settled = rewardService.settle(rc);
+        view.setFirstTime(settled.isFirstTime());
+        view.setCoins(settled.getCoins());
+        view.setCoinsCapped(settled.isCoinsCapped());
+        if (!settled.isFirstTime()) {
+            view.setMessage("该任务奖励本学期已发放");
+        }
+        else if (settled.isCoinsCapped()) {
+            view.setMessage(settled.getMessage());
+        }
+        else {
+            view.setMessage("任务完成，学习币 +" + settled.getCoins());
+        }
+        return view;
     }
 
     /**

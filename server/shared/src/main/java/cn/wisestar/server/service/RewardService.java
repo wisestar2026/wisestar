@@ -6,7 +6,7 @@ import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 /**
  * 学员积分·学币统一结算服务。
  *
- * <p>所有奖励的合法性校验、7 天防刷、单科 3000 上限、头衔晋升均在本服务内完成；
+ * <p>所有奖励的合法性校验、学期幂等、单科 10000 上限、头衔晋升均在本服务内完成；
  * 调用方只负责传入行为上下文并展示结果。</p>
  *
  * @author wisestar

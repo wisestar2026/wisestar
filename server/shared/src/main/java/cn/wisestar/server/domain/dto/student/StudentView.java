@@ -16,7 +16,7 @@ public class StudentView {
 	private String id;
 
 	/**
-	 * 学号（8 位数字，系统自动生成，即登录账号）。
+	 * 学号（字母 + 6 位数字，系统自动生成，即登录账号，如 a000001）。
 	 */
 	private String studentNo;
 
