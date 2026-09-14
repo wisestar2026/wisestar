@@ -972,6 +972,13 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                                     .anyMatch(x -> x != null && x.contains(kp)))
                     .collect(Collectors.toList());
         }
+        if (request.getTag() != null && request.getTag().length > 0) {
+            List<String> wantedTags = Arrays.asList(request.getTag());
+            questions = questions.stream()
+                    .filter(t -> t.getTag() != null
+                            && Arrays.stream(t.getTag()).anyMatch(wantedTags::contains))
+                    .collect(Collectors.toList());
+        }
         return questions;
     }
 

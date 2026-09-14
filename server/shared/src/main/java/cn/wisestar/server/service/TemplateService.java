@@ -94,6 +94,17 @@ public interface TemplateService {
 	Set<String> getTags(TagQuery query);
 
 	/**
+	 * 查询题目模板的全部标签（题目管理页「按标签筛选」下拉选项，去重）。
+	 *
+	 * <p>与 {@link #getTags(TagQuery)} 的区别：本方法针对普通题型（非 Survey 问卷题）的
+	 * 模板标签，来源为 t_tag（category=template），与 listTemplate 的 tag 过滤使用同一数据源，
+	 * 保证下拉里出现的标签一定能筛到题目。</p>
+	 *
+	 * @return 去重后的模板标签集合（按字典序）
+	 */
+	Set<String> listTemplateTags();
+
+	/**
 	 * 获取模板详情。
 	 *
 	 * @param query 查询条件（含模板 id，见 {@link TemplateQuery}）

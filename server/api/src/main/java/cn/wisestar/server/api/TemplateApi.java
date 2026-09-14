@@ -225,4 +225,28 @@ public class TemplateApi {
 		return templateService.getTags(query);
 	}
 
+	/**
+	 * 题目管理页获取全部题目标签（「按标签筛选」下拉选项）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/template/listTemplateTag
+	 * （如 /api/template/listTemplateTag）。</p>
+	 *
+	 * <p><b>功能</b>：返回普通题型（非 Survey 问卷题）模板使用过的全部标签（去重），
+	 * 供题目管理页「按标签筛选」下拉使用；与 /template/list 的 tag 过滤同源，保证能筛到题目。</p>
+	 *
+	 * <p><b>请求参数</b>：无。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@code Set<String>}（去重标签集合，按字典序）。</p>
+	 *
+	 * <p><b>权限</b>：无 @PreAuthorize 注解（与同处 /listCategory、/listTag 一致）。</p>
+	 *
+	 * <p><b>调用的下层 Service</b>：{@link TemplateService#listTemplateTags()}。</p>
+	 *
+	 * @return 模板标签集合
+	 */
+	@GetMapping("/listTemplateTag")
+	public Set<String> listTemplateTags() {
+		return templateService.listTemplateTags();
+	}
+
 }

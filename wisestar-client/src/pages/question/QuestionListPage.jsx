@@ -13,7 +13,7 @@
  * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"题目管理"菜单进入
  *
  * 筛选维度说明（重点）:
- *   支持"学科 / 年级 / 章节 / 小节 / 难度 / 知识点"六维筛选（加上题型、练习、名称共 9 个条件），
+ *   支持"学科 / 年级 / 章节 / 小节 / 难度 / 知识点"六维筛选（加上题型、练习、名称、标签共 10 个条件），
  *   全部通过 GET /api/template/list 的 query 参数下发给后端做 AND 组合查询。
  *   知识点属性字段在题目对象上的来源（两处均可能）:
  *     - 顶层字段: record.subject / record.grade / record.chapter / record.section /
@@ -42,7 +42,7 @@ import {
   ExportOutlined, SearchOutlined, PictureOutlined, CheckCircleOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { listTemplate, createTemplate, updateTemplate, deleteTemplate } from '../../api/template';
+import { listTemplate, createTemplate, updateTemplate, deleteTemplate, listTemplateTag } from '../../api/template';
 import { listRepo, exportTemplate } from '../../api/repo';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
 import ImportModal from '../../components/question/ImportModal';
@@ -72,6 +72,8 @@ export default function QuestionListPage() {
   const [filterSection, setFilterSection] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState(undefined);
   const [filterKnowledgePoint, setFilterKnowledgePoint] = useState('');
+  const [filterTag, setFilterTag] = useState(undefined);  // 标签筛选（如「含图片」）
+  const [tagOptions, setTagOptions] = useState([]);       // 全部题目标签（供筛选下拉）
   const [repos, setRepos] = useState([]);               // 全量练习列表（供筛选下拉）
   const [allReposCache, setAllReposCache] = useState([]); // 编辑弹窗用的练习列表（全量）
 
@@ -96,8 +98,18 @@ export default function QuestionListPage() {
     })();
   }, []);
 
+  // ---- 加载全部题目标签（供「按标签筛选」下拉） ----
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await listTemplateTag();
+        setTagOptions(res.data || []);
+      } catch { /* silent */ }
+    })();
+  }, []);
+
   // ---- 加载题目列表 ----
-  // 核心查询函数: 把 8 个筛选条件组装进 params 后调用 GET /api/template/list
+  // 核心查询函数: 把各筛选条件组装进 params 后调用 GET /api/template/list
   // 所有条件都为 AND 关系（由后端 SQL 组合查询）
   const fetchData = useCallback(async (p = page) => {
     setLoading(true);
@@ -112,6 +124,7 @@ export default function QuestionListPage() {
       if (filterSection.trim()) params.section = filterSection.trim();     // 小节过滤
       if (filterDifficulty) params.difficulty = filterDifficulty;          // 难度过滤（easy/medium/hard）
       if (filterKnowledgePoint.trim()) params.knowledgePoint = filterKnowledgePoint.trim(); // 知识点过滤
+      if (filterTag) params.tag = filterTag;                               // 标签过滤（如 含图片）
       const res = await listTemplate(params);
       setData(res.data?.list || []);
       setTotal(res.data?.total || 0);
@@ -120,10 +133,10 @@ export default function QuestionListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 任一筛选条件 / 页码变化时自动重新拉取（输入框 onChange 同时 setPage(1) 保证从首页开始）
-  useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, fetchData]);
+  useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, fetchData]);
 
   // ---- 新建 ----
   // editRecord 置 null → 弹窗进入"新建模式"（清空表单）
@@ -200,6 +213,7 @@ export default function QuestionListPage() {
       section: filterSection.trim() || undefined,
       difficulty: filterDifficulty,
       knowledgePoint: filterKnowledgePoint.trim() || undefined,
+      tag: filterTag,
     });
     message.info('正在导出...');
   };
@@ -446,11 +460,22 @@ export default function QuestionListPage() {
           style={{ width: 140 }}
           allowClear
         />
+        {/* 标签筛选（如「含图片」），选项来自全部题目标签 */}
+        <Select
+          value={filterTag}
+          onChange={(v) => { setFilterTag(v); setPage(1); }}
+          placeholder="按标签筛选"
+          allowClear
+          showSearch
+          optionFilterProp="label"
+          style={{ width: 140 }}
+          options={tagOptions.map((t) => ({ label: t, value: t }))}
+        />
         {/* 重置: 清空全部筛选条件并回到第 1 页 */}
         <Button icon={<ReloadOutlined />} onClick={() => {
           setKeyword(''); setFilterType(undefined); setFilterRepoId(undefined);
           setFilterSubject(''); setFilterGrade(''); setFilterChapter(''); setFilterSection('');
-          setFilterDifficulty(undefined); setFilterKnowledgePoint('');
+          setFilterDifficulty(undefined); setFilterKnowledgePoint(''); setFilterTag(undefined);
           setPage(1);
         }}>
           重置

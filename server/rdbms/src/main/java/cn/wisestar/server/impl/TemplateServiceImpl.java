@@ -1,13 +1,16 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.constant.TagCategoryEnum;
 import cn.wisestar.server.core.uitls.ContextHelper;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.*;
 import cn.wisestar.server.domain.mapper.TemplateViewMapper;
 import cn.wisestar.server.domain.model.Repo;
+import cn.wisestar.server.domain.model.Tag;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.UserBook;
+import cn.wisestar.server.mapper.TagMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.TemplateService;
@@ -63,6 +66,11 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
      * MapStruct 转换器：Template ↔ TemplateView ↔ TemplateRequest。
      */
     private final TemplateViewMapper templateViewMapper;
+
+    /**
+     * 标签表 Mapper：查询题目模板标签集合（题目管理页「按标签筛选」下拉选项）。
+     */
+    private final TagMapper tagMapper;
 
     /**
      * 错题本服务：getTemplate 时回填当前用户对该题的错题信息（@Lazy 延迟注入，
@@ -232,6 +240,26 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
                 tags.addAll(Arrays.asList(x.getTag()));
             }
         });
+        return tags;
+    }
+
+    /**
+     * 查询题目模板的全部标签（题目管理页「按标签筛选」下拉选项）。
+     *
+     * @return 去重后的模板标签集合（按字典序）
+     * @implNote 数据源为 t_tag 且 category=template，与 listTemplate 的 tag 过滤一致
+     * （该过滤通过 t_tag exists 子查询实现），保证下拉选项都能筛到题目。
+     */
+    @Override
+    public Set<String> listTemplateTags() {
+        Set<String> tags = new TreeSet<>();
+        tagMapper.selectList(Wrappers.<Tag>lambdaQuery()
+                .select(Tag::getName)
+                .eq(Tag::getCategory, TagCategoryEnum.template.name())).forEach(t -> {
+                    if (hasText(t.getName())) {
+                        tags.add(t.getName());
+                    }
+                });
         return tags;
     }
 

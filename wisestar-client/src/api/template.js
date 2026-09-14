@@ -47,6 +47,16 @@ export async function listTemplate(params) {
 }
 
 /**
+ * 查询题目模板的全部标签（题目管理页「按标签筛选」下拉选项）
+ * 后端接口: GET /api/template/listTemplateTag
+ * @returns {Object} data: string[]（去重标签集合，按字典序）
+ * 调用方: QuestionListPage（加载标签筛选项）
+ */
+export async function listTemplateTag() {
+  return request.get('/template/listTemplateTag');
+}
+
+/**
  * 获取单个题目
  * 后端接口: GET /api/template/get
  * @param {Object} params - { id: "题目ID" }
