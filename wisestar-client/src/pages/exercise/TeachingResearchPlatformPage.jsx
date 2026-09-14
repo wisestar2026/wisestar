@@ -26,6 +26,7 @@ import { updateTemplate } from '../../api/template';
 import NodeEditModal from '../../components/research/NodeEditModal';
 import AddQuestionModal from '../../components/research/AddQuestionModal';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
+import { extractCorrectAnswers, formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './TeachingResearchPlatformPage.css';
 
 const TYPE_LABELS = {
@@ -72,28 +73,6 @@ function stripImagePlaceholders(text) {
   return String(text || '').replace(/\{\{IMG:[^}]+\}\}/g, '').replace(/\s{2,}/g, ' ').trim();
 }
 
-const CHOICE_TYPES = new Set(['Radio', 'Checkbox', 'Select']);
-
-/** 答案展示：多空填空逐空列出；选择题把选项 id 映射为 A/B/C 后展示 */
-function buildAnswerText(qtype, raw, options) {
-  if (raw === undefined || raw === null || raw === '') return '';
-  if (qtype === 'MultipleBlank') {
-    return String(raw).split('|').map((p, i) => `空${i + 1}：${p}`).join('；');
-  }
-  if (CHOICE_TYPES.has(qtype) && options && options.length) {
-    return String(raw)
-      .split(/[|,，、]/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((p) => {
-        const idx = options.findIndex((o) => o.id === p);
-        return idx >= 0 ? String.fromCharCode(65 + idx) : p;
-      })
-      .join('、');
-  }
-  return String(raw);
-}
-
 /* ---------- 题目 Label（标签式面板，答案显隐状态独立） ---------- */
 function ResearchQuestionCard({ q, onEdit, action }) {
   const [show, setShow] = useState(false);
@@ -109,7 +88,8 @@ function ResearchQuestionCard({ q, onEdit, action }) {
   const images = Array.isArray(attr.examImages) ? attr.examImages.filter(Boolean) : [];
   const placeholders = imagePlaceholders(stemRaw);
   const hasImage = images.length > 0 || placeholders.length > 0;
-  const answerText = buildAnswerText(qtype, attr.examCorrectAnswer, options);
+  // 标准答案兼容整题级与选项级：编辑器写入根 attribute，历史导入题把答案标记在正确选项的 attribute 上
+  const answerText = formatCorrectAnswers(qtype, extractCorrectAnswers({ template: schema }) || []);
 
   return (
     <div className="trp-lbl">

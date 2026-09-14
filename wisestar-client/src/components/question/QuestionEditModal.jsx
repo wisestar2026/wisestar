@@ -154,12 +154,20 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         setAnswer('');
       } else {
         setBlanks(['', '']);
+        // 选项级答案兜底：部分历史/导入题把正确答案标记在正确选项的 attribute.examCorrectAnswer 上，
+        // 根 attribute 为空时据此回填，避免「打开即空、保存丢答案」（保存会归一化写回根 attribute）
+        const optionLevelAnswers = (tmpl?.children || [])
+          .filter((c) => c?.attribute?.examCorrectAnswer && String(c.attribute.examCorrectAnswer).trim())
+          .map((c) => c.title)
+          .filter(Boolean);
         // 多选题正确答案为多选（存 \n 分隔字符串，回填时拆分为数组）
         // 为什么这么写: 后端 examCorrectAnswer 是单字符串字段，多选答案以 \n 连接；
         // 回填时必须 split 还原为数组，才能正确渲染 Select mode="multiple"
         setAnswer(qType === 'Checkbox'
-          ? (attr.examCorrectAnswer ? String(attr.examCorrectAnswer).split('\n').filter(Boolean) : [])
-          : (attr.examCorrectAnswer || ''));
+          ? (attr.examCorrectAnswer
+            ? String(attr.examCorrectAnswer).split('\n').filter(Boolean)
+            : optionLevelAnswers)
+          : (attr.examCorrectAnswer || optionLevelAnswers[0] || ''));
       }
       setAnalysis(attr.examAnalysis || '');
       setScore(attr.examScore || 5);
