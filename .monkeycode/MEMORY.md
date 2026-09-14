@@ -124,4 +124,12 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 导出前必须先停预览后端：H2 文件库单进程独占；不要启用 AUTO_SERVER（本容器主机名为 UUID，`InetAddress.getLocalHost()` 解析失败会导致启动直接报错）
   - 约定流程：每次会话结束前「停后端 → 跑 server/db-export.sh → git add 快照并提交」，新环境用 server/start-preview.sh 启动即自动恢复
   - 判断后端是否在跑不要用 `pgrep -f 'wisestar-v1.9.0.jar'`（会误匹配正在执行该命令的 shell），改用 `ps -eo args | grep -E '[j]ava .*wisestar-v1\.9\.0\.jar'`
+  - 种子脚本改动后如需立即在预览库生效：停后端 → 用 H2 `RunScript` 把增量 SQL 应用到 live 库（`java -cp ~/.m2/repository/com/h2database/h2/<ver>/h2-*.jar org.h2.tools.RunScript -url 'jdbc:h2:file:./wisestar;MODE=MySQL;DATABASE_TO_LOWER=TRUE' -user sa -password '' -script x.sql`，工作目录 `server/api`）→ 再按上面流程重导快照；H2 对 INSERT 的列数不匹配会静默使整条语句失败（曾致 `t_chapter` 全量未入库），核对列估值务必对齐
+
+[回复语言行为指令]
+- Date: 2026-09-13
+- Context: 用户明确要求后续反馈使用中文
+- Category: 工作流协作
+- Instructions:
+  - 所有面向用户的反馈、结果汇报、提问与总结一律用中文输出
 
