@@ -261,6 +261,7 @@ public class StudentApi {
 	 * @param questionId        题目ID（单题重做数据源，优先于其他来源）
 	 * @param count             返回题目数量（为空=返回绑定内容全部题目，显式传值时上限 50）
 	 * @param perKp             每个知识点抽取题数（可空）
+	 * @param groupByKp         是否按知识点分组全量出题（专项练习「尽可能多且全覆盖」；可空）
 	 * @param types             题型过滤（逗号分隔，可选）
 	 * @param difficulty        难度过滤（可选）
 	 * @param random            是否随机排序
@@ -277,6 +278,7 @@ public class StudentApi {
 			@RequestParam(required = false) String questionId,
 			@RequestParam(required = false) Integer count,
 			@RequestParam(required = false) Integer perKp,
+			@RequestParam(required = false) Boolean groupByKp,
 			@RequestParam(required = false) List<String> types,
 			@RequestParam(required = false) String difficulty,
 			@RequestParam(required = false) Boolean random,
@@ -289,8 +291,8 @@ public class StudentApi {
 		if (knowledgePointId != null && !knowledgePointId.isEmpty() && !kpIds.contains(knowledgePointId)) {
 			kpIds.add(knowledgePointId);
 		}
-		return studentService.studyQuestions(sectionId, kpIds, repoId, questionId, count, perKp, types, difficulty,
-				random, exposeAnswer, usage);
+		return studentService.studyQuestions(sectionId, kpIds, repoId, questionId, count, perKp, groupByKp, types,
+				difficulty, random, exposeAnswer, usage);
 	}
 
 	/**

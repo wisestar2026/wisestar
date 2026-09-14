@@ -166,7 +166,10 @@ public interface StudentService {
 	 *
 	 * <p>题目来源可组合：sectionId → 小节绑定题库题目；knowledgePointIds → 知识点绑定题目并集；
 	 * repoId → 题库直练。按题型/难度过滤。count 为空时返回全部命中题目；显式传 count 时按指定数量返回（上限 50）。
-	 * perKp 有值时按每个知识点抽取指定题数（专项练习多知识点场景）。</p>
+	 * perKp 有值时按每个知识点抽取指定题数（专项练习多知识点场景）。
+	 * groupByKp=true 时按知识点分组全量出题（专项练习「尽可能多且全覆盖」）；
+	 * 显式传 count 时按知识点覆盖优先分配题量（每知识点保底 1 题，余量轮询）；
+	 * 小节通关（usage=trial）排除本小节已做过的题；章节测评小节（名称含「章节测评」）以本章全部知识点为范围且允许重复。</p>
 	 *
 	 * @param sectionId        小节ID（小节练习数据源）
 	 * @param knowledgePointIds 知识点ID集合（专项练习多选，可空）
@@ -174,6 +177,7 @@ public interface StudentService {
 	 * @param questionId       题目ID（单题重做数据源，优先于其他来源）
 	 * @param count            返回题目数量（为空=全部，上限 50）
 	 * @param perKp            每个知识点抽取题数（可空）
+	 * @param groupByKp        是否按知识点分组全量出题（专项练习；可空）
 	 * @param types            题型过滤（可选）
 	 * @param difficulty       难度过滤（可选）
 	 * @param random           是否随机排序
@@ -183,7 +187,7 @@ public interface StudentService {
 	 * @return 题目列表；无数据返回空列表
 	 */
 	List<StudentQuestionView> studyQuestions(String sectionId, List<String> knowledgePointIds, String repoId,
-			String questionId, Integer count, Integer perKp, List<String> types, String difficulty,
+			String questionId, Integer count, Integer perKp, Boolean groupByKp, List<String> types, String difficulty,
 			Boolean random, Boolean exposeAnswer, String usage);
 
 	/**

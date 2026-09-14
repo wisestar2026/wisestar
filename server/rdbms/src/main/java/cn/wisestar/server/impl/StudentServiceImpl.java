@@ -105,6 +105,7 @@ import org.springframework.util.StringUtils;
 import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Date;
 import java.time.LocalDate;
@@ -151,6 +152,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	/** 学号序号上限（6 位，000001-999999，满则进位到下一字母）。 */
 	private static final int STUDENT_NO_SEQ_MAX = 999999;
+
+	/** 章节测评小节名称标记（名称含该字样的章节小节以整章知识点为出题范围）。 */
+	private static final String CHAPTER_ASSESSMENT_SECTION_NAME = "章节测评";
 
 	private final StudentViewMapper studentViewMapper;
 
@@ -787,11 +791,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	@Override
 	public List<StudentQuestionView> studyQuestions(String sectionId, List<String> knowledgePointIds, String repoId,
-			String questionId, Integer count, Integer perKp, List<String> types, String difficulty,
+			String questionId, Integer count, Integer perKp, Boolean groupByKp, List<String> types, String difficulty,
 			Boolean random, Boolean exposeAnswer, String usage) {
 		boolean expose = Boolean.TRUE.equals(exposeAnswer);
-		List<String> kpIds = knowledgePointIds == null ? Collections.emptyList()
-				: knowledgePointIds.stream().filter(StringUtils::hasText).distinct().collect(Collectors.toList());
+		boolean group = Boolean.TRUE.equals(groupByKp);
+		List<String> kpIds = knowledgePointIds == null ? new ArrayList<>()
+				: knowledgePointIds.stream().filter(StringUtils::hasText).distinct()
+						.collect(Collectors.toCollection(ArrayList::new));
 		// 单题重做：仅允许取本人未订正的错题（校验归属，防越权取题）
 		if (StringUtils.hasText(questionId)) {
 			if (findUncorrectedWrong(SecurityContextUtils.getUserId(), questionId) == null) {
@@ -808,6 +814,20 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (!hasQuestionScopePermission(sectionId, kpIds, repoId)) {
 			return Collections.emptyList();
 		}
+		// 章节测评小节（名称含「章节测评」）：以本章全部知识点为出题范围（覆盖整章），
+		// 且允许重复做本章其他小节做过的题（不做小节级去重）
+		boolean chapterAssessment = false;
+		if (StringUtils.hasText(sectionId)) {
+			Section scopeSection = sectionMapper.selectById(sectionId);
+			chapterAssessment = isChapterAssessmentSection(scopeSection);
+			if (chapterAssessment) {
+				for (String chapterKpId : knowledgePointIdsOfChapter(scopeSection.getChapterId())) {
+					if (!kpIds.contains(chapterKpId)) {
+						kpIds.add(chapterKpId);
+					}
+				}
+			}
+		}
 		// 题目 id 集合（题库直练 + 小节绑定题库 + 知识点绑定题目，去重）
 		Set<String> templateIds = new LinkedHashSet<>();
 		// 知识点练习未显式带小节时，按知识点反查所属小节，作为「按知识点标签匹配」的范围
@@ -821,6 +841,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		// 用途场景（preview 预习 / practice 专项 / trial 通关）按做题库用途收敛范围；
 		// usage 为空时不过滤，保持历史行为
 		String usageScope = normalizeUsage(usage);
+		// 小节通关：以本小节全部知识点为范围之一（与绑定题库取并集），保证通关题尽量覆盖知识点；
+		// 章节测评小节不在此列（已在上面按整章知识点聚合）
+		if (!chapterAssessment && "trial".equals(usageScope) && kpIds.isEmpty() && StringUtils.hasText(sectionId)) {
+			knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+							.eq(KnowledgePoint::getSectionId, sectionId))
+					.stream().map(KnowledgePoint::getId).filter(StringUtils::hasText).forEach(kpIds::add);
+		}
 		// 用途约束的题库集合（非空时用于候选集统一过滤，含知识点标签匹配结果）
 		Set<String> usageRepoFilter = null;
 		if (StringUtils.hasText(repoId)) {
@@ -890,62 +917,29 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (templateIds.isEmpty()) {
 			return Collections.emptyList();
 		}
-		// 题型/难度/做题库用途过滤后按策略排序
+		// 小节通关不重复：排除本小节已做过的题（章节测评允许重复做本章题）
+		Set<String> doneQuestionIds = Collections.emptySet();
+		if ("trial".equals(usageScope) && !chapterAssessment && StringUtils.hasText(scopeSectionId)) {
+			doneQuestionIds = loadSectionDoneQuestionIds(SecurityContextUtils.getUserId(), scopeSectionId);
+		}
+		// 题型/难度/做题库用途/已做题目过滤后按策略排序
 		final List<String> typeFilter = types;
 		final Set<String> repoFilter = usageRepoFilter;
+		final Set<String> doneFilter = doneQuestionIds;
 		List<Template> candidates = templateMapper.selectBatchIds(templateIds).stream()
 				.filter(t -> typeFilter == null || typeFilter.isEmpty()
 						|| (t.getQuestionType() != null && typeFilter.contains(t.getQuestionType().name())))
 				.filter(t -> !StringUtils.hasText(difficulty) || difficulty.equals(t.getDifficulty()))
 				.filter(t -> repoFilter == null
 						|| (t.getRepoId() != null && repoFilter.contains(t.getRepoId())))
+				.filter(t -> !doneFilter.contains(t.getId()))
 				.collect(Collectors.toList());
-		if (Boolean.TRUE.equals(random)) {
-			Collections.shuffle(candidates, ThreadLocalRandom.current());
+		if (candidates.isEmpty()) {
+			return Collections.emptyList();
 		}
 		int limit = count == null ? Integer.MAX_VALUE : Math.min(count, 50);
-		List<Template> picked;
 		Map<String, String> assignedKp = new HashMap<>();
-		if (perKp != null && perKp > 0 && !questionsByKp.isEmpty()) {
-			// 以知识点为单位组卷：按知识点顺序分桶，每桶抽取 perKp 题；
-			// 同一题仅归入首个未满桶，避免重复；最终按知识点顺序拼接，保证同知识点题目相邻
-			Map<String, List<Template>> grouped = new LinkedHashMap<>();
-			questionsByKp.keySet().forEach(kpId -> grouped.put(kpId, new ArrayList<>()));
-			Set<String> used = new LinkedHashSet<>();
-			for (Template t : candidates) {
-				if (used.contains(t.getId())) {
-					continue;
-				}
-				for (Map.Entry<String, Set<String>> entry : questionsByKp.entrySet()) {
-					List<Template> bucket = grouped.get(entry.getKey());
-					if (entry.getValue().contains(t.getId()) && bucket.size() < perKp) {
-						bucket.add(t);
-						used.add(t.getId());
-						assignedKp.put(t.getId(), entry.getKey());
-						break;
-					}
-				}
-			}
-			picked = new ArrayList<>();
-			for (List<Template> bucket : grouped.values()) {
-				for (Template t : bucket) {
-					if (picked.size() >= limit) {
-						break;
-					}
-					picked.add(t);
-				}
-				if (picked.size() >= limit) {
-					break;
-				}
-			}
-		}
-		else {
-			picked = candidates.size() <= limit ? candidates : candidates.subList(0, limit);
-		}
-		// 兜底：按知识点分组未取到题（如标签缺失）时，退回整节候选题，避免专项练习空卷
-		if (picked.isEmpty() && perKp != null && perKp > 0) {
-			picked = candidates.size() <= limit ? candidates : candidates.subList(0, limit);
-		}
+		List<Template> picked = pickByCoverage(candidates, questionsByKp, limit, perKp, group, random, assignedKp);
 		return picked.stream().map(t -> {
 			StudentQuestionView view = expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t);
 			if (assignedKp.containsKey(t.getId())) {
@@ -953,6 +947,187 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			}
 			return view;
 		}).collect(Collectors.toList());
+	}
+
+	/**
+	 * 覆盖优先组卷：按知识点分桶分配题量并抽题，保证有题的知识点都被覆盖、题目不重复。
+	 *
+	 * <p>组卷规则：
+	 * <ul>
+	 *   <li>目标题量不限（limit=MAX）且需要分组时：每个知识点出全部候选题；</li>
+	 *   <li>目标题量有限时：每知识点保底 1 题，余量在知识点间轮询补足，直到用满目标题量或无题可用
+	 *       （某知识点题量不足时其配额自然溢出给其他知识点）；</li>
+	 *   <li>抽取时小桶优先，避免受限知识点的专属题被大桶抢占；</li>
+	 *   <li>未被任何知识点命中的候选题（如小节绑定题库题）作为兜底在末尾补足；</li>
+	 *   <li>结果全局去重，分组输出时同知识点题目相邻，并回填所属知识点。</li>
+	 * </ul>
+	 *
+	 * @param candidates    过滤后的候选题（顺序即检索顺序）
+	 * @param questionsByKp 知识点 → 题目ID集合（一题可挂多个知识点）
+	 * @param limit         目标题量上限（Integer.MAX_VALUE 表示不限）
+	 * @param perKp         每知识点题量上限（可空）
+	 * @param groupByKp     是否按知识点分组输出
+	 * @param random        是否随机抽题/输出
+	 * @param assignedKp    出参：题目ID → 归属知识点ID
+	 * @return 组卷结果
+	 */
+	private List<Template> pickByCoverage(List<Template> candidates, Map<String, Set<String>> questionsByKp,
+			int limit, Integer perKp, boolean groupByKp, Boolean random, Map<String, String> assignedKp) {
+		boolean shuffle = Boolean.TRUE.equals(random);
+		List<Template> ordered = new ArrayList<>(candidates);
+		if (shuffle) {
+			Collections.shuffle(ordered, ThreadLocalRandom.current());
+		}
+		Map<String, Template> byId = new LinkedHashMap<>();
+		Map<String, Integer> orderIndex = new HashMap<>();
+		for (int i = 0; i < ordered.size(); i++) {
+			Template t = ordered.get(i);
+			byId.put(t.getId(), t);
+			orderIndex.put(t.getId(), i);
+		}
+		boolean needsCoverage = groupByKp || limit != Integer.MAX_VALUE;
+		List<Template> picked = new ArrayList<>();
+		Set<String> used = new LinkedHashSet<>();
+		if (needsCoverage && !questionsByKp.isEmpty()) {
+			List<String> kpOrder = new ArrayList<>(questionsByKp.keySet());
+			// 各知识点在当前候选集内的题目（保持候选顺序；random 时即随机顺序）
+			Map<String, List<String>> pools = new LinkedHashMap<>();
+			for (String kpId : kpOrder) {
+				List<String> ids = new ArrayList<>();
+				for (String id : questionsByKp.get(kpId)) {
+					if (byId.containsKey(id)) {
+						ids.add(id);
+					}
+				}
+				ids.sort(Comparator.comparingInt(id -> orderIndex.getOrDefault(id, Integer.MAX_VALUE)));
+				pools.put(kpId, ids);
+			}
+			int maxPerKp = (perKp != null && perKp > 0) ? perKp : Integer.MAX_VALUE;
+			Map<String, Integer> quota = new LinkedHashMap<>();
+			kpOrder.forEach(kpId -> quota.put(kpId, 0));
+			if (limit == Integer.MAX_VALUE) {
+				// 不限总量：每知识点全出（受 perKp 限制）
+				for (String kpId : kpOrder) {
+					quota.put(kpId, Math.min(maxPerKp, pools.get(kpId).size()));
+				}
+			}
+			else {
+				// 保底覆盖：每个有题知识点先各取 1 题
+				int allocated = 0;
+				for (String kpId : kpOrder) {
+					if (allocated >= limit) {
+						break;
+					}
+					if (!pools.get(kpId).isEmpty()) {
+						quota.put(kpId, 1);
+						allocated++;
+					}
+				}
+				// 余量轮询：在仍有剩余题目的知识点间逐个补足，直到用满目标题量
+				boolean progress = true;
+				while (allocated < limit && progress) {
+					progress = false;
+					for (String kpId : kpOrder) {
+						if (allocated >= limit) {
+							break;
+						}
+						int cap = Math.min(maxPerKp, pools.get(kpId).size());
+						if (quota.get(kpId) < cap) {
+							quota.put(kpId, quota.get(kpId) + 1);
+							allocated++;
+							progress = true;
+						}
+					}
+				}
+			}
+			// 小池优先抽取，保证专属题先满足受限知识点；结果按知识点顺序分组输出
+			Map<String, List<Template>> buckets = new LinkedHashMap<>();
+			kpOrder.forEach(kpId -> buckets.put(kpId, new ArrayList<>()));
+			List<String> pickOrder = new ArrayList<>(kpOrder);
+			pickOrder.sort(Comparator.comparingInt(kpId -> pools.get(kpId).size()));
+			for (String kpId : pickOrder) {
+				int need = quota.get(kpId);
+				int taken = 0;
+				for (String id : pools.get(kpId)) {
+					if (taken >= need) {
+						break;
+					}
+					if (used.contains(id)) {
+						continue;
+					}
+					Template t = byId.get(id);
+					if (t == null) {
+						continue;
+					}
+					buckets.get(kpId).add(t);
+					used.add(id);
+					assignedKp.put(id, kpId);
+					taken++;
+				}
+			}
+			for (String kpId : kpOrder) {
+				picked.addAll(buckets.get(kpId));
+			}
+		}
+		// 兜底补足：未被知识点命中的候选题（或在有题量上限时仍缺额）在末尾补齐
+		for (Template t : ordered) {
+			if (picked.size() >= limit) {
+				break;
+			}
+			if (used.contains(t.getId())) {
+				continue;
+			}
+			picked.add(t);
+			used.add(t.getId());
+		}
+		if (!groupByKp) {
+			if (shuffle) {
+				Collections.shuffle(picked, ThreadLocalRandom.current());
+			}
+			else {
+				picked.sort(Comparator.comparingInt(t -> orderIndex.getOrDefault(t.getId(), Integer.MAX_VALUE)));
+			}
+		}
+		return picked;
+	}
+
+	/** 章节测评小节识别：小节名称包含「章节测评」。 */
+	private boolean isChapterAssessmentSection(Section section) {
+		return section != null && section.getName() != null
+				&& section.getName().contains(CHAPTER_ASSESSMENT_SECTION_NAME);
+	}
+
+	/** 章节下全部小节的知识点ID（章节测评出题范围，覆盖整章知识点）。 */
+	private List<String> knowledgePointIdsOfChapter(String chapterId) {
+		if (!StringUtils.hasText(chapterId)) {
+			return Collections.emptyList();
+		}
+		List<String> sectionIds = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+						.eq(Section::getChapterId, chapterId))
+				.stream().map(Section::getId).filter(StringUtils::hasText).collect(Collectors.toList());
+		if (sectionIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		return knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+						.in(KnowledgePoint::getSectionId, sectionIds))
+				.stream().map(KnowledgePoint::getId).filter(StringUtils::hasText).collect(Collectors.toList());
+	}
+
+	/** 某学员在某小节内已做过的题目ID（小节通关去重数据源）。 */
+	private Set<String> loadSectionDoneQuestionIds(String userId, String sectionId) {
+		if (!StringUtils.hasText(userId) || !StringUtils.hasText(sectionId)) {
+			return Collections.emptySet();
+		}
+		List<String> practiceIds = practiceRecordMapper.selectList(Wrappers.<PracticeRecord>lambdaQuery()
+						.eq(PracticeRecord::getUserId, userId).eq(PracticeRecord::getSectionId, sectionId))
+				.stream().map(PracticeRecord::getId).filter(StringUtils::hasText).collect(Collectors.toList());
+		if (practiceIds.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return practiceDetailMapper.selectList(Wrappers.<PracticeDetail>lambdaQuery()
+						.in(PracticeDetail::getPracticeId, practiceIds))
+				.stream().map(PracticeDetail::getQuestionId).filter(StringUtils::hasText)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**

@@ -171,7 +171,7 @@ export default function KnowledgePage() {
   // 小节练习配置是否随机模式（兼容后端 mode 字段与派生的 random 布尔）
   const isRandomMode = (cfg) => String(cfg?.mode || '').toLowerCase() === 'random' || cfg?.random === true;
 
-  // 开始专项练习：以知识点为单位，逐个知识点抽题（每个知识点至少 1 题，全部覆盖）
+  // 开始专项练习：以全部知识点为范围，尽量多出题并保证每个知识点都被覆盖（groupByKp）
   const startDrill = () => {
     const kpIds = (realPoints || []).map((p) => p.id);
     if (kpIds.length === 0) {
@@ -182,7 +182,7 @@ export default function KnowledgePage() {
     fetchQuestions({
       exposeAnswer: true,
       knowledgePointIds: kpIds,
-      perKp: 1,
+      groupByKp: true,
       random: true,
       sectionId: sectionId || undefined,
       repoId: repoId || undefined,
