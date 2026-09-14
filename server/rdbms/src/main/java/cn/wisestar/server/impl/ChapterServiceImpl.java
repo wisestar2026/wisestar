@@ -4,6 +4,7 @@ import cn.wisestar.server.core.constant.ErrorCode;
 import cn.wisestar.server.core.exception.ErrorCodeException;
 import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.uitls.ContextHelper;
+import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.ChapterImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.ChapterRepoRequest;
@@ -231,8 +232,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 						chapter.setSubjectId(subjectId);
 						chapter.setName(name.trim());
 						chapter.setGrade(normalizeBlank(cellText(r, 2)));
-						chapter.setTerm(normalizeBlank(cellText(r, 3)));
-						chapter.setVersion(normalizeBlank(cellText(r, 4)));
+						chapter.setTerm(KnowledgeValueNormalizer.term(cellText(r, 3)));
+						chapter.setVersion(KnowledgeValueNormalizer.version(cellText(r, 4)));
 						int nextSort = nextSortBySubject
 								.computeIfAbsent(subjectId, s -> new AtomicInteger(1)).getAndIncrement();
 						chapter.setSort(nextSort);

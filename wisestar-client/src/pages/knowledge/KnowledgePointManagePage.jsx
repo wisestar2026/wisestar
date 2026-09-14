@@ -206,28 +206,39 @@ export default function KnowledgePointManagePage() {
         const sec = allSec.find((x) => x.id === kp.sectionId);
         if (sec) {
           setDialogChapterId(sec.chapterId);
+          form.setFieldsValue({ chapterId: sec.chapterId });
           setDialogSections(allSec.filter((x) => x.chapterId === sec.chapterId));
           listChapters().then((res2) => {
             const allCh = res2?.data || [];
             const ch = allCh.find((c) => c.id === sec.chapterId);
             if (ch) {
               setDialogSubjectId(ch.subjectId);
+              form.setFieldsValue({ subjectId: ch.subjectId });
               setDialogChapters(allCh.filter((c) => c.subjectId === ch.subjectId));
             } else {
               setDialogSubjectId(undefined);
+              form.setFieldsValue({ subjectId: undefined });
               setDialogChapters(allCh);
             }
           });
         } else {
           setDialogSubjectId(undefined);
           setDialogChapterId(undefined);
+          form.setFieldsValue({ subjectId: undefined, chapterId: undefined });
           setDialogChapters([]);
           setDialogSections(allSec);
         }
       });
     } else {
       form.resetFields();
-      form.setFieldsValue({ sectionId: sectionId || undefined, sort: kps.length + 1, grade: searchGrade || undefined, term: searchTerm || undefined });
+      form.setFieldsValue({
+        subjectId: subjectId || undefined,
+        chapterId: chapterId || undefined,
+        sectionId: sectionId || undefined,
+        sort: kps.length + 1,
+        grade: searchGrade || undefined,
+        term: searchTerm || undefined,
+      });
       setDialogSubjectId(subjectId || undefined);
       setDialogChapterId(chapterId || undefined);
       if (subjectId) {

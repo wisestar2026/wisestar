@@ -19,7 +19,7 @@
  *   练习绑定: listRepo() 练习库 → saveSectionRepos / listSectionRepos 全量替换回显
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Breadcrumb, Popconfirm, Divider, message,
   Upload, Radio,
@@ -64,10 +64,10 @@ export default function SectionManagePage() {
   const [chapters, setChapters] = useState([]);
   const [subjectId, setSubjectId] = useState(urlSubjectId || undefined);
   const [chapterId, setChapterId] = useState(urlChapterId || undefined);
-  // 筛选栏过滤条件（年级/学期，任一变化即触发小节列表重查）
-  const [searchGrade, setSearchGrade] = useState(undefined);
-  const [searchTerm, setSearchTerm] = useState(undefined);
-  const [sections, setSections] = useState([]);
+  // 筛选栏过滤条件（年级/学期；空值=不限，其余条件下本地级联过滤）
+  const [searchGrade, setSearchGrade] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allSections, setAllSections] = useState([]);
   // 弹窗内「学科→章节」联动状态（与顶部筛选独立）
   const [dialogSubjectId, setDialogSubjectId] = useState(undefined);
   const [dialogChapters, setDialogChapters] = useState([]);
@@ -127,14 +127,42 @@ export default function SectionManagePage() {
     }).catch(() => setChapters([]));
   }, [subjectId]);
 
-  // ---- 章节/年级/学期切换 → 加载小节 ----
-  useEffect(() => {
-    if (!chapterId) return;
+  // ---- 章节切换 → 加载该章节全部小节（年级/学期在本地过滤，支持级联） ----
+  const loadSections = useCallback(() => {
+    if (!chapterId) { setAllSections([]); return; }
     setLoading(true);
-    listSections({ chapterId, grade: searchGrade, term: searchTerm }).then((res) => {
-      setSections(res?.data || []);
-    }).catch(() => setSections([])).finally(() => setLoading(false));
-  }, [chapterId, searchGrade, searchTerm]);
+    listSections({ chapterId })
+      .then((res) => setAllSections(res?.data || []))
+      .catch(() => setAllSections([]))
+      .finally(() => setLoading(false));
+  }, [chapterId]);
+
+  useEffect(() => { loadSections(); }, [loadSections]);
+
+  const val = (v) => v || '';
+  // 依据当前年级/学期过滤（空值=不限）
+  const sections = useMemo(() => allSections.filter((s) => (
+    (!searchGrade || val(s.grade) === searchGrade)
+    && (!searchTerm || val(s.term) === searchTerm)
+  )), [allSections, searchGrade, searchTerm]);
+
+  // 级联候选：每个下拉仅提供「其余已选条件下」存在的值
+  const filterOptions = useMemo(() => {
+    const hit = (s, skip) => (
+      (skip === 'grade' || !searchGrade || val(s.grade) === searchGrade)
+      && (skip === 'term' || !searchTerm || val(s.term) === searchTerm)
+    );
+    const collect = (skip, field) => Array.from(new Set(
+      allSections.filter((s) => hit(s, skip)).map((s) => val(s[field])).filter(Boolean),
+    )).sort((a, b) => a.localeCompare(b, 'zh'));
+    return { grade: collect('grade', 'grade'), term: collect('term', 'term') };
+  }, [allSections, searchGrade, searchTerm]);
+
+  // 已选值在当前候选中失效时自动回退为「空/不限」
+  useEffect(() => {
+    if (searchGrade && !filterOptions.grade.includes(searchGrade)) setSearchGrade('');
+    if (searchTerm && !filterOptions.term.includes(searchTerm)) setSearchTerm('');
+  }, [filterOptions, searchGrade, searchTerm]);
 
   const subject = subjects.find((s) => s.id === subjectId);
   const chapter = chapters.find((c) => c.id === chapterId);
@@ -151,7 +179,7 @@ export default function SectionManagePage() {
         if ((d.duplicate ?? 0) > 0) reason.push(`同章节下重名 ${d.duplicate}`);
         const reasonText = reason.length ? `；跳过原因：${reason.join('、')}` : '';
         message.success(`导入完成：新增 ${d.imported ?? 0} 个小节，跳过 ${d.skipped ?? 0} 个${reasonText}`);
-        listSections({ chapterId, grade: searchGrade, term: searchTerm }).then((res2) => setSections(res2?.data || [])).catch(() => setSections([]));
+        loadSections();
       })
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));
@@ -175,9 +203,11 @@ export default function SectionManagePage() {
         const ch = all.find((c) => c.id === section.chapterId);
         if (ch) {
           setDialogSubjectId(ch.subjectId);
+          form.setFieldsValue({ subjectId: ch.subjectId });
           setDialogChapters(all.filter((c) => c.subjectId === ch.subjectId));
         } else {
           setDialogSubjectId(undefined);
+          form.setFieldsValue({ subjectId: undefined });
           setDialogChapters(all);
         }
       });
@@ -216,14 +246,13 @@ export default function SectionManagePage() {
         updateSection({ ...payload, id: editing.id }).then(() => {
           message.success('小节已更新');
           setModalOpen(false);
-          setSections((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...payload } : s)));
+          setAllSections((prev) => prev.map((s) => (s.id === editing.id ? { ...s, ...payload } : s)));
         });
       } else {
         createSection(payload).then(() => {
           message.success('小节已新增');
           setModalOpen(false);
-          listSections({ chapterId: payload.chapterId, grade: searchGrade, term: searchTerm })
-            .then((res) => setSections(res?.data || []));
+          loadSections();
         });
       }
     });
@@ -251,7 +280,7 @@ export default function SectionManagePage() {
       updateSection({ id: contentSection.id, chapterId, content: payload }).then(() => {
         message.success('内容设置已保存');
         setContentOpen(false);
-        setSections((prev) => prev.map((s) => (s.id === contentSection.id ? { ...s, content: payload } : s)));
+        setAllSections((prev) => prev.map((s) => (s.id === contentSection.id ? { ...s, content: payload } : s)));
       });
     });
   };
@@ -297,7 +326,7 @@ export default function SectionManagePage() {
       ]).then(() => {
         message.success('练习设置已保存');
         setPracticeOpen(false);
-        setSections((prev) => prev.map((s) => (s.id === sectionId
+        setAllSections((prev) => prev.map((s) => (s.id === sectionId
           ? { ...s, practice: payload, repoCount: selectedIds.length } : s)));
       }).finally(() => setSavingBind(false));
     });
@@ -401,7 +430,7 @@ export default function SectionManagePage() {
             onConfirm={() => {
               deleteSection({ id: s.id }).then(() => {
                 message.success('小节已删除');
-                setSections((prev) => prev.filter((x) => x.id !== s.id));
+                setAllSections((prev) => prev.filter((x) => x.id !== s.id));
               });
             }}
           >
@@ -442,7 +471,7 @@ export default function SectionManagePage() {
         </Space>
       </div>
 
-      {/* ---- 三级联动下拉（前两级） ---- */}
+      {/* ---- 筛选栏：学科 → 年级 → 学期 → 章节 ---- */}
       <Space style={{ marginBottom: 16 }}>
         <Select
           style={{ width: 180 }}
@@ -452,27 +481,23 @@ export default function SectionManagePage() {
           options={subjects.map((s) => ({ value: s.id, label: `${s.icon || ''} ${s.name}` }))}
         />
         <Select
+          style={{ width: 110 }}
+          value={searchGrade}
+          onChange={setSearchGrade}
+          options={[{ value: '', label: '空' }, ...filterOptions.grade.map((v) => ({ value: v, label: v }))]}
+        />
+        <Select
+          style={{ width: 100 }}
+          value={searchTerm}
+          onChange={setSearchTerm}
+          options={[{ value: '', label: '空' }, ...filterOptions.term.map((v) => ({ value: v, label: v }))]}
+        />
+        <Select
           style={{ width: 220 }}
           value={chapterId}
           onChange={setChapterId}
           placeholder="选择章节"
           options={chapters.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))}
-        />
-        <Select
-          style={{ width: 100 }}
-          placeholder="年级"
-          allowClear
-          value={searchGrade}
-          onChange={setSearchGrade}
-          options={GRADE_OPTIONS}
-        />
-        <Select
-          style={{ width: 90 }}
-          placeholder="学期"
-          allowClear
-          value={searchTerm}
-          onChange={setSearchTerm}
-          options={TERM_OPTIONS}
         />
       </Space>
 

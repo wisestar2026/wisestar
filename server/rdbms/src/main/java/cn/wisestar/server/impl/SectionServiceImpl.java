@@ -2,6 +2,7 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.constant.SectionRepoUsage;
+import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
 import cn.wisestar.server.domain.dto.knowledge.SectionRepoRequest;
@@ -200,7 +201,7 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						section.setChapterId(chapterId);
 						section.setName(name.trim());
 						section.setGrade(normalizeBlank(cellText(r, 3)));
-						section.setTerm(normalizeBlank(cellText(r, 4)));
+						section.setTerm(KnowledgeValueNormalizer.term(cellText(r, 4)));
 						int nextSort = nextSortByChapter
 								.computeIfAbsent(chapterId, s -> new AtomicInteger(1)).getAndIncrement();
 						section.setSort(nextSort);

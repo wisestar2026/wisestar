@@ -21,7 +21,7 @@ const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二
 const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
 const VERSION_OPTIONS = [{ value: '人教版', label: '人教版' }, { value: '苏教版', label: '苏教版' }, { value: '北师大版', label: '北师大版' }, { value: '外研版', label: '外研版' }];
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Table, Space, Button, Input, InputNumber, Select, Modal, Form, Tag, Typography, Popconfirm, message,
   Upload,
@@ -48,7 +48,7 @@ export default function ChapterManagePage() {
 
   const [subjects, setSubjects] = useState([]);
   const [subjectId, setSubjectId] = useState(undefined);
-  const [chapters, setChapters] = useState([]);
+  const [allChapters, setAllChapters] = useState([]); // 当前学科全部章节（不受筛选影响，供级联下拉选项）
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
 
@@ -71,7 +71,7 @@ export default function ChapterManagePage() {
     }).catch(() => { /* request 拦截器已提示 */ });
   }, []);
 
-  // ---- 搜索栏过滤条件（年级/学期/版本，任一变化即触发列表重查） ----
+  // ---- 搜索栏过滤条件（'' = 空/不限） ----
   const [searchGrade, setSearchGrade] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchVersion, setSearchVersion] = useState('');
@@ -82,21 +82,50 @@ export default function ChapterManagePage() {
     setSearchVersion('');
   };
 
-  // ---- 学科切换 → 加载章节（并清空过滤条件） ----
-  useEffect(() => {
-    if (!subjectId) return;
+  // ---- 学科切换 → 加载该学科全部章节（筛选在本地做，便于级联下拉） ----
+  const loadChapters = useCallback(() => {
+    if (!subjectId) { setAllChapters([]); return; }
     setLoading(true);
-    listChapters({
-      subjectId,
-      grade: searchGrade || undefined,
-      term: searchTerm || undefined,
-      version: searchVersion || undefined,
-    }).then((res) => {
-      setChapters(res?.data || []);
-    }).catch(() => setChapters([])).finally(() => setLoading(false));
-    // 过滤条件随学科切换重置，避免残留条件影响新学科
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subjectId, searchGrade, searchTerm, searchVersion]);
+    listChapters({ subjectId })
+      .then((res) => setAllChapters(res?.data || []))
+      .catch(() => setAllChapters([]))
+      .finally(() => setLoading(false));
+  }, [subjectId]);
+
+  useEffect(() => { loadChapters(); }, [loadChapters]);
+
+  const val = (v) => v || '';
+
+  // 展示列表 = 全部章节按当前筛选条件过滤（'' 表示不限）
+  const chapters = useMemo(() => allChapters.filter((c) => (
+    (!searchGrade || val(c.grade) === searchGrade)
+    && (!searchTerm || val(c.term) === searchTerm)
+    && (!searchVersion || val(c.version) === searchVersion)
+  )), [allChapters, searchGrade, searchTerm, searchVersion]);
+
+  // 级联下拉选项：每个维度只列出「其余已选条件下」真实存在的值
+  const filterOptions = useMemo(() => {
+    const hit = (c, skip) => (
+      (skip === 'grade' || !searchGrade || val(c.grade) === searchGrade)
+      && (skip === 'term' || !searchTerm || val(c.term) === searchTerm)
+      && (skip === 'version' || !searchVersion || val(c.version) === searchVersion)
+    );
+    const collect = (skip, field) => Array.from(new Set(
+      allChapters.filter((c) => hit(c, skip)).map((c) => val(c[field])).filter(Boolean),
+    )).sort((a, b) => a.localeCompare(b, 'zh'));
+    return {
+      grade: collect('grade', 'grade'),
+      term: collect('term', 'term'),
+      version: collect('version', 'version'),
+    };
+  }, [allChapters, searchGrade, searchTerm, searchVersion]);
+
+  // 其余条件变化导致当前值不再可选时，自动回退到「空」（不限），避免筛出空结果
+  useEffect(() => {
+    if (searchGrade && !filterOptions.grade.includes(searchGrade)) setSearchGrade('');
+    if (searchTerm && !filterOptions.term.includes(searchTerm)) setSearchTerm('');
+    if (searchVersion && !filterOptions.version.includes(searchVersion)) setSearchVersion('');
+  }, [filterOptions, searchGrade, searchTerm, searchVersion]);
 
   // ---- Excel 批量导入 ----
   const handleImport = (file) => {
@@ -110,8 +139,7 @@ export default function ChapterManagePage() {
         if ((d.duplicate ?? 0) > 0) reason.push(`同学科下重名 ${d.duplicate}`);
         const reasonText = reason.length ? `；跳过原因：${reason.join('、')}` : '';
         message.success(`导入完成：新增 ${d.imported ?? 0} 个章节，跳过 ${d.skipped ?? 0} 个${reasonText}`);
-        listChapters({ subjectId, grade: searchGrade || undefined, term: searchTerm || undefined, version: searchVersion || undefined })
-          .then((res2) => setChapters(res2?.data || [])).catch(() => setChapters([]));
+        loadChapters();
       })
       .catch((err) => message.error(err?.message || '导入失败'))
       .finally(() => setImporting(false));
@@ -154,13 +182,13 @@ export default function ChapterManagePage() {
         updateChapter({ ...values, id: editing.id }).then(() => {
           message.success('章节已更新');
           setModalOpen(false);
-          setChapters((prev) => prev.map((c) => (c.id === editing.id ? { ...c, ...values } : c)));
+          setAllChapters((prev) => prev.map((c) => (c.id === editing.id ? { ...c, ...values } : c)));
         });
       } else {
         createChapter(values).then(() => {
           message.success('章节已新增');
           setModalOpen(false);
-          listChapters({ subjectId: values.subjectId }).then((res) => setChapters(res?.data || []));
+          loadChapters();
         });
       }
     });
@@ -170,7 +198,7 @@ export default function ChapterManagePage() {
   const handleDelete = (chapter) => {
     deleteChapter({ id: chapter.id }).then(() => {
       message.success('章节已删除');
-      setChapters((prev) => prev.filter((c) => c.id !== chapter.id));
+      setAllChapters((prev) => prev.filter((c) => c.id !== chapter.id));
     });
   };
 
@@ -269,9 +297,12 @@ export default function ChapterManagePage() {
 
       {/* 搜索栏 */}
       <Space wrap style={{ marginBottom: 16 }}>
-        <Select placeholder="年级" allowClear style={{ width: 100 }} value={searchGrade} onChange={setSearchGrade} options={GRADE_OPTIONS} />
-        <Select placeholder="学期" allowClear style={{ width: 80 }} value={searchTerm} onChange={setSearchTerm} options={TERM_OPTIONS} />
-        <Select placeholder="版本" allowClear style={{ width: 100 }} value={searchVersion} onChange={setSearchVersion} options={VERSION_OPTIONS} />
+        <Select style={{ width: 110 }} value={searchGrade} onChange={setSearchGrade}
+          options={[{ value: '', label: '空' }, ...filterOptions.grade.map((v) => ({ value: v, label: v }))]} />
+        <Select style={{ width: 100 }} value={searchTerm} onChange={setSearchTerm}
+          options={[{ value: '', label: '空' }, ...filterOptions.term.map((v) => ({ value: v, label: v }))]} />
+        <Select style={{ width: 120 }} value={searchVersion} onChange={setSearchVersion}
+          options={[{ value: '', label: '空' }, ...filterOptions.version.map((v) => ({ value: v, label: v }))]} />
         <Button onClick={handleReset}>重置</Button>
       </Space>
 
