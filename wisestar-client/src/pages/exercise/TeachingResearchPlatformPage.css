@@ -65,6 +65,107 @@
   opacity: 1;
 }
 
+/* 题目 Label（标签式面板）：每题一个带边框的面板，内部分块并带字段标签 */
+.trp-lbl {
+  border: 1px solid #e3e6eb;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 12px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.trp-lbl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-bottom: 1px dashed #eef0f3;
+  padding-bottom: 8px;
+  margin-bottom: 14px;
+}
+
+.trp-lbl-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.trp-lbl-body.has-image {
+  grid-template-columns: minmax(0, 1fr) 220px;
+}
+
+.trp-lbl-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.trp-lbl-side {
+  min-width: 0;
+}
+
+/* 字段块：边框 + 左上角悬浮标签 */
+.trp-lbl-field {
+  position: relative;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 14px 10px 10px;
+  min-height: 44px;
+}
+
+.trp-lbl-tag {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  background: #fff;
+  color: #1677ff;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 6px;
+}
+
+.trp-lbl-text {
+  color: #333;
+  font-size: 13px;
+  line-height: 1.7;
+  word-break: break-all;
+}
+
+.trp-lbl-opt {
+  color: #555;
+  font-size: 13px;
+}
+
+.trp-lbl-hint {
+  color: #999;
+  font-size: 12px;
+}
+
+.trp-lbl-field-img {
+  min-height: 120px;
+}
+
+.trp-lbl-imgs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trp-lbl-img {
+  width: 100%;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+@media (max-width: 720px) {
+  .trp-lbl-body.has-image {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* 答案区 */
 .trp-q-answer {
   background: #f6f8fa;

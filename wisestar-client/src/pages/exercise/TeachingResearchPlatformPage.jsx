@@ -7,7 +7,7 @@
  *   - 学科 + 年级 双筛选（学科级 + 年级来自章节数据）
  *   - 章节 → 小节 → 知识点 懒加载树；章节/小节点名称即编辑
  *   - 知识点：点名称查看直绑题目；节点右侧 ✎ 按钮编辑（含简介 content.intro / 讲解要点 content.points）
- *   - 右侧：直绑题目卡片（题干/答案/解析/难度），卡片「编辑」复用题目管理弹窗；
+ *   - 右侧：直绑题目 Label 面板（题目/选项/答案和解析/题目的图片 分块带字段标签），「编辑」复用题目管理弹窗；
  *     支持从题库勾选新题绑定（全量替换合并旧绑定，不覆盖）
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -55,34 +55,72 @@ function unwrap(res) {
   return res && res.code !== undefined ? res.data : res;
 }
 
-function buildAnswerText(qtype, answers) {
-  if (!answers || answers.length === 0) return '';
-  if (qtype === 'MultipleBlank') {
-    return String(answers[0]).split('|').map((p, i) => `空${i + 1}：${p}`).join('；');
-  }
-  return answers.join('、');
+/** 选择题选项：导入数据中 children 的选项节点带 title、无显式 type，故按 title 识别 */
+function parseOptions(schema) {
+  return ((schema && schema.children) || [])
+    .filter((c) => c && c.title)
+    .map((c) => ({ id: c.id, title: c.title }));
 }
 
-/* ---------- 题目卡片（顶层组件，答案显隐状态独立） ---------- */
+/** 题干中的 {{IMG:xxx}} 占位符键（图片落库前的映射键） */
+function imagePlaceholders(text) {
+  return (String(text || '').match(/\{\{IMG:([^}]+)\}\}/g) || []).map((m) => m.slice(6, -2));
+}
+
+/** 去除题干中的图片占位符，返回纯文本题干 */
+function stripImagePlaceholders(text) {
+  return String(text || '').replace(/\{\{IMG:[^}]+\}\}/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+const CHOICE_TYPES = new Set(['Radio', 'Checkbox', 'Select']);
+
+/** 答案展示：多空填空逐空列出；选择题把选项 id 映射为 A/B/C 后展示 */
+function buildAnswerText(qtype, raw, options) {
+  if (raw === undefined || raw === null || raw === '') return '';
+  if (qtype === 'MultipleBlank') {
+    return String(raw).split('|').map((p, i) => `空${i + 1}：${p}`).join('；');
+  }
+  if (CHOICE_TYPES.has(qtype) && options && options.length) {
+    return String(raw)
+      .split(/[|,，、]/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((p) => {
+        const idx = options.findIndex((o) => o.id === p);
+        return idx >= 0 ? String.fromCharCode(65 + idx) : p;
+      })
+      .join('、');
+  }
+  return String(raw);
+}
+
+/* ---------- 题目 Label（标签式面板，答案显隐状态独立） ---------- */
 function ResearchQuestionCard({ q, onEdit, action }) {
   const [show, setShow] = useState(false);
   const attr = extractAttr(q.template);
   const qtype = q.questionType;
-  const answers = attr.examCorrectAnswer ? buildAnswerText(qtype, [attr.examCorrectAnswer]) : '';
-  const options = useMemo(() => {
-    try {
-      const t = typeof q.template === 'string' ? JSON.parse(q.template) : q.template || {};
-      return (t.children || []).filter((c) => c.type === 'Option').map((c) => c.title);
-    } catch { return []; }
+  const schema = useMemo(() => {
+    try { return typeof q.template === 'string' ? JSON.parse(q.template) : (q.template || {}); }
+    catch { return {}; }
   }, [q.template]);
+  const options = useMemo(() => parseOptions(schema), [schema]);
+  const stemRaw = schema.title || q.name || '';
+  const stem = stripImagePlaceholders(stemRaw) || '（题干为图片）';
+  const images = Array.isArray(attr.examImages) ? attr.examImages.filter(Boolean) : [];
+  const placeholders = imagePlaceholders(stemRaw);
+  const hasImage = images.length > 0 || placeholders.length > 0;
+  const answerText = buildAnswerText(qtype, attr.examCorrectAnswer, options);
 
   return (
-    <Card
-      size="small"
-      className="trp-q-card"
-      title={<div style={{ wordBreak: 'break-all' }}>{q.name || '（未命名题目）'}</div>}
-      extra={(
-        <Space>
+    <div className="trp-lbl">
+      <div className="trp-lbl-head">
+        <Space size={4} wrap>
+          <Tag color="blue">{TYPE_LABELS[qtype] || qtype || '未知题型'}</Tag>
+          <Tag color={q.difficulty === 3 ? 'red' : q.difficulty === 2 ? 'orange' : 'green'}>
+            {DIFF_LABELS[q.difficulty] || '难度未知'}
+          </Tag>
+        </Space>
+        <Space size={4}>
           {action}
           <Button size="small" type="link" icon={show ? <EyeInvisibleOutlined /> : <EyeOutlined />}
             onClick={() => setShow(!show)}>
@@ -92,32 +130,61 @@ function ResearchQuestionCard({ q, onEdit, action }) {
             编辑
           </Button>
         </Space>
-      )}
-    >
-      <Space size={4} style={{ marginBottom: 8 }} wrap>
-        <Tag color="blue">{TYPE_LABELS[qtype] || qtype || '未知题型'}</Tag>
-        <Tag color={q.difficulty === 3 ? 'red' : q.difficulty === 2 ? 'orange' : 'green'}>
-          {DIFF_LABELS[q.difficulty] || '难度未知'}
-        </Tag>
-      </Space>
+      </div>
 
-      {options.length > 0 && (
-        <div style={{ marginBottom: 6 }}>
-          {options.map((o, i) => (
-            <div key={i} style={{ color: '#666', fontSize: 13 }}>
-              {String.fromCharCode(65 + i)}. {o}
+      <div className={`trp-lbl-body${hasImage ? ' has-image' : ''}`}>
+        <div className="trp-lbl-main">
+          <div className="trp-lbl-field">
+            <span className="trp-lbl-tag">题目</span>
+            <div className="trp-lbl-text">{stem}</div>
+          </div>
+
+          {options.length > 0 && (
+            <div className="trp-lbl-field">
+              <span className="trp-lbl-tag">选项</span>
+              <div className="trp-lbl-text">
+                {options.map((o, i) => (
+                  <div key={o.id || i} className="trp-lbl-opt">
+                    <b>{String.fromCharCode(65 + i)}.</b> {o.title}
+                  </div>
+                ))}
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {show && (
-        <div className="trp-q-answer">
-          {answers ? <div><b>参考答案：</b>{answers}</div> : <div><b>参考答案：</b>（未配置）</div>}
-          {attr.examAnalysis && <div style={{ marginTop: 4 }}><b>解析：</b>{attr.examAnalysis}</div>}
+          <div className="trp-lbl-field">
+            <span className="trp-lbl-tag">答案和解析</span>
+            {show ? (
+              <div className="trp-q-answer" style={{ marginTop: 0 }}>
+                <div><b>参考答案：</b>{answerText || '（未配置）'}</div>
+                {attr.examAnalysis && <div style={{ marginTop: 4 }}><b>解析：</b>{attr.examAnalysis}</div>}
+              </div>
+            ) : (
+              <div className="trp-lbl-hint">点击右上角「查看答案」显示参考答案与解析</div>
+            )}
+          </div>
         </div>
-      )}
-    </Card>
+
+        {hasImage && (
+          <div className="trp-lbl-side">
+            <div className="trp-lbl-field trp-lbl-field-img">
+              <span className="trp-lbl-tag">题目的图片</span>
+              {images.length > 0 ? (
+                <div className="trp-lbl-imgs">
+                  {images.map((src, i) => (
+                    <img key={i} src={src} alt={`题目图片${i + 1}`} className="trp-lbl-img" />
+                  ))}
+                </div>
+              ) : (
+                <div className="trp-lbl-hint">
+                  图片待补充（{placeholders.length} 张）：{placeholders.join('、')}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
