@@ -153,8 +153,46 @@
 .mall-pure-title { font-size: 18px; font-weight: 800; color: #2b4a6b; }
 .mall-pure-desc { font-size: 13px; color: #5b7a99; }
 
+/* 各科明细空态 */
+.mall-detail-empty { font-size: 13px; color: #8aa9c4; padding: 4px 0; }
+
+/* 我的兑换记录 */
+.mall-orders { display: flex; flex-direction: column; gap: 10px; }
+.mall-order-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+}
+.mall-order-info { flex: 1; min-width: 0; }
+.mall-order-name { font-size: 15px; font-weight: 800; color: #1d3a5f; }
+.mall-order-time { font-size: 12px; color: #8aa9c4; margin-top: 2px; }
+.mall-order-code { font-size: 13px; color: #5b7a99; }
+.mall-order-code b {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #b7791f;
+  margin-left: 4px;
+}
+.mall-order-coins { font-size: 13px; font-weight: 800; color: #ff8a3d; }
+
+/* 兑换成功弹窗 */
+.mall-success { text-align: center; padding: 8px 0 4px; }
+.mall-success-goods { font-size: 16px; font-weight: 800; color: #1d3a5f; margin-bottom: 12px; }
+.mall-success-label { font-size: 13px; color: #8aa9c4; }
+.mall-success-code {
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  color: #b7791f;
+  margin: 6px 0 14px;
+}
+.mall-success-tip { font-size: 13px; color: #5b7a99; }
+
 @media (max-width: 800px) {
   .mall-grid { grid-template-columns: repeat(2, 1fr); }
   .mall-top { flex-wrap: wrap; }
   .mall-top-collapse { min-width: 100%; }
+  .mall-order-row { flex-wrap: wrap; gap: 8px; }
 }

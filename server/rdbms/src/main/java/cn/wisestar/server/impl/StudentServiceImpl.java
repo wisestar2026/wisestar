@@ -1324,6 +1324,43 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	}
 
 	/**
+	 * 查询指定学员学币余额（本学期各科学习币 + 手动发放/扣减合计）。
+	 */
+	@Override
+	public int coinBalance(String studentId) {
+		if (studentId == null || getById(studentId) == null) {
+			return 0;
+		}
+		String semester = StudentRewardConstants.currentSemester();
+		int subject = subjectSemesterMapper.selectList(Wrappers.<SubjectSemester>lambdaQuery()
+						.eq(SubjectSemester::getUserId, studentId).eq(SubjectSemester::getSemester, semester))
+				.stream().mapToInt(ss -> ss.getCoins() == null ? 0 : ss.getCoins()).sum();
+		int manual = studentCoinMapper.selectList(Wrappers.<StudentCoin>lambdaQuery()
+						.eq(StudentCoin::getStudentId, studentId))
+				.stream().mapToInt(c -> c.getCoins() == null ? 0 : c.getCoins()).sum();
+		return subject + manual;
+	}
+
+	/**
+	 * 扣减指定学员学币（写入负向学币流水）。
+	 */
+	@Override
+	public void deductCoins(String studentId, int coins, String reason) {
+		if (coins <= 0) {
+			throw new ValidationException("扣减学币数量必须大于 0");
+		}
+		if (studentId == null || getById(studentId) == null) {
+			throw new ValidationException("学员不存在");
+		}
+		StudentCoin coin = new StudentCoin();
+		coin.setStudentId(studentId);
+		coin.setCoins(-coins);
+		coin.setReason(reason);
+		studentCoinMapper.insert(coin);
+	}
+
+
+	/**
 	 * 学员预习完成：标记该小节/知识点预习完成并结算奖励（同一目标仅首次发放）。
 	 */
 	@Override

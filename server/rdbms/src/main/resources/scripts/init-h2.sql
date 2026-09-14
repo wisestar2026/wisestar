@@ -2130,6 +2130,30 @@ ALTER TABLE t_mall_goods ADD COLUMN IF NOT EXISTS update_by varchar(256);
 ALTER TABLE t_mall_goods ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 
 -- ----------------------------
+-- 学币兑换订单（学员端商城兑换 → 老师端凭核销码核销）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_mall_order (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) DEFAULT NULL COMMENT '学员ID(t_student.id)',
+  student_no varchar(32) DEFAULT NULL COMMENT '学号(冗余快照)',
+  student_name varchar(64) DEFAULT NULL COMMENT '学员姓名(冗余快照)',
+  goods_id varchar(64) DEFAULT NULL COMMENT '商品ID(t_mall_goods.id)',
+  goods_name varchar(128) DEFAULT NULL COMMENT '商品名称(冗余快照)',
+  goods_image varchar(512) DEFAULT NULL COMMENT '商品图片(冗余快照)',
+  coins int DEFAULT 0 COMMENT '消耗学币数量',
+  verify_code varchar(6) DEFAULT NULL COMMENT '核销码(随机6位数字)',
+  status tinyint DEFAULT 0 COMMENT '状态 0待核销 1已核销',
+  verify_at timestamp DEFAULT NULL COMMENT '核销时间',
+  verify_by varchar(256) DEFAULT NULL COMMENT '核销人',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp DEFAULT NULL COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL,
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
+
+-- ----------------------------
 -- 今日任务（老师后台布置，学员端呈现，交卷且及格判定完成）
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS t_task (

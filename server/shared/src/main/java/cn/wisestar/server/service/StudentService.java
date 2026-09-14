@@ -162,6 +162,23 @@ public interface StudentService {
 	void addCoin(StudentCoinRequest request);
 
 	/**
+	 * 查询指定学员的学币余额（本学期各科学习币 + 手动发放/扣减合计）。
+	 *
+	 * @param studentId 学员ID
+	 * @return 学币余额（可为负，表示已透支）
+	 */
+	int coinBalance(String studentId);
+
+	/**
+	 * 扣减指定学员学币（写入负向学币流水，供商城兑换等消费场景使用）。
+	 *
+	 * @param studentId 学员ID
+	 * @param coins     扣减数量（正数）
+	 * @param reason    扣减原因
+	 */
+	void deductCoins(String studentId, int coins, String reason);
+
+	/**
 	 * 学员端练习/试炼题目（剥离标准答案，防作弊）。
 	 *
 	 * <p>题目来源可组合：sectionId → 小节绑定题库题目；knowledgePointIds → 知识点绑定题目并集；

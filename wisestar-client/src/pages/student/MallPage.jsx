@@ -5,22 +5,24 @@
  *   +--------------------------------------------------------------+
  *   | 顶部数据区: 大字「本学期可兑换总学习币」+ 折叠各科明细 + 提示  |
  *   | 商品网格: [🦈 商品卡][🧽 商品卡][...] 可兑换亮色/不足置灰      |
+ *   | 我的兑换记录: 商品 / 核销码 / 状态 / 申请时间                 |
  *   +--------------------------------------------------------------+
  *
- * 兑换数据流向（前端 mock）:
- *   汇总本学期所有绑定学科币总和判断是否充足 → 充足自动多科合并扣款
- *   → 顶部轻柔提示「兑换成功」1.5s 自动消失
+ * 兑换数据流向（真实后端）:
+ *   点击「立即兑换」→ POST /mall/order/create（后端校验学币并暂时扣除、下发随机 6 位核销码）
+ *   → 弹窗展示核销码 → 刷新学币余额与兑换记录 → 待老师端核销后订单完成
  *
  * 被谁引用: App.jsx（/student/mall）、首页「荣誉商城卡」
- * 依赖: react-router-dom(useNavigate)、antd(Collapse)、useStudentStore、./MallPage.css
+ * 依赖: react-router-dom(useNavigate)、antd(Collapse/Modal/Tag/message)、useStudentStore、
+ *       api/mall（商品/兑换订单）、api/student（学币）、./MallPage.css
  */
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Collapse } from 'antd';
-import useStudentStore, { SUBJECTS, GOODS } from '../../stores/useStudentStore';
-import { listGoods } from '../../api/mall';
-import { getStudentStats } from '../../api/student';
+import { Collapse, Modal, Tag, message } from 'antd';
+import useStudentStore from '../../stores/useStudentStore';
+import { listGoods, createMallOrder, listMyMallOrders } from '../../api/mall';
+import { getMyCoins } from '../../api/student';
 import IconTile from '../../components/common/IconTile';
 import './MallPage.css';
 
@@ -31,46 +33,42 @@ export default function MallPage() {
   const navigate = useNavigate();
   const { pureMode } = useStudentStore();
 
-  // 各科剩余学习币（前端 state，兑换后扣减演示）
-  const [subjectCoins, setSubjectCoins] = useState(() =>
-    Object.fromEntries(SUBJECTS.map((s) => [s.key, s.coins])),
-  );
-  const [reward, setReward] = useState(null);
-  const [exchanged, setExchanged] = useState({}); // 已兑换商品记录
+  const [goods, setGoods] = useState([]);
+  const [coins, setCoins] = useState(0);
+  const [coinList, setCoinList] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [successOrder, setSuccessOrder] = useState(null);
+  const [purchasing, setPurchasing] = useState(null);
 
-  // 真实商品列表（后台配置，仅上架）与可用积分
-  const [goods, setGoods] = useState(null);
-  const [availablePoints, setAvailablePoints] = useState(0);
+  const loadMall = () => {
+    listGoods(1).then((res) => setGoods(res?.data || [])).catch(() => setGoods([]));
+    getMyCoins().then((res) => {
+      const d = res?.data || {};
+      setCoins(d.total || 0);
+      setCoinList(d.list || []);
+    }).catch(() => {});
+    listMyMallOrders().then((res) => setOrders(res?.data || [])).catch(() => setOrders([]));
+  };
+
   useEffect(() => {
-    listGoods(1).then((res) => setGoods(res?.data || [])).catch(() => setGoods(null));
-    getStudentStats().then((res) => setAvailablePoints(res?.data?.totalPoints ?? 0)).catch(() => {});
+    loadMall();
   }, []);
 
-  // 展示商品：真实列表优先（未加载回退 mock）
-  const displayGoods = goods || GOODS.map((g) => ({
-    id: g.id, name: g.name, description: g.desc, imageUrl: '', points: g.price,
-  }));
-
-  const totalCoins = SUBJECTS.reduce((sum, s) => sum + subjectCoins[s.key], 0);
-
-  // 兑换: 汇总本学期所有学科币判断充足 → 多科合并扣款
+  // 兑换: 后端校验余额、暂时扣除学币并返回核销码
   const handleExchange = (good) => {
-    if (totalCoins < good.price) return;
-    let remain = good.price;
-    // 从各科余额依次扣减（多科合并扣款演示）
-    setSubjectCoins((prev) => {
-      const next = { ...prev };
-      for (const s of SUBJECTS) {
-        if (remain <= 0) break;
-        const take = Math.min(next[s.key], remain);
-        next[s.key] -= take;
-        remain -= take;
-      }
-      return next;
-    });
-    setExchanged((prev) => ({ ...prev, [good.id]: true }));
-    setReward(`🎉 兑换成功：${good.name}（已扣 ${good.price} 学习币）`);
-    setTimeout(() => setReward(null), 1600);
+    if (purchasing) return;
+    if (coins < (good.points || 0)) {
+      message.warning('学币不足，暂时无法兑换');
+      return;
+    }
+    setPurchasing(good.id);
+    createMallOrder({ goodsId: good.id })
+      .then((res) => {
+        setSuccessOrder(res?.data || null);
+        loadMall();
+      })
+      .catch(() => {})
+      .finally(() => setPurchasing(null));
   };
 
   // 纯净学习模式: 商城为激励模块，直接隐藏
@@ -89,26 +87,26 @@ export default function MallPage() {
     );
   }
 
-  // 各科明细折叠面板
+  // 各科明细折叠面板（真实学币）
   const collapseItems = [
     {
       key: 'detail',
       label: <span className="mall-collapse-label"><IconTile emoji="📋" tone="blue" size="xs" /> 各学科剩余学习币明细</span>,
       children: (
         <div className="mall-detail-list">
-          {SUBJECTS.map((s) => (
-            <div key={s.key} className="mall-detail-row">
-              <span className="mall-detail-sub">
-                <span className={`mall-detail-icon mall-detail-icon-${s.theme}`}>{s.icon}</span>
-                {s.name}
-              </span>
+          {coinList.length === 0 && (
+            <div className="mall-detail-empty">本学期还没有学习币，快去预习、练习积累吧</div>
+          )}
+          {coinList.map((s) => (
+            <div key={s.subjectId} className="mall-detail-row">
+              <span className="mall-detail-sub">{s.subjectName}</span>
               <div className="mall-detail-bar">
                 <div
-                  className={`mall-detail-bar-inner ${s.theme}`}
-                  style={{ width: `${Math.min(100, (subjectCoins[s.key] / COIN_LIMIT) * 100)}%` }}
+                  className="mall-detail-bar-inner blue"
+                  style={{ width: `${Math.min(100, ((s.coins || 0) / COIN_LIMIT) * 100)}%` }}
                 />
               </div>
-              <span className="mall-detail-num">{subjectCoins[s.key]}<small>/{COIN_LIMIT}</small></span>
+              <span className="mall-detail-num">{s.coins}<small>/{COIN_LIMIT}</small></span>
             </div>
           ))}
         </div>
@@ -118,14 +116,12 @@ export default function MallPage() {
 
   return (
     <div className="sll-page-enter mall-page">
-      {reward && <div className="sll-reward">{reward}</div>}
-
       {/* ---- 顶部数据区 ---- */}
       <div className="sll-card mall-top">
         <IconTile emoji="🐚" tone="gold" size="2xl" style={{ '--it-size': '76px' }} />
         <div className="mall-top-info">
           <div className="mall-top-label">本学期可兑换总学习币</div>
-          <div className="mall-top-num">{totalCoins}</div>
+          <div className="mall-top-num">{coins}</div>
           <div className="mall-top-tip">
             单科单学期上限 {COIN_LIMIT} · 同一学期多科学习币可合并兑换 · 学期结束自动清零
           </div>
@@ -138,33 +134,73 @@ export default function MallPage() {
       {/* ---- 商品网格 ---- */}
       <div className="mall-section-title"><IconTile emoji="🎁" tone="pink" size="sm" /> 荣誉商品</div>
       <div className="mall-grid">
-        {displayGoods.length === 0 && (
+        {goods.length === 0 && (
           <div className="mall-goods-desc" style={{ textAlign: 'center', padding: 24 }}>暂无上架商品，敬请期待</div>
         )}
-        {displayGoods.map((g) => {
-          const affordable = availablePoints >= g.points;
+        {goods.map((g) => {
+          const affordable = coins >= (g.points || 0);
           return (
-            <div
-              key={g.id}
-              className={`sll-card sll-card-hover mall-goods ${exchanged[g.id] ? 'exchanged' : ''}`}
-            >
+            <div key={g.id} className="sll-card sll-card-hover mall-goods">
               <div className="mall-goods-emoji">
                 {g.imageUrl ? <img src={g.imageUrl} alt={g.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 12 }} /> : '🎁'}
               </div>
               <div className="mall-goods-name">{g.name}</div>
               <div className="mall-goods-desc">{g.description}</div>
-              <div className="mall-goods-price">⭐ {g.points} 积分</div>
+              <div className="mall-goods-price">⭐ {g.points} 学币</div>
               <button
-                className={`mall-goods-btn ${affordable && !exchanged[g.id] ? 'ok' : 'no'}`}
-                disabled={!affordable || exchanged[g.id]}
+                className={`mall-goods-btn ${affordable ? 'ok' : 'no'}`}
+                disabled={!affordable || purchasing === g.id}
                 onClick={() => handleExchange(g)}
               >
-                {exchanged[g.id] ? '✓ 已兑换' : affordable ? '立即兑换' : '积分不足'}
+                {affordable ? (purchasing === g.id ? '兑换中…' : '立即兑换') : '学币不足'}
               </button>
             </div>
           );
         })}
       </div>
+
+      {/* ---- 我的兑换记录 ---- */}
+      <div className="mall-section-title"><IconTile emoji="🧾" tone="slate" size="sm" /> 我的兑换记录</div>
+      <div className="mall-orders">
+        {orders.length === 0 && (
+          <div className="mall-goods-desc" style={{ textAlign: 'center', padding: 16 }}>还没有兑换记录</div>
+        )}
+        {orders.map((o) => (
+          <div key={o.id} className="sll-card mall-order-row">
+            <div className="mall-order-info">
+              <div className="mall-order-name">{o.goodsName}</div>
+              <div className="mall-order-time">{o.createAt}</div>
+            </div>
+            <div className="mall-order-code">
+              核销码 <b>{o.verifyCode}</b>
+            </div>
+            <div className="mall-order-coins">-{o.coins} 学币</div>
+            {o.status === 1
+              ? <Tag color="green">已核销</Tag>
+              : <Tag color="orange">待核销</Tag>}
+          </div>
+        ))}
+      </div>
+
+      {/* ---- 兑换成功弹窗（展示核销码） ---- */}
+      <Modal
+        open={!!successOrder}
+        onCancel={() => setSuccessOrder(null)}
+        footer={null}
+        centered
+        title="兑换成功"
+      >
+        {successOrder && (
+          <div className="mall-success">
+            <div className="mall-success-goods">{successOrder.goodsName}</div>
+            <div className="mall-success-label">核销码</div>
+            <div className="mall-success-code">{successOrder.verifyCode}</div>
+            <div className="mall-success-tip">
+              已暂时扣除 {successOrder.coins} 学币，请向老师出示核销码完成核销
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

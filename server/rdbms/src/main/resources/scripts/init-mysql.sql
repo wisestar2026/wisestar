@@ -2091,6 +2091,31 @@ CREATE TABLE IF NOT EXISTS `t_mall_goods` (
 
 
 -- ----------------------------
+-- 学币兑换订单（学员端商城兑换 → 老师端凭核销码核销）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `t_mall_order` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学员ID(t_student.id)',
+  `student_no` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学号(冗余快照)',
+  `student_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学员姓名(冗余快照)',
+  `goods_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '商品ID(t_mall_goods.id)',
+  `goods_name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '商品名称(冗余快照)',
+  `goods_image` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '商品图片(冗余快照)',
+  `coins` int DEFAULT '0' COMMENT '消耗学币数量',
+  `verify_code` varchar(6) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '核销码(随机6位数字)',
+  `status` tinyint(1) DEFAULT '0' COMMENT '状态 0待核销 1已核销',
+  `verify_at` timestamp NULL DEFAULT NULL COMMENT '核销时间',
+  `verify_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '核销人',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL COMMENT '更新时间',
+  `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学币兑换订单';
+
+
+-- ----------------------------
 -- 今日任务（老师后台布置，学员端呈现，交卷且及格判定完成）
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS `t_task` (
