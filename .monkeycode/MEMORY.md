@@ -133,3 +133,12 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 所有面向用户的反馈、结果汇报、提问与总结一律用中文输出
 
+[预览库 DDL 生效方式补充]
+- Date: 2026-09-15
+- Context: Agent 为英语模块新增 t_english_unit / t_english_sentence / t_english_sentence_book 三张表时确认
+- Category: 运维部署
+- Instructions:
+  - 预览 profile 配置 `spring.sql.init.mode=always` + `continue-on-error: true`（见 rdbms/src/main/resources/config/application-preview.yml），且 start-preview.sh 在库文件已存在时仍传 `--spring.sql.init.mode=always`
+  - 因此 init-h2.sql 中新增的幂等 DDL（`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`）只需重启预览后端即自动应用到 live 库，不必再手动 RunScript 增量
+  - live 库新增表/数据后仍须重导快照（停后端 → server/db-export.sh → 提交），否则新容器从旧快照恢复会缺表
+
