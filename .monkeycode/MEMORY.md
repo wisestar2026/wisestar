@@ -142,3 +142,12 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 因此 init-h2.sql 中新增的幂等 DDL（`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`）只需重启预览后端即自动应用到 live 库，不必再手动 RunScript 增量
   - live 库新增表/数据后仍须重导快照（停后端 → server/db-export.sh → 提交），否则新容器从旧快照恢复会缺表
 
+[题目配图存储与标准模板图片列]
+- Date: 2026-09-16
+- Context: Agent 将 623 道数学题（含 394 张配图）导入题库、并为导入模板增加「图片」列时确认
+- Category: 排错调试
+- Instructions:
+  - 题目配图存 `attribute.examImages`（List<String> URL 数组），题库列表据此显示「含配图」标记、练习页据此渲染配图
+  - 后端 `/api/file/create` 返回的 FileView 实际不含 previewUrl（FileViewMapper 未映射、File 实体也无该字段）；图片直接引用 `/api/file?id=<fileId>`，且 `GET /api/file?id=` 无需登录即可访问，`<img>` 可直接加载
+  - 标准单表模板现为 30 列（第 30 列可选「图片」，多张用换行分隔）；解析在 `RepoServiceImpl.parseStandardRow`（COL_IMAGE），导出/模板在 `STANDARD_HEADERS`/`standardRowOf`
+

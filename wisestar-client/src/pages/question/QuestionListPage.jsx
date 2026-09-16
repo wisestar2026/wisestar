@@ -306,13 +306,6 @@ export default function QuestionListPage() {
       },
     },
     {
-      title: '分值', width: 60, align: 'center',
-      render: (_, r) => {
-        const s = r.template?.attribute?.examScore;
-        return s ? <Text strong>{s}</Text> : '-';
-      },
-    },
-    {
       title: '正确答案', width: 140, render: (_, r) => {
         const correct = r.template?.attribute?.examCorrectAnswer;
         if (!correct) return <Text type="secondary">-</Text>;

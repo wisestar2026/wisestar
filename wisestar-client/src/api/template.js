@@ -24,7 +24,8 @@
  *     tag[], category, repoId, repoName, subject, chapter, knowledgePoint[], difficulty, mode }
  *   attribute 扩展字段（用于考试判分）:
  *     examCorrectAnswer(正确答案，多选用 \n 分隔), examAnalysis(解析),
- *     examScore(分值), examScoreMode(计分方式), examImages(图片URL数组),
+ *     examScore(/examBlankScores: 练习内分值，由练习详情页维护，题目管理不设置),
+ *     examScoreMode(计分方式), examImages(图片URL数组),
  *     subject/chapter/knowledgePoint/difficulty(知识点属性快照)
  */
 

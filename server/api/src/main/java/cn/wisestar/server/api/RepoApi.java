@@ -211,7 +211,8 @@ public class RepoApi {
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/repo/unbind（如 /api/repo/unbind）。</p>
 	 *
-	 * <p><b>功能</b>：将题库与一批模板解除绑定（题目从题库中移除关联，不删除模板本身）。</p>
+	 * <p><b>功能</b>：将题库与一批模板解除绑定（题目从题库中移除关联，不删除模板本身）；
+	 * 同时清空练习内分值（attribute.examScore / examBlankScores），避免重新加入其他练习时带出旧分值。</p>
 	 *
 	 * <p><b>请求参数</b>：{@link RepoTemplateRequest}（@RequestBody JSON，题库与模板关联信息）。</p>
 	 *

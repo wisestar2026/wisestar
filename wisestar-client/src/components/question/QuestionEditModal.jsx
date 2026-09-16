@@ -6,7 +6,7 @@
  *   2. 题型选择（题库限定五类: 判断题/单选题/单项填空/多选题/多项填空）
  *   3. 选项增删编辑（判断题/单选/多选）
  *   4. 正确答案设置（选择题型下拉选择、单项填空自由输入、多项填空多空位输入）
- *   5. 分值 & 计分方式
+ *   5. 计分方式（分值属于练习内设置，在练习详情页维护，题目管理不设置分值）
  *   6. 答案解析
  *   7. 题目图片上传（通过 POST /api/file/create）
  *   8. 所属练习选择、标签、分类
@@ -55,7 +55,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import {
-  Modal, Input, Select, Switch, Space, Typography, Button, InputNumber,
+  Modal, Input, Select, Switch, Space, Typography, Button,
   message, Upload, Image, Divider, Tag,
 } from 'antd';
 import {
@@ -107,8 +107,8 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   const [answer, setAnswer] = useState('');
   const [blanks, setBlanks] = useState(['', '']); // 多项填空各空位答案（数组长度=空位数量）
   const [analysis, setAnalysis] = useState(''); // 答案解析
-  const [score, setScore] = useState(5);        // 分值，默认 5 分
-  const [scoreMode, setScoreMode] = useState('onlyOne'); // 计分方式: onlyOne/selectCorrect/selectAll/manual
+  // 计分方式: onlyOne/selectCorrect/selectAll/manual（分值属于练习内设置，不在题目管理中维护）
+  const [scoreMode, setScoreMode] = useState('onlyOne');
 
   // ---- 知识点属性（学科/章节/小节/知识点/难度/年级） ----
   const [subject, setSubject] = useState('');         // 学科（如: 数学）
@@ -173,7 +173,6 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           : (attr.examCorrectAnswer || optionLevelAnswers[0] || ''));
       }
       setAnalysis(attr.examAnalysis || '');
-      setScore(attr.examScore || 5);
       setScoreMode(attr.examScoreMode || 'onlyOne');
       // 知识点属性回填: 兼容数组 / 单值两种情况，统一转为数组
       // 年级优先取顶层字段（t_template.grade），其次 attribute 快照（兼容旧数据）
@@ -204,7 +203,6 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setAnswer('');
       setBlanks(['', '']);
       setAnalysis('');
-      setScore(5);
       setScoreMode('onlyOne');
       setSubject('');
       setGrade('');
@@ -298,18 +296,16 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
             ? (blanks.map((b) => String(b).trim()).join('|') || undefined)
             : (answer || undefined),
         examAnalysis: analysis || undefined,
-        // 编辑多项填空：若空位数与已有每空分值配置一致则保留练习内设置（空位数变化视为作废）；
-        // 保留配置时整题分=各空之和，避免与判分口径不一致
-        examBlankScores: (qType === 'MultipleBlank' && record?.id
-          && Array.isArray(record.template?.attribute?.examBlankScores)
+        // 分值属于练习内设置（练习详情页维护）：题目管理不修改分值，编辑时原样保留已有配置。
+        // 多项填空若空位数变化，旧每空分失效则丢弃，由练习端重新设置。
+        examBlankScores: (qType === 'MultipleBlank'
+          && Array.isArray(record?.template?.attribute?.examBlankScores)
           && record.template.attribute.examBlankScores.length === blanks.length)
           ? record.template.attribute.examBlankScores
           : undefined,
-        examScore: (qType === 'MultipleBlank' && record?.id
-          && Array.isArray(record.template?.attribute?.examBlankScores)
-          && record.template.attribute.examBlankScores.length === blanks.length)
-          ? Math.round(record.template.attribute.examBlankScores.reduce((s, v) => s + (v || 0), 0) * 100) / 100
-          : score,
+        examScore: typeof record?.template?.attribute?.examScore === 'number'
+          ? record.template.attribute.examScore
+          : undefined,
         examScoreMode: scoreMode,
         examImages: images.length > 0 ? images.map((i) => i.url) : undefined,
         // 知识点属性快照（写入 template.attribute，供题目转入问卷时随卷保存）
@@ -601,12 +597,6 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
                 placeholder="输入正确答案"
               />
             )}
-          </div>
-
-          {/* 分值 */}
-          <div style={{ width: 100 }}>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>分值</Text>
-            <InputNumber min={0} max={100} value={score} onChange={setScore} style={{ width: '100%' }} />
           </div>
         </div>
 

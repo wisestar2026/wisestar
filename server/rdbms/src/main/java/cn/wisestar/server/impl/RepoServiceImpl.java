@@ -59,7 +59,7 @@ import static com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank;
  * 2. 题库-题目批量管理：batchAddRepoTemplate（Excel 导入/批量保存，按"序号+题型"幂等更新）、
  *    batchUnBindTemplate 解绑题目
  * 3. 随机抽题：pickQuestionFromRepo（按题库/题型/标签条件随机选题，供考试随机抽题与练习使用）
- * 4. 题库导出增强：exportRepoQuestions（标准单表 29 列导出：学科/题型/章节/小节/知识点/题目/
+ * 4. 题库导出增强：exportRepoQuestions（标准单表 30 列导出：学科/题型/章节/小节/知识点/题目/
  *    选项A-H/难易程度/正确答案1-12/解析/标签），配套辅助方法 standardRowOf / answerCellsOf /
  *    queryQuestionsForExport / buildGuideSheet；导入模板与导出共用列结构
  * 5. 错题本：listUserBook/createUserBook/updateUserBook/deleteUserBook
@@ -342,14 +342,34 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      * @param request 含 ids 题目 ID 列表
      * @implNote 被 RepoController.batchUnBindTemplate 调用，仅清空题目 repoId，
      * 不删除 t_template 记录（与接口注释"移除关联、不删除模板本身"语义一致）。
+     * 分值属于练习内设置，解绑的同时清空 attribute.examScore / examBlankScores，
+     * 避免题目重新加入其他练习时带出旧分值。
      */
     @Override
     public void batchUnBindTemplate(RepoTemplateRequest request) {
-        if (request.getIds() != null) {
-            templateService.lambdaUpdate()
-                    .in(Template::getId, request.getIds())
-                    .set(Template::getRepoId, null)
-                    .update();
+        if (CollectionUtils.isEmpty(request.getIds())) {
+            return;
+        }
+        // 显式 set null 清空归属（updateBatchById 默认忽略 null 字段，无法用实体更新清空 repoId）
+        templateService.lambdaUpdate()
+                .in(Template::getId, request.getIds())
+                .set(Template::getRepoId, null)
+                .update();
+        // 分值属于练习内设置：解绑的同时清空 attribute.examScore / examBlankScores，
+        // 避免题目重新加入其他练习时带出旧分值（template 列非空，updateBatchById 会写回）
+        List<Template> templates = templateService.listByIds(request.getIds());
+        List<Template> scoreDirty = new ArrayList<>();
+        templates.forEach(template -> {
+            SurveySchema schema = template.getTemplate();
+            SurveySchema.Attribute attr = schema != null ? schema.getAttribute() : null;
+            if (attr != null && (attr.getExamScore() != null || attr.getExamBlankScores() != null)) {
+                attr.setExamScore(null);
+                attr.setExamBlankScores(null);
+                scoreDirty.add(template);
+            }
+        });
+        if (!scoreDirty.isEmpty()) {
+            templateService.updateBatchById(scoreDirty);
         }
     }
 
@@ -812,7 +832,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 导出题库题目为 Excel（标准单表模板，29 列单 sheet）。
+     * 导出题库题目为 Excel（标准单表模板，30 列单 sheet）。
      *
      * <p>列结构与「题目管理 → 导入模板」完全一致：学科/题型/章节/知识点/题目/选项A~H/
      * 难易程度/正确答案1~12/解析/标签；题型仅含判断/单选/单项填空/多选/多项填空
@@ -823,7 +843,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      *
      * 【数据流向】
      * RepoApi.exportRepoQuestions → exportRepoQuestions → queryQuestionsForExport（t_template）
-     * → standardRowOf 逐题装配 29 列 → fastexcel 写流 → 浏览器下载 xlsx。
+     * → standardRowOf 逐题装配 30 列 → fastexcel 写流 → 浏览器下载 xlsx。
      *
      * @param request 含题库 id（可空：空则导出全部题目）及题目维度筛选条件
      *        （name/questionType/subject/chapter/section/knowledgePoint/difficulty）
@@ -865,7 +885,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 下载题目导入模板（标准单表 29 列空模板 + 「填写说明」sheet）。
+     * 下载题目导入模板（标准单表 30 列空模板 + 「填写说明」sheet）。
      *
      * <p>仅输出表头与说明页，不含任何题目数据，供「题目管理 → 导入 → 下载模板」使用；
      * 与 exportRepoQuestions（无 repoId 导出全量题目）语义区分。</p>
@@ -897,18 +917,18 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     // ============================================================
 
     /**
-     * 标准单表模板列头（29 列，导入导出共用，顺序与用户约定模板一致）。
+     * 标准单表模板列头（30 列，导入导出共用，顺序与用户约定模板一致）。
      */
     private static final List<String> STANDARD_HEADERS = Collections.unmodifiableList(Arrays.asList(
             "学科", "题型", "章节", "小节", "知识点", "题目", "选项A", "选项B", "选项C", "选项D", "选项E", "选项F", "选项G", "选项H",
             "难易程度", "正确答案1", "正确答案2", "正确答案3", "正确答案4", "正确答案5", "正确答案6", "正确答案7", "正确答案8",
-            "正确答案9", "正确答案10", "正确答案11", "正确答案12", "解析", "标签"));
+            "正确答案9", "正确答案10", "正确答案11", "正确答案12", "解析", "标签", "图片"));
 
     /**
      * 各列导出列宽（与 STANDARD_HEADERS 一一对应）。
      */
     private static final int[] STANDARD_WIDTHS = { 14, 12, 16, 14, 22, 50, 12, 12, 12, 12, 12, 12, 12, 12, 10, 12, 12,
-            12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 42, 24 };
+            12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 42, 24, 40 };
 
     /**
      * 「填写说明」sheet 引导文案（下载模板时附在第二个 sheet，不参与导入解析）。
@@ -930,7 +950,8 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
             "10. 解析：题目解析，可留空；",
             "11. 标签：可填多个，用逗号或顿号分隔，可留空；",
             "12. 任一行的学科/章节/小节/知识点/选项/答案校验不通过会中止整次导入并提示行号；",
-            "13. 富内容写法（题干/选项/解析列均可使用，学员端会自动渲染）：",
+            "13. 图片（可选列）：填写题目配图 URL（如 /api/file?id=xxx），多个用换行分隔；",
+            "14. 富内容写法（题干/选项/解析列均可使用，学员端会自动渲染）：",
             "    图片：![图片说明](图片URL)，URL 须为公网可访问的 http(s) 地址；",
             "    行内公式：$x^2$、$\\frac{a}{b}$；独立公式：$$...$$；化学式：$\\ce{H2O}$；",
             "    加粗：**重点内容**；单元格内换行：按 Alt+Enter 输入换行。",
@@ -1033,16 +1054,16 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         rows.add(Arrays.asList("数学", "判断", "有理数", "数轴", "相反数", "示例：0 的相反数是 0。",
                 "", "", "", "", "", "", "", "",
                 "简单", "正确", "", "", "", "", "", "", "", "", "", "", "",
-                "示例解析：0 的相反数是其本身。", "示例标签"));
+                "示例解析：0 的相反数是其本身。", "示例标签", ""));
         rows.add(Arrays.asList("数学", "多项填空", "整式加减", "去括号", "合并同类项", "示例：2x+3x 与 5y-2y 的结果分别是？",
                 "", "", "", "", "", "", "", "",
                 "简单", "5x", "3y", "", "", "", "", "", "", "", "", "",
-                "示例解析：合并同类项系数相加减。", "示例标签"));
+                "示例解析：合并同类项系数相加减。", "示例标签", ""));
         rows.add(Arrays.asList("数学", "单选", "有理数", "数轴", "绝对值",
                 "示例：如图，点 A 表示的数是 $x$，且 $|x|=3$，则 $x$ 的值是？![数轴示意图](https://example.com/number-axis.png)",
                 "3", "-3", "$\\pm 3$", "以上都不对", "", "", "", "",
                 "中等", "C", "", "", "", "", "", "", "", "", "", "", "",
-                "示例解析：由 $|x|=3$ 得 $x=3$ 或 $x=-3$，故 $x=\\pm 3$。", "示例标签"));
+                "示例解析：由 $|x|=3$ 得 $x=3$ 或 $x=-3$，故 $x=\\pm 3$。", "示例标签", ""));
         return rows;
     }
 
@@ -1112,7 +1133,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 单表导出的一行（29 列，顺序与 STANDARD_HEADERS 一致）。
+     * 单表导出的一行（30 列，顺序与 STANDARD_HEADERS 一致）。
      *
      * @param template 题目实体
      * @return 导出行数据
@@ -1150,6 +1171,8 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         row.add(attr != null ? orEmpty(attr.getExamAnalysis()) : "");
         row.add(template.getTag() != null && template.getTag().length > 0
                 ? String.join("、", template.getTag()) : "");
+        row.add(attr != null && attr.getExamImages() != null && !attr.getExamImages().isEmpty()
+                ? String.join("\n", attr.getExamImages()) : "");
         return row;
     }
 
@@ -1311,6 +1334,26 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         return result;
     }
 
+    /**
+     * 拆分「图片」列的图片 URL（兼容换行与中英文逗号分隔）。
+     *
+     * <p>与 {@link #splitAnswers} 区分：图片 URL 中可能含有逗号等字符，故仅按
+     * 换行/逗号切分，避免误拆完整链接。</p>
+     */
+    private static List<String> splitImages(String text) {
+        List<String> result = new ArrayList<>();
+        if (text == null) {
+            return result;
+        }
+        for (String t : text.split("[\r\n,，]+")) {
+            String v = t.trim();
+            if (!v.isEmpty()) {
+                result.add(v);
+            }
+        }
+        return result;
+    }
+
 
     // ============================================================
     // 标准单表模板导入解析（与导出共用列结构，逐行校验后整体入库）
@@ -1344,12 +1387,14 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     private static final int COL_ANALYSIS = COL_ANSWER_END + 1;
     /** 标准模板「标签」列序号。 */
     private static final int COL_TAGS = COL_ANALYSIS + 1;
+    /** 标准模板「图片」列序号（可选列：题目配图 URL，支持换行/逗号分隔多个）。 */
+    private static final int COL_IMAGE = COL_TAGS + 1;
 
     /** 单次导入最多展示的行级错误条数。 */
     private static final int MAX_SHOWN_ERRORS = 20;
 
     /**
-     * 解析标准单表模板（首 sheet，29 列）。
+     * 解析标准单表模板（首 sheet，30 列）。
      *
      * <p>逐行校验：学科/章节/小节按名称匹配系统已有体系（不自动新建）；知识点列整格优先
      * 按一个知识点名匹配（名称可含顿号），整格未命中才按顿号等拆分多个知识点逐 token 校验，
@@ -1413,6 +1458,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         String difficultyText = cellText(r, COL_DIFFICULTY);
         String analysis = cellText(r, COL_ANALYSIS);
         String tagsText = cellText(r, COL_TAGS);
+        String imagesText = cellText(r, COL_IMAGE);
 
         List<String> rowErrors = new ArrayList<>();
 
@@ -1659,6 +1705,10 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                 .difficulty(difficulty);
         if (StringUtils.hasText(analysis)) {
             attrBuilder.examAnalysis(analysis);
+        }
+        List<String> imageUrls = splitImages(imagesText);
+        if (!imageUrls.isEmpty()) {
+            attrBuilder.examImages(imageUrls);
         }
         if (!kpNames.isEmpty()) {
             attrBuilder.knowledgePoint(kpNames);
