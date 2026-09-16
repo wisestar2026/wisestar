@@ -14,12 +14,13 @@
  * 被谁引用: App.jsx 路由表（/student/study）；StudentLayout 子路由
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
 import { getStudySections, uploadActivity } from '../../api/student';
 import IconTile from '../../components/common/IconTile';
+import StarRating from '../../components/common/StarRating';
 import './StudyPage.css';
 
 // 四大核心功能按钮配置（short 用于小节行内的紧凑按钮；tone 为 3D 黏土图标色调）
@@ -32,12 +33,6 @@ const ACTION_BUTTONS = [
 
 // 章节图标底座循环色调（让左栏章节有层次、不单调）
 const CHAPTER_TONES = ['blue', 'orange', 'green', 'purple', 'teal', 'pink'];
-
-// 完成度 → 星星（5 颗，金色点亮；完成练习且正确率达标：≥80 五颗 / ≥60 四颗 / ≥40 三颗 / ≥20 两颗 / >0 一颗）
-const stars = (rate) => {
-  const n = rate >= 80 ? 5 : rate >= 60 ? 4 : rate >= 40 ? 3 : rate >= 20 ? 2 : rate > 0 ? 1 : 0;
-  return '⭐'.repeat(n) + '☆'.repeat(5 - n);
-};
 
 export default function StudyPage() {
   const navigate = useNavigate();
@@ -81,33 +76,6 @@ export default function StudyPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubject, version, realMode]);
-
-  // 真实评价值索引：知识点 / 小节（掌握度均值+薄弱） / 章节（薄弱）
-  const progressChapters = useMemo(() => studyContent.progress?.chapters || [], [studyContent.progress]);
-  const sectionEvalMap = useMemo(() => {
-    const map = {};
-    progressChapters.forEach((ch) => {
-      const bySection = {};
-      (ch.kps || []).forEach((kp) => {
-        const cur = bySection[kp.sectionId] || (bySection[kp.sectionId] = { sum: 0, n: 0, weak: 0 });
-        cur.sum += kp.mastery || 0;
-        cur.n += 1;
-        if (kp.weak) cur.weak += 1;
-      });
-      Object.entries(bySection).forEach(([sid, v]) => {
-        map[sid] = { mastery: v.n ? Math.round(v.sum / v.n) : 0, weak: v.weak > 0 };
-      });
-    });
-    return map;
-  }, [progressChapters]);
-  const chapterEvalMap = useMemo(() => {
-    const map = {};
-    progressChapters.forEach((ch) => {
-      const kps = ch.kps || [];
-      map[ch.id] = { weak: kps.some((k) => k.weak) };
-    });
-    return map;
-  }, [progressChapters]);
 
   // 选中章节：章节列表只负责选中，小节改由中栏以行列表展示（按章节缓存小节）
   const selectChapter = (chId) => {
@@ -190,12 +158,11 @@ export default function StudyPage() {
                   <div className="study-chapter-info">
                     <div className="study-chapter-name">
                       {ch.name}
-                      {realMode && <span className="study-chapter-stars">{stars(ch.progress || 0)}</span>}
+                      {realMode && <StarRating value={ch.progress || 0} size={13} className="study-chapter-stars" />}
                     </div>
                     {realMode ? (
                       <div className="study-chapter-sub">
                         学习完成度 {ch.progress || 0}%
-                        {chapterEvalMap[ch.id]?.weak && <span style={{ color: '#e53935' }}> · 含薄弱点 ⚠️</span>}
                       </div>
                     ) : (
                       <div className="study-chapter-progress">
@@ -299,12 +266,11 @@ export default function StudyPage() {
                 <div className="study-empty">该章节暂无{realMode ? '小节' : '知识点'}内容</div>
               ) : realMode ? (
                 activeSections.map((sec) => {
-                  const ev = sectionEvalMap[sec.id];
-                  // 小节完成率 = 该小节专项练习/通关的正确率（不再用知识点掌握度平均，避免串小节）
-                  const mastery = Math.max(sec.progress || 0, sec.bestRate || 0);
-                  const lv = masteryLevel(mastery);
                   const locked = !!sec.locked;
-                  const secStars = sec.stars || 0;
+                  // 通关进度 = 已通关题量（已答对的不同题目数）/ 该小节已有题量
+                  const questionCount = sec.questionCount ?? 0;
+                  const passedCount = sec.correctCount ?? 0;
+                  const passRate = questionCount > 0 ? Math.round((passedCount / questionCount) * 100) : 0;
                   const sel = selectedSection && selectedSection.id === sec.id;
                   return (
                     <div
@@ -322,25 +288,22 @@ export default function StudyPage() {
                         <div className="study-kp-main">
                           <span className="study-kp-name">
                             <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="xs" />
-                            <span className="study-kp-name-text">{sec.name}{ev?.weak ? ' ⚠️' : ''}</span>
+                            <span className="study-kp-name-text">{sec.name}</span>
+                            <StarRating value={passRate} size={13} className="study-kp-stars" />
                           </span>
                           <span className="study-kp-tags">
-                            {secStars > 0 && <span className="study-kp-stars">{'⭐'.repeat(secStars)}</span>}
                             {sec.passed && <span className="study-kp-pass">已通关</span>}
                           </span>
                         </div>
                         <span className="study-kp-stats">
-                          <span className="study-kp-stat">共 <b>{sec.questionCount ?? 0}</b> 题</span>
-                          <span className="study-kp-stat">已答 <b>{sec.answeredCount ?? 0}</b></span>
-                          <span className="study-kp-stat correct">答对 <b>{sec.correctCount ?? 0}</b></span>
+                          <span className="study-kp-stat">已通关 <b>{passedCount}</b>/{questionCount} 题</span>
+                          <span className="study-kp-stat pct"><b>{passRate}%</b></span>
                         </span>
                       </div>
                       <div className="study-kp-progress">
-                        <span className="study-kp-pct">掌握率 {mastery}%</span>
                         <div className="study-kp-bar">
-                          <div className="study-kp-bar-fill" style={{ width: `${mastery}%`, background: lv.color }} />
+                          <div className="study-kp-bar-fill" style={{ width: `${passRate}%` }} />
                         </div>
-                        <span className="sll-level" style={{ background: lv.color }}>{lv.label}</span>
                       </div>
                       <div className="study-kp-actions">
                         {ACTION_BUTTONS.map((a) => (

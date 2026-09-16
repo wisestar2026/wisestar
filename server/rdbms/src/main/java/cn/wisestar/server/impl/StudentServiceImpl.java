@@ -555,6 +555,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 							.computeIfAbsent(t.getRepoId(), k -> new LinkedHashSet<>()).add(t.getId()));
 		}
 		// 知识点 → 题目（显式绑定 + 名称标签匹配）
+		// 名称标签匹配：自动按题目知识点标签命中；已绑定小节的练习下题目不参与，避免被小节题量重复计入
+		Set<String> sectionBoundRepoIds = loadSectionBoundRepoIds();
 		Map<String, Set<String>> questionIdsByKp = new HashMap<>();
 		for (KnowledgePoint kp : kpsBySection.values().stream().flatMap(List::stream)
 				.collect(Collectors.toList())) {
@@ -569,6 +571,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 								.and(w -> w.like(Template::getKnowledgePoint, name)
 										.or().like(Template::getTemplate, name)))
 						.stream().filter(t -> matchesKnowledgePointName(t, name))
+						.filter(t -> !sectionBoundRepoIds.contains(t.getRepoId()))
 						.forEach(t -> ids.add(t.getId()));
 			}
 			questionIdsByKp.put(kp.getId(), ids);
@@ -848,6 +851,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 							.eq(KnowledgePoint::getSectionId, sectionId))
 					.stream().map(KnowledgePoint::getId).filter(StringUtils::hasText).forEach(kpIds::add);
 		}
+		// 小节已绑练习（scopeSectionId 存在时用于用途收敛）
+		List<SectionRepo> sectionBindings = StringUtils.hasText(scopeSectionId)
+				? sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
+						.eq(SectionRepo::getSectionId, scopeSectionId))
+				: Collections.emptyList();
+		// 已绑定小节的练习ID集合：这些练习下的题由小节练习统一管理，不参与知识点标签自动匹配
+		Set<String> sectionBoundRepoIds = loadSectionBoundRepoIds();
 		// 用途约束的题库集合（非空时用于候选集统一过滤，含知识点标签匹配结果）
 		Set<String> usageRepoFilter = null;
 		if (StringUtils.hasText(repoId)) {
@@ -855,8 +865,6 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 					.forEach(t -> templateIds.add(t.getId()));
 		}
 		else if (StringUtils.hasText(scopeSectionId)) {
-			List<SectionRepo> sectionBindings = sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery()
-					.eq(SectionRepo::getSectionId, scopeSectionId));
 			Set<String> allowedRepoIds = resolveAllowedRepoIds(sectionBindings, usageScope);
 			// 预习缺省策略：请求未显式传题量/题型时采用小节预习配置（缺省题量 3、题型不限）
 			if (SectionRepoUsage.PREVIEW.equals(usageScope)) {
@@ -908,7 +916,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			templateMapper.selectList(Wrappers.<Template>lambdaQuery()
 							.and(w -> w.like(Template::getKnowledgePoint, name)
 									.or().like(Template::getTemplate, name)))
-					.stream().filter(t -> matchesKnowledgePointName(t, name))
+					.stream()
+					.filter(t -> matchesKnowledgePointName(t, name))
+					.filter(t -> !sectionBoundRepoIds.contains(t.getRepoId()))
 					.forEach(t -> {
 						questionsByKp.get(kpId).add(t.getId());
 						templateIds.add(t.getId());
@@ -1165,6 +1175,18 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.map(SectionRepo::getRepoId)
 				.collect(Collectors.toCollection(LinkedHashSet::new));
 		return filtered.isEmpty() ? all : filtered;
+	}
+
+	/**
+	 * 已绑定到小节的练习ID集合。
+	 *
+	 * <p>这些练习下的题目由小节练习（预习/专项/通关）统一管理，不再参与知识点标签的自动匹配，
+	 * 避免其被小节的知识点专项练习重复自动拉取；题目的知识点显式绑定与题库直练不受影响。</p>
+	 */
+	private Set<String> loadSectionBoundRepoIds() {
+		return sectionRepoMapper.selectList(Wrappers.<SectionRepo>lambdaQuery())
+				.stream().map(SectionRepo::getRepoId).filter(StringUtils::hasText)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
 	}
 
 	/**
