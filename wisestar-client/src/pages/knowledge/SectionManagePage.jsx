@@ -113,29 +113,40 @@ export default function SectionManagePage() {
     }).catch(() => { /* request 拦截器已提示 */ });
   }, []);
 
-  // ---- 学科切换 → 加载章节（默认选第一个） ----
+  // ---- 学科切换 → 加载该学科章节（章节默认不选中=全部章节；URL 指定且属于该学科时保留） ----
   useEffect(() => {
-    if (!subjectId) return;
+    if (!subjectId) { setChapters([]); setChapterId(''); return; }
     listChapters({ subjectId }).then((res) => {
       const list = res?.data || [];
       setChapters(list);
-      setChapterId((prev) => {
-        // URL 指定的章节不属于当前学科时，回退到第一个章节
-        if (prev && list.some((c) => c.id === prev)) return prev;
-        return list[0]?.id;
-      });
+      setChapterId((prev) => (prev && list.some((c) => c.id === prev) ? prev : ''));
     }).catch(() => setChapters([]));
   }, [subjectId]);
 
-  // ---- 章节切换 → 加载该章节全部小节（年级/学期在本地过滤，支持级联） ----
+  // 学科切换：立即清空章节选择（回到「全部章节」），避免短暂展示上一学科的章节小节
+  const handleSubjectChange = (nextSubjectId) => {
+    setSubjectId(nextSubjectId);
+    setChapterId('');
+  };
+
+  // ---- 小节加载：选中章节时按章节取；未选章节（全部章节）时取该学科下全部小节 ----
   const loadSections = useCallback(() => {
-    if (!chapterId) { setAllSections([]); return; }
+    if (!subjectId) { setAllSections([]); return; }
     setLoading(true);
-    listSections({ chapterId })
-      .then((res) => setAllSections(res?.data || []))
+    listSections(chapterId ? { chapterId } : {})
+      .then((res) => {
+        const list = res?.data || [];
+        if (chapterId) {
+          setAllSections(list);
+          return;
+        }
+        // 全部章节：仅保留当前学科（其章节集合）下的小节
+        const ids = new Set(chapters.map((c) => c.id));
+        setAllSections(list.filter((s) => ids.has(s.chapterId)));
+      })
       .catch(() => setAllSections([]))
       .finally(() => setLoading(false));
-  }, [chapterId]);
+  }, [chapterId, chapters, subjectId]);
 
   useEffect(() => { loadSections(); }, [loadSections]);
 
@@ -277,7 +288,7 @@ export default function SectionManagePage() {
         overview: values.overview || '',
         points: (values.points || []).filter((p) => p && p.trim()),
       });
-      updateSection({ id: contentSection.id, chapterId, content: payload }).then(() => {
+      updateSection({ id: contentSection.id, chapterId: contentSection.chapterId, content: payload }).then(() => {
         message.success('内容设置已保存');
         setContentOpen(false);
         setAllSections((prev) => prev.map((s) => (s.id === contentSection.id ? { ...s, content: payload } : s)));
@@ -321,7 +332,7 @@ export default function SectionManagePage() {
       const sectionId = practiceSection.id;
       setSavingBind(true);
       Promise.all([
-        updateSection({ id: sectionId, chapterId, practice: payload }),
+        updateSection({ id: sectionId, chapterId: practiceSection.chapterId, practice: payload }),
         saveSectionRepos({ sectionId, repoIds: selectedIds, usageByRepo: repoUsage }),
       ]).then(() => {
         message.success('练习设置已保存');
@@ -414,7 +425,7 @@ export default function SectionManagePage() {
         <Space wrap>
           <Button
             type="primary" size="small" icon={<ApartmentOutlined />}
-            onClick={() => navigate(`/knowledge/points?subjectId=${subjectId}&chapterId=${chapterId}&sectionId=${s.id}`)}
+            onClick={() => navigate(`/knowledge/points?subjectId=${subjectId}&chapterId=${s.chapterId}&sectionId=${s.id}`)}
           >
             管理知识点
           </Button>
@@ -452,7 +463,7 @@ export default function SectionManagePage() {
             items={[
               { title: <Text strong>知识管理</Text> },
               { title: <Text strong>{subject ? `${subject.icon} ${subject.name}` : '学科'}</Text> },
-              { title: <Text strong>{chapter?.name || '章节'}</Text> },
+              { title: <Text strong>{chapter?.name || (chapterId ? '章节' : '全部章节')}</Text> },
             ]}
           />
         </Space>
@@ -476,7 +487,7 @@ export default function SectionManagePage() {
         <Select
           style={{ width: 180 }}
           value={subjectId}
-          onChange={setSubjectId}
+          onChange={handleSubjectChange}
           placeholder="选择学科"
           options={subjects.map((s) => ({ value: s.id, label: `${s.icon || ''} ${s.name}` }))}
         />
@@ -494,10 +505,12 @@ export default function SectionManagePage() {
         />
         <Select
           style={{ width: 220 }}
-          value={chapterId}
+          value={chapterId || ''}
           onChange={setChapterId}
-          placeholder="选择章节"
-          options={chapters.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` }))}
+          options={[
+            { value: '', label: '全部章节' },
+            ...chapters.map((c) => ({ value: c.id, label: `${c.icon} ${c.name}` })),
+          ]}
         />
       </Space>
 
@@ -507,7 +520,7 @@ export default function SectionManagePage() {
         dataSource={sections}
         loading={loading}
         pagination={false}
-        locale={{ emptyText: '该章节下暂无小节，点击右上角「新增小节」创建' }}
+        locale={{ emptyText: chapterId ? '该章节下暂无小节，点击右上角「新增小节」创建' : '该学科下暂无小节，点击右上角「新增小节」创建' }}
       />
 
       {/* 新增/编辑小节弹窗 */}
@@ -712,7 +725,7 @@ export default function SectionManagePage() {
           <Space>
             <Button onClick={() => setKpOpen(false)}>关闭</Button>
             <Button type="primary" icon={<ApartmentOutlined />}
-              onClick={() => navigate(`/knowledge/points?subjectId=${subjectId}&chapterId=${chapterId}&sectionId=${kpSection?.id}`)}>
+              onClick={() => navigate(`/knowledge/points?subjectId=${subjectId}&chapterId=${kpSection?.chapterId}&sectionId=${kpSection?.id}`)}>
               进入知识点管理
             </Button>
           </Space>
