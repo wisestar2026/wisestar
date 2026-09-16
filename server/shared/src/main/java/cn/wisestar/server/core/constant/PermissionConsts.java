@@ -297,6 +297,8 @@ public final class PermissionConsts {
 			+ "system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,"
 			+ "user:update,"
 			+ "english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,"
+			+ "english:unit:list,english:unit:create,english:unit:update,english:unit:delete,"
+			+ "english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,"
 			+ "campus:list,campus:create,campus:update,campus:delete";
 
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */

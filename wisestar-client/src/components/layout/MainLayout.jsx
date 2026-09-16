@@ -115,9 +115,9 @@ export default function MainLayout() {
     {
       key: 'english-group', icon: <BookOutlined />, label: '英语板块',
       children: [
-        { key: '/english/unit', label: '单元管理' },
+        { key: '/english/unit', label: '单元管理', required: ['english:unit:list'] },
         { key: '/english/word', label: '单词管理', required: ['english:word:list'] },
-        { key: '/english/sentence', label: '句式管理' },
+        { key: '/english/sentence', label: '句库管理', required: ['english:sentence:list'] },
         { key: '/english/study', label: '单词学习' },
         { key: '/english/word-book', label: '单词本' },
         { key: '/english/word-ai', label: 'AI 内容生成', required: ['english:word:ai'] },

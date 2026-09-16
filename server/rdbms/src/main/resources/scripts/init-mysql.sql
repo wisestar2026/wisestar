@@ -1427,7 +1427,7 @@ CREATE TABLE `t_role` (
 BEGIN;
 -- 管理员：全量权限（含新增知识/学员/订单模块权限点），幂等插入
 INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
-SELECT '1457995481928998914', '管理员', 'admin', '系统初始化角色（超管）', 'home,exercise:list,project:list,project:detail,project:create,project:update,project:delete,project:report,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai', 1, 0, 1, '2021-11-09 16:56:26', NULL, '2026-08-13 10:00:00', '1457995481966747649'
+SELECT '1457995481928998914', '管理员', 'admin', '系统初始化角色（超管）', 'home,exercise:list,project:list,project:detail,project:create,project:update,project:delete,project:report,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import', 1, 0, 1, '2021-11-09 16:56:26', NULL, '2026-08-13 10:00:00', '1457995481966747649'
 WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'admin');
 -- 内置角色：校长（决策层）
 INSERT INTO `t_role` (`id`, `name`, `code`, `remark`, `authority`, `status`, `is_deleted`, `builtin`, `create_at`, `create_by`, `update_at`, `update_by`)
@@ -1454,7 +1454,7 @@ WHERE NOT EXISTS (SELECT 1 FROM `t_role` WHERE `code` = 'academic');
 UPDATE `t_role` SET `authority` = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,system:dict:list,system:dictItem:list' WHERE `code` = 'academic';
 UPDATE `t_role` SET `authority` = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,project:list,project:detail,answer:list,answer:detail,system:dict:list,system:dictItem:list' WHERE `code` = 'academic';
 -- 收敛旧库：已有 admin 角色补充内置标记与新权限点
-UPDATE `t_role` SET `name` = '管理员', `remark` = '系统初始化角色（超管）', `builtin` = 1, `update_at` = '2026-08-13 10:00:00', `update_by` = '1457995481966747649', `authority` = 'home,exercise:list,project:list,project:detail,project:create,project:update,project:delete,project:report,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai' WHERE `code` = 'admin';
+UPDATE `t_role` SET `name` = '管理员', `remark` = '系统初始化角色（超管）', `builtin` = 1, `update_at` = '2026-08-13 10:00:00', `update_by` = '1457995481966747649', `authority` = 'home,exercise:list,project:list,project:detail,project:create,project:update,project:delete,project:report,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import' WHERE `code` = 'admin';
 -- 兼容已存在的 MySQL 库：补充 data_scope 列
 ALTER TABLE `t_role` ADD COLUMN IF NOT EXISTS `data_scope` varchar(16) DEFAULT NULL COMMENT '数据范围 ALL全校可见 CAMPUS仅绑定校区';
 -- 数据范围默认值（幂等：仅对未配置的行赋默认值，不覆盖用户后续修改）
@@ -2287,6 +2287,62 @@ ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_at` timestamp D
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_by` varchar(64) DEFAULT NULL;
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
 UPDATE `t_english_ai_pack` SET `create_at` = `created_at` WHERE `create_at` IS NULL AND `created_at` IS NOT NULL;
+
+-- 英语单元目录（词库/句库单元 + 自定义排序/占位单元）
+CREATE TABLE IF NOT EXISTS `t_english_unit` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `grade` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级',
+  `term` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期（上册/下册）',
+  `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
+  `sort` int DEFAULT '0' COMMENT '排序',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_unit` (`version`, `grade`, `term`, `unit`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='英语单元目录';
+
+-- 英语句库（独立于单词，可单独维护与导入）
+CREATE TABLE IF NOT EXISTS `t_english_sentence` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `en` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '英文句子',
+  `zh` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '中文释义',
+  `audio_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '音频 URL',
+  `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `grade` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级',
+  `term` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期（上册/下册）',
+  `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
+  `sort` int DEFAULT '0' COMMENT '单元内排序',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `idx_english_sentence_unit` (`version`, `grade`, `term`, `unit`, `sort`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='英语句库';
+
+-- 用户句子本（熟练度 + 复习调度）
+CREATE TABLE IF NOT EXISTS `t_english_sentence_book` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `sentence_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `familiarity` tinyint DEFAULT '0' COMMENT '熟练度 0-未学习 1-生疏 2-熟悉 3-熟练 4-精通',
+  `correct_count` int DEFAULT '0' COMMENT '累计答对次数',
+  `wrong_count` int DEFAULT '0' COMMENT '累计答错次数',
+  `last_review_time` timestamp DEFAULT NULL COMMENT '最近复习时间',
+  `next_review_time` timestamp DEFAULT NULL COMMENT '下次复习时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_sentence` (`user_id`, `sentence_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户句子本';
 
 -- ============================================================
 -- 学员积分·学币体系（双轨数值账本）

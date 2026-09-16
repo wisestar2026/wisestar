@@ -43,6 +43,8 @@ export default function StudentHomePage() {
   const subject = visibleSubjects.find((s) => s.key === activeSubject)
     || SUBJECTS.find((s) => s.key === activeSubject)
     || SUBJECTS[1];
+  // 英语学科：学海研习卡片指向独立的英语学习中心（真 key 为学科 ID，如 1003；兼容 mock 'english'）
+  const isEnglish = subject?.name === '英语' || subject?.key === 'english' || subject?.key === '1003';
 
   // 当前学员真实档案（学号/姓名/学校等，来自 GET /api/student/me；加载失败回退 mock）
   const [myInfo, setMyInfo] = useState(null);
@@ -167,7 +169,7 @@ export default function StudentHomePage() {
         {/* 2) 学海研习卡片（核心学习入口） */}
         <div
           className={`sll-card sll-card-hover sh-home-card sh-home-card-study sh-home-card-${subject.theme}`}
-          onClick={() => navigate('/student/study')}
+          onClick={() => navigate(isEnglish ? '/student/english' : '/student/study')}
         >
             <div className="sh-home-card-head">
               <IconTile emoji={subject.icon} tone={subject.theme} size="sm" />

@@ -56,6 +56,10 @@ import KnowledgePage from './pages/student/KnowledgePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
+import EnglishCenterPage from './pages/student/EnglishCenterPage';
+import EnglishWordLearnPage from './pages/student/EnglishWordLearnPage';
+import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
+import EnglishReviewPage from './pages/student/EnglishReviewPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
@@ -132,6 +136,14 @@ export default function App() {
             <Route path="profile" element={<ProfilePage />} />
             {/* 荣誉商城: 多科合并兑换 */}
             <Route path="mall" element={<MallPage />} />
+            {/* 英语学习中心: 单元进度 + 智能复习 */}
+            <Route path="english" element={<EnglishCenterPage />} />
+            {/* 英语单词卡片学习（?unit=） */}
+            <Route path="english/word" element={<EnglishWordLearnPage />} />
+            {/* 英语句子学习·连词成句（?unit=） */}
+            <Route path="english/sentence" element={<EnglishSentenceLearnPage />} />
+            {/* 英语智能复习（单词 + 句子混合队列） */}
+            <Route path="english/review" element={<EnglishReviewPage />} />
           </Route>
 
           {/* ---- 受保护路由（需要登录） ---- */}
@@ -341,7 +353,7 @@ export default function App() {
             <Route
               path="/english/unit"
               element={
-                <AuthGuard>
+                <AuthGuard required={['english:unit:list']}>
                   <UnitManagePage />
                 </AuthGuard>
               }
@@ -357,7 +369,7 @@ export default function App() {
             <Route
               path="/english/sentence"
               element={
-                <AuthGuard>
+                <AuthGuard required={['english:sentence:list']}>
                   <SentenceManagePage />
                 </AuthGuard>
               }
