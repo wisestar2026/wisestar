@@ -83,6 +83,9 @@ const CHOICE_LIKE_TYPES = ['Radio', 'Checkbox', 'Judge'];
 // 下拉题/多行文本/评分/备注等问卷题型不可作为题库题目新建
 const ALL_TYPES = [...EXAM_TYPES];
 
+// 多项填空单题最大空位数：与题库导入/导出标准模板（正确答案1~12）一致
+const MAX_BLANK_COUNT = 12;
+
 export default function QuestionEditModal({ open, onCancel, onSave, record, repos = [] }) {
   // ---- 基础字段 ----
   const [title, setTitle] = useState('');       // 题目标题
@@ -558,12 +561,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
                 ))}
                 <Button type="dashed" size="small" icon={<PlusOutlined />}
                   onClick={() => setBlanks([...blanks, ''])}
+                  disabled={blanks.length >= MAX_BLANK_COUNT}
                   style={{ width: '100%' }}
                 >
-                  添加空位
+                  添加空位（{blanks.length}/{MAX_BLANK_COUNT}）
                 </Button>
                 <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>
-                  每个输入框对应题干中的一个空位（如「（ ）」），判分时按空位顺序逐个比对
+                  每个输入框对应题干中的一个空位（如「（ ）」），判分时按空位顺序逐个比对；单题最多 {MAX_BLANK_COUNT} 个空
                 </Text>
               </div>
             ) : CHOICE_LIKE_TYPES.includes(qType) ? (

@@ -59,8 +59,8 @@ import static com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank;
  * 2. 题库-题目批量管理：batchAddRepoTemplate（Excel 导入/批量保存，按"序号+题型"幂等更新）、
  *    batchUnBindTemplate 解绑题目
  * 3. 随机抽题：pickQuestionFromRepo（按题库/题型/标签条件随机选题，供考试随机抽题与练习使用）
- * 4. 题库导出增强：exportRepoQuestions（标准单表 22 列导出：学科/题型/章节/小节/知识点/题目/
- *    选项A-H/难易程度/正确答案1-5/解析/标签），配套辅助方法 standardRowOf / answerCellsOf /
+ * 4. 题库导出增强：exportRepoQuestions（标准单表 29 列导出：学科/题型/章节/小节/知识点/题目/
+ *    选项A-H/难易程度/正确答案1-12/解析/标签），配套辅助方法 standardRowOf / answerCellsOf /
  *    queryQuestionsForExport / buildGuideSheet；导入模板与导出共用列结构
  * 5. 错题本：listUserBook/createUserBook/updateUserBook/deleteUserBook
  *
@@ -812,10 +812,10 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 导出题库题目为 Excel（标准单表模板，21 列单 sheet）。
+     * 导出题库题目为 Excel（标准单表模板，29 列单 sheet）。
      *
      * <p>列结构与「题目管理 → 导入模板」完全一致：学科/题型/章节/知识点/题目/选项A~H/
-     * 难易程度/正确答案1~5/解析/标签；题型仅含判断/单选/单项填空/多选/多项填空
+     * 难易程度/正确答案1~12/解析/标签；题型仅含判断/单选/单项填空/多选/多项填空
      * （Textarea 简答题随题型收窄不再导出）。</p>
      *
      * <p>当筛选结果为空（含未传 repoId 下载模板场景）时：第一个 sheet 只输出表头，
@@ -823,7 +823,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      *
      * 【数据流向】
      * RepoApi.exportRepoQuestions → exportRepoQuestions → queryQuestionsForExport（t_template）
-     * → standardRowOf 逐题装配 22 列 → fastexcel 写流 → 浏览器下载 xlsx。
+     * → standardRowOf 逐题装配 29 列 → fastexcel 写流 → 浏览器下载 xlsx。
      *
      * @param request 含题库 id（可空：空则导出全部题目）及题目维度筛选条件
      *        （name/questionType/subject/chapter/section/knowledgePoint/difficulty）
@@ -865,7 +865,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 下载题目导入模板（标准单表 22 列空模板 + 「填写说明」sheet）。
+     * 下载题目导入模板（标准单表 29 列空模板 + 「填写说明」sheet）。
      *
      * <p>仅输出表头与说明页，不含任何题目数据，供「题目管理 → 导入 → 下载模板」使用；
      * 与 exportRepoQuestions（无 repoId 导出全量题目）语义区分。</p>
@@ -897,17 +897,18 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     // ============================================================
 
     /**
-     * 标准单表模板列头（22 列，导入导出共用，顺序与用户约定模板一致）。
+     * 标准单表模板列头（29 列，导入导出共用，顺序与用户约定模板一致）。
      */
     private static final List<String> STANDARD_HEADERS = Collections.unmodifiableList(Arrays.asList(
             "学科", "题型", "章节", "小节", "知识点", "题目", "选项A", "选项B", "选项C", "选项D", "选项E", "选项F", "选项G", "选项H",
-            "难易程度", "正确答案1", "正确答案2", "正确答案3", "正确答案4", "正确答案5", "解析", "标签"));
+            "难易程度", "正确答案1", "正确答案2", "正确答案3", "正确答案4", "正确答案5", "正确答案6", "正确答案7", "正确答案8",
+            "正确答案9", "正确答案10", "正确答案11", "正确答案12", "解析", "标签"));
 
     /**
      * 各列导出列宽（与 STANDARD_HEADERS 一一对应）。
      */
     private static final int[] STANDARD_WIDTHS = { 14, 12, 16, 14, 22, 50, 12, 12, 12, 12, 12, 12, 12, 12, 10, 12, 12,
-            12, 12, 12, 42, 24 };
+            12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 42, 24 };
 
     /**
      * 「填写说明」sheet 引导文案（下载模板时附在第二个 sheet，不参与导入解析）。
@@ -924,8 +925,8 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
             "6. 题目：题干文本，必填；",
             "7. 选项A~H：单选/多选填写选项内容，其他题型留空；",
             "8. 难易程度：简单 / 中等 / 困难，可留空；",
-            "9. 正确答案1~5：判断填“正确”或“错误”；单选填选项字母 A~H；",
-            "   多选依次填 1~5 个字母；单项填空填答案文本；多项填空按空位顺序依次填 1~5 个答案；",
+            "9. 正确答案1~12：判断填“正确”或“错误”；单选填选项字母 A~H；",
+            "   多选依次填 1~12 个字母；单项填空填答案文本；多项填空按空位顺序依次填 1~12 个答案（一道题最多 12 个空）；",
             "10. 解析：题目解析，可留空；",
             "11. 标签：可填多个，用逗号或顿号分隔，可留空；",
             "12. 任一行的学科/章节/小节/知识点/选项/答案校验不通过会中止整次导入并提示行号；",
@@ -1031,14 +1032,16 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         List<List<String>> rows = new ArrayList<>();
         rows.add(Arrays.asList("数学", "判断", "有理数", "数轴", "相反数", "示例：0 的相反数是 0。",
                 "", "", "", "", "", "", "", "",
-                "简单", "正确", "", "", "", "", "示例解析：0 的相反数是其本身。", "示例标签"));
+                "简单", "正确", "", "", "", "", "", "", "", "", "", "", "",
+                "示例解析：0 的相反数是其本身。", "示例标签"));
         rows.add(Arrays.asList("数学", "多项填空", "整式加减", "去括号", "合并同类项", "示例：2x+3x 与 5y-2y 的结果分别是？",
                 "", "", "", "", "", "", "", "",
-                "简单", "5x", "3y", "", "", "", "示例解析：合并同类项系数相加减。", "示例标签"));
+                "简单", "5x", "3y", "", "", "", "", "", "", "", "", "",
+                "示例解析：合并同类项系数相加减。", "示例标签"));
         rows.add(Arrays.asList("数学", "单选", "有理数", "数轴", "绝对值",
                 "示例：如图，点 A 表示的数是 $x$，且 $|x|=3$，则 $x$ 的值是？![数轴示意图](https://example.com/number-axis.png)",
                 "3", "-3", "$\\pm 3$", "以上都不对", "", "", "", "",
-                "中等", "C", "", "", "", "",
+                "中等", "C", "", "", "", "", "", "", "", "", "", "", "",
                 "示例解析：由 $|x|=3$ 得 $x=3$ 或 $x=-3$，故 $x=\\pm 3$。", "示例标签"));
         return rows;
     }
@@ -1109,7 +1112,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 单表导出的一行（22 列，顺序与 STANDARD_HEADERS 一致）。
+     * 单表导出的一行（29 列，顺序与 STANDARD_HEADERS 一致）。
      *
      * @param template 题目实体
      * @return 导出行数据
@@ -1141,7 +1144,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         }
         row.add(difficultyLabelOf(difficulty));
         List<String> answers = answerCellsOf(template);
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < MAX_ANSWER_CELLS; i++) {
             row.add(i < answers.size() ? answers.get(i) : "");
         }
         row.add(attr != null ? orEmpty(attr.getExamAnalysis()) : "");
@@ -1151,7 +1154,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
-     * 提取题目正确答案，拆分到模板「正确答案1~5」列（最多 5 个单元）。
+     * 提取题目正确答案，拆分到模板「正确答案1~12」列（最多 12 个单元）。
      *
      * <p>各题型取法：</p>
      * <ul>
@@ -1162,7 +1165,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      * </ul>
      *
      * @param template 题目实体
-     * @return 答案单元列表（不超过 5 个）
+     * @return 答案单元列表（不超过 12 个）
      */
     private List<String> answerCellsOf(Template template) {
         List<String> cells = new ArrayList<>();
@@ -1194,7 +1197,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                     cells.add(idx != null ? letterOf(idx) : token);
                 }
             } else {
-                for (int i = 0; i < children.size() && cells.size() < 5; i++) {
+                for (int i = 0; i < children.size() && cells.size() < MAX_ANSWER_CELLS; i++) {
                     SurveySchema option = children.get(i);
                     if (option != null && option.getAttribute() != null
                             && StringUtils.hasText(option.getAttribute().getExamCorrectAnswer())) {
@@ -1202,7 +1205,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                     }
                 }
             }
-            return cells.size() > 5 ? cells.subList(0, 5) : cells;
+            return cells.size() > MAX_ANSWER_CELLS ? cells.subList(0, MAX_ANSWER_CELLS) : cells;
         }
         // FillBlank / MultipleBlank：整题级答案按 | 拆空位
         if (StringUtils.hasText(top)) {
@@ -1217,7 +1220,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                 }
             }
         }
-        return cells.size() > 5 ? cells.subList(0, 5) : cells;
+        return cells.size() > MAX_ANSWER_CELLS ? cells.subList(0, MAX_ANSWER_CELLS) : cells;
     }
 
     /**
@@ -1333,18 +1336,20 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     private static final int COL_DIFFICULTY = 14;
     /** 标准模板答案列起始序号（正确答案1）。 */
     private static final int COL_ANSWER_START = 15;
-    /** 标准模板答案列结束序号（正确答案5）。 */
-    private static final int COL_ANSWER_END = 19;
+    /** 标准模板答案单元上限（正确答案1~12）：一道多项填空最多 12 个空位。 */
+    private static final int MAX_ANSWER_CELLS = 12;
+    /** 标准模板答案列结束序号（正确答案12）。 */
+    private static final int COL_ANSWER_END = COL_ANSWER_START + MAX_ANSWER_CELLS - 1;
     /** 标准模板「解析」列序号。 */
-    private static final int COL_ANALYSIS = 20;
+    private static final int COL_ANALYSIS = COL_ANSWER_END + 1;
     /** 标准模板「标签」列序号。 */
-    private static final int COL_TAGS = 21;
+    private static final int COL_TAGS = COL_ANALYSIS + 1;
 
     /** 单次导入最多展示的行级错误条数。 */
     private static final int MAX_SHOWN_ERRORS = 20;
 
     /**
-     * 解析标准单表模板（首 sheet，22 列）。
+     * 解析标准单表模板（首 sheet，29 列）。
      *
      * <p>逐行校验：学科/章节/小节按名称匹配系统已有体系（不自动新建）；知识点列整格优先
      * 按一个知识点名匹配（名称可含顿号），整格未命中才按顿号等拆分多个知识点逐 token 校验，
@@ -1534,7 +1539,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
             }
         }
 
-        // 正确答案列（正确答案1~5）
+        // 正确答案列（正确答案1~12）
         List<String> answerTokens = new ArrayList<>();
         for (int c = COL_ANSWER_START; c <= COL_ANSWER_END; c++) {
             String t = cellText(r, c);
@@ -1602,8 +1607,8 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         } else if (type == SurveySchema.QuestionType.MultipleBlank) {
             if (answerTokens.isEmpty()) {
                 rowErrors.add("多项填空未填写正确答案");
-            } else if (answerTokens.size() > 5) {
-                rowErrors.add("多项填空答案不能超过 5 个空");
+            } else if (answerTokens.size() > MAX_ANSWER_CELLS) {
+                rowErrors.add("多项填空答案不能超过 " + MAX_ANSWER_CELLS + " 个空");
             } else {
                 topAnswer = String.join("|", answerTokens);
             }

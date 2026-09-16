@@ -103,7 +103,8 @@ public final class RepoTemplateI18n {
 
 	private static class BlankHeader {
 
-		private static final List<String> BLANK_INDEXES = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8");
+		private static final List<String> BLANK_INDEXES = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+				"11", "12");
 
 		private static final Set<String> ALL_LABELS = BLANK_INDEXES.stream()
 			.flatMap(index -> getAliases("repo.template.header.blank", "空{0}", new Object[] { index }).stream())

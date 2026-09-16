@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.validation.ValidationException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,6 +62,11 @@ import static org.springframework.util.StringUtils.hasText;
 @Transactional
 @RequiredArgsConstructor
 public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> implements TemplateService {
+
+    /**
+     * 多项填空题单题最大空位数：与题库导入/导出标准模板（正确答案1~12）保持一致。
+     */
+    private static final int MAX_BLANK_COUNT = 12;
 
     /**
      * MapStruct 转换器：Template ↔ TemplateView ↔ TemplateRequest。
@@ -135,6 +141,7 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
      */
     @Override
     public String addTemplate(TemplateRequest request) {
+        validateMultipleBlank(request);
         Template template = templateViewMapper.fromRequest(request);
         save(template);
         return template.getId();
@@ -170,7 +177,29 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
      */
     @Override
     public void updateTemplate(TemplateRequest request) {
+        validateMultipleBlank(request);
         updateById(templateViewMapper.fromRequest(request));
+    }
+
+    /**
+     * 校验多项填空题的空位数量不超过 {@link #MAX_BLANK_COUNT}。
+     *
+     * @param request 模板请求
+     * @throws javax.validation.ValidationException 空位数量超过上限时抛出，由
+     *         GlobalExceptionHandler 统一转为错误响应
+     * @implNote 与题库导入/导出标准模板（正确答案1~12）保持一致；批量导入在
+     *         RepoServiceImpl.parseStandardQuestions 中已先行校验。
+     */
+    private void validateMultipleBlank(TemplateRequest request) {
+        if (request == null || request.getQuestionType() != SurveySchema.QuestionType.MultipleBlank
+                || request.getTemplate() == null) {
+            return;
+        }
+        List<SurveySchema> children = request.getTemplate().getChildren();
+        int blankCount = children == null ? 0 : children.size();
+        if (blankCount > MAX_BLANK_COUNT) {
+            throw new ValidationException("多项填空题最多支持 " + MAX_BLANK_COUNT + " 个空");
+        }
     }
 
     /**

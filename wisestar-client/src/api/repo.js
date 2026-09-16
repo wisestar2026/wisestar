@@ -130,7 +130,7 @@ export async function importTemplate({ file, repoId }) {
  * 后端接口: GET /api/repo/import/template
  * 为什么这么写: 与 exportTemplate 相同，使用隐藏 <a> 标签触发浏览器原生下载，
  *   避免经过 JS 二进制处理；同源请求自动携带登录 cookie
- * 模板格式: 标准单表 22 列（学科/题型/章节/小节/知识点/题目/选项A~H/难易程度/正确答案1~5/解析/标签），
+ * 模板格式: 标准单表 29 列（学科/题型/章节/小节/知识点/题目/选项A~H/难易程度/正确答案1~12/解析/标签），
  *   第一个工作表为表头 + 示例说明，第二个工作表为填写说明（导入时仅解析第一个工作表）
  * 调用方: ImportModal.handleDownloadTemplate
  */
