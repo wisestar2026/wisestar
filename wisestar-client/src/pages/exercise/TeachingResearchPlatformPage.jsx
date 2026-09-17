@@ -449,8 +449,14 @@ export default function TeachingResearchPlatformPage() {
   const handleAddQuestions = (ids) => bindQuestionIds(ids);
 
   const handleEditQuestionSaved = async (data) => {
-    const row = kpQuestions.list.find((q) => q.id === kpQuestions.editing);
-    if (!row) return;
+    // 编辑对象可能来自「已绑定」列表，也可能来自「题库中标记该知识点但未绑定」的匹配列表，
+    // 两处都要查找，否则未绑定题目会因找不到 row 而静默返回、无法保存。
+    const row = [...(kpQuestions.list || []), ...(kpQuestions.matched || [])]
+      .find((q) => q.id === kpQuestions.editing);
+    if (!row) {
+      message.error('保存失败：未找到该题目，请刷新后重试');
+      return;
+    }
     try {
       await updateTemplate({ ...data, id: row.id });
       message.success('题目保存成功');
