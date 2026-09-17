@@ -74,6 +74,7 @@ export default function QuestionListPage() {
   const [filterDifficulty, setFilterDifficulty] = useState(undefined);
   const [filterKnowledgePoint, setFilterKnowledgePoint] = useState('');
   const [filterTag, setFilterTag] = useState(undefined);  // 标签筛选（如「含图片」）
+  const [filterHasImage, setFilterHasImage] = useState(undefined); // 图片筛选：true 只看带图 / false 只看无图 / undefined 不限
   const [tagOptions, setTagOptions] = useState([]);       // 全部题目标签（供筛选下拉）
   const [repos, setRepos] = useState([]);               // 全量练习列表（供筛选下拉）
   const [allReposCache, setAllReposCache] = useState([]); // 编辑弹窗用的练习列表（全量）
@@ -126,6 +127,7 @@ export default function QuestionListPage() {
       if (filterDifficulty) params.difficulty = filterDifficulty;          // 难度过滤（easy/medium/hard）
       if (filterKnowledgePoint.trim()) params.knowledgePoint = filterKnowledgePoint.trim(); // 知识点过滤
       if (filterTag) params.tag = filterTag;                               // 标签过滤（如 含图片）
+      if (filterHasImage !== undefined) params.hasImage = filterHasImage;  // 图片过滤：true 带图 / false 无图
       const res = await listTemplate(params);
       setData(res.data?.list || []);
       setTotal(res.data?.total || 0);
@@ -134,10 +136,10 @@ export default function QuestionListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, filterHasImage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 任一筛选条件 / 页码变化时自动重新拉取（输入框 onChange 同时 setPage(1) 保证从首页开始）
-  useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, fetchData]);
+  useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, filterHasImage, fetchData]);
 
   // ---- 新建 ----
   // editRecord 置 null → 弹窗进入"新建模式"（清空表单）
@@ -375,7 +377,7 @@ export default function QuestionListPage() {
       </div>
 
       {/* ---- 筛选栏 ---- */}
-      {/* 8 个筛选条件 + 重置 + 批量删除；所有 Input/Select onChange 都同时 setPage(1)，
+      {/* 各筛选条件 + 重置 + 批量删除；所有 Input/Select onChange 都同时 setPage(1)，
           保证筛选生效后回到第 1 页（避免停在无数据的深页码） */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         {/* 名称搜索 */}
@@ -474,11 +476,24 @@ export default function QuestionListPage() {
           style={{ width: 140 }}
           options={tagOptions.map((t) => ({ label: t, value: t }))}
         />
+        {/* 图片筛选：只看带配图 / 无配图的题目（配图存于 attribute.examImages） */}
+        <Select
+          value={filterHasImage}
+          onChange={(v) => { setFilterHasImage(v); setPage(1); }}
+          placeholder="图片"
+          allowClear
+          style={{ width: 110 }}
+          options={[
+            { label: '带图片', value: true },
+            { label: '无图片', value: false },
+          ]}
+        />
         {/* 重置: 清空全部筛选条件并回到第 1 页 */}
         <Button icon={<ReloadOutlined />} onClick={() => {
           setKeyword(''); setFilterType(undefined); setFilterRepoId(undefined);
           setFilterSubject(''); setFilterGrade(''); setFilterChapter(''); setFilterSection('');
           setFilterDifficulty(undefined); setFilterKnowledgePoint(''); setFilterTag(undefined);
+          setFilterHasImage(undefined);
           setPage(1);
         }}>
           重置

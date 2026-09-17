@@ -67,4 +67,10 @@ public class TemplateQuery extends PageQuery {
 	 */
 	private String knowledgePoint;
 
+	/**
+	 * 图片筛选：true=只看带配图的题目；false=只看无配图题目；null=不限。
+	 * 配图存放在 template JSON 的 attribute.examImages，故按 template 文本包含匹配判断。
+	 */
+	private Boolean hasImage;
+
 }

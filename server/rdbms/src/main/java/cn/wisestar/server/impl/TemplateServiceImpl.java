@@ -95,6 +95,8 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
      *   category 分类、repoId 题库、mode 模式；
      * - 四维筛选：subject/chapter/difficulty 精确等值；knowledgePoint 用 like
      *   （因存储为 JSON 数组字符串，只能做包含匹配）；
+     * - hasImage 图片筛选：配图存于 template JSON 的 attribute.examImages，
+     *   true 时 template 文本包含 examImages，false 时取反（含 template 为空）；
      * - tag 标签：t_tag 表 exists 子查询（IN 匹配）；
      * - shared 权限：shared=0 只查本人；shared=null 且未指定 repoId 时也只查本人；
      *   排序按 priority 升序（值越小越靠前）。
@@ -120,6 +122,9 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
                 .eq(query.getDifficulty() != null, Template::getDifficulty, query.getDifficulty())
                 .eq(query.getGrade() != null, Template::getGrade, query.getGrade())
                 .like(query.getKnowledgePoint() != null, Template::getKnowledgePoint, query.getKnowledgePoint())
+                // 图片筛选：配图存于 template JSON 的 attribute.examImages，用文本包含匹配
+                .apply(Boolean.TRUE.equals(query.getHasImage()), "template like {0}", "%\"examImages\"%")
+                .apply(Boolean.FALSE.equals(query.getHasImage()), "(template is null or template not like {0})", "%\"examImages\"%")
                 .exists(!query.getTag().isEmpty(),
                         String.format("select 1 from t_tag t where t.entity_id = t_template.id and t.name in (%s)",
                                 query.getTag().stream().map(x -> "'" + x + "'").collect(Collectors.joining(","))))
