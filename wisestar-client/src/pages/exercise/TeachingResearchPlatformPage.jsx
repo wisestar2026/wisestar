@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Card, Select, Tree, Button, Tag, Tooltip, Typography, Space, Empty,
-  Spin, message,
+  Spin, message, Image,
 } from 'antd';
 import { EditOutlined, ReloadOutlined, PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import {
@@ -152,7 +152,14 @@ function ResearchQuestionCard({ q, onEdit, action }) {
               {images.length > 0 ? (
                 <div className="trp-lbl-imgs">
                   {images.map((src, i) => (
-                    <img key={i} src={src} alt={`题目图片${i + 1}`} className="trp-lbl-img" />
+                    <Image
+                      key={i}
+                      src={src}
+                      alt={`题目图片${i + 1}`}
+                      className="trp-lbl-img"
+                      wrapperStyle={{ width: '100%', display: 'block' }}
+                      preview={{ mask: '查看大图' }}
+                    />
                   ))}
                 </div>
               ) : (
