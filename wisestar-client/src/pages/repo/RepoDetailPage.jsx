@@ -40,6 +40,7 @@ import {
 } from '@ant-design/icons';
 import { listTemplate, updateTemplate } from '../../api/template';
 import { listRepo, unbindTemplate, importTemplate, listRepoLocations } from '../../api/repo';
+import { extractCorrectAnswers } from '../../utils/practiceHelpers';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
 
 const { Title, Text, Paragraph } = Typography;
@@ -329,10 +330,16 @@ export default function RepoDetailPage() {
 
   // ---- 渲染正确答案预览 ----
   const renderAnswer = (record) => {
-    const attr = record.template?.attribute || {};
-    const correct = attr.examCorrectAnswer;
-    if (!correct) return <Text type="secondary">-</Text>;
-    return <Tag color="green" icon={<CheckCircleOutlined />}>{correct}</Tag>;
+    // 整题级优先；缺省回退选项级答案（导入题的正确答案标记在正确选项子节点上）
+    const answers = extractCorrectAnswers(record) || [];
+    if (!answers.length) return <Text type="secondary">-</Text>;
+    return (
+      <Space size={2} wrap>
+        {answers.map((a, i) => (
+          <Tag key={i} color="green" icon={i === 0 ? <CheckCircleOutlined /> : undefined}>{a}</Tag>
+        ))}
+      </Space>
+    );
   };
 
   // ---- 表格列 ----
@@ -344,7 +351,7 @@ export default function RepoDetailPage() {
       ellipsis: true,
       render: (text, record) => {
         const attr = record.template?.attribute || {};
-        const hasAnswer = !!attr.examCorrectAnswer;
+        const hasAnswer = (extractCorrectAnswers(record) || []).length > 0;
         const hasAnalysis = !!attr.examAnalysis;
         return (
           <Space size={4}>

@@ -31,6 +31,7 @@ import {
 import { SearchOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { listTemplate } from '../../api/template';
 import { templateToQuestion } from '../../utils/surveyHelpers';
+import { extractCorrectAnswers } from '../../utils/practiceHelpers';
 import { EXAM_TYPES, TYPE_LABELS } from '../../utils/questionTypes';
 
 const { Text } = Typography;
@@ -113,7 +114,7 @@ export default function TemplatePickerModal({ open, onCancel, onAdd }) {
       // 题目名 + 标记标签：是否有答案/解析/图片（从 template.attribute 读取）
       render: (text, record) => {
         const attr = record.template?.attribute || {};
-        const hasAnswer = !!attr.examCorrectAnswer;   // 含正确答案标记
+        const hasAnswer = (extractCorrectAnswers(record) || []).length > 0;   // 含正确答案标记（整题级或选项级）
         const hasAnalysis = !!attr.examAnalysis;      // 含答案解析标记
         const hasImages = (attr.examImages || []).length > 0; // 含配图标记（悬停预览首图）
         return (

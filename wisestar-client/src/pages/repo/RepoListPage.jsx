@@ -35,6 +35,7 @@ import {
 import { listRepo, createRepo, updateRepo, deleteRepo, unbindTemplate } from '../../api/repo';
 import { listSubjects } from '../../api/knowledge';
 import { listTemplate } from '../../api/template';
+import { extractCorrectAnswers } from '../../utils/practiceHelpers';
 import { usePermission } from '../../utils/usePermission';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
 
@@ -421,7 +422,7 @@ export default function RepoListPage() {
                 {
                   title: '题目', dataIndex: 'name', ellipsis: true,
                   render: (text, r) => {
-                    const hasAnswer = !!r.template?.attribute?.examCorrectAnswer;
+                    const hasAnswer = (extractCorrectAnswers(r) || []).length > 0;
                     return (
                       <Space size={4}>
                         <span>{text}</span>
@@ -437,8 +438,11 @@ export default function RepoListPage() {
                 {
                   title: '正确答案', width: 90,
                   render: (_, r) => {
-                    const c = r.template?.attribute?.examCorrectAnswer;
-                    return c ? <Tag color="green" icon={<CheckCircleOutlined />} style={{ fontSize: 10 }}>{c}</Tag> : <Text type="secondary">-</Text>;
+                    // 整题级优先；缺省回退选项级答案（导入题的正确答案标记在正确选项子节点上）
+                    const answers = extractCorrectAnswers(r);
+                    return answers?.length
+                      ? <Tag color="green" icon={<CheckCircleOutlined />} style={{ fontSize: 10 }}>{answers.join(' / ')}</Tag>
+                      : <Text type="secondary">-</Text>;
                   },
                 },
                 {

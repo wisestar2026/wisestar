@@ -47,6 +47,7 @@ import { listRepo, exportTemplate } from '../../api/repo';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
 import ImportModal from '../../components/question/ImportModal';
 import { EXAM_TYPES, TYPE_LABELS } from '../../utils/questionTypes';
+import { extractCorrectAnswers } from '../../utils/practiceHelpers';
 import { usePermission } from '../../utils/usePermission';
 
 const { Title, Text } = Typography;
@@ -231,7 +232,8 @@ export default function QuestionListPage() {
       title: '题目', dataIndex: 'name', ellipsis: true,
       render: (text, record) => {
         const attr = record.template?.attribute || {};
-        const hasAnswer = !!attr.examCorrectAnswer;
+        // 答案可能在整题级(attr.examCorrectAnswer)，也可能标记在正确选项子节点上(导入题常见)
+        const hasAnswer = (extractCorrectAnswers(record) || []).length > 0;
         const hasAnalysis = !!attr.examAnalysis;
         const hasImages = (attr.examImages || []).length > 0;
         return (
@@ -308,9 +310,8 @@ export default function QuestionListPage() {
     {
       title: '正确答案', width: 140, render: (_, r) => {
         const correct = r.template?.attribute?.examCorrectAnswer;
-        if (!correct) return <Text type="secondary">-</Text>;
         // 多项填空答案以 | 分隔多个空位，拆开逐个展示
-        if (r.questionType === 'MultipleBlank') {
+        if (r.questionType === 'MultipleBlank' && correct) {
           return (
             <Space size={2} wrap>
               {String(correct).split('|').map((p, i) => (
@@ -321,7 +322,16 @@ export default function QuestionListPage() {
             </Space>
           );
         }
-        return <Tag color="green" icon={<CheckCircleOutlined />}>{correct}</Tag>;
+        // 整题级优先；缺省回退选项级答案（导入题的正确答案标记在正确选项子节点上）
+        const answers = extractCorrectAnswers(r);
+        if (!answers?.length) return <Text type="secondary">-</Text>;
+        return (
+          <Space size={2} wrap>
+            {answers.map((a, i) => (
+              <Tag key={i} color="green" icon={i === 0 ? <CheckCircleOutlined /> : undefined}>{a}</Tag>
+            ))}
+          </Space>
+        );
       },
     },
     {
