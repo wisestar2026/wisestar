@@ -14,7 +14,7 @@
  *
  * 数据流:
  *   打开: 分页 listTemplate(current=1..N, pageSize=500) 拉全量题目（超过单页上限时循环补齐）
- *         + listKnowledgePoints({current:1,pageSize:10000}) 构建 kpName → {subject,chapter,section} 映射并计算每题有效归属
+ *         + listKnowledgePoints({current:1,pageSize:-1}) 构建 kpName → {subject,chapter,section} 映射并计算每题有效归属
  *   过滤: 前端排除已绑定当前练习的题目（record.repoId === repoId → 不在列表中）
  *   确认: bindTemplate({repoId, ids}) → POST /api/repo/bind → onSuccess() 刷新练习题目列表
  *
@@ -116,7 +116,7 @@ export default function SelectTemplateModal({ open, repoId, onCancel, onSuccess 
       const pageSize = 500;
       const [first, kpRes] = await Promise.all([
         listTemplate({ current: 1, pageSize }),
-        listKnowledgePoints({ current: 1, pageSize: 10000 }).catch(() => ({ data: { list: [] } })),
+        listKnowledgePoints({ current: 1, pageSize: -1 }).catch(() => ({ data: { list: [] } })),
       ]);
       const total = first.data?.total || 0;
       let list = first.data?.list || [];

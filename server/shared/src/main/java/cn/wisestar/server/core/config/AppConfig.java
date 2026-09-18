@@ -15,6 +15,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * 应用级配置（AppConfig）。
@@ -80,8 +81,12 @@ public class AppConfig implements AsyncConfigurer {
 	/**
 	 * 全局异步任务线程池。
 	 *
-	 * <p>核心线程数 4、最大线程数 8、线程名前缀 "MyExecutor-"，
-	 * 供所有 @Async 注解方法提交任务使用（队列默认无界）。</p>
+	 * <p>核心线程数 4、最大线程数 8、队列容量 200、线程名前缀 "MyExecutor-"，
+	 * 供所有 @Async 注解方法提交任务使用。</p>
+	 *
+	 * <p><b>为什么队列有界</b>：无界队列在任务积压时会无限占用内存，最终 OOM。
+	 * 这里改为有界队列 + {@link ThreadPoolExecutor.CallerRunsPolicy}：
+	 * 队列满后由提交任务的线程自己执行，形成背压，避免任务被静默丢弃。</p>
 	 *
 	 * @return 异步执行器
 	 */
@@ -90,7 +95,12 @@ public class AppConfig implements AsyncConfigurer {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		executor.setCorePoolSize(4);
 		executor.setMaxPoolSize(8);
+		executor.setQueueCapacity(200);
 		executor.setThreadNamePrefix("MyExecutor-");
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		// 优雅停机：等待已提交任务完成，避免发布时丢任务
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setAwaitTerminationSeconds(30);
 		executor.initialize();
 		return executor;
 	}

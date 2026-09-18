@@ -134,7 +134,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		http.authorizeRequests().antMatchers("/api/public/**").permitAll().antMatchers("/api/system").permitAll()
 				.antMatchers("/captcha/get", "/captcha/check").permitAll().antMatchers(HttpMethod.GET, "/api/file/**")
-				.permitAll().antMatchers("/api/**").authenticated().antMatchers("/").permitAll();
+				.permitAll().antMatchers("/actuator/health", "/actuator/info").permitAll().antMatchers("/api/**")
+				.authenticated().antMatchers("/").permitAll();
 		http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 	}
 

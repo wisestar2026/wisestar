@@ -54,6 +54,15 @@ aj:
 api:
   prefix: /api
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     org.springframework.boot.web.embedded.undertow: DEBUG
