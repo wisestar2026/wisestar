@@ -15,6 +15,7 @@
 import { useEffect, useState } from 'react';
 import { Modal, Form, Input, InputNumber, Select, Button, message } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { IMPORTANCE_OPTIONS } from '../../utils/importance';
 
 const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
 const TERMS = ['上', '下'];
@@ -49,6 +50,7 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
         sort: record?.sort,
         grade: record?.grade,
         term: record?.term,
+        importance: record?.importance || undefined,
         intro: parseKpContent(record?.content).intro,
       });
     } else if (nodeType === 'section') {
@@ -57,6 +59,7 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
         sort: record?.sort,
         grade: record?.grade,
         term: record?.term,
+        importance: record?.importance || undefined,
       });
     } else {
       form.setFieldsValue({
@@ -92,6 +95,7 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
             sort: values.sort,
             grade: values.grade ?? '',
             term: values.term ?? '',
+            importance: values.importance ?? '',
           });
         } else {
           // 知识点：合并 intro + points（保留解析所得结构，避免清空既有要点）
@@ -109,6 +113,7 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
             sort: values.sort,
             grade: values.grade ?? '',
             term: values.term ?? '',
+            importance: values.importance ?? '',
             content: JSON.stringify(merged),
           };
           if (record?.imageUrl) payload.imageUrl = record.imageUrl;
@@ -168,6 +173,9 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
             <Form.Item name="term" label="学期" style={{ flex: 1 }}>
               <Select allowClear placeholder="请选择学期" options={TERMS.map((t) => ({ value: t, label: t === '上' ? '上册' : '下册' }))} />
             </Form.Item>
+            <Form.Item name="importance" label="重点程度" style={{ flex: 1 }}>
+              <Select allowClear placeholder="未标注" options={IMPORTANCE_OPTIONS} />
+            </Form.Item>
           </div>
         )}
 
@@ -179,6 +187,9 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
               </Form.Item>
               <Form.Item name="term" label="学期" style={{ flex: 1 }}>
                 <Select allowClear placeholder="请选择学期" options={TERMS.map((t) => ({ value: t, label: t === '上' ? '上册' : '下册' }))} />
+              </Form.Item>
+              <Form.Item name="importance" label="重点程度" style={{ flex: 1 }}>
+                <Select allowClear placeholder="未标注" options={IMPORTANCE_OPTIONS} />
               </Form.Item>
             </div>
             <Form.Item name="intro" label="知识点简介（展示在知识点节点旁）">

@@ -45,6 +45,11 @@ public class KnowledgePointRequest {
 	private String term;
 
 	/**
+	 * 重点程度（选填）：core=核心 / key=重点 / normal=一般；空串表示清除标注。
+	 */
+	private String importance;
+
+	/**
 	 * 内容设置 JSON：{"points":["讲解要点1"]}。
 	 */
 	private String content;

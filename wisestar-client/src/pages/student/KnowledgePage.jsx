@@ -19,6 +19,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getStudyPoints, getStudyQuestions, getSectionPracticeConfig, uploadActivity, completePreview, getKnowledgeDetail, wrongRedo } from '../../api/student';
 import { submitPractice, saveWrongReason } from '../../api/practice';
 import { extractCorrectAnswers } from '../../utils/practiceHelpers';
+import ImportanceTag from '../../utils/importance';
 import WrongBookPanel from '../../components/student/WrongBookPanel';
 import RichContent from '../../components/common/RichContent';
 import IconTile from '../../components/common/IconTile';
@@ -653,6 +654,7 @@ export default function KnowledgePage() {
                       >
                         <span className="kp-catalog-num">{i + 1}</span>
                         <span className="kp-catalog-name">{p.name}</span>
+                        <ImportanceTag value={p.importance} />
                         {readKpIds.has(p.id) && <span className="kp-catalog-done">✓</span>}
                       </button>
                     ))}
@@ -673,6 +675,7 @@ export default function KnowledgePage() {
                           )}
                           <div className="kp-detail-head">
                             <span className="kp-detail-badge">知识点 {activeKpIdx + 1}</span>
+                            <ImportanceTag value={p.importance} />
                             <h3 className="kp-detail-name">{p.name}</h3>
                           </div>
                           {pts.length > 0 ? (

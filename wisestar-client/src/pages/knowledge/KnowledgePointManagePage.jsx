@@ -38,6 +38,7 @@ import {
 import { listTemplate } from '../../api/template';
 import { uploadImage } from '../../api/upload';
 import { usePermission } from '../../utils/usePermission';
+import ImportanceTag, { IMPORTANCE_OPTIONS } from '../../utils/importance';
 
 const { Text } = Typography;
 
@@ -199,7 +200,7 @@ export default function KnowledgePointManagePage() {
     setModalOpen(true);
     if (kp) {
       form.resetFields();
-      form.setFieldsValue({ sectionId: kp.sectionId, name: kp.name, sort: kp.sort, grade: kp.grade || undefined, term: kp.term || undefined });
+      form.setFieldsValue({ sectionId: kp.sectionId, name: kp.name, sort: kp.sort, grade: kp.grade || undefined, term: kp.term || undefined, importance: kp.importance || undefined });
       // 编辑：反查归属（小节→章节→学科）
       listSections().then((res) => {
         const allSec = res?.data || [];
@@ -288,13 +289,14 @@ export default function KnowledgePointManagePage() {
         const payload = { ...values, id: editing.id };
         if (values.grade === undefined) payload.grade = '';
         if (values.term === undefined) payload.term = '';
+        if (values.importance === undefined) payload.importance = '';
         updateKnowledgePoint(payload).then(() => {
           message.success('知识点已更新');
           setModalOpen(false);
-          setKps((prev) => prev.map((k) => (k.id === editing.id ? { ...k, ...values, grade: values.grade || null, term: values.term || null } : k)));
+          setKps((prev) => prev.map((k) => (k.id === editing.id ? { ...k, ...values, grade: values.grade || null, term: values.term || null, importance: values.importance || null } : k)));
         });
       } else {
-        const payload = { ...values, grade: values.grade || undefined, term: values.term || undefined };
+        const payload = { ...values, grade: values.grade || undefined, term: values.term || undefined, importance: values.importance || undefined };
         createKnowledgePoint(payload).then(() => {
           message.success('知识点已新增');
           setModalOpen(false);
@@ -405,6 +407,10 @@ export default function KnowledgePointManagePage() {
     {
       title: '学期', dataIndex: 'term', width: 70, align: 'center',
       render: (v) => (v ? <Tag>{v === '上' ? '上册' : '下册'}</Tag> : <Text type="secondary">-</Text>),
+    },
+    {
+      title: '重点程度', dataIndex: 'importance', width: 90, align: 'center',
+      render: (v) => <ImportanceTag value={v} />,
     },
     {
       title: '排序', dataIndex: 'sort', width: 60, align: 'center',
@@ -585,6 +591,13 @@ export default function KnowledgePointManagePage() {
               placeholder="不限学期"
               allowClear
               options={TERM_OPTIONS}
+            />
+          </Form.Item>
+          <Form.Item name="importance" label="重点程度">
+            <Select
+              placeholder="未标注"
+              allowClear
+              options={IMPORTANCE_OPTIONS}
             />
           </Form.Item>
         </Form>

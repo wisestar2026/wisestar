@@ -39,6 +39,7 @@ import {
 import { listRepo } from '../../api/repo';
 import { QUESTION_TYPES, DIFFICULTY_OPTIONS } from '../../stores/useKnowledgeStore';
 import { usePermission } from '../../utils/usePermission';
+import ImportanceTag, { IMPORTANCE_OPTIONS } from '../../utils/importance';
 
 const { Text } = Typography;
 
@@ -207,6 +208,7 @@ export default function SectionManagePage() {
         chapterId: section.chapterId, name: section.name,
         sort: section.sort,
         grade: section.grade || undefined, term: section.term || undefined,
+        importance: section.importance || undefined,
       });
       // 编辑：反查归属学科并加载该学科章节
       listChapters().then((res) => {
@@ -251,8 +253,8 @@ export default function SectionManagePage() {
         message.warning('请选择所属学科与所属章节');
         return;
       }
-      // 年级/学期允许留空：空值归一为空串提交（后端将空串落为 null，表达清除）
-      const payload = { ...values, grade: values.grade || '', term: values.term || '' };
+      // 年级/学期/重点程度允许留空：空值归一为空串提交（后端将空串落为 null，表达清除）
+      const payload = { ...values, grade: values.grade || '', term: values.term || '', importance: values.importance || '' };
       if (editing) {
         updateSection({ ...payload, id: editing.id }).then(() => {
           message.success('小节已更新');
@@ -384,6 +386,10 @@ export default function SectionManagePage() {
     {
       title: '学期', dataIndex: 'term', width: 60, align: 'center',
       render: (t) => (t || '-'),
+    },
+    {
+      title: '重点程度', dataIndex: 'importance', width: 90, align: 'center',
+      render: (v) => <ImportanceTag value={v} />,
     },
     {
       title: '内容设置', width: 110, align: 'center',
@@ -553,6 +559,9 @@ export default function SectionManagePage() {
           </Form.Item>
           <Form.Item name="term" label="学期（选填）">
             <Select allowClear placeholder="选择学期" options={TERM_OPTIONS} />
+          </Form.Item>
+          <Form.Item name="importance" label="重点程度（选填）">
+            <Select allowClear placeholder="未标注" options={IMPORTANCE_OPTIONS} />
           </Form.Item>
         </Form>
       </Modal>

@@ -25,6 +25,7 @@ import {
 import { updateTemplate } from '../../api/template';
 import NodeEditModal from '../../components/research/NodeEditModal';
 import AddQuestionModal from '../../components/research/AddQuestionModal';
+import ImportanceTag from '../../utils/importance';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
 import { extractCorrectAnswers, formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './TeachingResearchPlatformPage.css';
@@ -303,8 +304,13 @@ export default function TeachingResearchPlatformPage() {
           const kps = (kpMap[sec.id] || []).filter(inGrade);
           return {
             key: 'sec:' + sec.id,
-            title: sec.name,
             isLeaf: false,
+            title: (
+              <span className="trp-sec-node">
+                <span className="trp-sec-name">{sec.name}</span>
+                <ImportanceTag value={sec.importance} />
+              </span>
+            ),
             children: kps.map((kp) => {
               const intro = parseKpIntro(kp.content);
               return {
@@ -314,6 +320,7 @@ export default function TeachingResearchPlatformPage() {
                   <Tooltip title={intro ? `简介：${intro}` : '暂无简介'} placement="right">
                     <span className="trp-kp-node">
                       <span className="trp-kp-name">{kp.name}</span>
+                      <ImportanceTag value={kp.importance} />
                       <span className="trp-kp-desc">{intro || '暂无简介'}</span>
                       <Button
                         size="small"

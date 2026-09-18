@@ -252,7 +252,7 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 
 	/**
 	 * 更新小节（含内容设置/练习设置 JSON）。
-	 * grade/term 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null，
+	 * grade/term/importance 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null，
 	 * 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容/练习设置）不受影响）。
 	 */
 	@Override
@@ -260,18 +260,23 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		Section m = sectionViewMapper.fromRequest(request);
 		boolean touchGrade = m.getGrade() != null;
 		boolean touchTerm = m.getTerm() != null;
+		boolean touchImportance = m.getImportance() != null;
 		if (touchGrade) {
 			m.setGrade(null);
 		}
 		if (touchTerm) {
 			m.setTerm(null);
 		}
+		if (touchImportance) {
+			m.setImportance(null);
+		}
 		updateById(m);
-		if (touchGrade || touchTerm) {
+		if (touchGrade || touchTerm || touchImportance) {
 			update(Wrappers.<Section>lambdaUpdate()
 					.eq(Section::getId, request.getId())
 					.set(touchGrade, Section::getGrade, normalizeBlank(request.getGrade()))
-					.set(touchTerm, Section::getTerm, normalizeBlank(request.getTerm())));
+					.set(touchTerm, Section::getTerm, normalizeBlank(request.getTerm()))
+					.set(touchImportance, Section::getImportance, normalizeBlank(request.getImportance())));
 		}
 	}
 

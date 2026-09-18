@@ -30,6 +30,18 @@
   gap: 4px;
 }
 
+/* 小节节点：名称 + 重点程度标识 */
+.trp-sec-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.trp-sec-name {
+  font-weight: 500;
+}
+
 /* 知识点节点：名称 + 简介摘要 + 编辑按钮 */
 .trp-kp-node {
   display: inline-flex;

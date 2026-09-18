@@ -42,6 +42,11 @@ public class KnowledgePointView {
 	private String term;
 
 	/**
+	 * 重点程度：core=核心 / key=重点 / normal=一般；为空表示未标注。
+	 */
+	private String importance;
+
+	/**
 	 * 内容设置 JSON 原文（可能为空）。
 	 */
 	private String content;

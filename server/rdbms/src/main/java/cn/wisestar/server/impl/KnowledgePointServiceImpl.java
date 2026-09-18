@@ -246,25 +246,30 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 	}
 
 	/** 更新知识点（含内容设置 JSON 与图片地址）。
-	 * grade/term 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null，
+	 * grade/term/importance 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null，
 	 * 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容设置）不受影响）。 */
 	@Override
 	public void updateKnowledgePoint(KnowledgePointRequest request) {
 		KnowledgePoint m = knowledgePointViewMapper.fromRequest(request);
 		boolean touchGrade = m.getGrade() != null;
 		boolean touchTerm = m.getTerm() != null;
+		boolean touchImportance = m.getImportance() != null;
 		if (touchGrade) {
 			m.setGrade(null);
 		}
 		if (touchTerm) {
 			m.setTerm(null);
 		}
+		if (touchImportance) {
+			m.setImportance(null);
+		}
 		updateById(m);
-		if (touchGrade || touchTerm) {
+		if (touchGrade || touchTerm || touchImportance) {
 			update(Wrappers.<KnowledgePoint>lambdaUpdate()
 					.eq(KnowledgePoint::getId, request.getId())
 					.set(touchGrade, KnowledgePoint::getGrade, hasText(request.getGrade()) ? request.getGrade().trim() : null)
-					.set(touchTerm, KnowledgePoint::getTerm, hasText(request.getTerm()) ? request.getTerm().trim() : null));
+					.set(touchTerm, KnowledgePoint::getTerm, hasText(request.getTerm()) ? request.getTerm().trim() : null)
+					.set(touchImportance, KnowledgePoint::getImportance, hasText(request.getImportance()) ? request.getImportance().trim() : null));
 		}
 	}
 

@@ -45,6 +45,11 @@ public class Section extends BaseModel {
 	private String term;
 
 	/**
+	 * 重点程度（选填）：core=核心 / key=重点 / normal=一般；为空表示未标注。
+	 */
+	private String importance;
+
+	/**
 	 * 内容设置 JSON：{"objective":"学习目标","overview":"内容概述","points":["要点1"]}。
 	 */
 	private String content;
