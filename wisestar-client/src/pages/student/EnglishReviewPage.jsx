@@ -151,7 +151,21 @@ export default function EnglishReviewPage() {
       <div className="eng-card">
         {!isSentence && (
           <>
-            <div className="eng-word">{current?.prompt}</div>
+            <div
+              className="eng-word eng-word-clickable"
+              role="button"
+              tabIndex={0}
+              title="点击朗读"
+              onClick={() => speakEnglish(current?.prompt, current?.audioUrl)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  speakEnglish(current?.prompt, current?.audioUrl);
+                }
+              }}
+            >
+              {current?.prompt}
+            </div>
             {current?.phonetic && <div className="eng-phonetic">/{current.phonetic}/</div>}
             {current?.imageUrl && <img className="eng-image" src={current.imageUrl} alt={current.prompt} />}
             <div className={`eng-meaning ${revealed ? '' : 'hidden'}`}>

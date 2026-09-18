@@ -8,16 +8,48 @@
  *   - shuffle：词块乱序（用于连词成句），保证与原顺序不同。
  */
 
-/** 浏览器语音合成朗读英文 */
+// 英文语音缓存：浏览器语音列表是异步加载的（Chrome 首次 getVoices() 可能为空），
+// 缓存后避免每次朗读都重新遍历，并在 voiceschanged 后刷新
+let englishVoice = null;
+let voicesBound = false;
+
+/** 从浏览器语音列表中挑选最合适的英文音色（优先 en-US，其次 en-GB，再次任意 en） */
+function pickEnglishVoice() {
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+  return (
+    voices.find((v) => /^en[-_]US/i.test(v.lang))
+    || voices.find((v) => /^en[-_]GB/i.test(v.lang))
+    || voices.find((v) => /^en/i.test(v.lang))
+    || null
+  );
+}
+
+/** 监听语音列表异步加载完成，刷新英文音色缓存 */
+function ensureVoiceListener() {
+  if (voicesBound) return;
+  voicesBound = true;
+  const synth = window.speechSynthesis;
+  if (typeof synth.addEventListener === 'function') {
+    synth.addEventListener('voiceschanged', () => { englishVoice = pickEnglishVoice(); });
+  }
+}
+
+/** 浏览器语音合成朗读英文（无需音频文件；若设备无英文音色则静默） */
 function speakByTTS(text) {
-  if (typeof window === 'undefined' || !window.speechSynthesis) {
+  if (typeof window === 'undefined' || !window.speechSynthesis || !text) {
     return;
   }
-  const utterance = new SpeechSynthesisUtterance(text);
+  const synth = window.speechSynthesis;
+  ensureVoiceListener();
+  if (!englishVoice) englishVoice = pickEnglishVoice();
+  const utterance = new SpeechSynthesisUtterance(String(text));
   utterance.lang = 'en-US';
   utterance.rate = 0.9;
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
+  // 显式指定英文音色，避免系统默认音色（可能是中文）读不出英文
+  if (englishVoice) utterance.voice = englishVoice;
+  synth.cancel();
+  synth.speak(utterance);
 }
 
 /**

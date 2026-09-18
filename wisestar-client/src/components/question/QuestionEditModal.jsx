@@ -86,6 +86,24 @@ const ALL_TYPES = [...EXAM_TYPES];
 // 多项填空单题最大空位数：与题库导入/导出标准模板（正确答案1~12）一致
 const MAX_BLANK_COUNT = 12;
 
+// 表单栅格：两列布局，窄屏自动堆叠。每个字段标签在上、控件占满整格宽度，
+// 避免多个输入挤在一行难以辨认和修改
+const FORM_GRID = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+  gap: 12,
+};
+
+/** 带标签的表单字段（标签在上、控件在下） */
+function Field({ label, children, span }) {
+  return (
+    <div style={{ minWidth: 0, gridColumn: span ? `span ${span}` : undefined }}>
+      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>{label}</Text>
+      {children}
+    </div>
+  );
+}
+
 export default function QuestionEditModal({ open, onCancel, onSave, record, repos = [] }) {
   // ---- 基础字段 ----
   const [title, setTitle] = useState('');       // 题目标题
@@ -386,7 +404,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       confirmLoading={saving}
       okText="保存"
       cancelText="取消"
-      width={700}
+      width={760}
       destroyOnHidden
       mask={{ closable: false }}
     >
@@ -408,22 +426,26 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           </Text>
         )}
 
-        <div style={{ display: 'flex', gap: 12 }}>
-          <Select
-            value={qType}
-            onChange={handleTypeChange}
-            options={typeOptions}
-            style={{ width: 160 }}
-          />
-          {repos.length > 0 && (
+        <div style={FORM_GRID}>
+          <Field label="题型">
             <Select
-              value={repoId}
-              onChange={setRepoId}
-              placeholder="选择所属练习（可选）"
-              allowClear
-              style={{ flex: 1 }}
-              options={repos.map((r) => ({ label: r.name, value: r.id }))}
+              value={qType}
+              onChange={handleTypeChange}
+              options={typeOptions}
+              style={{ width: '100%' }}
             />
+          </Field>
+          {repos.length > 0 && (
+            <Field label="所属练习（可选）">
+              <Select
+                value={repoId}
+                onChange={setRepoId}
+                placeholder="选择所属练习"
+                allowClear
+                style={{ width: '100%' }}
+                options={repos.map((r) => ({ label: r.name, value: r.id }))}
+              />
+            </Field>
           )}
         </div>
 
@@ -475,58 +497,68 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
           学科 → 章节 → 小节 → 知识点四级归类，附年级与难度，用于学生答题情况分析；入卷时自动快照，历史答卷不受题目修改影响
         </Text>
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={FORM_GRID}>
           {/* 学科: 单行文本录入（保存时写入顶层 subject + attribute.subject） */}
-          <Input
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            placeholder="学科（如：数学）"
-            style={{ flex: 1 }}
-          />
+          <Field label="学科">
+            <Input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="如：数学"
+            />
+          </Field>
           {/* 年级: 单行文本录入（保存时写入顶层 grade + attribute.grade） */}
-          <Input
-            value={grade}
-            onChange={(e) => setGrade(e.target.value)}
-            placeholder="年级（如：三年级）"
-            style={{ flex: 1 }}
-          />
+          <Field label="年级">
+            <Input
+              value={grade}
+              onChange={(e) => setGrade(e.target.value)}
+              placeholder="如：三年级"
+            />
+          </Field>
+          {/* 章节: 单行文本录入（保存时写入顶层 chapter + attribute.chapter） */}
+          <Field label="章节">
+            <Input
+              value={chapter}
+              onChange={(e) => setChapter(e.target.value)}
+              placeholder="如：第三章 函数"
+            />
+          </Field>
+          {/* 小节: 单行文本录入（保存时写入顶层 section + attribute.section）
+               知识结构: 学科 → 章节 → 小节 → 知识点 */}
+          <Field label="小节（可留空）">
+            <Input
+              value={section}
+              onChange={(e) => setSection(e.target.value)}
+              placeholder="如：第一节 函数的概念"
+            />
+          </Field>
           {/* 难度: 下拉选择 easy/medium/hard（保存时写入顶层 difficulty + attribute.difficulty） */}
-          <Select
-            value={difficulty}
-            onChange={setDifficulty}
-            placeholder="难度"
-            allowClear
-            style={{ width: 120 }}
-            options={[
-              { label: '简单', value: 'easy' },
-              { label: '中等', value: 'medium' },
-              { label: '困难', value: 'hard' },
-            ]}
-          />
+          <Field label="难度">
+            <Select
+              value={difficulty}
+              onChange={setDifficulty}
+              placeholder="请选择"
+              allowClear
+              style={{ width: '100%' }}
+              options={[
+                { label: '简单', value: 'easy' },
+                { label: '中等', value: 'medium' },
+                { label: '困难', value: 'hard' },
+              ]}
+            />
+          </Field>
+          {/* 知识点: mode="tags" 多值输入，回车/逗号分隔确认
+               状态为数组（knowledgePoints），保存时写入顶层 knowledgePoint[] + attribute.knowledgePoint */}
+          <Field label="知识点（可输入多个，回车确认）" span={2}>
+            <Select
+              mode="tags"
+              value={knowledgePoints}
+              onChange={setKnowledgePoints}
+              placeholder="如：函数单调性"
+              style={{ width: '100%' }}
+              tokenSeparators={[',', '，']}
+            />
+          </Field>
         </div>
-        {/* 章节: 单行文本录入（保存时写入顶层 chapter + attribute.chapter） */}
-        <Input
-          value={chapter}
-          onChange={(e) => setChapter(e.target.value)}
-          placeholder="章节（如：第三章 函数）"
-        />
-        {/* 小节: 单行文本录入（保存时写入顶层 section + attribute.section）
-             知识结构: 学科 → 章节 → 小节 → 知识点 */}
-        <Input
-          value={section}
-          onChange={(e) => setSection(e.target.value)}
-          placeholder="小节（如：第一节 函数的概念，可留空）"
-        />
-        {/* 知识点: mode="tags" 多值输入，回车/逗号分隔确认
-             状态为数组（knowledgePoints），保存时写入顶层 knowledgePoint[] + attribute.knowledgePoint */}
-        <Select
-          mode="tags"
-          value={knowledgePoints}
-          onChange={setKnowledgePoints}
-          placeholder="知识点（可输入多个，回车确认，如：函数单调性）"
-          style={{ width: '100%' }}
-          tokenSeparators={[',', '，']}
-        />
 
         <Divider style={{ margin: '4px 0' }} />
 
@@ -655,19 +687,21 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         <Divider style={{ margin: '4px 0' }} />
 
         {/* ========== 标签 & 分类 ========== */}
-        <div style={{ display: 'flex', gap: 12 }}>
-          <Input
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="标签（逗号分隔）如: 通用,单选"
-            style={{ flex: 1 }}
-          />
-          <Input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="分类（如: 数学、语文）"
-            style={{ flex: 1 }}
-          />
+        <div style={FORM_GRID}>
+          <Field label="标签（逗号分隔）">
+            <Input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder="如：通用,单选"
+            />
+          </Field>
+          <Field label="分类">
+            <Input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="如：数学、语文"
+            />
+          </Field>
         </div>
 
       </Space>

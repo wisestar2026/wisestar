@@ -138,6 +138,18 @@
   transition: width 0.35s ease;
 }
 .eng-progress-text { font-size: 13px; color: #1479a6; font-weight: 700; white-space: nowrap; }
+/* 学员端按小节分组：当前学习内容的小节标题 */
+.eng-section-title {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e8f6fd, #fdeee7);
+  color: #1479a6;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 6px 14px rgba(64, 140, 190, 0.16);
+}
 
 .eng-card {
   background: rgba(255, 255, 255, 0.96);
@@ -147,6 +159,10 @@
   text-align: center;
 }
 .eng-word { font-size: 40px; font-weight: 900; color: #14506e; letter-spacing: 1px; word-break: break-word; }
+/* 点击单词直接朗读（浏览器语音合成，无需音频文件） */
+.eng-word-clickable { cursor: pointer; transition: color 0.15s ease; }
+.eng-word-clickable:hover { color: #2f9fd4; }
+.eng-word-clickable:active { transform: scale(0.98); }
 .eng-phonetic { margin-top: 8px; color: #6a93a8; font-size: 15px; }
 .eng-meaning { margin-top: 18px; font-size: 18px; color: #d9603a; font-weight: 700; min-height: 28px; }
 .eng-meaning.hidden { color: #a9c3d1; font-weight: 500; }
