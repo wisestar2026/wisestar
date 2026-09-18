@@ -1,6 +1,7 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.CampusScope;
 import cn.wisestar.server.domain.dto.mall.MallOrderRequest;
 import cn.wisestar.server.domain.dto.mall.MallOrderView;
 import cn.wisestar.server.domain.model.MallGoods;
@@ -10,6 +11,7 @@ import cn.wisestar.server.mapper.MallGoodsMapper;
 import cn.wisestar.server.mapper.MallOrderMapper;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.service.BaseService;
+import cn.wisestar.server.service.CampusScopeService;
 import cn.wisestar.server.service.MallOrderService;
 import cn.wisestar.server.service.StudentService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,8 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.validation.ValidationException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
@@ -43,6 +47,8 @@ public class MallOrderServiceImpl extends BaseService<MallOrderMapper, MallOrder
 	private final StudentMapper studentMapper;
 
 	private final StudentService studentService;
+
+	private final CampusScopeService campusScopeService;
 
 	@Override
 	@Transactional(rollbackFor = Exception.class)
@@ -99,8 +105,27 @@ public class MallOrderServiceImpl extends BaseService<MallOrderMapper, MallOrder
 	public List<MallOrderView> listOrders(MallOrderRequest request) {
 		Integer status = request == null ? null : request.getStatus();
 		String keyword = request == null ? null : request.getKeyword();
+		// 校区数据权限：仅绑定校区的老师只看到本校区学员的核销订单
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Set<String> allowedStudentIds = null;
+		if (scope.isScoped()) {
+			Set<String> names = scope.getCampusNames();
+			if (names.isEmpty()) {
+				return Collections.emptyList();
+			}
+			allowedStudentIds = studentMapper
+					.selectList(Wrappers.<Student>lambdaQuery().select(Student::getId).in(Student::getCampus, names))
+					.stream().map(Student::getId).collect(Collectors.toSet());
+			if (allowedStudentIds.isEmpty()) {
+				return Collections.emptyList();
+			}
+		}
 		LambdaQueryWrapper<MallOrder> query = Wrappers.<MallOrder>lambdaQuery()
 				.eq(status != null, MallOrder::getStatus, status)
+				.in(allowedStudentIds != null, MallOrder::getStudentId, allowedStudentIds)
 				.orderByAsc(MallOrder::getStatus)
 				.orderByDesc(MallOrder::getCreateAt);
 		if (StringUtils.hasText(keyword)) {
@@ -113,14 +138,21 @@ public class MallOrderServiceImpl extends BaseService<MallOrderMapper, MallOrder
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	public MallOrderView verify(MallOrderRequest request) {
+		if (request == null || !StringUtils.hasText(request.getVerifyCode())) {
+			throw new ValidationException("请填写核销码");
+		}
+		String code = request.getVerifyCode().trim();
 		MallOrder target;
-		if (request != null && StringUtils.hasText(request.getId())) {
+		if (StringUtils.hasText(request.getId())) {
+			// 指定订单核销：核销码必须与该订单一致，避免张冠李戴
 			target = getById(request.getId());
 			if (target == null) {
 				throw new ValidationException("订单不存在");
 			}
-		} else if (request != null && StringUtils.hasText(request.getVerifyCode())) {
-			String code = request.getVerifyCode().trim();
+			if (!code.equals(target.getVerifyCode())) {
+				throw new ValidationException("核销码与订单不匹配");
+			}
+		} else {
 			target = this.baseMapper.selectList(Wrappers.<MallOrder>lambdaQuery()
 							.eq(MallOrder::getVerifyCode, code)
 							.eq(MallOrder::getStatus, 0))
@@ -130,17 +162,31 @@ public class MallOrderServiceImpl extends BaseService<MallOrderMapper, MallOrder
 						.eq(MallOrder::getVerifyCode, code)) > 0;
 				throw new ValidationException(used ? "该核销码已完成核销" : "核销码不存在");
 			}
-		} else {
-			throw new ValidationException("请填写核销码");
 		}
 		if (Integer.valueOf(1).equals(target.getStatus())) {
 			throw new ValidationException("该订单已完成核销");
 		}
+		assertOrderInScope(target);
 		target.setStatus(1);
 		target.setVerifyAt(new Date());
 		target.setVerifyBy(SecurityContextUtils.getUserId());
 		updateById(target);
 		return toView(target);
+	}
+
+	/**
+	 * 校验订单所属学员在当前账号校区数据权限范围内（核销操作）。
+	 */
+	private void assertOrderInScope(MallOrder order) {
+		CampusScope scope = campusScopeService.resolveScope();
+		if (scope.isAll() || order == null) {
+			return;
+		}
+		Student student = order.getStudentId() == null ? null : studentMapper.selectById(order.getStudentId());
+		if (scope.isEmpty() || student == null || student.getCampus() == null
+				|| !scope.getCampusNames().contains(student.getCampus())) {
+			throw new ValidationException("无权访问该订单（校区数据权限）");
+		}
 	}
 
 	/**

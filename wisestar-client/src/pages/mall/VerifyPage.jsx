@@ -2,18 +2,19 @@
  * VerifyPage.jsx - 商品核销页（老师端）
  *
  * 功能:
- *   1. 核销码输入框：填入学员出示的 6 位核销码 → 订单完成（学币正式扣除）
- *   2. 核销申请列表：展示学员购买信息（学号/姓名/商品/消耗学币/核销码/状态/时间）
- *      支持按状态、学员姓名或核销码筛选；待核销订单可直接点击「核销」
+ *   1. 核销申请列表：展示学员兑换订单（学号/姓名/商品/消耗学币/核销码/状态/时间）
+ *      支持按状态、学员姓名或核销码筛选；仅展示当前账号校区权限范围内的订单
+ *   2. 订单行右侧「商品核销」按钮：打开订单详情弹窗，出示核销码的学员由老师
+ *      输入 6 位核销码并确认，订单置为已核销（学员端刷新后同步显示已核销）
  *
  * URL: /mall/verify（受 AuthGuard 保护，管理端）
  * 数据流:
- *   listMallOrders({ status, keyword }) → 列表；verifyMallOrder({ verifyCode }) → 核销
+ *   listMallOrders({ status, keyword }) → 列表；verifyMallOrder({ id, verifyCode }) → 核销
  */
 
 import { useEffect, useState } from 'react';
 import {
-  Table, Space, Button, Input, Select, Tag, Typography, message,
+  Table, Space, Button, Input, Select, Tag, Typography, Descriptions, Modal, message,
 } from 'antd';
 import { CheckCircleOutlined, ReloadOutlined } from '@ant-design/icons';
 import { listMallOrders, verifyMallOrder } from '../../api/mall';
@@ -25,10 +26,13 @@ export default function VerifyPage() {
   const { can } = usePermission();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [verifyCode, setVerifyCode] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState(undefined);
   const [keyword, setKeyword] = useState('');
+
+  // 订单详情 + 核销码录入
+  const [verifyTarget, setVerifyTarget] = useState(null);
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   const loadList = () => {
     setLoading(true);
@@ -43,32 +47,33 @@ export default function VerifyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // ---- 凭核销码核销 ----
+  // ---- 打开订单详情（核销） ----
+  const openVerify = (record) => {
+    setVerifyTarget(record);
+    setVerifyCode('');
+  };
+
+  const closeVerify = () => {
+    setVerifyTarget(null);
+    setVerifyCode('');
+  };
+
+  // ---- 输入 6 位核销码并确认核销 ----
   const handleVerify = () => {
     const code = verifyCode.trim();
     if (!/^\d{6}$/.test(code)) {
       message.warning('请输入 6 位数字核销码');
       return;
     }
-    setSubmitting(true);
-    verifyMallOrder({ verifyCode: code })
+    setVerifying(true);
+    verifyMallOrder({ id: verifyTarget.id, verifyCode: code })
       .then(() => {
         message.success('核销成功，订单已完成');
-        setVerifyCode('');
+        closeVerify();
         loadList();
       })
       .catch(() => {})
-      .finally(() => setSubmitting(false));
-  };
-
-  // ---- 列表内直接核销 ----
-  const handleVerifyRow = (record) => {
-    verifyMallOrder({ id: record.id })
-      .then(() => {
-        message.success('核销成功，订单已完成');
-        loadList();
-      })
-      .catch(() => {});
+      .finally(() => setVerifying(false));
   };
 
   const columns = [
@@ -94,11 +99,11 @@ export default function VerifyPage() {
     { title: '申请时间', dataIndex: 'createAt', width: 170 },
     { title: '核销时间', dataIndex: 'verifyAt', width: 170, render: (v) => v || '-' },
     {
-      title: '操作', key: 'action', width: 110,
+      title: '操作', key: 'action', width: 130,
       render: (_, record) => (
         record.status === 0 && can('mall:update') ? (
-          <Button type="link" size="small" icon={<CheckCircleOutlined />} onClick={() => handleVerifyRow(record)}>
-            核销
+          <Button type="link" size="small" icon={<CheckCircleOutlined />} onClick={() => openVerify(record)}>
+            商品核销
           </Button>
         ) : '-'
       ),
@@ -110,20 +115,6 @@ export default function VerifyPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>商品核销</Title>
       </div>
-
-      {/* ---- 核销码录入 ---- */}
-      <Space wrap style={{ marginBottom: 16 }}>
-        <Input
-          placeholder="输入学员核销码（6 位数字）"
-          style={{ width: 240 }}
-          maxLength={6}
-          value={verifyCode}
-          onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ''))}
-          onPressEnter={handleVerify}
-          prefix={<CheckCircleOutlined />}
-        />
-        <Button type="primary" loading={submitting} onClick={handleVerify}>确认核销</Button>
-      </Space>
 
       {/* ---- 筛选 ---- */}
       <Space wrap style={{ marginBottom: 16 }}>
@@ -148,6 +139,49 @@ export default function VerifyPage() {
         pagination={{ pageSize: 20, showTotal: (t) => `共 ${t} 条` }}
         locale={{ emptyText: '暂无核销申请' }}
       />
+
+      {/* ---- 订单详情 + 核销码确认 ---- */}
+      <Modal
+        title="商品核销"
+        open={!!verifyTarget}
+        onOk={handleVerify}
+        onCancel={closeVerify}
+        okText="确认核销"
+        cancelText="取消"
+        confirmLoading={verifying}
+        okButtonProps={{ disabled: !/^\d{6}$/.test(verifyCode.trim()) }}
+        destroyOnClose
+        width={520}
+      >
+        {verifyTarget && (
+          <>
+            <Descriptions column={1} size="small" bordered style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="学员">
+                {verifyTarget.studentNo} {verifyTarget.studentName}
+              </Descriptions.Item>
+              <Descriptions.Item label="兑换商品">{verifyTarget.goodsName}</Descriptions.Item>
+              <Descriptions.Item label="消耗学币">
+                <span style={{ color: '#ff8a3d', fontWeight: 700 }}>-{verifyTarget.coins}</span>
+              </Descriptions.Item>
+              <Descriptions.Item label="申请时间">{verifyTarget.createAt || '-'}</Descriptions.Item>
+              <Descriptions.Item label="状态">
+                {verifyTarget.status === 1 ? <Tag color="green">已核销</Tag> : <Tag color="orange">待核销</Tag>}
+              </Descriptions.Item>
+            </Descriptions>
+            <div style={{ marginBottom: 8 }}>请输入学员出示的 6 位核销码：</div>
+            <Input
+              placeholder="6 位数字核销码"
+              maxLength={6}
+              autoFocus
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ''))}
+              onPressEnter={handleVerify}
+              prefix={<CheckCircleOutlined />}
+              style={{ width: 240 }}
+            />
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -83,7 +83,7 @@ public class MallOrderApi {
 	 *
 	 * <p><b>权限</b>：hasAuthority('mall:update')。</p>
 	 *
-	 * @param request 核销请求（verifyCode 或 id）
+	 * @param request 核销请求（verifyCode 必填；同时传 id 时校验核销码属于该订单）
 	 * @return 完成后的订单视图
 	 */
 	@PostMapping("/verify")

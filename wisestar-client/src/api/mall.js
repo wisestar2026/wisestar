@@ -53,7 +53,7 @@ export async function listMallOrders(params = {}) {
   return request.get('/mall/order/list', { params });
 }
 
-/** 老师端核销：{ verifyCode } 或 { id } */
+/** 老师端核销：{ id, verifyCode }（verifyCode 必填，且须与该订单一致） */
 export async function verifyMallOrder(data) {
   return request.post('/mall/order/verify', data);
 }
