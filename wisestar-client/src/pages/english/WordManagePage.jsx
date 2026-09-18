@@ -18,8 +18,9 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Progress } from 'antd';
+import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Progress, AutoComplete } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined } from '@ant-design/icons';
+import { getSections } from '../../api/englishAdmin';
 
 const API_BASE = '/api/english/word-manager';
 
@@ -35,12 +36,30 @@ export default function WordManagePage() {
   const [grade, setGrade] = useState('');
   const [term, setTerm] = useState('');
   const [unit, setUnit] = useState('');
+  const [section, setSection] = useState('');
   const [spell, setSpell] = useState('');
 
   // 弹窗状态
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
+
+  // 小节候选（小节目录 ∪ 内容已出现的 section）：随弹窗内 版本/年级/册别/单元 联动
+  const [sectionOptions, setSectionOptions] = useState([]);
+  const watchedVersion = Form.useWatch('version', form);
+  const watchedGrade = Form.useWatch('grade', form);
+  const watchedTerm = Form.useWatch('term', form);
+  const watchedUnit = Form.useWatch('unit', form);
+
+  useEffect(() => {
+    if (!watchedVersion || !watchedGrade || !watchedTerm || !watchedUnit) {
+      setSectionOptions([]);
+      return;
+    }
+    getSections({ version: watchedVersion, grade: watchedGrade, term: watchedTerm, unit: watchedUnit, pageSize: -1 })
+      .then((res) => setSectionOptions((res.data?.list || []).map((s) => ({ value: s.section }))))
+      .catch(() => setSectionOptions([]));
+  }, [watchedVersion, watchedGrade, watchedTerm, watchedUnit]);
 
   // 导入状态
   const [importing, setImporting] = useState(false);
@@ -57,6 +76,7 @@ export default function WordManagePage() {
       ...(grade && { grade }),
       ...(term && { term }),
       ...(unit && { unit }),
+      ...(section && { section }),
       ...(spell && { spell }),
     });
 
@@ -82,6 +102,7 @@ export default function WordManagePage() {
     setGrade('');
     setTerm('');
     setUnit('');
+    setSection('');
     setSpell('');
     setCurrent(1);
   };
@@ -168,8 +189,8 @@ export default function WordManagePage() {
   // 下载模板
   const downloadTemplate = () => {
     const template = [
-      ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元', '学期'],
-      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '人教版', '四年级', 'Unit 1 Helping at home', '上册'],
+      ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元', '学期', '小节'],
+      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '人教版', '四年级', 'Unit 1 Helping at home', '上册', 'Part A'],
     ];
     const csv = template.map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -188,6 +209,7 @@ export default function WordManagePage() {
     { title: '年级', dataIndex: 'grade', width: 80 },
     { title: '册别', dataIndex: 'term', width: 70 },
     { title: '单元', dataIndex: 'unit', width: 80 },
+    { title: '小节', dataIndex: 'section', width: 120, ellipsis: true },
     {
       title: '操作',
       key: 'action',
@@ -258,6 +280,7 @@ export default function WordManagePage() {
           { value: '下册', label: '下册' },
         ]} />
         <Input placeholder="单元" allowClear style={{ width: 100 }} value={unit} onChange={(e) => setUnit(e.target.value)} />
+        <Input placeholder="小节" allowClear style={{ width: 120 }} value={section} onChange={(e) => setSection(e.target.value)} onPressEnter={loadList} />
         <Input placeholder="单词拼写" allowClear style={{ width: 150 }} value={spell} onChange={(e) => setSpell(e.target.value)} onPressEnter={loadList} />
         <Button type="primary" onClick={loadList}>查询</Button>
         <Button onClick={handleReset}>重置</Button>
@@ -340,6 +363,13 @@ export default function WordManagePage() {
             </Form.Item>
             <Form.Item name="unit" label="单元">
               <Input />
+            </Form.Item>
+            <Form.Item name="section" label="小节">
+              <AutoComplete
+                options={sectionOptions}
+                placeholder="选择或输入小节"
+                filterOption={(input, option) => (option?.value || '').toLowerCase().includes(input.toLowerCase())}
+              />
             </Form.Item>
           </div>
         </Form>

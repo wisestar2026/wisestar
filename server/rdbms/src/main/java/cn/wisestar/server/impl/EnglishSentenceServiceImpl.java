@@ -44,12 +44,14 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 				.eq(query.getGrade() != null, EnglishSentence::getGrade, query.getGrade())
 				.eq(query.getTerm() != null, EnglishSentence::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishSentence::getUnit, query.getUnit())
+				.eq(query.getSection() != null, EnglishSentence::getSection, query.getSection())
 				.and(query.getKeyword() != null && !query.getKeyword().isEmpty(),
 						w -> w.like(EnglishSentence::getEn, query.getKeyword())
 								.or().like(EnglishSentence::getZh, query.getKeyword()))
 				.orderByAsc(EnglishSentence::getGrade)
 				.orderByAsc(EnglishSentence::getTerm)
 				.orderByAsc(EnglishSentence::getUnit)
+				.orderByAsc(EnglishSentence::getSection)
 				.orderByAsc(EnglishSentence::getSort);
 
 		Page<EnglishSentence> page = new Page<>(query.getCurrent(), query.getPageSize());
@@ -101,6 +103,7 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 					String en = getCellValue(row.getCell(4));
 					String zh = getCellValue(row.getCell(5));
 					String audioUrl = getCellValue(row.getCell(6));
+					String section = getCellValue(row.getCell(7));
 
 					if (en == null || en.trim().isEmpty()) {
 						throw new IllegalArgumentException("英文句子为空");
@@ -112,11 +115,14 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 									.eq(EnglishSentence::getGrade, grade)
 									.eq(EnglishSentence::getTerm, term)
 									.eq(EnglishSentence::getUnit, unit)
+									.eq(section != null, EnglishSentence::getSection, section)
+									.isNull(section == null, EnglishSentence::getSection)
 									.eq(EnglishSentence::getEn, en)
 									.last("LIMIT 1"));
 					if (existing != null) {
 						existing.setZh(zh);
 						existing.setAudioUrl(audioUrl);
+						existing.setSection(section);
 						englishSentenceMapper.updateById(existing);
 					} else {
 						EnglishSentence entity = new EnglishSentence();
@@ -124,6 +130,7 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 						entity.setGrade(grade);
 						entity.setTerm(term);
 						entity.setUnit(unit);
+						entity.setSection(section);
 						entity.setEn(en);
 						entity.setZh(zh);
 						entity.setAudioUrl(audioUrl);
@@ -172,6 +179,7 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 		entity.setGrade(view.getGrade());
 		entity.setTerm(view.getTerm());
 		entity.setUnit(view.getUnit());
+		entity.setSection(view.getSection());
 		entity.setSort(view.getSort() == null ? 0 : view.getSort());
 		return entity;
 	}
@@ -186,6 +194,7 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 		view.setGrade(entity.getGrade());
 		view.setTerm(entity.getTerm());
 		view.setUnit(entity.getUnit());
+		view.setSection(entity.getSection());
 		view.setSort(entity.getSort());
 		return view;
 	}

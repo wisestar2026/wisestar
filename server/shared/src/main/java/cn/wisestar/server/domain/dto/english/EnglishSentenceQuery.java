@@ -26,6 +26,9 @@ public class EnglishSentenceQuery extends PageQuery {
 	/** 单元 */
 	private String unit;
 
+	/** 小节 */
+	private String section;
+
 	/** 关键字（英文或中文模糊） */
 	private String keyword;
 

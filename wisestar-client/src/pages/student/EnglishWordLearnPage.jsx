@@ -23,6 +23,26 @@ import { getEnglishWordBook, recordEnglishWord, recordEnglishSession } from '../
 import { speakEnglish } from '../../utils/english';
 import './EnglishCenterPage.css';
 
+/**
+ * 按 section 将单词分组：有名称的小节保持后端顺序，「未分节」固定置末。
+ */
+function groupWordsBySection(list) {
+  const named = new Map();
+  const unsectioned = [];
+  list.forEach((item) => {
+    const key = (item.section || '').trim();
+    if (!key) {
+      unsectioned.push(item);
+      return;
+    }
+    if (!named.has(key)) named.set(key, []);
+    named.get(key).push(item);
+  });
+  const groups = [...named.entries()].map(([section, items]) => ({ section, items }));
+  if (unsectioned.length) groups.push({ section: '未分节', items: unsectioned });
+  return groups;
+}
+
 export default function EnglishWordLearnPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -32,6 +52,7 @@ export default function EnglishWordLearnPage() {
 
   const [term] = useState('上册');
   const [words, setWords] = useState([]);
+  const [sectionLabels, setSectionLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -46,7 +67,17 @@ export default function EnglishWordLearnPage() {
     }
     setLoading(true);
     getEnglishWordBook({ version, grade, term, unit, pageSize: -1 })
-      .then((res) => setWords(res?.data?.list || []))
+      .then((res) => {
+        const groups = groupWordsBySection(res?.data?.list || []);
+        const flat = [];
+        const labels = [];
+        groups.forEach((group) => group.items.forEach((item) => {
+          flat.push(item);
+          labels.push(group.section);
+        }));
+        setWords(flat);
+        setSectionLabels(labels);
+      })
       .catch(() => message.error('单词加载失败'))
       .finally(() => setLoading(false));
   }, [version, grade, term, unit]);
@@ -134,13 +165,28 @@ export default function EnglishWordLearnPage() {
 
   return (
     <div className="eng-learn-wrap">
+      {sectionLabels[index] && <div className="eng-section-title">{sectionLabels[index]}</div>}
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
         <div className="eng-progress-text">{index + 1} / {words.length}</div>
       </div>
 
       <div className="eng-card">
-        <div className="eng-word">{current?.spell}</div>
+        <div
+          className="eng-word eng-word-clickable"
+          role="button"
+          tabIndex={0}
+          title="点击朗读"
+          onClick={() => speakEnglish(current?.spell, current?.audioUrl)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              speakEnglish(current?.spell, current?.audioUrl);
+            }
+          }}
+        >
+          {current?.spell}
+        </div>
         {current?.phonetic && <div className="eng-phonetic">/{current.phonetic}/</div>}
         {current?.imageUrl && <img className="eng-image" src={current.imageUrl} alt={current.spell} />}
         <div className={`eng-meaning ${revealed ? '' : 'hidden'}`}>

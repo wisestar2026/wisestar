@@ -123,7 +123,7 @@ export default function WordBookManagePage() {
         <Button
           type="link"
           icon={<BookOutlined />}
-          onClick={() => navigate(`/english/word?wordId=${record.id}`)}
+          onClick={() => navigate(`/english/study?wordId=${record.id}`)}
         >
           学习
         </Button>
@@ -216,7 +216,7 @@ export default function WordBookManagePage() {
           }))}
         />
         <Button onClick={loadList}>查询</Button>
-        <Button onClick={() => navigate('/english/word')}>开始学习</Button>
+        <Button onClick={() => navigate('/english/study')}>开始学习</Button>
       </Space>
 
       {/* 单词列表 */}

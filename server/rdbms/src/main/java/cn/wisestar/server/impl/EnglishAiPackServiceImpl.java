@@ -439,25 +439,35 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 			}
 		}
 
-		// 语法库同步（同年级同标题覆盖更新）
+		// 语法库同步（按 版本+年级+学期+单元+小节+标题 覆盖更新）
 		int grammarSynced = 0;
 		JsonNode grammar = content.path("grammar");
 		if (grammar.isObject()) {
 			String gTitle = grammar.path("title").asText("");
 			if (!gTitle.trim().isEmpty()) {
 				EnglishGrammar exist = grammarMapper.selectOne(Wrappers.<EnglishGrammar>lambdaQuery()
-						.eq(EnglishGrammar::getGrade, pack.getGrade())
+						.eq(pack.getVersion() != null, EnglishGrammar::getVersion, pack.getVersion())
+						.isNull(pack.getVersion() == null, EnglishGrammar::getVersion)
+						.eq(pack.getGrade() != null, EnglishGrammar::getGrade, pack.getGrade())
+						.isNull(pack.getGrade() == null, EnglishGrammar::getGrade)
+						.eq(pack.getUnit() != null, EnglishGrammar::getUnit, pack.getUnit())
+						.isNull(pack.getUnit() == null, EnglishGrammar::getUnit)
 						.eq(EnglishGrammar::getTitle, gTitle.trim())
 						.last("limit 1"));
 				boolean isNew = exist == null;
 				if (isNew) {
 					exist = new EnglishGrammar();
 				}
+				exist.setVersion(pack.getVersion());
 				exist.setGrade(pack.getGrade());
+				exist.setUnit(pack.getUnit());
 				exist.setTitle(gTitle.trim());
 				exist.setContent(textOrNull(grammar.path("content").asText()));
 				exist.setExamples(writeJson(grammar.path("examples")));
 				exist.setExercises(writeJson(grammar.path("exercises")));
+				if (exist.getSort() == null) {
+					exist.setSort(0);
+				}
 				if (isNew) {
 					grammarMapper.insert(exist);
 				} else {

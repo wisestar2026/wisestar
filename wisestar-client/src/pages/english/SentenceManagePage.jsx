@@ -18,11 +18,12 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Typography } from 'antd';
+import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Typography, AutoComplete } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, SoundOutlined,
 } from '@ant-design/icons';
 import { speakEnglish } from '../../utils/english';
+import { getSections } from '../../api/englishAdmin';
 
 const API_BASE = '/api/english/sentence';
 const { Title } = Typography;
@@ -42,11 +43,29 @@ export default function SentenceManagePage() {
   const [grade, setGrade] = useState('');
   const [term, setTerm] = useState('');
   const [unit, setUnit] = useState('');
+  const [section, setSection] = useState('');
   const [keyword, setKeyword] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
+
+  // 小节候选：随弹窗内 版本/年级/册别/单元 联动
+  const [sectionOptions, setSectionOptions] = useState([]);
+  const watchedVersion = Form.useWatch('version', form);
+  const watchedGrade = Form.useWatch('grade', form);
+  const watchedTerm = Form.useWatch('term', form);
+  const watchedUnit = Form.useWatch('unit', form);
+
+  useEffect(() => {
+    if (!watchedVersion || !watchedGrade || !watchedTerm || !watchedUnit) {
+      setSectionOptions([]);
+      return;
+    }
+    getSections({ version: watchedVersion, grade: watchedGrade, term: watchedTerm, unit: watchedUnit, pageSize: -1 })
+      .then((res) => setSectionOptions((res.data?.list || []).map((s) => ({ value: s.section }))))
+      .catch(() => setSectionOptions([]));
+  }, [watchedVersion, watchedGrade, watchedTerm, watchedUnit]);
 
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
@@ -60,6 +79,7 @@ export default function SentenceManagePage() {
       ...(grade && { grade }),
       ...(term && { term }),
       ...(unit && { unit }),
+      ...(section && { section }),
       ...(keyword && { keyword }),
     });
     fetch(`${API_BASE}/list?${params}`)
@@ -83,6 +103,7 @@ export default function SentenceManagePage() {
     setGrade('');
     setTerm('');
     setUnit('');
+    setSection('');
     setKeyword('');
     setCurrent(1);
   };
@@ -94,7 +115,7 @@ export default function SentenceManagePage() {
       form.setFieldsValue(record);
     } else {
       form.resetFields();
-      form.setFieldsValue({ version: version || '人教版', grade: grade || '三年级', term: term || '上册', unit: unit || '', sort: 0 });
+      form.setFieldsValue({ version: version || '人教版', grade: grade || '三年级', term: term || '上册', unit: unit || '', section: section || '', sort: 0 });
     }
   };
 
@@ -160,8 +181,8 @@ export default function SentenceManagePage() {
 
   const downloadTemplate = () => {
     const template = [
-      ['版本', '年级', '册别', '单元', '英文', '中文', '音频'],
-      ['人教版', '四年级', '上册', 'Unit 1 Helping at home', 'What would you like to eat?', '你想吃什么？', ''],
+      ['版本', '年级', '册别', '单元', '英文', '中文', '音频', '小节'],
+      ['人教版', '四年级', '上册', 'Unit 1 Helping at home', 'What would you like to eat?', '你想吃什么？', '', 'Part A'],
     ];
     const csv = template.map((row) => row.join(',')).join('\n');
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
@@ -175,6 +196,7 @@ export default function SentenceManagePage() {
     { title: '英文', dataIndex: 'en', ellipsis: true },
     { title: '中文', dataIndex: 'zh', width: 220, ellipsis: true },
     { title: '单元', dataIndex: 'unit', width: 160, ellipsis: true },
+    { title: '小节', dataIndex: 'section', width: 120, ellipsis: true },
     { title: '册别', dataIndex: 'term', width: 70 },
     { title: '排序', dataIndex: 'sort', width: 70 },
     {
@@ -236,6 +258,7 @@ export default function SentenceManagePage() {
         <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade || undefined} onChange={setGrade} options={GRADE_OPTIONS} />
         <Select placeholder="册别" allowClear style={{ width: 90 }} value={term || undefined} onChange={setTerm} options={TERM_OPTIONS} />
         <Input placeholder="单元" allowClear style={{ width: 160 }} value={unit} onChange={(e) => setUnit(e.target.value)} />
+        <Input placeholder="小节" allowClear style={{ width: 120 }} value={section} onChange={(e) => setSection(e.target.value)} onPressEnter={loadList} />
         <Input placeholder="英文/中文关键字" allowClear style={{ width: 180 }} value={keyword} onChange={(e) => setKeyword(e.target.value)} onPressEnter={loadList} />
         <Button type="primary" onClick={loadList}>查询</Button>
         <Button onClick={handleReset}>重置</Button>
@@ -288,6 +311,13 @@ export default function SentenceManagePage() {
             </Form.Item>
             <Form.Item name="unit" label="单元">
               <Input />
+            </Form.Item>
+            <Form.Item name="section" label="小节">
+              <AutoComplete
+                options={sectionOptions}
+                placeholder="选择或输入小节"
+                filterOption={(input, option) => (option?.value || '').toLowerCase().includes(input.toLowerCase())}
+              />
             </Form.Item>
           </div>
           <Form.Item name="sort" label="排序">

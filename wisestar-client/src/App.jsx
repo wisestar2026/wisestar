@@ -84,6 +84,8 @@ import SentenceManagePage from './pages/english/SentenceManagePage';
 import VerifyPage from './pages/mall/VerifyPage';
 import CampusManagePage from './pages/admin/CampusManagePage';
 import UnitManagePage from './pages/english/UnitManagePage';
+import EnglishSectionManagePage from './pages/english/SectionManagePage';
+import EnglishGrammarManagePage from './pages/english/GrammarManagePage';
 
 
 export default function App() {
@@ -355,6 +357,22 @@ export default function App() {
               element={
                 <AuthGuard required={['english:unit:list']}>
                   <UnitManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/section"
+              element={
+                <AuthGuard required={['english:section:list']}>
+                  <EnglishSectionManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/grammar"
+              element={
+                <AuthGuard required={['english:grammar:list']}>
+                  <EnglishGrammarManagePage />
                 </AuthGuard>
               }
             />

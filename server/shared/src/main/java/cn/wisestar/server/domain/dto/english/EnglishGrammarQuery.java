@@ -5,14 +5,14 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 英语单词查询 DTO。
+ * 英语语法查询 DTO。
  *
  * @author wisestar
- * @date 2026/8/30
+ * @date 2026/9/18
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class EnglishWordQuery extends PageQuery {
+public class EnglishGrammarQuery extends PageQuery {
 
 	/** 教材版本 */
 	private String version;
@@ -29,7 +29,7 @@ public class EnglishWordQuery extends PageQuery {
 	/** 小节 */
 	private String section;
 
-	/** 单词拼写（模糊） */
-	private String spell;
+	/** 标题（模糊） */
+	private String title;
 
 }

@@ -46,4 +46,7 @@ public class EnglishWord extends BaseModel {
 	/** 单元 */
 	private String unit;
 
+	/** 小节 */
+	private String section;
+
 }

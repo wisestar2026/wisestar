@@ -23,6 +23,26 @@ import { getEnglishSentences, recordEnglishSentence, recordEnglishSession } from
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
 import './EnglishCenterPage.css';
 
+/**
+ * 按 section 将句子分组：有名称的小节保持后端顺序，「未分节」固定置末。
+ */
+function groupSentencesBySection(list) {
+  const named = new Map();
+  const unsectioned = [];
+  list.forEach((item) => {
+    const key = (item.section || '').trim();
+    if (!key) {
+      unsectioned.push(item);
+      return;
+    }
+    if (!named.has(key)) named.set(key, []);
+    named.get(key).push(item);
+  });
+  const groups = [...named.entries()].map(([section, items]) => ({ section, items }));
+  if (unsectioned.length) groups.push({ section: '未分节', items: unsectioned });
+  return groups;
+}
+
 export default function EnglishSentenceLearnPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -32,6 +52,7 @@ export default function EnglishSentenceLearnPage() {
 
   const [term] = useState('上册');
   const [sentences, setSentences] = useState([]);
+  const [sectionLabels, setSectionLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
   const [pool, setPool] = useState([]);
@@ -49,7 +70,17 @@ export default function EnglishSentenceLearnPage() {
     }
     setLoading(true);
     getEnglishSentences({ version, grade, term, unit })
-      .then((res) => setSentences(res?.data || []))
+      .then((res) => {
+        const groups = groupSentencesBySection(res?.data || []);
+        const flat = [];
+        const labels = [];
+        groups.forEach((group) => group.items.forEach((item) => {
+          flat.push(item);
+          labels.push(group.section);
+        }));
+        setSentences(flat);
+        setSectionLabels(labels);
+      })
       .catch(() => message.error('句子加载失败'))
       .finally(() => setLoading(false));
   }, [version, grade, term, unit]);
@@ -145,6 +176,7 @@ export default function EnglishSentenceLearnPage() {
 
   return (
     <div className="eng-learn-wrap">
+      {sectionLabels[index] && <div className="eng-section-title">{sectionLabels[index]}</div>}
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
         <div className="eng-progress-text">{index + 1} / {sentences.length}</div>

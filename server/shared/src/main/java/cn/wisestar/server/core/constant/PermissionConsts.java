@@ -299,6 +299,8 @@ public final class PermissionConsts {
 			+ "english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,"
 			+ "english:unit:list,english:unit:create,english:unit:update,english:unit:delete,"
 			+ "english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,"
+			+ "english:section:list,english:section:create,english:section:update,english:section:delete,"
+			+ "english:grammar:list,english:grammar:create,english:grammar:update,english:grammar:delete,"
 			+ "campus:list,campus:create,campus:update,campus:delete";
 
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */

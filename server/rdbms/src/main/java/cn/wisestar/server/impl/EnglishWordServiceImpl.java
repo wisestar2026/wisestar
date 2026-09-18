@@ -38,10 +38,12 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 				.eq(query.getGrade() != null, EnglishWord::getGrade, query.getGrade())
 				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
+				.eq(query.getSection() != null, EnglishWord::getSection, query.getSection())
 				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
 				.orderByAsc(EnglishWord::getGrade)
 				.orderByAsc(EnglishWord::getTerm)
 				.orderByAsc(EnglishWord::getUnit)
+				.orderByAsc(EnglishWord::getSection)
 				.orderByAsc(EnglishWord::getSpell);
 
 		Page<EnglishWord> page = new Page<>(query.getCurrent(), query.getPageSize());
@@ -61,10 +63,12 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 				.eq(query.getGrade() != null, EnglishWord::getGrade, query.getGrade())
 				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
+				.eq(query.getSection() != null, EnglishWord::getSection, query.getSection())
 				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
 				.orderByAsc(EnglishWord::getGrade)
 				.orderByAsc(EnglishWord::getTerm)
 				.orderByAsc(EnglishWord::getUnit)
+				.orderByAsc(EnglishWord::getSection)
 				.orderByAsc(EnglishWord::getSpell);
 
 		Page<EnglishWord> page = new Page<>(query.getCurrent(), query.getPageSize());
@@ -188,6 +192,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		view.setGrade(word.getGrade());
 		view.setTerm(word.getTerm());
 		view.setUnit(word.getUnit());
+		view.setSection(word.getSection());
 		return view;
 	}
 

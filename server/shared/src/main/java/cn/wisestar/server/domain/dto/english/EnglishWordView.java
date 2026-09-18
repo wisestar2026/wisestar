@@ -43,6 +43,9 @@ public class EnglishWordView {
 	/** 单元 */
 	private String unit;
 
+	/** 小节 */
+	private String section;
+
 	/** 熟练度（用户单词本） */
 	private Integer familiarity;
 

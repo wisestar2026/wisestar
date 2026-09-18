@@ -34,6 +34,9 @@ public class EnglishSentenceView {
 	/** 单元 */
 	private String unit;
 
+	/** 小节 */
+	private String section;
+
 	/** 单元内排序 */
 	private Integer sort;
 

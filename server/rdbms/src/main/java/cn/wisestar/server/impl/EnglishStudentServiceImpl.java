@@ -120,6 +120,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.eq(grade != null, EnglishSentence::getGrade, grade)
 				.eq(term != null, EnglishSentence::getTerm, term)
 				.eq(unit != null, EnglishSentence::getUnit, unit)
+				.orderByAsc(EnglishSentence::getSection)
 				.orderByAsc(EnglishSentence::getSort)
 				.orderByAsc(EnglishSentence::getId));
 		List<EnglishSentenceView> views = list.stream().map(this::toView).collect(Collectors.toList());
@@ -324,6 +325,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		view.setGrade(entity.getGrade());
 		view.setTerm(entity.getTerm());
 		view.setUnit(entity.getUnit());
+		view.setSection(entity.getSection());
 		view.setSort(entity.getSort());
 		return view;
 	}

@@ -1,20 +1,19 @@
-package cn.wisestar.server.domain.model;
+package cn.wisestar.server.domain.dto.english;
 
-import cn.wisestar.server.core.model.BaseModel;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import java.util.Date;
 
 /**
- * 英语语法实体（对应数据库表 t_english_grammar）。
+ * 英语语法视图 DTO。
  *
  * @author wisestar
- * @date 2026/9/9
+ * @date 2026/9/18
  */
 @Data
-@TableName("t_english_grammar")
-@EqualsAndHashCode(callSuper = false)
-public class EnglishGrammar extends BaseModel {
+public class EnglishGrammarView {
+
+	private String id;
 
 	/** 标题 */
 	private String title;
@@ -28,10 +27,10 @@ public class EnglishGrammar extends BaseModel {
 	/** 练习题（JSON：exercises 数组） */
 	private String exercises;
 
-	/** 教材版本（人教版/苏教版等） */
+	/** 教材版本 */
 	private String version;
 
-	/** 年级（一年级~六年级） */
+	/** 年级 */
 	private String grade;
 
 	/** 学期/册别（上册/下册） */
@@ -45,5 +44,8 @@ public class EnglishGrammar extends BaseModel {
 
 	/** 排序 */
 	private Integer sort;
+
+	/** 更新时间 */
+	private Date updateAt;
 
 }

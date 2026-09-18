@@ -116,8 +116,10 @@ export default function MainLayout() {
       key: 'english-group', icon: <BookOutlined />, label: '英语板块',
       children: [
         { key: '/english/unit', label: '单元管理', required: ['english:unit:list'] },
+        { key: '/english/section', label: '小节管理', required: ['english:section:list'] },
         { key: '/english/word', label: '单词管理', required: ['english:word:list'] },
         { key: '/english/sentence', label: '句库管理', required: ['english:sentence:list'] },
+        { key: '/english/grammar', label: '语法管理', required: ['english:grammar:list'] },
         { key: '/english/study', label: '单词学习' },
         { key: '/english/word-book', label: '单词本' },
         { key: '/english/word-ai', label: 'AI 内容生成', required: ['english:word:ai'] },
@@ -195,7 +197,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /knowledge/chapters）。
   // 一级入口教研平台 key=/exercise/list，同样需要精确匹配到第一段路径规则之外
-  const SUB_PATH_KEYS = ['/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items'];
+  const SUB_PATH_KEYS = ['/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/sentence', '/english/grammar', '/english/study', '/english/word-book', '/english/word-ai'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)

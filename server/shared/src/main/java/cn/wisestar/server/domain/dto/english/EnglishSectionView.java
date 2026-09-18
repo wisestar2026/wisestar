@@ -1,18 +1,17 @@
 package cn.wisestar.server.domain.dto.english;
 
-import cn.wisestar.server.domain.dto.PageQuery;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
- * 英语单词查询 DTO。
+ * 英语小节视图 DTO。
  *
  * @author wisestar
- * @date 2026/8/30
+ * @date 2026/9/18
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
-public class EnglishWordQuery extends PageQuery {
+public class EnglishSectionView {
+
+	private String id;
 
 	/** 教材版本 */
 	private String version;
@@ -29,7 +28,7 @@ public class EnglishWordQuery extends PageQuery {
 	/** 小节 */
 	private String section;
 
-	/** 单词拼写（模糊） */
-	private String spell;
+	/** 排序 */
+	private Integer sort;
 
 }

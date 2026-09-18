@@ -6,26 +6,17 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 英语句子实体（对应数据库表 t_english_sentence）。
+ * 英语小节目录实体（对应数据库表 t_english_section）。
  *
- * <p>独立的句库，与单词解耦，可单独维护与导入。</p>
+ * <p>维护某「版本 + 年级 + 学期 + 单元」下的小节名称与排序，词库、句库、语法共用。</p>
  *
  * @author wisestar
- * @date 2026/9/15
+ * @date 2026/9/18
  */
 @Data
-@TableName("t_english_sentence")
+@TableName("t_english_section")
 @EqualsAndHashCode(callSuper = false)
-public class EnglishSentence extends BaseModel {
-
-	/** 英文句子 */
-	private String en;
-
-	/** 中文释义 */
-	private String zh;
-
-	/** 音频 URL（为空时前端回退浏览器语音合成） */
-	private String audioUrl;
+public class EnglishSection extends BaseModel {
 
 	/** 教材版本（人教版/苏教版等） */
 	private String version;
@@ -42,7 +33,7 @@ public class EnglishSentence extends BaseModel {
 	/** 小节 */
 	private String section;
 
-	/** 单元内排序 */
+	/** 排序 */
 	private Integer sort;
 
 }
