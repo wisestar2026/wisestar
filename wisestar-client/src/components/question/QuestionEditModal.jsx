@@ -63,6 +63,7 @@ import {
 } from '@ant-design/icons';
 import { TYPES_WITH_OPTIONS, createQuestion } from '../../utils/surveyHelpers';
 import { EXAM_TYPES, EXAM_TYPE_VALUES, typeLabel } from '../../utils/questionTypes';
+import { normalizeBlankMarkers, blankMarkerLabel } from '../../utils/blankMarkers';
 import { uploadImage } from '../../api/upload';
 
 const { Text } = Typography;
@@ -150,8 +151,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
     if (record) {
       // 编辑模式：回填已有数据（record 为 TemplateView，见 api/template.js）
-      setTitle(record.name || '');
-      setQType(record.questionType || 'Radio');
+      // 注意: 本 effect 内必须使用局部 nextType；qType 状态此刻仍是上一次渲染的旧值，
+      // 直接读 qType 会走错分支（多项填空回填为空、多选答案被当成单值），导致「打开即空」
+      const nextType = record.questionType || 'Radio';
+      const isBlankType = nextType === 'FillBlank' || nextType === 'MultipleBlank';
+      // 填空题题干空位统一规范为 __①__、__②__ …（回填时即展示规范写法）
+      setTitle(isBlankType ? normalizeBlankMarkers(record.name || '') : (record.name || ''));
+      setQType(nextType);
       setTags((record.tag || []).join(','));      // 标签数组 → 逗号分隔字符串
       setCategory(record.category || '');
       setRepoId(record.repoId || undefined);
@@ -161,13 +167,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       if (tmpl?.children?.length > 0) {
         setOptions(tmpl.children.map((c) => c.title || ''));
       } else {
-        setOptions(qType === 'Judge' ? ['正确', '错误'] : ['', '']);
+        setOptions(nextType === 'Judge' ? ['正确', '错误'] : ['', '']);
       }
 
       const attr = tmpl?.attribute || {};
       setRequired(attr.required || false);
       // 多项填空: 答案存 | 分隔字符串，回填时按空位拆为数组
-      if (qType === 'MultipleBlank') {
+      if (nextType === 'MultipleBlank') {
         const raw = attr.examCorrectAnswer ? String(attr.examCorrectAnswer) : '';
         const parts = raw ? raw.split('|') : ['', ''];
         // 空位至少 2 个，避免渲染时只有一个输入框
@@ -184,7 +190,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         // 多选题正确答案为多选（存 \n 分隔字符串，回填时拆分为数组）
         // 为什么这么写: 后端 examCorrectAnswer 是单字符串字段，多选答案以 \n 连接；
         // 回填时必须 split 还原为数组，才能正确渲染 Select mode="multiple"
-        setAnswer(qType === 'Checkbox'
+        setAnswer(nextType === 'Checkbox'
           ? (attr.examCorrectAnswer
             ? String(attr.examCorrectAnswer).split('\n').filter(Boolean)
             : optionLevelAnswers)
@@ -298,9 +304,13 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
     setSaving(true);
     try {
+      // 填空题题干空位统一规范为 __①__、__②__ …（与回填展示一致）
+      const finalTitle = (qType === 'FillBlank' || qType === 'MultipleBlank')
+        ? normalizeBlankMarkers(title)
+        : title;
       // 构建题目 JSON（createQuestion 生成问卷节点骨架，含 id/type/attribute/children）
       const templateJson = createQuestion(qType);
-      templateJson.title = title;
+      templateJson.title = finalTitle;
 
       // 属性（含答案、解析、图片、知识点属性）
       // 重点: 多选题答案多选 → \n 分隔字符串（与回填时 split('\n') 对称）
@@ -352,7 +362,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       // 标签: 逗号分隔字符串 → 去空格过滤空值 → 数组
       const tagArr = tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
       const payload = {
-        name: title,
+        name: finalTitle,
         questionType: qType,
         template: templateJson,
         tag: tagArr,
@@ -420,9 +430,14 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           maxLength={500}
           showCount
         />
+        {qType === 'FillBlank' && (
+          <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
+            单项填空提示：题干空位写「（ ）」，保存后自动编号为 __①__，并填写对应的正确答案
+          </Text>
+        )}
         {qType === 'MultipleBlank' && (
           <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
-            多项填空提示：在题目文本中用（ ）标注空位，并在「正确答案」中按顺序填写各空位答案
+            多项填空提示：题干空位写「（ ）」，保存后自动编号为 __①__、__②__ …，请在「正确答案」中按序号依次填写
           </Text>
         )}
 
@@ -577,7 +592,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
                     <Input
                       value={b}
                       onChange={(e) => { const n = [...blanks]; n[i] = e.target.value; setBlanks(n); }}
-                      placeholder={`第 ${i + 1} 个空位的答案`}
+                      placeholder={`第 ${i + 1} 个空位（${blankMarkerLabel(i)}）的答案`}
                       style={{ flex: 1 }}
                     />
                     {blanks.length > 1 && (
@@ -595,7 +610,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
                   添加空位（{blanks.length}/{MAX_BLANK_COUNT}）
                 </Button>
                 <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>
-                  每个输入框对应题干中的一个空位（如「（ ）」），判分时按空位顺序逐个比对；单题最多 {MAX_BLANK_COUNT} 个空
+                  每个输入框按顺序对应题干中的一个空位（从 __①__ 开始依次编号），判分时按空位顺序逐个比对；单题最多 {MAX_BLANK_COUNT} 个空
                 </Text>
               </div>
             ) : CHOICE_LIKE_TYPES.includes(qType) ? (
@@ -626,7 +641,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
               <Input
                 value={answer}
                 onChange={(e) => setAnswer(e.target.value)}
-                placeholder="输入正确答案"
+                placeholder="输入 __①__ 的正确答案"
               />
             )}
           </div>
