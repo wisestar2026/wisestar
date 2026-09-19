@@ -3,7 +3,7 @@
  *
  * 布局（海底童趣视觉版）:
  *   +--------------------------------------------------------------+
- *   | 🐬 小海星，今天也要潜入知识的海洋哦                            |
+ *   | 🐬 小海星，{随机学习鼓励语}                                    |
  *   | [我的档案卡] [学海研习卡] [荣誉商城卡]                         |
  *   | +----------------------------------------------------------+ |
  *   | | 今日学习数据总览: 时长 / 知识点 / 积分 / 学习币  四模块     | |
@@ -33,6 +33,20 @@ import IconTile from '../../components/common/IconTile';
 import OnlineChestFloat from './OnlineChestFloat';
 import './StudentHomePage.css';
 
+// 首页欢迎语：每次进入随机展示一条，鼓励学习
+const STUDY_GREETINGS = [
+  '今天也要潜入知识的海洋哦',
+  '每一次坚持，都会让你离梦想更近一步',
+  '今天多学一点，明天就多一份自信',
+  '认真学习的你，正在悄悄变强大',
+  '慢慢来，一步一个脚印，你会越来越棒',
+  '把今天的难题，变成明天的小骄傲',
+  '你已经很棒了，再往前一点点就好',
+  '保持好奇心，去探索更大的世界吧',
+  '读书如潜水，越深越能看见美丽的风景',
+  '相信自己，你比想象中更厉害',
+];
+
 export default function StudentHomePage() {
   const navigate = useNavigate();
   const { pureMode } = useStudentStore();
@@ -45,6 +59,9 @@ export default function StudentHomePage() {
     || SUBJECTS[1];
   // 英语学科：学海研习卡片指向独立的英语学习中心（真 key 为学科 ID，如 1003；兼容 mock 'english'）
   const isEnglish = subject?.name === '英语' || subject?.key === 'english' || subject?.key === '1003';
+
+  // 每次进入首页随机挑选一条学习鼓励语（组件挂载时确定，渲染间保持不变）
+  const [greeting] = useState(() => STUDY_GREETINGS[Math.floor(Math.random() * STUDY_GREETINGS.length)]);
 
   // 当前学员真实档案（学号/姓名/学校等，来自 GET /api/student/me；加载失败回退 mock）
   const [myInfo, setMyInfo] = useState(null);
@@ -134,7 +151,7 @@ export default function StudentHomePage() {
       {/* 吉祥物 + 欢迎语 */}
       <div className="sll-mascot-row">
         <div className="sll-mascot"><span>🐬</span></div>
-        <div className="sll-bubble">{displayName}，今天也要潜入知识的海洋哦</div>
+        <div className="sll-bubble">{displayName}，{greeting}</div>
       </div>
 
       {/* ---- 上半部: 三大悬浮功能卡片 ---- */}
