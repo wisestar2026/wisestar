@@ -18,9 +18,9 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Progress, AutoComplete } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined } from '@ant-design/icons';
-import { getSections } from '../../api/englishAdmin';
+import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Progress, AutoComplete, Checkbox, Image } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, ReadOutlined } from '@ant-design/icons';
+import { getSections, fillDictionary } from '../../api/englishAdmin';
 
 const API_BASE = '/api/english/word-manager';
 
@@ -38,6 +38,11 @@ export default function WordManagePage() {
   const [unit, setUnit] = useState('');
   const [section, setSection] = useState('');
   const [spell, setSpell] = useState('');
+  const [onlyMissing, setOnlyMissing] = useState(false);
+
+  // 行选择 + 词典补全
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [filling, setFilling] = useState(false);
 
   // 弹窗状态
   const [modalOpen, setModalOpen] = useState(false);
@@ -78,6 +83,7 @@ export default function WordManagePage() {
       ...(unit && { unit }),
       ...(section && { section }),
       ...(spell && { spell }),
+      ...(onlyMissing && { hasImage: 'false' }),
     });
 
     fetch(`${API_BASE}/list?${params}`)
@@ -94,7 +100,7 @@ export default function WordManagePage() {
 
   useEffect(() => {
     loadList();
-  }, [current, pageSize]);
+  }, [current, pageSize, onlyMissing]);
 
   // 重置筛选
   const handleReset = () => {
@@ -104,7 +110,29 @@ export default function WordManagePage() {
     setUnit('');
     setSection('');
     setSpell('');
+    setOnlyMissing(false);
     setCurrent(1);
+  };
+
+  // 批量词典补全（音标/释义/例句，只填空字段）
+  const handleFillDictionary = () => {
+    if (!selectedRowKeys.length) {
+      message.warning('请先勾选需要补全的单词');
+      return;
+    }
+    setFilling(true);
+    fillDictionary(selectedRowKeys)
+      .then((res) => {
+        const r = res.data || {};
+        message.success(`补全完成：成功 ${r.success || 0} 个，失败 ${r.failed || 0} 个`);
+        if (r.errors && r.errors.length) {
+          r.errors.slice(0, 5).forEach((err) => message.warning(err));
+        }
+        setSelectedRowKeys([]);
+        loadList();
+      })
+      .catch(() => {})
+      .finally(() => setFilling(false));
   };
 
   // 打开新增/编辑弹窗
@@ -211,6 +239,17 @@ export default function WordManagePage() {
     { title: '单元', dataIndex: 'unit', width: 80 },
     { title: '小节', dataIndex: 'section', width: 120, ellipsis: true },
     {
+      title: '配图',
+      dataIndex: 'imageUrl',
+      width: 70,
+      render: (url) =>
+        url ? (
+          <Image src={url} width={40} height={40} style={{ objectFit: 'cover', borderRadius: 4 }} />
+        ) : (
+          <span style={{ color: '#bbb' }}>无</span>
+        ),
+    },
+    {
       title: '操作',
       key: 'action',
       width: 150,
@@ -238,6 +277,14 @@ export default function WordManagePage() {
           <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
         </Upload>
         <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>下载模板</Button>
+        <Button
+          icon={<ReadOutlined />}
+          onClick={handleFillDictionary}
+          loading={filling}
+          disabled={!selectedRowKeys.length}
+        >
+          词典补全{selectedRowKeys.length ? `（${selectedRowKeys.length}）` : ''}
+        </Button>
       </Space>
 
       {/* 导入结果提示 */}
@@ -282,6 +329,7 @@ export default function WordManagePage() {
         <Input placeholder="单元" allowClear style={{ width: 100 }} value={unit} onChange={(e) => setUnit(e.target.value)} />
         <Input placeholder="小节" allowClear style={{ width: 120 }} value={section} onChange={(e) => setSection(e.target.value)} onPressEnter={loadList} />
         <Input placeholder="单词拼写" allowClear style={{ width: 150 }} value={spell} onChange={(e) => setSpell(e.target.value)} onPressEnter={loadList} />
+        <Checkbox checked={onlyMissing} onChange={(e) => { setOnlyMissing(e.target.checked); setCurrent(1); }}>仅看无图</Checkbox>
         <Button type="primary" onClick={loadList}>查询</Button>
         <Button onClick={handleReset}>重置</Button>
       </Space>
@@ -289,6 +337,7 @@ export default function WordManagePage() {
       {/* 单词列表 */}
       <Table
         rowKey="id"
+        rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
         loading={loading}
         columns={columns}
         dataSource={list}

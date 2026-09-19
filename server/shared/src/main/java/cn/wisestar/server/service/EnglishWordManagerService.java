@@ -44,4 +44,12 @@ public interface EnglishWordManagerService {
 	 */
 	ImportResult importWords(MultipartFile file);
 
+	/**
+	 * 从免费词典接口补全单词的音标、释义、例句（只填充空字段，不覆盖已有内容）。
+	 *
+	 * @param wordIds 单词 ID 列表
+	 * @return 处理结果（总数/成功/失败/失败原因）
+	 */
+	ImportResult fillFromDictionary(java.util.List<String> wordIds);
+
 }

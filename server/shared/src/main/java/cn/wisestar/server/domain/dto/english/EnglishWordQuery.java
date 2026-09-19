@@ -32,4 +32,9 @@ public class EnglishWordQuery extends PageQuery {
 	/** 单词拼写（模糊） */
 	private String spell;
 
+	/**
+	 * 是否已有图片：{@code false} 仅无图，{@code true} 仅有图，{@code null} 不限。
+	 */
+	private Boolean hasImage;
+
 }

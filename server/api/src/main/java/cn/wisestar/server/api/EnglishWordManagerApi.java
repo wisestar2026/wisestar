@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 英语单词管理接口（后台管理端）。
@@ -75,6 +76,17 @@ public class EnglishWordManagerApi {
 	@PreAuthorize("hasAuthority('english:word:import')")
 	public cn.wisestar.server.domain.dto.english.ImportResult importWords(@RequestParam MultipartFile file) {
 		return wordManagerService.importWords(file);
+	}
+
+	/**
+	 * 从免费词典接口批量补全音标、释义、例句（只填充空字段）。
+	 */
+	@PostMapping("/fill-dictionary")
+	@PreAuthorize("hasAuthority('english:word:update')")
+	public cn.wisestar.server.domain.dto.english.ImportResult fillDictionary(@RequestBody Map<String, Object> request) {
+		@SuppressWarnings("unchecked")
+		List<String> wordIds = (List<String>) request.get("wordIds");
+		return wordManagerService.fillFromDictionary(wordIds);
 	}
 
 }

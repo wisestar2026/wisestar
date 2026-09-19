@@ -21,6 +21,7 @@
  */
 
 import request from './request';
+import axios from 'axios';
 
 /** 小节分页列表 */
 export function getSections(params) {
@@ -50,4 +51,47 @@ export function saveGrammar(data) {
 /** 删除语法 */
 export function deleteGrammar(id) {
   return request.post('/english/grammar/delete', null, { params: { id } });
+}
+
+/**
+ * 批量从免费词典补全音标/释义/例句（只填空字段）。
+ * 后端返回 ImportResult：{ total, success, failed, errors }
+ */
+export function fillDictionary(wordIds) {
+  return request.post('/english/word-manager/fill-dictionary', { wordIds }, { timeout: 120000 });
+}
+
+/**
+ * 为若干单词抓取候选配图（只读，不落库）。
+ * 返回 WordImageCandidateView 列表：{ wordId, spell, meaning, candidates: string[] }
+ */
+export function getWordImageCandidates(wordIds) {
+  return request.post('/english/word-image/candidates', { wordIds }, { timeout: 120000 });
+}
+
+/**
+ * 确认候选图并入库（后端下载图片后回写单词图片地址）。
+ * 返回 WordImageView：{ wordId, spell, imageUrl }
+ */
+export function confirmWordImage(wordId, imageUrl) {
+  return request.post('/english/word-image/confirm', { wordId, imageUrl }, { timeout: 120000 });
+}
+
+/**
+ * 手动上传本地图片并入库（multipart，走原生 axios）。
+ * 返回 WordImageView：{ wordId, spell, imageUrl }
+ */
+export async function uploadWordImage(wordId, file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await axios.post('/api/english/word-image/upload', formData, {
+    params: { wordId },
+    withCredentials: true,
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 120000,
+  });
+  if (response.data && response.data.code === 200) {
+    return response.data.data;
+  }
+  throw new Error((response.data && response.data.message) || '图片上传失败');
 }

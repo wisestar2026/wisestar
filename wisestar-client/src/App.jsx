@@ -86,6 +86,7 @@ import CampusManagePage from './pages/admin/CampusManagePage';
 import UnitManagePage from './pages/english/UnitManagePage';
 import EnglishSectionManagePage from './pages/english/SectionManagePage';
 import EnglishGrammarManagePage from './pages/english/GrammarManagePage';
+import WordImageReviewPage from './pages/english/WordImageReviewPage';
 
 
 export default function App() {
@@ -381,6 +382,14 @@ export default function App() {
               element={
                 <AuthGuard required={['english:word:list']}>
                   <WordManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/word-image"
+              element={
+                <AuthGuard required={['english:word:update']}>
+                  <WordImageReviewPage />
                 </AuthGuard>
               }
             />

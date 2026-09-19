@@ -1,16 +1,19 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.english.DictionaryEntryView;
 import cn.wisestar.server.domain.dto.english.EnglishWordQuery;
 import cn.wisestar.server.domain.dto.english.EnglishWordView;
 import cn.wisestar.server.domain.dto.english.ImportResult;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.mapper.EnglishWordMapper;
+import cn.wisestar.server.service.EnglishDictionaryService;
 import cn.wisestar.server.service.EnglishWordManagerService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,11 +30,14 @@ import java.util.stream.Collectors;
  * @author wisestar
  * @date 2026/8/30
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EnglishWordManagerServiceImpl implements EnglishWordManagerService {
 
 	private final EnglishWordMapper englishWordMapper;
+
+	private final EnglishDictionaryService dictionaryService;
 
 	@Override
 	public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query) {
@@ -47,6 +53,13 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 				.orderByAsc(EnglishWord::getUnit)
 				.orderByAsc(EnglishWord::getSection)
 				.orderByAsc(EnglishWord::getSpell);
+
+		// 按是否有图片过滤：false 仅无图，true 仅有图
+		if (Boolean.FALSE.equals(query.getHasImage())) {
+			wrapper.and(w -> w.isNull(EnglishWord::getImageUrl).or().eq(EnglishWord::getImageUrl, ""));
+		} else if (Boolean.TRUE.equals(query.getHasImage())) {
+			wrapper.isNotNull(EnglishWord::getImageUrl).ne(EnglishWord::getImageUrl, "");
+		}
 
 		Page<EnglishWord> page = new Page<>(query.getCurrent(), query.getPageSize());
 		Page<EnglishWord> result = englishWordMapper.selectPage(page, wrapper);
@@ -125,6 +138,65 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 		}
 
 		return new ImportResult(success + failed, success, failed, errors);
+	}
+
+	/**
+	 * 从免费词典接口补全单词的音标、释义、例句（只填充空字段）。
+	 */
+	@Override
+	public ImportResult fillFromDictionary(List<String> wordIds) {
+		List<String> errors = new ArrayList<>();
+		int success = 0;
+		int failed = 0;
+
+		if (wordIds != null) {
+			for (String wordId : wordIds) {
+				if (wordId == null || wordId.trim().isEmpty()) {
+					continue;
+				}
+				try {
+					EnglishWord word = englishWordMapper.selectById(wordId);
+					if (word == null) {
+						errors.add("单词不存在：" + wordId);
+						failed++;
+						continue;
+					}
+					DictionaryEntryView entry = dictionaryService.lookup(word.getSpell());
+					if (entry == null) {
+						errors.add(word.getSpell() + "：词典未找到结果");
+						failed++;
+						continue;
+					}
+					boolean changed = false;
+					if (isBlank(word.getPhonetic()) && !isBlank(entry.getPhonetic())) {
+						word.setPhonetic(entry.getPhonetic());
+						changed = true;
+					}
+					if (isBlank(word.getMeaning()) && !isBlank(entry.getMeaning())) {
+						word.setMeaning(entry.getMeaning());
+						changed = true;
+					}
+					if (isBlank(word.getExampleSentence()) && !isBlank(entry.getExampleSentence())) {
+						word.setExampleSentence(entry.getExampleSentence());
+						changed = true;
+					}
+					if (changed) {
+						englishWordMapper.updateById(word);
+					}
+					success++;
+				} catch (Exception e) {
+					errors.add("单词 ID " + wordId + " 补全失败：" + e.getMessage());
+					failed++;
+					log.warn("词典补全失败 wordId={} err={}", wordId, e.getMessage());
+				}
+			}
+		}
+
+		return new ImportResult(success + failed, success, failed, errors);
+	}
+
+	private boolean isBlank(String value) {
+		return value == null || value.trim().isEmpty();
 	}
 
 	/**
