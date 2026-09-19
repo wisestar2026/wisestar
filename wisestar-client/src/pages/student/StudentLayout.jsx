@@ -26,20 +26,14 @@ import { Select, Dropdown, Switch, message } from 'antd';
 import {
   SettingOutlined, BellOutlined, LogoutOutlined, ArrowLeftOutlined,
 } from '@ant-design/icons';
-import useStudentStore, { TITLES, PROFILE } from '../../stores/useStudentStore';
+import useStudentStore, { TITLES, PROFILE, SUBJECTS } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
 import { uploadActivity, getStudentStats } from '../../api/student';
 import { sendStudyHeartbeat } from '../../api/studentStudy';
 import IconTile from '../../components/common/IconTile';
 import './student.css';
 
-// 底部导航配置（tone 用于 3D 黏土图标底座色调）
-const TABS = [
-  { path: '/student', icon: '🏠', tone: 'sky', label: '首页' },
-  { path: '/student/study', icon: '📖', tone: 'blue', label: '学习' },
-  { path: '/student/wrong', icon: '📕', tone: 'pink', label: '错题本' },
-  { path: '/student/profile', icon: '👤', tone: 'purple', label: '个人中心' },
-];
+// 底部导航配置在组件内按当前学科动态生成（学习/错题本在英语学科下指向英语模块）
 
 export default function StudentLayout() {
   const {
@@ -101,6 +95,36 @@ export default function StudentLayout() {
     return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
   });
   const hasPermission = visibleSubjects.length > 0;
+
+  // 英语学科：底部「学习」入口指向独立的英语学习中心（真实 key 为学科 ID，如 1003；兼容 mock 'english'）
+  const activeSubjectInfo = visibleSubjects.find((s) => s.key === activeSubject)
+    || SUBJECTS.find((s) => s.key === activeSubject);
+  const isEnglishSubject = activeSubjectInfo?.name === '英语'
+    || activeSubjectInfo?.key === 'english'
+    || activeSubjectInfo?.key === '1003';
+  const studyPath = isEnglishSubject ? '/student/english' : '/student/study';
+
+  // 底部导航（英语学科：学习→英语学习中心，错题本改名为「复习」→智能复习）
+  const tabs = [
+    { path: '/student', icon: '🏠', tone: 'sky', label: '首页', match: ['/student'] },
+    {
+      path: studyPath,
+      icon: '📖',
+      tone: 'blue',
+      label: '学习',
+      match: isEnglishSubject
+        ? ['/student/english', '/student/english/word', '/student/english/sentence']
+        : ['/student/study'],
+    },
+    {
+      path: isEnglishSubject ? '/student/english/review' : '/student/wrong',
+      icon: '📕',
+      tone: 'pink',
+      label: isEnglishSubject ? '复习' : '错题本',
+      match: isEnglishSubject ? ['/student/english/review'] : ['/student/wrong'],
+    },
+    { path: '/student/profile', icon: '👤', tone: 'purple', label: '个人中心', match: ['/student/profile'] },
+  ];
 
   // 退出登录（学员端）：清登录态并返回学员端登录页
   const handleStudentLogout = () => {
@@ -227,8 +251,8 @@ export default function StudentLayout() {
 
       {/* ---- 底部导航栏（首页/学习/错题本/个人中心） ---- */}
       <nav className="sll-tabbar">
-        {TABS.map((t) => {
-          const active = location.pathname === t.path
+        {tabs.map((t) => {
+          const active = t.match.includes(location.pathname)
             || (t.path === '/student' && location.pathname.startsWith('/student/knowledge'));
           return (
             <button
