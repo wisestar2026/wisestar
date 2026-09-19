@@ -30,7 +30,7 @@ import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import useUserStore from '../../stores/useUserStore';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export default function LoginPage() {
   // 登录按钮加载状态（防止重复提交）
@@ -78,8 +78,7 @@ export default function LoginPage() {
       <Card style={{ width: 400, boxShadow: '0 8px 24px rgba(0,0,0,0.15)' }}>
         {/* ---- 标题区 ---- */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={2} style={{ marginBottom: 8 }}>wisestar</Title>
-          <Text type="secondary">Better Survey System</Text>
+          <Title level={2} style={{ marginBottom: 8 }}>海洋智学后台管理端</Title>
         </div>
 
         {/* ---- 登录表单 ---- */}

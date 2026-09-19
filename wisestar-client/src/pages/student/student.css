@@ -224,18 +224,6 @@
   min-height: 0;
 }
 
-/* ---------- 底部常驻提示 ---------- */
-.sll-footer {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 8px 0 14px;
-  font-size: 12px;
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(43, 74, 107, 0.5);
-  letter-spacing: 0.5px;
-}
-
 /* ============================================================
  * 通用组件（各学生端页面复用）
  * ============================================================ */
