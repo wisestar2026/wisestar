@@ -109,6 +109,8 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 判断后端是否在跑不要用 `pgrep -f 'wisestar-v1.9.0.jar'`（会误匹配正在执行该命令的 shell），改用 `ps -eo args | grep -E '[j]ava .*wisestar-v1\.9\.0\.jar'`
   - 种子脚本改动后如需立即在预览库生效：停后端 → 用 H2 `RunScript` 把增量 SQL 应用到 live 库（`java -cp ~/.m2/repository/com/h2database/h2/<ver>/h2-*.jar org.h2.tools.RunScript -url 'jdbc:h2:file:./wisestar;MODE=MySQL;DATABASE_TO_LOWER=TRUE' -user sa -password '' -script x.sql`，工作目录 `server/api`）→ 再按上面流程重导快照；H2 对 INSERT 的列数不匹配会静默使整条语句失败（曾致 `t_chapter` 全量未入库），核对列估值务必对齐
   - 预览 profile 配置 `spring.sql.init.mode=always` + `continue-on-error: true`（见 rdbms/.../config/application-preview.yml），且 start-preview.sh 在库文件已存在时仍传 `--spring.sql.init.mode=always`；因此 init-h2.sql 中新增的幂等 DDL（`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`）只需重启预览后端即自动应用到 live 库，不必手动 RunScript 增量；但 live 库新增表/数据后仍须重导快照（停后端 → server/db-export.sh → 提交），否则新容器从旧快照恢复会缺表
+  - 全量精确遍历 `t_template` 不要用 `/api/template/list` 分页：该接口仅 `orderByAsc(priority)`（priority 常为空）→ 排序不稳定，翻页会重复/跳过记录；应停后端后用 H2 JDBC 直连文件库（`jdbc:h2:file:/workspace/server/api/wisestar;MODE=MySQL;DATABASE_TO_LOWER=TRUE`，sa 空密码）批量处理。JDBC 直查不过滤逻辑删除，会比接口多出软删行
+  - 填空题题干空位统一用 `__①__`、`__②__` 等按出现顺序递延标记（判分/答案按空位顺序一一对应）；编辑弹窗 `QuestionEditModal` 打开与保存时会自动规范化；存量题干里的「（ ）」/「( )」/「（　）」已批量迁移为 `__N__`
 
 [回复语言行为指令]
 - Date: 2026-09-13
