@@ -28,4 +28,10 @@ public class EnglishWordBook extends BaseModel {
 	/** 下次复习时间 */
 	private java.util.Date nextReviewTime;
 
+	/** 累计答对（认识）次数 */
+	private Integer correctCount;
+
+	/** 累计答错（不认识）次数 */
+	private Integer wrongCount;
+
 }

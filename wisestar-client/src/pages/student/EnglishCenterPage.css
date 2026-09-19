@@ -130,6 +130,8 @@
 
 /* ---------- 学习卡片 ---------- */
 .eng-learn-wrap { max-width: 720px; margin: 0 auto; padding: 20px 20px 80px; }
+/* 单词学习页：撑满可用宽度（避免 flex 子项因 margin:auto 收缩为内容宽度） */
+.eng-learn-wide { width: 100%; max-width: 1320px; }
 .eng-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
 .eng-progress-track { flex: 1; height: 10px; border-radius: 999px; background: #dcecf5; overflow: hidden; }
 .eng-progress-track > span {
@@ -158,6 +160,16 @@
   box-shadow: 0 14px 32px rgba(64, 140, 190, 0.2);
   text-align: center;
 }
+/* 单词卡片：固定尺寸容器，宽度不随单词长短变化 */
+.eng-card-word {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 580px;
+  padding: 40px 48px;
+}
 .eng-word { font-size: 40px; font-weight: 900; color: #14506e; letter-spacing: 1px; word-break: break-word; }
 /* 点击单词直接朗读（浏览器语音合成，无需音频文件） */
 .eng-word-clickable { cursor: pointer; transition: color 0.15s ease; }
@@ -167,6 +179,13 @@
 .eng-meaning { margin-top: 18px; font-size: 18px; color: #d9603a; font-weight: 700; min-height: 28px; }
 .eng-meaning.hidden { color: #a9c3d1; font-weight: 500; }
 .eng-image { margin: 16px auto 0; max-width: 180px; max-height: 140px; border-radius: 16px; display: block; }
+
+/* 单词学习页内的放大样式（句子学习 / 复习页保持原样） */
+.eng-card-word .eng-word { font-size: 56px; }
+.eng-card-word .eng-phonetic { margin-top: 12px; font-size: 20px; }
+.eng-card-word .eng-meaning { margin-top: 24px; font-size: 24px; min-height: 34px; }
+.eng-card-word .eng-meaning.hidden { font-size: 20px; }
+.eng-card-word .eng-image { margin-top: 20px; max-width: 320px; max-height: 260px; }
 
 .eng-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
 .eng-btn {
@@ -232,7 +251,40 @@
 .eng-done-stat b { font-size: 26px; color: #ff7a59; display: block; }
 .eng-done-stat span { font-size: 13px; color: #5b7f92; }
 
+/* 需加强标记与列表 */
+.eng-weak-tag {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: #fff0e8;
+  color: #d9603a;
+  font-size: 13px;
+  font-weight: 800;
+}
+.eng-weak-list { margin: 18px auto 0; max-width: 620px; text-align: left; }
+.eng-weak-list-title { font-size: 14px; font-weight: 800; color: #d9603a; margin-bottom: 10px; text-align: center; }
+.eng-weak-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #f6fbfe;
+  margin-bottom: 8px;
+}
+.eng-weak-item b { color: #14506e; }
+.eng-weak-item span { color: #6a93a8; }
+
 @media (max-width: 600px) {
   .eng-word { font-size: 30px; }
+  .eng-card-word { min-height: 420px; padding: 28px 20px; }
+  .eng-card-word .eng-word { font-size: 36px; }
+  .eng-card-word .eng-phonetic { font-size: 16px; }
+  .eng-card-word .eng-meaning { font-size: 20px; }
+  .eng-card-word .eng-image { max-width: 220px; max-height: 180px; }
   .eng-hero { padding: 16px; }
+}
+@media (max-height: 820px) {
+  .eng-card-word { min-height: 440px; }
 }

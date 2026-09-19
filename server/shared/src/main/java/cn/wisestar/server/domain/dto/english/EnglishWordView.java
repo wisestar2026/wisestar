@@ -49,4 +49,13 @@ public class EnglishWordView {
 	/** 熟练度（用户单词本） */
 	private Integer familiarity;
 
+	/** 累计答对（认识）次数 */
+	private Integer correctCount;
+
+	/** 累计答错（不认识）次数 */
+	private Integer wrongCount;
+
+	/** 是否需加强（多次不认识） */
+	private Boolean weak;
+
 }

@@ -4,7 +4,9 @@
  * 功能:
  *   1. 展示单元单词卡片（拼写 / 音标 / 释义 / 图片 / 发音）
  *   2. 认识 / 不认识 → 回写熟练度与复习队列
- *   3. 学习结束记录会话
+ *   3. 本节内间隔重复：点「不认识」的单词会后置并轮流反复出现，
+ *      需要补足的「认识」次数 = 该词累计「不认识」次数（至少 1 次）
+ *   4. 累计「不认识」≥2 次的单词标记为「需加强」
  *
  * URL: /student/english/word?unit=xxx
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片
@@ -15,7 +17,7 @@
  *   POST /api/english/student/session → 记录会话
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
@@ -43,6 +45,9 @@ function groupWordsBySection(list) {
   return groups;
 }
 
+/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
+const WEAK_UNKNOWN_TIMES = 2;
+
 export default function EnglishWordLearnPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -52,13 +57,14 @@ export default function EnglishWordLearnPage() {
 
   const [term] = useState('上册');
   const [words, setWords] = useState([]);
-  const [sectionLabels, setSectionLabels] = useState([]);
+  const [queue, setQueue] = useState([]);
+  const [mastered, setMastered] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
-  const [known, setKnown] = useState(0);
-  const [again, setAgain] = useState(0);
   const startAt = useRef(Date.now());
+  const sessionRecorded = useRef(false);
+  // 本节会话内的逐词统计：wordId -> { unknown, known }
+  const statsRef = useRef(new Map());
 
   const loadWords = useCallback(() => {
     if (!unit) {
@@ -70,13 +76,18 @@ export default function EnglishWordLearnPage() {
       .then((res) => {
         const groups = groupWordsBySection(res?.data?.list || []);
         const flat = [];
-        const labels = [];
+        const entries = [];
         groups.forEach((group) => group.items.forEach((item) => {
           flat.push(item);
-          labels.push(group.section);
+          entries.push({ word: item, section: group.section });
         }));
+        statsRef.current = new Map();
+        sessionRecorded.current = false;
+        startAt.current = Date.now();
         setWords(flat);
-        setSectionLabels(labels);
+        setQueue(entries);
+        setMastered(0);
+        setRevealed(false);
       })
       .catch(() => message.error('单词加载失败'))
       .finally(() => setLoading(false));
@@ -86,36 +97,69 @@ export default function EnglishWordLearnPage() {
     loadWords();
   }, [loadWords]);
 
-  const current = words[index];
-  const finished = !loading && words.length > 0 && index >= words.length;
-  const durationSeconds = Math.round((Date.now() - startAt.current) / 1000);
+  const total = words.length;
+  const current = queue[0]?.word;
+  const currentSection = queue[0]?.section;
+  const currentUnknown = (current && statsRef.current.get(current.id)?.unknown) || 0;
+  // 本节内已多次不认识，或历史累计已标记需加强
+  const currentWeak = current && (currentUnknown >= WEAK_UNKNOWN_TIMES || current.weak);
+  const finished = !loading && total > 0 && queue.length === 0;
 
-  const recordSession = useCallback(() => {
-    const correct = known;
-    recordEnglishSession({ type: 'word', durationSeconds, correctCount: correct }).catch(() => {});
-  }, [durationSeconds, known]);
+  // 本节内「不认识」≥2 次的单词（需加强）
+  const weakWords = finished
+    ? words.filter((w) => (statsRef.current.get(w.id)?.unknown || 0) >= WEAK_UNKNOWN_TIMES)
+    : [];
 
+  // 学完记录一次会话
+  useEffect(() => {
+    if (!finished || sessionRecorded.current) return;
+    sessionRecorded.current = true;
+    let correctCount = 0;
+    statsRef.current.forEach((s) => { correctCount += s.known; });
+    recordEnglishSession({
+      type: 'word',
+      durationSeconds: Math.round((Date.now() - startAt.current) / 1000),
+      correctCount,
+    }).catch(() => {});
+  }, [finished]);
+
+  /**
+   * 本节内间隔重复算法：
+   * - required = max(累计不认识次数, 1)：点错越多，需要补足的「认识」次数越多。
+   * - 答「认识」：known+1；达到 required 即出队（掌握），否则后置轮转。
+   * - 答「不认识」：unknown+1 抬高 required，并后置轮转，保证本节内轮流反复出现。
+   */
   const handleAnswer = (correct) => {
-    if (!current) return;
-    recordEnglishWord({ wordId: current.id, correct }).catch(() => {});
-    if (correct) setKnown((n) => n + 1);
-    else setAgain((n) => n + 1);
+    const head = queue[0];
+    if (!head) return;
+    const wordId = head.word.id;
+    const stat = statsRef.current.get(wordId) || { unknown: 0, known: 0 };
+    if (correct) stat.known += 1;
+    else stat.unknown += 1;
+    statsRef.current.set(wordId, stat);
+
+    recordEnglishWord({ wordId, correct }).catch(() => {});
+
+    const required = Math.max(stat.unknown, 1);
+    const graduated = correct && stat.known >= required;
+    if (graduated) setMastered((n) => n + 1);
+
     setRevealed(false);
-    setIndex((i) => i + 1);
+    setQueue((prev) => {
+      const [first, ...rest] = prev;
+      return graduated ? rest : [...rest, first];
+    });
   };
 
-  const progress = useMemo(
-    () => (words.length ? Math.round((index / words.length) * 100) : 0),
-    [index, words.length],
-  );
+  const progress = total ? Math.round((mastered / total) * 100) : 0;
 
   if (loading) {
-    return <div className="eng-learn-wrap"><Spin /></div>;
+    return <div className="eng-learn-wrap eng-learn-wide"><Spin /></div>;
   }
 
   if (!unit) {
     return (
-      <div className="eng-learn-wrap">
+      <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
           <div className="eng-empty-emoji">📖</div>
           <div className="eng-empty-title">未选择单元</div>
@@ -127,9 +171,9 @@ export default function EnglishWordLearnPage() {
     );
   }
 
-  if (words.length === 0) {
+  if (total === 0) {
     return (
-      <div className="eng-learn-wrap">
+      <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
           <div className="eng-empty-emoji">🐚</div>
           <div className="eng-empty-title">该单元暂无单词</div>
@@ -143,18 +187,29 @@ export default function EnglishWordLearnPage() {
 
   if (finished) {
     return (
-      <div className="eng-learn-wrap">
+      <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
           <div className="eng-empty-emoji">🎉</div>
           <div className="eng-empty-title">本单元单词已学完</div>
           <div className="eng-done-stats">
-            <div className="eng-done-stat"><b>{known}</b><span>认识</span></div>
-            <div className="eng-done-stat"><b>{again}</b><span>需加强</span></div>
+            <div className="eng-done-stat"><b>{mastered}</b><span>认识</span></div>
+            <div className="eng-done-stat"><b>{weakWords.length}</b><span>需加强</span></div>
           </div>
+          {weakWords.length > 0 && (
+            <div className="eng-weak-list">
+              <div className="eng-weak-list-title">多次不认识的单词，记得加强复习</div>
+              {weakWords.map((w) => (
+                <div className="eng-weak-item" key={w.id}>
+                  <b>{w.spell}</b>
+                  <span>{w.meaning || '—'}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <button
             type="button"
             className="eng-btn eng-btn-primary"
-            onClick={() => { recordSession(); navigate('/student/english'); }}
+            onClick={() => navigate('/student/english')}
           >
             返回学习中心
           </button>
@@ -164,14 +219,15 @@ export default function EnglishWordLearnPage() {
   }
 
   return (
-    <div className="eng-learn-wrap">
-      {sectionLabels[index] && <div className="eng-section-title">{sectionLabels[index]}</div>}
+    <div className="eng-learn-wrap eng-learn-wide">
+      {currentSection && <div className="eng-section-title">{currentSection}</div>}
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
-        <div className="eng-progress-text">{index + 1} / {words.length}</div>
+        <div className="eng-progress-text">{mastered} / {total}</div>
       </div>
 
-      <div className="eng-card">
+      <div className="eng-card eng-card-word">
+        {currentWeak && <div className="eng-weak-tag">需加强</div>}
         <div
           className="eng-word eng-word-clickable"
           role="button"
@@ -208,12 +264,6 @@ export default function EnglishWordLearnPage() {
             <button type="button" className="eng-btn eng-btn-again" onClick={() => handleAnswer(false)}>不认识</button>
           </div>
         )}
-      </div>
-
-      <div className="eng-actions">
-        <button type="button" className="eng-btn eng-btn-ghost" onClick={() => { recordSession(); navigate('/student/english'); }}>
-          结束学习
-        </button>
       </div>
     </div>
   );

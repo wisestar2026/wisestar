@@ -31,6 +31,9 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	private final EnglishWordMapper englishWordMapper;
 	private final EnglishWordBookMapper englishWordBookMapper;
 
+	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
+	private static final int WEAK_WRONG_TIMES = 2;
+
 	@Override
 	public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query) {
 		LambdaQueryWrapper<EnglishWord> wrapper = Wrappers.<EnglishWord>lambdaQuery()
@@ -83,21 +86,26 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	}
 
 	/**
-	 * 为单词视图回填当前学员在单词本中的熟练度（未学习默认 0）。
+	 * 为单词视图回填当前学员在单词本中的熟练度与需加强标记（未学习默认 0）。
 	 */
 	private void fillFamiliarity(String userId, List<EnglishWordView> views) {
 		if (userId == null || views.isEmpty()) {
 			return;
 		}
 		List<String> wordIds = views.stream().map(EnglishWordView::getId).collect(Collectors.toList());
-		java.util.Map<String, Integer> familiarityByWord = englishWordBookMapper.selectList(
+		java.util.Map<String, EnglishWordBook> bookByWord = englishWordBookMapper.selectList(
 						Wrappers.<EnglishWordBook>lambdaQuery()
 								.eq(EnglishWordBook::getUserId, userId)
 								.in(EnglishWordBook::getWordId, wordIds))
 				.stream()
-				.collect(Collectors.toMap(EnglishWordBook::getWordId,
-						b -> b.getFamiliarity() == null ? 0 : b.getFamiliarity(), (a, b) -> b));
-		views.forEach(v -> v.setFamiliarity(familiarityByWord.getOrDefault(v.getId(), 0)));
+				.collect(Collectors.toMap(EnglishWordBook::getWordId, b -> b, (a, b) -> b));
+		views.forEach(v -> {
+			EnglishWordBook book = bookByWord.get(v.getId());
+			v.setFamiliarity(book == null || book.getFamiliarity() == null ? 0 : book.getFamiliarity());
+			v.setCorrectCount(book == null || book.getCorrectCount() == null ? 0 : book.getCorrectCount());
+			v.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());
+			v.setWeak(v.getWrongCount() >= WEAK_WRONG_TIMES);
+		});
 	}
 
 	@Override
@@ -143,7 +151,9 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			book.setUserId(userId);
 			book.setWordId(wordId);
 			book.setFamiliarity(correct ? 1 : 0);
-			book.setNextReviewTime(calculateNextReviewTime(1));
+			book.setCorrectCount(correct ? 1 : 0);
+			book.setWrongCount(correct ? 0 : 1);
+			book.setNextReviewTime(calculateNextReviewTime(correct ? 1 : 0));
 			englishWordBookMapper.insert(book);
 		} else {
 			// 复习
@@ -154,6 +164,8 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 				familiarity = Math.max(familiarity - 1, 0);
 			}
 			book.setFamiliarity(familiarity);
+			book.setCorrectCount((book.getCorrectCount() == null ? 0 : book.getCorrectCount()) + (correct ? 1 : 0));
+			book.setWrongCount((book.getWrongCount() == null ? 0 : book.getWrongCount()) + (correct ? 0 : 1));
 			book.setNextReviewTime(calculateNextReviewTime(familiarity));
 			englishWordBookMapper.updateById(book);
 		}
