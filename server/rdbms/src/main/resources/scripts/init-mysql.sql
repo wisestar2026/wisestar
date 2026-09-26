@@ -4,7 +4,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ----------------------------
 -- Table structure for t_account
 -- ----------------------------
-CREATE TABLE `t_account` (
+CREATE TABLE IF NOT EXISTS `t_account` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `user_type` varchar(100) NOT NULL DEFAULT 'SysUser' COMMENT '用户类型',
   `user_id` varchar(64) NOT NULL COMMENT '用户ID',
@@ -31,7 +31,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_answer
 -- ----------------------------
-CREATE TABLE `t_answer` (
+CREATE TABLE IF NOT EXISTS `t_answer` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `project_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `temp_answer` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '暂存答案',
@@ -63,7 +63,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_comm_dict
 -- ----------------------------
-CREATE TABLE `t_comm_dict` (
+CREATE TABLE IF NOT EXISTS `t_comm_dict` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `code` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '字典编码',
   `name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '字典中文名称',
@@ -86,7 +86,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_comm_dict_item
 -- ----------------------------
-CREATE TABLE `t_comm_dict_item` (
+CREATE TABLE IF NOT EXISTS `t_comm_dict_item` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `dict_code` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '字典编码',
   `item_name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '字典项中文名称',
@@ -1136,7 +1136,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_dashboard
 -- ----------------------------
-CREATE TABLE `t_dashboard` (
+CREATE TABLE IF NOT EXISTS `t_dashboard` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `key` varchar(256) NOT NULL COMMENT '仪表盘组件key',
   `type` int DEFAULT NULL COMMENT '仪表盘分类',
@@ -1158,7 +1158,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_dept
 -- ----------------------------
-CREATE TABLE `t_dept` (
+CREATE TABLE IF NOT EXISTS `t_dept` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `parent_id` varchar(64) NOT NULL,
   `name` varchar(64) DEFAULT NULL COMMENT '名称',
@@ -1187,7 +1187,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_file
 -- ----------------------------
-CREATE TABLE `t_file` (
+CREATE TABLE IF NOT EXISTS `t_file` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `original_name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `file_name` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
@@ -1212,7 +1212,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_position
 -- ----------------------------
-CREATE TABLE `t_position` (
+CREATE TABLE IF NOT EXISTS `t_position` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `name` varchar(50) NOT NULL,
   `code` varchar(20) DEFAULT NULL,
@@ -1236,7 +1236,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_project
 -- ----------------------------
-CREATE TABLE `t_project` (
+CREATE TABLE IF NOT EXISTS `t_project` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `parent_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT '0' COMMENT '父ID',
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '项目名称',
@@ -1263,7 +1263,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_project_partner
 -- ----------------------------
-CREATE TABLE `t_project_partner` (
+CREATE TABLE IF NOT EXISTS `t_project_partner` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `uid` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '项目内唯一ID',
   `project_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '项目id',
@@ -1290,14 +1290,14 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_repo
 -- ----------------------------
-CREATE TABLE `t_repo` (
+CREATE TABLE IF NOT EXISTS `t_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '标题',
   `description` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '备注',
   `category` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库分类',
   `mode` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'survey问卷 exam考试',
   `shared` tinyint(1) DEFAULT '0' COMMENT '1共享 0私有',
-  `tag` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '标签',
+  `tag` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '标签（JSON 数组文本）',
   `priority` int DEFAULT NULL COMMENT '排序优先级',
   `setting` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '设置',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -1322,7 +1322,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_user_repo（学员-题库分配）
 -- ----------------------------
-CREATE TABLE `t_user_repo` (
+CREATE TABLE IF NOT EXISTS `t_user_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学员用户ID',
   `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID',
@@ -1344,7 +1344,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_practice_record（练习会话记录）
 -- ----------------------------
-CREATE TABLE `t_practice_record` (
+CREATE TABLE IF NOT EXISTS `t_practice_record` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '练习学员ID',
   `mode` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '练习模式 special专项 exam套卷 random随机',
@@ -1365,7 +1365,7 @@ CREATE TABLE `t_practice_record` (
 -- ----------------------------
 -- Table structure for t_practice_detail（练习逐题明细/错题标记）
 -- ----------------------------
-CREATE TABLE `t_practice_detail` (
+CREATE TABLE IF NOT EXISTS `t_practice_detail` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `practice_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '练习会话ID',
   `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID',
@@ -1386,7 +1386,7 @@ CREATE TABLE `t_practice_detail` (
 -- ----------------------------
 -- Table structure for t_repo_template
 -- ----------------------------
-CREATE TABLE `t_repo_template` (
+CREATE TABLE IF NOT EXISTS `t_repo_template` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `template_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '模板id',
   `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '模板库id',
@@ -1404,7 +1404,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_role
 -- ----------------------------
-CREATE TABLE `t_role` (
+CREATE TABLE IF NOT EXISTS `t_role` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `name` varchar(50) NOT NULL COMMENT '名称',
   `code` varchar(50) NOT NULL COMMENT '编码',
@@ -1465,7 +1465,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_sys_info
 -- ----------------------------
-CREATE TABLE `t_sys_info` (
+CREATE TABLE IF NOT EXISTS `t_sys_info` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '主键',
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '系统名称',
   `description` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '系统描述信息',
@@ -1493,7 +1493,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_tag
 -- ----------------------------
-CREATE TABLE `t_tag` (
+CREATE TABLE IF NOT EXISTS `t_tag` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `entity_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '实体ID',
   `name` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '名称',
@@ -1522,7 +1522,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_template
 -- ----------------------------
-CREATE TABLE `t_template` (
+CREATE TABLE IF NOT EXISTS `t_template` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `serial_no` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '序号',
@@ -1531,13 +1531,13 @@ CREATE TABLE `t_template` (
   `template` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '模板',
   `mode` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '模板模式 survey/exam',
   `category` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '模板分类',
-  `tag` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '标签',
+  `tag` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '标签（JSON 数组文本）',
   `priority` int DEFAULT NULL COMMENT '排序优先级',
   `preview_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '预览地址',
   `subject` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科',
   `chapter` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节',
   `section` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节',
-  `knowledge_point` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点（多值，逗号分隔）',
+  `knowledge_point` varchar(1024) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点（多值，JSON 数组文本）',
   `difficulty` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '难度',
   `grade` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级标签',
   `shared` tinyint(1) DEFAULT '0',
@@ -1586,7 +1586,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_answer_detail
 -- ----------------------------
-CREATE TABLE `t_answer_detail` (
+CREATE TABLE IF NOT EXISTS `t_answer_detail` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `answer_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '答卷 ID',
   `project_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '问卷 ID',
@@ -1613,7 +1613,7 @@ CREATE TABLE `t_answer_detail` (
 -- ----------------------------
 -- Table structure for t_user
 -- ----------------------------
-CREATE TABLE `t_user` (
+CREATE TABLE IF NOT EXISTS `t_user` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `name` varchar(50) NOT NULL COMMENT '真实姓名',
   `dept_id` varchar(20) DEFAULT NULL,
@@ -1643,7 +1643,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_user_book
 -- ----------------------------
-CREATE TABLE `t_user_book` (
+CREATE TABLE IF NOT EXISTS `t_user_book` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `name` varchar(2048) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '问题名称',
   `template_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '模板ID',
@@ -1670,7 +1670,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_user_position
 -- ----------------------------
-CREATE TABLE `t_user_position` (
+CREATE TABLE IF NOT EXISTS `t_user_position` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `user_id` varchar(64) NOT NULL,
   `dept_id` varchar(64) DEFAULT NULL,
@@ -1693,7 +1693,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_user_role
 -- ----------------------------
-CREATE TABLE `t_user_role` (
+CREATE TABLE IF NOT EXISTS `t_user_role` (
   `id` varchar(64) NOT NULL COMMENT 'ID',
   `user_type` varchar(100) NOT NULL DEFAULT 'SysUser' COMMENT '用户类型',
   `user_id` varchar(64) NOT NULL COMMENT '用户ID',
@@ -1716,7 +1716,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_subject（学科字典：知识管理板块一级维度）
 -- ----------------------------
-CREATE TABLE `t_subject` (
+CREATE TABLE IF NOT EXISTS `t_subject` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科名称',
   `code` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科编码',
@@ -1741,7 +1741,7 @@ INSERT INTO `t_subject` (`id`, `name`, `code`, `icon`, `theme_color`, `sort`, `i
 -- ----------------------------
 -- Table structure for t_chapter（章节：学科下的大单元）
 -- ----------------------------
-CREATE TABLE `t_chapter` (
+CREATE TABLE IF NOT EXISTS `t_chapter` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID(t_subject.id)',
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节名称',
@@ -1769,7 +1769,7 @@ INSERT INTO `t_chapter` (`id`, `subject_id`, `name`, `grade`, `term`, `version`,
 -- ----------------------------
 -- Table structure for t_section（小节：章节下的学习小站，含内容/练习设置 JSON）
 -- ----------------------------
-CREATE TABLE `t_section` (
+CREATE TABLE IF NOT EXISTS `t_section` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID(t_chapter.id)',
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节名称',
@@ -1823,7 +1823,7 @@ UPDATE `t_section` SET grade='三年级', term='上' WHERE id='3011' AND grade I
 -- ----------------------------
 -- Table structure for t_knowledge_point（知识点：最小学习单元，含内容设置 JSON 与图片）
 -- ----------------------------
-CREATE TABLE `t_knowledge_point` (
+CREATE TABLE IF NOT EXISTS `t_knowledge_point` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
   `name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点名称',
@@ -1883,7 +1883,7 @@ UPDATE `t_knowledge_point` SET grade='三年级', term='上' WHERE id='4014' AND
 -- ----------------------------
 -- Table structure for t_knowledge_point_question（知识点-题目绑定：从题目库选题，多对多）
 -- ----------------------------
-CREATE TABLE `t_knowledge_point_question` (
+CREATE TABLE IF NOT EXISTS `t_knowledge_point_question` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `knowledge_point_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点ID(t_knowledge_point.id)',
   `question_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题目ID(t_template.id，仅能从题目库选择)',
@@ -1906,7 +1906,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_section_repo（小节-题库绑定：从题库管理选题库，多对多）
 -- ----------------------------
-CREATE TABLE `t_section_repo` (
+CREATE TABLE IF NOT EXISTS `t_section_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID(t_section.id)',
   `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID(t_repo.id，仅能从题库管理选择)',
@@ -1930,7 +1930,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_chapter_repo（章节-题库绑定：从题库管理选题库，多对多）
 -- ----------------------------
-CREATE TABLE `t_chapter_repo` (
+CREATE TABLE IF NOT EXISTS `t_chapter_repo` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID(t_chapter.id)',
   `repo_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '题库ID(t_repo.id，仅能从题库管理选择)',
@@ -1973,7 +1973,7 @@ INSERT INTO `t_template` (`id`, `repo_id`, `serial_no`, `name`, `question_type`,
 -- ----------------------------
 -- Table structure for t_student（学员主数据：学员管理模块，学号唯一）
 -- ----------------------------
-CREATE TABLE `t_student` (
+CREATE TABLE IF NOT EXISTS `t_student` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
   `student_no` varchar(8) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学号(字母+6位数字，系统自动生成，全局唯一，如 a000001)',
   `name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '姓名',
@@ -2002,7 +2002,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_student_order（学员订单：开通AI自习室权限）
 -- ----------------------------
-CREATE TABLE `t_student_order` (
+CREATE TABLE IF NOT EXISTS `t_student_order` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
   `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID(t_student.id)',
   `subject_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID多选(逗号分隔，t_subject.id)',
@@ -2030,7 +2030,7 @@ COMMIT;
 -- ----------------------------
 -- Table structure for t_student_permission（学员权限：多选学科×年级笛卡尔积展开，供学员端鉴权）
 -- ----------------------------
-CREATE TABLE `t_student_permission` (
+CREATE TABLE IF NOT EXISTS `t_student_permission` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'ID',
   `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID(t_student.id)',
   `order_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '来源订单ID(t_student_order.id)',

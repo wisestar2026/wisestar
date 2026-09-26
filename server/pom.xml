@@ -8,7 +8,6 @@
         <module>shared</module>
         <module>rdbms</module>
         <module>ai</module>
-        <!--        <module>flow</module>-->
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
