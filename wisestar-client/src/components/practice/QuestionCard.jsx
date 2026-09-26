@@ -36,6 +36,7 @@
  *   - 全屏聚焦，单题一屏
  */
 
+import { useRef } from 'react';
 import { Typography, Tag, Button, Space, Input, Image } from 'antd';
 import {
   CheckCircleOutlined, CloseCircleOutlined,
@@ -44,6 +45,7 @@ import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import { isStdCycle } from '../../utils/cycleDecimal';
 import RichContent from '../common/RichContent';
 import CycleDecimalInput from '../common/CycleDecimalInput';
+import MathSymbolBar from '../common/MathSymbolBar';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -156,6 +158,43 @@ export default function QuestionCard({
     onChange({ type: 'text', text: arr.join('|') });
   };
 
+  // ---- 数学符号工具条: 在指定输入框光标处插入符号 ----
+  const fillInputRef = useRef(null); // 单项填空原生 input
+  const blankInputRefs = useRef([]); // 多项填空各空位原生 input
+  const activeBlankRef = useRef(0); // 多项填空最近聚焦的空位下标
+
+  // 在原生 input 的当前光标处插入符号，并回填光标位置
+  const insertSymbolInto = (el, current, symbol, apply) => {
+    if (locked) return;
+    const text = String(current == null ? '' : current);
+    const start = typeof el?.selectionStart === 'number' ? el.selectionStart : text.length;
+    const end = typeof el?.selectionEnd === 'number' ? el.selectionEnd : text.length;
+    apply(text.slice(0, start) + symbol + text.slice(end));
+    const pos = start + symbol.length;
+    requestAnimationFrame(() => {
+      if (!el) return;
+      try {
+        el.focus();
+        el.setSelectionRange(pos, pos);
+      } catch {
+        // 忽略不支持 setSelectionRange 的场景
+      }
+    });
+  };
+
+  // 单项填空: 插入到单输入框
+  const insertFillSymbol = (symbol) => {
+    const cur = value?.type === 'text' ? value.text : '';
+    insertSymbolInto(fillInputRef.current, cur, symbol, handleTextChange);
+  };
+
+  // 多项填空: 插入到最近聚焦的空位（无聚焦时默认第 1 个空位）
+  const insertBlankSymbol = (symbol) => {
+    const i = activeBlankRef.current || 0;
+    if (isStdCycle(stdParts[i])) return; // 循环小数空位走专用输入器，不插入普通符号
+    insertSymbolInto(blankInputRefs.current[i], blankValues[i] || '', symbol, (v) => handleBlankChange(i, v));
+  };
+
   return (
     <div style={{ maxWidth: 760, margin: '0 auto' }}>
       {/* ---- 题号 + 题型 + 难度 ---- */}
@@ -248,6 +287,8 @@ export default function QuestionCard({
                   <Input
                     size="large"
                     style={inputStyle}
+                    ref={(el) => { blankInputRefs.current[i] = el?.input ?? el; }}
+                    onFocus={() => { activeBlankRef.current = i; }}
                     prefix={<span style={{ color: '#999', fontSize: 13 }}>空位 {i + 1}</span>}
                     placeholder={`请输入第 ${i + 1} 个空位的答案`}
                     value={blankValues[i] || ''}
@@ -258,6 +299,12 @@ export default function QuestionCard({
               </div>
             );
           })}
+          {!locked && Array.from({ length: blankCount }).some((_, i) => !isStdCycle(stdParts[i])) && (
+            <MathSymbolBar
+              label="符号："
+              onPick={insertBlankSymbol}
+            />
+          )}
           <Text type="secondary" style={{ fontSize: 12 }}>
             按题目空位顺序作答，全部空位填写后提交判分
           </Text>
@@ -276,6 +323,7 @@ export default function QuestionCard({
             ) : (
               <Input
                 size="large"
+                ref={(el) => { fillInputRef.current = el?.input ?? el; }}
                 placeholder="请输入答案"
                 value={value?.type === 'text' ? value.text : ''}
                 onChange={(e) => handleTextChange(e.target.value)}
@@ -290,6 +338,9 @@ export default function QuestionCard({
               onChange={(e) => handleTextChange(e.target.value)}
               disabled={locked}
             />
+          )}
+          {qtype === 'FillBlank' && !isStdCycle(stdParts[0]) && !locked && (
+            <MathSymbolBar label="符号：" onPick={insertFillSymbol} />
           )}
         </div>
       )}
