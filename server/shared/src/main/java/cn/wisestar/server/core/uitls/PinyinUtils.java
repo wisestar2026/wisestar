@@ -5,6 +5,7 @@ import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
 import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
 import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
+import lombok.extern.slf4j.Slf4j;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -12,6 +13,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * @author javahuang
  * @date 2022/6/5
  */
+@Slf4j
 public class PinyinUtils {
 
 	/**
@@ -35,7 +37,7 @@ public class PinyinUtils {
 					charPinyin = PinyinHelper.toHanyuPinyinStringArray(c, format);
 				}
 				catch (BadHanyuPinyinOutputFormatCombination e) {
-					e.printStackTrace();
+					log.warn("汉字转拼音失败，字符原样输出: {}", c, e);
 				}
 				if (charPinyin != null) {
 					result.append(charPinyin[0]);

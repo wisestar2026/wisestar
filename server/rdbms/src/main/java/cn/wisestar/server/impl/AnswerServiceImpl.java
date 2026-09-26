@@ -432,19 +432,19 @@ public class AnswerServiceImpl extends ServiceImpl<AnswerMapper, Answer> impleme
                     LocaleContextHolder.setLocale(locale);
                     export(project, answerViews, outputStream);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("导出答卷 Excel 失败", e);
                 } finally {
                     try {
                         outputStream.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        log.warn("关闭答卷导出输出流失败", e);
                     }
                     LocaleContextHolder.setLocale(previousLocale);
                 }
             }).start();
             download.setResource(new InputStreamResource(inputStream));
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("创建答卷导出管道失败", e);
         }
 
         download.setMediaType(MediaType.parseMediaType("application/vnd.ms-excel"));
@@ -681,7 +681,7 @@ public class AnswerServiceImpl extends ServiceImpl<AnswerMapper, Answer> impleme
                                 zout.putNextEntry(entry);
                                 zout.write(resource.getByteArray());
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                log.error("写入答卷附件压缩包失败, attachmentId={}", attachment.getId(), e);
                             }
 
                         });

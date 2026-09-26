@@ -2,6 +2,7 @@ package cn.wisestar.server.storage;
 
 import cn.wisestar.server.core.constant.ErrorCode;
 import cn.wisestar.server.core.exception.ErrorCodeException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import java.nio.file.StandardCopyOption;
  * @author javahuang
  * @date 2021/9/6
  */
+@Slf4j
 public class LocalStorageService extends AbstractStorageService {
 
 	/**
@@ -59,10 +61,11 @@ public class LocalStorageService extends AbstractStorageService {
 			Files.createDirectories(rootLocation);
 		}
 		catch (UnknownHostException e) {
-			e.printStackTrace();
+			log.error("本地存储初始化失败：无法解析主机名", e);
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			log.error("本地存储初始化失败：创建根目录异常, rootPath={}",
+					getStorageConfig().getLocal().getRootPath(), e);
 		}
 	}
 
@@ -80,7 +83,7 @@ public class LocalStorageService extends AbstractStorageService {
 			Files.createDirectories(destinationFile.getParent());
 			Files.copy(inputStream, destinationFile, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("上传文件失败, path={}", path, e);
 			throw new ErrorCodeException(ErrorCode.FileUploadError);
 		}
 	}
@@ -119,7 +122,7 @@ public class LocalStorageService extends AbstractStorageService {
 		try {
 			return Files.readAllBytes(resolvedPath);
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("读取文件失败, filePath={}", filePath, e);
 			throw new ErrorCodeException(ErrorCode.FileNotExists);
 		}
 	}

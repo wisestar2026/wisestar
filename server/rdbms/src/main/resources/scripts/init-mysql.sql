@@ -3448,3 +3448,23 @@ CREATE TABLE IF NOT EXISTS `t_user_campus` (
   KEY `idx_user_campus_user` (`user_id`),
   KEY `idx_user_campus_campus` (`campus_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户-校区绑定';
+
+-- ----------------------------
+-- 热点查询二级索引（幂等补齐；t_template/t_repo/t_answer/t_answer_detail/t_repo_template）
+-- 说明：实体启用 @TableLogic，普通查询会自动追加 is_deleted = 0，
+--       故高频过滤列与 is_deleted 组成组合索引。
+--       已存在的索引（如 t_answer_detail 的内联索引）由 IF NOT EXISTS 跳过。
+-- ----------------------------
+CREATE INDEX IF NOT EXISTS idx_template_repo ON `t_template` (`repo_id`, `is_deleted`);
+CREATE INDEX IF NOT EXISTS idx_template_subject ON `t_template` (`subject`, `is_deleted`);
+CREATE INDEX IF NOT EXISTS idx_template_question_type ON `t_template` (`question_type`, `is_deleted`);
+CREATE INDEX IF NOT EXISTS idx_template_create_by ON `t_template` (`create_by`, `is_deleted`);
+CREATE INDEX IF NOT EXISTS idx_repo_mode ON `t_repo` (`mode`);
+CREATE INDEX IF NOT EXISTS idx_repo_subject ON `t_repo` (`subject`);
+CREATE INDEX IF NOT EXISTS idx_repo_create_by ON `t_repo` (`create_by`);
+CREATE INDEX IF NOT EXISTS idx_answer_repo ON `t_answer` (`repo_id`);
+CREATE INDEX IF NOT EXISTS idx_answer_create_by ON `t_answer` (`create_by`);
+CREATE INDEX IF NOT EXISTS idx_answer_detail_answer ON `t_answer_detail` (`answer_id`);
+CREATE INDEX IF NOT EXISTS idx_answer_detail_create_by ON `t_answer_detail` (`create_by`);
+CREATE INDEX IF NOT EXISTS idx_repo_template_template ON `t_repo_template` (`template_id`);
+CREATE INDEX IF NOT EXISTS idx_repo_template_repo ON `t_repo_template` (`repo_id`);

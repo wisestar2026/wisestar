@@ -3465,3 +3465,22 @@ INSERT INTO t_english_word (id, spell, phonetic, meaning, version, grade, term, 
 INSERT INTO t_english_word (id, spell, phonetic, meaning, version, grade, term, unit) SELECT 'ew6206021', 'wrong', 'rɔŋ', '错误的', '人教版', '六年级', '下册', 'Unit 6 How do you feel?' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_english_word WHERE id = 'ew6206021');
 INSERT INTO t_english_word (id, spell, phonetic, meaning, version, grade, term, unit) SELECT 'ew6206022', 'what''s wrong', 'wəts rɔŋ', '怎么了', '人教版', '六年级', '下册', 'Unit 6 How do you feel?' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_english_word WHERE id = 'ew6206022');
 INSERT INTO t_english_grammar (id, title, content, examples, grade) SELECT 'eg6206', '六年级下册 Unit 6 How do you feel? 语法重点', '1. 情绪和身体状态类形容词的综合运用 2. 一般过去时中feel的过去式felt的用法 3. 询问身体状况的句型的过去式变化', '[]', '六年级' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_english_grammar WHERE id = 'eg6206');
+
+-- ----------------------------
+-- 热点查询二级索引（幂等补齐；t_template/t_repo/t_answer/t_answer_detail/t_repo_template）
+-- 说明：实体启用 @TableLogic，普通查询会自动追加 is_deleted = 0，
+--       故高频过滤列与 is_deleted 组成组合索引。
+-- ----------------------------
+CREATE INDEX IF NOT EXISTS idx_template_repo ON t_template (repo_id, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_template_subject ON t_template (subject, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_template_question_type ON t_template (question_type, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_template_create_by ON t_template (create_by, is_deleted);
+CREATE INDEX IF NOT EXISTS idx_repo_mode ON t_repo (mode);
+CREATE INDEX IF NOT EXISTS idx_repo_subject ON t_repo (subject);
+CREATE INDEX IF NOT EXISTS idx_repo_create_by ON t_repo (create_by);
+CREATE INDEX IF NOT EXISTS idx_answer_repo ON t_answer (repo_id);
+CREATE INDEX IF NOT EXISTS idx_answer_create_by ON t_answer (create_by);
+CREATE INDEX IF NOT EXISTS idx_answer_detail_answer ON t_answer_detail (answer_id);
+CREATE INDEX IF NOT EXISTS idx_answer_detail_create_by ON t_answer_detail (create_by);
+CREATE INDEX IF NOT EXISTS idx_repo_template_template ON t_repo_template (template_id);
+CREATE INDEX IF NOT EXISTS idx_repo_template_repo ON t_repo_template (repo_id);

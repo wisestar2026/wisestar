@@ -2,6 +2,7 @@ package cn.wisestar.server.core.uitls;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
+import lombok.extern.slf4j.Slf4j;
 import org.dhatim.fastexcel.Workbook;
 import org.dhatim.fastexcel.Worksheet;
 
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author javahuang
  * @date 2021/2/1
  */
+@Slf4j
 public class ExcelExporter {
 
 	private Workbook workbook;
@@ -86,7 +88,7 @@ public class ExcelExporter {
 			return new ByteArrayInputStream(this.os.toByteArray());
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			log.error("Excel 导出失败", e);
 		}
 		return null;
 	}
@@ -96,7 +98,7 @@ public class ExcelExporter {
 			this.workbook.finish();
 		}
 		catch (IOException e) {
-			e.printStackTrace();
+			log.error("Excel 导出到输出流失败", e);
 		}
 	}
 

@@ -2,6 +2,7 @@ package cn.wisestar.server.core.uitls;
 
 import cn.wisestar.server.domain.dto.DatabaseInitProperties;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,6 +22,7 @@ import java.util.Scanner;
  * @author javahuang
  * @date 2022/1/25
  */
+@Slf4j
 public class DatabaseInitHelper {
 
 	private static final String CONFIG_FILE = "application.properties";
@@ -218,7 +220,7 @@ public class DatabaseInitHelper {
 			runner.runScript(new BufferedReader(new FileReader(file)));
 		}
 		catch (SQLException e) {
-			e.printStackTrace();
+			log.error("数据库初始化失败", e);
 		}
 		colorOutput("数据库初始化完成", 1);
 	}
@@ -290,13 +292,13 @@ public class DatabaseInitHelper {
 	private static void colorOutput(String output, int level) {
 		switch (level) {
 		case 1: // success
-			System.out.println(Ansi.Green.colorize(output));
+			log.info(Ansi.Green.colorize(output));
 			break;
 		case 2: // fail
-			System.out.println(Ansi.Red.colorize(output));
+			log.error(Ansi.Red.colorize(output));
 			break;
 		default: // info
-			System.out.println(Ansi.Blue.colorize(output));
+			log.info(Ansi.Blue.colorize(output));
 			break;
 		}
 	}
