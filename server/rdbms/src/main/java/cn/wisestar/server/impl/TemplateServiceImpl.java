@@ -43,7 +43,6 @@ import static org.springframework.util.StringUtils.hasText;
  * 【被谁调用】
  * - Controller：TemplateController（模板广场/题目管理）
  * - 业务层：RepoServiceImpl（批量添加/删除/导出题目、随机抽题 pickQuestionFromRepo）、
- *   SurveyServiceImpl（题库练习时加载题目列表）、RandomSurveyProcessor（间接）、
  *   UserBookServiceImpl/错题本相关（间接）
  *
  * 【依赖什么】

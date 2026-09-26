@@ -46,16 +46,6 @@
   - `public MybatisPlusInterceptor mybatisPlusInterceptor()`
     新的分页插件,一缓和二缓遵循mybatis的规则,需要设置 MybatisConfiguration#useDeprecatedExecutor = false 避免缓存出现问题(该属性会在旧插件移除后一同移除)
 
-### `rdbms/src/main/java/cn/wisestar/server/domain/dto/FlatSurveySchemaByType.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class FlatSurveySchemaByType`
-- 注解: @Data
-
-### `rdbms/src/main/java/cn/wisestar/server/domain/mapper/AnswerViewMapper.java`
-- 包: `cn.wisestar.server.domain.mapper`
-- 类型: `interface AnswerViewMapper`
-- 注解: @Mapper
-
 ### `rdbms/src/main/java/cn/wisestar/server/domain/mapper/CampusDtoMapper.java`
 - 包: `cn.wisestar.server.domain.mapper`
 - 类型: `interface CampusDtoMapper`
@@ -205,15 +195,8 @@
 - 类型: `class Answer`
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
-  答卷实体（对应数据库表 t_answer，autoResultMap=true 支持 JSON 类型字段自动映射）。 【类职责】 记录一次问卷/考试/练习的完整答卷：暂存答案（未提交）、最终答案、问卷快照、 考试得分与答题元信息（作答起止时间、客户端信息等）。是系统"答卷"概念的核心载体， 也是答题明细（t_answer_detail）生成的数据源。 【被谁调用】 - 数据访问层：AnswerMapper、AnswerDetailMapper（MyBatis-Plus） - 业务层：AnswerServiceImpl（保存/查询/导出/删除答卷）、SurveyServiceImpl（答卷相关 公开操作）、RepoServiceImpl（错题本保存临时答案）、RandomSurveyProcessor（随机抽题 时保存随机 schema 到答案表）、UserServiceImpl（历史任务查询） 【依赖什么】 - 继承 BaseModel：id（主键）、createAt、createBy、updateAt、updateBy、deleted - 题目/问卷结构复用 SurveySchema；答案结构 LinkedHashMap（questionId -> optionId -> value） - AnswerMetaInfo：作答元信息（开始/结束时间、客户端等） - AnswerExamInfo：考试信息（每题得分 questionScore） 【核心数据流】 学生作答（Controller）→ SurveyServiceImpl.saveAnswer → AnswerServiceImpl.saveAnswer/ updateAnswer → 计算考试分值 computeExamScore → 更新关联问卷答案 updateLinkSurveyAnswer → 保存本实体 → generateAnswerDetails 按题生成明细到 t_answer_detail → 返回 AnswerView。
+  答卷实体（对应数据库表 t_answer，autoResultMap=true 支持 JSON 类型字段自动映射）。 【类职责】 记录一次练习/考试的完整答卷：暂存答案（未提交）、最终答案、问卷快照、 考试得分与答题元信息（作答起止时间、客户端信息等）。 【被谁调用】 - 数据访问层：AnswerMapper（MyBatis-Plus） - 业务层：RepoServiceImpl（错题本保存临时答案，经由 AnswerServiceImpl 继承的基础 CRUD）、 AnswerServiceImpl（练习历史 historyExercise）、UserServiceImpl（历史任务查询） 【依赖什么】 - 继承 BaseModel：id（主键）、createAt、createBy、updateAt、updateBy、deleted - 题目/问卷结构复用 SurveySchema；答案结构 LinkedHashMap（questionId -> optionId -> value） - AnswerMetaInfo：作答元信息（开始/结束时间、客户端等） - AnswerExamInfo：考试信息（每题得分 questionScore） 【核心数据流】 练习/错题保存（RepoServiceImpl）→ AnswerServiceImpl 继承的 updateById 写本实体。
 - 注入/字段: String id, LinkedHashMap tempAnswer, LinkedHashMap answer, SurveySchema survey, AnswerMetaInfo metaInfo, AnswerExamInfo examInfo, String createBy, Date updateAt
-
-### `rdbms/src/main/java/cn/wisestar/server/domain/model/AnswerDetail.java`
-- 包: `cn.wisestar.server.domain.model`
-- 类型: `class AnswerDetail`
-- 注解: @Data, @TableName, @EqualsAndHashCode
-- **类说明**：
-  答题明细表实体（对应数据库表 t_answer_detail）：一次答卷中单道题的作答记录。 【类职责】 把一次答卷（t_answer）按题目拆成一条条明细，每条记录"某学生在某次答卷中对某道题的 作答结果"，是学生答题情况分析（优势/薄弱知识点）的数据基础。 由 AnswerServiceImpl.generateAnswerDetails 在提交答卷（tempSave=1）时按题生成。 【被谁调用】 - 写入方：AnswerServiceImpl.generateAnswerDetails（先按 answerId 删除旧明细再逐条插入， 保证重复提交幂等） - 读取方：AnswerDetailMapper（MyBatis-Plus 基础 CRUD）（原分析聚合方 AnalysisServiceImpl 随问卷链路移除） 【依赖什么】 - 继承 BaseModel：id、createAt（答题时间）、createBy（学生ID，MyBatis-Plus 自动填充）、 updateAt、updateBy、deleted 逻辑删除字段 - 数据来源：提交答卷时从 Answer（survey 问卷快照 + answer 答案 Map）中按题提取 【核心数据流】 学生提交答卷（Controller）→ AnswerServiceImpl.saveAnswer/updateAnswer → generateAnswerDetails：遍历问卷快照中的每一题，取题目知识点四维信息（attribute 快照）、 学生答案、对错判定结果、分值 → 逐条 insert 到 t_answer_detail。 【存储格式说明】 - knowledgePoint 列：多值知识点以英文逗号分隔存为字符串（如 "函数单调性,奇偶性"） - isCorrect 列：null=无标准答案不计分，1=正确，0=错误 - createBy 列即学生ID（答题人），聚合分析时以此为归属依据
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/Campus.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -581,7 +564,7 @@
 - 类型: `class Template`
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
-  问题模板表实体（对应数据库表 t_template） 【类职责】 代表"题库"中的一个具体题目（一道单选/多选/判断/填空/简答题），是 AI 自习室系统中 题库（Repo）与问卷/考试（Project）之间的桥梁：一个题库（t_repo）下挂多道题目， 题目以"模板"形式存储；出卷时（pickQuestionFromRepo / RandomSurveyProcessor）从题库 拉取模板并渲染为问卷题目（SurveySchema）。 【被谁调用】 - 数据访问层：TemplateMapper（MyBatis-Plus 基础 CRUD）、t_tag 标签表通过 entity_id 关联本表 - 业务层：TemplateServiceImpl（四维筛选 listTemplate）、RepoServiceImpl（导出/批量导入/ 随机抽题 pickQuestionFromRepo）、SurveyServiceImpl（题库练习加载题目）、RandomSurveyProcessor 【依赖什么】 - 继承 BaseModel，自动获得 id、createAt、createBy、updateAt、updateBy、deleted 逻辑删除字段 - 题目 JSON 结构复用 domain.dto.SurveySchema（问卷 schema 同一套结构） - ProjectModeEnum：题目所处模式（survey 问卷 / exam 考试） 【核心数据流】 题库管理端（Controller）→ RepoServiceImpl/TemplateServiceImpl → TemplateMapper → t_template 表；出题时 RepoServiceImpl.pickQuestionFromRepo 将本实体转换为 SurveySchema 下发到前端答题。题目难度体系（subject/chapter/knowledgePoint/difficulty 四字段）在答题 提交时被 AnswerServiceImpl.generateAnswerDetails 快照进 t_answer_detail 答题明细表。
+  问题模板表实体（对应数据库表 t_template） 【类职责】 代表"题库"中的一个具体题目（一道单选/多选/判断/填空/简答题），是 AI 自习室系统中 题库（Repo）与问卷/考试（Project）之间的桥梁：一个题库（t_repo）下挂多道题目， 题目以"模板"形式存储；出卷时（RepoServiceImpl.pickQuestionFromRepo）从题库 拉取模板并渲染为问卷题目（SurveySchema）。 【被谁调用】 - 数据访问层：TemplateMapper（MyBatis-Plus 基础 CRUD）、t_tag 标签表通过 entity_id 关联本表 - 业务层：TemplateServiceImpl（四维筛选 listTemplate）、RepoServiceImpl（导出/批量导入/ 随机抽题 pickQuestionFromRepo） 【依赖什么】 - 继承 BaseModel，自动获得 id、createAt、createBy、updateAt、updateBy、deleted 逻辑删除字段 - 题目 JSON 结构复用 domain.dto.SurveySchema（问卷 schema 同一套结构） - ProjectModeEnum：题目所处模式（survey 问卷 / exam 考试） 【核心数据流】 题库管理端（Controller）→ RepoServiceImpl/TemplateServiceImpl → TemplateMapper → t_template 表；出题时 RepoServiceImpl.pickQuestionFromRepo 将本实体转换为 SurveySchema 下发到前端答题。
 - 注入/字段: SurveySchema template, String[] tag, String createBy, String[] knowledgePoint
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/User.java`
@@ -675,37 +658,12 @@
 ### `rdbms/src/main/java/cn/wisestar/server/impl/AnswerServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class AnswerServiceImpl`
-- 注解: @Service, @Transactional, @RequiredArgsConstructor, @Slf4j
+- 注解: @Service, @Transactional, @Slf4j
 - **类说明**：
-  答卷（Answer）业务实现：答卷的保存/查询/导出/删除、考试计分与答题明细生成。 【类职责】 处理"答卷"全生命周期业务： 1. 答卷 CRUD：listAnswer 分页查询、getAnswer 详情、saveAnswer/updateAnswer 保存与更新、 deleteAnswer 删除、回收站（listAnswerDeleted/restoreAnswer/batchDestroyAnswer） 2. 考试计分：beforeSaveAnswer → computeExamScore 用 AnswerScoreEvaluator 计算总分与每题得分 3. 答题明细生成：generateAnswerDetails（提交答卷时按题落库 t_answer_detail， 供学生知识点分析使用，幂等先删后插） 4. 导出：downloadSurvey 导出 xlsx、downloadAttachment 附件下载/打包 zip、 附件重命名表达式 parseAttachmentNameByExp 5. 其他：Excel 批量导入 upload、练习历史 historyExercise、关联问卷答案同步 updateLinkSurveyAnswer 【被谁调用】 - Controller：AnswerController（管理端答卷管理）、SurveyController（公开答卷提交间接调用） - 业务层：SurveyServiceImpl.saveAnswer / tempSaveAnswer / loadProject、RepoServiceImpl （错题本保存临时答案）、RandomSurveyProcessor（保存随机 schema）、UserServiceImpl （历史任务查询）、FileServiceImpl（附件下载时验证项目） 【依赖什么】 - AnswerMapper（BaseMapper CRUD + 回收站自定义 SQL）、AnswerDetailMapper（答题明细）、 ProjectMapper / ProjectPartnerMapper（项目与参与人） - FileService（附件）、UserService/DeptService/ProjectService（答案附加信息回填） - AnswerViewMapper（MapStruct：Answer↔AnswerView↔AnswerRequest 转换） - AnswerScoreEvaluator（考试计分）、SchemaHelper（schema 扁平化/解析）、ExcelExporter（导出） 【核心数据流】 学生提交答卷 → SurveyServiceImpl.saveAnswer → saveAnswer/updateAnswer → beforeSaveAnswer（计分 + 关联问卷同步）→ save/updateById 写 t_answer → generateAnswerDetails 按题写 t_answer_detail（先删后插） → AnswerViewMapper.toView 返回 AnswerView（含题目附加信息/排名等）。
+  答卷（Answer）业务实现。仅保留练习历史查询 historyExercise；原问卷/答卷管理链路（CRUD、考试计分、答题明细生成、Excel 导出、附件下载、回收站、Excel 批量导入、关联问卷同步）已随对应前端模块与控制器下线一并移除。仍继承 ServiceImpl 供 RepoServiceImpl / UserServiceImpl 直接使用基础 CRUD。
 - 方法:
-  - `public PaginationResponse<AnswerView> listAnswer(AnswerQuery query)`
-    分页查询答卷列表。
-  - `public AnswerView getAnswer(AnswerQuery query)`
-    查询单份答卷详情。
-  - `public AnswerView saveAnswer(AnswerRequest request)`
-    保存答卷（新增或更新分派）。
-  - `public long count(AnswerQuery query)`
-    统计答卷数量（用于提交限制校验，如最大答题数/时间窗/登录/Cookie/IP/白名单限制）。
-  - `public AnswerView updateAnswer(AnswerRequest request)`
-    更新答卷：保存前计算考试分值/同步关联问卷答案，更新后重新生成答题明细。
-  - `public void deleteAnswer(AnswerRequest request)`
-    删除答卷（逻辑删除，is_deleted=1；回收站可见，可恢复）。
-  - `public DownloadData downloadSurvey(DownloadQuery query)`
-    导出答卷为 Excel（异步管道流，避免大数据量一次性载入内存）。
-  - `public DownloadData downloadAttachment(DownloadQuery query)`
-    下载答卷附件：指定 answerId 时下载单份答卷附件，否则把选定答卷的附件打包为 zip。
-  - `public List<AnswerView> listAnswerDeleted(AnswerQuery query)`
-    查询回收站中已逻辑删除的答卷。
-  - `public void batchDestroyAnswer(AnswerRequest request)`
-    彻底销毁答卷（物理删除，不可恢复）。
-  - `public void restoreAnswer(AnswerRequest request)`
-    恢复回收站中的答卷（is_deleted 置 0）。
-  - `public AnswerUploadView upload(AnswerUploadRequest request)`
-    Excel 批量导入答卷（行头匹配已有项目 schema 或自动创建项目 schema）。
   - `public PaginationResponse<ExerciseView> historyExercise(HistoryExerciseQuery query)`
     练习历史分页查询（顺序/随机/错题练习记录）。
-
 ### `rdbms/src/main/java/cn/wisestar/server/impl/CampusScopeServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class CampusScopeServiceImpl`
@@ -936,7 +894,7 @@
 - 包: `cn.wisestar.server.impl`
 - 类型: `class FileServiceImpl`
 - 注解: @Service, @Transactional, @RequiredArgsConstructor, @Slf4j
-- 注入/字段: ProjectService projectService, SurveyService surveyService
+- 注入/字段: StorageService storageService, FileViewMapper fileViewMapper, StorageProperties storageProperties
 - 方法:
   - `public void deleteFile(String id)`
   - `public FileView upload(UploadFileRequest request)`
@@ -1096,22 +1054,12 @@
   - `public void batchDestroyProject(ProjectRequest request)`
   - `public void restoreProject(ProjectRequest request)`
 
-### `rdbms/src/main/java/cn/wisestar/server/impl/RandomSurveyProcessor.java`
-- 包: `cn.wisestar.server.impl`
-- 类型: `class RandomSurveyProcessor`
-- 注解: @Component, @RequiredArgsConstructor, @Slf4j
-- **类说明**：
-  随机问题处理器 负责处理考试模式下的随机问题选择和错题练习功能
-- 方法:
-  - `public void processRandomSurvey(ProjectView project, PublicProjectView projectView)`
-    处理随机问题逻辑，包括随机问题和错题练习
-
 ### `rdbms/src/main/java/cn/wisestar/server/impl/RepoServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class RepoServiceImpl`
 - 注解: @Transactional, @Service, @RequiredArgsConstructor
 - **类说明**：
-  题库（Repo）业务实现：题库 CRUD、题目批量管理、随机抽题、错题本与题库导出。 【类职责】 1. 题库 CRUD：listRepo 分页查询、addRepo/updateRepo/deleteRepo、selectRepo 选择器 2. 题库-题目批量管理：batchAddRepoTemplate（Excel 导入/批量保存，按"序号+题型"幂等更新）、 batchUnBindTemplate 解绑题目 3. 随机抽题：pickQuestionFromRepo（按题库/题型/标签条件随机选题，供考试随机抽题与练习使用） 4. 题库导出增强：exportRepoQuestions（标准单表 30 列导出：学科/题型/章节/小节/知识点/题目/ 选项A-H/难易程度/正确答案1-12/解析/标签），配套辅助方法 standardRowOf / answerCellsOf / queryQuestionsForExport / buildGuideSheet；导入模板与导出共用列结构 5. 错题本：listUserBook/createUserBook/updateUserBook/deleteUserBook 【被谁调用】 - Controller：RepoController（题库管理/导出/错题本接口） - 业务层：SurveyServiceImpl（题库练习加载）、RandomSurveyProcessor（随机抽题）、 TemplateServiceImpl.selectTemplate（间接取题库列表）、AnswerServiceImpl（无） 【依赖什么】 - RepoMapper（BaseMapper + selectRepoTemplateTags/selectRepoQuestionTypes 自定义统计）、 TemplateServiceImpl（题目 CRUD）、TagServiceImpl（标签）、UserBookServiceImpl（错题本）、 AnswerServiceImpl（错题练习时保存临时答案） - RepoViewMapper / UserBookViewMapper（MapStruct 转换）、RepoTemplateExcelParseHelper（导入解析）、 ExcelExporter 对应物（导出用 fastexcel 直接写）、AnswerScoreEvaluator（错题判分） 【核心数据流】 管理端维护题库 → RepoController → RepoServiceImpl → RepoMapper（t_repo）+ TemplateServiceImpl （t_template）+ TagServiceImpl（t_tag）→ 列表回填各题统计；导出时按题型分组写入 xlsx 流。
+  题库（Repo）业务实现：题库 CRUD、题目批量管理、随机抽题、错题本与题库导出。 【类职责】 1. 题库 CRUD：listRepo 分页查询、addRepo/updateRepo/deleteRepo、selectRepo 选择器 2. 题库-题目批量管理：batchAddRepoTemplate（Excel 导入/批量保存，按"序号+题型"幂等更新）、 batchUnBindTemplate 解绑题目 3. 随机抽题：pickQuestionFromRepo（按题库/题型/标签条件随机选题，供考试随机抽题与练习使用） 4. 题库导出增强：exportRepoQuestions（标准单表 30 列导出：学科/题型/章节/小节/知识点/题目/ 选项A-H/难易程度/正确答案1-12/解析/标签），配套辅助方法 standardRowOf / answerCellsOf / queryQuestionsForExport / buildGuideSheet；导入模板与导出共用列结构 5. 错题本：listUserBook/createUserBook/updateUserBook/deleteUserBook 【被谁调用】 - Controller：RepoController（题库管理/导出/错题本接口） - 业务层：TemplateServiceImpl.selectTemplate（间接取题库列表） 【依赖什么】 - RepoMapper（BaseMapper + selectRepoTemplateTags/selectRepoQuestionTypes 自定义统计）、 TemplateServiceImpl（题目 CRUD）、TagServiceImpl（标签）、UserBookServiceImpl（错题本）、 AnswerServiceImpl（错题练习时保存临时答案） - RepoViewMapper / UserBookViewMapper（MapStruct 转换）、RepoTemplateExcelParseHelper（导入解析）、 ExcelExporter 对应物（导出用 fastexcel 直接写）、AnswerScoreEvaluator（错题判分） 【核心数据流】 管理端维护题库 → RepoController → RepoServiceImpl → RepoMapper（t_repo）+ TemplateServiceImpl （t_template）+ TagServiceImpl（t_tag）→ 列表回填各题统计；导出时按题型分组写入 xlsx 流。
 - 方法:
   - `public PaginationResponse<RepoView> listRepo(RepoQuery query)`
     分页查询题库列表。
@@ -1391,38 +1339,6 @@
   - `public void deleteSubject(SubjectRequest request)`
     删除学科（逻辑删除；其下章节/小节/知识点不级联删除，仅学科不可见）。
 
-### `rdbms/src/main/java/cn/wisestar/server/impl/SurveyServiceImpl.java`
-- 包: `cn.wisestar.server.impl`
-- 类型: `class SurveyServiceImpl`
-- 注解: @Service, @Transactional, @RequiredArgsConstructor, @Slf4j
-- **类说明**：
-  问卷/考试公开访问业务实现：问卷加载校验、公开答卷提交、公开查询、成绩查询、 答题限制（登录/密码/白名单/Cookie/IP）、关联问卷联动等。 【类职责】 面向"答卷人"（学生/外部用户）的公开入口逻辑： 1. 问卷加载：loadProject（含登录表单验证、题库练习、随机问题处理）、validateProject 校验 2. 答卷提交：saveAnswer（区分随机卷/公开查询修改/允许修改开关）、tempSaveAnswer 暂存、 答题后更新白名单状态 updateProjectPartnerByAnswer 3. 公开查询：loadQuery 查询表单、getQueryResult 查询结果（字段权限过滤/可编辑回写）、 loadExamResult 成绩查询（排名/正确答案可见性由考试设置控制）、loadLinkResult 关联问卷回填 4. 答题限制：登录限制/密码/白名单（内部/导入用户）/Cookie 限制/IP 限制/最大答题数/ 时间窗（CronHelper）校验 5. 其他：loadDict 字典加载、答案唯一性/配额校验（validateAnswer） 【被谁调用】 - Controller：SurveyController（公开访问接口）、AnswerController（间接） - 业务层：FileServiceImpl.upload（公开上传时校验项目状态） 【依赖什么】 - ProjectService/ProjectViewMapper（项目与视图）、AnswerServiceImpl（答卷读写）、 ProjectPartnerMapper（参与人/白名单）、RepoServiceImpl/UserBookServiceImpl/ TemplateServiceImpl（题库练习）、RandomSurveyProcessor（随机问题处理）、 DictItemServiceImpl（字典）、JwtTokenUtil/AuthenticationManager（答卷登录）、 ObjectMapper（JSON 序列化）、MessageSource（i18n） 【核心数据流】 答卷人访问链接 → SurveyController → loadProject（校验+加载 schema）→ 提交答案 → saveAnswer（限制校验 → AnswerServiceImpl.saveAnswer 落库）→ 考试模式计算错题入错题本 → 白名单状态更新 → 返回答卷 ID；查询侧按配置的字段权限过滤后返回。
-- 方法:
-  - `public PublicProjectView loadProject(ProjectQuery query)`
-    加载公开问卷/考试页面数据（进入答卷页面的主入口）。 【分支逻辑】 1. repoId 非空（题库练习）：从题库加载题目组装练习卷；已有未完成答卷则回填 已答内容（examInfo 供前端判断对错），否则按练习类型（O 顺序/R 随机/W 错题） 生成题目列表并预创建一份 tempSave=0 的答卷； 2. answerId 非空（随机卷/修改答案）：直接按答卷 id 回显答案与问卷快照； 3. 其他：先做登录表单校验（convertAndValidateLoginFormIfNeeded），再校验问卷状态 （validateProject：停用/数量/时间/各类限制）； - 需要登录/密码/白名单时返回登录表单 schema（loginRequired=true）； - 否则处理随机问题（randomSurveyProcessor.processRandomSurvey）并回填最近答案 （允许修改开关开启时 getLatestAnswer）。
-  - `public PublicProjectView validateProject(ProjectQuery query)`
-    校验问卷并加载页面数据（登录表单验证 + 随机问题处理 + 问卷状态校验）。
-  - `public PublicStatisticsView statProject(ProjectQuery query)`
-    问卷答题统计（各题选项计数，供前端实时统计/配额校验）。
-  - `public PublicAnswerView saveAnswer(AnswerRequest request)`
-    公开提交/更新答卷（答卷人入口）。 【答案归属确定逻辑】（按优先级） 1. 随机卷 Cookie（COOKIE_RANDOM_PROJECT_PREFIX+projectId）非空 → 复用 Cookie 中答卷 id； 2. 公开查询修改（queryId 非空）→ validateAndMergeAnswer 校验可编辑字段后合并旧答案； 3. 显式传 id 且非练习项目 → 需项目开启"允许修改答案"开关（enableUpdate）否则拒绝； 4. 其他 → validateAndGetLatestAnswer：校验通过且（已登录 + 允许修改）时复用最近一次答卷。 【保存后处理】 - AnswerServiceImpl.saveAnswer 落库 + 生成答题明细； - 考试模式（非练习项目）：返回总分与每题得分，并把错题写入错题本 （userBookService.saveWrongQuestion）； - 白名单答卷：updateProjectPartnerByAnswer 更新参与人状态为已答题； - 清理随机卷 Cookie。
-  - `public PublicQueryVerifyView loadQuery(PublicQueryRequest request)`
-    加载公开查询验证表单（校验链接有效性后返回查询条件表单 schema）。
-  - `public PublicQueryView getQueryResult(PublicQueryRequest request)`
-    公开查询答卷结果。
-  - `public List<PublicDictView> loadDict(PublicDictRequest request)`
-    加载公开字典项（答卷页下拉选项数据）。
-  - `public PublicExamResult loadExamResult(PublicExamRequest request)`
-    考试结束后的成绩查询页数据。
-  - `public void tempSaveAnswer(AnswerRequest request)`
-    暂存答案（目前仅支持登录用户 + 随机卷，按 Cookie 中的答卷 id 更新 tempAnswer）。
-  - `public PublicLinkResult loadLinkResult(PublicLinkRequest request)`
-    关联问卷联动数据加载：选择某题的某个选项后，返回关联问卷中匹配该选项值的 最近答卷字段，用于自动回填。
-  - `public void fillLinkFieldAndAnswer(LinkedHashMap answer, List<SurveySchema.LinkField> linkFields, LinkedHashMap<String, Map<String, Object>> fillAnswer)`
-    填充关联问卷字段值到联动结果 Map（按 linkFields 配置把关联答卷中的字段值 拷贝到填充题的对应选项位置）。
-  - `public void validateProject(ProjectView project)`
-    按问卷设置校验项目状态与各类答题限制（提交前必查）。 【校验项】（按顺序，任一不满足即抛错） 1. 项目存在性；2. status=0 已暂停（SurveySuspend）； 3. 最大答卷数 maxAnswers（AnswerService.count 统计）； 4. 问卷结束时间 endTime；5. 登录限制 loginLimit（需开启 loginRequired）； 6. Cookie 限制 cookieLimit；7. IP 限制 ipLimit；8. 白名单限制 whitelistLimit； 9. 考试时间窗（validateExamSetting）。
-
 ### `rdbms/src/main/java/cn/wisestar/server/impl/SystemServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class SystemServiceImpl`
@@ -1466,7 +1382,7 @@
 - 类型: `class TemplateServiceImpl`
 - 注解: @Service, @Transactional, @RequiredArgsConstructor
 - **类说明**：
-  题目模板（Template）业务实现：题目 CRUD、四维筛选（学科/章节/知识点/难度）、 分类/标签查询与错题本信息回填。 【类职责】 1. 题目 CRUD：listTemplate 分页四维筛选、addTemplate/batchAddTemplate/updateTemplate/ batchUpdateTemplate/deleteTemplate、getTemplate 详情（含错题本信息）、 selectTemplate 按题库分组选择题目、listTemplateCategories 分类列表、getTags 标签集合 2. 与题库（Repo）联动：题目挂在题库下（repoId），题库导出/批量导入委托本服务操作题目 【被谁调用】 - Controller：TemplateController（模板广场/题目管理） - 业务层：RepoServiceImpl（批量添加/删除/导出题目、随机抽题 pickQuestionFromRepo）、 SurveyServiceImpl（题库练习时加载题目列表）、RandomSurveyProcessor（间接）、 UserBookServiceImpl/错题本相关（间接） 【依赖什么】 - TemplateMapper（BaseMapper CRUD）、TemplateViewMapper（MapStruct 转换）、 RepoServiceImpl（selectTemplate 取题库列表，注意循环依赖用 ContextHelper 取 Bean）、 UserBookServiceImpl（getTemplate 回填错题本 note/correctTimes/wrongTimes） 【核心数据流】 管理端/模板广场 → TemplateController → TemplateServiceImpl → TemplateMapper（t_template） → 列表/详情/标签/分类返回；出卷时题目经 RepoServiceImpl.pickQuestionFromRepo 转 SurveySchema。
+  题目模板（Template）业务实现：题目 CRUD、四维筛选（学科/章节/知识点/难度）、 分类/标签查询与错题本信息回填。 【类职责】 1. 题目 CRUD：listTemplate 分页四维筛选、addTemplate/batchAddTemplate/updateTemplate/ batchUpdateTemplate/deleteTemplate、getTemplate 详情（含错题本信息）、 selectTemplate 按题库分组选择题目、listTemplateCategories 分类列表、getTags 标签集合 2. 与题库（Repo）联动：题目挂在题库下（repoId），题库导出/批量导入委托本服务操作题目 【被谁调用】 - Controller：TemplateController（模板广场/题目管理） - 业务层：RepoServiceImpl（批量添加/删除/导出题目、随机抽题 pickQuestionFromRepo）、 UserBookServiceImpl/错题本相关（间接） 【依赖什么】 - TemplateMapper（BaseMapper CRUD）、TemplateViewMapper（MapStruct 转换）、 RepoServiceImpl（selectTemplate 取题库列表，注意循环依赖用 ContextHelper 取 Bean）、 UserBookServiceImpl（getTemplate 回填错题本 note/correctTimes/wrongTimes） 【核心数据流】 管理端/模板广场 → TemplateController → TemplateServiceImpl → TemplateMapper（t_template） → 列表/详情/标签/分类返回；出卷时题目经 RepoServiceImpl.pickQuestionFromRepo 转 SurveySchema。
 - 注入/字段: UserBookServiceImpl userBookService
 - 方法:
   - `public PaginationResponse<TemplateView> listTemplate(TemplateQuery query)`
@@ -1537,12 +1453,6 @@
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/AccountMapper.java`
 - 包: `cn.wisestar.server.mapper`
 - 类型: `interface AccountMapper`
-
-### `rdbms/src/main/java/cn/wisestar/server/mapper/AnswerDetailMapper.java`
-- 包: `cn.wisestar.server.mapper`
-- 类型: `interface AnswerDetailMapper`
-- **类说明**：
-  答题明细表（t_answer_detail）数据访问 Mapper（MyBatis-Plus）。 【类职责】 提供 AnswerDetail 实体的基础 CRUD（继承 BaseMapper 自动获得 selectList/insert/delete 等）， 供答卷/练习相关业务读写"一次答卷中单道题的作答记录"。 本接口没有自定义 SQL，全部走 MyBatis-Plus 通用方法，逻辑删除由 BaseModel.deleted 自动接管。 【被谁调用】 - 写入方：AnswerServiceImpl.generateAnswerDetails —— 提交答卷时先按 answerId delete 旧明细， 再逐条 insert 新明细（先删后插保证幂等） （原分析读取方 AnalysisServiceImpl 已于 2026-09-26 移除） 【依赖什么】 - AnswerDetail 实体（继承 BaseModel，含 createBy=学生ID、isCorrect、knowledgePoint 等分析字段） - MyBatis-Plus BaseMapper 通用能力（需要 Mapper 扫描与 MybatisPlugConfig 分页插件配合） 【核心数据流】 学生提交答卷 → AnswerServiceImpl.generateAnswerDetails 写入本表 → selectList(Wrappers.lambdaQuery) → SQL: SELECT * FROM t_answer_detail WHERE is_deleted=0 AND create_by=? AND subject=?... 。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/AnswerMapper.java`
 - 包: `cn.wisestar.server.mapper`

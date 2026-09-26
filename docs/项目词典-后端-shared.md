@@ -123,24 +123,6 @@
   - `public PaginationResponse(Long total, List<T> list)`
     构造分页响应（total + list；current / pageSize 需由调用方另行 set，或保持为空）。
 
-### `shared/src/main/java/cn/wisestar/server/core/common/Tuple2.java`
-- 包: `cn.wisestar.server.core.common`
-- 类型: `class Tuple2`
-- **类说明**：
-  二元组对象（Tuple2）。
-  **所属模块**：shared 模块核心通用类（cn.wisestar.server.core.common）。
-
-  **类职责**：简单的不可变二元组（Pair），用于"一个方法需要同时返回两个值" 的场景，避免为临时结果单独定义 DTO 或使用 Object[] 数组。
-
-  **使用场景**：如 Service/工具方法需要返回"对象 + 状态"、"结果 + 计数"等 成对数据时使用。字段通过 final 保证不可变，构造后不可修改。
-- 方法:
-  - `public Tuple2(T1 first, T2 second)`
-    构造二元组。
-  - `public T1 getFirst()`
-    获取第一个值。
-  - `public T2 getSecond()`
-    获取第二个值。
-
 ### `shared/src/main/java/cn/wisestar/server/core/config/AppConfig.java`
 - 包: `cn.wisestar.server.core.config`
 - 类型: `class AppConfig`
@@ -317,24 +299,6 @@
   - PermType：数据权限类型（默认 project）；
   - ProjectPartnerStatus：项目参与者状态。
 - 内部类型: interface FileType, enum DICTCODE_PERMISSION_TYPE, enum RESOURCE_PERMISSION_DISPLAY_TYPE, enum AUTH_TYPE, enum USER_TYPE, interface USER_STATUS, enum DataPermissionTypeEnum, enum DispositionTypeEnum, interface DashboardType, interface PermType, interface ProjectPartnerStatus
-
-### `shared/src/main/java/cn/wisestar/server/core/constant/AttachmentNameVariableEnum.java`
-- 包: `cn.wisestar.server.core.constant`
-- 类型: `enum AttachmentNameVariableEnum`
-- **类说明**：
-  附件命名变量枚举（AttachmentNameVariableEnum）。
-  **所属模块**：shared 模块常量包（cn.wisestar.server.core.constant）。
-
-  **类职责**：定义附件（上传文件）自定义命名规则中可用的变量名。 用户在配置上传文件命名模板时，可以引用这些变量占位符，系统在保存文件时 会将占位符替换为实际值（见 rdbms 模块附件命名逻辑）。
-
-  **可用变量**：
-
-  - projectId：项目 id
-  - serialNum：全局附件序号（所有附件从 1 开始编号）
-  - serialNumInAnswer：同一问卷内附件序号（从 1 开始）
-  - uploadDate / uploadDateTime：上传日期 / 日期时间
-  - sourceName：原始文件名
-  - questionTitle：问题标题
 
 ### `shared/src/main/java/cn/wisestar/server/core/constant/CacheConsts.java`
 - 包: `cn.wisestar.server.core.constant`
@@ -582,7 +546,7 @@
 
   **与普通异常的区别**：cn.wisestar.server.core.mvc.advice.GlobalExceptionHandler 的兜底 ExceptionHandler 会特判本类型：只有本类型的 message 才会被透传给前端， 其他未知异常一律返回通用文案"服务出了点问题"，避免把内部实现细节泄露给客户端。
 
-  **使用场景示例**：用户/字典批量导入解析失败（`UserServiceImpl`/`DictServiceImpl`）、 压缩包生成失败（`AnswerServiceImpl`）等不可预期错误时抛出本异常。
+  **使用场景示例**：用户/字典批量导入解析失败（`UserServiceImpl`/`DictServiceImpl`）等不可预期错误时抛出本异常。
 - 方法:
   - `public InternalServerError()`
     构造空异常。
@@ -829,7 +793,7 @@
 - 类型: `class AnswerJudgeUtil`
 - **类说明**：
   练习答题判分工具（纯静态，无状态）。
-  **定位**：供练习落库（PracticeServiceImpl）对"前端提交的学生答案"复核判分， 语义与前端 utils/practiceHelpers.js 一致：单选/判断按选项标题文本等值、 多选按选项标题集合相等（与顺序无关）、填空/文本按输入内容等值。 与 AnswerServiceImpl 的判分规则对齐，避免前后端判分不一致。
+  **定位**：供练习落库（PracticeServiceImpl）对"前端提交的学生答案"复核判分， 语义与前端 utils/practiceHelpers.js 一致：单选/判断按选项标题文本等值、 多选按选项标题集合相等（与顺序无关）、填空/文本按输入内容等值。 与前端判分语义对齐，避免前后端判分不一致。
 
   **答案格式**：学生答案由前端提交，结构为 `{type: 'option', optionId} / {type: 'options', optionIds: []} / {type: 'text', text}`； 判分前先按题目选项映射为"选项标题文本"再比较。
 
@@ -915,15 +879,6 @@
   - `public static HttpServletResponse getCurrentHttpResponse()`
   - `public static String getCookie(String cookieName)`
 
-### `shared/src/main/java/cn/wisestar/server/core/uitls/CronHelper.java`
-- 包: `cn.wisestar.server.core.uitls`
-- 类型: `class CronHelper`
-- 方法:
-  - `public CronHelper(String cron)`
-  - `public Tuple2<LocalDateTime, LocalDateTime> currentWindow()`
-  - `public Tuple2<LocalDateTime, LocalDateTime> nextWindow()`
-    下个时间窗
-
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/DatabaseInitHelper.java`
 - 包: `cn.wisestar.server.core.uitls`
 - 类型: `class DatabaseInitHelper`
@@ -933,14 +888,6 @@
   - `public static void initH2()`
   - `public static String getJarFilePath()`
     获取当前 jar 运行目录
-
-### `shared/src/main/java/cn/wisestar/server/core/uitls/DateUtils.java`
-- 包: `cn.wisestar.server.core.uitls`
-- 类型: `class DateUtils`
-- 方法:
-  - `public static Date localDateTime2date(LocalDateTime in)`
-  - `public static LocalDateTime date2localDateTime(Date in)`
-  - `public static boolean isBetween(Date current, Date start, Date end)`
 
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/ExcelExporter.java`
 - 包: `cn.wisestar.server.core.uitls`
@@ -957,13 +904,6 @@
   - `public void exportToStream()`
   - `public ExcelExporter build()`
 
-### `shared/src/main/java/cn/wisestar/server/core/uitls/FileUtils.java`
-- 包: `cn.wisestar.server.core.uitls`
-- 类型: `class FileUtils`
-- 方法:
-  - `public static Double bytesToMb(long bytes)`
-    将文件大小从字节转换为兆字节（MB）。
-
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/HTTPUtils.java`
 - 包: `cn.wisestar.server.core.uitls`
 - 类型: `class HTTPUtils`
@@ -972,12 +912,6 @@
 - 方法:
   - `public static String getContentDispositionValue(String fileName)`
     获取下载文件名，避免中文文件名乱码
-
-### `shared/src/main/java/cn/wisestar/server/core/uitls/IPUtils.java`
-- 包: `cn.wisestar.server.core.uitls`
-- 类型: `class IPUtils`
-- 方法:
-  - `public static String getClientIpAddress(HttpServletRequest request)`
 
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/JSONUtil.java`
 - 包: `cn.wisestar.server.core.uitls`
@@ -1030,13 +964,6 @@
 - 方法:
   - `public static String chineseToPinyin(String str)`
     汉字转拼音
-
-### `shared/src/main/java/cn/wisestar/server/core/uitls/ProjectStatHelper.java`
-- 包: `cn.wisestar.server.core.uitls`
-- 类型: `class ProjectStatHelper`
-- 方法:
-  - `public ProjectStatHelper(SurveySchema schema, List<AnswerView> answers)`
-  - `public PublicStatisticsView stat()`
 
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/RSAUtils.java`
 - 包: `cn.wisestar.server.core.uitls`
@@ -1171,28 +1098,6 @@
 - 类型: `class AnswerMetaInfo`
 - 注解: @Data, @Builder, @AllArgsConstructor, @NoArgsConstructor
 
-### `shared/src/main/java/cn/wisestar/server/domain/dto/AnswerQuery.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class AnswerQuery`
-- 注解: @Data, @EqualsAndHashCode
-- **类说明**：
-  答卷分页查询条件 DTO。 【类职责】 承载"答卷列表查询"的过滤参数：按项目、主键、时间区间、 项目名称等维度筛选答卷。 【被谁调用】 - `AnswerService.listAnswer/getAnswer/count/listAnswerDeleted`（`AnswerServiceImpl`） - `SurveyServiceImpl` / `RandomSurveyProcessor` 构造查询条件 【数据流】 Service 构造本 DTO → `AnswerServiceImpl` → `AnswerMapper` 分页查询 t_answer → `AnswerView` 列表返回。 `/api/answer/*` 接口已于 2026-09-26 移除，本 DTO 仅供保留的答卷/问卷 Service 复用。
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/AnswerRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class AnswerRequest`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/AnswerUploadRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class AnswerUploadRequest`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/AnswerUploadView.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class AnswerUploadView`
-- 注解: @Data
-
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/AnswerView.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class AnswerView`
@@ -1314,18 +1219,6 @@
 - 类型: `class DeptView`
 - 注解: @Data
 
-### `shared/src/main/java/cn/wisestar/server/domain/dto/DownloadData.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class DownloadData`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/DownloadQuery.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class DownloadQuery`
-- 注解: @Data, @EqualsAndHashCode
-- 内部类型: enum DownloadType
-- 注入/字段: String projectId, Date startTime, Date endTime, DownloadType type
-
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/ExerciseProjectTemplate.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class ExerciseProjectTemplate`
@@ -1365,13 +1258,6 @@
 - 注解: @Data
 - **类说明**：
   知识点统计查询条件
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/KnowledgePointStat.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class KnowledgePointStat`
-- 注解: @Data
-- **类说明**：
-  知识点统计结果：答题次数、正确次数、正确率
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/MyTaskQuery.java`
 - 包: `cn.wisestar.server.domain.dto`
@@ -1485,73 +1371,12 @@
 - 类型: `class ProjectView`
 - 注解: @Data
 
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicAnswerView.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicAnswerView`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicDictRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicDictRequest`
-- 注解: @Data
-- 注入/字段: String dictCode
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicDictView.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicDictView`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicExamRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicExamRequest`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicExamResult.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicExamResult`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicLinkRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicLinkRequest`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicLinkResult.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicLinkResult`
-- 注解: @Data
-
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicProjectView.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class PublicProjectView`
 - 注解: @Data
 - **类说明**：
   答卷页面
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicQueryRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicQueryRequest`
-- 注解: @Data
-- **类说明**：
-  公开查询支持两种答案查询方式，1、通过查询表单提交参数 2、通过 url 参数
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicQueryVerifyView.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicQueryVerifyView`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicQueryView.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicQueryView`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PublicStatisticsView.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PublicStatisticsView`
-- 注解: @Data
-- 方法:
-  - `public QuestionStatistics()`
-  - `public QuestionStatistics(int count, List<OptionStatistics> optionStatistics)`
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/RegisterRequest.java`
 - 包: `cn.wisestar.server.domain.dto`
@@ -2467,16 +2292,10 @@
 - 包: `cn.wisestar.server.service`
 - 类型: `interface AnswerService`
 - **类说明**：
-  答卷服务接口（AnswerService）。
-  **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。
-
-  **类职责**：提供答卷（Answer）的管理与回收能力：答卷分页、详情、 计数、保存（提交/编辑）、删除、回收站（已删除列表/批量销毁/恢复）、 附件/答卷 Excel 下载、答卷上传、历史练习查询。实现类位于 rdbms 模块 （AnswerServiceImpl）。
-
-  **内置 default 方法**：
-
-  - #parseClientInfo：从当前请求解析答卷人客户端信息（User-Agent、 IP、限制 Cookie），用于答卷元数据记录与作答频率限制；
-  - #download：按下载类型分发到 downloadSurvey（答卷 Excel）或 downloadAttachment（附件），统一拼装 Content-Disposition 响应头。
-
+  答卷服务接口（AnswerService）。仅保留练习历史查询 historyExercise；问卷/答卷管理链路（答卷分页、详情、保存、删除、回收站、附件与 Excel 导出等）已随对应前端模块与控制器下线一并移除。实现类位于 rdbms 模块（AnswerServiceImpl）。
+- 方法:
+  - `public PaginationResponse<ExerciseView> historyExercise(HistoryExerciseQuery query)`
+    分页查询历史练习记录（考试练习场景）。
 ### `shared/src/main/java/cn/wisestar/server/service/CampusScopeService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface CampusScopeService`
@@ -2767,17 +2586,6 @@
 - 类型: `interface SubjectService`
 - **类说明**：
   学科管理服务（知识管理板块一级维度）。
-
-### `shared/src/main/java/cn/wisestar/server/service/SurveyService.java`
-- 包: `cn.wisestar.server.service`
-- 类型: `interface SurveyService`
-- **类说明**：
-  问卷（公开访问）服务接口（SurveyService）。
-  **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。
-
-  **类职责**：定义问卷对外（答卷人/公开链接）访问所需的核心能力： 加载问卷、查看统计、提交/暂存答卷、公开查询（验证身份后查结果）、 加载字典、加载考试结果、加载关联链接等。这些能力服务于 无需登录 或 以答卷人身份 访问的场景。
-
-  **实现类**：rdbms 模块 SurveyServiceImpl；**调用方**：api 模块 SurveyApi（/api/public/** 等公开端点，无需登录）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/SystemService.java`
 - 包: `cn.wisestar.server.service`

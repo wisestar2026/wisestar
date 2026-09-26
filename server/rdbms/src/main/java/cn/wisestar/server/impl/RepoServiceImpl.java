@@ -66,8 +66,7 @@ import static com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank;
  *
  * 【被谁调用】
  * - Controller：RepoController（题库管理/导出/错题本接口）
- * - 业务层：SurveyServiceImpl（题库练习加载）、RandomSurveyProcessor（随机抽题）、
- *   TemplateServiceImpl.selectTemplate（间接取题库列表）、AnswerServiceImpl（无）
+ * - 业务层：TemplateServiceImpl.selectTemplate（间接取题库列表）
  *
  * 【依赖什么】
  * - RepoMapper（BaseMapper + selectRepoTemplateTags/selectRepoQuestionTypes 自定义统计）、
@@ -208,7 +207,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      *
      * @param id 题库 ID
      * @return 题库视图；不存在返回 null
-     * @implNote 被 RepoController.getRpo / SurveyServiceImpl.loadProject（题库练习加载题目）调用。
+     * @implNote 被 RepoController.getRpo 调用。
      */
     @Override
     public RepoView getRpo(String id) {
@@ -416,8 +415,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
      *
      * @param repos 抽题条件列表（每个题库一个条件）
      * @return 组装好的题目 schema 列表（按题型排序）
-     * @implNote 被 RandomSurveyProcessor.processSingleRandomSurvey / processRandomQuestionSelection
-     * 调用。
+     * @implNote 被 RepoApi.pickQuestionFromRepo 调用。
      */
     @Override
     public List<SurveySchema> pickQuestionFromRepo(List<ProjectSetting.RandomSurveyCondition> repos) {

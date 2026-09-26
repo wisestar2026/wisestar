@@ -17,13 +17,13 @@ import org.apache.ibatis.type.JdbcType;
  * 【类职责】
  * 代表"题库"中的一个具体题目（一道单选/多选/判断/填空/简答题），是 AI 自习室系统中
  * 题库（Repo）与问卷/考试（Project）之间的桥梁：一个题库（t_repo）下挂多道题目，
- * 题目以"模板"形式存储；出卷时（pickQuestionFromRepo / RandomSurveyProcessor）从题库
+ * 题目以"模板"形式存储；出卷时（RepoServiceImpl.pickQuestionFromRepo）从题库
  * 拉取模板并渲染为问卷题目（SurveySchema）。
  *
  * 【被谁调用】
  * - 数据访问层：TemplateMapper（MyBatis-Plus 基础 CRUD）、t_tag 标签表通过 entity_id 关联本表
  * - 业务层：TemplateServiceImpl（四维筛选 listTemplate）、RepoServiceImpl（导出/批量导入/
- *   随机抽题 pickQuestionFromRepo）、SurveyServiceImpl（题库练习加载题目）、RandomSurveyProcessor
+ *   随机抽题 pickQuestionFromRepo）
  *
  * 【依赖什么】
  * - 继承 BaseModel，自动获得 id、createAt、createBy、updateAt、updateBy、deleted 逻辑删除字段
@@ -33,9 +33,7 @@ import org.apache.ibatis.type.JdbcType;
  * 【核心数据流】
  * 题库管理端（Controller）→ RepoServiceImpl/TemplateServiceImpl → TemplateMapper
  * → t_template 表；出题时 RepoServiceImpl.pickQuestionFromRepo 将本实体转换为 SurveySchema
- * 下发到前端答题。题目难度体系（subject/chapter/knowledgePoint/difficulty 四字段）在答题
- * 提交时被 AnswerServiceImpl.generateAnswerDetails 快照进 t_answer_detail 答题明细表，
- * 供 AnalysisServiceImpl 做知识点聚合分析。
+ * 下发到前端答题。
  *
  * @author javahuang
  * @date 2021/9/23
@@ -147,8 +145,6 @@ public class Template extends BaseModel {
 	/**
 	 * 知识点数组（对应数据库列 knowledge_point，VARCHAR，Jackson 序列化为 JSON 数组，
 	 * 如 ["函数单调性","奇偶性"]，一道题可挂多个知识点）。
-	 * 答题提交时被 AnswerServiceImpl.generateAnswerDetails 以逗号连接快照进
-	 * t_answer_detail.knowledge_point；AnalysisServiceImpl 再按逗号拆开做聚合统计。
 	 */
 	@TableField(typeHandler = JacksonTypeHandler.class, jdbcType = JdbcType.VARCHAR)
 	private String[] knowledgePoint;

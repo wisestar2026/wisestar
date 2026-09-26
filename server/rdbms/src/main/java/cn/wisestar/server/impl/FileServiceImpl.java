@@ -11,8 +11,6 @@ import cn.wisestar.server.domain.mapper.FileViewMapper;
 import cn.wisestar.server.domain.model.File;
 import cn.wisestar.server.mapper.FileMapper;
 import cn.wisestar.server.service.FileService;
-import cn.wisestar.server.service.ProjectService;
-import cn.wisestar.server.service.SurveyService;
 import cn.wisestar.server.storage.StorageProperties;
 import cn.wisestar.server.storage.StorageService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -21,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -42,7 +38,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static cn.wisestar.server.core.constant.ErrorCode.FileUploadError;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 /**
@@ -63,14 +58,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
 
     private final AtomicLong seq = new AtomicLong(System.currentTimeMillis());
 
-    @Autowired
-    @Lazy
-    private ProjectService projectService;
-
-    @Autowired
-    @Lazy
-    private SurveyService surveyService;
-
     @Override
     public void deleteFile(String id) {
         removeById(id);
@@ -81,37 +68,6 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
     public FileView upload(UploadFileRequest request) {
         MultipartFile uploadFile = request.getFile();
         String filePath = getFileNameByStrategy(Objects.requireNonNull(uploadFile.getOriginalFilename()));
-        String extName = StringUtils.substringAfterLast(uploadFile.getOriginalFilename(), ".");
-        // 通过问卷页面上传需要校验文件类型
-        if (Boolean.TRUE.equals(request.getPublicUpload())) {
-            if (StringUtils.isEmpty(request.getProjectId()) || StringUtils.isEmpty(request.getQuestionId())) {
-                throw new ErrorCodeException(FileUploadError);
-            }
-            ProjectView projectView = projectService.getProject(request.getProjectId());
-            // 校验对应项目状态
-            surveyService.validateProject(projectView);
-
-            //  校验文件拓展名
-            SurveySchema uploadSchema = SchemaHelper.flatSurveySchema(projectView.getSurvey()).stream()
-                    .filter(x -> x.getId().equals(request.getQuestionId())).findFirst()
-                    .orElseThrow(() -> new ErrorCodeException(FileUploadError));
-            String fileAccept = uploadSchema.getChildren().get(0).getAttribute().getFileAccept();
-            if (StringUtils.isNotEmpty(fileAccept)) {
-                // 只允许上传指定格式的文件
-                boolean notAllowExtension = Arrays.stream(fileAccept.split(","))
-                        .map(type -> type.trim().replaceFirst("\\.", "")).noneMatch(type -> type.equalsIgnoreCase(extName));
-                if (notAllowExtension) {
-                    throw new ErrorCodeException(FileUploadError);
-                }
-            } else {
-                // 默认文件类型白名单限制
-                boolean notAllowExtension = Arrays.stream(FileUtils.ALLOWED_EXTENSIONS)
-                        .noneMatch(ext -> ext.equalsIgnoreCase(extName));
-                if (notAllowExtension) {
-                    throw new ErrorCodeException(FileUploadError);
-                }
-            }
-        }
 
         File file = new File();
         file.setId(NanoIdUtils.randomNanoId());

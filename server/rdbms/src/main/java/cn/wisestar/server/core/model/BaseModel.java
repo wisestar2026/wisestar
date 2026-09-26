@@ -45,7 +45,7 @@ public class BaseModel {
 
 	/**
 	 * 创建人（对应列 create_by，FieldFill.INSERT 插入时自动填充当前登录用户ID）。
-	 * 很多"只查自己的数据"的过滤条件（如 AnswerDetail 按学生归属）都基于该字段。
+	 * 很多"只查自己的数据"的过滤条件（如练习记录按学生归属）都基于该字段。
 	 */
 	@TableField(fill = FieldFill.INSERT)
 	private String createBy;
