@@ -100,6 +100,12 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 
 	private final CaptchaService captchaService;
 
+	private final StudentMapper studentMapper;
+
+	private final StudentPermissionMapper studentPermissionMapper;
+
+	private final SubjectMapper subjectMapper;
+
 	/**
 	 * @param username 账号密码登录认证使用
 	 * @return
@@ -505,6 +511,34 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 				.exists(String.format(
 						"SELECT 1 FROM t_project t WHERE t.mode = '%s' AND t.id = t_project_partner.project_id",
 						ProjectModeEnum.exam.name()))));
+		// 学员总数：t_student 中状态正常（status=1）的学员数
+		userOverview.setStudentCount(
+				studentMapper.selectCount(Wrappers.<Student>lambdaQuery().eq(Student::getStatus, 1)));
+		// 科次：按学科统计有效（未过期）权限的学员数，并汇总科次总数
+		Date now = new Date();
+		Map<String, Set<String>> studentsBySubject = new HashMap<>();
+		studentPermissionMapper.selectList(Wrappers.<StudentPermission>lambdaQuery()
+				.gt(StudentPermission::getExpireAt, now)).forEach(permission -> {
+					if (StringUtils.hasText(permission.getSubjectId())
+							&& StringUtils.hasText(permission.getStudentId())) {
+						studentsBySubject.computeIfAbsent(permission.getSubjectId(), k -> new HashSet<>())
+								.add(permission.getStudentId());
+					}
+				});
+		List<SubjectStudentCount> subjectStudentCounts = new ArrayList<>();
+		long courseCount = 0;
+		for (Subject subject : subjectMapper
+				.selectList(Wrappers.<Subject>lambdaQuery().orderByAsc(Subject::getSort))) {
+			Set<String> students = studentsBySubject.getOrDefault(subject.getId(), Collections.emptySet());
+			SubjectStudentCount item = new SubjectStudentCount();
+			item.setSubjectId(subject.getId());
+			item.setSubjectName(subject.getName());
+			item.setStudentCount((long) students.size());
+			subjectStudentCounts.add(item);
+			courseCount += students.size();
+		}
+		userOverview.setCourseCount(courseCount);
+		userOverview.setSubjectStudentCounts(subjectStudentCounts);
 		return userOverview;
 	}
 

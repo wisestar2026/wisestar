@@ -112,12 +112,11 @@ export async function getCurrentUser() {
 // 获取用户概览统计数据
 // ============================================================
 // 后端接口: GET /api/userOverview
-// 返回: { code: 200, data: { surveyCount, examCount, userCount, todayAnswerCount } }
-//   surveyCount     - 我创建的问卷数量
-//   examCount       - 我创建的考试数量
-//   userCount       - 团队成员数量
-//   todayAnswerCount - 今日答卷数量
-// 调用方: DashboardPage（仪表盘 4 个统计卡片，组件挂载时调用一次）
+// 返回: { code: 200, data: { studentCount, courseCount, subjectStudentCounts } }
+//   studentCount         - 学员总数（t_student 状态正常）
+//   courseCount          - 科次总数（各学科有效权限学员数之和）
+//   subjectStudentCounts - 按学科统计的学员数 [{ subjectId, subjectName, studentCount }]
+// 调用方: DashboardPage（仪表盘统计卡片，组件挂载时调用一次）
 export async function getUserOverview() {
   return request.get('/userOverview');
 }
