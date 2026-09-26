@@ -19,6 +19,7 @@ import katex from 'katex';
 import 'katex/contrib/mhchem';
 import 'katex/dist/katex.min.css';
 import './RichContent.css';
+import { CycleNumber } from './CycleDecimalText';
 
 // 组合正则（顺序敏感）：独立公式 → 图片 → 行内公式 → 加粗
 // 行内公式要求首尾均非空白，避免把货币符号（如 $5 与后续 $）误判为公式
@@ -53,12 +54,27 @@ function MathTex({ tex, display }) {
   );
 }
 
+// 纯文本行：把其中的 STD 循环小数（如 0.(6)、3.4(897)）渲染为教材循环点记法
+const CYCLE_IN_LINE = /\d+\.\d*\(\d+\)/g;
+function pushLine(out, line, keyRef) {
+  if (!line) return;
+  let last = 0;
+  let m;
+  CYCLE_IN_LINE.lastIndex = 0;
+  while ((m = CYCLE_IN_LINE.exec(line)) !== null) {
+    if (m.index > last) out.push(<span key={`t-${keyRef.k++}`}>{line.slice(last, m.index)}</span>);
+    out.push(<CycleNumber key={`cy-${keyRef.k++}`} obj={m[0]} />);
+    last = m.index + m[0].length;
+  }
+  if (last < line.length) out.push(<span key={`t-${keyRef.k++}`}>{line.slice(last)}</span>);
+}
+
 // 普通文本：按换行切分并插入 <br/>
 function pushText(out, s, keyRef) {
   const lines = String(s).split('\n');
   lines.forEach((line, i) => {
     if (i > 0) out.push(<br key={`br-${keyRef.k++}`} />);
-    if (line) out.push(<span key={`t-${keyRef.k++}`}>{line}</span>);
+    pushLine(out, line, keyRef);
   });
 }
 

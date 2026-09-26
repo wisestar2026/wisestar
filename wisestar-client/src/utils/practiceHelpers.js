@@ -22,6 +22,8 @@
  *   - 返回值: 1 正确 / 0 错误 / null 无标准答案（不计分）；多空题附 blankHits/earnedScore
  */
 
+import { cycleDecimalEquals, stdToDisplayText } from './cycleDecimal';
+
 /**
  * 提取题目标准答案列表；无标准答案时返回 null。
  *
@@ -79,8 +81,14 @@ export function normalizeBlankText(s) {
 
 /**
  * 填空空位等值比较（两边先归一化；纯 ASCII 字母串如选项字母 A/B/C 忽略大小写）。
+ * 当至少一方为循环小数时，改走数学等价判定（如 `0.6̇` / `0.666…` / `0.(6)` 等价，
+ * 而未标循环点的 `0.666` 判错），否则回退既有文本等值比较。
  */
 export function blankEquals(a, b) {
+  // 循环小数：数学等价判定（无循环小数时返回 null，走下方文本比较）
+  const cycleHit = cycleDecimalEquals(a, b);
+  if (cycleHit !== null) return cycleHit;
+
   const na = normalizeBlankText(a);
   const nb = normalizeBlankText(b);
   if (na === nb) return true;
@@ -254,10 +262,10 @@ export function formatCorrectAnswers(qtype, answers) {
   if (qtype === 'MultipleBlank') {
     return answers
       .flatMap((a) => String(a || '').split('|'))
-      .map((p, i) => `空${i + 1}: ${p}`)
+      .map((p, i) => `空${i + 1}: ${stdToDisplayText(p)}`)
       .join('；');
   }
-  return answers.join('、');
+  return answers.map((a) => stdToDisplayText(String(a))).join('、');
 }
 
 /**

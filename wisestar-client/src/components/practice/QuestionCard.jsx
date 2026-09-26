@@ -41,7 +41,9 @@ import {
   CheckCircleOutlined, CloseCircleOutlined,
 } from '@ant-design/icons';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
+import { isStdCycle } from '../../utils/cycleDecimal';
 import RichContent from '../common/RichContent';
+import CycleDecimalInput from '../common/CycleDecimalInput';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -229,17 +231,30 @@ export default function QuestionCard({
               : hit === 0
                 ? { borderColor: '#ff4d4f', background: '#fff2f0' }
                 : undefined;
+            // 标准答案为 STD 循环小数时，该空位改用循环点输入器（答案存 STD，判题数学等价）
+            const cycleBlank = isStdCycle(stdParts[i]);
             return (
               <div key={i} style={{ marginBottom: 12 }}>
-                <Input
-                  size="large"
-                  style={inputStyle}
-                  prefix={<span style={{ color: '#999', fontSize: 13 }}>空位 {i + 1}</span>}
-                  placeholder={`请输入第 ${i + 1} 个空位的答案`}
-                  value={blankValues[i] || ''}
-                  onChange={(e) => handleBlankChange(i, e.target.value)}
-                  disabled={locked}
-                />
+                {cycleBlank ? (
+                  <div style={hit != null ? { padding: 8, borderRadius: 8, border: `1px solid ${hit === 1 ? '#52c41a' : '#ff4d4f'}`, background: hit === 1 ? '#f6ffed' : '#fff2f0' } : undefined}>
+                    <div style={{ color: '#999', fontSize: 13, marginBottom: 4 }}>空位 {i + 1}（循环小数）</div>
+                    <CycleDecimalInput
+                      value={blankValues[i] || ''}
+                      onChange={(text) => handleBlankChange(i, text)}
+                      disabled={locked}
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    size="large"
+                    style={inputStyle}
+                    prefix={<span style={{ color: '#999', fontSize: 13 }}>空位 {i + 1}</span>}
+                    placeholder={`请输入第 ${i + 1} 个空位的答案`}
+                    value={blankValues[i] || ''}
+                    onChange={(e) => handleBlankChange(i, e.target.value)}
+                    disabled={locked}
+                  />
+                )}
               </div>
             );
           })}
@@ -252,13 +267,21 @@ export default function QuestionCard({
       {(qtype === 'FillBlank' || qtype === 'Text') && (
         <div>
           {qtype === 'FillBlank' ? (
-            <Input
-              size="large"
-              placeholder="请输入答案"
-              value={value?.type === 'text' ? value.text : ''}
-              onChange={(e) => handleTextChange(e.target.value)}
-              disabled={locked}
-            />
+            isStdCycle(stdParts[0]) ? (
+              <CycleDecimalInput
+                value={value?.type === 'text' ? value.text : ''}
+                onChange={handleTextChange}
+                disabled={locked}
+              />
+            ) : (
+              <Input
+                size="large"
+                placeholder="请输入答案"
+                value={value?.type === 'text' ? value.text : ''}
+                onChange={(e) => handleTextChange(e.target.value)}
+                disabled={locked}
+              />
+            )
           ) : (
             <Input.TextArea
               rows={3}

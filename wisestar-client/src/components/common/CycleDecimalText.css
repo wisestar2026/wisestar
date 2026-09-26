@@ -1,0 +1,26 @@
+/**
+ * CycleDecimalText.css - 循环小数循环点样式
+ *
+ * 循环点以当前文字颜色绘制，位置在数字正上方，字号 / 基线随行内容自适应。
+ */
+.cycle-num {
+  white-space: nowrap;
+}
+
+.cycle-digit {
+  position: relative;
+  display: inline-block;
+}
+
+/* 循环点：数字正上方一个实心圆点 */
+.cycle-digit--dot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.5em;
+  width: 0.16em;
+  height: 0.16em;
+  margin-left: -0.08em;
+  border-radius: 50%;
+  background: currentColor;
+}
