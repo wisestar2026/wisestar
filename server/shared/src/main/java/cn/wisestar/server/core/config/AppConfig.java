@@ -23,8 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * <p><b>所属模块</b>：shared 模块核心框架配置包（cn.wisestar.server.core.config）。</p>
  * <p><b>类职责</b>：集中配置应用运行期的三类能力：</p>
  * <ul>
- *   <li><b>AOP 代理</b>（@EnableAspectJAutoProxy）：开启基于注解的 AOP
- *       （如 {@link cn.wisestar.server.core.aop.DataPermAspect} 数据权限切面）；</li>
+	 *   <li><b>AOP 代理</b>（@EnableAspectJAutoProxy）：开启基于注解的 AOP 代理能力；</li>
  *   <li><b>异步支持</b>（@EnableAsync + AsyncConfigurer）：提供全局线程池
  *       （核心 4、最大 8、前缀 "MyExecutor-"），供 @Async 方法使用
  *       （如消息通知、异步统计等）；</li>

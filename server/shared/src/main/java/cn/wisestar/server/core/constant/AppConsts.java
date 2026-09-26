@@ -17,7 +17,6 @@ package cn.wisestar.server.core.constant;
  *   <li>{@link DataPermissionTypeEnum}：岗位数据权限范围；</li>
  *   <li>{@link DispositionTypeEnum}：文件下载方式（预览/附件）；</li>
  *   <li>{@link DashboardType}：仪表盘类型；</li>
- *   <li>{@link PermType}：数据权限类型（默认 project）；</li>
  *   <li>{@link ProjectPartnerStatus}：项目参与者状态。</li>
  * </ul>
  *
@@ -200,15 +199,6 @@ public class AppConsts {
 
 		/** 项目概要页面 */
 		int PROJECT_OVERVIEW = 2;
-
-	}
-
-	/**
-	 * 数据权限类型（@EnableDataPerm 注解 permType 取值，当前仅支持项目维度）。
-	 */
-	public interface PermType {
-
-		String PROJECT = "project";
 
 	}
 

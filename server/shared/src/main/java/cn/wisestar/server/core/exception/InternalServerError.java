@@ -11,8 +11,7 @@ package cn.wisestar.server.core.exception;
  * 的兜底 ExceptionHandler 会特判本类型：<em>只有本类型的 message 才会被透传给前端</em>，
  * 其他未知异常一律返回通用文案"服务出了点问题"，避免把内部实现细节泄露给客户端。</p>
  *
- * <p><b>使用场景示例</b>：{@link cn.wisestar.server.core.aop.DataPermAspect} 在
- * 数据权限校验失败时抛出本异常（如"没有权限访问本问卷"）。</p>
+ * <p><b>使用场景示例</b>：依赖服务调用失败、数据状态非法等不可恢复场景下抛出本异常。</p>
  *
  * @author javahuang
  * @date 2021/8/6

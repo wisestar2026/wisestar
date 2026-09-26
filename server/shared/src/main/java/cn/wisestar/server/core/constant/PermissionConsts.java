@@ -33,23 +33,6 @@ public final class PermissionConsts {
 	/** 在线练习 */
 	public static final String EXERCISE_LIST = "exercise:list";
 
-	/** 问卷管理 */
-	public static final String PROJECT_LIST = "project:list";
-	public static final String PROJECT_DETAIL = "project:detail";
-	public static final String PROJECT_CREATE = "project:create";
-	public static final String PROJECT_UPDATE = "project:update";
-	public static final String PROJECT_DELETE = "project:delete";
-	public static final String PROJECT_REPORT = "project:report";
-
-	/** 答案管理 */
-	public static final String ANSWER_LIST = "answer:list";
-	public static final String ANSWER_DETAIL = "answer:detail";
-	public static final String ANSWER_CREATE = "answer:create";
-	public static final String ANSWER_UPDATE = "answer:update";
-	public static final String ANSWER_DELETE = "answer:delete";
-	public static final String ANSWER_EXPORT = "answer:export";
-	public static final String ANSWER_UPLOAD = "answer:upload";
-
 	/** 题库管理 */
 	public static final String REPO_LIST = "repo:list";
 	public static final String REPO_DETAIL = "repo:detail";
@@ -213,12 +196,6 @@ public final class PermissionConsts {
 		List<Node> tree = new ArrayList<>();
 		tree.add(node("dashboard", "仪表盘", ops(HOME, "查看")));
 		tree.add(node("exercise", "在线练习", ops(EXERCISE_LIST, "查看")));
-		tree.add(node("project", "问卷管理",
-				ops(PROJECT_LIST, "查看", PROJECT_DETAIL, "详情", PROJECT_CREATE, "新增", PROJECT_UPDATE, "修改",
-						PROJECT_DELETE, "删除", PROJECT_REPORT, "报表")));
-		tree.add(node("answer", "答案管理",
-				ops(ANSWER_LIST, "查看", ANSWER_DETAIL, "详情", ANSWER_CREATE, "新增", ANSWER_UPDATE, "修改",
-						ANSWER_DELETE, "删除", ANSWER_EXPORT, "导出", ANSWER_UPLOAD, "上传")));
 		tree.add(node("repo", "题库管理",
 				ops(REPO_LIST, "查看", REPO_DETAIL, "详情", REPO_CREATE, "新增", REPO_UPDATE, "修改", REPO_DELETE, "删除",
 						REPO_EXPORT, "导出", REPO_BOOK, "教材绑定")));
@@ -280,8 +257,6 @@ public final class PermissionConsts {
 	 * 管理员全量权限（仅保留有接口消费的权限点，2026-08-15 清理 file/org/裸模块名等残留）。
 	 */
 	public static final String ADMIN_AUTHORITY = "home,exercise:list,"
-			+ "project:list,project:detail,project:create,project:update,project:delete,project:report,"
-			+ "answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,answer:upload,"
 			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,"
 			+ "template:list,template:create,template:update,template:delete,"
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
@@ -305,7 +280,6 @@ public final class PermissionConsts {
 
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */
 	public static final String PRINCIPAL_AUTHORITY = "home,exercise:list,"
-			+ "project:list,project:detail,answer:list,answer:detail,"
 			+ "repo:list,repo:detail,template:list,knowledge:list,"
 			+ "student:list,student:create,student:update,student:delete,"
 			+ "order:list,order:create,order:update,order:delete,"
@@ -319,8 +293,7 @@ public final class PermissionConsts {
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
 			+ "student:list,student:supervision,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
-			+ "task:list,task:create,task:update,task:delete,"
-			+ "project:list,project:detail,answer:list,answer:detail";
+			+ "task:list,task:create,task:update,task:delete";
 
 	/** 学管师：学员运营，学员/订单全操作 + 知识查看，含学员督学 */
 	public static final String CONSULTANT_AUTHORITY = "home,exercise:list,"
@@ -339,7 +312,6 @@ public final class PermissionConsts {
 			+ "student:list,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"
-			+ "project:list,project:detail,answer:list,answer:detail,"
 			+ "system:dict:list,system:dictItem:list,"
 			+ "campus:list";
 

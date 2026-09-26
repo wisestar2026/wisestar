@@ -213,7 +213,7 @@
 - 类型: `class AnswerDetail`
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
-  答题明细表实体（对应数据库表 t_answer_detail）：一次答卷中单道题的作答记录。 【类职责】 把一次答卷（t_answer）按题目拆成一条条明细，每条记录"某学生在某次答卷中对某道题的 作答结果"，是学生答题情况分析（优势/薄弱知识点，AnalysisServiceImpl）的数据基础。 由 AnswerServiceImpl.generateAnswerDetails 在提交答卷（tempSave=1）时按题生成。 【被谁调用】 - 写入方：AnswerServiceImpl.generateAnswerDetails（先按 answerId 删除旧明细再逐条插入， 保证重复提交幂等） - 读取方：AnalysisServiceImpl.aggregate（按学生/学科/章节筛选聚合）、 AnswerDetailMapper（MyBatis-Plus 基础 CRUD） 【依赖什么】 - 继承 BaseModel：id、createAt（答题时间）、createBy（学生ID，MyBatis-Plus 自动填充）、 updateAt、updateBy、deleted 逻辑删除字段 - 数据来源：提交答卷时从 Answer（survey 问卷快照 + answer 答案 Map）中按题提取 【核心数据流】 学生提交答卷（Controller）→ AnswerServiceImpl.saveAnswer/updateAnswer → generateAnswerDetails：遍历问卷快照中的每一题，取题目知识点四维信息（attribute 快照）、 学生答案、对错判定结果、分值 → 逐条 insert 到 t_answer_detail → AnalysisServiceImpl 按 createBy(学生) + subject/chapter 筛选，knowledgePoint 逗号拆分后聚合统计。 【存储格式说明】 - knowledgePoint 列：多值知识点以英文逗号分隔存为字符串（如 "函数单调性,奇偶性"） - isCorrect 列：null=无标准答案不计分，1=正确，0=错误 - createBy 列即学生ID（答题人），聚合分析时以此为归属依据
+  答题明细表实体（对应数据库表 t_answer_detail）：一次答卷中单道题的作答记录。 【类职责】 把一次答卷（t_answer）按题目拆成一条条明细，每条记录"某学生在某次答卷中对某道题的 作答结果"，是学生答题情况分析（优势/薄弱知识点）的数据基础。 由 AnswerServiceImpl.generateAnswerDetails 在提交答卷（tempSave=1）时按题生成。 【被谁调用】 - 写入方：AnswerServiceImpl.generateAnswerDetails（先按 answerId 删除旧明细再逐条插入， 保证重复提交幂等） - 读取方：AnswerDetailMapper（MyBatis-Plus 基础 CRUD）（原分析聚合方 AnalysisServiceImpl 随问卷链路移除） 【依赖什么】 - 继承 BaseModel：id、createAt（答题时间）、createBy（学生ID，MyBatis-Plus 自动填充）、 updateAt、updateBy、deleted 逻辑删除字段 - 数据来源：提交答卷时从 Answer（survey 问卷快照 + answer 答案 Map）中按题提取 【核心数据流】 学生提交答卷（Controller）→ AnswerServiceImpl.saveAnswer/updateAnswer → generateAnswerDetails：遍历问卷快照中的每一题，取题目知识点四维信息（attribute 快照）、 学生答案、对错判定结果、分值 → 逐条 insert 到 t_answer_detail。 【存储格式说明】 - knowledgePoint 列：多值知识点以英文逗号分隔存为字符串（如 "函数单调性,奇偶性"） - isCorrect 列：null=无标准答案不计分，1=正确，0=错误 - createBy 列即学生ID（答题人），聚合分析时以此为归属依据
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/Campus.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -581,7 +581,7 @@
 - 类型: `class Template`
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
-  问题模板表实体（对应数据库表 t_template） 【类职责】 代表"题库"中的一个具体题目（一道单选/多选/判断/填空/简答题），是 AI 自习室系统中 题库（Repo）与问卷/考试（Project）之间的桥梁：一个题库（t_repo）下挂多道题目， 题目以"模板"形式存储；出卷时（pickQuestionFromRepo / RandomSurveyProcessor）从题库 拉取模板并渲染为问卷题目（SurveySchema）。 【被谁调用】 - 数据访问层：TemplateMapper（MyBatis-Plus 基础 CRUD）、t_tag 标签表通过 entity_id 关联本表 - 业务层：TemplateServiceImpl（四维筛选 listTemplate）、RepoServiceImpl（导出/批量导入/ 随机抽题 pickQuestionFromRepo）、SurveyServiceImpl（题库练习加载题目）、RandomSurveyProcessor 【依赖什么】 - 继承 BaseModel，自动获得 id、createAt、createBy、updateAt、updateBy、deleted 逻辑删除字段 - 题目 JSON 结构复用 domain.dto.SurveySchema（问卷 schema 同一套结构） - ProjectModeEnum：题目所处模式（survey 问卷 / exam 考试） 【核心数据流】 题库管理端（Controller）→ RepoServiceImpl/TemplateServiceImpl → TemplateMapper → t_template 表；出题时 RepoServiceImpl.pickQuestionFromRepo 将本实体转换为 SurveySchema 下发到前端答题。题目难度体系（subject/chapter/knowledgePoint/difficulty 四字段）在答题 提交时被 AnswerServiceImpl.generateAnswerDetails 快照进 t_answer_detail 答题明细表， 供 AnalysisServiceImpl 做知识点聚合分析。
+  问题模板表实体（对应数据库表 t_template） 【类职责】 代表"题库"中的一个具体题目（一道单选/多选/判断/填空/简答题），是 AI 自习室系统中 题库（Repo）与问卷/考试（Project）之间的桥梁：一个题库（t_repo）下挂多道题目， 题目以"模板"形式存储；出卷时（pickQuestionFromRepo / RandomSurveyProcessor）从题库 拉取模板并渲染为问卷题目（SurveySchema）。 【被谁调用】 - 数据访问层：TemplateMapper（MyBatis-Plus 基础 CRUD）、t_tag 标签表通过 entity_id 关联本表 - 业务层：TemplateServiceImpl（四维筛选 listTemplate）、RepoServiceImpl（导出/批量导入/ 随机抽题 pickQuestionFromRepo）、SurveyServiceImpl（题库练习加载题目）、RandomSurveyProcessor 【依赖什么】 - 继承 BaseModel，自动获得 id、createAt、createBy、updateAt、updateBy、deleted 逻辑删除字段 - 题目 JSON 结构复用 domain.dto.SurveySchema（问卷 schema 同一套结构） - ProjectModeEnum：题目所处模式（survey 问卷 / exam 考试） 【核心数据流】 题库管理端（Controller）→ RepoServiceImpl/TemplateServiceImpl → TemplateMapper → t_template 表；出题时 RepoServiceImpl.pickQuestionFromRepo 将本实体转换为 SurveySchema 下发到前端答题。题目难度体系（subject/chapter/knowledgePoint/difficulty 四字段）在答题 提交时被 AnswerServiceImpl.generateAnswerDetails 快照进 t_answer_detail 答题明细表。
 - 注入/字段: SurveySchema template, String[] tag, String createBy, String[] knowledgePoint
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/User.java`
@@ -671,18 +671,6 @@
   - `public String generateSpeech(String text, String lang)`
   - `public String generateImage(String prompt)`
   - `public String generateText(String prompt)`
-
-### `rdbms/src/main/java/cn/wisestar/server/impl/AnalysisServiceImpl.java`
-- 包: `cn.wisestar.server.impl`
-- 类型: `class AnalysisServiceImpl`
-- 注解: @Service, @RequiredArgsConstructor, @Slf4j
-- **类说明**：
-  学生答题情况分析实现：基于答题明细表 t_answer_detail 按知识点聚合统计。 【类职责】 提供学生"知识点掌握情况"分析能力：按学生 +（可选）学科/章节/知识点筛选， 汇总每个知识点的作答次数（attempts）、答对次数（correctCount）与正确率（correctRate）， 用于生成学生画像（优势/薄弱知识点），支撑 AI 自习室的个性化学情反馈。 【被谁调用】 - 上层：AnalysisController（知识点评分统计接口、学生画像接口） - 接口定义：AnalysisService（本类是其实现） 【依赖什么】 - AnswerDetailMapper：读取 t_answer_detail（MyBatis-Plus lambda 条件查询） - SecurityContextUtils：获取当前登录用户 ID（studentId 未传时默认查自己） - KnowledgePointQuery / KnowledgePointStat：查询入参与聚合结果 DTO 【核心数据流】 前端请求 → AnalysisController → knowledgePointStats(query) 或 studentProfile(studentId) → 确定查询目标学生（入参优先，否则当前登录用户）→ aggregate() 从 t_answer_detail 按 createBy(学生) + subject/chapter 过滤 → 内存中把每题的 knowledge_point 逗号拆开， 按"学科|章节|知识点"聚合 → 计算正确率 → 返回 List。 【注意（越权防护，已处理）】 AnalysisApi（Controller 层）已加入越权校验：非管理员传入他人 studentId 查询画像时， 强制改为查询当前登录用户自己；管理员可查任意学生。本实现层保持纯查询职责。
-- 方法:
-  - `public List<KnowledgePointStat> knowledgePointStats(KnowledgePointQuery query)`
-    知识点掌握情况统计（对外接口）。
-  - `public List<KnowledgePointStat> studentProfile(String studentId)`
-    学生画像（对外接口）：聚合指定学生的全部答题明细，不限制学科/章节/知识点维度。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/AnswerServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1193,14 +1181,6 @@
 - 类型: `class RepoTemplateServiceImpl`
 - 注解: @Service, @Transactional
 
-### `rdbms/src/main/java/cn/wisestar/server/impl/ReportServiceImpl.java`
-- 包: `cn.wisestar.server.impl`
-- 类型: `class ReportServiceImpl`
-- 注解: @Service, @RequiredArgsConstructor
-- 方法:
-  - `public ReportData getData(String shortId)`
-  - `public int compareTo(Number n1, Number n2)`
-
 ### `rdbms/src/main/java/cn/wisestar/server/impl/RewardServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class RewardServiceImpl`
@@ -1562,7 +1542,7 @@
 - 包: `cn.wisestar.server.mapper`
 - 类型: `interface AnswerDetailMapper`
 - **类说明**：
-  答题明细表（t_answer_detail）数据访问 Mapper（MyBatis-Plus）。 【类职责】 提供 AnswerDetail 实体的基础 CRUD（继承 BaseMapper 自动获得 selectList/insert/delete 等）， 供学生答题情况分析相关业务读写"一次答卷中单道题的作答记录"。 本接口没有自定义 SQL，全部走 MyBatis-Plus 通用方法，逻辑删除由 BaseModel.deleted 自动接管。 【被谁调用】 - 写入方：AnswerServiceImpl.generateAnswerDetails —— 提交答卷时先按 answerId delete 旧明细， 再逐条 insert 新明细（先删后插保证幂等） - 读取方：AnalysisServiceImpl.knowledgePointStats / studentProfile —— 按学生/学科/章节筛选 明细做知识点聚合统计 【依赖什么】 - AnswerDetail 实体（继承 BaseModel，含 createBy=学生ID、isCorrect、knowledgePoint 等分析字段） - MyBatis-Plus BaseMapper 通用能力（需要 Mapper 扫描与 MybatisPlugConfig 分页插件配合） 【核心数据流】 学生提交答卷 → AnswerServiceImpl.generateAnswerDetails 写入本表 → 学生画像/知识点统计（AnalysisServiceImpl）→ selectList(Wrappers.lambdaQuery) → SQL: SELECT * FROM t_answer_detail WHERE is_deleted=0 AND create_by=? AND subject=?... → 内存聚合统计 → KnowledgePointStat 列表返回前端。
+  答题明细表（t_answer_detail）数据访问 Mapper（MyBatis-Plus）。 【类职责】 提供 AnswerDetail 实体的基础 CRUD（继承 BaseMapper 自动获得 selectList/insert/delete 等）， 供答卷/练习相关业务读写"一次答卷中单道题的作答记录"。 本接口没有自定义 SQL，全部走 MyBatis-Plus 通用方法，逻辑删除由 BaseModel.deleted 自动接管。 【被谁调用】 - 写入方：AnswerServiceImpl.generateAnswerDetails —— 提交答卷时先按 answerId delete 旧明细， 再逐条 insert 新明细（先删后插保证幂等） （原分析读取方 AnalysisServiceImpl 已于 2026-09-26 移除） 【依赖什么】 - AnswerDetail 实体（继承 BaseModel，含 createBy=学生ID、isCorrect、knowledgePoint 等分析字段） - MyBatis-Plus BaseMapper 通用能力（需要 Mapper 扫描与 MybatisPlugConfig 分页插件配合） 【核心数据流】 学生提交答卷 → AnswerServiceImpl.generateAnswerDetails 写入本表 → selectList(Wrappers.lambdaQuery) → SQL: SELECT * FROM t_answer_detail WHERE is_deleted=0 AND create_by=? AND subject=?... 。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/AnswerMapper.java`
 - 包: `cn.wisestar.server.mapper`

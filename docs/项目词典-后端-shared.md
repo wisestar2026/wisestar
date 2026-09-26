@@ -8,30 +8,6 @@
 > 本文件仅描述代码事实，未收录任何密钥；配置项中的 token 均为占位符。
 
 ---
-### `shared/src/main/java/cn/wisestar/server/core/aop/DataPermAspect.java`
-- 包: `cn.wisestar.server.core.aop`
-- 类型: `class DataPermAspect`
-- 注解: @Aspect, @Component, @Slf4j, @RequiredArgsConstructor
-- **类说明**：
-  数据权限校验切面（DataPermAspect）。
-  **所属模块**：shared 模块 AOP 切面包（cn.wisestar.server.core.aop）。
-
-  **类职责**：对标注了 EnableDataPerm 注解的 Controller 方法 做数据级权限的前置校验（区别于 @PreAuthorize 的功能级权限）。 用于"项目/问卷"维度的数据隔离：当前用户必须拥有访问指定问卷的权限， 否则抛出异常阻止请求继续执行。
-
-  **工作机制**：
-
-  - 通过切点表达式 `@annotation(dataPerm)` 匹配所有标注
-- 方法:
-  - `public void checkPermissionPointCut(EnableDataPerm dataPerm)`
-    切点定义：匹配所有标注了 @EnableDataPerm 的方法。
-  - `public void around(JoinPoint joinPoint, EnableDataPerm dataPerm) throws Throwable`
-    前置通知：方法执行前校验数据权限。
-    **执行步骤**：
-
-    - 解析方法参数名与参数值，构建 SpEL 求值上下文（参数名作为变量）；
-    - 求值注解 key 表达式得到目标资源标识（如问卷 id），空值直接拒绝 （"未找到对应的问卷"）；
-    - 获取当前用户可见的项目权限集合，标识不在集合内则拒绝 （"没有权限访问本问卷"）。
-
 ### `shared/src/main/java/cn/wisestar/server/core/base/converter/PublicQueryConverter.java`
 - 包: `cn.wisestar.server.core.base.converter`
 - 类型: `class PublicQueryConverter`
@@ -175,7 +151,7 @@
 
   **类职责**：集中配置应用运行期的三类能力：
 
-  - **AOP 代理**（@EnableAspectJAutoProxy）：开启基于注解的 AOP （如 cn.wisestar.server.core.aop.DataPermAspect 数据权限切面）；
+  - **AOP 代理**（@EnableAspectJAutoProxy）：开启基于注解的 AOP 代理能力（问卷数据权限切面移除后，当前无自定义切面）；
   - **异步支持**（@EnableAsync + AsyncConfigurer）：提供全局线程池 （核心 4、最大 8、前缀 "MyExecutor-"），供 @Async 方法使用 （如消息通知、异步统计等）；
   - **全局类型转换器注册**：应用启动完成（ApplicationReadyEvent）后， 向 Spring 默认转换服务注册三个自定义 Converter： UniqueLimitSettingConverter、PublicQueryConverter、 RandomSurveyConverter，使 URL 参数能自动绑定为对应的复杂类型。
 
@@ -606,7 +582,7 @@
 
   **与普通异常的区别**：cn.wisestar.server.core.mvc.advice.GlobalExceptionHandler 的兜底 ExceptionHandler 会特判本类型：只有本类型的 message 才会被透传给前端， 其他未知异常一律返回通用文案"服务出了点问题"，避免把内部实现细节泄露给客户端。
 
-  **使用场景示例**：cn.wisestar.server.core.aop.DataPermAspect 在 数据权限校验失败时抛出本异常（如"没有权限访问本问卷"）。
+  **使用场景示例**：用户/字典批量导入解析失败（`UserServiceImpl`/`DictServiceImpl`）、 压缩包生成失败（`AnswerServiceImpl`）等不可预期错误时抛出本异常。
 - 方法:
   - `public InternalServerError()`
     构造空异常。
@@ -1200,7 +1176,7 @@
 - 类型: `class AnswerQuery`
 - 注解: @Data, @EqualsAndHashCode
 - **类说明**：
-  答卷分页查询条件 DTO。 【类职责】 承载"答卷列表查询"（AnswerApi.listAnswer）的过滤参数：按项目、主键、时间区间、 项目名称等维度筛选答卷。 【被谁调用】 - AnswerApi.listAnswer → AnswerServiceImpl.listAnswer（构造 MyBatis-Plus 查询条件） - AnswerServiceImpl.downloadSurvey（导出答卷时复用 listAnswer 查询） 【数据流】 前端答卷列表页（AnswerListPage）GET /api/answer/list → 本 DTO（GET query 参数绑定） → AnswerServiceImpl.listAnswer → AnswerMapper 分页查询 t_answer → AnswerView 列表返回
+  答卷分页查询条件 DTO。 【类职责】 承载"答卷列表查询"的过滤参数：按项目、主键、时间区间、 项目名称等维度筛选答卷。 【被谁调用】 - `AnswerService.listAnswer/getAnswer/count/listAnswerDeleted`（`AnswerServiceImpl`） - `SurveyServiceImpl` / `RandomSurveyProcessor` 构造查询条件 【数据流】 Service 构造本 DTO → `AnswerServiceImpl` → `AnswerMapper` 分页查询 t_answer → `AnswerView` 列表返回。 `/api/answer/*` 接口已于 2026-09-26 移除，本 DTO 仅供保留的答卷/问卷 Service 复用。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/AnswerRequest.java`
 - 包: `cn.wisestar.server.domain.dto`
@@ -1431,11 +1407,6 @@
 - 方法:
   - `public PermissionView(String code)`
 
-### `shared/src/main/java/cn/wisestar/server/domain/dto/PickRepoQuestionRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class PickRepoQuestionRequest`
-- 注解: @Data
-
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/PositionQuery.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class PositionQuery`
@@ -1647,11 +1618,6 @@
 - 类型: `class RepoView`
 - 注解: @Data
 
-### `shared/src/main/java/cn/wisestar/server/domain/dto/ReportData.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class ReportData`
-- 注解: @Data
-
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/RoleQuery.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class RoleQuery`
@@ -1665,11 +1631,6 @@
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/RoleView.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class RoleView`
-- 注解: @Data
-
-### `shared/src/main/java/cn/wisestar/server/domain/dto/SelectCategoryRequest.java`
-- 包: `cn.wisestar.server.domain.dto`
-- 类型: `class SelectCategoryRequest`
 - 注解: @Data
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/SelectDeptRequest.java`
@@ -1847,7 +1808,7 @@
 - 类型: `class WhiteListRequest`
 - 注解: @Data
 - **类说明**：
-  问卷/考试参与白名单设置请求 DTO。 【类职责】 承载"设置问卷参与白名单"接口（ProjectApi 的 setWhiteList 类接口）的请求参数， 支持两种方式指定白名单人员：手工勾选用户列表（selected）或上传用户文件（file）。 【被谁调用】 - 写入方：ProjectApi 白名单设置接口，将本 DTO 转为 ProjectPartner / 白名单记录保存 - 来源：前端项目管理页的"白名单设置"弹窗表单 【依赖什么】 - MultipartFile：Spring MVC 文件上传对象，仅使用 selected 方式时可为空 【数据流】 前端弹窗（勾选用户或上传文件）→ ProjectApi（HTTP multipart/form-data 或 JSON） → 解析为 WhiteListRequest → Service 层落库（t_project_partner / 白名单相关表）
+  问卷/考试参与白名单设置请求 DTO。 【类职责】 承载"设置问卷参与白名单"的请求参数， 支持两种方式指定白名单人员：手工勾选用户列表（selected）或上传用户文件（file）。 【被谁调用】 - 写入方：`ProjectPartnerService.importPartner`（`ProjectPartnerServiceImpl`）解析本 DTO 并落库 - 原入口：`ProjectApi` 白名单设置接口（已于 2026-09-26 移除），当前 `importPartner` 暂无调用方，本 DTO 随 `ProjectPartnerService` 保留 【依赖什么】 - MultipartFile：Spring MVC 文件上传对象，仅使用 selected 方式时可为空 【数据流】 前端弹窗（勾选用户或上传文件）→（原 ProjectApi）→ 解析为 WhiteListRequest → Service 层落库（t_project_partner / 白名单相关表）
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/WrongQuestionQuery.java`
 - 包: `cn.wisestar.server.domain.dto`
@@ -2502,24 +2463,6 @@
 - **类说明**：
   AI 服务接口（TTS 语音 + DALL-E 图片 + GPT 文本）。
 
-### `shared/src/main/java/cn/wisestar/server/service/AnalysisService.java`
-- 包: `cn.wisestar.server.service`
-- 类型: `interface AnalysisService`
-- **类说明**：
-  学生答题情况分析服务接口（AnalysisService）。
-  **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。 为 AI 自习室系统新增的统计分析能力。
-
-  **类职责**：定义"学生答题情况"的统计分析接口，按知识点维度 聚合学生的答题记录，输出答题次数、正确次数与正确率，用于 学习情况诊断与知识点画像。
-
-  **实现类**：`cn.wisestar.server.impl.AnalysisServiceImpl` （rdbms 模块，@Service 注册），内部通过 AnswerDetailMapper 查询 答题明细表（t_answer_detail），在内存中按 "学科 subject - 章节 chapter - 知识点 knowledgePoint" 聚合； 一道题可挂多个知识点（逗号分隔），会拆开分别计入各知识点。
-
-  **调用方**：`cn.wisestar.server.api.AnalysisApi` （api 模块 Controller）：
-
-  - GET /api/analysis/knowledge-point/stats → knowledgePointStats(KnowledgePointQuery)
-  - GET /api/analysis/knowledge-point/student-profile → studentProfile(String)
-
-  **数据流**：前端 GET 请求（携带筛选条件）→ AnalysisApi → 本接口 → AnalysisServiceImpl（解析 studentId 为空时取当前登录用户） → AnswerDetailMapper 查询 → 聚合为 List → 返回前端。
-
 ### `shared/src/main/java/cn/wisestar/server/service/AnswerService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface AnswerService`
@@ -2726,7 +2669,7 @@
 
   **类职责**：提供项目参与者（答卷人/协作者）的管理能力：参与者分页、 添加/删除参与者、获取当前用户的可见项目权限集合（数据权限核心）、 参与者导出与批量导入。实现类位于 rdbms 模块（ProjectPartnerServiceImpl）。
 
-  **缓存设计**：当前用户的"可见项目权限集合"（getProjectPerms）使用 CacheConsts#projectPermissionCacheName 缓存（key 为用户 id）， 添加/删除参与者时按当前用户 id 精确失效该缓存，保证权限变更实时生效。 该缓存被 cn.wisestar.server.core.aop.DataPermAspect 数据权限切面调用。
+  **缓存设计**：当前用户的"可见项目权限集合"（getProjectPerms）使用 CacheConsts#projectPermissionCacheName 缓存（key 为用户 id）， 添加/删除参与者时按当前用户 id 精确失效该缓存，保证权限变更实时生效。 该缓存原由问卷数据权限切面（DataPermAspect，已于 2026-09-26 移除）调用；当前 `getProjectPerms()` 暂无调用方，随 `ProjectPartnerService` 保留。
 
 ### `shared/src/main/java/cn/wisestar/server/service/ProjectService.java`
 - 包: `cn.wisestar.server.service`
@@ -2747,17 +2690,6 @@
   **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。
 
   **类职责**：提供题库（Repo）与题库题目（模板）的管理能力：题库分页、 题库 CRUD、题库绑定/解绑模板、从题库挑题（随机问卷数据源）、从模板导入、 用户错题本（UserBook）管理、题库选择器、题库题目导出。 题库是 AI 自习室系统中知识点（subject/chapter/knowledgePoint/difficulty） 组织与复用试题的核心载体。实现类位于 rdbms 模块（RepoServiceImpl）。
-
-### `shared/src/main/java/cn/wisestar/server/service/ReportService.java`
-- 包: `cn.wisestar.server.service`
-- 类型: `interface ReportService`
-- **类说明**：
-  报表数据服务接口（ReportService）。
-  **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。
-
-  **类职责**：提供问卷项目的统计报表数据，供项目概要/数据看板页面 展示回收统计、每日回收数量趋势等。实现类位于 rdbms 模块 （ReportServiceImpl）。
-
-  **调用方**：api 模块 ReportApi（GET /api/report/xxx 系列接口）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/RewardService.java`
 - 包: `cn.wisestar.server.service`

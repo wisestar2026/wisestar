@@ -12,9 +12,8 @@
  *   失败: { code: 非200, message: "错误信息" }
  *
  * 被谁引用:
- *   - src/api/ 下的所有业务 API 文件（answer/project/repo/survey/template/user.js）
+ *   - src/api/ 下的所有业务 API 文件（repo/practice/student/system/template/user.js 等）
  *   - 各业务 API 文件被对应页面/组件引用，例如:
- *     ProjectListPage → api/project.js → request.js → POST /api/project/list
  *     QuestionListPage → api/template.js → request.js → GET /api/template/list
  *   - 注意: 文件上传类接口（api/upload.js、api/repo.js 的 importTemplate）不走本实例，
  *     而是使用原生 axios + multipart/form-data，因为拦截器只解包 JSON。

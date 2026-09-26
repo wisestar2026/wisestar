@@ -21,8 +21,7 @@ import java.util.List;
  *
  * <p><b>缓存设计</b>：当前用户的"可见项目权限集合"（getProjectPerms）使用
  * {@link CacheConsts#projectPermissionCacheName} 缓存（key 为用户 id），
- * 添加/删除参与者时按当前用户 id 精确失效该缓存，保证权限变更实时生效。
- * 该缓存被 {@link cn.wisestar.server.core.aop.DataPermAspect} 数据权限切面调用。</p>
+ * 添加/删除参与者时按当前用户 id 精确失效该缓存，保证权限变更实时生效。</p>
  *
  * @author javahuang
  * @date 2022/1/28
@@ -58,9 +57,7 @@ public interface ProjectPartnerService {
 	/**
 	 * 获取当前用户可访问的项目权限集合（带缓存）。
 	 *
-	 * <p>返回当前用户有权访问的项目 id 集合，是数据权限校验的核心数据源：
-	 * {@link cn.wisestar.server.core.aop.DataPermAspect} 通过它判断用户能否
-	 * 访问指定问卷/项目。缓存 key 为当前用户 id。</p>
+	 * <p>返回当前用户有权访问的项目 id 集合。缓存 key 为当前用户 id。</p>
 	 *
 	 * @return 可访问项目 id 列表（String）
 	 */
