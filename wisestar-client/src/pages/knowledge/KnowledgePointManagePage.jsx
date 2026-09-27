@@ -111,7 +111,8 @@ export default function KnowledgePointManagePage() {
   // ---- 加载学科（默认选中第一个） ----
   useEffect(() => {
     listSubjects().then((res) => {
-      const list = res?.data || [];
+      // 英语知识统一在英语板块维护，知识管理不展示英语学科
+      const list = (res?.data || []).filter((s) => s.code !== 'ENGLISH');
       setSubjects(list);
       setSubjectId((prev) => prev || list[0]?.id);
     }).catch(() => { /* request 拦截器已提示 */ });

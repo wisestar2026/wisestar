@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Card, Select, Tree, Button, Tag, Tooltip, Typography, Space, Empty,
-  Spin, message, Image,
+  Spin, message, Image, List,
 } from 'antd';
 import { EditOutlined, ReloadOutlined, PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import {
@@ -23,6 +23,7 @@ import {
   listMatchedKnowledgePointQuestions,
 } from '../../api/knowledge';
 import { updateTemplate } from '../../api/template';
+import { getUnitBooks, getUnitWords, getUnitSentences } from '../../api/englishAdmin';
 import NodeEditModal from '../../components/research/NodeEditModal';
 import AddQuestionModal from '../../components/research/AddQuestionModal';
 import ImportanceTag from '../../utils/importance';
@@ -194,6 +195,14 @@ export default function TeachingResearchPlatformPage() {
   const [addOpen, setAddOpen] = useState(false);
   const expandedRef = useRef([]);
 
+  // 英语学科专用：单元目录（册别 → 单元 → 单词/重点句子）与只读内容
+  const [englishUnits, setEnglishUnits] = useState([]);
+  const [englishItems, setEnglishItems] = useState({ key: null, type: null, title: '', loading: false, list: [] });
+
+  // 当前学科是否为英语：英语知识统一来自英语板块，不走章节/小节/知识点树
+  const currentSubject = subjects.find((s) => s.id === subjectId);
+  const isEnglish = currentSubject?.code === 'ENGLISH';
+
   /* ---------- 初始化：学科（失败给出空态 + 重试，避免无限转圈） ---------- */
   const loadSubjects = () => {
     setLoadingSubjects(true);
@@ -225,9 +234,35 @@ export default function TeachingResearchPlatformPage() {
     setExpandedKeys([]);
     expandedRef.current = [];
     setKpQuestions({ pid: null, list: [], loading: false, editing: null });
+    setEnglishItems({ key: null, type: null, title: '', loading: false, list: [] });
+  };
+
+  // 英语：加载单元目录（含单词数/句子数），年级选项取自单元数据
+  const loadEnglishUnits = (keepGrade) => {
+    setLoadingRoot(true);
+    getUnitBooks({})
+      .then((res) => {
+        const raw = unwrap(res);
+        const list = Array.isArray(raw) ? raw : raw?.list || [];
+        setEnglishUnits(list);
+        const gs = [...new Set(list.map((u) => u.grade).filter(Boolean))];
+        setGradeOptions(gs);
+        if (!keepGrade || !gs.includes(grade)) {
+          setGrade(gs.length > 0 ? gs[0] : undefined);
+          setExpandedKeys([]);
+          expandedRef.current = [];
+        }
+      })
+      .catch((e) => message.error('加载英语单元失败：' + (e?.message || e)))
+      .finally(() => setLoadingRoot(false));
   };
 
   const loadChapters = (subject, keepGrade) => {
+    // 英语学科知识来自英语板块：按年级加载「册别 → 单元」目录
+    if (subjects.find((s) => s.id === subject)?.code === 'ENGLISH') {
+      loadEnglishUnits(keepGrade);
+      return;
+    }
     setLoadingRoot(true);
     listChapters({ subjectId: subject })
       .then((res) => {
@@ -341,6 +376,37 @@ export default function TeachingResearchPlatformPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chapters, secMap, kpMap, grade]);
 
+  /* ---------- 英语树：册别 → 单元 → 单词/重点句子（只读） ---------- */
+  const englishTreeData = useMemo(() => {
+    const termOrder = { '上册': 0, '下册': 1 };
+    const units = englishUnits.filter((u) => !grade || !u.grade || u.grade === grade);
+    const terms = [...new Set(units.map((u) => u.term).filter(Boolean))]
+      .sort((a, b) => (termOrder[a] ?? 9) - (termOrder[b] ?? 9));
+    return terms.map((term) => ({
+      key: 'et:' + term,
+      title: term + '英语',
+      isLeaf: false,
+      children: units
+        .filter((u) => u.term === term)
+        .sort((a, b) => (a.sort || 0) - (b.sort || 0))
+        .map((u) => {
+          const idx = englishUnits.indexOf(u);
+          return {
+            key: 'eu:' + idx,
+            title: u.unit,
+            isLeaf: false,
+            children: [
+              { key: `ec:${idx}:word`, title: `单词（${u.wordCount || 0}）`, isLeaf: true },
+              { key: `ec:${idx}:sentence`, title: `重点句子（${u.sentenceCount || 0}）`, isLeaf: true },
+            ],
+          };
+        }),
+    }));
+  }, [englishUnits, grade]);
+
+  // 英语走英语板块数据，其他学科走章节/小节/知识点树
+  const effectiveTreeData = isEnglish ? englishTreeData : treeData;
+
   const onNodeSelect = (_keys, info) => {
     const key = String(info?.node?.key ?? '');
     if (key.startsWith('ch:')) {
@@ -351,6 +417,8 @@ export default function TeachingResearchPlatformPage() {
       if (sec) setEditState({ nodeType: 'section', record: sec });
     } else if (key.startsWith('kp:')) {
       openQuestions(key.slice(3));
+    } else if (key.startsWith('ec:')) {
+      openEnglishItems(key);
     }
   };
 
@@ -412,6 +480,28 @@ export default function TeachingResearchPlatformPage() {
   const openQuestions = (pid) => {
     if (kpQuestions.pid === pid && kpQuestions.list.length) return;
     loadQuestions(pid);
+  };
+
+  /* ---------- 英语：单元下「单词 / 重点句子」只读浏览 ---------- */
+  const openEnglishItems = (key) => {
+    const parts = key.split(':'); // ['ec', unitIndex, type]
+    const unit = englishUnits[Number(parts[1])];
+    if (!unit) return;
+    const type = parts[2];
+    const label = type === 'word' ? '单词' : '重点句子';
+    setEnglishItems({ key, type, title: `${unit.unit} · ${label}`, loading: true, list: [] });
+    const params = { version: unit.version, grade: unit.grade, term: unit.term, unit: unit.unit };
+    const p = type === 'word'
+      ? getUnitWords({ ...params, current: 1, pageSize: 500 })
+      : getUnitSentences(params);
+    p.then((res) => {
+      const raw = unwrap(res);
+      const list = Array.isArray(raw) ? raw : raw?.list || [];
+      setEnglishItems((s) => ({ ...s, loading: false, list }));
+    }).catch((e) => {
+      message.error('加载失败：' + (e?.message || e));
+      setEnglishItems((s) => ({ ...s, loading: false }));
+    });
   };
 
   const refreshQuestions = () => {
@@ -503,7 +593,9 @@ export default function TeachingResearchPlatformPage() {
         bodyStyle={{ padding: 8, overflow: 'auto', maxHeight: 'calc(100vh - 260px)' }}
       >
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', margin: '4px 8px 8px' }}>
-          点「章节 / 小节」名称修改信息；点「知识点」查看直绑题目，右侧 ✎ 可编辑简介。
+          {isEnglish
+            ? '英语知识来自英语板块：点单元下的「单词 / 重点句子」只读浏览。'
+            : '点「章节 / 小节」名称修改信息；点「知识点」查看直绑题目，右侧 ✎ 可编辑简介。'}
         </Typography.Text>
         <Spin spinning={loadingSubjects || (!!subjectId && loadingRoot)}>
           {!loadingSubjects && subjects.length === 0 ? (
@@ -515,9 +607,9 @@ export default function TeachingResearchPlatformPage() {
             </Empty>
           ) : (
             <>
-              {treeData.length ? (
+              {effectiveTreeData.length ? (
                 <Tree
-                  treeData={treeData}
+                  treeData={effectiveTreeData}
                   expandedKeys={expandedKeys}
                   onExpand={onExpand}
                   onSelect={onNodeSelect}
@@ -527,7 +619,9 @@ export default function TeachingResearchPlatformPage() {
               ) : (
                 <Empty
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={subjectId ? '该学科暂无章节，请先在知识管理中录入' : '请选择学科'}
+                  description={isEnglish
+                    ? '该年级暂无英语单元，请先在英语板块录入'
+                    : (subjectId ? '该学科暂无章节，请先在知识管理中录入' : '请选择学科')}
                 />
               )}
             </>
@@ -540,28 +634,41 @@ export default function TeachingResearchPlatformPage() {
         title={(
           <div className="trp-header">
             <div className="trp-panel-title">
-              {selectedKp ? (
-                <>
-                  <Typography.Text strong>{selectedKp.name}</Typography.Text>
-                  <Tooltip title={parseKpIntro(selectedKp.content) || '暂无简介'}>
-                    <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }} ellipsis>
-                      {parseKpIntro(selectedKp.content) || '暂无简介'}
-                    </Typography.Text>
-                  </Tooltip>
-                </>
-              ) : '直绑题目'}
+              {isEnglish
+                ? (englishItems.key ? englishItems.title : '英语知识')
+                : (selectedKp ? (
+                  <>
+                    <Typography.Text strong>{selectedKp.name}</Typography.Text>
+                    <Tooltip title={parseKpIntro(selectedKp.content) || '暂无简介'}>
+                      <Typography.Text type="secondary" style={{ fontSize: 12, marginLeft: 8 }} ellipsis>
+                        {parseKpIntro(selectedKp.content) || '暂无简介'}
+                      </Typography.Text>
+                    </Tooltip>
+                  </>
+                ) : '直绑题目')}
             </div>
             <Space style={{ marginLeft: 'auto' }}>
-              {selectedKp && (
-                <>
-                  <Tag color="purple" style={{ marginRight: 0 }}>
-                    {kpQuestions.list.length} 题
-                  </Tag>
-                  <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>
-                    绑定新题
-                  </Button>
-                  <Button size="small" icon={<ReloadOutlined />} onClick={refreshQuestions} />
-                </>
+              {isEnglish ? (
+                englishItems.key && (
+                  <>
+                    <Tag color="purple" style={{ marginRight: 0 }}>
+                      {englishItems.list.length} 条
+                    </Tag>
+                    <Button size="small" icon={<ReloadOutlined />} onClick={() => openEnglishItems(englishItems.key)} />
+                  </>
+                )
+              ) : (
+                selectedKp && (
+                  <>
+                    <Tag color="purple" style={{ marginRight: 0 }}>
+                      {kpQuestions.list.length} 题
+                    </Tag>
+                    <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>
+                      绑定新题
+                    </Button>
+                    <Button size="small" icon={<ReloadOutlined />} onClick={refreshQuestions} />
+                  </>
+                )
               )}
             </Space>
           </div>
@@ -569,7 +676,42 @@ export default function TeachingResearchPlatformPage() {
         className="trp-qpanel-card"
         bodyStyle={{ padding: 12, overflow: 'auto', maxHeight: 'calc(100vh - 260px)' }}
       >
-        {!kpQuestions.pid ? (
+        {isEnglish ? (
+          !englishItems.key ? (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="点左侧单元下的「单词」或「重点句子」查看内容" />
+          ) : (
+            <Spin spinning={englishItems.loading}>
+              <List
+                size="small"
+                dataSource={englishItems.list}
+                locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无内容" /> }}
+                renderItem={(row) => (
+                  <List.Item>
+                    <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                      {englishItems.type === 'word' ? (
+                        <>
+                          <Space>
+                            <Typography.Text strong>{row.spell}</Typography.Text>
+                            {row.phonetic && <Typography.Text type="secondary">/{row.phonetic}/</Typography.Text>}
+                          </Space>
+                          <Typography.Text>{row.meaning}</Typography.Text>
+                          {row.exampleSentence && (
+                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>{row.exampleSentence}</Typography.Text>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Typography.Text strong>{row.en}</Typography.Text>
+                          {row.zh && <Typography.Text type="secondary">{row.zh}</Typography.Text>}
+                        </>
+                      )}
+                    </Space>
+                  </List.Item>
+                )}
+              />
+            </Spin>
+          )
+        ) : !kpQuestions.pid ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="点左侧知识点，查看其直绑题目" />
         ) : (
           <Spin spinning={kpQuestions.loading}>

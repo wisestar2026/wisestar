@@ -23,6 +23,21 @@
 import request from './request';
 import axios from 'axios';
 
+/** 单元目录（教研平台英语知识树）：按版本/年级/册别取，含单词数与句子数 */
+export function getUnitBooks(params) {
+  return request.get('/english/unit/books', { params });
+}
+
+/** 单元单词列表（教研平台只读浏览，走登录可读接口） */
+export function getUnitWords(params) {
+  return request.get('/english/word/list', { params });
+}
+
+/** 单元重点句子列表（教研平台只读浏览，走登录可读接口） */
+export function getUnitSentences(params) {
+  return request.get('/english/student/sentences', { params });
+}
+
 /** 小节分页列表 */
 export function getSections(params) {
   return request.get('/english/section/list', { params });

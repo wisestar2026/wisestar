@@ -1786,8 +1786,6 @@ INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, i
 INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2002', '1001', '古诗文诵读', '三年级', '上', '人教版', '📜', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2002');
 INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2003', '1002', '100以内加减法', '一年级', '下', '人教版', '🧮', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2003');
 INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2004', '1002', '图形的认识', '一年级', '下', '人教版', '📐', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2004');
-INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2005', '1003', '字母与拼读', '三年级', '上', '外研版', '🔠', 1, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2005');
-INSERT INTO t_chapter (id, subject_id, name, grade, term, version, icon, sort, is_deleted, create_at, create_by) SELECT '2006', '1003', '基础单词', '三年级', '上', '外研版', '🗣️', 2, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_chapter WHERE id = '2006');
 
 -- ----------------------------
 -- Table structure for t_section（小节：章节下的学习小站，含内容/练习设置 JSON）
@@ -1822,9 +1820,6 @@ INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted
 INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted, create_at, create_by) SELECT '3006', '2003', '减法小站', 2, '{"objective":"掌握两位数退位减法与混合运算","overview":"学习个位不够减向十位借一的规则。","points":["退位减法竖式","破十法口算","加减混合运算顺序"]}', '{"questionCount":10,"difficulty":"进阶","types":["Radio","Judge"]}', 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_section WHERE id = '3006');
 INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted, create_at, create_by) SELECT '3007', '2004', '平面图形', 1, '{"objective":"认识常见平面图形","overview":"三角形、长方形、正方形、圆的特征。","points":["边与角的数量","图形分类"]}', '{"questionCount":8,"difficulty":"基础","types":["Radio"]}', 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_section WHERE id = '3007');
 INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted, create_at, create_by) SELECT '3008', '2004', '立体图形', 2, '{"objective":"认识常见立体图形","overview":"长方体、正方体、圆柱、球的特征。","points":["面与棱","图形与实物对应"]}', '{"questionCount":8,"difficulty":"基础","types":["Radio","Judge"]}', 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_section WHERE id = '3008');
-INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted, create_at, create_by) SELECT '3009', '2005', '字母乐园', 1, '{"objective":"掌握 26 个字母","overview":"字母名称音、大小写与书写占格。","points":["26 个字母顺序","大小写对应","5 个元音字母"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_section WHERE id = '3009');
-INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted, create_at, create_by) SELECT '3010', '2005', '拼读魔法', 2, '{"objective":"掌握自然拼读","overview":"元音字母在单词中的短音规律。","points":["a→/æ/ e→/e/ i→/ɪ/","辅音发音","拼读练习"]}', '{"questionCount":8,"difficulty":"进阶","types":["Radio"]}', 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_section WHERE id = '3010');
-INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted, create_at, create_by) SELECT '3011', '2006', '校园词汇', 1, '{"objective":"掌握校园常用词汇","overview":"教室、文具、颜色等词汇。","points":["book/pen/ruler","red/blue/green"]}', '{"questionCount":10,"difficulty":"基础","types":["Radio","FillBlank"]}', 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_section WHERE id = '3011');
 
 -- 老库表结构升级（新库已由上方 CREATE 建列，此块幂等）
 ALTER TABLE t_section ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)';
@@ -1839,9 +1834,6 @@ UPDATE t_section SET grade='一年级', term='下' WHERE id='3005' AND grade IS 
 UPDATE t_section SET grade='一年级', term='下' WHERE id='3006' AND grade IS NULL;
 UPDATE t_section SET grade='一年级', term='下' WHERE id='3007' AND grade IS NULL;
 UPDATE t_section SET grade='一年级', term='下' WHERE id='3008' AND grade IS NULL;
-UPDATE t_section SET grade='三年级', term='上' WHERE id='3009' AND grade IS NULL;
-UPDATE t_section SET grade='三年级', term='上' WHERE id='3010' AND grade IS NULL;
-UPDATE t_section SET grade='三年级', term='上' WHERE id='3011' AND grade IS NULL;
 
 -- ----------------------------
 -- Table structure for t_knowledge_point（知识点：最小学习单元，含内容设置 JSON 与图片）
@@ -1879,9 +1871,6 @@ INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, i
 INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4009', '3006', '加减混合运算', 2, '{"points":["从左到右依次计算","有括号先算括号内","两步式混合运算"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4009');
 INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4010', '3007', '平面图形', 1, '{"points":["三角形 3 条边 3 个角","长方形对边相等","圆由曲线围成"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4010');
 INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4011', '3008', '立体图形', 1, '{"points":["长方体 6 个面","正方体 6 个面都是正方形","球可任意滚动"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4011');
-INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4012', '3009', '26个字母', 1, '{"points":["A-Z 字母顺序","元音字母 A E I O U","书写占格规范"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4012');
-INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4013', '3010', '自然拼读', 1, '{"points":["短音发音规律","c-a-t 拼读","单词拼读训练"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4013');
-INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, is_deleted, create_at, create_by) SELECT '4014', '3011', '校园词汇', 1, '{"points":["学习用品词汇","颜色词汇","看图说词"]}', NULL, 0, CURRENT_TIMESTAMP, '1457995481966747649' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM t_knowledge_point WHERE id = '4014');
 
 -- 老库表结构升级（新库已由上方 CREATE 建列，此块幂等）
 ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)';
@@ -1899,9 +1888,6 @@ UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4008' AND g
 UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4009' AND grade IS NULL;
 UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4010' AND grade IS NULL;
 UPDATE t_knowledge_point SET grade='一年级', term='下' WHERE id='4011' AND grade IS NULL;
-UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4012' AND grade IS NULL;
-UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4013' AND grade IS NULL;
-UPDATE t_knowledge_point SET grade='三年级', term='上' WHERE id='4014' AND grade IS NULL;
 
 -- ----------------------------
 -- Table structure for t_knowledge_point_question（知识点-题目绑定：从题目库选题，多对多）
@@ -2218,8 +2204,6 @@ UPDATE t_chapter SET grade='一年级', term='上', version='人教版' WHERE id
 UPDATE t_chapter SET grade='三年级', term='上', version='人教版' WHERE id='2002' AND grade IS NULL;
 UPDATE t_chapter SET grade='一年级', term='下', version='人教版' WHERE id='2003' AND grade IS NULL;
 UPDATE t_chapter SET grade='一年级', term='下', version='人教版' WHERE id='2004' AND grade IS NULL;
-UPDATE t_chapter SET grade='三年级', term='上', version='外研版' WHERE id='2005' AND grade IS NULL;
-UPDATE t_chapter SET grade='三年级', term='上', version='外研版' WHERE id='2006' AND grade IS NULL;
 
 -- 英语学习模块
 CREATE TABLE IF NOT EXISTS t_english_word (
