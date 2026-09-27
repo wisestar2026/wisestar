@@ -236,17 +236,21 @@ public class StudentApi {
 	/**
 	 * 学员端学科学习进度（章节 → 知识点掌握度/评级/薄弱）。
 	 *
-	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/progress?subjectId=&versionId=。</p>
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/study/progress?subjectId=&versionId=&grade=&term=。</p>
 	 *
 	 * @param subjectId 学科ID
 	 * @param versionId 教材版本ID（可选）
+	 * @param grade     年级（可选，限定本学期年级）
+	 * @param term      册别（可选，上/下，限定本学期）
 	 * @return 章节及其知识点的真实评价值
 	 */
 	@GetMapping("/study/progress")
 	@PreAuthorize("isAuthenticated()")
 	public StudentStudyProgressView studyProgress(@RequestParam(required = false) String subjectId,
-			@RequestParam(required = false) String versionId) {
-		return studentService.studyProgress(subjectId, versionId);
+			@RequestParam(required = false) String versionId,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term) {
+		return studentService.studyProgress(subjectId, versionId, grade, term);
 	}
 
 	/**

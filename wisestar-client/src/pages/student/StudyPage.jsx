@@ -14,11 +14,11 @@
  * 被谁引用: App.jsx 路由表（/student/study）；StudentLayout 子路由
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
-import { getStudySections, uploadActivity } from '../../api/student';
+import { getStudySections, uploadActivity, getStudentStats } from '../../api/student';
 import IconTile from '../../components/common/IconTile';
 import StarRating from '../../components/common/StarRating';
 import './StudyPage.css';
@@ -58,6 +58,18 @@ export default function StudyPage() {
   // 章节数据：真实模式用真实章节；否则用 mock 学科章节
   const chapters = realMode ? (realChapters || []) : subject.chapters;
 
+  // 本学期学习情况：学习统计（练习量/正确率/积分/学币）
+  const [stats, setStats] = useState(null);
+  useEffect(() => {
+    if (!realMode) {
+      setStats(null);
+      return;
+    }
+    getStudentStats()
+      .then((res) => setStats(res?.data || null))
+      .catch(() => setStats(null));
+  }, [realMode]);
+
   // 学科/年级切换 → 按订单授权年级加载真实章节
   useEffect(() => {
     if (realMode) {
@@ -69,13 +81,23 @@ export default function StudyPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSubject, grade, realMode]);
 
-  // 学科/版本切换 → 加载真实掌握度/薄弱（章节 → 知识点）
+  // 学期口径：取该学员当前年级可访问章节归属的 term；唯一则直接采用，多值时按当前月份兜底
+  const chapterTerms = [...new Set((realChapters || []).map((c) => c.term).filter(Boolean))];
+  const semesterTerm = (() => {
+    if (chapterTerms.length === 1) return chapterTerms[0];
+    const month = new Date().getMonth() + 1;
+    const byDate = month >= 9 || month <= 1 ? '上' : '下';
+    if (chapterTerms.includes(byDate)) return byDate;
+    return chapterTerms[0] || null;
+  })();
+
+  // 学科/版本/学期切换 → 加载真实掌握度/薄弱（章节 → 知识点）
   useEffect(() => {
     if (realMode) {
-      fetchStudyProgress(activeSubject, version);
+      fetchStudyProgress(activeSubject, version, grade, semesterTerm);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSubject, version, realMode]);
+  }, [activeSubject, version, grade, semesterTerm, realMode]);
 
   // 选中章节：章节列表只负责选中，小节改由中栏以行列表展示（按章节缓存小节）
   const selectChapter = (chId) => {
@@ -133,6 +155,106 @@ export default function StudyPage() {
     : (activeChapter?.kps || []);
   const sectionsLoading = realMode && !!selectedChapterId && sectionsMap[selectedChapterId] === undefined;
 
+  // 研习首页看板：本学期重点（管理员标注重点程度）+ 学习情况 + 优势/不足
+  const dash = useMemo(() => {
+    const IMP_RANK = { core: 3, key: 2, normal: 1 };
+    const rankLabel = (r) => (r >= 3 ? 'core' : r === 2 ? 'key' : r === 1 ? 'normal' : '');
+    const sectionMap = new Map();
+    const strengths = [];
+    const weaknesses = [];
+    let totalKps = 0;
+    let masterySum = 0;
+    let weakCount = 0;
+    (studyContent.progress?.chapters || []).forEach((ch) => {
+      (ch.kps || []).forEach((kp) => {
+        const mastery = kp.mastery || 0;
+        totalKps += 1;
+        masterySum += mastery;
+        if (kp.weak) weakCount += 1;
+        if (!sectionMap.has(kp.sectionId)) {
+          sectionMap.set(kp.sectionId, {
+            id: kp.sectionId,
+            name: kp.sectionName || '未命名小节',
+            chapterId: ch.id,
+            chapterName: ch.name,
+            icon: ch.icon,
+            rank: 0,
+            kps: [],
+            masterySum: 0,
+          });
+        }
+        const sec = sectionMap.get(kp.sectionId);
+        sec.kps.push(kp);
+        sec.masterySum += mastery;
+        sec.rank = Math.max(sec.rank, IMP_RANK[kp.sectionImportance] || 0, IMP_RANK[kp.importance] || 0);
+        if (mastery >= 70) strengths.push({ ...kp, chapterName: ch.name, icon: ch.icon });
+        if (kp.weak || mastery < 40) weaknesses.push({ ...kp, chapterName: ch.name, icon: ch.icon });
+      });
+    });
+    const sections = [...sectionMap.values()].map((s) => ({
+      ...s,
+      importance: rankLabel(s.rank),
+      mastery: s.kps.length ? Math.round(s.masterySum / s.kps.length) : 0,
+    }));
+    const completedSections = sections.filter((s) => s.mastery >= 60).length;
+    let keySections = sections.filter((s) => s.rank >= 2).sort((a, b) => b.rank - a.rank || a.mastery - b.mastery);
+    const keyFallback = keySections.length === 0;
+    if (keyFallback) {
+      // 管理员尚未标注重点时，按知识点密度给出参考重点，避免空白
+      keySections = [...sections].sort((a, b) => b.kps.length - a.kps.length).slice(0, 6);
+    }
+    const keyChapterMap = new Map();
+    keySections.forEach((s) => {
+      if (!keyChapterMap.has(s.chapterId)) {
+        keyChapterMap.set(s.chapterId, { id: s.chapterId, name: s.chapterName, icon: s.icon, sections: [] });
+      }
+      keyChapterMap.get(s.chapterId).sections.push(s);
+    });
+    strengths.sort((a, b) => b.mastery - a.mastery);
+    weaknesses.sort((a, b) => a.mastery - b.mastery);
+    return {
+      totalKps,
+      weakCount,
+      avgMastery: totalKps ? Math.round(masterySum / totalKps) : 0,
+      sectionTotal: sections.length,
+      completedSections,
+      keyChapters: [...keyChapterMap.values()],
+      keyFallback,
+      strengths,
+      weaknesses,
+    };
+  }, [studyContent.progress]);
+
+  const coinsTotal = (stats?.coinsBySubject || []).reduce((n, c) => n + (c.coins || 0), 0);
+
+  // 看板点击：定位到某小节的章节列表并展开该小节
+  const focusSection = (s) => {
+    setSelectedChapterId(s.chapterId);
+    setSelectedKp(null);
+    const pick = (list) => setSelectedSection((list || []).find((x) => x.id === s.id) || null);
+    if (!realMode) {
+      setSelectedSection(null);
+      return;
+    }
+    if (sectionsMap[s.chapterId]) {
+      pick(sectionsMap[s.chapterId]);
+      return;
+    }
+    getStudySections(s.chapterId)
+      .then((res) => {
+        const list = res?.data || [];
+        setSectionsMap((m) => ({ ...m, [s.chapterId]: list }));
+        pick(list);
+      })
+      .catch(() => setSectionsMap((m) => ({ ...m, [s.chapterId]: [] })));
+  };
+
+  // 看板点击：进入某知识点小节的预习
+  const openKp = (kp) => {
+    const nm = kp.name ? `&name=${encodeURIComponent(kp.name)}` : '';
+    navigate(`/student/knowledge?sectionId=${kp.sectionId}${nm}&tab=preview`);
+  };
+
   return (
     <div className="sll-page-enter study-page">
       {/* ---- 左栏: 章节学海洲岛导航 ---- */}
@@ -141,7 +263,7 @@ export default function StudyPage() {
           <IconTile emoji="🗺️" tone="teal" size="sm" /> 学海洲岛 · {realSubject?.name || subject.name}
           {!pureMode && <span className="study-left-sub">{realMode ? `${chapters.length} 个章节` : `进度 ${avgProgress}%`}</span>}
         </div>
-        {realMode && studyContent.loadFailed && (
+        {realMode && studyContent.chaptersFailed && (
           <div className="study-load-hint">⚠️ 内容加载失败，当前为演示数据</div>
         )}
         <div className="study-chapters">
@@ -183,23 +305,86 @@ export default function StudyPage() {
       <main className="sll-card study-center">
         {!selectedChapterId ? (
           realMode ? (
-            /* 真实模式未选章节: 学科概览 */
-            <div className="study-overview">
+            /* 真实模式未选章节: 研习首页看板（重点 / 学习情况 / 优势与不足） */
+            <div className="study-dashboard">
               <div className="study-overview-title">
-                <IconTile emoji="🌊" tone="sky" size="sm" /> {realSubject?.name || subject.name} · 研习概览（{version}）
+                <IconTile emoji="🌊" tone="sky" size="sm" /> {realSubject?.name || subject.name} · 研习首页（{version} · {grade}{semesterTerm ? ` · ${semesterTerm}册` : ''}）
               </div>
-              <div className="study-overview-body">
-                <div className="study-ring-stats" style={{ width: '100%', justifyContent: 'center' }}>
-                  <div className="study-ring-stat"><span className="study-ring-dot orange" />章节 {chapters.length} 个</div>
-                  <div className="study-ring-stat"><span className="study-ring-dot blue" />小节 {chapters.reduce((n, c) => n + (c.sectionCount || 0), 0)} 个</div>
+
+              <div className="study-dash-heading">本学期学习情况</div>
+              <div className="study-stat-grid">
+                <div className="study-stat-card">
+                  <div className="study-stat-num">{dash.completedSections}<i>/{dash.sectionTotal}</i></div>
+                  <div className="study-stat-label">完成小节</div>
                 </div>
-                <div className="study-overview-chapters" style={{ width: '100%' }}>
-                  {chapters.map((ch) => (
-                    <div key={ch.id} className="study-ov-chapter">
-                      <span className="study-ov-name"><IconTile emoji={ch.icon || '📖'} tone="blue" size="xs" /> {ch.name}</span>
-                      <span className="study-ov-pct">小节 {ch.sectionCount ?? 0}</span>
-                    </div>
-                  ))}
+                <div className="study-stat-card">
+                  <div className="study-stat-num">{dash.avgMastery}<i>%</i></div>
+                  <div className="study-stat-label">平均掌握度</div>
+                </div>
+                <div className="study-stat-card">
+                  <div className="study-stat-num">{stats?.totalQuestions ?? 0}<i> 题</i></div>
+                  <div className="study-stat-label">累计练习 · 正确率 {stats?.accuracy ?? 0}%</div>
+                </div>
+                <div className="study-stat-card">
+                  <div className="study-stat-num">{stats?.totalPoints ?? 0}<i> 分</i></div>
+                  <div className="study-stat-label">学海积分 · 学习币 {coinsTotal}</div>
+                </div>
+                <div className="study-stat-card">
+                  <div className="study-stat-num">{dash.weakCount}<i> 个</i></div>
+                  <div className="study-stat-label">薄弱知识点</div>
+                </div>
+              </div>
+
+              <div className="study-dash-cols">
+                <div className="study-dash-col">
+                  <div className="study-dash-heading">
+                    本学期重点
+                    {dash.keyFallback && <span className="study-dash-note">暂无标注，按知识点密度推荐</span>}
+                  </div>
+                  {dash.keyChapters.length === 0 ? (
+                    <div className="study-empty">本学期暂无可推荐的重点内容</div>
+                  ) : (
+                    dash.keyChapters.map((kc) => (
+                      <div key={kc.id} className="study-dash-chapter">
+                        <div className="study-dash-chapter-head" onClick={() => selectChapter(kc.id)}>
+                          <IconTile emoji={kc.icon || '📖'} tone="blue" size="xs" /> {kc.name}
+                        </div>
+                        <div className="study-dash-secs">
+                          {kc.sections.map((s) => (
+                            <span key={s.id} className="study-dash-sec" onClick={() => focusSection(s)}>
+                              {s.importance === 'core' ? <b className="study-dash-tag core">核心</b> : s.importance === 'key' ? <b className="study-dash-tag key">重点</b> : null}
+                              {s.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="study-dash-col">
+                  <div className="study-dash-heading">优势 · 掌握较好</div>
+                  {dash.strengths.length === 0 ? (
+                    <div className="study-empty">继续学习后可查看优势知识点</div>
+                  ) : (
+                    dash.strengths.slice(0, 6).map((kp) => (
+                      <div key={kp.id} className="study-dash-item good" onClick={() => openKp(kp)}>
+                        <span className="study-dash-item-name">{kp.name}</span>
+                        <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%</span>
+                      </div>
+                    ))
+                  )}
+                  <div className="study-dash-heading" style={{ marginTop: 14 }}>不足 · 待巩固 / 薄弱</div>
+                  {dash.weaknesses.length === 0 ? (
+                    <div className="study-empty">暂无明显薄弱环节</div>
+                  ) : (
+                    dash.weaknesses.slice(0, 6).map((kp) => (
+                      <div key={kp.id} className="study-dash-item bad" onClick={() => openKp(kp)}>
+                        <span className="study-dash-item-name">{kp.name}</span>
+                        <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%{kp.weak ? ' · 薄弱' : ''}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

@@ -286,7 +286,7 @@ const useStudentStore = create((set, get) => ({
     points: null,      // 当前小节真实知识点
     questions: null,   // 当前练习/试炼真实题目
     progress: null,    // 当前学科真实掌握度（章节 → 知识点 mastery/level/weak）
-    loadFailed: false, // 接口异常标记（回退 mock 提示）
+    chaptersFailed: false, // 章节加载失败标记（研习页据此提示；成功加载后清零）
   },
 
   // ---- actions ----
@@ -353,7 +353,7 @@ const useStudentStore = create((set, get) => ({
       set({ permissions: { subjects: [], grades: [], versions: [] } });
     }
   },
-  // 通用内容加载：成功写缓存，失败标记 loadFailed（页面回退 mock 并提示）
+  // 通用内容加载：成功写缓存；章节失败额外置 chaptersFailed（研习页据此提示，成功后清零）
   fetchStudySubjects: async () => {
     try {
       const res = await getStudySubjects();
@@ -361,15 +361,15 @@ const useStudentStore = create((set, get) => ({
       // 真实学科到位后收敛当前学科-年级-版本到订单授权范围
       get().normalizeSelection();
     } catch {
-      set((s) => ({ studyContent: { ...s.studyContent, subjects: [], loadFailed: true } }));
+      set((s) => ({ studyContent: { ...s.studyContent, subjects: [] } }));
     }
   },
   fetchStudyChapters: async (subjectId, grade) => {
     try {
       const res = await getStudyChapters(subjectId, grade);
-      set((s) => ({ studyContent: { ...s.studyContent, chapters: res?.data || [] } }));
+      set((s) => ({ studyContent: { ...s.studyContent, chapters: res?.data || [], chaptersFailed: false } }));
     } catch {
-      set((s) => ({ studyContent: { ...s.studyContent, chapters: [], loadFailed: true } }));
+      set((s) => ({ studyContent: { ...s.studyContent, chapters: [], chaptersFailed: true } }));
     }
   },
   fetchStudySections: async (chapterId) => {
@@ -377,7 +377,7 @@ const useStudentStore = create((set, get) => ({
       const res = await getStudySections(chapterId);
       set((s) => ({ studyContent: { ...s.studyContent, sections: res?.data || [] } }));
     } catch {
-      set((s) => ({ studyContent: { ...s.studyContent, sections: [], loadFailed: true } }));
+      set((s) => ({ studyContent: { ...s.studyContent, sections: [] } }));
     }
   },
   fetchStudyPoints: async (sectionId) => {
@@ -385,7 +385,7 @@ const useStudentStore = create((set, get) => ({
       const res = await getStudyPoints(sectionId);
       set((s) => ({ studyContent: { ...s.studyContent, points: res?.data || [] } }));
     } catch {
-      set((s) => ({ studyContent: { ...s.studyContent, points: [], loadFailed: true } }));
+      set((s) => ({ studyContent: { ...s.studyContent, points: [] } }));
     }
   },
   fetchStudyQuestions: async (params) => {
@@ -393,16 +393,16 @@ const useStudentStore = create((set, get) => ({
       const res = await getStudyQuestions(params);
       set((s) => ({ studyContent: { ...s.studyContent, questions: res?.data || [] } }));
     } catch {
-      set((s) => ({ studyContent: { ...s.studyContent, questions: [], loadFailed: true } }));
+      set((s) => ({ studyContent: { ...s.studyContent, questions: [] } }));
     }
   },
   // 真实掌握度/薄弱（章节 → 知识点）：失败保留上次缓存，不静默回退 mock
-  fetchStudyProgress: async (subjectId, versionId) => {
+  fetchStudyProgress: async (subjectId, versionId, grade, term) => {
     try {
-      const res = await getStudyProgress(subjectId, versionId);
+      const res = await getStudyProgress(subjectId, versionId, grade, term);
       set((s) => ({ studyContent: { ...s.studyContent, progress: res?.data || null } }));
     } catch {
-      set((s) => ({ studyContent: { ...s.studyContent, loadFailed: true } }));
+      // 掌握度失败不影响章节浏览，保留上次缓存
     }
   },
 

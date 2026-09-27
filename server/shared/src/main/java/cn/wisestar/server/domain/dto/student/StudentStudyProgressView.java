@@ -32,6 +32,12 @@ public class StudentStudyProgressView {
 		/** 章节图标 */
 		private String icon;
 
+		/** 年级（如 四年级） */
+		private String grade;
+
+		/** 册别（上/下） */
+		private String term;
+
 		/** 章节下知识点 */
 		private List<Kp> kps = new ArrayList<>();
 
@@ -51,6 +57,15 @@ public class StudentStudyProgressView {
 
 		/** 所属小节ID */
 		private String sectionId;
+
+		/** 所属小节名称 */
+		private String sectionName;
+
+		/** 所属小节重点程度：core/key/normal，空=未标注 */
+		private String sectionImportance;
+
+		/** 知识点重点程度：core/key/normal，空=未标注 */
+		private String importance;
 
 		/** 掌握度 0-100 */
 		private int mastery;

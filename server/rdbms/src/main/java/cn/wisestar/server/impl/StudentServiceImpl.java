@@ -716,7 +716,7 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	 * 学科学习进度：章节 → 知识点掌握度/评级/薄弱（真实评价值，不返回 mock）。
 	 */
 	@Override
-	public StudentStudyProgressView studyProgress(String subjectId, String versionId) {
+	public StudentStudyProgressView studyProgress(String subjectId, String versionId, String grade, String term) {
 		String userId = currentStudentId();
 		StudentStudyProgressView view = new StudentStudyProgressView();
 		if (!StringUtils.hasText(subjectId) || validGrades(subjectId).isEmpty()) {
@@ -726,6 +726,12 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.<Chapter>lambdaQuery().eq(Chapter::getSubjectId, subjectId);
 		if (StringUtils.hasText(versionId)) {
 			cq.eq(Chapter::getVersion, versionId);
+		}
+		if (StringUtils.hasText(grade)) {
+			cq.eq(Chapter::getGrade, grade);
+		}
+		if (StringUtils.hasText(term)) {
+			cq.eq(Chapter::getTerm, term);
 		}
 		List<Chapter> chapters = chapterMapper.selectList(cq.orderByAsc(Chapter::getSort));
 		if (chapters.isEmpty()) {
@@ -752,6 +758,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			cv.setId(chapter.getId());
 			cv.setName(chapter.getName());
 			cv.setIcon(chapter.getIcon());
+			cv.setGrade(chapter.getGrade());
+			cv.setTerm(chapter.getTerm());
 			List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
 					.eq(Section::getChapterId, chapter.getId()).orderByAsc(Section::getSort));
 			for (Section section : sections) {
@@ -762,6 +770,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 					kv.setId(kp.getId());
 					kv.setName(kp.getName());
 					kv.setSectionId(section.getId());
+					kv.setSectionName(section.getName());
+					kv.setSectionImportance(section.getImportance());
+					kv.setImportance(kp.getImportance());
 					UserKnowledgeProgress p = progressMap.get(kp.getId());
 					int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
 					kv.setMastery(mastery);

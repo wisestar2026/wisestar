@@ -129,9 +129,11 @@ public interface StudentService {
 	 *
 	 * @param subjectId 学科ID
 	 * @param versionId 教材版本ID（可选）
+	 * @param grade     年级（可选，限定本学期年级）
+	 * @param term      册别（可选，上/下，限定本学期）
 	 * @return 章节及其知识点的真实评价值；学科不在权限内返回空列表
 	 */
-	StudentStudyProgressView studyProgress(String subjectId, String versionId);
+	StudentStudyProgressView studyProgress(String subjectId, String versionId, String grade, String term);
 
 	/**
 	 * 学员端实时位置上报（当前学员，路由变化/进入习题时调用）。

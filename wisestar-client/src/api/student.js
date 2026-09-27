@@ -146,9 +146,9 @@ export async function getStudyPoints(sectionId) {
   return request.get('/student/study/points', { params: { sectionId } });
 }
 
-/** 学员端学科学习进度（章节 → 知识点掌握度/评级/薄弱） */
-export async function getStudyProgress(subjectId, versionId) {
-  return request.get('/student/study/progress', { params: { subjectId, versionId } });
+/** 学员端学科学习进度（章节 → 知识点掌握度/评级/薄弱，可按年级/学期收敛） */
+export async function getStudyProgress(subjectId, versionId, grade, term) {
+  return request.get('/student/study/progress', { params: { subjectId, versionId, grade, term } });
 }
 
 /**

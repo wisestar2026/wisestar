@@ -319,6 +319,106 @@
 .study-ov-bar-inner.green  { background: linear-gradient(90deg, #81c784, #4caf50); }
 .study-ov-pct { width: 42px; text-align: right; font-size: 12px; font-weight: 800; color: #5b7a99; }
 
+/* 真实模式研习首页看板 */
+.study-dashboard { display: flex; flex-direction: column; gap: 18px; }
+.study-dash-heading {
+  font-size: 14px;
+  font-weight: 800;
+  color: #2b4a6b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.study-dash-note {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8aa9c4;
+  background: #f2f8fd;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.study-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+.study-stat-card {
+  background: linear-gradient(135deg, #eaf6ff, #f6fbfe);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+.study-stat-num {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1976d2;
+  line-height: 1.1;
+}
+.study-stat-num i { font-size: 12px; font-style: normal; font-weight: 700; color: #8aa9c4; }
+.study-stat-label { margin-top: 6px; font-size: 12px; font-weight: 600; color: #5b7a99; }
+.study-dash-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.study-dash-col { display: flex; flex-direction: column; gap: 10px; }
+.study-dash-chapter {
+  background: #f6fbfe;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.study-dash-chapter-head {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1d3a5f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.study-dash-chapter-head:hover { color: #1976d2; }
+.study-dash-secs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.study-dash-sec {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #2b4a6b;
+  background: #e8f2fa;
+  border-radius: 999px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.study-dash-sec:hover { background: #d3e9fb; }
+.study-dash-tag {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 6px;
+  padding: 1px 5px;
+  color: #fff;
+}
+.study-dash-tag.core { background: #ff6b6b; }
+.study-dash-tag.key  { background: #ffa726; }
+.study-dash-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  border-radius: 12px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.study-dash-item.good { background: #f1faf3; }
+.study-dash-item.bad  { background: #fdf3f3; }
+.study-dash-item:hover { filter: brightness(0.97); }
+.study-dash-item-name { font-weight: 700; color: #2b4a6b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.study-dash-item-meta { flex-shrink: 0; font-size: 12px; font-weight: 700; color: #5b7a99; }
+@media (max-width: 1100px) {
+  .study-dash-cols { grid-template-columns: 1fr; }
+}
+
 /* 选中: 知识点详情 */
 .study-kp-detail-title {
   display: flex;
