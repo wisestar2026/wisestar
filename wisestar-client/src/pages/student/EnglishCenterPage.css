@@ -126,6 +126,7 @@
 }
 .eng-unit-actions button:hover { transform: translateY(-1px); }
 .eng-btn-word { background: #e6f6fd; color: #1479a6; }
+.eng-btn-practice { background: #eafaf1; color: #1f8f4d; }
 .eng-btn-sentence { background: #fff0e8; color: #d9603a; }
 
 /* ---------- 学习卡片 ---------- */
@@ -198,6 +199,52 @@
 .eng-btn-ok { background: linear-gradient(135deg, #5bd07f, #33b463); color: #fff; }
 .eng-btn-again { background: #fff0e8; color: #d9603a; }
 .eng-btn-ghost { background: #eef4f8; color: #4b7285; }
+
+/* ---------- 单词练习（选择题） ---------- */
+.eng-quiz-badge {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e8f6fd, #fdeee7);
+  color: #1479a6;
+  font-size: 13px;
+  font-weight: 800;
+}
+.eng-quiz-hint { font-size: 14px; color: #6a93a8; margin-bottom: 8px; }
+.eng-quiz-image {
+  display: block;
+  margin: 4px auto 8px;
+  max-width: 360px;
+  max-height: 300px;
+  border-radius: 20px;
+  box-shadow: 0 10px 24px rgba(64, 140, 190, 0.18);
+}
+.eng-quiz-prompt-meaning { font-size: 32px; font-weight: 900; color: #d9603a; }
+.eng-quiz-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  max-width: 640px;
+  margin: 26px auto 0;
+}
+.eng-quiz-option {
+  border: 2px solid #cfe7f4;
+  background: #f6fbfe;
+  color: #14506e;
+  border-radius: 16px;
+  padding: 16px 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  word-break: break-word;
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+}
+.eng-quiz-option:hover:not(:disabled) { transform: translateY(-2px); border-color: #4bb7e8; }
+.eng-quiz-option:disabled { cursor: default; }
+.eng-quiz-option.correct { background: #d8f5e2; border-color: #33b463; color: #1f8f4d; }
+.eng-quiz-option.wrong { background: #ffe0e0; border-color: #e06666; color: #c0392b; }
 
 /* ---------- 组句 ---------- */
 .eng-sentence-hint { font-size: 16px; color: #d9603a; font-weight: 700; margin-bottom: 16px; }
@@ -276,6 +323,49 @@
 .eng-weak-item b { color: #14506e; }
 .eng-weak-item span { color: #6a93a8; }
 
+/* ---------- 强制巩固弹窗 (WordDrillModal) ---------- */
+.eng-drill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.eng-drill-tip { font-size: 13px; color: #6a93a8; }
+.eng-drill-progress-text { font-size: 13px; font-weight: 800; color: #1479a6; white-space: nowrap; }
+.eng-drill-meta {
+  margin: 10px 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #d9603a;
+  text-align: center;
+}
+.eng-drill-done {
+  padding: 32px 0 8px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1f8f4d;
+}
+.eng-drill-done .anticon { margin-right: 6px; }
+.eng-drill-judge { text-align: center; padding: 10px 0; }
+.eng-drill-judge .eng-word { cursor: pointer; }
+.eng-drill-meaning { margin-top: 12px; font-size: 18px; font-weight: 700; color: #14506e; }
+.eng-drill-judge-actions { display: flex; justify-content: center; gap: 16px; margin-top: 22px; }
+.eng-drill-judge-btn {
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 10px 26px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.eng-drill-judge-btn:hover:not(:disabled) { transform: translateY(-2px); }
+.eng-drill-judge-btn:disabled { cursor: default; opacity: 0.7; }
+.eng-drill-judge-btn.is-ok { background: #d8f5e2; border-color: #33b463; color: #1f8f4d; }
+.eng-drill-judge-btn.is-no { background: #ffe0e0; border-color: #e06666; color: #c0392b; }
+
 @media (max-width: 600px) {
   .eng-word { font-size: 30px; }
   .eng-card-word { min-height: 420px; padding: 28px 20px; }
@@ -283,6 +373,9 @@
   .eng-card-word .eng-phonetic { font-size: 16px; }
   .eng-card-word .eng-meaning { font-size: 20px; }
   .eng-card-word .eng-image { max-width: 220px; max-height: 180px; }
+  .eng-quiz-options { grid-template-columns: 1fr; }
+  .eng-quiz-image { max-width: 100%; max-height: 220px; }
+  .eng-quiz-prompt-meaning { font-size: 24px; }
   .eng-hero { padding: 16px; }
 }
 @media (max-height: 820px) {

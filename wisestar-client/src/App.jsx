@@ -58,6 +58,7 @@ import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
 import EnglishCenterPage from './pages/student/EnglishCenterPage';
 import EnglishWordLearnPage from './pages/student/EnglishWordLearnPage';
+import EnglishWordPracticePage from './pages/student/EnglishWordPracticePage';
 import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
 import EnglishReviewPage from './pages/student/EnglishReviewPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
@@ -141,6 +142,8 @@ export default function App() {
             <Route path="english" element={<EnglishCenterPage />} />
             {/* 英语单词卡片学习（?unit=） */}
             <Route path="english/word" element={<EnglishWordLearnPage />} />
+            {/* 英语单词选择题练习（?unit=） */}
+            <Route path="english/practice" element={<EnglishWordPracticePage />} />
             {/* 英语句子学习·连词成句（?unit=） */}
             <Route path="english/sentence" element={<EnglishSentenceLearnPage />} />
             {/* 英语智能复习（单词 + 句子混合队列） */}

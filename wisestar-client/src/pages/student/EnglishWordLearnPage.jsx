@@ -23,6 +23,7 @@ import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishWordBook, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
+import { WORD_PLACEHOLDER } from '../../utils/englishQuiz';
 import './EnglishCenterPage.css';
 
 /**
@@ -244,7 +245,14 @@ export default function EnglishWordLearnPage() {
           {current?.spell}
         </div>
         {current?.phonetic && <div className="eng-phonetic">/{current.phonetic}/</div>}
-        {current?.imageUrl && <img className="eng-image" src={current.imageUrl} alt={current.spell} />}
+        {revealed && (
+          <img
+            className="eng-image"
+            src={current?.imageUrl || WORD_PLACEHOLDER}
+            alt={current?.spell || ''}
+            onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
+          />
+        )}
         <div className={`eng-meaning ${revealed ? '' : 'hidden'}`}>
           {revealed ? (current?.meaning || '—') : '点击「显示释义」查看含义'}
         </div>
