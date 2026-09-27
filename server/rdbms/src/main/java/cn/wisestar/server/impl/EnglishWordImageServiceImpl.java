@@ -2,6 +2,7 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.domain.dto.FileView;
 import cn.wisestar.server.domain.dto.UploadFileRequest;
+import cn.wisestar.server.domain.dto.english.ImportResult;
 import cn.wisestar.server.domain.dto.english.WordImageCandidateView;
 import cn.wisestar.server.domain.dto.english.WordImageView;
 import cn.wisestar.server.domain.model.EnglishWord;
@@ -9,6 +10,7 @@ import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.service.EnglishDictionaryService;
 import cn.wisestar.server.service.EnglishWordImageService;
 import cn.wisestar.server.service.FileService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -95,6 +97,42 @@ public class EnglishWordImageServiceImpl implements EnglishWordImageService {
 		word.setImageUrl(FILE_URL_PREFIX + fileView.getId());
 		englishWordMapper.updateById(word);
 		return toView(word);
+	}
+
+	@Override
+	public ImportResult autoFillByCondition(String version, String grade, String term, String unit) {
+		LambdaQueryWrapper<EnglishWord> wrapper = new LambdaQueryWrapper<>();
+		wrapper.eq(!isBlank(version), EnglishWord::getVersion, version);
+		wrapper.eq(!isBlank(grade), EnglishWord::getGrade, grade);
+		wrapper.eq(!isBlank(term), EnglishWord::getTerm, term);
+		wrapper.eq(!isBlank(unit), EnglishWord::getUnit, unit);
+		wrapper.and(w -> w.isNull(EnglishWord::getImageUrl).or().eq(EnglishWord::getImageUrl, ""));
+		wrapper.and(w -> w.likeRight(EnglishWord::getMeaning, "n.").or().likeRight(EnglishWord::getMeaning, "adj."));
+		List<EnglishWord> words = englishWordMapper.selectList(wrapper);
+
+		List<String> errors = new ArrayList<>();
+		int success = 0;
+		for (EnglishWord word : words) {
+			try {
+				List<String> candidates = dictionaryService.lookupImages(word.getSpell());
+				if (candidates == null || candidates.isEmpty()) {
+					errors.add("word=" + word.getSpell() + ": 无候选图片");
+					continue;
+				}
+				String first = candidates.get(0);
+				byte[] bytes = download(first);
+				if (bytes == null || bytes.length == 0) {
+					errors.add("word=" + word.getSpell() + ": 图片下载失败");
+					continue;
+				}
+				word.setImageUrl(store(word.getSpell(), bytes, guessContentType(first)));
+				englishWordMapper.updateById(word);
+				success++;
+			} catch (Exception e) {
+				errors.add("word=" + word.getSpell() + ": " + e.getMessage());
+			}
+		}
+		return new ImportResult(words.size(), success, words.size() - success, errors);
 	}
 
 	/**

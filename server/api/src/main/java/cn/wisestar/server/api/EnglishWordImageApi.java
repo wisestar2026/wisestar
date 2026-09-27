@@ -1,5 +1,6 @@
 package cn.wisestar.server.api;
 
+import cn.wisestar.server.domain.dto.english.ImportResult;
 import cn.wisestar.server.domain.dto.english.WordImageCandidateView;
 import cn.wisestar.server.domain.dto.english.WordImageView;
 import cn.wisestar.server.service.EnglishWordImageService;
@@ -8,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +56,17 @@ public class EnglishWordImageApi {
 	@PreAuthorize("hasAuthority('english:word:update')")
 	public WordImageView upload(@RequestParam String wordId, @RequestParam MultipartFile file) {
 		return wordImageService.uploadForWord(wordId, file);
+	}
+
+	/**
+	 * 按条件批量补图：缺图且词性为名词或形容词的单词自动取候选图首图入库。
+	 */
+	@PostMapping("/auto-fill")
+	@PreAuthorize("hasAuthority('english:word:update')")
+	public ImportResult autoFill(@RequestBody(required = false) Map<String, String> request) {
+		Map<String, String> body = request == null ? Collections.emptyMap() : request;
+		return wordImageService.autoFillByCondition(
+				body.get("version"), body.get("grade"), body.get("term"), body.get("unit"));
 	}
 
 }

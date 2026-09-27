@@ -93,6 +93,14 @@ export function confirmWordImage(wordId, imageUrl) {
 }
 
 /**
+ * 按条件批量补图：缺图且词性为名词/形容词的单词自动取候选图首图入库。
+ * 返回 ImportResult：{ total, success, failed, errors }
+ */
+export function autoFillWordImages(params) {
+  return request.post('/english/word-image/auto-fill', params, { timeout: 600000 });
+}
+
+/**
  * 手动上传本地图片并入库（multipart，走原生 axios）。
  * 返回 WordImageView：{ wordId, spell, imageUrl }
  */

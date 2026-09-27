@@ -14,6 +14,7 @@
  *   POST /api/english/word-image/candidates  { wordIds }        → 候选图列表
  *   POST /api/english/word-image/confirm     { wordId, imageUrl } → 确认入库
  *   POST /api/english/word-image/upload?wordId=  (multipart)      → 上传本地图片入库
+ *   POST /api/english/word-image/auto-fill  { version, grade, term, unit } → 名词/形容词批量自动补图
  */
 
 import { useEffect, useState } from 'react';
@@ -23,9 +24,10 @@ import {
   CloudDownloadOutlined,
   CheckCircleOutlined,
   UploadOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import request from '../../api/request';
-import { getWordImageCandidates, confirmWordImage, uploadWordImage } from '../../api/englishAdmin';
+import { getWordImageCandidates, confirmWordImage, uploadWordImage, autoFillWordImages } from '../../api/englishAdmin';
 
 const { Title } = Typography;
 
@@ -51,6 +53,7 @@ export default function WordImageReviewPage() {
   // 行选择
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [fetching, setFetching] = useState(false);
+  const [autoFilling, setAutoFilling] = useState(false);
 
   // 审核弹窗
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -128,7 +131,27 @@ export default function WordImageReviewPage() {
   const updateItem = (wordId, patch) => {
     setReviewItems((prev) => prev.map((it) => (it.wordId === wordId ? { ...it, ...patch } : it)));
   };
-
+  // 一键补图：缺图且词性为名词/形容词的单词自动取候选图首图入库
+  const handleAutoFill = () => {
+    if (!version) {
+      message.warning('请先选择教材版本，再一键补图');
+      return;
+    }
+    setAutoFilling(true);
+    autoFillWordImages({
+      version,
+      ...(grade && { grade }),
+      ...(term && { term }),
+      ...(unit && { unit }),
+    })
+      .then((res) => {
+        const r = res.data || {};
+        message.success(`补图完成：成功 ${r.success || 0}，失败 ${r.failed || 0}，共 ${r.total || 0}`);
+        loadList();
+      })
+      .catch(() => {})
+      .finally(() => setAutoFilling(false));
+  };
   // 确认候选图入库
   const handleConfirm = (item) => {
     if (!item.selectedUrl) {
@@ -229,6 +252,14 @@ export default function WordImageReviewPage() {
           disabled={!selectedRowKeys.length}
         >
           抓取候选图{selectedRowKeys.length ? `（${selectedRowKeys.length}）` : ''}
+        </Button>
+        <Button
+          icon={<ThunderboltOutlined />}
+          onClick={handleAutoFill}
+          loading={autoFilling}
+          disabled={!version}
+        >
+          一键补图（名词/形容词）
         </Button>
       </Space>
 

@@ -1,5 +1,6 @@
 package cn.wisestar.server.service;
 
+import cn.wisestar.server.domain.dto.english.ImportResult;
 import cn.wisestar.server.domain.dto.english.WordImageCandidateView;
 import cn.wisestar.server.domain.dto.english.WordImageView;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,5 +40,16 @@ public interface EnglishWordImageService {
 	 * @return 更新后的单词配图信息
 	 */
 	WordImageView uploadForWord(String wordId, MultipartFile file);
+
+	/**
+	 * 按条件批量补图：对缺图且释义词性为名词或形容词的单词，自动取候选图首图入库。
+	 *
+	 * @param version 教材版本，空表示不限
+	 * @param grade   年级，空表示不限
+	 * @param term    学期/册别，空表示不限
+	 * @param unit    单元，空表示不限
+	 * @return 处理总数、成功数、失败数与失败原因
+	 */
+	ImportResult autoFillByCondition(String version, String grade, String term, String unit);
 
 }
