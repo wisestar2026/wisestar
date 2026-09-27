@@ -311,32 +311,34 @@ export default function StudyPage() {
                 <IconTile emoji="🌊" tone="sky" size="sm" /> {realSubject?.name || subject.name} · 研习首页（{version} · {grade}{semesterTerm ? ` · ${semesterTerm}册` : ''}）
               </div>
 
-              <div className="study-dash-heading">本学期学习情况</div>
-              <div className="study-stat-grid">
-                <div className="study-stat-card">
-                  <div className="study-stat-num">{dash.completedSections}<i>/{dash.sectionTotal}</i></div>
-                  <div className="study-stat-label">完成小节</div>
+              <section className="study-dash-block">
+                <div className="study-dash-heading">本学期学习情况</div>
+                <div className="study-stat-grid">
+                  <div className="study-stat-card">
+                    <div className="study-stat-num">{dash.completedSections}<i>/{dash.sectionTotal}</i></div>
+                    <div className="study-stat-label">完成小节</div>
+                  </div>
+                  <div className="study-stat-card">
+                    <div className="study-stat-num">{dash.avgMastery}<i>%</i></div>
+                    <div className="study-stat-label">平均掌握度</div>
+                  </div>
+                  <div className="study-stat-card">
+                    <div className="study-stat-num">{stats?.totalQuestions ?? 0}<i> 题</i></div>
+                    <div className="study-stat-label">累计练习 · 正确率 {stats?.accuracy ?? 0}%</div>
+                  </div>
+                  <div className="study-stat-card">
+                    <div className="study-stat-num">{stats?.totalPoints ?? 0}<i> 分</i></div>
+                    <div className="study-stat-label">学海积分 · 学习币 {coinsTotal}</div>
+                  </div>
+                  <div className="study-stat-card">
+                    <div className="study-stat-num">{dash.weakCount}<i> 个</i></div>
+                    <div className="study-stat-label">薄弱知识点</div>
+                  </div>
                 </div>
-                <div className="study-stat-card">
-                  <div className="study-stat-num">{dash.avgMastery}<i>%</i></div>
-                  <div className="study-stat-label">平均掌握度</div>
-                </div>
-                <div className="study-stat-card">
-                  <div className="study-stat-num">{stats?.totalQuestions ?? 0}<i> 题</i></div>
-                  <div className="study-stat-label">累计练习 · 正确率 {stats?.accuracy ?? 0}%</div>
-                </div>
-                <div className="study-stat-card">
-                  <div className="study-stat-num">{stats?.totalPoints ?? 0}<i> 分</i></div>
-                  <div className="study-stat-label">学海积分 · 学习币 {coinsTotal}</div>
-                </div>
-                <div className="study-stat-card">
-                  <div className="study-stat-num">{dash.weakCount}<i> 个</i></div>
-                  <div className="study-stat-label">薄弱知识点</div>
-                </div>
-              </div>
+              </section>
 
               <div className="study-dash-cols">
-                <div className="study-dash-col">
+                <section className="study-dash-block">
                   <div className="study-dash-heading">
                     本学期重点
                     {dash.keyFallback && <span className="study-dash-note">暂无标注，按知识点密度推荐</span>}
@@ -360,31 +362,36 @@ export default function StudyPage() {
                       </div>
                     ))
                   )}
-                </div>
+                </section>
 
                 <div className="study-dash-col">
-                  <div className="study-dash-heading">优势 · 掌握较好</div>
-                  {dash.strengths.length === 0 ? (
-                    <div className="study-empty">继续学习后可查看优势知识点</div>
-                  ) : (
-                    dash.strengths.slice(0, 6).map((kp) => (
-                      <div key={kp.id} className="study-dash-item good" onClick={() => openKp(kp)}>
-                        <span className="study-dash-item-name">{kp.name}</span>
-                        <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%</span>
-                      </div>
-                    ))
-                  )}
-                  <div className="study-dash-heading" style={{ marginTop: 14 }}>不足 · 待巩固 / 薄弱</div>
-                  {dash.weaknesses.length === 0 ? (
-                    <div className="study-empty">暂无明显薄弱环节</div>
-                  ) : (
-                    dash.weaknesses.slice(0, 6).map((kp) => (
-                      <div key={kp.id} className="study-dash-item bad" onClick={() => openKp(kp)}>
-                        <span className="study-dash-item-name">{kp.name}</span>
-                        <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%{kp.weak ? ' · 薄弱' : ''}</span>
-                      </div>
-                    ))
-                  )}
+                  <section className="study-dash-block">
+                    <div className="study-dash-heading">优势 · 掌握较好</div>
+                    {dash.strengths.length === 0 ? (
+                      <div className="study-empty">继续学习后可查看优势知识点</div>
+                    ) : (
+                      dash.strengths.slice(0, 6).map((kp) => (
+                        <div key={kp.id} className="study-dash-item good" onClick={() => openKp(kp)}>
+                          <span className="study-dash-item-name">{kp.name}</span>
+                          <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%</span>
+                        </div>
+                      ))
+                    )}
+                  </section>
+
+                  <section className="study-dash-block">
+                    <div className="study-dash-heading">不足 · 待巩固 / 薄弱</div>
+                    {dash.weaknesses.length === 0 ? (
+                      <div className="study-empty">暂无明显薄弱环节</div>
+                    ) : (
+                      dash.weaknesses.slice(0, 6).map((kp) => (
+                        <div key={kp.id} className="study-dash-item bad" onClick={() => openKp(kp)}>
+                          <span className="study-dash-item-name">{kp.name}</span>
+                          <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%{kp.weak ? ' · 薄弱' : ''}</span>
+                        </div>
+                      ))
+                    )}
+                  </section>
                 </div>
               </div>
             </div>
@@ -472,9 +479,9 @@ export default function StudyPage() {
                       <div className="study-kp-head">
                         <div className="study-kp-main">
                           <span className="study-kp-name">
-                            <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="xs" />
+                            <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="sm" />
                             <span className="study-kp-name-text">{sec.name}</span>
-                            <StarRating value={passRate} size={13} className="study-kp-stars" />
+                            <StarRating value={passRate} size={20} className="study-kp-stars" />
                           </span>
                           <span className="study-kp-tags">
                             {sec.passed && <span className="study-kp-pass">已通关</span>}
@@ -506,7 +513,7 @@ export default function StudyPage() {
                               navigateToAction(sec, a);
                             }}
                           >
-                            <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
+                            <IconTile emoji={a.icon} tone={a.tone} size="sm" className="study-kp-act-ico" />
                             <span>{a.short}</span>
                           </button>
                         ))}
@@ -526,7 +533,7 @@ export default function StudyPage() {
                     >
                       <div className="study-kp-head">
                         <div className="study-kp-main">
-                          <span className="study-kp-name"><IconTile emoji="🌊" tone="teal" size="xs" /><span className="study-kp-name-text">{kp.name}</span></span>
+                          <span className="study-kp-name"><IconTile emoji="🌊" tone="teal" size="sm" /><span className="study-kp-name-text">{kp.name}</span></span>
                         </div>
                       </div>
                       <div className="study-kp-progress">
@@ -548,7 +555,7 @@ export default function StudyPage() {
                               navigateToAction(kp, a);
                             }}
                           >
-                            <IconTile emoji={a.icon} tone={a.tone} size="xs" className="study-kp-act-ico" />
+                            <IconTile emoji={a.icon} tone={a.tone} size="sm" className="study-kp-act-ico" />
                             <span>{a.short}</span>
                           </button>
                         ))}
