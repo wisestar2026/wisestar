@@ -14,8 +14,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +36,9 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 
 	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
 	private static final int WEAK_WRONG_TIMES = 2;
+
+	/** 巩固池上限：熟练度达到该值视为已熟悉，不再强制巩固。 */
+	private static final int DRILL_FAMILIARITY_CEILING = 3;
 
 	@Override
 	public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query) {
@@ -133,6 +139,39 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			views = englishWordMapper.selectBatchIds(wordIds).stream()
 					.map(this::toView)
 					.collect(Collectors.toList());
+		}
+		fillFamiliarity(userId, views);
+		return views;
+	}
+
+	@Override
+	public List<EnglishWordView> getDrillWords(String userId, int limit) {
+		if (userId == null || limit <= 0) {
+			return new ArrayList<>();
+		}
+		// 最近答错（wrongCount>0）或复习到期（nextReviewTime<=now），且尚未熟悉的单词
+		List<EnglishWordBook> books = englishWordBookMapper.selectList(
+				Wrappers.<EnglishWordBook>lambdaQuery()
+						.eq(EnglishWordBook::getUserId, userId)
+						.lt(EnglishWordBook::getFamiliarity, DRILL_FAMILIARITY_CEILING)
+						.and(w -> w.gt(EnglishWordBook::getWrongCount, 0)
+								.or().le(EnglishWordBook::getNextReviewTime, new java.util.Date()))
+						.orderByDesc(EnglishWordBook::getUpdateAt)
+						.last("LIMIT " + limit));
+		if (books.isEmpty()) {
+			return new ArrayList<>();
+		}
+		List<String> wordIds = books.stream()
+				.map(EnglishWordBook::getWordId)
+				.collect(Collectors.toList());
+		Map<String, EnglishWord> byId = new LinkedHashMap<>();
+		englishWordMapper.selectBatchIds(wordIds).forEach(w -> byId.put(w.getId(), w));
+		List<EnglishWordView> views = new ArrayList<>();
+		for (EnglishWordBook book : books) {
+			EnglishWord word = byId.get(book.getWordId());
+			if (word != null) {
+				views.add(toView(word));
+			}
 		}
 		fillFamiliarity(userId, views);
 		return views;

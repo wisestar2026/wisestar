@@ -38,6 +38,19 @@ public class EnglishWordStudentApi {
 	}
 
 	/**
+	 * 学生端：进入学习前强制巩固的单词（最近答错 + 复习到期，排除已熟悉）。
+	 *
+	 * @param limit 数量上限
+	 * @return 待巩固单词列表
+	 */
+	@GetMapping("/drill")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishWordView> drillWords(@RequestParam(defaultValue = "10") Integer limit) {
+		String userId = SecurityContextUtils.getUserId();
+		return englishWordService.getDrillWords(userId, limit);
+	}
+
+	/**
 	 * 学生端：记录学习结果（熟练度 + 下次复习时间）。
 	 *
 	 * @param request {wordId, correct}

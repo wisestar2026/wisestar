@@ -39,6 +39,15 @@ public interface EnglishWordService {
 	java.util.List<EnglishWordView> getStudyWords(String userId, int limit);
 
 	/**
+	 * 获取进入学习前需强制巩固的单词（最近答错 + 复习到期，排除已熟悉）。
+	 *
+	 * @param userId 用户 ID
+	 * @param limit 数量上限
+	 * @return 待巩固单词列表
+	 */
+	java.util.List<EnglishWordView> getDrillWords(String userId, int limit);
+
+	/**
 	 * 记录学习结果（熟练度 + 下次复习时间）。
 	 *
 	 * @param userId 用户 ID
