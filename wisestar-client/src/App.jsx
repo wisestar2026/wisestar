@@ -73,8 +73,6 @@ import PositionManagePage from './pages/system/PositionManagePage';
 import DictManagePage from './pages/system/DictManagePage';
 import DictItemManagePage from './pages/system/DictItemManagePage';
 import AiSettingPage from './pages/system/AiSettingPage';
-import WordStudyPage from './pages/english/WordStudyPage';
-import WordBookManagePage from './pages/english/WordBookManagePage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
@@ -398,22 +396,6 @@ export default function App() {
               element={
                 <AuthGuard required={['english:sentence:list']}>
                   <SentenceManagePage />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/english/study"
-              element={
-                <AuthGuard>
-                  <WordStudyPage />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/english/word-book"
-              element={
-                <AuthGuard>
-                  <WordBookManagePage />
                 </AuthGuard>
               }
             />
