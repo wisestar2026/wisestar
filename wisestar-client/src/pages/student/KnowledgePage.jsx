@@ -524,8 +524,8 @@ export default function KnowledgePage() {
   // ============================================================
   if (realMode) {
     return (
-      <div className={`sll-page-enter knowledge-page${tab === 'preview' ? ' knowledge-page-wide' : ''}`}>
-        <div className="sll-card" style={{ padding: 24, maxWidth: tab === 'preview' ? 960 : 720, margin: '0 auto' }}>
+      <div className={`sll-page-enter knowledge-page${tab === 'preview' || tab === 'wrong' ? ' knowledge-page-wide' : ''}`}>
+        <div className="sll-card" style={{ padding: 24, maxWidth: tab === 'preview' ? 960 : (tab === 'wrong' ? 1300 : 720), margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               {tab !== 'preview' && (
