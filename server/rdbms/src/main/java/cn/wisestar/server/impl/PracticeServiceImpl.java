@@ -47,8 +47,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -422,7 +425,110 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		}
 		Page<WrongQuestionView> page = new Page<>(query.getCurrent(), query.getPageSize());
 		IPage<WrongQuestionView> result = practiceDetailMapper.selectWrongQuestions(page, query);
-		return new PaginationResponse<>(result.getTotal(), result.getRecords());
+		List<WrongQuestionView> records = result.getRecords();
+		enrichWrongQuestions(records);
+		return new PaginationResponse<>(result.getTotal(), records);
+	}
+
+	/**
+	 * 富化错题视图：回填正确答案与章节/小节信息。
+	 *
+	 * <p>正确答案由题目 schema 经 {@link AnswerJudgeUtil#extractCorrectAnswers} 提取；
+	 * 小节优先取错题所属练习会话的 section_id，缺省回退到知识点所属小节；
+	 * 章节从小节 chapter_id 解析。</p>
+	 *
+	 * @param records 当前页错题记录（原地填充）
+	 */
+	private void enrichWrongQuestions(List<WrongQuestionView> records) {
+		if (CollectionUtils.isEmpty(records)) {
+			return;
+		}
+		Set<String> questionIds = records.stream().map(WrongQuestionView::getQuestionId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		Map<String, Template> templateById = questionIds.isEmpty() ? Collections.emptyMap()
+				: templateService.listByIds(questionIds).stream()
+						.collect(Collectors.toMap(Template::getId, Function.identity(), (a, b) -> a));
+		Set<String> kpIds = records.stream().map(WrongQuestionView::getKnowledgePointId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		Map<String, KnowledgePoint> kpById = kpIds.isEmpty() ? Collections.emptyMap()
+				: knowledgePointMapper.selectBatchIds(kpIds).stream()
+						.collect(Collectors.toMap(KnowledgePoint::getId, Function.identity(), (a, b) -> a));
+		Set<String> sectionIds = new HashSet<>();
+		for (WrongQuestionView view : records) {
+			if (!StringUtils.hasText(view.getSectionId()) && StringUtils.hasText(view.getKnowledgePointId())) {
+				KnowledgePoint point = kpById.get(view.getKnowledgePointId());
+				if (point != null) {
+					view.setSectionId(point.getSectionId());
+				}
+			}
+			if (StringUtils.hasText(view.getSectionId())) {
+				sectionIds.add(view.getSectionId());
+			}
+		}
+		Map<String, Section> sectionById = sectionIds.isEmpty() ? Collections.emptyMap()
+				: sectionMapper.selectBatchIds(sectionIds).stream()
+						.collect(Collectors.toMap(Section::getId, Function.identity(), (a, b) -> a));
+		Set<String> chapterIds = sectionById.values().stream().map(Section::getChapterId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		Map<String, Chapter> chapterById = chapterIds.isEmpty() ? Collections.emptyMap()
+				: chapterMapper.selectBatchIds(chapterIds).stream()
+						.collect(Collectors.toMap(Chapter::getId, Function.identity(), (a, b) -> a));
+		for (WrongQuestionView view : records) {
+			Template template = templateById.get(view.getQuestionId());
+			if (template != null) {
+				List<String> answers = AnswerJudgeUtil.extractCorrectAnswers(template.getTemplate());
+				if (answers != null) {
+					view.setCorrectAnswer(formatCorrectAnswerText(view.getQuestionType(), answers));
+				}
+			}
+			if (!StringUtils.hasText(view.getKnowledgePointName()) && StringUtils.hasText(view.getKnowledgePointId())) {
+				KnowledgePoint point = kpById.get(view.getKnowledgePointId());
+				if (point != null) {
+					view.setKnowledgePointName(point.getName());
+				}
+			}
+			Section section = sectionById.get(view.getSectionId());
+			if (section != null) {
+				view.setSectionName(section.getName());
+				view.setChapterId(section.getChapterId());
+				Chapter chapter = chapterById.get(section.getChapterId());
+				if (chapter != null) {
+					view.setChapterName(chapter.getName());
+				}
+			}
+		}
+	}
+
+	/**
+	 * 标准答案展示文本：多空填空按「空1: x；空2: y」拼接，其余答案以「、」连接。
+	 *
+	 * @param questionType 题型
+	 * @param answers      标准答案列表（未清洗）
+	 * @return 展示文本；无有效答案返回 null
+	 */
+	private String formatCorrectAnswerText(String questionType, List<String> answers) {
+		List<String> cleaned = answers.stream().filter(StringUtils::hasText).map(String::trim)
+				.collect(Collectors.toList());
+		if (cleaned.isEmpty()) {
+			return null;
+		}
+		boolean multiBlank = "MultipleBlank".equals(questionType)
+				|| ("FillBlank".equals(questionType) && cleaned.stream().anyMatch(a -> a.contains("|")));
+		if (multiBlank) {
+			List<String> blanks = new ArrayList<>();
+			for (String answer : cleaned) {
+				Collections.addAll(blanks, answer.split("\\|", -1));
+			}
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < blanks.size(); i++) {
+				if (i > 0) {
+					builder.append("；");
+				}
+				builder.append("空").append(i + 1).append(": ").append(blanks.get(i).trim());
+			}
+			return builder.toString();
+		}
+		return String.join("、", cleaned);
 	}
 
 	/**

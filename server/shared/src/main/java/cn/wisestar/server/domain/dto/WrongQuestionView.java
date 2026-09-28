@@ -79,4 +79,21 @@ public class WrongQuestionView {
 	 * 最近一次做错时的本题得分（答错恒为 0）
 	 */
 	private Double lastScore;
+
+	/**
+	 * 正确答案展示文本（多答案以「、」连接；无标准答案时为空）
+	 */
+	private String correctAnswer;
+
+	/** 所属小节ID（优先练习会话 section_id，其次知识点所属小节） */
+	private String sectionId;
+
+	/** 所属小节名称 */
+	private String sectionName;
+
+	/** 所属章节ID */
+	private String chapterId;
+
+	/** 所属章节名称 */
+	private String chapterName;
 }
