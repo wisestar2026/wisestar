@@ -1023,7 +1023,7 @@
   - `public PracticeResultView submitPractice(PracticeSubmitRequest request)`
     提交一次练习（交卷落库 + 错题标记）。
   - `public PaginationResponse<WrongQuestionView> listWrongQuestions(WrongQuestionQuery query)`
-    分页查询错题库（题目 × 学员聚合）。
+    分页查询错题库（题目 × 学员聚合）；对当页记录批量回填正确答案与章节/小节名称。
   - `public void saveWrongReason(WrongReasonRequest request)`
     保存错题错误归因（校验明细属于当前学员）。
 

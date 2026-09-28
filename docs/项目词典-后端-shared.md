@@ -1655,6 +1655,8 @@
 
   **用途**：管理端「错题库管理」页面列表数据；学员端错题本（阶段二） 可复用同一聚合语义，仅增加按当前用户过滤。
 
+  **扩展字段**（学员端错题本改造新增）：correctAnswer（正确答案展示文本，多空以「空N: 值」拼接、其余以「、」连接）、sectionId/sectionName（所属小节，优先练习会话 section_id，其次知识点所属小节）、chapterId/chapterName（小节所属章节）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/WrongReasonRequest.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class WrongReasonRequest`
