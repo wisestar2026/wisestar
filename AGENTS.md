@@ -55,9 +55,15 @@ cd wisestar-client && npm ci && npm run dev
 - 提交信息格式：`<type>(<scope>): <中文描述>`，type ∈ `feat|fix|chore|refactor|style|docs|test`。
 - `commit` 与 `push` 前需与用户确认；push 不带 `-o merge_request.*`。
 
+## 会话收尾与交接
+
+- 每次会话结束前（或交接给下一次对话前），按 `docs/会话收尾与交接清单.md` 执行：核对文档最新 → 构建/lint/提交/push 使主线最新 → 停后端导出 H2 快照并提交 → 重启预览自检。
+- 数据库跨会话迁移依赖该清单第 3 步：`server/db-export.sh` 导出 `server/db-snapshot/wisestar.sql` 并提交，新环境由 `server/start-preview.sh` 自动恢复。
+
 ## 文档
 
 - 规范：`docs/开发规范.md`
 - 现状：`docs/项目结构梳理.md`、`docs/项目词典*.md`
 - 过程记录：`docs/开发维护日志.md`；文档索引：`docs/README.md`
+- 收尾与交接：`docs/会话收尾与交接清单.md`
 - 变更结构/接口/权限后，同步更新对应词典与日志。
