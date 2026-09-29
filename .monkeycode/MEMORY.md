@@ -96,6 +96,7 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 提交时逐文件 `git add <file>`，禁止 `git add -A` / `git add .`
   - 验证过程产生的测试号数据保留、不清理
   - 本仓库远程为 GitHub（非 GitLab），push 不要带 `-o merge_request.*` 参数
+  - push 报 `RPC failed; HTTP 408` / `unexpected disconnect`（本环境网络对大包推送易超时）时重试即可，必要时加大缓冲：`git -c http.version=HTTP/1.1 -c http.postBuffer=524288000 push origin main`
 
 [预览库 H2 快照备份与恢复（2026-09-13）]
 - Date: 2026-09-13
