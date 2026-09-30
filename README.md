@@ -50,6 +50,7 @@ cd wisestar-client && npm ci && npm run dev
 ## 运行环境与配置
 
 - **云端（preview profile）**：H2 文件库，种子脚本幂等（`CREATE TABLE IF NOT EXISTS` + `ALTER ... ADD COLUMN IF NOT EXISTS` + 内置角色 `UPDATE` 收敛），重启即自动补齐结构与权限。云端预览无持久化卷，H2 库会随容器重建丢失；数据持久化靠 **H2 SQL 快照**：停止后端后执行 `server/db-export.sh` 导出到 `server/db-snapshot/wisestar.sql`（需提交），新环境用 `server/start-preview.sh` 启动时自动导入。注意勿启用 H2 `AUTO_SERVER`（容器主机名解析会导致启动失败）。
+- **运行期文件数据（图片/附件）**：`server/api/files/`（约 836MB / 2002 个文件，被 `.gitignore` 忽略）不在 Git 内，全新环境缺失会导致 `t_file` 引用的图片经 `/api/file?id=` 返回 404；执行 `server/fetch-files.sh` 从 GitHub Release 资产 `data-20260930` 下载、逐片校验并自动恢复。
 - **本地（dev profile）**：MySQL 8，`server/rdbms/src/main/resources/scripts/init-mysql.sql` 为完整种子脚本；H2 版为 `init-h2.sql`。**改动数据库结构或权限时两份脚本需同步修改**。
 - 端口：前端 3000，后端 1991（preview）/ 7007（dev）。
 

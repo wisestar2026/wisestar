@@ -148,3 +148,12 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 后端 `/api/file/create` 返回的 FileView 实际不含 previewUrl（FileViewMapper 未映射、File 实体也无该字段）；图片直接引用 `/api/file?id=<fileId>`，且 `GET /api/file?id=` 无需登录即可访问，`<img>` 可直接加载
   - 标准单表模板现为 30 列（第 30 列可选「图片」，多张用换行分隔）；解析在 `RepoServiceImpl.parseStandardRow`（COL_IMAGE），导出/模板在 `STANDARD_HEADERS`/`standardRowOf`
 
+[GitHub Release 大文件下载（运维部署）]
+- Date: 2026-09-30
+- Context: Agent 下载 ~815MB 分片资产（tar.gz.part-00..08）并入 `server/api/files` 时确认
+- Category: 运维部署
+- Instructions:
+  - 本环境到 GitHub 的 HTTP/2 大文件下载会中途 stall（curl 无报错但 0 字节/秒）或报 `HTTP/2 stream ... not closed cleanly`；改用 `curl -fL --http1.1 --connect-timeout 20 --speed-limit 20480 --speed-time 30 -C - --retry 5 --retry-all-errors` 可断点续传并自动重连
+  - 分片还原按序号 `cat *.part-00..08 > big.tar.gz` 再解压；图片数据目录为 `/workspace/server/api/files/`（gitignore），扁平文件名与 `t_file.file_path`/`thumb_file_path` 一一对应，新环境需另行拷贝或重新下载
+
+
