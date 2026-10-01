@@ -3,18 +3,19 @@
  *
  * 布局（参考设计稿「海洋智学」主界面）:
  *   +--------------------------------------------------------------+
- *   |  商城   |                                                    |
- *   |  错题本 |        ⛵ 整张船图 = 「开始学习」按钮              |   ← 同一容器
- *   |  今日任务|       （「开始学习」文字浮于船图右下，整图可点）    |
+ *   |  商城   |          ⛵ 整张船图（仅展示，不可点击）            |   ← 同一容器
+ *   |  错题本 |       「开始学习」按钮浮于船图下方，是唯一入口       |
+ *   |  今日任务|                                                    |
  *   +--------------------------------------------------------------+
- *        ↑ 右侧「今日数据/积分引导/签到」三张悬浮卡片，绝对定位浮在容器之上，默认收起、不占布局
+ *        ↑ 右侧「今日数据/积分引导/签到/总结」四张悬浮卡片：默认只露出图标贴在右缘，
+ *          点击图标才展开为悬浮窗，不占布局
  *        ↑ 容器浮于「虚化背景」之上（.slh-root::before backdrop-filter），与背景不在同一平面
  *
  * 功能保持不变（仅重排布局）:
- *   - 整张船图即「开始学习」按钮（英语学科指向英语学习中心）
+ *   - 船图仅展示；仅「开始学习」按钮进入学习（英语学科指向英语学习中心）
  *   - 荣誉商城 / 错题本 / 今日任务（任务改为右侧抽屉展示，含完成结算）
- *   - 今日学习数据总览 / 今日积分获取引导 / 每日签到 → 右侧可折叠悬浮卡片（默认收起）
- *   - 今日学习总结 / 在线时长宝箱 → 保留
+ *   - 今日学习数据总览 / 今日积分获取引导 / 每日签到 / 今日学习总结 → 右缘图标悬浮卡（默认只露图标）
+ *   - 在线时长宝箱 → 可拖动悬浮条（位置本地记忆）
  *
  * 个人信息（学号/证书/头衔/积分）展示在顶部状态栏（StudentLayout），不再占用首页容器
  *
@@ -42,7 +43,14 @@ function FloatCard({ title, icon, tone = 'sky', defaultOpen = false, headExtra, 
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className={`slh-float-card ${open ? 'is-open' : ''} ${className}`}>
-      <button type="button" className="slh-float-head" onClick={() => setOpen((o) => !o)}>
+      <button
+        type="button"
+        className="slh-float-head"
+        onClick={() => setOpen((o) => !o)}
+        title={title}
+        aria-label={title}
+        aria-expanded={open}
+      >
         <IconTile emoji={icon} tone={tone} size="xs" />
         <span className="slh-float-title">{title}</span>
         {headExtra && <span className="slh-float-extra">{headExtra}</span>}
@@ -167,22 +175,20 @@ export default function StudentHomePage() {
         </aside>
 
         <div className="slh-stage">
-          {/* 整张船图即按钮：点击开始学习 */}
+          {/* 船图仅作展示，不可点击 */}
+          <div className="slh-ship-wrap" aria-hidden="true">
+            <img className="slh-ship" src="/student-assets/ship-start.webp" alt="" />
+          </div>
+          {/* 仅「开始学习」按钮可进入学习界面 */}
           <button
             type="button"
-            className="slh-ship-btn"
+            className="slh-start"
             onClick={() => navigate(studyPath)}
             aria-label={`开始学习 · ${subject.name}`}
           >
-            <img className="slh-ship" src="/student-assets/ship-start.webp" alt="" />
-            <span className="slh-start">
-              <span className="slh-start-btn">
-                <span className="slh-start-play" aria-hidden="true">▶</span>
-                <span className="slh-start-text">开始学习</span>
-              </span>
-              <span className="slh-start-sub">
-                开启{subject.name}研习 · {(subject.chapters?.[0]?.name) || '今日研习'}
-              </span>
+            <span className="slh-start-btn">
+              <span className="slh-start-play" aria-hidden="true">▶</span>
+              <span className="slh-start-text">开始学习</span>
             </span>
           </button>
         </div>
@@ -270,10 +276,11 @@ export default function StudentHomePage() {
             <div className="slh-summary-text">{summary.content}</div>
           </FloatCard>
         )}
-
-        {/* 在线时长宝箱：时长进度条 + 三只小宝箱（达成点击领取；纯净学习模式隐藏） */}
-        {!pureMode && <OnlineChestFloat />}
       </aside>
+
+      {/* 在线时长宝箱：时长进度条 + 三只小宝箱（达成点击领取；纯净学习模式隐藏）
+          置于主容器内，拖动位置以主容器为基准，随容器居中/缩窄一起移动 */}
+      {!pureMode && <OnlineChestFloat />}
 
       {/* ---- 今日任务抽屉 ---- */}
       <Drawer

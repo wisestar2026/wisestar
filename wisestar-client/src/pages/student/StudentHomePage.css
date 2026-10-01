@@ -15,6 +15,11 @@
   min-height: 0;
   display: flex;
   isolation: isolate;
+  /* 宽屏下按 ~2:1（接近平板端比例）限宽并居中，使容器宽度贴近绿色目标框：
+     容器高度 ≈ 100vh - 209px（顶栏 99 + 主区上下内边距 18 + 92），宽度取其 2 倍 */
+  width: 100%;
+  max-width: calc((100vh - 209px) * 2);
+  margin: 0 auto;
 }
 
 /* ---------- 虚化背景层：与容器不在同一平面 ---------- */
@@ -41,7 +46,8 @@
   z-index: 1;
   flex: 1;
   min-width: 0;
-  min-height: 540px;
+  /* 不设最小高度：随视口高度弹性收缩，保证 100% 缩放时首页无纵向滚动 */
+  min-height: 0;
   display: grid;
   grid-template-columns: 208px minmax(0, 1fr);
   border-radius: 30px;
@@ -145,26 +151,17 @@
 .slh-side-wrong { --accent: #5b6fe0; --accent-soft: rgba(91, 111, 224, 0.42); }
 .slh-side-task { --accent: #17a5b8; --accent-soft: rgba(23, 165, 184, 0.42); }
 
-/* ---------- 船图舞台：整张船图即按钮 ---------- */
+/* ---------- 船图舞台：船图仅展示，「开始学习」按钮为唯一入口 ---------- */
 .slh-stage {
   position: relative;
   overflow: hidden;
 }
-.slh-ship-btn {
+.slh-ship-wrap {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
   overflow: hidden;
-  transition: filter 0.3s;
+  pointer-events: none;
 }
-.slh-ship-btn:hover { filter: saturate(1.06) brightness(1.02); }
-.slh-ship-btn:active { filter: saturate(1.1) brightness(0.99); }
 .slh-ship {
   width: 100%;
   height: 100%;
@@ -180,19 +177,24 @@
   50%      { transform: translateY(-10px); }
 }
 
-/* 「开始学习」：船图正下方居中，半透明玻璃小胶囊，随整图一起可点 */
+/* 「开始学习」：船图正下方居中，唯一的可点击入口（玻璃小胶囊） */
 .slh-start {
   position: absolute;
   left: 50%;
-  bottom: 24px;
+  bottom: 56px;
   transform: translateX(-50%);
   z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
-  pointer-events: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
 }
+.slh-start:active { transform: translate(-50%, 1px); }
 .slh-start-btn {
   display: inline-flex;
   align-items: center;
@@ -223,18 +225,12 @@
   color: #ffffff;
   text-shadow: 0 2px 7px rgba(18, 78, 140, 0.65);
 }
-.slh-start-sub {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 5px rgba(18, 78, 140, 0.7);
-}
 @keyframes slh-start-pulse {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-3px); }
 }
 
-/* ---------- 右侧悬浮卡片：绝对定位，浮在容器之上，默认收起、不占布局 ---------- */
+/* ---------- 右侧悬浮卡片：贴在右缘，默认只露图标，点击展开为悬浮窗 ---------- */
 .slh-float {
   position: absolute;
   top: 14px;
@@ -243,30 +239,45 @@
   width: 296px;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 12px;
+  pointer-events: none;
 }
 .slh-float-card {
+  pointer-events: auto;
+  width: 56px;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 249, 255, 0.93) 100%);
   border: 1px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 10px 26px rgba(64, 140, 190, 0.22), 0 2px 6px rgba(64, 140, 190, 0.1);
   backdrop-filter: blur(6px);
   overflow: hidden;
-  transition: box-shadow 0.25s, border-radius 0.25s;
+  transition: width 0.25s ease, box-shadow 0.25s, border-radius 0.25s;
 }
-.slh-float-card.is-open { border-radius: 22px; }
+.slh-float-card.is-open { width: 296px; border-radius: 22px; }
 .slh-float-card:hover { box-shadow: 0 14px 32px rgba(64, 140, 190, 0.28); }
 .slh-float-head {
   width: 100%;
+  height: 56px;
   border: none;
   background: transparent;
   cursor: pointer;
   font-family: inherit;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  padding: 0;
+}
+.slh-float-card.is-open .slh-float-head {
+  height: auto;
+  justify-content: flex-start;
   padding: 14px 18px;
 }
+/* 未展开：只露图标（标题/附加信息/箭头隐藏） */
+.slh-float-card:not(.is-open) .slh-float-title,
+.slh-float-card:not(.is-open) .slh-float-extra,
+.slh-float-card:not(.is-open) .slh-float-caret { display: none; }
 .slh-float-title { font-size: 14px; font-weight: 800; color: #2b4a6b; flex: 1; text-align: left; }
 .slh-float-extra { font-size: 12px; font-weight: 700; color: #5b7a99; }
 .slh-float-caret { font-size: 12px; color: #7aa3c4; }
@@ -338,7 +349,37 @@
   .slh-side-emoji { width: 46px; height: 46px; font-size: 26px; }
   .slh-stage { min-height: 380px; }
   .slh-start-text { font-size: 28px; letter-spacing: 3px; }
-  /* 小屏改为常规排布，避免悬浮遮挡 */
-  .slh-float { position: static; width: auto; margin-top: 16px; }
+  /* 小屏改为常规排布，避免悬浮遮挡；卡片恢复通栏并显示标题 */
+  .slh-float { position: static; width: auto; margin-top: 16px; align-items: stretch; pointer-events: auto; }
+  .slh-float-card { width: 100%; }
+  .slh-float-card:not(.is-open) .slh-float-head {
+    height: auto;
+    justify-content: flex-start;
+    padding: 14px 18px;
+  }
+  .slh-float-card:not(.is-open) .slh-float-title,
+  .slh-float-card:not(.is-open) .slh-float-caret { display: block; }
   .slh-root::before { display: none; }
+}
+
+/* ---------- 低视口高度：最后生效，压缩左栏入口避免内容溢出 ---------- */
+@media (max-height: 780px) {
+  .slh-side { gap: 10px; padding: 14px; }
+  .slh-side-btn { min-height: 74px; gap: 5px; }
+  .slh-side-emoji { width: 44px; height: 44px; font-size: 24px; }
+  .slh-side-main { font-size: 15px; letter-spacing: 1px; }
+  .slh-side-sub { font-size: 11px; padding: 2px 10px; }
+  .slh-start { bottom: 40px; }
+  .slh-start-text { font-size: 26px; letter-spacing: 3px; }
+}
+
+/* ---------- 极矮视口：进一步收缩 ---------- */
+@media (max-height: 660px) {
+  .slh-side { gap: 8px; padding: 12px; }
+  .slh-side-btn { min-height: 56px; gap: 4px; padding: 10px; }
+  .slh-side-emoji { width: 38px; height: 38px; font-size: 20px; }
+  .slh-side-main { font-size: 14px; }
+  .slh-side-sub { font-size: 10px; padding: 2px 8px; }
+  .slh-start { bottom: 28px; }
+  .slh-start-text { font-size: 22px; }
 }

@@ -1,4 +1,22 @@
-/* OnlineChestFloat.css - 学员端首页「在线时长宝箱」步骤条（菱形节点 + 连接轨道，无卡片容器） */
+/* OnlineChestFloat.css - 学员端首页「在线时长宝箱」步骤条（菱形节点 + 连接轨道，整条可拖动悬浮） */
+
+/* ---------- 可拖动悬浮容器（完全透明，只保留进度条/宝箱/文字） ---------- */
+/* 绝对定位在首页主容器 .slh-root 内，随容器居中/缩窄一起移动 */
+.ocf-float {
+  position: absolute;
+  z-index: 60;
+  width: 296px;
+  pointer-events: auto;
+  padding: 6px 10px 26px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ocf-float:active { cursor: grabbing; }
 
 .ocf-steps {
   --ocf-rail-y: 34px;
