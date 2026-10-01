@@ -311,8 +311,17 @@ public final class AnswerJudgeUtil {
 
 	/**
 	 * 填空空位等值比较（两边先归一化；纯 ASCII 字母串如选项字母 A/B/C 忽略大小写）。
+	 *
+	 * <p>当至少一方为循环小数时，优先走数学等价判定（如 {@code 0.6̇} / {@code 0.666…} / {@code 0.(6)} 等价，
+	 * 而未标循环点的 {@code 0.666} 判错），与前端 cycleDecimal.js 语义一致；数学等价不成立时仍回退
+	 * 文本等值比较（兼容全角括号、空白等格式差异）。</p>
 	 */
 	private static boolean blankEquals(String a, String b) {
+		// 循环小数：数学等价成立即判对；等价为否/不适用时回退文本比较，避免误伤格式差异
+		if (Boolean.TRUE.equals(CycleDecimalJudge.cycleDecimalEquals(a, b))) {
+			return true;
+		}
+
 		String na = normalizeBlank(a);
 		String nb = normalizeBlank(b);
 		if (na.equals(nb)) {

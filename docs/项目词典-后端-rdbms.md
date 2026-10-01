@@ -1234,6 +1234,7 @@
     扣减指定学员学币（写入负向学币流水）。
   - `public StudentPreviewCompleteView completePreview(StudentPreviewCompleteRequest request)`
     学员预习完成：标记该小节/知识点预习完成并结算奖励（同一目标仅首次发放）。
+    若请求携带 `items`（预习例题检测作答），按 questionId 回源复核判分后纳入学情评价（刷新知识点掌握度/薄弱），仅评价不落练习会话，也不额外发放练习奖励。
   - `public void uploadActivity(StudentActivityRequest request)`
     学员端实时位置上报（按学员覆盖，记录最后活跃时间）。
   - `public List<StudentActivityView> listActivities()`
@@ -1262,6 +1263,7 @@
     学习完成统一结算。
   - `public StudentWrongRedoView wrongRedo(StudentWrongRedoRequest request)`
     错题重做：答对则订正、移出错题本、刷新薄弱并结算奖励。
+    订正成功视为该知识点一次正确作答，纳入掌握度窗口，并尝试消除薄弱标记。
   - `public StudentWeakConquerView weakConquer(StudentWeakConquerRequest request)`
     薄弱知识点攻克。
 

@@ -8,11 +8,13 @@ import cn.wisestar.server.core.security.PasswordEncoder;
 import cn.wisestar.server.core.uitls.AnswerJudgeUtil;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.CampusScope;
+import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.knowledge.ChapterView;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
 import cn.wisestar.server.domain.dto.knowledge.SectionPracticeConfig;
 import cn.wisestar.server.domain.dto.knowledge.SectionView;
+import cn.wisestar.server.domain.dto.student.PracticeEvaluationContext;
 import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.dto.student.StudentActivityRequest;
 import cn.wisestar.server.domain.dto.student.StudentActivityView;
@@ -104,6 +106,7 @@ import org.springframework.util.StringUtils;
 
 import javax.validation.ValidationException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -1395,6 +1398,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	/**
 	 * 学员预习完成：标记该小节/知识点预习完成并结算奖励（同一目标仅首次发放）。
+	 *
+	 * <p>若请求携带 {@code items}（预习例题检测作答），按 questionId 回源复核判分后纳入学情评价
+	 * （刷新知识点掌握度/薄弱），仅评价不落练习会话，也不额外发放练习奖励。</p>
 	 */
 	@Override
 	public StudentPreviewCompleteView completePreview(StudentPreviewCompleteRequest request) {
@@ -1419,6 +1425,10 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 			throw new ValidationException("预习内容不在权限范围");
 		}
+		// 例题检测结果纳入掌握度刷新（仅学情评价：不落练习会话/错题本，不额外发练习奖励；异常不阻断预习完成）
+		if (request.getItems() != null && !request.getItems().isEmpty()) {
+			recordPreviewEvaluation(userId, section, byKp ? request.getKnowledgePointId() : null, request.getItems());
+		}
 		// 奖励结算：统一走积分·学币账本（refId 幂等 + 7 天防刷，与内容配置无关）
 		RewardContext context = new RewardContext();
 		context.setUserId(userId);
@@ -1428,6 +1438,55 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		context.setSectionId(section.getId());
 		context.setRefId("preview:" + (byKp ? request.getKnowledgePointId() : section.getId()));
 		return rewardService.settle(context);
+	}
+
+	/**
+	 * 把「预习例题检测」作答纳入学情评价（掌握度/薄弱刷新）。
+	 *
+	 * <p>后端按 questionId 回源题目并复核判分，仅统计有效作答（已答且有标准答案）的题，
+	 * 不写 t_practice_record / t_practice_detail，因此不影响错题本与练习奖励；异常仅记录日志。</p>
+	 */
+	private void recordPreviewEvaluation(String userId, Section section, String knowledgePointId,
+			List<PracticeSubmitRequest.PracticeItem> items) {
+		try {
+			PracticeEvaluationContext evalCtx = new PracticeEvaluationContext();
+			evalCtx.setUserId(userId);
+			evalCtx.setKnowledgePointId(knowledgePointId);
+			evalCtx.setSectionId(section.getId());
+			for (PracticeSubmitRequest.PracticeItem item : items) {
+				if (item == null || !StringUtils.hasText(item.getQuestionId()) || item.getAnswer() == null) {
+					continue; // 未作答的例题不计入，避免因跳过而拉低掌握度
+				}
+				Template template = templateMapper.selectById(item.getQuestionId());
+				if (template == null || template.getTemplate() == null) {
+					continue;
+				}
+				Integer correct;
+				try {
+					correct = AnswerJudgeUtil.evaluate(template.getTemplate(), item.getAnswer());
+				}
+				catch (Exception e) {
+					continue; // 该题无法判分：跳过
+				}
+				if (correct == null) {
+					continue; // 无标准答案：不计分
+				}
+				PracticeEvaluationContext.Item evalItem = new PracticeEvaluationContext.Item();
+				evalItem.setQuestionId(template.getId());
+				evalItem.setCorrect(Integer.valueOf(1).equals(correct));
+				if (template.getKnowledgePoint() != null) {
+					evalItem.setKnowledgePointNames(Arrays.asList(template.getKnowledgePoint()));
+				}
+				evalCtx.getItems().add(evalItem);
+			}
+			if (!evalCtx.getItems().isEmpty()) {
+				evaluationService.recordPractice(evalCtx);
+			}
+		}
+		catch (Exception e) {
+			log.warn("preview evaluation failed: user={}, section={}", userId,
+					section == null ? null : section.getId(), e);
+		}
 	}
 
 	/**
@@ -1849,6 +1908,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 
 	/**
 	 * 错题重做：答对则订正、移出错题本、刷新薄弱并结算奖励。
+	 *
+	 * <p>订正成功视为该知识点一次正确作答，纳入掌握度窗口，并尝试消除薄弱标记。</p>
 	 */
 	@Override
 	public StudentWrongRedoView wrongRedo(StudentWrongRedoRequest request) {
@@ -1884,6 +1945,24 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		PracticeRecord record = practiceRecordMapper.selectById(detail.getPracticeId());
 		String kpId = resolveKpIdFromTemplate(template, record);
 		if (StringUtils.hasText(kpId)) {
+			// 订正成功即视为该知识点的一次正确作答，纳入掌握度窗口（异常不阻断订正）
+			try {
+				PracticeEvaluationContext evalCtx = new PracticeEvaluationContext();
+				evalCtx.setUserId(userId);
+				evalCtx.setKnowledgePointId(kpId);
+				evalCtx.setSectionId(record == null ? null : record.getSectionId());
+				PracticeEvaluationContext.Item evalItem = new PracticeEvaluationContext.Item();
+				evalItem.setQuestionId(template.getId());
+				evalItem.setCorrect(true);
+				if (template.getKnowledgePoint() != null) {
+					evalItem.setKnowledgePointNames(Arrays.asList(template.getKnowledgePoint()));
+				}
+				evalCtx.getItems().add(evalItem);
+				evaluationService.recordPractice(evalCtx);
+			}
+			catch (Exception e) {
+				log.warn("wrong redo evaluation failed: user={}, kp={}", userId, kpId, e);
+			}
 			try {
 				evaluationService.refreshWeakAfterCorrection(userId, kpId);
 			}

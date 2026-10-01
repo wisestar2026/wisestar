@@ -798,6 +798,8 @@
   **答案格式**：学生答案由前端提交，结构为 `{type: 'option', optionId} / {type: 'options', optionIds: []} / {type: 'text', text}`； 判分前先按题目选项映射为"选项标题文本"再比较。
 
   **返回值约定**：1 正确 / 0 错误（含未作答）/ null 无标准答案（不计分）。
+
+  **循环小数**：填空等值比较接入 {@link CycleDecimalJudge}，至少一方为循环小数时优先做数学等价判定（如 `0.6̇` / `0.666…` / `0.(6)` 等价、`0.666` 不等价），数学等价不成立或不适用时回退文本等值比较。
 - 方法:
   - `public static List<String> extractCorrectAnswers(SurveySchema question)`
     提取题目标准答案列表；无任何标准答案时返回 null。
@@ -878,6 +880,21 @@
   - `public static HttpServletRequest getCurrentHttpRequest()`
   - `public static HttpServletResponse getCurrentHttpResponse()`
   - `public static String getCookie(String cookieName)`
+
+### `shared/src/main/java/cn/wisestar/server/core/uitls/CycleDecimalJudge.java`
+- 包: `cn.wisestar.server.core.uitls`
+- 类型: `class CycleDecimalJudge`
+- **类说明**：
+  循环小数数学等价判定（后端移植版）。
+  **定位**：与前端 `wisestar-client/src/utils/cycleDecimal.js` 语义保持一致， 供 `AnswerJudgeUtil` 填空判分调用，修复「前端判对、后端判错」的循环小数判分不一致问题。
+
+  **四种形态**：STD 标准（循环节半角括号，如 `0.(6)`）；DISPLAY 显示（教材循环点记法）； INPUT 输入（括号 / 循环点 / 省略号 / 有限小数）；OBJ 判题对象（结构化 kind/int/nonrep/rep）。
+
+  **设计原则**：判题只做数学等价判定，不依赖字符串相等；有限小数与循环小数类型不同即判错 （`0.666` ≠ `0.(6)`）；同一数值的不同循环节写法归一为最短循环节。
+- 方法:
+  - `public static Boolean cycleDecimalEquals(String stdText, String inputText)`
+    循环小数等价判定。
+    **语义**：仅当至少一方为循环小数时返回 TRUE/FALSE；两边都不是循环小数时返回 null （调用方回退到既有文本等值比较，避免影响普通数值/文本）。
 
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/DatabaseInitHelper.java`
 - 包: `cn.wisestar.server.core.uitls`
@@ -2082,6 +2099,7 @@
 - **类说明**：
   学员预习完成请求（知识点预习讲完后的「预习完成」按钮）。
   小节预习传 sectionId，知识点预习传 knowledgePointId；同一目标仅首次结算奖励。
+  例题检测结果通过 `items` 一并上报：后端回源题目复核判分后刷新知识点掌握度 （仅供学情评价，不写练习会话/错题本，也不额外发放练习奖励）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/StudentPreviewCompleteView.java`
 - 包: `cn.wisestar.server.domain.dto.student`

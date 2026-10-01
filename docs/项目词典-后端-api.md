@@ -1018,6 +1018,7 @@
     **HTTP 方法 + 完整路径**：POST ${api.prefix}/student/preview/complete。
 
     **功能**：标记该小节/知识点预习完成（学习完成度 100%）并结算奖励 （学习币 +5 / 学海积分 +3）；同一目标仅首次结算，重复调用不重复发放。
+    请求可选携带 `items`（预习例题检测作答），后端回源复核判分后刷新知识点掌握度。
 
     **权限**：isAuthenticated()（服务层校验学员身份）。
   - `public StudentProfileView profile()`

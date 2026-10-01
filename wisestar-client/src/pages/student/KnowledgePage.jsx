@@ -501,10 +501,15 @@ export default function KnowledgePage() {
   const finishPreview = () => {
     if (previewCompleting || previewDone) return;
     setPreviewCompleting(true);
+    // 已作答的例题检测一并上报：后端复核判分后刷新知识点掌握度（只评价，不落练习会话）
+    const items = (realQuestions || [])
+      .filter((q) => realAnswers[q.id])
+      .map((q) => ({ questionId: q.id, answer: realAnswers[q.id] }));
     completePreview({
       sectionId: sectionId || undefined,
       knowledgePointId: kpIdParam || undefined,
       repoId: repoId || undefined,
+      items: items.length ? items : undefined,
     })
       .then((res) => {
         const d = res?.data || {};

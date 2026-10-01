@@ -81,13 +81,13 @@ export function normalizeBlankText(s) {
 
 /**
  * 填空空位等值比较（两边先归一化；纯 ASCII 字母串如选项字母 A/B/C 忽略大小写）。
- * 当至少一方为循环小数时，改走数学等价判定（如 `0.6̇` / `0.666…` / `0.(6)` 等价，
- * 而未标循环点的 `0.666` 判错），否则回退既有文本等值比较。
+ * 当至少一方为循环小数且数学等价成立时判对（如 `0.6̇` / `0.666…` / `0.(6)` 等价，
+ * 而未标循环点的 `0.666` 判错）；数学等价不成立或不适用时回退既有文本等值比较，
+ * 以兼容全角括号、空白等格式差异。后端 AnswerJudgeUtil 采用同一策略。
  */
 export function blankEquals(a, b) {
-  // 循环小数：数学等价判定（无循环小数时返回 null，走下方文本比较）
-  const cycleHit = cycleDecimalEquals(a, b);
-  if (cycleHit !== null) return cycleHit;
+  // 循环小数：数学等价成立即判对，否则回退文本比较
+  if (cycleDecimalEquals(a, b) === true) return true;
 
   const na = normalizeBlankText(a);
   const nb = normalizeBlankText(b);
