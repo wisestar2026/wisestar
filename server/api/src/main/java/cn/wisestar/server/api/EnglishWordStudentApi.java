@@ -51,6 +51,20 @@ public class EnglishWordStudentApi {
 	}
 
 	/**
+	 * 学生端：当天是否已完成强制巩固。
+	 *
+	 * <p>按账号 + 自然日判定，跨设备生效；完成后当天的强制巩固弹窗不再出现。</p>
+	 *
+	 * @return true 表示当天已巩固过
+	 */
+	@GetMapping("/drill/completed")
+	@PreAuthorize("isAuthenticated()")
+	public boolean drillCompletedToday() {
+		String userId = SecurityContextUtils.getUserId();
+		return englishWordService.hasDrillCompletedToday(userId);
+	}
+
+	/**
 	 * 学生端：记录学习结果（熟练度 + 下次复习时间）。
 	 *
 	 * @param request {wordId, correct}

@@ -271,6 +271,10 @@
 - 方法:
   - `public List<EnglishWordView> studyWords(@RequestParam(defaultValue = "10") Integer limit)`
     学生端：获取待学习/复习单词列表。
+  - `public List<EnglishWordView> drillWords(@RequestParam(defaultValue = "10") Integer limit)`
+    学生端：进入学习前强制巩固的单词（最近答错 + 复习到期，排除已熟悉）。
+  - `public boolean drillCompletedToday()`
+    学生端：当天是否已完成强制巩固（按账号 + 自然日，跨设备生效）。
   - `public void recordLearning(@RequestBody java.util.Map<String, Object> request)`
     学生端：记录学习结果（熟练度 + 下次复习时间）。
   - `public PaginationResponse<EnglishWordView> getWordBook(EnglishWordQuery query)`

@@ -9,6 +9,7 @@
  *   GET  /english/student/review           智能复习（单词 + 句子混合队列）
  *   POST /english/student/session          记录学习会话 { type, durationSeconds, correctCount }
  *   GET  /english/word/drill               进入学习前强制巩固单词（最近答错 + 复习到期）
+ *   GET  /english/word/drill/completed     当天是否已完成强制巩固（账号维度，跨设备）
  *   GET  /english/word/word-book           单元单词列表（含熟练度，复用单词接口）
  *   POST /english/word/record              记录单词作答 { wordId, correct }
  *
@@ -59,6 +60,11 @@ export function getEnglishWordBook(params) {
 /** 进入学习前强制巩固的单词（最近答错 + 复习到期，排除已熟悉） */
 export function getEnglishDrillWords(params) {
   return request.get('/english/word/drill', { params });
+}
+
+/** 当天是否已完成强制巩固（按账号 + 自然日，跨设备生效） */
+export function getEnglishDrillCompleted() {
+  return request.get('/english/word/drill/completed');
 }
 
 /** 记录单词作答 */

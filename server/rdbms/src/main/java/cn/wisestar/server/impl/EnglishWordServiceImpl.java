@@ -3,8 +3,10 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.english.EnglishWordQuery;
 import cn.wisestar.server.domain.dto.english.EnglishWordView;
+import cn.wisestar.server.domain.model.EnglishLearningLog;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.domain.model.EnglishWordBook;
+import cn.wisestar.server.mapper.EnglishLearningLogMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
 import cn.wisestar.server.service.EnglishWordService;
@@ -14,8 +16,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +38,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 
 	private final EnglishWordMapper englishWordMapper;
 	private final EnglishWordBookMapper englishWordBookMapper;
+	private final EnglishLearningLogMapper englishLearningLogMapper;
 
 	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
 	private static final int WEAK_WRONG_TIMES = 2;
@@ -175,6 +181,21 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		}
 		fillFamiliarity(userId, views);
 		return views;
+	}
+
+	@Override
+	public boolean hasDrillCompletedToday(String userId) {
+		if (userId == null) {
+			return false;
+		}
+		// 当天开始的时刻，用于判定「今天是否已完成巩固」（与全站 LocalDate.now() 口径一致）
+		Date todayStart = Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant());
+		Long count = englishLearningLogMapper.selectCount(
+				Wrappers.<EnglishLearningLog>lambdaQuery()
+						.eq(EnglishLearningLog::getUserId, userId)
+						.eq(EnglishLearningLog::getType, "drill")
+						.ge(EnglishLearningLog::getCreatedAt, todayStart));
+		return count != null && count > 0;
 	}
 
 	@Override

@@ -872,10 +872,15 @@
 - 注解: @Service, @RequiredArgsConstructor
 - **类说明**：
   英语单词学习服务实现。
+- 注入/字段: EnglishWordMapper englishWordMapper, EnglishWordBookMapper englishWordBookMapper, EnglishLearningLogMapper englishLearningLogMapper
 - 方法:
   - `public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query)`
   - `public PaginationResponse<EnglishWordView> wordBook(String userId, EnglishWordQuery query)`
   - `public List<EnglishWordView> getStudyWords(String userId, int limit)`
+  - `public List<EnglishWordView> getDrillWords(String userId, int limit)`
+    最近答错（wrongCount>0）或复习到期且未熟悉的单词，按 update_at 倒序取 limit。
+  - `public boolean hasDrillCompletedToday(String userId)`
+    查 t_english_learning_log 中该账号当天是否存在 type=drill 记录（LocalDate.now() 起算）。
   - `public void recordLearning(String userId, String wordId, boolean correct)`
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EvaluationServiceImpl.java`

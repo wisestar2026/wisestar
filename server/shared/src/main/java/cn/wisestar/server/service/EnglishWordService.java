@@ -48,6 +48,14 @@ public interface EnglishWordService {
 	java.util.List<EnglishWordView> getDrillWords(String userId, int limit);
 
 	/**
+	 * 是否已完成当天的强制巩固（按账号 + 自然日，跨设备生效）。
+	 *
+	 * @param userId 用户 ID
+	 * @return true 表示当天已巩固过，今日不再弹出
+	 */
+	boolean hasDrillCompletedToday(String userId);
+
+	/**
 	 * 记录学习结果（熟练度 + 下次复习时间）。
 	 *
 	 * @param userId 用户 ID

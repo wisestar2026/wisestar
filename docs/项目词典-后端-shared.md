@@ -2413,6 +2413,11 @@
 - 类型: `interface EnglishWordService`
 - **类说明**：
   英语单词学习服务。
+- 方法:
+  - `List<EnglishWordView> getDrillWords(String userId, int limit)`
+    进入学习前需强制巩固的单词（最近答错 + 复习到期）。
+  - `boolean hasDrillCompletedToday(String userId)`
+    当天是否已完成强制巩固（按账号 + 自然日，跨设备生效）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EvaluationService.java`
 - 包: `cn.wisestar.server.service`
