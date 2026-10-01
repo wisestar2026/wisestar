@@ -27,7 +27,7 @@ import {
 } from '@ant-design/icons';
 import useStudentStore, { TITLES, PROFILE, SUBJECTS } from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
-import { uploadActivity, getStudentStats } from '../../api/student';
+import { uploadActivity, getStudentStats, getMyStudentInfo } from '../../api/student';
 import { sendStudyHeartbeat } from '../../api/studentStudy';
 import IconTile from '../../components/common/IconTile';
 import './student.css';
@@ -86,6 +86,12 @@ export default function StudentLayout() {
   const totalPoints = stats?.totalPoints ?? 0;
   const totalCoins = (stats?.coinsBySubject || []).reduce((sum, c) => sum + c.coins, 0) + (stats?.manualCoins || 0);
 
+  // 学员个人档案（姓名/学号等，展示在顶部状态栏；加载失败回退 mock）
+  const [myInfo, setMyInfo] = useState(null);
+  useEffect(() => {
+    getMyStudentInfo().then((res) => setMyInfo(res?.data || null)).catch(() => setMyInfo(null));
+  }, []);
+
   // 按订单权限过滤后的可见学科（顺序：语文-数学-英语）
   const SUBJECT_ORDER = ['语文', '数学', '英语'];
   const visibleSubjects = [...getVisibleSubjects()].sort((a, b) => {
@@ -134,6 +140,8 @@ export default function StudentLayout() {
 
   // 当前头衔（按学海积分自动晋升，无降级）
   const currentTitle = [...TITLES].reverse().find((t) => PROFILE.points >= t.need) || TITLES[0];
+  // 顶部状态栏展示姓名（真实档案优先，缺失回退 mock）
+  const displayName = myInfo?.name || PROFILE.name;
 
   // 设置菜单项（纯净学习模式开关 / 返回管理端）
   const settingsItems = [
@@ -231,9 +239,16 @@ export default function StudentLayout() {
           <Dropdown menu={{ items: settingsItems }} trigger={['click']} placement="bottomRight">
             <button className="sll-icon-btn"><SettingOutlined /></button>
           </Dropdown>
-          {/* 头像 + 头衔 */}
-          <button className="sll-user" onClick={() => navigate('/student/profile')}>
+          {/* 个人档案（姓名/学号/证书/头衔，展示在顶部状态栏） */}
+          <button className="sll-user" onClick={() => navigate('/student/profile')} title="查看我的档案">
             <IconTile emoji="🐬" tone="sky" size="lg" round />
+            <span className="sll-user-meta">
+              <span className="sll-user-name">{displayName}</span>
+              <span className="sll-user-sub">
+                🎓 {myInfo?.studentNo || '—'}
+                {!pureMode && <> · 🏅 证书 {PROFILE.certCount}/{PROFILE.certTotal}</>}
+              </span>
+            </span>
             {!pureMode && <span className="sll-title-chip">{currentTitle.emoji} {currentTitle.name}</span>}
           </button>
           {/* 退出登录（学员账号无管理端权限） */}

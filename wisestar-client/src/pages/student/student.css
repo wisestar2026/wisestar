@@ -181,6 +181,16 @@
   cursor: pointer;
   padding: 2px;
 }
+/* 顶部状态栏个人档案（姓名/学号/证书） */
+.sll-user-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  min-width: 0;
+}
+.sll-user-name { font-size: 13px; font-weight: 800; color: #1d3a5f; white-space: nowrap; }
+.sll-user-sub { font-size: 11px; font-weight: 600; color: #5b7a99; white-space: nowrap; }
 .sll-title-chip {
   background: linear-gradient(135deg, #fff3d0, #ffe4a3);
   color: #9a6a00;
@@ -387,6 +397,9 @@
 .shp-ai-line2 { font-size: 16px; font-weight: 800; }
 
 /* ---------- 响应式 ---------- */
+@media (max-width: 1360px) {
+  .sll-user-sub { display: none; }
+}
 @media (max-width: 1000px) {
   .sll-header { flex-direction: column; align-items: flex-start; }
   .sll-right { flex-wrap: wrap; }
