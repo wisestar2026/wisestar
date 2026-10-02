@@ -3,9 +3,11 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.english.EnglishUnitQuery;
 import cn.wisestar.server.domain.dto.english.EnglishUnitView;
+import cn.wisestar.server.domain.model.EnglishGrammar;
 import cn.wisestar.server.domain.model.EnglishSentence;
 import cn.wisestar.server.domain.model.EnglishUnit;
 import cn.wisestar.server.domain.model.EnglishWord;
+import cn.wisestar.server.mapper.EnglishGrammarMapper;
 import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.mapper.EnglishUnitMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
@@ -44,6 +46,7 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 	private final EnglishUnitMapper englishUnitMapper;
 	private final EnglishWordMapper englishWordMapper;
 	private final EnglishSentenceMapper englishSentenceMapper;
+	private final EnglishGrammarMapper englishGrammarMapper;
 
 	@Override
 	public PaginationResponse<EnglishUnitView> list(EnglishUnitQuery query) {
@@ -123,6 +126,19 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 			fillBook(view, sentence.getVersion(), sentence.getGrade(), sentence.getTerm());
 		}
 
+		List<EnglishGrammar> grammars = englishGrammarMapper.selectList(Wrappers.<EnglishGrammar>lambdaQuery()
+				.eq(version != null, EnglishGrammar::getVersion, version)
+				.eq(grade != null, EnglishGrammar::getGrade, grade)
+				.eq(term != null, EnglishGrammar::getTerm, term));
+		for (EnglishGrammar grammar : grammars) {
+			if (isBlank(grammar.getUnit())) {
+				continue;
+			}
+			EnglishUnitView view = map.computeIfAbsent(grammar.getUnit(), this::newUnitView);
+			view.setGrammarCount(view.getGrammarCount() + 1);
+			fillBook(view, grammar.getVersion(), grammar.getGrade(), grammar.getTerm());
+		}
+
 		List<EnglishUnit> rows = englishUnitMapper.selectList(Wrappers.<EnglishUnit>lambdaQuery()
 				.eq(version != null, EnglishUnit::getVersion, version)
 				.eq(grade != null, EnglishUnit::getGrade, grade)
@@ -154,6 +170,7 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 		view.setUnit(unit);
 		view.setWordCount(0);
 		view.setSentenceCount(0);
+		view.setGrammarCount(0);
 		return view;
 	}
 

@@ -1,5 +1,6 @@
 package cn.wisestar.server.service;
 
+import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
@@ -36,6 +37,17 @@ public interface EnglishStudentService {
 	 * @return 句子列表
 	 */
 	List<EnglishSentenceView> sentences(String userId, String version, String grade, String term, String unit);
+
+	/**
+	 * 单元重点语法列表。
+	 *
+	 * @param version 版本
+	 * @param grade 年级
+	 * @param term 学期/册别
+	 * @param unit 单元
+	 * @return 语法列表（单元内 sort 升序）
+	 */
+	List<EnglishGrammarView> grammars(String version, String grade, String term, String unit);
 
 	/**
 	 * 待学习/复习句子。

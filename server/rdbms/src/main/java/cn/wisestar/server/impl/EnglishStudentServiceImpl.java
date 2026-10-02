@@ -1,14 +1,17 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
+import cn.wisestar.server.domain.model.EnglishGrammar;
 import cn.wisestar.server.domain.model.EnglishLearningLog;
 import cn.wisestar.server.domain.model.EnglishSentence;
 import cn.wisestar.server.domain.model.EnglishSentenceBook;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.domain.model.EnglishWordBook;
+import cn.wisestar.server.mapper.EnglishGrammarMapper;
 import cn.wisestar.server.mapper.EnglishLearningLogMapper;
 import cn.wisestar.server.mapper.EnglishSentenceBookMapper;
 import cn.wisestar.server.mapper.EnglishSentenceMapper;
@@ -43,6 +46,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final EnglishSentenceMapper englishSentenceMapper;
 	private final EnglishSentenceBookMapper englishSentenceBookMapper;
 	private final EnglishLearningLogMapper englishLearningLogMapper;
+	private final EnglishGrammarMapper englishGrammarMapper;
 	private final EnglishUnitService englishUnitService;
 
 	@Override
@@ -77,6 +81,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			view.setSort(unit.getSort());
 			view.setWordCount(unit.getWordCount());
 			view.setSentenceCount(unit.getSentenceCount());
+			view.setGrammarCount(unit.getGrammarCount());
 
 			int wordFinished = 0;
 			int reviewDue = 0;
@@ -126,6 +131,18 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		List<EnglishSentenceView> views = list.stream().map(this::toView).collect(Collectors.toList());
 		fillSentenceFamiliarity(userId, views);
 		return views;
+	}
+
+	@Override
+	public List<EnglishGrammarView> grammars(String version, String grade, String term, String unit) {
+		List<EnglishGrammar> list = englishGrammarMapper.selectList(Wrappers.<EnglishGrammar>lambdaQuery()
+				.eq(version != null, EnglishGrammar::getVersion, version)
+				.eq(grade != null, EnglishGrammar::getGrade, grade)
+				.eq(term != null, EnglishGrammar::getTerm, term)
+				.eq(unit != null, EnglishGrammar::getUnit, unit)
+				.orderByAsc(EnglishGrammar::getSort)
+				.orderByAsc(EnglishGrammar::getId));
+		return list.stream().map(this::toGrammarView).collect(Collectors.toList());
 	}
 
 	@Override
@@ -327,6 +344,23 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		view.setUnit(entity.getUnit());
 		view.setSection(entity.getSection());
 		view.setSort(entity.getSort());
+		return view;
+	}
+
+	private EnglishGrammarView toGrammarView(EnglishGrammar entity) {
+		EnglishGrammarView view = new EnglishGrammarView();
+		view.setId(entity.getId());
+		view.setTitle(entity.getTitle());
+		view.setContent(entity.getContent());
+		view.setExamples(entity.getExamples());
+		view.setExercises(entity.getExercises());
+		view.setVersion(entity.getVersion());
+		view.setGrade(entity.getGrade());
+		view.setTerm(entity.getTerm());
+		view.setUnit(entity.getUnit());
+		view.setSection(entity.getSection());
+		view.setSort(entity.getSort());
+		view.setUpdateAt(entity.getUpdateAt());
 		return view;
 	}
 

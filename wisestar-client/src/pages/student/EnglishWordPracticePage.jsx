@@ -34,7 +34,7 @@ export default function EnglishWordPracticePage() {
   const unit = searchParams.get('unit') || '';
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
-  const term = '上册';
+  const term = useStudentStore((s) => s.term);
 
   const [words, setWords] = useState([]);
   const [questions, setQuestions] = useState([]);

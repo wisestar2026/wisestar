@@ -4,6 +4,7 @@
  * 接口（后端 EnglishStudentApi / EnglishWordStudentApi，前缀 /api）：
  *   GET  /english/student/units            单元列表 + 学习进度（version/grade/term）
  *   GET  /english/student/sentences        单元句子列表（含熟练度）
+ *   GET  /english/student/grammars         单元重点语法列表（只读）
  *   GET  /english/student/sentence/study   待学习/复习句子
  *   POST /english/student/sentence/record  记录句子作答 { sentenceId, correct }
  *   GET  /english/student/review           智能复习（单词 + 句子混合队列）
@@ -30,6 +31,11 @@ export function getEnglishUnits(params) {
 /** 单元句子列表（含熟练度） */
 export function getEnglishSentences(params) {
   return request.get('/english/student/sentences', { params });
+}
+
+/** 单元重点语法列表（只读） */
+export function getEnglishGrammars(params) {
+  return request.get('/english/student/grammars', { params });
 }
 
 /** 待学习/复习句子 */

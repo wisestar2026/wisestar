@@ -195,6 +195,8 @@
     单元列表 + 学习进度。
   - `public List<EnglishSentenceView> sentences(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
     单元句子列表（含熟练度）。
+  - `public List<EnglishGrammarView> grammars(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
+    单元重点语法列表（只读，按 sort + id 升序）。
   - `public List<EnglishSentenceView> studySentences(@RequestParam(defaultValue = "10") Integer limit)`
     待学习/复习句子。
   - `public void recordSentence(@RequestBody Map<String, Object> request)`

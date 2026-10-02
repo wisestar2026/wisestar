@@ -108,6 +108,7 @@ export default function EnglishCenterPage() {
 
   const goWord = (unit) => navigate(`/student/english/word?unit=${encodeURIComponent(unit)}`);
   const goSentence = (unit) => navigate(`/student/english/sentence?unit=${encodeURIComponent(unit)}`);
+  const goGrammar = (unit) => navigate(`/student/english/grammar?unit=${encodeURIComponent(unit)}`);
   const goPractice = (item) => {
     if ((item.wordCount || 0) < 4) {
       message.warning('本单元单词太少，暂不能练习');
@@ -122,7 +123,7 @@ export default function EnglishCenterPage() {
         <div>
           <div className="eng-hero-title">英语学习中心</div>
           <div className="eng-hero-sub">
-            {version} · {grade} · 单词 + 句子，学练一体，智能复习帮你记得更牢
+            {version} · {grade} · 单词 + 句子 + 语法，学练一体，智能复习帮你记得更牢
           </div>
         </div>
         <div className="eng-hero-actions">
@@ -187,6 +188,14 @@ export default function EnglishCenterPage() {
                 <button type="button" className="eng-btn-word" onClick={() => goWord(unit.unit)}>单词学习</button>
                 <button type="button" className="eng-btn-practice" onClick={() => goPractice(unit)}>单词练习</button>
                 <button type="button" className="eng-btn-sentence" onClick={() => goSentence(unit.unit)}>句子学习</button>
+                <button
+                  type="button"
+                  className="eng-btn-grammar"
+                  disabled={!unit.grammarCount}
+                  onClick={() => goGrammar(unit.unit)}
+                >
+                  重点语法{unit.grammarCount ? ` · ${unit.grammarCount}` : ''}
+                </button>
               </div>
             </div>
           ))}

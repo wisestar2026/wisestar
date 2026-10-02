@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
@@ -46,6 +47,18 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
 		return englishStudentService.sentences(SecurityContextUtils.getUserId(), version, grade, term, unit);
+	}
+
+	/**
+	 * 单元重点语法列表（学员端只读）。
+	 */
+	@GetMapping("/grammars")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishGrammarView> grammars(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam(required = false) String unit) {
+		return englishStudentService.grammars(version, grade, term, unit);
 	}
 
 	/**

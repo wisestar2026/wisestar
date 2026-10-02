@@ -23,6 +23,9 @@ public class EnglishUnitProgressView {
 	/** 单元句子总数 */
 	private Integer sentenceCount;
 
+	/** 单元重点语法总数 */
+	private Integer grammarCount;
+
 	/** 已学习单词数（熟练度 >= 1） */
 	private Integer wordFinished;
 

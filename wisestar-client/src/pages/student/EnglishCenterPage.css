@@ -116,9 +116,8 @@
   background: linear-gradient(90deg, #4bb7e8, #7ed0f2);
 }
 .eng-stat-bar.sentence > span { background: linear-gradient(90deg, #ffb36b, #ff8a5c); }
-.eng-unit-actions { display: flex; gap: 10px; margin-top: 4px; }
+.eng-unit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .eng-unit-actions button {
-  flex: 1;
   border: none;
   border-radius: 12px;
   padding: 9px 0;
@@ -127,10 +126,64 @@
   cursor: pointer;
   transition: transform 0.15s ease;
 }
-.eng-unit-actions button:hover { transform: translateY(-1px); }
+.eng-unit-actions button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.eng-unit-actions button:hover:not(:disabled) { transform: translateY(-1px); }
 .eng-btn-word { background: #e6f6fd; color: #1479a6; }
 .eng-btn-practice { background: #eafaf1; color: #1f8f4d; }
 .eng-btn-sentence { background: #fff0e8; color: #d9603a; }
+.eng-btn-grammar { background: #f1ecff; color: #6a4bd0; }
+
+/* ---------- 重点语法页 ---------- */
+.eng-grammar-hero { margin-bottom: 18px; }
+.eng-grammar-list { display: flex; flex-direction: column; gap: 14px; }
+.eng-grammar-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 20px rgba(64, 140, 190, 0.14);
+}
+.eng-grammar-head { display: flex; align-items: flex-start; gap: 10px; }
+.eng-grammar-index {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f1ecff;
+  color: #6a4bd0;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eng-grammar-title { font-size: 15px; font-weight: 800; color: #14506e; line-height: 1.5; }
+.eng-grammar-content { margin: 8px 0 0 32px; font-size: 13px; color: #43647a; line-height: 1.7; }
+.eng-grammar-examples { margin: 10px 0 0 32px; }
+.eng-grammar-examples-label { font-size: 12px; font-weight: 700; color: #6a4bd0; margin-bottom: 4px; }
+.eng-grammar-examples ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.eng-grammar-examples li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #f7f4ff;
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+.eng-grammar-en { font-size: 13px; color: #14506e; font-weight: 600; }
+.eng-grammar-zh { font-size: 12px; color: #7a8fa0; }
+.eng-grammar-sound {
+  margin-left: auto;
+  border: none;
+  border-radius: 999px;
+  background: #e6f6fd;
+  color: #1479a6;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.eng-grammar-sound:hover { background: #d5eefb; }
 
 /* ---------- 学习卡片 ---------- */
 .eng-learn-wrap { max-width: 720px; margin: 0 auto; padding: 20px 20px 80px; }

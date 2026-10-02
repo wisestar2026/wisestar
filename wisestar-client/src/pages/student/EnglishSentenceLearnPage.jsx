@@ -50,7 +50,7 @@ export default function EnglishSentenceLearnPage() {
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
 
-  const [term] = useState('上册');
+  const term = useStudentStore((s) => s.term);
   const [sentences, setSentences] = useState([]);
   const [sectionLabels, setSectionLabels] = useState([]);
   const [loading, setLoading] = useState(true);

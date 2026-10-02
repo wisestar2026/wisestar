@@ -34,4 +34,7 @@ public class EnglishUnitView {
 	/** 该单元句子数 */
 	private Integer sentenceCount;
 
+	/** 该单元重点语法数 */
+	private Integer grammarCount;
+
 }

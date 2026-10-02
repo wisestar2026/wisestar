@@ -56,7 +56,7 @@ export default function EnglishWordLearnPage() {
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
 
-  const [term] = useState('上册');
+  const term = useStudentStore((s) => s.term);
   const [words, setWords] = useState([]);
   const [queue, setQueue] = useState([]);
   const [mastered, setMastered] = useState(0);

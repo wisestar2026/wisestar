@@ -60,6 +60,7 @@ import EnglishCenterPage from './pages/student/EnglishCenterPage';
 import EnglishWordLearnPage from './pages/student/EnglishWordLearnPage';
 import EnglishWordPracticePage from './pages/student/EnglishWordPracticePage';
 import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
+import EnglishGrammarLearnPage from './pages/student/EnglishGrammarLearnPage';
 import EnglishReviewPage from './pages/student/EnglishReviewPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
@@ -146,6 +147,8 @@ export default function App() {
             <Route path="english/practice" element={<EnglishWordPracticePage />} />
             {/* 英语句子学习·连词成句（?unit=） */}
             <Route path="english/sentence" element={<EnglishSentenceLearnPage />} />
+            {/* 英语重点语法（只读，?unit=） */}
+            <Route path="english/grammar" element={<EnglishGrammarLearnPage />} />
             {/* 英语智能复习（单词 + 句子混合队列） */}
             <Route path="english/review" element={<EnglishReviewPage />} />
           </Route>
