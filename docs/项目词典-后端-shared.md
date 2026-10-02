@@ -1716,6 +1716,7 @@
 - 注解: @Data
 - **类说明**：
   英语单元进度视图 DTO（学员端学习中心）。
+  含 wordFinished/sentenceFinished（熟练度 >= 1 的数量）、mastery（单词+句子 familiarity 均值归一化到 0~100 的综合熟练度）与 reviewDue（待复习数）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitQuery.java`
 - 包: `cn.wisestar.server.domain.dto.english`

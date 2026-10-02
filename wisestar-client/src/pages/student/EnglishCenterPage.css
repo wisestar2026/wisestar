@@ -101,6 +101,10 @@
 }
 .eng-unit-stats { display: flex; gap: 14px; margin: 12px 0; }
 .eng-stat { flex: 1; }
+.eng-unit-mastery { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+.eng-unit-mastery-label { font-size: 12px; color: #5b7f92; white-space: nowrap; }
+.eng-unit-mastery-stars { line-height: 1; }
+.eng-unit-mastery-val { font-size: 12px; font-weight: 800; color: #2e9e5b; margin-left: auto; }
 .eng-stat-label { font-size: 12px; color: #5b7f92; display: flex; justify-content: space-between; }
 .eng-stat-bar {
   margin-top: 5px;

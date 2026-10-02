@@ -22,6 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
+import StarRating from '../../components/common/StarRating';
 import { getEnglishUnits, getEnglishReview, getEnglishDrillWords, getEnglishDrillCompleted } from '../../api/englishStudent';
 import WordDrillModal from './WordDrillModal';
 import './EnglishCenterPage.css';
@@ -164,6 +165,11 @@ export default function EnglishCenterPage() {
             <div className="eng-unit-card" key={unit.unit}>
               {unit.reviewDue > 0 && <span className="eng-unit-badge">复习 {unit.reviewDue}</span>}
               <div className="eng-unit-name">{unit.unit}</div>
+              <div className="eng-unit-mastery" title="单词与句子综合熟练度">
+                <span className="eng-unit-mastery-label">熟练度</span>
+                <StarRating value={unit.mastery || 0} size={15} className="eng-unit-mastery-stars" />
+                <span className="eng-unit-mastery-val">{unit.mastery || 0}%</span>
+              </div>
               <div className="eng-unit-stats">
                 <div className="eng-stat">
                   <div className="eng-stat-label">

@@ -32,6 +32,9 @@ public class EnglishUnitProgressView {
 	/** 已学习句子数（熟练度 >= 1） */
 	private Integer sentenceFinished;
 
+	/** 单元综合熟练度（单词 + 句子 familiarity 均值，0~100） */
+	private Integer mastery;
+
 	/** 待复习数（单词本 + 句子本中已到期记录） */
 	private Integer reviewDue;
 

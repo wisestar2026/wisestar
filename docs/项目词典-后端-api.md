@@ -192,7 +192,7 @@
   英语学员学习接口（学生端学习中心）。
 - 方法:
   - `public List<EnglishUnitProgressView> units(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term)`
-    单元列表 + 学习进度。
+    单元列表 + 学习进度（含综合熟练度 mastery）。
   - `public List<EnglishSentenceView> sentences(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
     单元句子列表（含熟练度）。
   - `public List<EnglishGrammarView> grammars(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`

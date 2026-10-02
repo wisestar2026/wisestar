@@ -84,12 +84,15 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			view.setGrammarCount(unit.getGrammarCount());
 
 			int wordFinished = 0;
+			int familiaritySum = 0;
 			int reviewDue = 0;
 			for (EnglishWordBook book : wordBooks) {
 				if (!unit.getUnit().equals(wordUnitById.get(book.getWordId()))) {
 					continue;
 				}
-				if (book.getFamiliarity() != null && book.getFamiliarity() >= 1) {
+				int familiarity = book.getFamiliarity() == null ? 0 : book.getFamiliarity();
+				familiaritySum += Math.min(Math.max(familiarity, 0), 4);
+				if (familiarity >= 1) {
 					wordFinished++;
 				}
 				if (isDue(book.getNextReviewTime(), now)) {
@@ -102,7 +105,9 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				if (!unit.getUnit().equals(sentenceUnitById.get(book.getSentenceId()))) {
 					continue;
 				}
-				if (book.getFamiliarity() != null && book.getFamiliarity() >= 1) {
+				int familiarity = book.getFamiliarity() == null ? 0 : book.getFamiliarity();
+				familiaritySum += Math.min(Math.max(familiarity, 0), 4);
+				if (familiarity >= 1) {
 					sentenceFinished++;
 				}
 				if (isDue(book.getNextReviewTime(), now)) {
@@ -110,8 +115,15 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				}
 			}
 
+			// 综合熟练度 = (单词 + 句子 familiarity 之和) / (4 × 词句总数)，0~100
+			int totalItems = (unit.getWordCount() == null ? 0 : unit.getWordCount())
+					+ (unit.getSentenceCount() == null ? 0 : unit.getSentenceCount());
+			int mastery = totalItems == 0 ? 0
+					: (int) Math.round(familiaritySum * 100.0 / (4.0 * totalItems));
+
 			view.setWordFinished(wordFinished);
 			view.setSentenceFinished(sentenceFinished);
+			view.setMastery(mastery);
 			view.setReviewDue(reviewDue);
 			result.add(view);
 		}
