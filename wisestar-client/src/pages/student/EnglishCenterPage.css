@@ -44,6 +44,9 @@
   transition: background 0.2s ease;
 }
 .eng-term button.active { background: #fff; color: #ff7a59; font-weight: 700; }
+/* 学习页锁定册别：不可切换，仅展示当前学期 */
+.eng-term button:disabled { cursor: not-allowed; }
+.eng-term button:not(.active):disabled { opacity: 0.65; }
 
 .eng-review-btn {
   border: none;

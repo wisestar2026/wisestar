@@ -125,9 +125,15 @@ export default function EnglishCenterPage() {
           </div>
         </div>
         <div className="eng-hero-actions">
-          <div className="eng-term">
+          <div className="eng-term" title="当前册别由学期确定，不可切换">
             {TERMS.map((t) => (
-              <button key={t} type="button" className={term === t ? 'active' : ''} onClick={() => setTerm(t)}>
+              <button
+                key={t}
+                type="button"
+                className={term === t ? 'active' : ''}
+                onClick={() => setTerm(t)}
+                disabled
+              >
                 {t}
               </button>
             ))}

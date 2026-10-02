@@ -131,6 +131,11 @@ export default function StudentLayout() {
     { path: '/student/profile', icon: '👤', tone: 'purple', label: '个人中心', match: ['/student/profile'] },
   ];
 
+  // 「学习」页面（数学研习页 /student/study 与英语学习中心 /student/english*）：
+  // 学科、年级由账号授权范围固定，学生不可自行选择或切换（仅展示当前值）；教材版本仍可切换。
+  const isStudyPage = location.pathname === '/student/study'
+    || location.pathname.startsWith('/student/english');
+
   // 退出登录（学员端）：清登录态并返回学员端登录页
   const handleStudentLogout = () => {
     logout();
@@ -187,6 +192,8 @@ export default function StudentLayout() {
                 size="small"
                 value={activeSubject}
                 onChange={setSubject}
+                disabled={isStudyPage}
+                title={isStudyPage ? '学习页已锁定当前学科' : undefined}
                 options={visibleSubjects.map((s) => ({ value: s.key, label: `${s.icon} ${s.name}` }))}
                 popupMatchSelectWidth={false}
               />
@@ -206,7 +213,8 @@ export default function StudentLayout() {
               size="small"
               value={grade}
               onChange={setGrade}
-              disabled={getVisibleGrades(activeSubject).length === 0}
+              disabled={isStudyPage || getVisibleGrades(activeSubject).length === 0}
+              title={isStudyPage ? '学习页已锁定当前年级' : undefined}
               options={getVisibleGrades(activeSubject).map((g) => ({ label: g, value: g }))}
               popupMatchSelectWidth={false}
             />
