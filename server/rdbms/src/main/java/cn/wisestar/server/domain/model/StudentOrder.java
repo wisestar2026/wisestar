@@ -43,6 +43,11 @@ public class StudentOrder extends BaseModel {
 	private String version;
 
 	/**
+	 * 册别多选（逗号分隔，上册/下册；空表示不限）。
+	 */
+	private String terms;
+
+	/**
 	 * 账号时长数值。
 	 */
 	private Integer duration;

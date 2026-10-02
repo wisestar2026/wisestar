@@ -3,9 +3,9 @@
  *
  * 功能:
  *   1. 订单分页列表（按学员姓名搜索、按状态筛选）
- *   2. 创建订单：选择学员 + 学科多选 + 年级多选 + 教材版本单选 + 账号时长
- *      （学科数据来自知识管理 /api/subject/list；年级/教材版本/时长单位为前端常量；
- *       服务端按学科×年级笛卡尔积展开写入权限表并计算有效期）
+ *   2. 创建订单：选择学员 + 学科多选 + 年级多选 + 上下册多选 + 教材版本单选 + 账号时长
+ *      （学科数据来自知识管理 /api/subject/list；年级/册别/教材版本/时长单位为前端常量；
+ *       服务端按学科×年级×册别笛卡尔积展开写入权限表并计算有效期）
  *   3. 作废/删除订单（作废后学员对应权限失效）
  *
  * URL: /orders（受 AuthGuard 保护，管理端）
@@ -37,6 +37,9 @@ const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五�
 // 教材版本（前端常量：固定枚举）
 const VERSION_OPTIONS = ['人教版', '苏教版', '北师大版', '外研版']
   .map((v) => ({ value: v, label: v }));
+
+// 册别（前端常量：上册/下册，可多选）
+const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 // 时长单位（前端常量：DAY/MONTH/YEAR）
 const DURATION_UNIT_OPTIONS = [
@@ -106,7 +109,7 @@ export default function OrderManagePage() {
     setModalOpen(true);
     setStudentOptions([]);
     form.resetFields();
-    form.setFieldsValue({ durationUnit: 'MONTH', duration: 12 });
+    form.setFieldsValue({ durationUnit: 'MONTH', duration: 12, terms: ['上册', '下册'] });
     loadSubjects();
   };
 
@@ -117,6 +120,7 @@ export default function OrderManagePage() {
         studentId: values.studentId,
         subjectIds: values.subjectIds,
         grades: values.grades,
+        terms: values.terms,
         version: values.version,
         duration: values.duration,
         durationUnit: values.durationUnit,
@@ -155,6 +159,10 @@ export default function OrderManagePage() {
     },
     {
       title: '年级', dataIndex: 'grades', width: 130,
+      render: (v) => (v || []).join(' / ') || '-',
+    },
+    {
+      title: '上下册', dataIndex: 'terms', width: 110,
       render: (v) => (v || []).join(' / ') || '-',
     },
     { title: '教材版本', dataIndex: 'version', width: 100, render: (v) => v || '-' },
@@ -251,6 +259,11 @@ export default function OrderManagePage() {
             name="grades" label="年级" rules={[{ required: true, message: '请至少选择一个年级' }]}
           >
             <Select mode="multiple" placeholder="可多选" options={GRADE_OPTIONS} />
+          </Form.Item>
+          <Form.Item
+            name="terms" label="上下册" rules={[{ required: true, message: '请至少选择一个册别' }]}
+          >
+            <Select mode="multiple" placeholder="可多选" options={TERM_OPTIONS} />
           </Form.Item>
           <Form.Item name="version" label="教材版本">
             <Select allowClear placeholder="选填" options={VERSION_OPTIONS} />

@@ -287,6 +287,12 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.forEach(view.getGrades()::add);
 		perms.stream().map(StudentPermission::getVersion).filter(StringUtils::hasText).distinct()
 				.forEach(view.getVersions()::add);
+		// 册别去重；历史订单未标册别视为不限，返回上下册
+		perms.stream().map(StudentPermission::getTerm).filter(StringUtils::hasText).distinct()
+				.forEach(view.getTerms()::add);
+		if (view.getTerms().isEmpty()) {
+			view.getTerms().addAll(Arrays.asList("上册", "下册"));
+		}
 		return view;
 	}
 
@@ -347,6 +353,11 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				.filter(p -> StringUtils.hasText(p.getGrade()))
 				.collect(Collectors.groupingBy(StudentPermission::getSubjectId,
 						Collectors.mapping(StudentPermission::getGrade, Collectors.toSet())));
+		// 各学科有权限的册别；历史订单未标册别视为不限，返回上下册
+		Map<String, Set<String>> termsBySubject = perms.stream()
+				.filter(p -> StringUtils.hasText(p.getTerm()))
+				.collect(Collectors.groupingBy(StudentPermission::getSubjectId,
+						Collectors.mapping(StudentPermission::getTerm, Collectors.toSet())));
 		return subjects.stream().map(sub -> {
 			StudentSubjectView view = new StudentSubjectView();
 			view.setId(sub.getId());
@@ -354,6 +365,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			view.setIcon(sub.getIcon());
 			view.setVersions(new ArrayList<>(versionsBySubject.getOrDefault(sub.getId(), Collections.emptySet())));
 			view.setGrades(new ArrayList<>(gradesBySubject.getOrDefault(sub.getId(), Collections.emptySet())));
+			List<String> terms = new ArrayList<>(termsBySubject.getOrDefault(sub.getId(), Collections.emptySet()));
+			view.setTerms(terms.isEmpty() ? new ArrayList<>(Arrays.asList("上册", "下册")) : terms);
 			return view;
 		}).collect(Collectors.toList());
 	}

@@ -1994,6 +1994,7 @@ CREATE TABLE IF NOT EXISTS `t_student_order` (
   `subject_ids` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID多选(逗号分隔，t_subject.id)',
   `grades` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '年级多选(逗号分隔)',
   `version` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `terms` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '册别多选(逗号分隔，上册/下册)',
   `duration` int NOT NULL COMMENT '账号时长数值',
   `duration_unit` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '时长单位(DAY/MONTH/YEAR)',
   `expire_at` datetime NOT NULL COMMENT '有效期至(服务端按时长计算)',
@@ -2006,6 +2007,7 @@ CREATE TABLE IF NOT EXISTS `t_student_order` (
   PRIMARY KEY (`id`),
   KEY `idx_order_student` (`student_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员订单';
+ALTER TABLE `t_student_order` ADD COLUMN IF NOT EXISTS `terms` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '册别多选(逗号分隔，上册/下册)';
 
 -- ----------------------------
 -- Records of t_student_order
@@ -2023,6 +2025,7 @@ CREATE TABLE IF NOT EXISTS `t_student_permission` (
   `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学科ID(t_subject.id)',
   `grade` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '年级',
   `version` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
+  `term` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '册别（上册/下册；空=不限）',
   `expire_at` datetime NOT NULL COMMENT '有效期至',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -2033,6 +2036,7 @@ CREATE TABLE IF NOT EXISTS `t_student_permission` (
   KEY `idx_perm_student` (`student_id`),
   KEY `idx_perm_order` (`order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员权限';
+ALTER TABLE `t_student_permission` ADD COLUMN IF NOT EXISTS `term` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '册别（上册/下册；空=不限）';
 
 -- ----------------------------
 -- Records of t_student_permission

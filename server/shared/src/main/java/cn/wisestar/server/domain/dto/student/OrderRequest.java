@@ -37,6 +37,11 @@ public class OrderRequest {
 	private List<String> grades;
 
 	/**
+	 * 册别多选（上册/下册；为空表示不限，默认授予上下册）。
+	 */
+	private List<String> terms;
+
+	/**
 	 * 教材版本（如 人教版/苏教版/北师大版/外研版）。
 	 */
 	private String version;

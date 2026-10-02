@@ -28,4 +28,7 @@ public class StudentSubjectView {
 	/** 该学科下有权限的年级（去重，如 一年级/三年级） */
 	private List<String> grades = new ArrayList<>();
 
+	/** 该学科下有权限的册别（去重，上册/下册；空权限视为不限，返回上下册） */
+	private List<String> terms = new ArrayList<>();
+
 }

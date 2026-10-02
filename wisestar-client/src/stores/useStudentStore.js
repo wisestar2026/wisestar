@@ -302,14 +302,17 @@ const useStudentStore = create((set, get) => ({
     if (realSubject) {
       const curVersion = get().version;
       const curGrade = get().grade;
+      const curTerm = get().term;
       next.version = realSubject.versions?.includes(curVersion) ? curVersion : (realSubject.versions?.[0] || curVersion);
       next.grade = realSubject.grades?.includes(curGrade) ? curGrade : (realSubject.grades?.[0] || curGrade);
+      next.term = realSubject.terms?.includes(curTerm) ? curTerm : (realSubject.terms?.[0] || curTerm);
     } else if (subject) {
       next.version = subject.version;
     }
     localStorage.setItem('sh-active-subject', key);
     if (next.version) localStorage.setItem('sh-version', next.version);
     if (next.grade) localStorage.setItem('sh-grade', next.grade);
+    if (next.term) localStorage.setItem('sh-term', next.term);
     set(next);
   },
   setVersion: (v) => {
@@ -340,9 +343,13 @@ const useStudentStore = create((set, get) => ({
     if (has.versions?.length && !has.versions.includes(get().version)) {
       next.version = has.versions[0];
     }
+    if (has.terms?.length && !has.terms.includes(get().term)) {
+      next.term = has.terms[0];
+    }
     if (next.grade) localStorage.setItem('sh-grade', next.grade);
     if (next.version) localStorage.setItem('sh-version', next.version);
-    if (next.grade || next.version) set(next);
+    if (next.term) localStorage.setItem('sh-term', next.term);
+    if (next.grade || next.version || next.term) set(next);
   },
   togglePureMode: () => {
     set((s) => {
@@ -432,6 +439,7 @@ const useStudentStore = create((set, get) => ({
         version: s.versions?.[0] || '人教版',
         versions: s.versions?.length ? s.versions : ['人教版'],
         grades: Array.isArray(s.grades) ? s.grades : [],
+        terms: Array.isArray(s.terms) && s.terms.length ? s.terms : ['上册', '下册'],
         chapters: [],
       }));
     }
@@ -463,6 +471,16 @@ const useStudentStore = create((set, get) => ({
     const perms = get().permissions;
     if (!perms || (perms.versions || []).length === 0) return sub.versions || [];
     return (sub.versions || []).filter((v) => (perms.versions || []).includes(v));
+  },
+  // 按订单权限过滤可见册别（真实模式 = 该学科授权册别；无授权或 mock 回退上下册）
+  getVisibleTerms: (subjectKey) => {
+    const real = get().studyContent?.subjects;
+    if (real && real.length > 0) {
+      const rs = real.find((s) => s.id === subjectKey);
+      if (rs && rs.terms?.length) return rs.terms;
+      if (rs) return ['上册', '下册'];
+    }
+    return ['上册', '下册'];
   },
 }));
 

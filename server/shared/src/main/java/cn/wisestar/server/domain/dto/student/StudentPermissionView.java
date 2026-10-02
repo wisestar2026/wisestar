@@ -25,6 +25,9 @@ public class StudentPermissionView {
 	/** 可访问教材版本（去重） */
 	private List<String> versions = new ArrayList<>();
 
+	/** 可访问册别（去重，上册/下册） */
+	private List<String> terms = new ArrayList<>();
+
 	@Data
 	public static class SubjectItem {
 

@@ -42,6 +42,11 @@ public class OrderView {
 	private List<String> grades;
 
 	/**
+	 * 册别（多选，上册/下册）。
+	 */
+	private List<String> terms;
+
+	/**
 	 * 教材版本。
 	 */
 	private String version;

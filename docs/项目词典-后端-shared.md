@@ -1964,7 +1964,7 @@
 - 注解: @Data
 - **类说明**：
   订单请求（学员管理模块）。
-  create 用：studentId 必传；subjectIds 多选学科ID、grades 多选年级， 服务端按学科×年级笛卡尔积展开写入权限表。
+  create 用：studentId 必传；subjectIds 多选学科ID、grades 多选年级、terms 多选册别（上册/下册，可空）， 服务端按学科×年级×册别笛卡尔积展开写入权限表；terms 为空表示不限册别（等价上下册）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/OrderView.java`
 - 包: `cn.wisestar.server.domain.dto.student`
@@ -2075,7 +2075,7 @@
 - 注解: @Data
 - **类说明**：
   学员有效权限视图（多条有效订单合并，expire_at > NOW() 才生效）。
-  供学员端按订单授予范围过滤可访问内容：学科 + 年级 + 教材版本。
+  供学员端按订单授予范围过滤可访问内容：学科 + 年级 + 册别 + 教材版本。
 - 方法:
   - `public SubjectItem()`
   - `public SubjectItem(String id, String name)`
@@ -2162,6 +2162,7 @@
 - 注解: @Data
 - **类说明**：
   学员端学科视图（按订单有效权限过滤）。
+  terms 为该学科下有效授权册别去重集合（空授权视为不限，回退 上册/下册）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/StudentSupervisionView.java`
 - 包: `cn.wisestar.server.domain.dto.student`
@@ -2486,7 +2487,7 @@
 - 类型: `interface OrderService`
 - **类说明**：
   学员订单服务（学员管理模块）。
-  **定位**：为已注册学员创建订单并配置学科/年级/教材版本/账号时长， 订单写入同时按学科×年级笛卡尔积展开写入学员权限表（t_student_permission）， 供学员端按有效期鉴权。
+  **定位**：为已注册学员创建订单并配置学科/年级/册别/教材版本/账号时长， 订单写入同时按学科×年级×册别笛卡尔积展开写入学员权限表（t_student_permission）， 供学员端按有效期与册别授权鉴权。
 
 ### `shared/src/main/java/cn/wisestar/server/service/PositionService.java`
 - 包: `cn.wisestar.server.service`

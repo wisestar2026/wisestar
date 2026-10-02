@@ -505,17 +505,17 @@
 - 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
 - **类说明**：
   学员订单接口（学员管理模块）。
-  **定位**：管理端「学员管理 → 订单管理」页面数据源——为学员创建订单 开通 AI 自习室权限（学科多选 × 年级多选 × 教材版本 × 账号时长）。
+  **定位**：管理端「学员管理 → 订单管理」页面数据源——为学员创建订单 开通 AI 自习室权限（学科多选 × 年级多选 × 册别多选 × 教材版本 × 账号时长）。
 - 方法:
   - `public OrderView createOrder(@RequestBody OrderRequest request)`
     创建订单。
     **HTTP 方法 + 完整路径**：POST ${api.prefix}/order/create（如 /api/order/create）。
 
-    **功能**：校验学员/学科/年级/时长 → 服务端计算有效期 → 同一事务内写入订单主表与权限表（学科×年级笛卡尔积展开）。
+    **功能**：校验学员/学科/年级/册别/时长 → 服务端计算有效期 → 同一事务内写入订单主表与权限表（学科×年级×册别笛卡尔积展开）。
 
-    **请求参数**：OrderRequest（@RequestBody JSON： studentId/subjectIds[]/grades[]/version/duration/durationUnit）。
+    **请求参数**：OrderRequest（@RequestBody JSON： studentId/subjectIds[]/grades[]/terms[]/version/duration/durationUnit；terms 可选，空表示不限册别）。
 
-    **返回值结构**：OrderView（含学员信息、学科名称、有效期）。
+    **返回值结构**：OrderView（含学员信息、学科名称、册别、有效期）。
   - `public PaginationResponse<OrderView> listOrders(OrderQuery query)`
     订单分页列表。
     **HTTP 方法 + 完整路径**：GET ${api.prefix}/order/list（如 /api/order/list）。
@@ -981,7 +981,7 @@
 
     **权限**：isAuthenticated()（学员端登录即可）。
   - `public List<StudentSubjectView> studySubjects()`
-    学员端学科列表（按订单有效权限过滤）。
+    学员端学科列表（按订单有效权限过滤，含有效授权册别 terms）。
     **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/study/subjects。
 
     **权限**：isAuthenticated()（服务层校验学员身份与订单权限）。

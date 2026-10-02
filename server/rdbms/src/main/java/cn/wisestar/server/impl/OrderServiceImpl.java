@@ -108,7 +108,7 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 		order.setStatus(ORDER_STATUS_VALID);
 		save(order);
 
-		// 学科×年级笛卡尔积展开写入权限表（多选学科 × 多选年级）
+		// 学科×年级×册别笛卡尔积展开写入权限表（多选学科 × 多选年级 × 多选册别）
 		List<StudentPermission> permissions = buildPermissions(order);
 		permissions.forEach(studentPermissionMapper::insert);
 
@@ -237,21 +237,36 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 	}
 
 	/**
-	 * 按学科×年级笛卡尔积构造权限展开行。
+	 * 按学科×年级×册别笛卡尔积构造权限展开行（册别为空表示不限，展开为上下册）。
 	 */
 	private List<StudentPermission> buildPermissions(StudentOrder order) {
 		List<String> subjectIds = split(order.getSubjectIds());
 		List<String> grades = split(order.getGrades());
-		return subjectIds.stream().flatMap(subjectId -> grades.stream().map(grade -> {
+		List<String> terms = normalizeTerms(split(order.getTerms()));
+		return subjectIds.stream().flatMap(subjectId -> grades.stream().flatMap(grade -> terms.stream().map(term -> {
 			StudentPermission permission = new StudentPermission();
 			permission.setStudentId(order.getStudentId());
 			permission.setOrderId(order.getId());
 			permission.setSubjectId(subjectId);
 			permission.setGrade(grade);
 			permission.setVersion(order.getVersion());
+			permission.setTerm(term);
 			permission.setExpireAt(order.getExpireAt());
 			return permission;
-		})).collect(Collectors.toList());
+		}))).collect(Collectors.toList());
+	}
+
+	/** 册别归一：为空表示不限，展开为上下册；否则去重并去除空白。 */
+	private List<String> normalizeTerms(List<String> terms) {
+		if (terms == null || terms.isEmpty()) {
+			return Arrays.asList("上册", "下册");
+		}
+		List<String> normalized = terms.stream()
+				.filter(StringUtils::hasText)
+				.map(String::trim)
+				.distinct()
+				.collect(Collectors.toList());
+		return normalized.isEmpty() ? Arrays.asList("上册", "下册") : normalized;
 	}
 
 	/**

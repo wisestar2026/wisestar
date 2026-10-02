@@ -47,6 +47,11 @@ public class StudentPermission extends BaseModel {
 	private String version;
 
 	/**
+	 * 册别（上册/下册；空表示不限）。
+	 */
+	private String term;
+
+	/**
 	 * 有效期至（服务端按订单时长计算）。
 	 */
 	private Date expireAt;

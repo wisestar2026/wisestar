@@ -28,6 +28,7 @@ public interface OrderViewMapper extends BaseModelMapper<OrderRequest, OrderView
 	 */
 	@Mapping(target = "subjectIds", expression = "java(join(request.getSubjectIds()))")
 	@Mapping(target = "grades", expression = "java(join(request.getGrades()))")
+	@Mapping(target = "terms", expression = "java(join(request.getTerms()))")
 	@Override
 	StudentOrder fromRequest(OrderRequest request);
 
@@ -38,6 +39,7 @@ public interface OrderViewMapper extends BaseModelMapper<OrderRequest, OrderView
 	@Mapping(target = "studentName", ignore = true)
 	@Mapping(target = "subjects", ignore = true)
 	@Mapping(target = "grades", expression = "java(split(item.getGrades()))")
+	@Mapping(target = "terms", expression = "java(split(item.getTerms()))")
 	OrderView toView(StudentOrder item);
 
 	/**

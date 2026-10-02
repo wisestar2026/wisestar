@@ -38,7 +38,7 @@ export default function StudentLayout() {
   const {
     activeSubject, version, term, pureMode,
     setSubject, setVersion, setGrade, setTerm, grade, togglePureMode, fetchPermissions, fetchStudySubjects,
-    getVisibleSubjects, getVisibleVersions, getVisibleGrades,
+    getVisibleSubjects, getVisibleVersions, getVisibleGrades, getVisibleTerms,
   } = useStudentStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,10 +135,6 @@ export default function StudentLayout() {
   // 教材版本不在锁定范围内，保持可切换。
   const isHomePage = location.pathname === '/student';
   const lockContext = !isHomePage;
-  const TERM_OPTIONS = [
-    { label: '上册', value: '上册' },
-    { label: '下册', value: '下册' },
-  ];
 
   // 切换学科后整页刷新：让各页数据与入口按新学科重建（避免只改文案、变化不明显）。
   // setSubject 会同步写入 localStorage，刷新后按新学科初始化。
@@ -236,9 +232,9 @@ export default function StudentLayout() {
               size="small"
               value={term}
               onChange={setTerm}
-              disabled={lockContext}
+              disabled={lockContext || getVisibleTerms(activeSubject).length === 0}
               title={lockContext ? '仅首页可切换册别' : undefined}
-              options={TERM_OPTIONS}
+              options={getVisibleTerms(activeSubject).map((t) => ({ label: t, value: t }))}
               popupMatchSelectWidth={false}
             />
           </div>

@@ -479,7 +479,7 @@
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
   学员订单实体（对应数据库表 t_student_order，学员管理模块）。
-  **权限载体**：创建订单时服务端在同一事务内写入 t_student_order 与 t_student_permission（多选学科×年级笛卡尔积展开），权限有效期 expireAt 由服务端按 duration + durationUnit 计算。
+  **权限载体**：创建订单时服务端在同一事务内写入 t_student_order 与 t_student_permission（多选学科×年级×册别笛卡尔积展开），权限有效期 expireAt 由服务端按 duration + durationUnit 计算。字段 terms 存储多选册别（逗号分隔，空表示不限册别）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/StudentPermission.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -487,7 +487,7 @@
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
   学员权限实体（对应数据库表 t_student_permission，学员管理模块）。
-  **用途**：订单中多选学科×多选年级按笛卡尔积展开为权限行， 学员端鉴权按 student_id + subject_id + grade 且 expire_at > NOW() 查询。
+  **用途**：订单中多选学科×多选年级×多选册别按笛卡尔积展开为权限行， 学员端按 student_id + subject_id + grade 且 expire_at > NOW() 查出授权行， 再汇总各行 term 得到可访问册别（term 为空表示不限册别，等价上下册）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/StudentRecord.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -985,7 +985,7 @@
 
   【依赖什么】StudentOrderMapper/StudentPermissionMapper/StudentMapper/SubjectMapper （BaseMapper CRUD）、OrderViewMapper（MapStruct 转换）。
 
-  【核心逻辑】创建订单：校验 → 计算 expireAt（now + duration × 单位）→ 同一事务内写 t_student_order + 按学科×年级笛卡尔积展开写 t_student_permission。 作废/删除订单时同步逻辑删除该订单的权限行。
+  【核心逻辑】创建订单：校验 → 计算 expireAt（now + duration × 单位）→ 同一事务内写 t_student_order + 按学科×年级×册别笛卡尔积展开写 t_student_permission。 作废/删除订单时同步逻辑删除该订单的权限行。
 - 方法:
   - `public OrderView createOrder(OrderRequest request)`
     创建订单：订单主表 + 权限展开行（同一事务）。
