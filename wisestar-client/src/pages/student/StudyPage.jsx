@@ -37,10 +37,13 @@ const CHAPTER_TONES = ['blue', 'orange', 'green', 'purple', 'teal', 'pink'];
 export default function StudyPage() {
   const navigate = useNavigate();
   const {
-    activeSubject, version, grade, pureMode,
+    activeSubject, version, grade, term, pureMode,
     studyContent, fetchStudyChapters, fetchStudyProgress, getVisibleSubjects,
   } = useStudentStore();
   const subject = SUBJECTS.find((s) => s.key === activeSubject) || SUBJECTS[1];
+
+  // 全局册别（上册/下册）→ 数学章节 term 口径（上/下）
+  const termShort = term === '下册' ? '下' : '上';
 
   // 当前选中的章节（章节列表在中栏展开其小节）+ 选中的小节/知识点
   const [selectedChapterId, setSelectedChapterId] = useState(null);
@@ -55,8 +58,10 @@ export default function StudyPage() {
   const realSubject = visibleSubjects.find((s) => s.key === activeSubject);
   const realChapters = studyContent.chapters; // null=未加载 / [] = 无数据
 
-  // 章节数据：真实模式用真实章节；否则用 mock 学科章节
-  const chapters = realMode ? (realChapters || []) : subject.chapters;
+  // 章节数据：真实模式用真实章节（按全局册别过滤，无 term 的章节保留）；否则用 mock 学科章节
+  const chapters = realMode
+    ? (realChapters || []).filter((c) => !c.term || c.term === termShort)
+    : subject.chapters;
 
   // 本学期学习情况：学习统计（练习量/正确率/积分/学币）
   const [stats, setStats] = useState(null);
@@ -70,7 +75,7 @@ export default function StudyPage() {
       .catch(() => setStats(null));
   }, [realMode]);
 
-  // 学科/年级切换 → 按订单授权年级加载真实章节
+  // 学科/年级/册别切换 → 按订单授权年级加载真实章节
   useEffect(() => {
     if (realMode) {
       fetchStudyChapters(activeSubject, grade);
@@ -79,25 +84,15 @@ export default function StudyPage() {
     setSelectedSection(null);
     setSelectedKp(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSubject, grade, realMode]);
+  }, [activeSubject, grade, termShort, realMode]);
 
-  // 学期口径：取该学员当前年级可访问章节归属的 term；唯一则直接采用，多值时按当前月份兜底
-  const chapterTerms = [...new Set((realChapters || []).map((c) => c.term).filter(Boolean))];
-  const semesterTerm = (() => {
-    if (chapterTerms.length === 1) return chapterTerms[0];
-    const month = new Date().getMonth() + 1;
-    const byDate = month >= 9 || month <= 1 ? '上' : '下';
-    if (chapterTerms.includes(byDate)) return byDate;
-    return chapterTerms[0] || null;
-  })();
-
-  // 学科/版本/学期切换 → 加载真实掌握度/薄弱（章节 → 知识点）
+  // 学科/版本/册别切换 → 加载真实掌握度/薄弱（章节 → 知识点）
   useEffect(() => {
     if (realMode) {
-      fetchStudyProgress(activeSubject, version, grade, semesterTerm);
+      fetchStudyProgress(activeSubject, version, grade, termShort);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSubject, version, grade, semesterTerm, realMode]);
+  }, [activeSubject, version, grade, termShort, realMode]);
 
   // 选中章节：章节列表只负责选中，小节改由中栏以行列表展示（按章节缓存小节）
   const selectChapter = (chId) => {
@@ -308,7 +303,7 @@ export default function StudyPage() {
             /* 真实模式未选章节: 研习首页看板（重点 / 学习情况 / 优势与不足） */
             <div className="study-dashboard">
               <div className="study-overview-title">
-                <IconTile emoji="🌊" tone="sky" size="sm" /> {realSubject?.name || subject.name} · 研习首页（{version} · {grade}{semesterTerm ? ` · ${semesterTerm}册` : ''}）
+                <IconTile emoji="🌊" tone="sky" size="sm" /> {realSubject?.name || subject.name} · 研习首页（{version} · {grade} · {term}）
               </div>
 
               <section className="study-dash-block">

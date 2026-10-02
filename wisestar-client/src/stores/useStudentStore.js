@@ -276,6 +276,9 @@ const useStudentStore = create((set, get) => ({
   version: localStorage.getItem('sh-version') || '人教版',            // 当前教材版本（记忆上次选择）
   pureMode: localStorage.getItem('sh-pure-mode') === '1',             // 纯净学习模式（迎检专用）
   grade: localStorage.getItem('sh-grade') || '一年级',                // 当前年级（记忆上次选择）
+  // 当前册别（上册/下册，记忆上次选择）；默认按学期：上学期（9 月~次年 1 月）为上册，其余为下册
+  term: localStorage.getItem('sh-term')
+    || ((new Date().getMonth() + 1 >= 9 || new Date().getMonth() + 1 <= 1) ? '上册' : '下册'),
   // 学员有效权限（null=未加载/加载失败；有值={ subjects, grades, versions }，按订单授予范围过滤内容）
   permissions: null,
   // 真实学习内容（后台配置，按订单权限过滤；null=未加载，[]=已加载但无数据）
@@ -316,6 +319,10 @@ const useStudentStore = create((set, get) => ({
   setGrade: (g) => {
     localStorage.setItem('sh-grade', g);
     set({ grade: g });
+  },
+  setTerm: (t) => {
+    localStorage.setItem('sh-term', t);
+    set({ term: t });
   },
   // 真实学科/权限加载后收敛当前学科-年级-版本到订单授权范围（防越权残留）
   normalizeSelection: () => {

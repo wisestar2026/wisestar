@@ -37,9 +37,10 @@ export default function EnglishCenterPage() {
   const navigate = useNavigate();
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
+  // 册别由首页统一选择，本页只读展示（不可切换）
+  const term = useStudentStore((s) => s.term);
   const userId = useUserStore((s) => s.user?.userId ?? s.user?.id);
 
-  const [term, setTerm] = useState('上册');
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
@@ -125,13 +126,12 @@ export default function EnglishCenterPage() {
           </div>
         </div>
         <div className="eng-hero-actions">
-          <div className="eng-term" title="当前册别由学期确定，不可切换">
+          <div className="eng-term" title="册别由首页选择，此处仅展示">
             {TERMS.map((t) => (
               <button
                 key={t}
                 type="button"
                 className={term === t ? 'active' : ''}
-                onClick={() => setTerm(t)}
                 disabled
               >
                 {t}

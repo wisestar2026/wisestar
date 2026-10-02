@@ -129,6 +129,11 @@
   color: #2b4a6b;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1) !important;
 }
+/* 册别下拉 */
+.sll-term {
+  flex-shrink: 0;
+  width: 84px;
+}
 
 /* ---------- 右侧信息区 ---------- */
 .sll-right {

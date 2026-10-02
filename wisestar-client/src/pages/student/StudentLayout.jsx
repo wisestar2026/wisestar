@@ -36,8 +36,8 @@ import './student.css';
 
 export default function StudentLayout() {
   const {
-    activeSubject, version, pureMode,
-    setSubject, setVersion, setGrade, grade, togglePureMode, fetchPermissions, fetchStudySubjects,
+    activeSubject, version, term, pureMode,
+    setSubject, setVersion, setGrade, setTerm, grade, togglePureMode, fetchPermissions, fetchStudySubjects,
     getVisibleSubjects, getVisibleVersions, getVisibleGrades,
   } = useStudentStore();
   const navigate = useNavigate();
@@ -131,10 +131,22 @@ export default function StudentLayout() {
     { path: '/student/profile', icon: '👤', tone: 'purple', label: '个人中心', match: ['/student/profile'] },
   ];
 
-  // 「学习」页面（数学研习页 /student/study 与英语学习中心 /student/english*）：
-  // 学科、年级由账号授权范围固定，学生不可自行选择或切换（仅展示当前值）；教材版本仍可切换。
-  const isStudyPage = location.pathname === '/student/study'
-    || location.pathname.startsWith('/student/english');
+  // 仅在学员端首页可切换学科/年级/册别；其余页面这些控件只读（置灰展示当前值，不可操作）。
+  // 教材版本不在锁定范围内，保持可切换。
+  const isHomePage = location.pathname === '/student';
+  const lockContext = !isHomePage;
+  const TERM_OPTIONS = [
+    { label: '上册', value: '上册' },
+    { label: '下册', value: '下册' },
+  ];
+
+  // 切换学科后整页刷新：让各页数据与入口按新学科重建（避免只改文案、变化不明显）。
+  // setSubject 会同步写入 localStorage，刷新后按新学科初始化。
+  const handleSubjectChange = (key) => {
+    if (key === activeSubject) return;
+    setSubject(key);
+    window.location.reload();
+  };
 
   // 退出登录（学员端）：清登录态并返回学员端登录页
   const handleStudentLogout = () => {
@@ -184,16 +196,17 @@ export default function StudentLayout() {
             <img src="/student-assets/logo-flower.webp" alt="logo" className="sll-logo" />
             <span className="sll-title">海洋智学</span>
           </div>
-          {/* 学科下拉（语文-数学-英语顺序；默认展示拥有学科，可切换）+ 版本/年级下拉 */}
+          {/* 学科下拉（语文-数学-英语顺序；默认展示拥有学科，可切换）+ 版本/年级/册别下拉
+              仅首页可切换学科/年级/册别，其余页面置灰只读；版本始终可切换 */}
           <div className="sll-tabs">
             {hasPermission ? (
               <Select
                 className="sll-subject"
                 size="small"
                 value={activeSubject}
-                onChange={setSubject}
-                disabled={isStudyPage}
-                title={isStudyPage ? '学习页已锁定当前学科' : undefined}
+                onChange={handleSubjectChange}
+                disabled={lockContext}
+                title={lockContext ? '仅首页可切换学科' : undefined}
                 options={visibleSubjects.map((s) => ({ value: s.key, label: `${s.icon} ${s.name}` }))}
                 popupMatchSelectWidth={false}
               />
@@ -213,9 +226,19 @@ export default function StudentLayout() {
               size="small"
               value={grade}
               onChange={setGrade}
-              disabled={isStudyPage || getVisibleGrades(activeSubject).length === 0}
-              title={isStudyPage ? '学习页已锁定当前年级' : undefined}
+              disabled={lockContext || getVisibleGrades(activeSubject).length === 0}
+              title={lockContext ? '仅首页可切换年级' : undefined}
               options={getVisibleGrades(activeSubject).map((g) => ({ label: g, value: g }))}
+              popupMatchSelectWidth={false}
+            />
+            <Select
+              className="sll-term"
+              size="small"
+              value={term}
+              onChange={setTerm}
+              disabled={lockContext}
+              title={lockContext ? '仅首页可切换册别' : undefined}
+              options={TERM_OPTIONS}
               popupMatchSelectWidth={false}
             />
           </div>
