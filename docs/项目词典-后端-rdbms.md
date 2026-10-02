@@ -814,9 +814,10 @@
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishStudentServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EnglishStudentServiceImpl`
-- 注解: @Service, @RequiredArgsConstructor
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
   英语学员学习服务实现。
+  `recordSession` 在写学习日志后调用 `RewardService` 结算学习币/学海积分（与主系统同一套），按英语行为类型映射奖励、按自然日幂等、subjectId 解析为英语学科。
 - 方法:
   - `public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term)`
   - `public List<EnglishSentenceView> sentences(String userId, String version, String grade, String term, String unit)`
@@ -824,7 +825,8 @@
   - `public List<EnglishSentenceView> studySentences(String userId, int limit)`
   - `public void recordSentence(String userId, String sentenceId, boolean correct)`
   - `public List<ReviewSessionView> reviewSession(String userId, int limit)`
-  - `public void recordSession(String userId, String type, int durationSeconds, int correctCount)`
+  - `public StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
+    写学习日志并结算奖励（异常不阻断学习）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishUnitServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

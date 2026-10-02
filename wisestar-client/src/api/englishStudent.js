@@ -21,6 +21,7 @@
  *   - EnglishReviewPage         单词 + 句子混合复习
  */
 
+import { message } from 'antd';
 import request from './request';
 
 /** 单元列表 + 学习进度 */
@@ -53,9 +54,20 @@ export function getEnglishReview(params) {
   return request.get('/english/student/review', { params });
 }
 
-/** 记录学习会话 */
+/**
+ * 记录学习会话，并展示奖励结算反馈。
+ *
+ * 后端与主系统共用 RewardService：首次完成对应类型当日任务时返回 firstTime=true，
+ * 此处按主系统一致的方式提示「学习币 +X · 积分 +Y」。
+ */
 export function recordEnglishSession(data) {
-  return request.post('/english/student/session', data);
+  return request.post('/english/student/session', data).then((res) => {
+    const reward = res?.data;
+    if (reward?.firstTime && (reward.coins > 0 || reward.points > 0)) {
+      message.success(`学习币 +${reward.coins} · 积分 +${reward.points}`);
+    }
+    return res;
+  });
 }
 
 /** 单元单词列表（含熟练度，复用单词接口） */

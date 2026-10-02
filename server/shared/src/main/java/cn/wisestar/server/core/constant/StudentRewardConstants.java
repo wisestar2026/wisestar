@@ -67,6 +67,21 @@ public final class StudentRewardConstants {
 	/** 任务完成 */
 	public static final String ACTION_TASK_DONE = "task_done";
 
+	/** 英语单词学习 */
+	public static final String ACTION_EN_WORD = "en_word";
+
+	/** 英语句子学习 */
+	public static final String ACTION_EN_SENTENCE = "en_sentence";
+
+	/** 英语单词练习 */
+	public static final String ACTION_EN_WORD_QUIZ = "en_word_quiz";
+
+	/** 英语智能复习 */
+	public static final String ACTION_EN_REVIEW = "en_review";
+
+	/** 英语巩固强化 */
+	public static final String ACTION_EN_DRILL = "en_drill";
+
 	// ---------------- 奖励数值 ----------------
 
 	/** 在线宝箱档位（分钟），与 {@link #reward} 学币一一对应 */
@@ -127,6 +142,13 @@ public final class StudentRewardConstants {
 				return new int[] { 10, 0 };
 			case ACTION_ONLINE_CHEST_120:
 				return new int[] { 20, 0 };
+			case ACTION_EN_WORD:
+			case ACTION_EN_SENTENCE:
+				return new int[] { 5, 3 };
+			case ACTION_EN_WORD_QUIZ:
+			case ACTION_EN_REVIEW:
+			case ACTION_EN_DRILL:
+				return new int[] { 20, 6 };
 			default:
 				return null;
 		}
@@ -259,6 +281,16 @@ public final class StudentRewardConstants {
 				return "每日签到";
 			case ACTION_TASK_DONE:
 				return "任务完成";
+			case ACTION_EN_WORD:
+				return "英语单词学习";
+			case ACTION_EN_SENTENCE:
+				return "英语句子学习";
+			case ACTION_EN_WORD_QUIZ:
+				return "英语单词练习";
+			case ACTION_EN_REVIEW:
+				return "英语智能复习";
+			case ACTION_EN_DRILL:
+				return "英语巩固强化";
 			default:
 				return actionType;
 		}

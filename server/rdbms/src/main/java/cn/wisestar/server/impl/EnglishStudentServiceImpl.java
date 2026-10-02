@@ -1,28 +1,36 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.StudentRewardConstants;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
+import cn.wisestar.server.domain.dto.student.RewardContext;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.model.EnglishGrammar;
 import cn.wisestar.server.domain.model.EnglishLearningLog;
 import cn.wisestar.server.domain.model.EnglishSentence;
 import cn.wisestar.server.domain.model.EnglishSentenceBook;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.domain.model.EnglishWordBook;
+import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.mapper.EnglishGrammarMapper;
 import cn.wisestar.server.mapper.EnglishLearningLogMapper;
 import cn.wisestar.server.mapper.EnglishSentenceBookMapper;
 import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
+import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.EnglishStudentService;
 import cn.wisestar.server.service.EnglishUnitService;
+import cn.wisestar.server.service.RewardService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -37,6 +45,7 @@ import java.util.stream.Collectors;
  * @author wisestar
  * @date 2026/9/15
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EnglishStudentServiceImpl implements EnglishStudentService {
@@ -48,6 +57,8 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final EnglishLearningLogMapper englishLearningLogMapper;
 	private final EnglishGrammarMapper englishGrammarMapper;
 	private final EnglishUnitService englishUnitService;
+	private final SubjectMapper subjectMapper;
+	private final RewardService rewardService;
 
 	@Override
 	public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term) {
@@ -288,8 +299,75 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	}
 
 	@Override
-	public void recordSession(String userId, String type, int durationSeconds, int correctCount) {
+	public StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount) {
 		writeLog(userId, type, "-", durationSeconds, correctCount);
+		return settleSessionReward(userId, type);
+	}
+
+	/**
+	 * 结算英语学习会话奖励（学习币 + 学海积分）。
+	 *
+	 * <p>与主系统共用 {@link RewardService}：同一份行为记录、积分累计、头衔晋升与单科学币上限。
+	 * 幂等键按「英语行为类型 + 自然日」生成，保证每个类型每天只发一次，避免重复刷取。</p>
+	 */
+	private StudentPreviewCompleteView settleSessionReward(String userId, String type) {
+		StudentPreviewCompleteView view = new StudentPreviewCompleteView();
+		String action = englishAction(type);
+		if (action == null) {
+			view.setOk(false);
+			return view;
+		}
+		RewardContext context = new RewardContext();
+		context.setUserId(userId);
+		context.setActionType(action);
+		context.setSubjectId(englishSubjectId());
+		context.setRefId("en:" + type + ":" + LocalDate.now());
+		try {
+			StudentPreviewCompleteView result = rewardService.settle(context);
+			return result == null ? view : result;
+		}
+		catch (Exception e) {
+			// 奖励结算异常不阻断英语学习
+			log.warn("english session: reward settle failed, ignored. user={}, type={}", userId, type, e);
+			view.setOk(false);
+			return view;
+		}
+	}
+
+	/**
+	 * 英语学习类型 → 奖励行为类型。
+	 *
+	 * @param type 会话类型 word / sentence / word-quiz / review / drill
+	 * @return 奖励行为类型；未知类型返回 null（不结算）
+	 */
+	private String englishAction(String type) {
+		if (type == null) {
+			return null;
+		}
+		switch (type) {
+			case "word":
+				return StudentRewardConstants.ACTION_EN_WORD;
+			case "sentence":
+				return StudentRewardConstants.ACTION_EN_SENTENCE;
+			case "word-quiz":
+				return StudentRewardConstants.ACTION_EN_WORD_QUIZ;
+			case "review":
+				return StudentRewardConstants.ACTION_EN_REVIEW;
+			case "drill":
+				return StudentRewardConstants.ACTION_EN_DRILL;
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * 解析英语学科 ID（{@code t_subject.code='ENGLISH'}），使学习币计入英语学科学期上限。
+	 */
+	private String englishSubjectId() {
+		Subject subject = subjectMapper.selectOne(Wrappers.<Subject>lambdaQuery()
+				.eq(Subject::getCode, "ENGLISH")
+				.last("limit 1"));
+		return subject == null ? null : subject.getId();
 	}
 
 	private void writeLog(String userId, String type, String contentId, int duration, int correctCount) {

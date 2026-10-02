@@ -488,6 +488,8 @@
   【设计原则】奖励金额只由「学习行为类型」决定，与章节/小节/知识点配置无关， 因此教学内容调整不影响积分与学习币体系（体系稳定）。
 
   【学习币】分学科、单学期上限 #SUBJECT_COIN_LIMIT，只用于商品兑换； 【学海积分】全学科、终身、无上限，只用于荣誉评价（头衔/证书）。
+
+  英语学习行为复用同一体系：`ACTION_EN_WORD`/`ACTION_EN_SENTENCE` 各 5 币 3 分， `ACTION_EN_WORD_QUIZ`/`ACTION_EN_REVIEW`/`ACTION_EN_DRILL` 各 20 币 6 分。
 - 方法:
   - `public static int[] reward(String actionType, Integer stage)`
     奖励值：返回 `[学习币, 学海积分]`。
@@ -2415,6 +2417,9 @@
 - 类型: `interface EnglishStudentService`
 - **类说明**：
   英语学员学习服务（学员端学习中心）。
+- 方法:
+  - `StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
+    记录一次学习会话（写学习日志 + 结算学习币/积分奖励）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishUnitService.java`
 - 包: `cn.wisestar.server.service`

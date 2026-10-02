@@ -5,6 +5,7 @@ import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.service.EnglishStudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -92,16 +93,16 @@ public class EnglishStudentApi {
 	}
 
 	/**
-	 * 记录学习会话（{type, durationSeconds, correctCount}）。
+	 * 记录学习会话（{type, durationSeconds, correctCount}），返回奖励结算结果。
 	 */
 	@PostMapping("/session")
 	@PreAuthorize("isAuthenticated()")
-	public void session(@RequestBody Map<String, Object> request) {
+	public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request) {
 		String userId = SecurityContextUtils.getUserId();
 		String type = String.valueOf(request.getOrDefault("type", "word"));
 		int durationSeconds = parseInt(request.get("durationSeconds"));
 		int correctCount = parseInt(request.get("correctCount"));
-		englishStudentService.recordSession(userId, type, durationSeconds, correctCount);
+		return englishStudentService.recordSession(userId, type, durationSeconds, correctCount);
 	}
 
 	private int parseInt(Object value) {

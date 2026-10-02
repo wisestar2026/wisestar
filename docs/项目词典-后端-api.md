@@ -203,8 +203,8 @@
     记录句子作答（{sentenceId, correct}）。
   - `public List<ReviewSessionView> review(@RequestParam(defaultValue = "20") Integer limit)`
     智能复习会话（单词 + 句子混合队列）。
-  - `public void session(@RequestBody Map<String, Object> request)`
-    记录学习会话（{type, durationSeconds, correctCount}）。
+  - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
+    记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
 
 ### `api/src/main/java/cn/wisestar/server/api/EnglishUnitApi.java`
 - 包: `cn.wisestar.server.api`

@@ -4,6 +4,7 @@ import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
+import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 
 import java.util.List;
 
@@ -77,13 +78,14 @@ public interface EnglishStudentService {
 	List<ReviewSessionView> reviewSession(String userId, int limit);
 
 	/**
-	 * 记录一次学习会话（写学习日志）。
+	 * 记录一次学习会话（写学习日志 + 结算学习币/积分奖励）。
 	 *
 	 * @param userId 用户 ID
-	 * @param type 类型 word / sentence
+	 * @param type 类型 word / sentence / word-quiz / review / drill
 	 * @param durationSeconds 学习时长（秒）
 	 * @param correctCount 正确数
+	 * @return 奖励结算结果
 	 */
-	void recordSession(String userId, String type, int durationSeconds, int correctCount);
+	StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount);
 
 }
