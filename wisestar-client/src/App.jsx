@@ -53,6 +53,7 @@ import StudentLayout from './pages/student/StudentLayout';
 import StudentHomePage from './pages/student/StudentHomePage';
 import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
+import KnowledgeDetectPage from './pages/student/KnowledgeDetectPage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
@@ -135,6 +136,8 @@ export default function App() {
             <Route path="knowledge/:kpId" element={<KnowledgePage />} />
             {/* 错题本: 练习错题自动收录（/api/practice/wrong-list） */}
             <Route path="wrong" element={<WrongBookPage />} />
+            {/* 知识点检测: 勾选单元自动组卷 + 薄弱点诊断报告（诊断性质，不发奖） */}
+            <Route path="detect" element={<KnowledgeDetectPage />} />
             {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}
             <Route path="profile" element={<ProfilePage />} />
             {/* 荣誉商城: 多科合并兑换 */}

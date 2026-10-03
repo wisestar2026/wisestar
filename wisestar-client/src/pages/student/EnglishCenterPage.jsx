@@ -202,6 +202,13 @@ export default function EnglishCenterPage() {
                 >
                   重点语法{unit.grammarCount ? ` · ${unit.grammarCount}` : ''}
                 </button>
+                <button
+                  type="button"
+                  className="eng-btn-practice"
+                  onClick={() => navigate(`/student/detect?unit=${encodeURIComponent(unit.unit)}`)}
+                >
+                  单元练习
+                </button>
               </div>
             </div>
           ))}

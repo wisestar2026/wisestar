@@ -22,7 +22,7 @@ import {
   listKnowledgePointQuestions, saveKnowledgePointQuestions,
   listMatchedKnowledgePointQuestions,
 } from '../../api/knowledge';
-import { updateTemplate } from '../../api/template';
+import { updateTemplate, listTemplate } from '../../api/template';
 import { getUnitBooks, getUnitWords, getUnitSentences } from '../../api/englishAdmin';
 import NodeEditModal from '../../components/research/NodeEditModal';
 import AddQuestionModal from '../../components/research/AddQuestionModal';
@@ -195,9 +195,11 @@ export default function TeachingResearchPlatformPage() {
   const [addOpen, setAddOpen] = useState(false);
   const expandedRef = useRef([]);
 
-  // 英语学科专用：单元目录（册别 → 单元 → 单词/重点句子）与只读内容
+  // 英语学科专用：单元目录（册别 → 单元 → 单词/重点句子/练习题）与只读内容
   const [englishUnits, setEnglishUnits] = useState([]);
   const [englishItems, setEnglishItems] = useState({ key: null, type: null, title: '', loading: false, list: [] });
+  // 英语练习题编辑中的题目 id（复用题目管理弹窗）
+  const [englishEditing, setEnglishEditing] = useState(null);
 
   // 当前学科是否为英语：英语知识统一来自英语板块，不走章节/小节/知识点树
   const currentSubject = subjects.find((s) => s.id === subjectId);
@@ -235,6 +237,7 @@ export default function TeachingResearchPlatformPage() {
     expandedRef.current = [];
     setKpQuestions({ pid: null, list: [], loading: false, editing: null });
     setEnglishItems({ key: null, type: null, title: '', loading: false, list: [] });
+    setEnglishEditing(null);
   };
 
   // 英语：加载单元目录（含单词数/句子数），年级选项取自单元数据
@@ -398,6 +401,7 @@ export default function TeachingResearchPlatformPage() {
             children: [
               { key: `ec:${idx}:word`, title: `单词（${u.wordCount || 0}）`, isLeaf: true },
               { key: `ec:${idx}:sentence`, title: `重点句子（${u.sentenceCount || 0}）`, isLeaf: true },
+              { key: `ec:${idx}:question`, title: '练习题', isLeaf: true },
             ],
           };
         }),
@@ -482,14 +486,35 @@ export default function TeachingResearchPlatformPage() {
     loadQuestions(pid);
   };
 
-  /* ---------- 英语：单元下「单词 / 重点句子」只读浏览 ---------- */
+  /* ---------- 英语：单元下「单词 / 重点句子 / 练习题」浏览（练习题可编辑） ---------- */
   const openEnglishItems = (key) => {
     const parts = key.split(':'); // ['ec', unitIndex, type]
     const unit = englishUnits[Number(parts[1])];
     if (!unit) return;
     const type = parts[2];
-    const label = type === 'word' ? '单词' : '重点句子';
+    const label = type === 'word' ? '单词' : (type === 'sentence' ? '重点句子' : '练习题');
     setEnglishItems({ key, type, title: `${unit.unit} · ${label}`, loading: true, list: [] });
+    setEnglishEditing(null);
+    // 练习题：按 学科 + 年级 + 单元（章节名）从题库取该单元题目，支持编辑
+    if (type === 'question') {
+      listTemplate({
+        subject: currentSubject?.name || '英语',
+        grade: unit.grade,
+        chapter: unit.unit,
+        current: 1,
+        pageSize: 500,
+      })
+        .then((res) => {
+          const raw = unwrap(res);
+          const list = Array.isArray(raw) ? raw : raw?.list || [];
+          setEnglishItems((s) => ({ ...s, loading: false, list }));
+        })
+        .catch((e) => {
+          message.error('加载练习题失败：' + (e?.message || e));
+          setEnglishItems((s) => ({ ...s, loading: false }));
+        });
+      return;
+    }
     const params = { version: unit.version, grade: unit.grade, term: unit.term, unit: unit.unit };
     const p = type === 'word'
       ? getUnitWords({ ...params, current: 1, pageSize: 500 })
@@ -564,6 +589,23 @@ export default function TeachingResearchPlatformPage() {
     }
   };
 
+  /* ---------- 英语练习题编辑保存 ---------- */
+  const handleEnglishQuestionSaved = async (data) => {
+    const row = (englishItems.list || []).find((q) => q.id === englishEditing);
+    if (!row) {
+      message.error('保存失败：未找到该题目，请刷新后重试');
+      return;
+    }
+    try {
+      await updateTemplate({ ...data, id: row.id });
+      message.success('题目保存成功');
+      setEnglishEditing(null);
+      if (englishItems.key) openEnglishItems(englishItems.key);
+    } catch (e) {
+      message.error('题目保存失败：' + (e?.message || e));
+    }
+  };
+
   /* ---------- JSX ---------- */
   return (
     <div className="trp-root">
@@ -594,7 +636,7 @@ export default function TeachingResearchPlatformPage() {
       >
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', margin: '4px 8px 8px' }}>
           {isEnglish
-            ? '英语知识来自英语板块：点单元下的「单词 / 重点句子」只读浏览。'
+            ? '英语知识来自英语板块：点单元下的「单词 / 重点句子」只读浏览；「练习题」可查看并编辑该单元题目。'
             : '点「章节 / 小节」名称修改信息；点「知识点」查看直绑题目，右侧 ✎ 可编辑简介。'}
         </Typography.Text>
         <Spin spinning={loadingSubjects || (!!subjectId && loadingRoot)}>
@@ -678,7 +720,19 @@ export default function TeachingResearchPlatformPage() {
       >
         {isEnglish ? (
           !englishItems.key ? (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="点左侧单元下的「单词」或「重点句子」查看内容" />
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="点左侧单元下的「单词」「重点句子」或「练习题」查看内容" />
+          ) : englishItems.type === 'question' ? (
+            <Spin spinning={englishItems.loading}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {englishItems.list.length === 0 ? (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="该单元暂无练习题，可前往「题目管理」新增" />
+                ) : (
+                  englishItems.list.map((q) => (
+                    <ResearchQuestionCard key={q.id} q={q} onEdit={() => setEnglishEditing(q.id)} />
+                  ))
+                )}
+              </div>
+            </Spin>
           ) : (
             <Spin spinning={englishItems.loading}>
               <List
@@ -780,6 +834,17 @@ export default function TeachingResearchPlatformPage() {
           onCancel={() => setKpQuestions((s) => ({ ...s, editing: null }))}
           onSave={handleEditQuestionSaved}
           record={[...kpQuestions.list, ...(kpQuestions.matched || [])].find((q) => q.id === kpQuestions.editing)}
+          repos={[]}
+        />
+      )}
+
+      {/* 英语练习题编辑：复用题目管理页弹窗 */}
+      {englishEditing && (
+        <QuestionEditModal
+          open
+          onCancel={() => setEnglishEditing(null)}
+          onSave={handleEnglishQuestionSaved}
+          record={(englishItems.list || []).find((q) => q.id === englishEditing)}
           repos={[]}
         />
       )}

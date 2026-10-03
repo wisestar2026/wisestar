@@ -441,3 +441,41 @@
 @media (max-height: 820px) {
   .eng-card-word { min-height: 440px; }
 }
+
+/* ---------- 单元绑定练习（重点语法/句型页呈现） ---------- */
+.eng-unit-question {
+  padding: 12px 0;
+  border-top: 1px dashed #e3eef7;
+}
+.eng-unit-question:first-of-type { border-top: none; }
+.eng-unit-q-stem {
+  display: flex;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #20415f;
+  line-height: 1.7;
+}
+.eng-unit-q-no { color: #2f8ae0; flex-shrink: 0; }
+.eng-unit-q-options {
+  margin: 8px 0 0;
+  padding-left: 22px;
+  list-style: none;
+}
+.eng-unit-q-options li {
+  font-size: 14px;
+  color: #41678c;
+  line-height: 1.8;
+  padding-left: 10px;
+  position: relative;
+}
+.eng-unit-q-options li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #b7d6ee;
+}

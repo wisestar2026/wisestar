@@ -17,7 +17,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishGrammars } from '../../api/englishStudent';
+import { getUnitQuestions } from '../../api/detect';
 import { speakEnglish } from '../../utils/english';
+import RichContent from '../../components/common/RichContent';
 import './EnglishCenterPage.css';
 
 /** 解析后端 JSON 字符串列（examples/exercises），容错为空数组 */
@@ -51,9 +53,13 @@ export default function EnglishGrammarLearnPage() {
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
+  const activeSubject = useStudentStore((s) => s.activeSubject);
 
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
+  // 本单元绑定的练习题（长任务，失败静默降级为空）
+  const [questions, setQuestions] = useState([]);
+  const [qLoading, setQLoading] = useState(false);
 
   const load = useCallback(() => {
     if (!unit) {
@@ -70,6 +76,27 @@ export default function EnglishGrammarLearnPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // 本单元绑定题目：按 学科+年级+册别 匹配同名单元后组卷（复用检测接口，已剥离答案）
+  useEffect(() => {
+    if (!unit) {
+      setQuestions([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setQLoading(true);
+    getUnitQuestions({
+      subjectId: activeSubject || '1003',
+      grade,
+      term,
+      unit,
+      count: 20,
+    })
+      .then((qs) => { if (!cancelled) setQuestions(qs || []); })
+      .catch(() => { if (!cancelled) setQuestions([]); })
+      .finally(() => { if (!cancelled) setQLoading(false); });
+    return () => { cancelled = true; };
+  }, [activeSubject, grade, term, unit]);
 
   if (loading) {
     return <div className="eng-learn-wrap"><Spin /></div>;
@@ -139,6 +166,55 @@ export default function EnglishGrammarLearnPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* 本单元绑定练习：呈现单元题目（题干 + 选项，已剥离答案），可进入检测作答 */}
+      <div className="eng-grammar-list" style={{ marginTop: 20 }}>
+        <div className="eng-grammar-card">
+          <div className="eng-grammar-head">
+            <span className="eng-grammar-index">📝</span>
+            <span className="eng-grammar-title">本单元练习</span>
+            {qLoading && <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>加载中…</span>}
+            {!qLoading && questions.length > 0 && (
+              <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>共 {questions.length} 题</span>
+            )}
+          </div>
+          {!qLoading && questions.length === 0 && (
+            <div className="eng-grammar-content">该单元暂无绑定练习，先去学习单词和句子吧。</div>
+          )}
+          {questions.map((q, idx) => {
+            const children = q.schema?.children || [];
+            const isChoice = q.questionType === 'Radio' || q.questionType === 'Checkbox' || q.questionType === 'Judge';
+            return (
+              <div key={q.id} className="eng-unit-question">
+                <div className="eng-unit-q-stem">
+                  <span className="eng-unit-q-no">{idx + 1}.</span>
+                  <RichContent text={q.schema?.title || q.name || ''} />
+                </div>
+                {isChoice && children.length > 0 && (
+                  <ul className="eng-unit-q-options">
+                    {children.map((opt) => (
+                      <li key={opt.id}>
+                        <RichContent text={opt.title || ''} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })}
+          {questions.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                className="eng-btn eng-btn-primary"
+                onClick={() => navigate(`/student/detect?unit=${encodeURIComponent(unit)}`)}
+              >
+                开始本单元练习
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="eng-actions">

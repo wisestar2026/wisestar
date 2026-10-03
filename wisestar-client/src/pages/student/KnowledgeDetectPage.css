@@ -1,0 +1,233 @@
+/**
+ * KnowledgeDetectPage.css - 学员端「知识点检测」样式
+ *
+ * 配色沿用海洋智学体系（蓝青渐变 + 白色玻璃卡片），三步骤：
+ *   配置（单元勾选/题量/难度）→ 作答（逐题 + 题号导航）→ 报告（正确率/薄弱点/解析）
+ */
+
+.kd-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px 4px 40px;
+}
+
+/* ---------- 顶部 Hero ---------- */
+.kd-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e8f4ff 0%, #f4fbff 60%, #eefaf3 100%);
+  box-shadow: 0 10px 24px rgba(64, 140, 190, 0.14);
+  margin-bottom: 16px;
+}
+.kd-hero-emoji { font-size: 42px; line-height: 1; }
+.kd-hero-title { font-size: 22px; font-weight: 900; color: #1d3a5f; letter-spacing: 1px; }
+.kd-hero-sub { font-size: 13px; color: #5b7c9b; margin-top: 4px; }
+
+.kd-context {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.kd-context-tip { font-size: 12px; color: #8aa4bd; margin-left: 6px; }
+
+/* ---------- 卡片 ---------- */
+.kd-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(64, 140, 190, 0.12);
+  backdrop-filter: blur(8px);
+}
+.kd-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.kd-step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2f8ae0;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.kd-card-title { font-size: 16px; font-weight: 800; color: #1d3a5f; }
+.kd-card-extra { margin-left: auto; }
+.kd-extra-text { font-size: 12px; color: #7d97b0; }
+
+.kd-loading { padding: 32px; text-align: center; }
+
+/* ---------- 单元勾选网格 ---------- */
+.kd-unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.kd-unit-item {
+  margin: 0 !important;
+  padding: 10px 12px;
+  border: 1px solid #dbe9f5;
+  border-radius: 12px;
+  background: #f8fcff;
+  transition: all 0.18s;
+}
+.kd-unit-item:hover { border-color: #8fc6f0; background: #eef7ff; }
+.kd-unit-item.ant-checkbox-wrapper-checked {
+  border-color: #2f8ae0;
+  background: #e8f4ff;
+}
+.kd-unit-name { font-weight: 700; color: #20415f; margin-left: 4px; }
+.kd-unit-count { font-size: 12px; color: #7d97b0; margin-left: 6px; }
+
+/* ---------- 字段 ---------- */
+.kd-field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.kd-field:last-child { margin-bottom: 0; }
+.kd-field-label { width: 48px; font-weight: 700; color: #41678c; }
+
+/* ---------- 动作区 ---------- */
+.kd-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ---------- 作答 ---------- */
+.kd-answer-wrap { max-width: 860px; }
+.kd-answer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.kd-answer-title { font-size: 18px; font-weight: 900; color: #1d3a5f; }
+.kd-answer-emoji { margin-right: 6px; }
+.kd-answer-meta { font-size: 13px; color: #5b7c9b; font-weight: 700; }
+
+.kd-nav-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.kd-nav-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid #d4e6f5;
+  background: #fff;
+  color: #5b7c9b;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+.kd-nav-dot:hover { border-color: #8fc6f0; }
+.kd-nav-dot.is-done { background: #e6f7ee; border-color: #9fdcb8; color: #1d8a4e; }
+.kd-nav-dot.is-current {
+  background: #2f8ae0;
+  border-color: #2f8ae0;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(47, 138, 224, 0.4);
+}
+
+.kd-question-box {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 22px 24px;
+  box-shadow: 0 8px 20px rgba(64, 140, 190, 0.12);
+}
+
+.kd-answer-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+}
+.kd-answer-foot { text-align: center; margin-top: 8px; }
+
+/* ---------- 报告 ---------- */
+.kd-report-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e8f4ff 0%, #f4fbff 60%, #eefaf3 100%);
+  box-shadow: 0 10px 24px rgba(64, 140, 190, 0.14);
+  margin-bottom: 16px;
+}
+.kd-report-percent { font-size: 26px; font-weight: 900; color: #1d3a5f; }
+.kd-report-percent small { font-size: 13px; }
+.kd-report-title { font-size: 20px; font-weight: 900; color: #1d3a5f; margin-bottom: 6px; }
+.kd-report-line { font-size: 14px; color: #41678c; }
+.kd-report-hint { color: #7d97b0; margin-top: 4px; }
+
+.kd-chapter-list { display: flex; flex-direction: column; gap: 10px; }
+.kd-chapter-row { display: flex; align-items: center; gap: 12px; }
+.kd-chapter-name { width: 96px; font-weight: 700; color: #20415f; flex-shrink: 0; }
+.kd-chapter-bar { flex: 1; }
+.kd-chapter-stat { width: 110px; text-align: right; font-size: 12px; color: #5b7c9b; }
+
+.kd-weak-list { display: flex; flex-direction: column; gap: 8px; }
+.kd-weak-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff5f4;
+  border: 1px solid #ffd8d4;
+}
+.kd-weak-name { font-size: 13px; color: #87362e; font-weight: 700; }
+.kd-weak-chapter { font-size: 12px; color: #b58a85; margin-left: auto; }
+.kd-weak-empty { font-size: 13px; color: #1d8a4e; padding: 6px 0; }
+
+.kd-detail-list { display: flex; flex-direction: column; gap: 12px; }
+.kd-detail-item {
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e6eef6;
+  background: #fbfdff;
+}
+.kd-detail-item.is-right { border-color: #c9eed8; background: #f6fffa; }
+.kd-detail-item.is-wrong { border-color: #ffd8d4; background: #fff8f7; }
+.kd-detail-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.kd-detail-index {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #eef4fa; color: #41678c; font-size: 12px; font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.kd-detail-flag { font-size: 12px; font-weight: 800; padding: 1px 8px; border-radius: 8px; }
+.kd-detail-flag.ok { color: #1d8a4e; background: #e6f7ee; }
+.kd-detail-flag.bad { color: #c0392b; background: #fdecea; }
+.kd-detail-kp { font-size: 12px; color: #7d97b0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kd-detail-line { font-size: 13px; line-height: 1.9; }
+.kd-detail-label { color: #7d97b0; }
+.kd-detail-correct { color: #1d8a4e; font-weight: 700; }
+.kd-detail-wrong { color: #c0392b; font-weight: 700; }
+.kd-detail-analysis {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #5b7c9b;
+  line-height: 1.8;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f2f8fd;
+}

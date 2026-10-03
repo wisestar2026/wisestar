@@ -172,6 +172,11 @@ export default function StudentHomePage() {
               {pendingTaskCount > 0 ? `${pendingTaskCount} 项待完成` : '全部完成'}
             </span>
           </button>
+          <button type="button" className="slh-side-btn slh-side-detect" onClick={() => navigate('/student/detect')}>
+            <span className="slh-side-emoji">🎯</span>
+            <span className="slh-side-main">知识点检测</span>
+            <span className="slh-side-sub">测薄弱点</span>
+          </button>
         </aside>
 
         <div className="slh-stage">
