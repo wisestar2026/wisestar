@@ -465,6 +465,20 @@
   学员实时位置实体（对应数据库表 t_student_activity，学员动态监控模块）。
   **用途**：学员端在路由变化/进入习题时上报当前位置（page/questionId）， 后台老师按学员实时查看其在哪个页面、哪道习题，并可查看该习题答案与解析。
 
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/StudentArchive.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class StudentArchive`
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  学员档案实体（对应数据库表 t_student_archive）。按「学员 + 学期」唯一，承载本学期目标规划表（goalPlan）、承诺书（promise）、初始档案快照（profileSnapshot，JSON 数组记录建案时薄弱点）、学期报告正文（reportContent）与报告状态（reportStatus: none/draft/final）；另有 studentNo/studentName/schoolYear/semester/termLabel/subjectId/teacherId/teacherName/status(draft/active/closed)/remark 及审计列。
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/StudentArchiveRecord.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class StudentArchiveRecord`
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  学员上课记录/学习日志实体（对应数据库表 t_student_archive_record）。每次课一条，记录当日学习情况（studySummary）、解决的问题（solvedProblems）、强化的知识点（strengthenedKps）、暴露的弱点（weaknesses）、课后作业（homework）与教师寄语（teacherComment），并含 durationMinutes/points/coins/source(auto/manual)/status(draft/final)/sort 等。
+
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/StudentCoin.java`
 - 包: `cn.wisestar.server.domain.model`
 - 类型: `class StudentCoin`
@@ -1218,6 +1232,30 @@
   - `public List<SectionRepoView> listRepos(String sectionId)`
     查询小节已绑定的题库列表（题库管理 t_repo 数据，保持绑定顺序，附带用途标记）。
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/StudentArchiveServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class StudentArchiveServiceImpl`
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
+- **类说明**：
+  学员档案服务实现。学期按当前日期自动推导（9 月起/1 月为第一学期，2-8 月为第二学期，可手填覆盖）；新建档案时以当前薄弱点定格 `profileSnapshot`；上课记录支持按日期调用 `StudySummaryService.preview` 拉取当日学习数据生成草稿，老师编辑后定稿；学期报告在 AI 可用时经 `StudySummaryService.aiText` 润色、否则降级规则模板（写入 reportContent 并置 reportStatus=draft）。
+- 方法:
+  - `public StudentArchiveView getArchive(String studentId, String semester)`
+    查询学员档案详情（不存在时返回空白视图，含实时薄弱点、记录与当日情况 preview）。
+  - `public StudentArchiveView myArchive()`
+    查询当前登录学员本人本学期档案。
+  - `public StudentArchiveView save(StudentArchiveSaveRequest request)`
+    新建/更新档案（新建时定格初始薄弱点快照）。
+  - `public StudentArchiveOverviewView overview(String studentId)`
+    档案概览（是否建档、薄弱点/记录数、最近记录日期、报告状态）。
+  - `public StudentArchiveRecordView saveRecord(StudentArchiveRecordRequest request)`
+    保存上课记录；档案不存在时自动建档；按 archiveId+recordDate 覆盖同日记录。
+  - `public void deleteRecord(String id)`
+    逻辑删除上课记录。
+  - `public ArchiveRecordDraftView draft(String studentId, String date)`
+    生成某日上课记录自动草稿。
+  - `public StudentArchiveView generateReport(String studentId, String semester)`
+    生成学期报告并写回档案。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/StudentServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class StudentServiceImpl`
@@ -1337,11 +1375,15 @@
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
   当日学习总结服务实现。
-  聚合学员当日练习记录、答题明细、学习行为、掌握度与薄弱点数据，优先调用系统 AI 生成 面向家长的总结文本；AI 未启用或调用失败时降级为规则模板，`model` 标记为 rule。
+  聚合学员当日练习记录、答题明细、学习行为、掌握度与薄弱点数据，优先调用系统 AI 生成 面向家长的总结文本；AI 未启用或调用失败时降级为规则模板，`model` 标记为 rule。聚合结果同时回填练习/答题/正确率/积分/学币/知识点/掌握度等计数与 weakNames/strengthenedNames 名单；`preview` 可在不落库前提下返回规则模板或已有总结。
 - 方法:
   - `public StudySummaryView generate(String studentId, String summaryDate, String sessionId)`
   - `public StudySummaryView getMySummary()`
   - `public StudySummaryView getStudentSummary(String studentId, String date)`
+  - `public StudySummaryView preview(String studentId, String date)`
+    预览某日学习概况：已生成总结则返回其内容，否则规则模板实时生成（不落库）。
+  - `public String aiText(String systemPrompt, String userPrompt)`
+    通用 AI 文本生成（供学期报告等复用），AI 未启用或失败返回 null。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/SubjectServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1663,6 +1705,18 @@
 - 类型: `interface StudentActivityMapper`
 - **类说明**：
   StudentActivity Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/StudentArchiveMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface StudentArchiveMapper`
+- **类说明**：
+  StudentArchive Mapper（MyBatis-Plus 基础 CRUD，对应 t_student_archive）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/StudentArchiveRecordMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface StudentArchiveRecordMapper`
+- **类说明**：
+  StudentArchiveRecord Mapper（MyBatis-Plus 基础 CRUD，对应 t_student_archive_record）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/StudentCoinMapper.java`
 - 包: `cn.wisestar.server.mapper`

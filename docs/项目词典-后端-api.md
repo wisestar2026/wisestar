@@ -34,6 +34,37 @@
 
     **异常**：若数据库不可用、配置错误或端口被占用，启动过程会抛出异常并终止进程。
 
+### `api/src/main/java/cn/wisestar/server/api/ArchiveApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class ArchiveApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  学员档案接口。
+  **所属模块**：api 模块（Web 接口层）。
+
+  **路径前缀**：`${api.prefix}/student/archive`（api.prefix 通常为 /api）。
+
+  **被谁调用**：管理端学员档案页（学员列表行内「档案」入口，student:archive[:edit]）、 学员端「我的学习档案」页（/student/archive）。
+
+  **数据权限**：管理端读写需 student:archive / student:archive:edit；学员端 /my 仅返回当前 登录学员本人档案（isAuthenticated）。
+- 方法:
+  - `public StudentArchiveView detail(@RequestParam String studentId, @RequestParam(required = false) String semester)`
+    学员档案详情（含初始快照、薄弱点、上课记录、当日情况）。权限 hasAuthority('student:archive')。
+  - `public StudentArchiveOverviewView overview(@RequestParam String studentId)`
+    档案概览（学员列表入口角标：是否建档、薄弱点/记录数、报告状态）。权限 hasAuthority('student:archive')。
+  - `public StudentArchiveView save(@RequestBody StudentArchiveSaveRequest request)`
+    保存档案（目标规划表/承诺书/学期报告/状态）。权限 hasAuthority('student:archive:edit')。
+  - `public ArchiveRecordDraftView draft(@RequestParam String studentId, @RequestParam(required = false) String date)`
+    生成上课记录自动草稿（拉取当日学习数据与薄弱/强化知识点）。权限 hasAuthority('student:archive:edit')。
+  - `public StudentArchiveRecordView saveRecord(@RequestBody StudentArchiveRecordRequest request)`
+    保存上课记录（新增/更新，档案不存在时自动建档）。权限 hasAuthority('student:archive:edit')。
+  - `public void deleteRecord(@RequestParam String id)`
+    删除上课记录（逻辑删除）。权限 hasAuthority('student:archive:edit')。
+  - `public StudentArchiveView generateReport(@RequestParam String studentId, @RequestParam(required = false) String semester)`
+    生成学期报告（AI 可用时润色，否则规则模板）。权限 hasAuthority('student:archive:edit')。
+  - `public StudentArchiveView myArchive()`
+    我的档案（学员端只读，返回当前登录学员本人本学期档案）。
+
 ### `api/src/main/java/cn/wisestar/server/api/CampusApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class CampusApi`

@@ -388,7 +388,7 @@
   后台系统权限点清单（权限树数据源）。
   角色权限管理（人事管理）模块使用：角色编辑页的权限树按功能模块分组展示 权限点，勾选结果以权限编码列表保存到 `t_role.authority`（逗号分隔）， 后端接口通过 `@PreAuthorize("hasAuthority('module:action')")` 拦截。
 
-  本类集中定义后台全部功能模块的权限点，是权限树、内置角色默认权限、 管理员全量权限的唯一权威清单。
+  本类集中定义后台全部功能模块的权限点，是权限树、内置角色默认权限、 管理员全量权限的唯一权威清单。学员管理新增「学员档案」权限点：`student:archive`（查看/打印，归 admin/principal/teacher/consultant/academic）、`student:archive:edit`（编辑定稿，归 admin/teacher/consultant）。
 - 方法:
   - `public Node()`
   - `public Node(String key, String name)`
@@ -1237,6 +1237,48 @@
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class DeptView`
 - 注解: @Data
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/archive/ArchiveRecordDraftView.java`
+- 包: `cn.wisestar.server.domain.dto.archive`
+- 类型: `class ArchiveRecordDraftView`
+- 注解: @Data
+- **类说明**：
+  上课记录自动草稿视图。字段：date（日期）、title（建议主题）、studySummary（当日学习情况文本，优先 AI 总结否则规则模板）、durationMinutes/practiceCount/questionCount/correctCount/accuracy/wrongCount/points/coins/knowledgeCount/avgMastery（当日学习数据）、strengthenedKps（当日强化的知识点名称，建议填入「强化的知识点」）、weakNames（当前薄弱知识点名称，建议填入「暴露的弱点」）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/archive/StudentArchiveOverviewView.java`
+- 包: `cn.wisestar.server.domain.dto.archive`
+- 类型: `class StudentArchiveOverviewView`
+- 注解: @Data
+- **类说明**：
+  学员档案概览视图（学员列表「档案」入口角标）。字段：studentId/studentName、hasArchive（是否已建本学期档案）、semester/termLabel、weakCount（当前薄弱点数）、recordCount（上课记录数）、lastRecordDate、reportStatus（none/draft/final）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/archive/StudentArchiveRecordRequest.java`
+- 包: `cn.wisestar.server.domain.dto.archive`
+- 类型: `class StudentArchiveRecordRequest`
+- 注解: @Data
+- **类说明**：
+  学员上课记录保存请求。字段：id（空为新增）、archiveId（可空，按学员+学期自动定位/建档）、studentId、recordDate（yyyy-MM-dd）、subjectId、title、studySummary、solvedProblems、strengthenedKps、weaknesses、homework、teacherComment、durationMinutes、points、coins、status（draft/final）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/archive/StudentArchiveRecordView.java`
+- 包: `cn.wisestar.server.domain.dto.archive`
+- 类型: `class StudentArchiveRecordView`
+- 注解: @Data
+- **类说明**：
+  学员上课记录视图。字段与 `StudentArchiveRecordRequest` 对应，另含 archiveId/source（auto/manual）/sort。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/archive/StudentArchiveSaveRequest.java`
+- 包: `cn.wisestar.server.domain.dto.archive`
+- 类型: `class StudentArchiveSaveRequest`
+- 注解: @Data
+- **类说明**：
+  学员档案保存请求（管理端填写目标规划表/承诺书/学期报告）。字段：id（空为新建）、studentId、schoolYear/semester/termLabel（空按当前日期推导）、subjectId（可空表示全科）、teacherName、status（draft/active/closed）、goalPlan、promise、reportContent、reportStatus（none/draft/final）、remark。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/archive/StudentArchiveView.java`
+- 包: `cn.wisestar.server.domain.dto.archive`
+- 类型: `class StudentArchiveView`
+- 注解: @Data
+- **类说明**：
+  学员档案详情视图（管理端档案页 / 学员端我的档案）。聚合档案主数据（id/studentId/studentNo/studentName/schoolYear/semester/termLabel/subjectId/teacherId/teacherName/status/goalPlan/promise/reportContent/reportStatus/remark）、initialWeakPoints（初始快照薄弱点名称）、weakPoints（`List<StudentWeakView>` 实时薄弱点）、records（`List<StudentArchiveRecordView>` 上课记录，日期倒序）、today（`StudySummaryView` 当日学习情况）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectGenerateRequest.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
@@ -2311,7 +2353,7 @@
 - 类型: `class StudySummaryView`
 - 注解: @Data
 - **类说明**：
-  学习总结视图（学员本人 / 教师查看）。
+  学习总结视图（学员本人 / 教师查看）。字段：id/studentId/studentName/summaryDate/sessionId/content/model（规则模板为 rule）/status/createTime、durationMs（当日累计学习时长）、practiceCount/questionCount/correctCount/accuracy/wrongCount/points/coins/knowledgeCount/avgMastery（当日学习数据聚合）、weakNames（当前薄弱点名称）、strengthenedNames（当日强化的知识点名称）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/task/StudentTaskView.java`
 - 包: `cn.wisestar.server.domain.dto.task`
@@ -2624,6 +2666,12 @@
 - **类说明**：
   小节管理服务（知识管理板块三级维度）。
 
+### `shared/src/main/java/cn/wisestar/server/service/StudentArchiveService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface StudentArchiveService`
+- **类说明**：
+  学员档案服务（学习规划 + 上课记录 + 学期报告）。以知识点检测/薄弱点为新学期档案的初始快照，老师据此填写本学期目标规划表与承诺书；每次上课记录逐条汇入档案形成学习日志，学期末汇总为可打印的学期报告。方法：`getArchive(studentId,semester)`、`myArchive()`、`save(request)`、`overview(studentId)`、`saveRecord(request)`、`deleteRecord(id)`、`draft(studentId,date)`、`generateReport(studentId,semester)`。
+
 ### `shared/src/main/java/cn/wisestar/server/service/StudentService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface StudentService`
@@ -2655,7 +2703,7 @@
 - 类型: `interface StudySummaryService`
 - **类说明**：
   当日学习总结服务。
-  聚合学员当日练习记录、答题明细、学习行为、掌握度与薄弱点数据，调用系统 AI 生成总结； AI 未启用或失败时降级为规则模板（model=rule）。
+  聚合学员当日练习记录、答题明细、学习行为、掌握度与薄弱点数据，调用系统 AI 生成总结； AI 未启用或失败时降级为规则模板（model=rule）。方法：`generate(studentId,summaryDate,sessionId)`、`getMySummary()`、`getStudentSummary(studentId,date)`、`preview(studentId,date)`（已生成返回其内容，否则规则模板实时生成不落库）、`aiText(systemPrompt,userPrompt)`（通用 AI 文本，供学期报告等复用，未启用/失败返回 null）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/SubjectService.java`
 - 包: `cn.wisestar.server.service`
