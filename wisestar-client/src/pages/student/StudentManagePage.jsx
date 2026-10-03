@@ -15,12 +15,13 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Table, Space, Button, Input, Select, InputNumber, Modal, Form, Typography, Popconfirm, message,
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, FolderOpenOutlined } from '@ant-design/icons';
 import {
-  listStudents, createStudent, updateStudent, deleteStudent,
+  listStudents, createStudent, updateStudent, deleteStudent, addCoin,
 } from '../../api/student';
 import { listCampusOptions } from '../../api/system';
 import { usePermission } from '../../utils/usePermission';
@@ -29,6 +30,7 @@ const { Title } = Typography;
 
 export default function StudentManagePage() {
   const { can } = usePermission();
+  const navigate = useNavigate();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -176,9 +178,14 @@ export default function StudentManagePage() {
     { title: '校区', dataIndex: 'campus', width: 110, render: (v) => v || '-' },
     { title: '创建时间', dataIndex: 'createAt', width: 170 },
     {
-      title: '操作', key: 'action', width: 140,
+      title: '操作', key: 'action', width: 200,
       render: (_, record) => (
         <Space>
+          {can('student:archive') && (
+            <Button type="link" size="small" icon={<FolderOpenOutlined />} onClick={() => navigate(`/students/${record.id}/archive`)}>
+              档案
+            </Button>
+          )}
           {can('student:update') && (
             <Button type="link" size="small" icon={<PlusOutlined />} onClick={() => openCoin(record)}>
               加学币

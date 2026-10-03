@@ -54,6 +54,7 @@ import StudentHomePage from './pages/student/StudentHomePage';
 import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
 import KnowledgeDetectPage from './pages/student/KnowledgeDetectPage';
+import StudentMyArchivePage from './pages/student/StudentMyArchivePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
 import WrongBookPage from './pages/student/WrongBookPage';
@@ -68,6 +69,7 @@ import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
 import StudentManagePage from './pages/student/StudentManagePage';
+import StudentArchivePage from './pages/student/StudentArchivePage';
 import OrderManagePage from './pages/student/OrderManagePage';
 import RoleManagePage from './pages/hr/RoleManagePage';
 import UserManagePage from './pages/system/UserManagePage';
@@ -138,6 +140,8 @@ export default function App() {
             <Route path="wrong" element={<WrongBookPage />} />
             {/* 知识点检测: 勾选单元自动组卷 + 薄弱点诊断报告（诊断性质，不发奖） */}
             <Route path="detect" element={<KnowledgeDetectPage />} />
+            {/* 我的学习档案: 学习目标/知识点/当日情况/上课记录/学期报告（只读可打印） */}
+            <Route path="archive" element={<StudentMyArchivePage />} />
             {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}
             <Route path="profile" element={<ProfilePage />} />
             {/* 荣誉商城: 多科合并兑换 */}
@@ -251,6 +255,15 @@ export default function App() {
               element={
                 <AuthGuard required={['student:list', 'student:create', 'student:update', 'student:delete']}>
                   <StudentManagePage />
+                </AuthGuard>
+              }
+            />
+            {/* 学员档案（学习规划/上课记录/学期报告，可打印） */}
+            <Route
+              path="/students/:studentId/archive"
+              element={
+                <AuthGuard required={['student:archive']}>
+                  <StudentArchivePage />
                 </AuthGuard>
               }
             />

@@ -1,0 +1,110 @@
+/* StudentMyArchivePage.css - 学员端我的学习档案（只读，可打印） */
+
+.my-archive-page {
+  max-width: 960px;
+}
+
+.my-archive-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.my-archive-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b3d5c;
+}
+
+.my-archive-meta {
+  color: #5b7a8c;
+  font-size: 13px;
+}
+
+.my-archive-section {
+  margin-bottom: 18px;
+}
+
+.my-archive-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0b3d5c;
+  margin: 0 0 10px;
+}
+
+.my-archive-text {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  color: #274b5e;
+}
+
+.my-archive-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.my-archive-chip {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(47, 138, 224, 0.12);
+  color: #2f6fa0;
+  font-size: 13px;
+}
+
+.my-archive-record {
+  padding: 10px 0;
+  border-bottom: 1px dashed rgba(47, 138, 224, 0.25);
+}
+
+.my-archive-record:last-child {
+  border-bottom: none;
+}
+
+.my-archive-record-date {
+  font-weight: 700;
+  color: #2f8ae0;
+  margin-right: 8px;
+}
+
+.my-archive-record-title {
+  color: #0b3d5c;
+  font-weight: 600;
+}
+
+.my-archive-record-body {
+  margin-top: 6px;
+  color: #456;
+  white-space: pre-wrap;
+}
+
+.my-archive-empty {
+  color: #8aa;
+}
+
+@media print {
+  .sll-header,
+  .sll-tabbar,
+  .sll-wave,
+  .sll-cloud,
+  .shp-ai-btn,
+  .ocf-float,
+  .no-print,
+  .ant-message {
+    display: none !important;
+  }
+
+  .my-archive-page {
+    max-width: none;
+  }
+
+  .my-archive-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

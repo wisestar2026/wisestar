@@ -1,0 +1,91 @@
+/* StudentArchivePage.css - 学员档案页（管理端，可打印） */
+
+.archive-page {
+  max-width: 1080px;
+}
+
+.archive-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.archive-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.archive-title {
+  margin: 0;
+}
+
+.archive-meta {
+  color: #666;
+  font-size: 13px;
+}
+
+.archive-section {
+  margin-bottom: 20px;
+}
+
+.archive-kp-tags {
+  margin-bottom: 12px;
+}
+
+.archive-record-summary {
+  white-space: pre-wrap;
+  color: #555;
+}
+
+.archive-empty {
+  color: #999;
+}
+
+.archive-report-text {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  font-size: 15px;
+  color: #333;
+}
+
+.archive-sign {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  color: #666;
+}
+
+/* 打印：仅输出档案主体，隐藏后台框架、工具栏与操作列 */
+@media print {
+  .ant-layout-sider,
+  .ant-layout-header,
+  .ant-layout-footer,
+  .no-print,
+  .ant-message {
+    display: none !important;
+  }
+
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .archive-page {
+    max-width: none;
+  }
+
+  .archive-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}
