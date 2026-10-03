@@ -41,4 +41,37 @@ public class StudySummaryView {
 	/** 当日生成时间 yyyy-MM-dd HH:mm */
 	private String createTime;
 
+	/** 当日练习次数 */
+	private int practiceCount;
+
+	/** 当日答题数 */
+	private int questionCount;
+
+	/** 当日答对数 */
+	private int correctCount;
+
+	/** 当日正确率 0-100 */
+	private int accuracy;
+
+	/** 当日错题数 */
+	private int wrongCount;
+
+	/** 当日获得学海积分 */
+	private int points;
+
+	/** 当日获得学习币 */
+	private int coins;
+
+	/** 当日覆盖知识点数 */
+	private int knowledgeCount;
+
+	/** 当日平均掌握度 0-100 */
+	private int avgMastery;
+
+	/** 当前薄弱知识点名称 */
+	private java.util.List<String> weakNames;
+
+	/** 当日强化的知识点名称（当日有练习进度的知识点） */
+	private java.util.List<String> strengthenedNames;
+
 }

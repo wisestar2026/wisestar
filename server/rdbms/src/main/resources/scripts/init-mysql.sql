@@ -1457,6 +1457,9 @@ UPDATE `t_role` SET `authority` = 'home,exercise:list,repo:list,repo:detail,repo
 UPDATE `t_role` SET `name` = '管理员', `remark` = '系统初始化角色（超管）', `builtin` = 1, `update_at` = '2026-08-13 10:00:00', `update_by` = '1457995481966747649', `authority` = 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,english:section:list,english:section:create,english:section:update,english:section:delete,english:grammar:list,english:grammar:create,english:grammar:update,english:grammar:delete' WHERE `code` = 'admin';
 -- 兼容已存在的 MySQL 库：补充 data_scope 列
 ALTER TABLE `t_role` ADD COLUMN IF NOT EXISTS `data_scope` varchar(16) DEFAULT NULL COMMENT '数据范围 ALL全校可见 CAMPUS仅绑定校区';
+-- 学员档案权限点收敛（幂等，避免旧库角色缺 student:archive* 权限点）
+UPDATE `t_role` SET `authority` = CONCAT(`authority`, ',student:archive') WHERE `code` IN ('admin','principal','teacher','consultant','academic') AND `authority` NOT LIKE '%student:archive%';
+UPDATE `t_role` SET `authority` = CONCAT(`authority`, ',student:archive:edit') WHERE `code` IN ('admin','teacher','consultant') AND `authority` NOT LIKE '%student:archive:edit%';
 -- 数据范围默认值（幂等：仅对未配置的行赋默认值，不覆盖用户后续修改）
 UPDATE `t_role` SET `data_scope` = 'CAMPUS' WHERE `code` IN ('principal','academic','consultant') AND `data_scope` IS NULL;
 UPDATE `t_role` SET `data_scope` = 'ALL' WHERE `data_scope` IS NULL;
@@ -2530,6 +2533,63 @@ CREATE TABLE IF NOT EXISTS `t_study_summary` (
   PRIMARY KEY (`id`),
   KEY `idx_study_summary_student_date` (`student_id`,`summary_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='当日学习总结';
+
+-- 学员档案（按学员 + 学期唯一；承载目标规划表/承诺书/初始档案快照/学期报告）
+CREATE TABLE IF NOT EXISTS `t_student_archive` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `student_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学号快照',
+  `student_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '姓名快照',
+  `school_year` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学年，如 2026-2027',
+  `semester` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期键，如 2026-1',
+  `term_label` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期名称，如 第一学期',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID（空表示全科档案）',
+  `teacher_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '负责老师ID',
+  `teacher_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '负责老师姓名',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'draft' COMMENT 'draft/active/closed',
+  `profile_snapshot` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '初始档案快照(JSON：薄弱知识点/掌握度)',
+  `goal_plan` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '本学期目标规划表正文',
+  `promise` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '学员承诺书正文',
+  `report_content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '学期报告正文',
+  `report_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'none' COMMENT 'none/draft/final',
+  `remark` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '备注',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_student_archive_student` (`student_id`,`semester`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员档案';
+
+-- 学员上课记录/学习日志（每次课一条，含系统草稿与老师定稿）
+CREATE TABLE IF NOT EXISTS `t_student_archive_record` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `archive_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '档案ID',
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `record_date` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '上课日期 yyyy-MM-dd',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `title` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '本次主题',
+  `study_summary` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '当日学习情况(系统自动/老师编辑)',
+  `solved_problems` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '解决的问题',
+  `strengthened_kps` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '强化的知识点',
+  `weaknesses` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '暴露的弱点',
+  `homework` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '课后作业/任务',
+  `teacher_comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '教师寄语',
+  `duration_minutes` int DEFAULT '0' COMMENT '本次时长(分钟)',
+  `points` int DEFAULT '0' COMMENT '获得积分',
+  `coins` int DEFAULT '0' COMMENT '获得学习币',
+  `source` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'manual' COMMENT 'auto/manual',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'draft' COMMENT 'draft/final',
+  `sort` int DEFAULT '0',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_student_archive_record` (`archive_id`,`record_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学员上课记录';
 
 -- 小节通关记录（每学员每小节唯一，保留历史最佳正确率/星级/首次通关）
 CREATE TABLE IF NOT EXISTS `t_section_pass` (

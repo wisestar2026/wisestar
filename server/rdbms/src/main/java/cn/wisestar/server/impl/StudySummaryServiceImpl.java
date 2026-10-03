@@ -69,6 +69,10 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	/** 未配置模型时的兜底模型 */
 	private static final String DEFAULT_MODEL = "deepseek-chat";
 
+	/** 缺省系统提示词（面向家长反馈口吻） */
+	private static final String DEFAULT_SYSTEM_PROMPT =
+			"你是一位耐心细致的学习教练，擅长用简洁、鼓励的语言向家长反馈孩子的学习情况。";
+
 	private final StudySummaryMapper studySummaryMapper;
 	private final StudySessionMapper studySessionMapper;
 	private final PracticeRecordMapper practiceRecordMapper;
@@ -103,7 +107,7 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		if (aiSetting != null && Boolean.TRUE.equals(aiSetting.getEnabled())
 				&& aiSetting.getToken() != null && !aiSetting.getToken().trim().isEmpty()) {
 			try {
-				aiContent = callAi(aiSetting, buildPrompt(summaryDate, agg));
+				aiContent = callAi(aiSetting, DEFAULT_SYSTEM_PROMPT, buildPrompt(summaryDate, agg));
 				aiModel = (aiSetting.getModels() != null && !aiSetting.getModels().isEmpty())
 						? aiSetting.getModels().get(0) : DEFAULT_MODEL;
 			} catch (Exception e) {
@@ -164,6 +168,46 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		return toView(summary, aggregate(studentId, summaryDate), studentId);
 	}
 
+	@Override
+	public StudySummaryView preview(String studentId, String date) {
+		if (studentId == null || studentId.isEmpty()) {
+			return null;
+		}
+		String summaryDate = (date == null || date.isEmpty())
+				? LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE) : date;
+		Aggregation agg = aggregate(studentId, summaryDate);
+		StudySummary summary = studySummaryMapper.selectOne(new LambdaQueryWrapper<StudySummary>()
+				.eq(StudySummary::getStudentId, studentId)
+				.eq(StudySummary::getSummaryDate, summaryDate)
+				.last("limit 1"));
+		if (summary != null) {
+			return toView(summary, agg, studentId);
+		}
+		StudySummary tmp = new StudySummary();
+		tmp.setStudentId(studentId);
+		tmp.setSummaryDate(summaryDate);
+		tmp.setContent(buildRuleContent(summaryDate, agg));
+		tmp.setModel("rule");
+		tmp.setStatus("preview");
+		return toView(tmp, agg, studentId);
+	}
+
+	@Override
+	public String aiText(String systemPrompt, String userPrompt) {
+		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
+		if (aiSetting == null || !Boolean.TRUE.equals(aiSetting.getEnabled())
+				|| aiSetting.getToken() == null || aiSetting.getToken().trim().isEmpty()) {
+			return null;
+		}
+		try {
+			String content = callAi(aiSetting, systemPrompt, userPrompt);
+			return (content != null && !content.trim().isEmpty()) ? content.trim() : null;
+		} catch (Exception e) {
+			log.warn("AI 文本生成失败：{}", e.getMessage());
+			return null;
+		}
+	}
+
 	// ------------------------------------------------------------------ 聚合
 
 	/** 汇总当日学习数据 */
@@ -215,6 +259,25 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 				sum += p.getMastery() == null ? 0 : p.getMastery();
 			}
 			agg.avgMastery = sum / progresses.size();
+		}
+
+		// 当日强化的知识点（当日有练习进度的知识点名称）
+		agg.strengthenedNames = new ArrayList<>();
+		if (!progresses.isEmpty()) {
+			Set<String> progressKpIds = progresses.stream().map(UserKnowledgeProgress::getKnowledgePointId)
+					.filter(id -> id != null && !id.isEmpty()).collect(Collectors.toSet());
+			if (!progressKpIds.isEmpty()) {
+				Map<String, String> progressNameMap = new HashMap<>();
+				for (KnowledgePoint kp : knowledgePointMapper.selectBatchIds(progressKpIds)) {
+					progressNameMap.put(kp.getId(), kp.getName());
+				}
+				for (UserKnowledgeProgress p : progresses) {
+					String name = progressNameMap.get(p.getKnowledgePointId());
+					if (name != null) {
+						agg.strengthenedNames.add(name);
+					}
+				}
+			}
 		}
 
 		// 薄弱知识点
@@ -294,7 +357,7 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	}
 
 	/** 调用大模型生成总结文本；异常向上抛出由调用方降级。 */
-	private String callAi(SystemInfo.AiSetting aiSetting, String userPrompt) throws Exception {
+	private String callAi(SystemInfo.AiSetting aiSetting, String systemPrompt, String userPrompt) throws Exception {
 		String model = (aiSetting.getModels() != null && !aiSetting.getModels().isEmpty())
 				? aiSetting.getModels().get(0) : DEFAULT_MODEL;
 		HttpHeaders headers = new HttpHeaders();
@@ -304,7 +367,7 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		List<Map<String, String>> messages = new ArrayList<>();
 		Map<String, String> system = new HashMap<>();
 		system.put("role", "system");
-		system.put("content", "你是一位耐心细致的学习教练，擅长用简洁、鼓励的语言向家长反馈孩子的学习情况。");
+		system.put("content", systemPrompt);
 		messages.add(system);
 		Map<String, String> user = new HashMap<>();
 		user.put("role", "user");
@@ -341,7 +404,21 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		view.setContent(summary.getContent());
 		view.setModel(summary.getModel());
 		view.setStatus(summary.getStatus());
-		view.setDurationMs(agg == null ? null : agg.onlineDurationMs);
+		if (agg != null) {
+			view.setDurationMs(agg.onlineDurationMs);
+			view.setPracticeCount(agg.practiceCount);
+			view.setQuestionCount(agg.questionCount);
+			view.setCorrectCount(agg.correctCount);
+			view.setAccuracy(agg.questionCount == 0 ? 0
+					: (int) Math.round(agg.correctCount * 100.0 / agg.questionCount));
+			view.setWrongCount((int) agg.wrongCount);
+			view.setPoints(agg.points);
+			view.setCoins(agg.coins);
+			view.setKnowledgeCount(agg.knowledgeCount);
+			view.setAvgMastery(agg.avgMastery);
+			view.setWeakNames(agg.weakNames);
+			view.setStrengthenedNames(agg.strengthenedNames);
+		}
 		Student student = studentMapper.selectById(studentId);
 		if (student != null) {
 			view.setStudentName(student.getName());
@@ -377,6 +454,7 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		private int avgMastery;
 		private long onlineDurationMs;
 		private List<String> weakNames = Collections.emptyList();
+		private List<String> strengthenedNames = Collections.emptyList();
 	}
 
 }

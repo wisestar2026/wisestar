@@ -39,4 +39,22 @@ public interface StudySummaryService {
 	 */
 	StudySummaryView getStudentSummary(String studentId, String date);
 
+	/**
+	 * 预览某日学习概况：已生成总结则返回其内容，否则用规则模板实时生成（不落库）。
+	 *
+	 * @param studentId 学员ID
+	 * @param date      日期 yyyy-MM-dd，为空取当天
+	 * @return 学习概况视图
+	 */
+	StudySummaryView preview(String studentId, String date);
+
+	/**
+	 * 调用系统 AI 生成一段文本（供学期报告等场景复用）。
+	 *
+	 * @param systemPrompt 系统提示词
+	 * @param userPrompt   用户提示词
+	 * @return AI 文本；AI 未启用或调用失败返回 null（由调用方降级）
+	 */
+	String aiText(String systemPrompt, String userPrompt);
+
 }
