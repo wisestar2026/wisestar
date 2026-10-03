@@ -751,6 +751,21 @@
   - `public void deleteDept(String id)`
   - `public void sortDept(DeptSortRequest request)`
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/DetectionServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class DetectionServiceImpl`
+- 注解: @Service, @Transactional, @RequiredArgsConstructor
+- **类说明**：
+  学员端知识点检测服务实现（DetectionServiceImpl），实现 shared 模块 DetectionService。
+  **取题口径**：单元统计与组卷优先用「章节/小节 → 题库」绑定（`t_chapter_repo` 与经 `t_section.chapter_id` 关联的 `t_section_repo` 取并集）精确圈定到册别/单元，避免 `t_template` 无年级/册别列导致跨册串题；无任何绑定时回退到「学科 + 章节名（+ 年级）」匹配。组卷时剥离 `examCorrectAnswer`/`examAnalysis`，判分复用 AnswerJudgeUtil，报告按单元与知识点标签聚合，不落库、不发奖励。
+- 方法:
+  - `public List<DetectUnitView> units(String subjectId, String grade, String term)`
+    检测可选单元列表（按学科 + 年级 + 册别过滤，带可用题量）。
+  - `public List<StudentQuestionView> generate(DetectGenerateRequest request)`
+    自动组卷（剥离标准答案与解析）。
+  - `public DetectReportView submit(DetectSubmitRequest request)`
+    交卷并生成薄弱点诊断报告。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/DictItemServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class DictItemServiceImpl`

@@ -148,6 +148,56 @@
 
     **调用的下层 Service**：DashboardService#listDashboard(DashboardQuery)。
 
+### `api/src/main/java/cn/wisestar/server/api/DetectionApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class DetectionApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  学员端知识点检测接口（DetectionApi）。
+  **所属模块**：api 模块（Web 接口层，Spring MVC REST Controller）。
+
+  **类职责**：为学员提供"知识点检测"能力——先按学科/年级/册别拉取可选单元及题量，再按勾选的单元、题量、难度、题型自动组卷（剥离答案与解析），最后交卷并生成按单元/知识点聚合的薄弱点诊断报告。检测为诊断性质，不发放学习币/积分，也不写入练习记录。
+
+  **请求路径前缀**：类级路径为 `${api.prefix}/student/detect`（api.prefix 通常为 /api）。
+
+  **被谁调用**：前端学员端首页"知识点检测"入口 → `/student/detect` 页面（`KnowledgeDetectPage`），以及英语单元练习入口。
+
+  **依赖的服务**：注入 DetectionService（shared 模块接口，rdbms 模块实现）——负责单元统计、组卷取题、判分与报告聚合。
+
+  **权限**：三个方法均为 `@PreAuthorize("isAuthenticated()")`（登录即可，不设功能级权限点）。
+- 方法:
+  - `public List<DetectUnitView> units(String subjectId, String grade, String term)`
+    检测可选单元列表（带可用题量）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/detect/units?subjectId=&grade=&term=。
+
+    **功能**：按学科 + 年级 + 册别返回可检测单元及其可用题量；`grade`/`term` 为空时不作该维度过滤。
+
+    **请求参数**：subjectId（必填）、grade（可空）、term（可空，服务端归一化比较上/下）。
+
+    **返回值结构**：`List<DetectUnitView>`（id/name/grade/term/questionCount）。
+  - `public List<StudentQuestionView> generate(DetectGenerateRequest request)`
+    自动组卷并剥离答案/解析。
+    **HTTP 方法 + 完整路径**：POST ${api.prefix}/student/detect/generate。
+
+    **功能**：按学科、年级、册别、章节、题量、难度、题型筛题随机组卷，返回的题目已移除 `examCorrectAnswer`/`examAnalysis`。
+
+    **请求参数**：DetectGenerateRequest（subjectId/grade/term/chapterIds/questionCount/difficulty/types）。
+
+    **返回值结构**：`List<StudentQuestionView>`（无答案）。
+
+    **调用的下层 Service**：DetectionService#generate(DetectGenerateRequest)。
+  - `public DetectReportView submit(DetectSubmitRequest request)`
+    交卷并生成薄弱点诊断报告。
+    **HTTP 方法 + 完整路径**：POST ${api.prefix}/student/detect/submit。
+
+    **功能**：逐题判分（复用 AnswerJudgeUtil），按单元与知识点标签聚合出薄弱点，返回总题数/正确数/正确率/单元统计/薄弱点/逐题详情；不落库、不发奖励。
+
+    **请求参数**：DetectSubmitRequest（items：[{questionId, answer}]）。
+
+    **返回值结构**：`DetectReportView`（total/correct/accuracy/chapterStats/weakPoints/details）。
+
+    **调用的下层 Service**：DetectionService#submit(DetectSubmitRequest)。
+
 ### `api/src/main/java/cn/wisestar/server/api/EnglishAiPackApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class EnglishAiPackApi`

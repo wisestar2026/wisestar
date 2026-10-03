@@ -1238,6 +1238,34 @@
 - 类型: `class DeptView`
 - 注解: @Data
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectGenerateRequest.java`
+- 包: `cn.wisestar.server.domain.dto.detect`
+- 类型: `class DetectGenerateRequest`
+- 注解: @Data
+- **类说明**：
+  知识点检测组卷请求。字段：subjectId（学科ID）、grade（年级）、term（册别，服务端归一化比较上/下）、chapterIds（勾选单元ID列表）、questionCount（抽题数量，默认 10，上限 50）、difficulty（easy/medium/hard，可空不限）、types（题型过滤，可空不限）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectReportView.java`
+- 包: `cn.wisestar.server.domain.dto.detect`
+- 类型: `class DetectReportView`
+- 注解: @Data
+- **类说明**：
+  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序且仅含有错题）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 正确/0 错误/null 未判分）/correctAnswers/studentAnswer/analysis）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectSubmitRequest.java`
+- 包: `cn.wisestar.server.domain.dto.detect`
+- 类型: `class DetectSubmitRequest`
+- 注解: @Data
+- **类说明**：
+  知识点检测交卷请求。字段：items（`List<Item>`：questionId（t_template.id）、answer（`Map<String,Object>`，形如 {type:'option',optionId} / {type:'options',optionIds} / {type:'text',text}））。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectUnitView.java`
+- 包: `cn.wisestar.server.domain.dto.detect`
+- 类型: `class DetectUnitView`
+- 注解: @Data
+- **类说明**：
+  知识点检测可选单元视图。字段：id（章节/单元ID）、name（单元名称）、grade（年级）、term（册别，原样返回）、questionCount（可用题目数量）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/ExerciseProjectTemplate.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class ExerciseProjectTemplate`
@@ -2368,6 +2396,22 @@
   **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。
 
   **类职责**：提供用户自定义仪表盘（首页/项目概要页布局配置）的查询与 保存能力。仪表盘内容为前端可配置的卡片/模块布局。实现类位于 rdbms 模块 （DashboardServiceImpl）。
+
+### `shared/src/main/java/cn/wisestar/server/service/DetectionService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface DetectionService`
+- **类说明**：
+  学员端知识点检测服务接口（DetectionService）。
+  **所属模块**：shared 模块服务接口包（cn.wisestar.server.service）。
+
+  **类职责**：为学员提供按学科/年级/册别勾选单元、题量、难度自动组卷做诊断，交卷后按单元与知识点标签聚合薄弱点的能力。检测为诊断性质，不发放学习币/积分，也不写入练习记录。实现类位于 rdbms 模块（DetectionServiceImpl）。
+- 方法:
+  - `public List<DetectUnitView> units(String subjectId, String grade, String term)`
+    检测可选单元列表（按学科 + 年级 + 册别过滤，带可用题量）。
+  - `public List<StudentQuestionView> generate(DetectGenerateRequest request)`
+    自动组卷（剥离标准答案与解析）。
+  - `public DetectReportView submit(DetectSubmitRequest request)`
+    交卷并生成薄弱点诊断报告（不落库、不发放奖励）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/DeptService.java`
 - 包: `cn.wisestar.server.service`
