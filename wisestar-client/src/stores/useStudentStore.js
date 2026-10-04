@@ -119,8 +119,8 @@ export const SUBJECTS = [
     icon: '🔤',
     theme: 'green',
     coins: 500,
-    version: '人教版',
-    versions: ['人教版', '外研版'],
+    version: '外研版',
+    versions: ['外研版'],
     chapters: [
       {
         id: 'e1', name: '字母与拼读', icon: '🔠', progress: 68,

@@ -28,7 +28,7 @@ import {
 } from '@ant-design/icons';
 import request from '../../api/request';
 
-const VERSIONS = ['人教版', '苏教版', '北师大版', '外研版'];
+const VERSIONS = ['苏教版', '北师大版', '外研版'];
 const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
 const UNITS = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6', 'Unit 7', 'Unit 8'];
 

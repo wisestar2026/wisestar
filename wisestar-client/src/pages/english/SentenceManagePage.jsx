@@ -28,7 +28,7 @@ import { getSections } from '../../api/englishAdmin';
 const API_BASE = '/api/english/sentence';
 const { Title } = Typography;
 
-const VERSION_OPTIONS = ['人教版', '苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
+const VERSION_OPTIONS = ['苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
 const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'].map((g) => ({ value: g, label: g }));
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
@@ -115,7 +115,7 @@ export default function SentenceManagePage() {
       form.setFieldsValue(record);
     } else {
       form.resetFields();
-      form.setFieldsValue({ version: version || '人教版', grade: grade || '三年级', term: term || '上册', unit: unit || '', section: section || '', sort: 0 });
+      form.setFieldsValue({ version: version || '外研版', grade: grade || '三年级', term: term || '上册', unit: unit || '', section: section || '', sort: 0 });
     }
   };
 
@@ -182,7 +182,7 @@ export default function SentenceManagePage() {
   const downloadTemplate = () => {
     const template = [
       ['版本', '年级', '册别', '单元', '英文', '中文', '音频', '小节'],
-      ['人教版', '四年级', '上册', 'Unit 1 Helping at home', 'What would you like to eat?', '你想吃什么？', '', 'Part A'],
+      ['外研版', '三年级', '上册', 'Unit 1', 'What would you like to eat?', '你想吃什么？', '', ''],
     ];
     const csv = template.map((row) => row.join(',')).join('\n');
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });

@@ -143,7 +143,7 @@ export default function WordManagePage() {
       form.setFieldsValue(record);
     } else {
       form.resetFields();
-      form.setFieldsValue({ version: '人教版', grade: '三年级', term: '上册' });
+      form.setFieldsValue({ version: '外研版', grade: '三年级', term: '上册' });
     }
   };
 
@@ -218,7 +218,7 @@ export default function WordManagePage() {
   const downloadTemplate = () => {
     const template = [
       ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元', '学期', '小节'],
-      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '人教版', '四年级', 'Unit 1 Helping at home', '上册', 'Part A'],
+      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '外研版', '三年级', 'Unit 1', '上册', ''],
     ];
     const csv = template.map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -309,7 +309,6 @@ export default function WordManagePage() {
       {/* 筛选栏 */}
       <Space wrap style={{ marginBottom: 16 }}>
         <Select placeholder="教材版本" allowClear style={{ width: 120 }} value={version} onChange={setVersion} options={[
-          { value: '人教版', label: '人教版' },
           { value: '苏教版', label: '苏教版' },
           { value: '北师大版', label: '北师大版' },
           { value: '外研版', label: '外研版' },
@@ -388,7 +387,6 @@ export default function WordManagePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
             <Form.Item name="version" label="版本">
               <Select options={[
-                { value: '人教版', label: '人教版' },
                 { value: '苏教版', label: '苏教版' },
                 { value: '北师大版', label: '北师大版' },
                 { value: '外研版', label: '外研版' },

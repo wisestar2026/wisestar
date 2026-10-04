@@ -24,7 +24,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 const API_BASE = '/api/english/unit';
 const { Title } = Typography;
 
-const VERSION_OPTIONS = ['人教版', '苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
+const VERSION_OPTIONS = ['苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
 const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'].map((g) => ({ value: g, label: g }));
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
@@ -85,7 +85,7 @@ export default function UnitManagePage() {
       form.setFieldsValue(record);
     } else {
       form.resetFields();
-      form.setFieldsValue({ version: version || '人教版', grade: grade || '三年级', term: term || '上册', sort: 0 });
+      form.setFieldsValue({ version: version || '外研版', grade: grade || '三年级', term: term || '上册', sort: 0 });
     }
   };
 
