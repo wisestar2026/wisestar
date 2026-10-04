@@ -14,7 +14,7 @@
  * 依赖: api/englishStudent、utils/english、utils/englishQuiz、antd
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal, Progress } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import { recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
@@ -73,10 +73,15 @@ export default function WordDrillModal({ open, words, onFinish }) {
   const clearedCount = (words || []).filter((w) => states.current.get(w.id)?.cleared).length;
   const done = open && total > 0 && queue.length === 0;
 
-  // 同批单词不足 4 个时无法出选择题，退化为「认识 / 不认识」自评
-  const question = current && total >= 4
-    ? buildQuestionForWord(current.word, words, typeAt(current.word, current.seq), `${current.seq}-${current.word.id}`)
-    : null;
+  // 同批单词不足 4 个时无法出选择题，退化为「认识 / 不认识」自评。
+  // 用 useMemo 固定当前题的选项顺序：仅在切到下一个词/下一遍时重算，
+  // 选择后的 verdict 重渲染不会打乱选项（修复选项顺序跳变）。
+  const question = useMemo(
+    () => (current && total >= 4
+      ? buildQuestionForWord(current.word, words, typeAt(current.word, current.seq), `${current.seq}-${current.word.id}`)
+      : null),
+    [current, total, words],
+  );
   const useJudge = Boolean(current) && !question;
 
   // 全部巩固完成后记录一次学习会话（每个自然天至多一次）

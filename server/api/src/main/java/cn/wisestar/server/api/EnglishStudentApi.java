@@ -51,7 +51,7 @@ public class EnglishStudentApi {
 	}
 
 	/**
-	 * 单元重点语法列表（学员端只读）。
+	 * 单元重点语法列表（含掌握度，学员端）。
 	 */
 	@GetMapping("/grammars")
 	@PreAuthorize("isAuthenticated()")
@@ -59,7 +59,19 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String grade,
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
-		return englishStudentService.grammars(version, grade, term, unit);
+		return englishStudentService.grammars(SecurityContextUtils.getUserId(), version, grade, term, unit);
+	}
+
+	/**
+	 * 记录语法作答（{grammarId, correct}）。
+	 */
+	@PostMapping("/grammar/record")
+	@PreAuthorize("isAuthenticated()")
+	public void recordGrammar(@RequestBody Map<String, Object> request) {
+		String userId = SecurityContextUtils.getUserId();
+		String grammarId = String.valueOf(request.get("grammarId"));
+		boolean correct = Boolean.parseBoolean(String.valueOf(request.get("correct")));
+		englishStudentService.recordGrammar(userId, grammarId, correct);
 	}
 
 	/**

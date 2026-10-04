@@ -48,23 +48,23 @@ export default function StudentMyArchivePage() {
         </Button>
       </div>
 
-      {/* 一、学习目标 */}
+      {/* 一、学习目标 + 承诺（合并为一张卡） */}
       <div className="sll-card my-archive-section">
-        <h3 className="my-archive-section-title">一、本学期学习目标</h3>
+        <h3 className="my-archive-section-title">本学期学习目标</h3>
         <div className="my-archive-text">
           {detail?.goalPlan || <span className="my-archive-empty">老师暂未填写学习目标</span>}
         </div>
         {detail?.promise && (
-          <>
-            <h3 className="my-archive-section-title" style={{ marginTop: 16 }}>我的承诺</h3>
-            <div className="my-archive-text">{detail.promise}</div>
-          </>
+          <div className="my-archive-text my-archive-promise">
+            <span className="my-archive-promise-label">我的承诺：</span>
+            {detail.promise}
+          </div>
         )}
       </div>
 
       {/* 二、学习知识点 */}
       <div className="sll-card my-archive-section">
-        <h3 className="my-archive-section-title">二、学习知识点</h3>
+        <h3 className="my-archive-section-title">学习知识点</h3>
         <div className="my-archive-meta" style={{ marginBottom: 8 }}>检测初始薄弱点</div>
         <div className="my-archive-tags">
           {detail?.initialWeakPoints?.length
@@ -83,7 +83,7 @@ export default function StudentMyArchivePage() {
 
       {/* 三、当日情况 */}
       <div className="sll-card my-archive-section">
-        <h3 className="my-archive-section-title">三、当日学习情况</h3>
+        <h3 className="my-archive-section-title">当日学习情况</h3>
         {today ? (
           <>
             <div className="my-archive-text">{today.content}</div>
@@ -104,7 +104,7 @@ export default function StudentMyArchivePage() {
 
       {/* 四、上课记录 */}
       <div className="sll-card my-archive-section">
-        <h3 className="my-archive-section-title">四、上课记录 / 学习日志</h3>
+        <h3 className="my-archive-section-title">上课记录 / 学习日志</h3>
         {detail?.records?.length ? detail.records.map((r) => (
           <div key={r.id} className="my-archive-record">
             <span className="my-archive-record-date">{r.recordDate}</span>
@@ -119,7 +119,7 @@ export default function StudentMyArchivePage() {
 
       {/* 五、学期报告 */}
       <div className="sll-card my-archive-section">
-        <h3 className="my-archive-section-title">五、学期报告</h3>
+        <h3 className="my-archive-section-title">学期报告</h3>
         <div className="my-archive-text">
           {detail?.reportContent || <span className="my-archive-empty">学期报告尚未生成</span>}
         </div>

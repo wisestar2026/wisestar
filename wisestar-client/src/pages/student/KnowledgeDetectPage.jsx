@@ -21,12 +21,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  Button, Checkbox, Empty, Progress, Radio, Spin, Tag, Tooltip, message,
+  Button, Checkbox, Empty, Progress, Radio, Spin, Tag, message,
 } from 'antd';
 import { ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import { getDetectUnits, generateDetectPaper, submitDetectPaper } from '../../api/detect';
 import QuestionCard from '../../components/practice/QuestionCard';
+import RichContent from '../../components/common/RichContent';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
 
@@ -427,9 +428,9 @@ export default function KnowledgeDetectPage() {
                   </span>
                 </div>
                 {d.analysis && (
-                  <Tooltip title={d.analysis}>
-                    <div className="kd-detail-analysis">{d.analysis}</div>
-                  </Tooltip>
+                  <div className="kd-detail-analysis">
+                    <b>解析：</b><RichContent text={d.analysis} />
+                  </div>
                 )}
               </div>
             </div>

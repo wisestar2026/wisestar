@@ -9,12 +9,14 @@ import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.model.EnglishGrammar;
+import cn.wisestar.server.domain.model.EnglishGrammarBook;
 import cn.wisestar.server.domain.model.EnglishLearningLog;
 import cn.wisestar.server.domain.model.EnglishSentence;
 import cn.wisestar.server.domain.model.EnglishSentenceBook;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.domain.model.EnglishWordBook;
 import cn.wisestar.server.domain.model.Subject;
+import cn.wisestar.server.mapper.EnglishGrammarBookMapper;
 import cn.wisestar.server.mapper.EnglishGrammarMapper;
 import cn.wisestar.server.mapper.EnglishLearningLogMapper;
 import cn.wisestar.server.mapper.EnglishSentenceBookMapper;
@@ -56,6 +58,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final EnglishSentenceBookMapper englishSentenceBookMapper;
 	private final EnglishLearningLogMapper englishLearningLogMapper;
 	private final EnglishGrammarMapper englishGrammarMapper;
+	private final EnglishGrammarBookMapper englishGrammarBookMapper;
 	private final EnglishUnitService englishUnitService;
 	private final SubjectMapper subjectMapper;
 	private final RewardService rewardService;
@@ -157,7 +160,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	}
 
 	@Override
-	public List<EnglishGrammarView> grammars(String version, String grade, String term, String unit) {
+	public List<EnglishGrammarView> grammars(String userId, String version, String grade, String term, String unit) {
 		List<EnglishGrammar> list = englishGrammarMapper.selectList(Wrappers.<EnglishGrammar>lambdaQuery()
 				.eq(version != null, EnglishGrammar::getVersion, version)
 				.eq(grade != null, EnglishGrammar::getGrade, grade)
@@ -165,7 +168,41 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.eq(unit != null, EnglishGrammar::getUnit, unit)
 				.orderByAsc(EnglishGrammar::getSort)
 				.orderByAsc(EnglishGrammar::getId));
-		return list.stream().map(this::toGrammarView).collect(Collectors.toList());
+		List<EnglishGrammarView> views = list.stream().map(this::toGrammarView).collect(Collectors.toList());
+		fillGrammarFamiliarity(userId, views);
+		return views;
+	}
+
+	@Override
+	public void recordGrammar(String userId, String grammarId, boolean correct) {
+		Date now = new Date();
+		EnglishGrammarBook book = englishGrammarBookMapper.selectOne(
+				Wrappers.<EnglishGrammarBook>lambdaQuery()
+						.eq(EnglishGrammarBook::getUserId, userId)
+						.eq(EnglishGrammarBook::getGrammarId, grammarId));
+
+		if (book == null) {
+			book = new EnglishGrammarBook();
+			book.setUserId(userId);
+			book.setGrammarId(grammarId);
+			book.setFamiliarity(correct ? 1 : 0);
+			book.setCorrectCount(correct ? 1 : 0);
+			book.setWrongCount(correct ? 0 : 1);
+			book.setLastReviewTime(now);
+			book.setNextReviewTime(EnglishReviewScheduler.nextReviewTime(book.getFamiliarity()));
+			englishGrammarBookMapper.insert(book);
+		} else {
+			int familiarity = EnglishReviewScheduler.adjustFamiliarity(
+					book.getFamiliarity() == null ? 0 : book.getFamiliarity(), correct);
+			book.setFamiliarity(familiarity);
+			book.setCorrectCount((book.getCorrectCount() == null ? 0 : book.getCorrectCount()) + (correct ? 1 : 0));
+			book.setWrongCount((book.getWrongCount() == null ? 0 : book.getWrongCount()) + (correct ? 0 : 1));
+			book.setLastReviewTime(now);
+			book.setNextReviewTime(EnglishReviewScheduler.nextReviewTime(familiarity));
+			englishGrammarBookMapper.updateById(book);
+		}
+
+		writeLog(userId, "grammar", grammarId, 0, correct ? 1 : 0);
 	}
 
 	@Override
@@ -412,6 +449,25 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.collect(Collectors.toMap(EnglishSentenceBook::getSentenceId, b -> b, (a, b) -> b));
 		views.forEach(v -> {
 			EnglishSentenceBook book = bookBySentence.get(v.getId());
+			v.setFamiliarity(book == null || book.getFamiliarity() == null ? 0 : book.getFamiliarity());
+			v.setCorrectCount(book == null || book.getCorrectCount() == null ? 0 : book.getCorrectCount());
+			v.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());
+		});
+	}
+
+	private void fillGrammarFamiliarity(String userId, List<EnglishGrammarView> views) {
+		if (userId == null || views.isEmpty()) {
+			return;
+		}
+		List<String> grammarIds = views.stream().map(EnglishGrammarView::getId).collect(Collectors.toList());
+		Map<String, EnglishGrammarBook> bookByGrammar = englishGrammarBookMapper.selectList(
+						Wrappers.<EnglishGrammarBook>lambdaQuery()
+								.eq(EnglishGrammarBook::getUserId, userId)
+								.in(EnglishGrammarBook::getGrammarId, grammarIds))
+				.stream()
+				.collect(Collectors.toMap(EnglishGrammarBook::getGrammarId, b -> b, (a, b) -> b));
+		views.forEach(v -> {
+			EnglishGrammarBook book = bookByGrammar.get(v.getId());
 			v.setFamiliarity(book == null || book.getFamiliarity() == null ? 0 : book.getFamiliarity());
 			v.setCorrectCount(book == null || book.getCorrectCount() == null ? 0 : book.getCorrectCount());
 			v.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());

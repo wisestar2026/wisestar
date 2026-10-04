@@ -27,3 +27,37 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/**
+ * 后台表格统一体验:
+ *   - 单元格内容不换行，内容超宽时由表格容器横向滚动
+ *   - 末列（惯例为「操作」列）吸附在右侧，横向滚动时始终可见
+ * 说明: 以全局规则收敛 40+ 处 Table，避免逐页配置 scroll/fixed 造成遗漏与不一致。
+ */
+.ant-table-wrapper .ant-table-content,
+.ant-table-wrapper .ant-table-body {
+  overflow-x: auto;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  white-space: nowrap;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th:last-child,
+.ant-table-wrapper .ant-table-tbody > tr > td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: #fff;
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th:last-child {
+  z-index: 3;
+  background: #fafafa;
+}
+
+.ant-table-wrapper .ant-table-tbody > tr:hover > td:last-child {
+  background: #fafafa;
+}
+

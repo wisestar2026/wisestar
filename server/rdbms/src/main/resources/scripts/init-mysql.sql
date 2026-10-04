@@ -2248,6 +2248,25 @@ ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `update_by` varchar(64)
 ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
 UPDATE `t_english_grammar` SET `create_at` = `created_at` WHERE `create_at` IS NULL AND `created_at` IS NOT NULL;
 
+-- 用户语法本（熟练度 + 复习调度，供英语语法练习与复习）
+CREATE TABLE IF NOT EXISTS `t_english_grammar_book` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `grammar_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `familiarity` tinyint DEFAULT 0 COMMENT '熟练度 0-未学习 1-生疏 2-熟悉 3-熟练 4-精通',
+  `correct_count` int DEFAULT 0 COMMENT '累计答对次数',
+  `wrong_count` int DEFAULT 0 COMMENT '累计答错次数',
+  `last_review_time` timestamp NULL DEFAULT NULL COMMENT '最近复习时间',
+  `next_review_time` timestamp NULL DEFAULT NULL COMMENT '下次复习时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_grammar` (`user_id`, `grammar_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户英语语法本';
+
 CREATE TABLE IF NOT EXISTS `t_english_learning_log` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `user_id` varchar(64) CHARACTER SET utf8mb4_bin NOT NULL,

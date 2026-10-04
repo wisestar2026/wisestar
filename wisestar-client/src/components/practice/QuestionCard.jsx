@@ -212,7 +212,12 @@ export default function QuestionCard({
 
       {/* ---- 题干 ---- */}
       <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6 }}>
-        {index}. <RichContent text={schema.title || question?.name || '(未命名题目)'} />
+        <span style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+          <span style={{ flex: 'none' }}>{index}.</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <RichContent text={schema.title || question?.name || '(未命名题目)'} />
+          </span>
+        </span>
       </Title>
 
       {/* 配图（如有） */}

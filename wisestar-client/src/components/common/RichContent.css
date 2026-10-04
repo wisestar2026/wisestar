@@ -31,3 +31,77 @@
   max-width: 100%;
   margin: 6px 0;
 }
+
+/* ---- 结构化块（长题干小问 / 讲解要点分行）---- */
+.rich-content-block {
+  display: block;
+}
+
+.rich-content-p {
+  display: block;
+  margin: 0 0 6px;
+  line-height: 1.75;
+}
+
+.rich-content-p:last-child {
+  margin-bottom: 0;
+}
+
+.rich-content-gap {
+  display: block;
+  height: 8px;
+}
+
+.rich-content-h {
+  display: block;
+  margin: 6px 0 3px;
+  font-weight: 700;
+  color: #1f2d3d;
+  line-height: 1.6;
+}
+
+.rich-content-item {
+  display: flex;
+  gap: 6px;
+  margin: 2px 0;
+  line-height: 1.75;
+}
+
+.rich-content-item.level-1 {
+  margin-left: 18px;
+}
+
+.rich-content-item.level-2 {
+  margin-left: 36px;
+}
+
+.rich-content-marker {
+  flex: none;
+  min-width: 1.4em;
+  font-weight: 600;
+  color: #1677ff;
+  white-space: nowrap;
+}
+
+.rich-content-marker.is-bullet {
+  min-width: 0.8em;
+  color: #52c41a;
+}
+
+.rich-content-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 知识点讲解高亮 */
+.rich-content-hl {
+  color: #1976d2;
+  font-weight: 800;
+}
+
+.rich-content-step {
+  font-style: normal;
+  font-weight: 800;
+  color: #e65100;
+  margin-right: 2px;
+}

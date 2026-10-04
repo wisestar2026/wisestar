@@ -40,15 +40,25 @@ public interface EnglishStudentService {
 	List<EnglishSentenceView> sentences(String userId, String version, String grade, String term, String unit);
 
 	/**
-	 * 单元重点语法列表。
+	 * 单元重点语法列表（含掌握度）。
 	 *
+	 * @param userId 用户 ID
 	 * @param version 版本
 	 * @param grade 年级
 	 * @param term 学期/册别
 	 * @param unit 单元
 	 * @return 语法列表（单元内 sort 升序）
 	 */
-	List<EnglishGrammarView> grammars(String version, String grade, String term, String unit);
+	List<EnglishGrammarView> grammars(String userId, String version, String grade, String term, String unit);
+
+	/**
+	 * 记录语法作答结果（熟练度 + 复习时间 + 学习日志）。
+	 *
+	 * @param userId 用户 ID
+	 * @param grammarId 语法 ID
+	 * @param correct 是否正确
+	 */
+	void recordGrammar(String userId, String grammarId, boolean correct);
 
 	/**
 	 * 待学习/复习句子。

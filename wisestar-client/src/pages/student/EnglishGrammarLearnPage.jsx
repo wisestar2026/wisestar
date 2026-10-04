@@ -208,9 +208,9 @@ export default function EnglishGrammarLearnPage() {
               <button
                 type="button"
                 className="eng-btn eng-btn-primary"
-                onClick={() => navigate(`/student/detect?unit=${encodeURIComponent(unit)}`)}
+                onClick={() => navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}`)}
               >
-                开始本单元练习
+                开始本单元语法练习
               </button>
             </div>
           )}

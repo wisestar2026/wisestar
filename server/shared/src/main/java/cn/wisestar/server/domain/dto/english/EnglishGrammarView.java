@@ -48,4 +48,13 @@ public class EnglishGrammarView {
 	/** 更新时间 */
 	private Date updateAt;
 
+	/** 熟练度（0-未学习 1-生疏 2-熟悉 3-熟练 4-精通） */
+	private Integer familiarity;
+
+	/** 累计答对次数 */
+	private Integer correctCount;
+
+	/** 累计答错次数 */
+	private Integer wrongCount;
+
 }

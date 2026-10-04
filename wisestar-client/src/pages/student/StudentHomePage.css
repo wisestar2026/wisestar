@@ -146,12 +146,11 @@
   background: var(--accent, #2f8ae0);
   box-shadow: 0 3px 8px rgba(64, 140, 190, 0.3);
 }
-/* 四个入口：统一蓝青玻璃卡，仅主题色不同 */
+/* 左侧入口：统一蓝青玻璃卡，仅主题色不同 */
 .slh-side-mall { --accent: #2f8ae0; --accent-soft: rgba(47, 138, 224, 0.42); }
 .slh-side-wrong { --accent: #5b6fe0; --accent-soft: rgba(91, 111, 224, 0.42); }
 .slh-side-task { --accent: #17a5b8; --accent-soft: rgba(23, 165, 184, 0.42); }
 .slh-side-detect { --accent: #8a5cf6; --accent-soft: rgba(138, 92, 246, 0.42); }
-.slh-side-archive { --accent: #2fa46b; --accent-soft: rgba(47, 164, 107, 0.42); }
 
 /* ---------- 船图舞台：船图仅展示，「开始学习」按钮为唯一入口 ---------- */
 .slh-stage {

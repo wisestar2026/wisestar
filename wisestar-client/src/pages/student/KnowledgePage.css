@@ -397,8 +397,6 @@
   background: linear-gradient(135deg, #64b5f6, #1976d2); box-shadow: 0 3px 8px rgba(33, 150, 243, 0.28);
 }
 .kp-point-text { flex: 1; font-size: 15px; line-height: 1.85; color: #33506e; }
-.kp-mark-key { color: #1976d2; font-weight: 800; }
-.kp-mark-step { font-style: normal; color: #e65100; font-weight: 800; margin-right: 2px; }
 .kp-point-empty { padding: 20px; text-align: center; color: #90a4ae; }
 .kp-whale {
   display: flex; gap: 10px; margin-top: 16px; padding: 12px 14px; border-radius: 14px;

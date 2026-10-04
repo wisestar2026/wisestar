@@ -621,11 +621,11 @@ export default function KnowledgePointManagePage() {
               {(fields, { add, remove }) => (
                 <>
                   {fields.map(({ key, name }) => (
-                    <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                    <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="start">
                       <Form.Item name={name} rules={[{ required: true, message: '请输入要点内容' }]} style={{ marginBottom: 0, flex: 1 }}>
-                        <Input placeholder="输入一条讲解要点" maxLength={100} />
+                        <Input.TextArea placeholder="输入一条讲解要点，可换行；小问可用（1）（2）或 1. 2. 标注" autoSize={{ minRows: 1, maxRows: 6 }} maxLength={300} showCount />
                       </Form.Item>
-                      <Button danger size="small" onClick={() => remove(name)}>删除</Button>
+                      <Button danger size="small" onClick={() => remove(name)} style={{ marginTop: 4 }}>删除</Button>
                     </Space>
                   ))}
                   <Button type="dashed" block icon={<PlusOutlined />} onClick={() => add('')}>添加要点</Button>

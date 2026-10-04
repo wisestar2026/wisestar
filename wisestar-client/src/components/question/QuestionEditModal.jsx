@@ -105,7 +105,7 @@ function Field({ label, children, span }) {
   );
 }
 
-export default function QuestionEditModal({ open, onCancel, onSave, record, repos = [] }) {
+export default function QuestionEditModal({ open, onCancel, onSave, record, repos = [], defaultSubject = '' }) {
   // ---- 基础字段 ----
   const [title, setTitle] = useState('');       // 题目标题
   const [qType, setQType] = useState('Radio');  // 题型
@@ -228,7 +228,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setBlanks(['', '']);
       setAnalysis('');
       setScoreMode('onlyOne');
-      setSubject('');
+      setSubject(defaultSubject || '');
       setGrade('');
       setChapter('');
       setSection('');
@@ -423,13 +423,17 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         {/* ========== 基础信息 ========== */}
         <Text type="secondary" style={{ fontSize: 11 }}>基础信息</Text>
 
-        <Input
+        <Input.TextArea
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="请输入题目内容"
+          autoSize={{ minRows: 1, maxRows: 8 }}
           maxLength={500}
           showCount
         />
+        <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
+          支持换行排版；小问可分行或用「（1）（2）」「1. 2.」「①②」标注，学员端会自动分行缩进；公式用 $...$、加粗用 **...**
+        </Text>
         {qType === 'FillBlank' && (
           <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
             单项填空提示：题干空位写「（ ）」，保存后自动编号为 __①__，并填写对应的正确答案

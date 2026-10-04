@@ -1,260 +1,259 @@
 /**
- * EnglishReviewPage.jsx - 学员端英语智能复习（单词 + 句子混合队列）
+ * EnglishReviewPage.jsx - 学员端英语分类复习
  *
  * 功能:
- *   1. 拉取到期复习队列（单词 + 句子，按到期时间升序）
- *   2. 单词：认识/不认识；句子：连词成句
- *   3. 作答回写熟练度与下次复习时间，结束记录会话
+ *   1. 按 单词 / 重点句子 / 语法 三类组织复习入口
+ *   2. 单词：按单元统计 陌生 / 一般 / 熟悉 三档，点击进入单词练习
+ *   3. 重点句子：按单元列出句子与熟练度，点击进入句子练习
+ *   4. 语法：按单元列出语法点与掌握度，点击进入语法练习（回写掌握度）
  *
  * URL: /student/english/review
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心「智能复习」
  *
  * 数据流:
- *   GET  /api/english/student/review          → 混合复习队列
- *   POST /api/english/word/record             → 单词作答
- *   POST /api/english/student/sentence/record → 句子作答
- *   POST /api/english/student/session         → 记录会话
+ *   GET /api/english/student/units      单元进度（单词总数）
+ *   GET /api/english/word/word-book     单词本（含熟练度，pageSize=-1）
+ *   GET /api/english/student/sentences  句子列表（含熟练度）
+ *   GET /api/english/student/grammars   语法列表（含掌握度）
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin, message } from 'antd';
-import { getEnglishReview, recordEnglishWord, recordEnglishSentence, recordEnglishSession } from '../../api/englishStudent';
-import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
+import { Empty, Spin, Tabs, Tag, message } from 'antd';
+import useStudentStore from '../../stores/useStudentStore';
+import {
+  getEnglishUnits,
+  getEnglishWordBook,
+  getEnglishSentences,
+  getEnglishGrammars,
+} from '../../api/englishStudent';
 import './EnglishCenterPage.css';
+
+const FAMILIARITY_LABELS = ['未学习', '生疏', '熟悉', '熟练', '精通'];
+const FAMILIARITY_COLORS = ['default', 'orange', 'blue', 'cyan', 'green'];
+
+/** 单词三档：陌生(0-1) / 一般(2) / 熟悉(3-4) */
+function wordBucket(familiarity) {
+  const f = Math.min(Math.max(familiarity || 0, 0), 4);
+  if (f <= 1) return 'unfamiliar';
+  if (f === 2) return 'normal';
+  return 'familiar';
+}
+
+function famTag(familiarity) {
+  const lv = Math.min(Math.max(familiarity || 0, 0), 4);
+  return <Tag color={FAMILIARITY_COLORS[lv]}>{FAMILIARITY_LABELS[lv]}</Tag>;
+}
+
+/** 按单元分组（保持后端返回顺序） */
+function groupByUnit(list) {
+  const map = new Map();
+  list.forEach((item) => {
+    const key = item.unit || '未分单元';
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+  });
+  return Array.from(map.entries());
+}
+
+function Bucket({ label, value, color }) {
+  return (
+    <div style={{ flex: 1, textAlign: 'center', background: '#f4f9fc', borderRadius: 10, padding: '8px 4px' }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color }}>{value}</div>
+      <div style={{ fontSize: 12, color: '#5b7f92' }}>{label}</div>
+    </div>
+  );
+}
 
 export default function EnglishReviewPage() {
   const navigate = useNavigate();
+  const version = useStudentStore((s) => s.version);
+  const grade = useStudentStore((s) => s.grade);
+  const term = useStudentStore((s) => s.term);
+  const activeSubject = useStudentStore((s) => s.activeSubject);
 
-  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [index, setIndex] = useState(0);
-  const [revealed, setRevealed] = useState(false);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [pool, setPool] = useState([]);
-  const [selected, setSelected] = useState([]);
-  const [feedback, setFeedback] = useState(null);
-  const startAt = useRef(Date.now());
-  const timerRef = useRef(null);
+  const [units, setUnits] = useState([]);
+  const [words, setWords] = useState([]);
+  const [sentences, setSentences] = useState([]);
+  const [grammars, setGrammars] = useState([]);
 
-  useEffect(() => {
-    getEnglishReview({ limit: 20 })
-      .then((res) => setItems(res?.data || []))
-      .catch(() => message.error('复习队列加载失败'))
+  const load = useCallback(() => {
+    setLoading(true);
+    Promise.all([
+      getEnglishUnits({ version, grade, term }).catch(() => ({ data: [] })),
+      getEnglishWordBook({ version, grade, term, pageSize: -1 }).catch(() => ({ data: { list: [] } })),
+      getEnglishSentences({ version, grade, term }).catch(() => ({ data: [] })),
+      getEnglishGrammars({ version, grade, term }).catch(() => ({ data: [] })),
+    ])
+      .then(([uRes, wRes, sRes, gRes]) => {
+        setUnits(uRes?.data || []);
+        setWords(wRes?.data?.list || []);
+        setSentences(sRes?.data || []);
+        setGrammars(gRes?.data || []);
+      })
+      .catch(() => message.error('复习数据加载失败'))
       .finally(() => setLoading(false));
-  }, []);
-
-  const current = items[index];
-  const isSentence = current?.type === 'sentence';
-  const finished = !loading && items.length > 0 && index >= items.length;
-
-  // 切题重置
-  useEffect(() => {
-    if (current) {
-      setRevealed(current.type === 'word' ? false : true);
-      setFeedback(null);
-      if (current.type === 'sentence') {
-        setPool(shuffle(tokenizeSentence(current.prompt)));
-        setSelected([]);
-      }
-    }
-  }, [index, current]);
-
-  useEffect(() => () => clearTimeout(timerRef.current), []);
+  }, [version, grade, term]);
 
   useEffect(() => {
-    if (finished) {
-      const durationSeconds = Math.round((Date.now() - startAt.current) / 1000);
-      recordEnglishSession({ type: 'review', durationSeconds, correctCount }).catch(() => {});
-    }
-  }, [finished, correctCount]);
+    load();
+  }, [load]);
 
-  const goNext = () => {
-    clearTimeout(timerRef.current);
-    setIndex((i) => i + 1);
+  // 单词按单元三档统计
+  const wordBuckets = useMemo(() => {
+    const map = {};
+    words.forEach((w) => {
+      const key = w.unit || '未分单元';
+      if (!map[key]) map[key] = { total: 0, unfamiliar: 0, normal: 0, familiar: 0 };
+      map[key].total += 1;
+      map[key][wordBucket(w.familiarity)] += 1;
+    });
+    return map;
+  }, [words]);
+
+  const wordUnits = useMemo(() => {
+    const names = units.map((u) => u.unit).filter(Boolean);
+    Object.keys(wordBuckets).forEach((k) => {
+      if (!names.includes(k)) names.push(k);
+    });
+    return names;
+  }, [units, wordBuckets]);
+
+  const sentenceGroups = useMemo(() => groupByUnit(sentences), [sentences]);
+  const grammarGroups = useMemo(() => groupByUnit(grammars), [grammars]);
+
+  const goPractice = (unit) => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`);
+  const goSentence = (unit) => navigate(`/student/english/sentence?unit=${encodeURIComponent(unit)}`);
+  const goGrammar = (unit) => {
+    const sid = activeSubject || '1003';
+    navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(sid)}`);
   };
-
-  const answerWord = (correct) => {
-    if (!current) return;
-    recordEnglishWord({ wordId: current.id, correct }).catch(() => {});
-    if (correct) setCorrectCount((n) => n + 1);
-    goNext();
-  };
-
-  const checkSentence = () => {
-    if (!current) return;
-    const answer = selected.map((i) => pool[i]).join(' ');
-    if (normalizeAnswer(answer) === normalizeAnswer(current.prompt)) {
-      setFeedback('ok');
-      setCorrectCount((n) => n + 1);
-      recordEnglishSentence({ sentenceId: current.id, correct: true }).catch(() => {});
-      timerRef.current = setTimeout(goNext, 900);
-    } else {
-      setFeedback('no');
-      recordEnglishSentence({ sentenceId: current.id, correct: false }).catch(() => {});
-    }
-  };
-
-  const typeLabel = useMemo(() => (isSentence ? '句子' : '单词'), [isSentence]);
 
   if (loading) {
     return <div className="eng-learn-wrap"><Spin /></div>;
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="eng-learn-wrap">
-        <div className="eng-empty">
-          <div className="eng-empty-emoji">✅</div>
-          <div className="eng-empty-title">暂无待复习内容</div>
-          <div>先去学习中心学习单词和句子，到期的内容会自动出现在这里</div>
-          <button
-            type="button"
-            className="eng-btn eng-btn-primary"
-            style={{ marginTop: 16 }}
-            onClick={() => navigate('/student/english')}
-          >
-            返回英语学习中心
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (finished) {
-    return (
-      <div className="eng-learn-wrap">
-        <div className="eng-empty">
-          <div className="eng-empty-emoji">🏆</div>
-          <div className="eng-empty-title">本轮复习完成</div>
-          <div className="eng-done-stats">
-            <div className="eng-done-stat"><b>{correctCount}</b><span>答对</span></div>
-            <div className="eng-done-stat"><b>{items.length}</b><span>复习总数</span></div>
-          </div>
-          <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-            返回学习中心
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const progress = Math.round((index / items.length) * 100);
-
-  return (
-    <div className="eng-learn-wrap">
-      <div className="eng-progress-row">
-        <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
-        <div className="eng-progress-text">{index + 1} / {items.length} · {typeLabel}</div>
-      </div>
-
-      <div className="eng-card">
-        {!isSentence && (
-          <>
-            <div
-              className="eng-word eng-word-clickable"
-              role="button"
-              tabIndex={0}
-              title="点击朗读"
-              onClick={() => speakEnglish(current?.prompt, current?.audioUrl)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  speakEnglish(current?.prompt, current?.audioUrl);
-                }
-              }}
-            >
-              {current?.prompt}
+  const wordTab = wordUnits.length === 0 ? (
+    <Empty description="暂无单词数据，先去学习中心学习单词吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+  ) : (
+    <div className="eng-grid">
+      {wordUnits.map((unit) => {
+        const b = wordBuckets[unit] || { total: 0, unfamiliar: 0, normal: 0, familiar: 0 };
+        const canPractice = b.total >= 4;
+        return (
+          <div className="eng-unit-card" key={unit}>
+            <div className="eng-unit-name">{unit}</div>
+            <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
+              <Bucket label="陌生" value={b.unfamiliar} color="#ff7043" />
+              <Bucket label="一般" value={b.normal} color="#f5a623" />
+              <Bucket label="熟悉" value={b.familiar} color="#34c759" />
             </div>
-            {current?.phonetic && <div className="eng-phonetic">/{current.phonetic}/</div>}
-            {current?.imageUrl && <img className="eng-image" src={current.imageUrl} alt={current.prompt} />}
-            <div className={`eng-meaning ${revealed ? '' : 'hidden'}`}>
-              {revealed ? (current?.answer || '—') : '点击「显示释义」查看含义'}
-            </div>
-            <div className="eng-actions">
-              <button type="button" className="eng-btn eng-btn-sound" onClick={() => speakEnglish(current?.prompt, current?.audioUrl)}>
-                朗读
-              </button>
-              {!revealed && (
-                <button type="button" className="eng-btn eng-btn-ghost" onClick={() => setRevealed(true)}>显示释义</button>
-              )}
-            </div>
-            {revealed && (
-              <div className="eng-actions">
-                <button type="button" className="eng-btn eng-btn-ok" onClick={() => answerWord(true)}>认识</button>
-                <button type="button" className="eng-btn eng-btn-again" onClick={() => answerWord(false)}>不认识</button>
-              </div>
-            )}
-          </>
-        )}
-
-        {isSentence && (
-          <>
-            <div className="eng-sentence-hint">连词成句：{current?.answer || '（无中文提示）'}</div>
-            <div className="eng-answer-slot">
-              {selected.length === 0 && <span style={{ color: '#a9c3d1' }}>点击下方词块，按顺序拼出句子</span>}
-              {selected.map((poolIndex, pos) => (
-                <button
-                  key={`${poolIndex}-${pos}`}
-                  type="button"
-                  className={`eng-token selected ${feedback === 'ok' ? 'correct' : ''} ${feedback === 'no' ? 'wrong' : ''}`}
-                  onClick={() => setSelected((prev) => prev.filter((_, i) => i !== pos))}
-                >
-                  {pool[poolIndex]}
-                </button>
-              ))}
-            </div>
-            <div className="eng-token-pool">
-              {pool.map((token, poolIndex) => {
-                const used = selected.includes(poolIndex);
-                return (
-                  <button
-                    key={`${token}-${poolIndex}`}
-                    type="button"
-                    className={`eng-token ${used ? 'used' : ''}`}
-                    disabled={used || feedback === 'ok'}
-                    onClick={() => setSelected((prev) => [...prev, poolIndex])}
-                  >
-                    {token}
-                  </button>
-                );
-              })}
-            </div>
-            {feedback === 'ok' && <div className="eng-feedback ok">太棒了，完全正确！</div>}
-            {feedback === 'no' && (
-              <div className="eng-feedback no">再想想～<div>正确答案：{current?.prompt}</div></div>
-            )}
-            <div className="eng-actions">
-              <button type="button" className="eng-btn eng-btn-sound" onClick={() => speakEnglish(current?.prompt, current?.audioUrl)}>
-                朗读
-              </button>
-              <button type="button" className="eng-btn eng-btn-ghost" onClick={() => setSelected([])} disabled={feedback === 'ok'}>
-                清空
-              </button>
+            <div className="eng-unit-actions" style={{ gridTemplateColumns: '1fr' }}>
               <button
                 type="button"
-                className="eng-btn eng-btn-primary"
-                onClick={checkSentence}
-                disabled={selected.length === 0 || feedback === 'ok'}
+                className="eng-btn-practice"
+                disabled={!canPractice}
+                title={canPractice ? '' : '本单元单词太少，暂不能练习'}
+                onClick={() => goPractice(unit)}
               >
-                检查
+                去练习{canPractice ? ` · ${b.total}` : ''}
               </button>
             </div>
-          </>
-        )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const sentenceTab = sentenceGroups.length === 0 ? (
+    <Empty description="暂无句子数据，先去学习中心学习句子吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+  ) : (
+    <div className="eng-grammar-list">
+      {sentenceGroups.map(([unit, list]) => (
+        <div className="eng-grammar-card" key={unit}>
+          <div className="eng-grammar-head">
+            <span className="eng-grammar-index">💬</span>
+            <span className="eng-grammar-title">{unit}</span>
+            <span style={{ marginLeft: 'auto' }}>
+              <button type="button" className="eng-btn-sentence eng-btn" onClick={() => goSentence(unit)}>
+                复习该单元
+              </button>
+            </span>
+          </div>
+          <div className="eng-grammar-examples">
+            <ul>
+              {list.map((s) => (
+                <li
+                  key={s.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => goSentence(unit)}
+                  title="点击进入该单元句子练习"
+                >
+                  <span className="eng-grammar-en">{s.en}</span>
+                  {s.zh && <span className="eng-grammar-zh">{s.zh}</span>}
+                  {famTag(s.familiarity)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const grammarTab = grammarGroups.length === 0 ? (
+    <Empty description="暂无语法数据，先去学习中心学习重点语法吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+  ) : (
+    <div className="eng-grammar-list">
+      {grammarGroups.map(([unit, list]) => (
+        <div className="eng-grammar-card" key={unit}>
+          <div className="eng-grammar-head">
+            <span className="eng-grammar-index">📘</span>
+            <span className="eng-grammar-title">{unit}</span>
+            <span style={{ marginLeft: 'auto' }}>
+              <button type="button" className="eng-btn-grammar eng-btn" onClick={() => goGrammar(unit)}>
+                语法练习
+              </button>
+            </span>
+          </div>
+          <div className="eng-grammar-examples">
+            <ul>
+              {list.map((g) => (
+                <li key={g.id}>
+                  <span className="eng-grammar-en">{g.title}</span>
+                  {famTag(g.familiarity)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="eng-page">
+      <div className="eng-hero">
+        <div>
+          <div className="eng-hero-title">英语智能复习</div>
+          <div className="eng-hero-sub">
+            {version} · {grade} · 按 单词 / 重点句子 / 语法 分类复习，点击进入对应练习
+          </div>
+        </div>
       </div>
 
-      <div className="eng-actions">
-        <button
-          type="button"
-          className="eng-btn eng-btn-ghost"
-          onClick={() => {
-            const durationSeconds = Math.round((Date.now() - startAt.current) / 1000);
-            recordEnglishSession({ type: 'review', durationSeconds, correctCount }).catch(() => {});
-            navigate('/student/english');
-          }}
-        >
-          结束复习
+      <Tabs
+        items={[
+          { key: 'word', label: `单词（${words.length}）`, children: wordTab },
+          { key: 'sentence', label: `重点句子（${sentences.length}）`, children: sentenceTab },
+          { key: 'grammar', label: `语法（${grammars.length}）`, children: grammarTab },
+        ]}
+      />
+
+      <div className="eng-actions" style={{ marginTop: 20 }}>
+        <button type="button" className="eng-btn eng-btn-ghost" onClick={() => navigate('/student/english')}>
+          返回学习中心
         </button>
       </div>
     </div>

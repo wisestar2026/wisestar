@@ -1775,6 +1775,13 @@
 - **类说明**：
   英语句子查询 DTO。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishGrammarView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishGrammarView`
+- 注解: @Data
+- **类说明**：
+  英语语法视图 DTO。除语法内容（标题/讲解/例句/练习题）外，含用户掌握度字段 familiarity/correctCount/wrongCount（由 EnglishStudentService.grammars 按当前用户回填）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSentenceView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishSentenceView`

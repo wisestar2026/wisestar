@@ -289,6 +289,14 @@
   用户句子本实体（对应数据库表 t_english_sentence_book）。
   记录学员对句子的熟练度与复习调度信息。
 
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishGrammarBook.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishGrammarBook`
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  用户语法本实体（对应数据库表 t_english_grammar_book）。
+  记录学员对语法点的掌握度与复习调度信息（familiarity/correctCount/wrongCount/lastReviewTime/nextReviewTime）。
+
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishUnit.java`
 - 包: `cn.wisestar.server.domain.model`
 - 类型: `class EnglishUnit`
@@ -850,9 +858,12 @@
 - 方法:
   - `public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term)`
   - `public List<EnglishSentenceView> sentences(String userId, String version, String grade, String term, String unit)`
-  - `public List<EnglishGrammarView> grammars(String version, String grade, String term, String unit)`
+  - `public List<EnglishGrammarView> grammars(String userId, String version, String grade, String term, String unit)`
+    单元语法列表，按用户回填 `familiarity/correctCount/wrongCount`。
   - `public List<EnglishSentenceView> studySentences(String userId, int limit)`
   - `public void recordSentence(String userId, String sentenceId, boolean correct)`
+  - `public void recordGrammar(String userId, String grammarId, boolean correct)`
+    记录语法作答（熟练度 +1/-1 夹取 0~4、复习调度、学习日志 `type=grammar`）。
   - `public List<ReviewSessionView> reviewSession(String userId, int limit)`
   - `public StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
     写学习日志并结算奖励（异常不阻断学习）。
@@ -1570,6 +1581,12 @@
 - 类型: `interface EnglishGrammarMapper`
 - **类说明**：
   EnglishGrammar Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishGrammarBookMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishGrammarBookMapper`
+- **类说明**：
+  EnglishGrammarBook Mapper（MyBatis-Plus 基础 CRUD）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishLearningLogMapper.java`
 - 包: `cn.wisestar.server.mapper`

@@ -63,6 +63,7 @@ import EnglishWordLearnPage from './pages/student/EnglishWordLearnPage';
 import EnglishWordPracticePage from './pages/student/EnglishWordPracticePage';
 import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
 import EnglishGrammarLearnPage from './pages/student/EnglishGrammarLearnPage';
+import EnglishGrammarPracticePage from './pages/student/EnglishGrammarPracticePage';
 import EnglishReviewPage from './pages/student/EnglishReviewPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
@@ -156,7 +157,9 @@ export default function App() {
             <Route path="english/sentence" element={<EnglishSentenceLearnPage />} />
             {/* 英语重点语法（只读，?unit=） */}
             <Route path="english/grammar" element={<EnglishGrammarLearnPage />} />
-            {/* 英语智能复习（单词 + 句子混合队列） */}
+            {/* 英语语法练习（?unit=，按正确率回写语法掌握度） */}
+            <Route path="english/grammar-practice" element={<EnglishGrammarPracticePage />} />
+            {/* 英语智能复习（单词 / 重点句子 / 语法 三类） */}
             <Route path="english/review" element={<EnglishReviewPage />} />
           </Route>
 
@@ -190,12 +193,12 @@ export default function App() {
               }
             />
 
-            {/* 题目管理（全局） */}
+            {/* 题目管理（习题管理·理科：仅数学） */}
             <Route
               path="/questions"
               element={
                 <AuthGuard required={['template:list', 'template:create', 'template:update', 'template:delete']}>
-                  <QuestionListPage />
+                  <QuestionListPage lockedSubject="数学" />
                 </AuthGuard>
               }
             />
@@ -426,6 +429,15 @@ export default function App() {
               element={
                 <AuthGuard required={['english:word:ai']}>
                   <WordAiManagePage />
+                </AuthGuard>
+              }
+            />
+            {/* 英语题目（复用题目管理，锁定学科=英语，呈现形式与理科一致） */}
+            <Route
+              path="/english/questions"
+              element={
+                <AuthGuard required={['template:list']}>
+                  <QuestionListPage lockedSubject="英语" />
                 </AuthGuard>
               }
             />

@@ -14,7 +14,7 @@
  * 功能保持不变（仅重排布局）:
  *   - 船图仅展示；仅「开始学习」按钮进入学习（英语学科指向英语学习中心）
  *   - 荣誉商城 / 错题本 / 今日任务（任务改为右侧抽屉展示，含完成结算）
- *   - 今日学习数据总览 / 今日积分获取引导 / 每日签到 / 今日学习总结 → 右缘图标悬浮卡（默认只露图标）
+ *   - 今日学习数据总览 / 今日积分获取引导 / 每日签到 / 学习档案 / 今日学习总结 → 右缘图标悬浮卡（默认只露图标）
  *   - 在线时长宝箱 → 可拖动悬浮条（位置本地记忆）
  *
  * 个人信息（学号/证书/头衔/积分）展示在顶部状态栏（StudentLayout），不再占用首页容器
@@ -177,11 +177,6 @@ export default function StudentHomePage() {
             <span className="slh-side-main">知识点检测</span>
             <span className="slh-side-sub">测薄弱点</span>
           </button>
-          <button type="button" className="slh-side-btn slh-side-archive" onClick={() => navigate('/student/archive')}>
-            <span className="slh-side-emoji">📘</span>
-            <span className="slh-side-main">学习档案</span>
-            <span className="slh-side-sub">目标 · 日志</span>
-          </button>
         </aside>
 
         <div className="slh-stage">
@@ -279,6 +274,21 @@ export default function StudentHomePage() {
             </div>
           </FloatCard>
         )}
+
+        {/* 学习档案（非激励模块，纯净模式也显示）：悬浮小图标，点击展开进入我的档案 */}
+        <FloatCard title="学习档案" icon="📘" tone="green">
+          <div
+            className="slh-guide-item"
+            style={{ cursor: 'pointer' }}
+            onClick={() => navigate('/student/archive')}
+          >
+            <IconTile emoji="📖" tone="green" size="xs" round />
+            <span className="slh-guide-label">
+              查看我的学习档案
+              <span className="slh-guide-desc"> · 目标规划 / 上课记录 / 学期报告</span>
+            </span>
+          </div>
+        </FloatCard>
 
         {/* 今日学习总结（学习时长累计满 1 小时后自动生成） */}
         {summary?.content && (

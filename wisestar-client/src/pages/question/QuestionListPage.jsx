@@ -9,8 +9,12 @@
  *   5. 批量删除题目
  *   6. 表格中展示题目信息：标题、图片、题型、所属练习、分值、正确答案、标签
  *
- * URL: /questions（受 AuthGuard 保护）
- * 被谁引用: App.jsx 路由表；MainLayout 侧边栏"题目管理"菜单进入
+ * URL: /questions（理科·数学，lockedSubject="数学"）；/english/questions（英语板块，lockedSubject="英语"）
+ * 被谁引用: App.jsx 路由表；MainLayout 侧边栏「题目管理」「英语题目」菜单进入
+ *
+ * 学科锁定（lockedSubject）:
+ *   习题管理→题目管理锁定「数学」，英语板块→英语题目锁定「英语」；
+ *   锁定时学科输入框以只读标签展示，查询/导出/新建均强制带上该学科。
  *
  * 筛选维度说明（重点）:
  *   支持"学科 / 年级 / 章节 / 小节 / 难度 / 知识点"六维筛选（加上题型、练习、名称、标签共 10 个条件），
@@ -52,7 +56,7 @@ import { usePermission } from '../../utils/usePermission';
 
 const { Title, Text } = Typography;
 
-export default function QuestionListPage() {
+export default function QuestionListPage({ lockedSubject }) {
   const { can } = usePermission();
   // ---- 列表状态 ----
   const [loading, setLoading] = useState(false);
@@ -67,7 +71,8 @@ export default function QuestionListPage() {
   const [filterType, setFilterType] = useState(undefined);
   const [filterRepoId, setFilterRepoId] = useState(undefined);
   // 知识点属性筛选: 学科 / 章节 / 小节 / 年级 / 难度 / 知识点
-  const [filterSubject, setFilterSubject] = useState('');
+  // lockedSubject 非空时学科固定（习题管理=数学、英语板块=英语），不再展示可编辑学科输入
+  const [filterSubject, setFilterSubject] = useState(lockedSubject || '');
   const [filterGrade, setFilterGrade] = useState('');
   const [filterChapter, setFilterChapter] = useState('');
   const [filterSection, setFilterSection] = useState('');
@@ -120,7 +125,7 @@ export default function QuestionListPage() {
       if (keyword.trim()) params.name = keyword.trim();                    // 名称模糊搜索
       if (filterType) params.questionType = filterType;                    // 题型过滤
       if (filterRepoId) params.repoId = filterRepoId;                      // 练习过滤
-      if (filterSubject.trim()) params.subject = filterSubject.trim();     // 学科过滤
+      params.subject = (lockedSubject || filterSubject.trim()) || undefined; // 学科过滤（锁定学科优先）
       if (filterGrade.trim()) params.grade = filterGrade.trim();           // 年级过滤
       if (filterChapter.trim()) params.chapter = filterChapter.trim();     // 章节过滤
       if (filterSection.trim()) params.section = filterSection.trim();     // 小节过滤
@@ -136,7 +141,7 @@ export default function QuestionListPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, filterHasImage]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, filterHasImage, lockedSubject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 任一筛选条件 / 页码变化时自动重新拉取（输入框 onChange 同时 setPage(1) 保证从首页开始）
   useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, filterHasImage, fetchData]);
@@ -210,7 +215,7 @@ export default function QuestionListPage() {
       repoId: filterRepoId,
       name: keyword.trim() || undefined,
       questionType: filterType,
-      subject: filterSubject.trim() || undefined,
+      subject: (lockedSubject || filterSubject.trim()) || undefined,
       grade: filterGrade.trim() || undefined,
       chapter: filterChapter.trim() || undefined,
       section: filterSection.trim() || undefined,
@@ -366,7 +371,7 @@ export default function QuestionListPage() {
     <div>
       {/* ---- 页面标题 ---- */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>题目管理</Title>
+        <Title level={4} style={{ margin: 0 }}>{lockedSubject ? `${lockedSubject}题目` : '题目管理'}</Title>
         <Space>
           <Button icon={<ImportOutlined />} onClick={() => setImportOpen(true)}>Excel 导入</Button>
           <Button icon={<ExportOutlined />} onClick={handleExport}>导出</Button>
@@ -407,15 +412,19 @@ export default function QuestionListPage() {
           style={{ width: 180 }}
           options={repos.map((r) => ({ label: r.name, value: r.id }))}
         />
-        {/* 学科筛选（六维筛选之一） */}
-        <Input
-          prefix={<SearchOutlined />}
-          placeholder="学科"
-          value={filterSubject}
-          onChange={(e) => { setFilterSubject(e.target.value); setPage(1); }}
-          style={{ width: 120 }}
-          allowClear
-        />
+        {/* 学科筛选（六维筛选之一）；锁定学科的页面以只读标签展示，避免误改 */}
+        {lockedSubject ? (
+          <Tag color="cyan" style={{ margin: 0, padding: '4px 10px' }}>学科：{lockedSubject}</Tag>
+        ) : (
+          <Input
+            prefix={<SearchOutlined />}
+            placeholder="学科"
+            value={filterSubject}
+            onChange={(e) => { setFilterSubject(e.target.value); setPage(1); }}
+            style={{ width: 120 }}
+            allowClear
+          />
+        )}
         {/* 年级筛选（六维筛选之一） */}
         <Input
           prefix={<SearchOutlined />}
@@ -491,7 +500,7 @@ export default function QuestionListPage() {
         {/* 重置: 清空全部筛选条件并回到第 1 页 */}
         <Button icon={<ReloadOutlined />} onClick={() => {
           setKeyword(''); setFilterType(undefined); setFilterRepoId(undefined);
-          setFilterSubject(''); setFilterGrade(''); setFilterChapter(''); setFilterSection('');
+          setFilterSubject(lockedSubject || ''); setFilterGrade(''); setFilterChapter(''); setFilterSection('');
           setFilterDifficulty(undefined); setFilterKnowledgePoint(''); setFilterTag(undefined);
           setFilterHasImage(undefined);
           setPage(1);
@@ -542,6 +551,7 @@ export default function QuestionListPage() {
         onSave={handleSave}
         record={editRecord}
         repos={allReposCache}
+        defaultSubject={lockedSubject}
       />
 
       {/* ---- 导入弹窗 ---- */}

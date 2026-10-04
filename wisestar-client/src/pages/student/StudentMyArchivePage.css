@@ -27,13 +27,31 @@
 
 .my-archive-section {
   margin-bottom: 18px;
+  padding: 22px 26px;
+}
+
+/* 档案卡片：图二风格——纯白底、大圆角、无标题栏、柔和阴影 */
+.my-archive-page .sll-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(120, 180, 220, 0.16);
+  box-shadow: 0 6px 20px rgba(64, 140, 190, 0.1);
 }
 
 .my-archive-section-title {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   color: #0b3d5c;
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+}
+
+.my-archive-promise {
+  margin-top: 12px;
+}
+
+.my-archive-promise-label {
+  font-weight: 600;
+  color: #0b3d5c;
 }
 
 .my-archive-text {

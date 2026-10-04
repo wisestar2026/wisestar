@@ -74,24 +74,6 @@ function blankEq(a, b) {
   return false;
 }
 
-// 讲解要点富文本高亮：步骤标记 ①②③ / 引号内术语 “xx” / 数字（含千分位）加粗
-function renderRichText(text) {
-  const s = String(text == null ? '' : text);
-  const re = /(“[^”]{1,24}”|「[^」]{1,24}」|\d[\d,.·]*)|(①|②|③|④|⑤|⑥|⑦|⑧|⑨)/g;
-  const nodes = [];
-  let last = 0;
-  let m;
-  let k = 0;
-  while ((m = re.exec(s)) !== null) {
-    if (m.index > last) nodes.push(s.slice(last, m.index));
-    if (m[2]) nodes.push(<em key={k++} className="kp-mark-step">{m[2]}</em>);
-    else nodes.push(<strong key={k++} className="kp-mark-key">{m[1]}</strong>);
-    last = m.index + m[0].length;
-  }
-  if (last < s.length) nodes.push(s.slice(last));
-  return nodes.length ? nodes : s;
-}
-
 // 四种模式 tab 配置
 // 预习讲解内容（按知识点生成 mock 要点）
 export default function KnowledgePage() {
@@ -688,7 +670,7 @@ export default function KnowledgePage() {
                               {pts.map((pt, i) => (
                                 <div className="kp-point-card" key={i}>
                                   <span className="kp-point-index">{i + 1}</span>
-                                  <div className="kp-point-text">{renderRichText(pt)}</div>
+                                  <div className="kp-point-text"><RichContent text={pt} highlight /></div>
                                 </div>
                               ))}
                             </div>
@@ -836,7 +818,10 @@ export default function KnowledgePage() {
                             </div>
                           );
                         })()}
-                        <div className="knowledge-q-text">{currentQ + 1}. <RichContent text={question.name || schema.title} /></div>
+                        <div className="knowledge-q-text" style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                          <span style={{ flex: 'none' }}>{currentQ + 1}.</span>
+                          <span style={{ flex: 1, minWidth: 0 }}><RichContent text={question.name || schema.title} /></span>
+                        </div>
                         {/* 老师配图（题干图片，与题干 Markdown 图片互补） */}
                         {schema.attribute?.examImages?.length > 0 && (
                           <div className="knowledge-q-images">
