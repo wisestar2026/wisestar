@@ -11,6 +11,8 @@ bin/
 target/
 server/api/src/main/resources/static/
 test/
+# Java 单元测试目录需入库，覆盖上面的通用 test/ 规则
+!server/*/src/test/
 build.sh
 # Dependencies
 /node_modules
