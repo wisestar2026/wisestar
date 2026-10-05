@@ -11,6 +11,8 @@ import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.UserKnowledgeProgress;
 import cn.wisestar.server.domain.model.UserWeakKnowledge;
+import cn.wisestar.server.domain.model.WeakPointEvent;
+import cn.wisestar.server.event.WeakPointEventRecorder;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.PracticeDetailMapper;
@@ -28,12 +30,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -81,6 +86,8 @@ public class EvaluationServiceImpl implements EvaluationService {
 
 	private final RewardService rewardService;
 
+	private final WeakPointEventRecorder weakPointEventRecorder;
+
 	@Override
 	public void recordPractice(PracticeEvaluationContext context) {
 		if (context == null || !StringUtils.hasText(context.getUserId()) || context.getItems() == null
@@ -96,6 +103,9 @@ public class EvaluationServiceImpl implements EvaluationService {
 		}
 		Map<String, int[]> agg = new LinkedHashMap<>();
 		Map<String, String> nameCache = new HashMap<>();
+		// 事件来源基键：同一练习会话内的跃迁做幂等；无会话ID（错题订正链路）按日期兜底
+		String refBase = StringUtils.hasText(context.getPracticeId()) ? "practice:" + context.getPracticeId()
+				: "practice:" + todayKey();
 		for (PracticeEvaluationContext.Item item : context.getItems()) {
 			String kpId = resolveKpId(item.getKnowledgePointNames(), ctx, nameCache);
 			if (!StringUtils.hasText(kpId)) {
@@ -117,7 +127,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 			}
 			int correct = e.getValue()[0];
 			int rate = (int) Math.round(correct * 100.0 / total);
-			updateProgress(userId, e.getKey(), rate, total, correct);
+			updateProgress(userId, e.getKey(), rate, total, correct, refBase);
 		}
 		if (ctx != null && StringUtils.hasText(ctx.subjectId)) {
 			checkChapterStage(userId, ctx.subjectId);
@@ -134,7 +144,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 		String subjectId = ctx == null ? null : ctx.subjectId;
 		recordConquerRate(userId, knowledgePointId, ctx, correctRate);
 		settleKpMaster(userId, ctx, knowledgePointId);
-		markConquered(userId, subjectId, knowledgePointId);
+		markConquered(userId, subjectId, knowledgePointId, "conquer:" + todayKey(), correctRate);
 		if (StringUtils.hasText(subjectId)) {
 			checkChapterStage(userId, subjectId);
 		}
@@ -159,12 +169,72 @@ public class EvaluationServiceImpl implements EvaluationService {
 		}
 		boolean hasWrong = hasUncorrectedWrong(userId, kp.getName());
 		if (!hasWrong && mastery >= WEAK_THRESHOLD) {
-			markConquered(userId, ctx == null ? null : ctx.subjectId, knowledgePointId);
+			markConquered(userId, ctx == null ? null : ctx.subjectId, knowledgePointId,
+					"correction:" + todayKey(), mastery);
 		}
 	}
 
-	// ---------------- 内部方法 ----------------
+	@Override
+	public void seedWeakFromBaseline(String userId, String subjectId, String refKey,
+			Map<String, Integer> kpMasteryByName) {
+		if (!StringUtils.hasText(userId) || !StringUtils.hasText(subjectId)
+				|| kpMasteryByName == null || kpMasteryByName.isEmpty()) {
+			return;
+		}
+		String ref = StringUtils.hasText(refKey) ? refKey : "detect";
+		Map<String, KnowledgePoint> byName = knowledgePointsBySubject(subjectId);
+		for (Map.Entry<String, Integer> entry : kpMasteryByName.entrySet()) {
+			String name = entry.getKey();
+			if (!StringUtils.hasText(name)) {
+				continue;
+			}
+			KnowledgePoint kp = byName.get(name);
+			if (kp == null) {
+				continue;
+			}
+			int mastery = entry.getValue() == null ? 0 : entry.getValue();
+			if (mastery >= WEAK_THRESHOLD) {
+				continue;
+			}
+			if (findWeak(userId, subjectId, kp.getId()) != null) {
+				continue;
+			}
+			UserWeakKnowledge w = new UserWeakKnowledge();
+			w.setUserId(userId);
+			w.setSubjectId(subjectId);
+			w.setKnowledgePointId(kp.getId());
+			w.setStatus("active");
+			w.setConquerTimes(0);
+			w.setFirstWeakAt(new Date());
+			weakMapper.insert(w);
+			weakPointEventRecorder.publish(buildEvent(userId, subjectId, kp.getId(), "discovered",
+					mastery, ref + ":" + kp.getId() + ":discovered"));
+		}
+	}
 
+	/**
+	 * 学科下知识点按名称索引（经 章节 → 小节 → 知识点 定位，名称重复取首个）。
+	 */
+	private Map<String, KnowledgePoint> knowledgePointsBySubject(String subjectId) {
+		List<Chapter> chapters = chapterMapper.selectList(Wrappers.<Chapter>lambdaQuery()
+				.eq(Chapter::getSubjectId, subjectId));
+		if (chapters.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		Set<String> chapterIds = chapters.stream().map(Chapter::getId).collect(Collectors.toSet());
+		List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+				.in(Section::getChapterId, chapterIds));
+		if (sections.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		Set<String> sectionIds = sections.stream().map(Section::getId).collect(Collectors.toSet());
+		return knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+						.in(KnowledgePoint::getSectionId, sectionIds))
+				.stream().filter(k -> StringUtils.hasText(k.getName()))
+				.collect(Collectors.toMap(KnowledgePoint::getName, k -> k, (a, b) -> a));
+	}
+
+	// ---------------- 内部方法 ----------------
 	/**
 	 * 记录显式攻克复测的正确率，刷新掌握度。
 	 *
@@ -206,7 +276,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 		progressMapper.updateById(p);
 	}
 
-	private void updateProgress(String userId, String kpId, int rate, int total, int correct) {
+	private void updateProgress(String userId, String kpId, int rate, int total, int correct, String refBase) {
 		KpContext ctx = resolveContext(kpId, null);
 		UserKnowledgeProgress p = findProgress(userId, ctx, kpId);
 		if (p == null) {
@@ -257,15 +327,19 @@ public class EvaluationServiceImpl implements EvaluationService {
 				w.setConquerTimes(0);
 				w.setFirstWeakAt(new Date());
 				weakMapper.insert(w);
+				weakPointEventRecorder.publish(buildEvent(userId, subjectId, kpId, "discovered",
+						mastery, refBase + ":" + kpId + ":discovered"));
 			}
 			else if (!"active".equals(w.getStatus())) {
 				w.setStatus("active");
 				weakMapper.updateById(w);
+				weakPointEventRecorder.publish(buildEvent(userId, subjectId, kpId, "reopened",
+						mastery, refBase + ":" + kpId + ":reopened"));
 			}
 		}
 		else if (mastery >= CONQUER_MASTERY && rate >= CONQUER_RATE) {
 			if (w != null && "active".equals(w.getStatus())) {
-				markConquered(userId, subjectId, kpId);
+				markConquered(userId, subjectId, kpId, refBase, rate);
 			}
 		}
 		// 掌握度达精通即「消灭知识点」，每学期每知识点结算一次
@@ -298,7 +372,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 		}
 	}
 
-	private void markConquered(String userId, String subjectId, String kpId) {
+	private void markConquered(String userId, String subjectId, String kpId, String refBase, int mastery) {
 		UserWeakKnowledge w = findWeak(userId, subjectId, kpId);
 		boolean firstConquer = false;
 		if (w == null) {
@@ -333,7 +407,84 @@ public class EvaluationServiceImpl implements EvaluationService {
 			catch (Exception e) {
 				log.warn("weak conquer reward failed: user={}, kp={}", userId, kpId, e);
 			}
+			weakPointEventRecorder.publish(buildEvent(userId, subjectId, kpId, "conquered",
+					mastery, refBase + ":" + kpId + ":conquered"));
+			settleWeakSection(userId, subjectId, kpId);
 		}
+	}
+
+	/**
+	 * 薄弱小节攻克：该小节不再有 active 薄弱知识点时，终身一次发放小节攻克奖励。
+	 */
+	private void settleWeakSection(String userId, String subjectId, String kpId) {
+		KnowledgePoint kp = knowledgePointMapper.selectById(kpId);
+		String sectionId = kp == null ? null : kp.getSectionId();
+		if (!StringUtils.hasText(sectionId)) {
+			return;
+		}
+		List<String> sectionKpIds = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+						.eq(KnowledgePoint::getSectionId, sectionId))
+				.stream().map(KnowledgePoint::getId).collect(Collectors.toList());
+		if (sectionKpIds.isEmpty()) {
+			return;
+		}
+		Long activeCount = weakMapper.selectCount(Wrappers.<UserWeakKnowledge>lambdaQuery()
+				.eq(UserWeakKnowledge::getUserId, userId)
+				.eq(UserWeakKnowledge::getStatus, "active")
+				.in(UserWeakKnowledge::getKnowledgePointId, sectionKpIds));
+		if (activeCount != null && activeCount > 0) {
+			return;
+		}
+		try {
+			RewardContext rc = new RewardContext();
+			rc.setUserId(userId);
+			rc.setSubjectId(subjectId);
+			rc.setSectionId(sectionId);
+			rc.setActionType(StudentRewardConstants.ACTION_WEAK_SECTION_CONQUER);
+			rc.setRefId("weak_section:" + sectionId);
+			rewardService.settle(rc);
+		}
+		catch (Exception e) {
+			log.warn("weak section conquer reward failed: user={}, section={}", userId, sectionId, e);
+		}
+	}
+
+	/**
+	 * 构造薄弱点跃迁事件（含知识点/小节/章节名称快照，便于时间线展示）。
+	 */
+	private WeakPointEvent buildEvent(String userId, String subjectId, String kpId,
+			String eventType, int mastery, String refId) {
+		WeakPointEvent event = new WeakPointEvent();
+		event.setStudentId(userId);
+		event.setSubjectId(subjectId);
+		event.setKnowledgePointId(kpId);
+		event.setEventType(eventType);
+		event.setMastery(mastery);
+		event.setRefId(refId);
+		event.setSource(refId.startsWith("correction:") ? "correction" : "practice");
+		event.setOccurredAt(new Date());
+		KnowledgePoint kp = knowledgePointMapper.selectById(kpId);
+		if (kp != null) {
+			event.setKpName(kp.getName());
+			event.setSectionId(kp.getSectionId());
+			Section section = StringUtils.hasText(kp.getSectionId())
+					? sectionMapper.selectById(kp.getSectionId()) : null;
+			if (section != null) {
+				event.setSectionName(section.getName());
+				event.setChapterId(section.getChapterId());
+				Chapter chapter = StringUtils.hasText(section.getChapterId())
+						? chapterMapper.selectById(section.getChapterId()) : null;
+				if (chapter != null) {
+					event.setChapterName(chapter.getName());
+				}
+			}
+		}
+		return event;
+	}
+
+	/** 事件幂等用的日期键 yyyyMMdd。 */
+	private String todayKey() {
+		return new SimpleDateFormat("yyyyMMdd").format(new Date());
 	}
 
 	/**

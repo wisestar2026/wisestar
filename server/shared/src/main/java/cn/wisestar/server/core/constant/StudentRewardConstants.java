@@ -37,6 +37,9 @@ public final class StudentRewardConstants {
 	/** 薄弱知识点复测达标 */
 	public static final String ACTION_WEAK_CONQUER = "weak_conquer";
 
+	/** 薄弱小节全部攻克 */
+	public static final String ACTION_WEAK_SECTION_CONQUER = "weak_section_conquer";
+
 	/** 每日：完成 2 个知识点练习 */
 	public static final String ACTION_DAILY_KP = "daily_kp";
 
@@ -119,6 +122,8 @@ public final class StudentRewardConstants {
 				return new int[] { 5, 4 };
 			case ACTION_WEAK_CONQUER:
 				return new int[] { 25, 12 };
+			case ACTION_WEAK_SECTION_CONQUER:
+				return new int[] { 40, 0 };
 			case ACTION_KP_MASTER:
 				return new int[] { 60, 0 };
 			case ACTION_DAILY_CHECKIN:
@@ -261,6 +266,8 @@ public final class StudentRewardConstants {
 				return "错题订正";
 			case ACTION_WEAK_CONQUER:
 				return "薄弱点攻克";
+			case ACTION_WEAK_SECTION_CONQUER:
+				return "薄弱小节攻克";
 			case ACTION_DAILY_KP:
 				return "每日知识点练习";
 			case ACTION_DAILY_WRONG:

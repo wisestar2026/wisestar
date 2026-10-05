@@ -23,8 +23,11 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 学员积分·学币统一结算实现。
@@ -49,6 +52,11 @@ public class RewardServiceImpl implements RewardService {
 
 	private final PracticeRecordMapper practiceRecordMapper;
 
+	/** 终身一次的行为：幂等键不加学期前缀，跨学期不重复发放。 */
+	private static final Set<String> LIFETIME_ACTIONS = new HashSet<>(Arrays.asList(
+			StudentRewardConstants.ACTION_WEAK_CONQUER,
+			StudentRewardConstants.ACTION_WEAK_SECTION_CONQUER));
+
 	@Override
 	public StudentPreviewCompleteView settle(RewardContext context) {
 		StudentPreviewCompleteView view = new StudentPreviewCompleteView();
@@ -66,18 +74,20 @@ public class RewardServiceImpl implements RewardService {
 			return view;
 		}
 		String semester = StudentRewardConstants.currentSemester();
-		// 学期幂等键：ref_id 统一加学期前缀，使内容型奖励「每学期每内容一次」，跨学期自动可再发
+		// 学期幂等键：ref_id 统一加学期前缀，使内容型奖励「每学期每内容一次」，跨学期自动可再发；
+		// 攻克薄弱点/小节为成长里程碑，按终身一次（不加学期前缀）
+		boolean lifetime = LIFETIME_ACTIONS.contains(action);
 		String effectiveRef = null;
 		if (StringUtils.hasText(context.getRefId())) {
-			effectiveRef = semester + ":" + context.getRefId();
+			effectiveRef = (lifetime ? "" : semester + ":") + context.getRefId();
 			if (effectiveRef.length() > 64) {
 				throw new IllegalArgumentException("奖励幂等键超长：" + effectiveRef);
 			}
 		}
 
-		// 幂等：同一学期同一业务关联ID不重复发放
+		// 幂等：同一业务关联ID不重复发放（学期行为按学期、终身行为不区分学期）
 		if (StringUtils.hasText(effectiveRef) && existsRef(context.getUserId(), action, effectiveRef)) {
-			return blocked(view, context.getUserId(), "该奖励本学期已发放");
+			return blocked(view, context.getUserId(), lifetime ? "该奖励已发放" : "该奖励本学期已发放");
 		}
 
 		int baseCoins = reward[0];
@@ -136,7 +146,7 @@ public class RewardServiceImpl implements RewardService {
 			// 并发穿透：唯一索引兜底，回滚本次余额与积分变更，按「已发放」返回
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			log.warn("reward settle duplicate: user={}, action={}, ref={}", context.getUserId(), action, effectiveRef);
-			return blocked(view, context.getUserId(), "该奖励本学期已发放");
+			return blocked(view, context.getUserId(), lifetime ? "该奖励已发放" : "该奖励本学期已发放");
 		}
 
 		view.setOk(true);

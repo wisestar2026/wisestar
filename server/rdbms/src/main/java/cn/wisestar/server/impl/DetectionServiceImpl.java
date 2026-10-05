@@ -1,29 +1,43 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.StudentRewardConstants;
 import cn.wisestar.server.core.uitls.AnswerJudgeUtil;
 import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
+import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.detect.DetectGenerateRequest;
+import cn.wisestar.server.domain.dto.detect.DetectRecordView;
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.detect.DetectSubmitRequest;
 import cn.wisestar.server.domain.dto.detect.DetectUnitView;
+import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentWeakView;
 import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.ChapterRepo;
+import cn.wisestar.server.domain.model.DetectRecord;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionRepo;
 import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.ChapterRepoMapper;
+import cn.wisestar.server.mapper.DetectRecordMapper;
 import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.service.DetectionService;
+import cn.wisestar.server.service.EvaluationService;
+import cn.wisestar.server.service.GrowthArchiveService;
+import cn.wisestar.server.service.StudentArchiveService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -48,6 +62,7 @@ import java.util.stream.Collectors;
  * @author wisestar
  * @date 2026/10/3
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DetectionServiceImpl implements DetectionService {
@@ -67,6 +82,16 @@ public class DetectionServiceImpl implements DetectionService {
 	private final SectionMapper sectionMapper;
 
 	private final SectionRepoMapper sectionRepoMapper;
+
+	private final DetectRecordMapper detectRecordMapper;
+
+	private final EvaluationService evaluationService;
+
+	private final GrowthArchiveService growthArchiveService;
+
+	private final StudentArchiveService studentArchiveService;
+
+	private final ObjectMapper objectMapper;
 
 	@Override
 	public List<DetectUnitView> units(String subjectId, String grade, String term) {
@@ -270,7 +295,258 @@ public class DetectionServiceImpl implements DetectionService {
 		});
 		weakPoints.sort((a, b) -> Integer.compare(a.getAccuracy(), b.getAccuracy()));
 		report.setWeakPoints(weakPoints);
+		// WPB 定基：落库检测记录并判定成长基线；失败不阻断诊断报告返回
+		try {
+			persistRecord(request, report);
+			String studentId = SecurityContextUtils.getUserId();
+			// 成长档案：检测轨迹留痕
+			recordDetectGrowth(request, report, studentId);
+			// 首次基线：一次性播种薄弱知识点（口径 a，此后检测不重写）并定格成长基线
+			if (report.isBaseline()) {
+				seedBaselineWeak(request.getSubjectId(), report);
+				bindBaselineArchive(request, report, studentId);
+			}
+		}
+		catch (Exception e) {
+			log.warn("detect submit: persist record failed, ignored", e);
+		}
 		return report;
+	}
+
+	/** 成长档案：写入一条 DETECT 轨迹事件（幂等，失败不阻断）。 */
+	private void recordDetectGrowth(DetectSubmitRequest request, DetectReportView report, String studentId) {
+		if (!StringUtils.hasText(studentId) || !StringUtils.hasText(report.getRecordId())) {
+			return;
+		}
+		try {
+			GrowthEventContext ctx = new GrowthEventContext();
+			ctx.setStudentId(studentId);
+			ctx.setSubjectId(request.getSubjectId());
+			ctx.setEventType("DETECT");
+			ctx.setSourceType("detect");
+			ctx.setSourceId(report.getRecordId());
+			ctx.setQuestionCount(report.getTotal());
+			ctx.setCorrectCount(report.getCorrect());
+			ctx.setAccuracy(report.getAccuracy());
+			ctx.setDurationMs(request.getDurationMs());
+			ctx.setChapter(request.getChapterNames() == null ? null
+					: String.join("、", request.getChapterNames()));
+			List<String> kpNames = report.getWeakPoints() == null ? new ArrayList<>()
+					: report.getWeakPoints().stream().map(DetectReportView.WeakPoint::getName)
+							.filter(StringUtils::hasText).distinct().collect(Collectors.toList());
+			ctx.setKnowledgePoints(kpNames);
+			ctx.setTitle(Boolean.TRUE.equals(report.isBaseline()) ? "学前检测" : "单元检测");
+			growthArchiveService.record(ctx);
+		}
+		catch (Exception e) {
+			log.warn("detect submit: record growth failed, ignored", e);
+		}
+	}
+
+	/** 成长档案：把本次基线检测定格为「学员 + 学期 + 学科」档案的成长基线。 */
+	private void bindBaselineArchive(DetectSubmitRequest request, DetectReportView report, String studentId) {
+		if (!StringUtils.hasText(studentId) || !StringUtils.hasText(request.getSubjectId())
+				|| !StringUtils.hasText(report.getRecordId())) {
+			return;
+		}
+		try {
+			String semester = StringUtils.hasText(request.getSemester()) ? request.getSemester()
+					: StudentRewardConstants.currentSemester();
+			List<StudentWeakView> weakList = new ArrayList<>();
+			if (report.getWeakPoints() != null) {
+				for (DetectReportView.WeakPoint wp : report.getWeakPoints()) {
+					weakList.add(new StudentWeakView(null, wp.getName(), request.getSubjectId(), wp.getAccuracy()));
+				}
+			}
+			studentArchiveService.bindBaseline(studentId, request.getSubjectId(), semester,
+					report.getRecordId(), report.getAccuracy(), weakList);
+		}
+		catch (Exception e) {
+			log.warn("detect submit: bind baseline archive failed, ignored", e);
+		}
+	}
+
+	/**
+	 * 基线薄弱点播种：取检测报告中答错的知识点（正确率 &lt; 薄弱阈值）写入薄弱系统。
+	 */
+	private void seedBaselineWeak(String subjectId, DetectReportView report) {
+		if (!StringUtils.hasText(subjectId) || report.getWeakPoints() == null
+				|| report.getWeakPoints().isEmpty()) {
+			return;
+		}
+		Map<String, Integer> kpMastery = new LinkedHashMap<>();
+		for (DetectReportView.WeakPoint wp : report.getWeakPoints()) {
+			if (StringUtils.hasText(wp.getName())) {
+				kpMastery.putIfAbsent(wp.getName(), wp.getAccuracy());
+			}
+		}
+		if (kpMastery.isEmpty()) {
+			return;
+		}
+		String ref = report.getRecordId() == null ? "detect" : "detect:" + report.getRecordId();
+		evaluationService.seedWeakFromBaseline(SecurityContextUtils.getUserId(), subjectId, ref, kpMastery);
+	}
+
+	@Override
+	public List<DetectRecordView> history(String studentId, String subjectId, String semester) {
+		String uid = StringUtils.hasText(studentId) ? studentId : SecurityContextUtils.getUserId();
+		if (!StringUtils.hasText(uid)) {
+			return Collections.emptyList();
+		}
+		List<DetectRecord> records = detectRecordMapper.selectList(Wrappers.<DetectRecord>lambdaQuery()
+				.eq(DetectRecord::getStudentId, uid)
+				.eq(StringUtils.hasText(subjectId), DetectRecord::getSubjectId, subjectId)
+				.eq(StringUtils.hasText(semester), DetectRecord::getSemester, semester)
+				.orderByDesc(DetectRecord::getCreateAt));
+		return records.stream().map(this::toRecordView).collect(Collectors.toList());
+	}
+
+	/**
+	 * 落库一条检测记录并判定成长基线（第 12.7 节，幂等 + 并发兜底）。
+	 *
+	 * <p>基线判定：某学员某学科某学期无 PRE 记录时，本次标 PRE + {@code is_baseline=1}，
+	 * 并写唯一键 {@code studentId:subjectId:semester}；否则为 STAGE。重复 {@code clientToken}
+	 * 或并发冲突时回查既有记录返回，不再新增。</p>
+	 */
+	private void persistRecord(DetectSubmitRequest request, DetectReportView report) {
+		String studentId = SecurityContextUtils.getUserId();
+		if (!StringUtils.hasText(studentId)) {
+			return;
+		}
+		// 客户端幂等：同 token 直接复用既有记录
+		String clientToken = request.getClientToken();
+		if (StringUtils.hasText(clientToken)) {
+			DetectRecord existing = detectRecordMapper.selectOne(Wrappers.<DetectRecord>lambdaQuery()
+					.eq(DetectRecord::getStudentId, studentId)
+					.eq(DetectRecord::getClientToken, clientToken).last("limit 1"));
+			if (existing != null) {
+				applyMeta(report, existing);
+				return;
+			}
+		}
+		String subjectId = request.getSubjectId();
+		String semester = StringUtils.hasText(request.getSemester()) ? request.getSemester()
+				: StudentRewardConstants.currentSemester();
+		String detectType = "STAGE";
+		boolean baseline = false;
+		String baselineKey = null;
+		if (StringUtils.hasText(subjectId) && StringUtils.hasText(semester)) {
+			Long preCount = detectRecordMapper.selectCount(Wrappers.<DetectRecord>lambdaQuery()
+					.eq(DetectRecord::getStudentId, studentId)
+					.eq(DetectRecord::getSubjectId, subjectId)
+					.eq(DetectRecord::getSemester, semester)
+					.eq(DetectRecord::getDetectType, "PRE"));
+			if (preCount == null || preCount == 0) {
+				detectType = "PRE";
+				baseline = true;
+				baselineKey = studentId + ":" + subjectId + ":" + semester;
+			}
+		}
+		DetectRecord record = new DetectRecord();
+		record.setStudentId(studentId);
+		record.setSubjectId(subjectId);
+		Subject subject = StringUtils.hasText(subjectId) ? subjectMapper.selectById(subjectId) : null;
+		record.setSubjectName(subject == null ? null : subject.getName());
+		record.setGrade(request.getGrade());
+		record.setTerm(request.getTerm());
+		record.setSemester(semester);
+		record.setDetectType(detectType);
+		record.setIsBaseline(baseline);
+		record.setBaselineKey(baselineKey);
+		record.setChapterIds(toJson(request.getChapterIds()));
+		record.setChapterNames(toJson(request.getChapterNames()));
+		record.setQuestionCount(request.getQuestionCount());
+		record.setTotal(report.getTotal());
+		record.setCorrectCount(report.getCorrect());
+		record.setAccuracy(report.getAccuracy());
+		record.setDurationMs(request.getDurationMs());
+		record.setWeakPoints(toJson(report.getWeakPoints()));
+		record.setDetails(toJson(report.getDetails()));
+		record.setClientToken(clientToken);
+		try {
+			detectRecordMapper.insert(record);
+		}
+		catch (DuplicateKeyException dup) {
+			// 并发冲突：回查既有记录（优先 clientToken，其次基线键）
+			DetectRecord existing = null;
+			if (StringUtils.hasText(clientToken)) {
+				existing = detectRecordMapper.selectOne(Wrappers.<DetectRecord>lambdaQuery()
+						.eq(DetectRecord::getStudentId, studentId)
+						.eq(DetectRecord::getClientToken, clientToken).last("limit 1"));
+			}
+			if (existing == null && StringUtils.hasText(baselineKey)) {
+				existing = detectRecordMapper.selectOne(Wrappers.<DetectRecord>lambdaQuery()
+						.eq(DetectRecord::getStudentId, studentId)
+						.eq(DetectRecord::getBaselineKey, baselineKey).last("limit 1"));
+			}
+			if (existing == null) {
+				throw dup;
+			}
+			record = existing;
+		}
+		applyMeta(report, record);
+	}
+
+	private void applyMeta(DetectReportView report, DetectRecord record) {
+		report.setRecordId(record.getId());
+		report.setDetectType(record.getDetectType());
+		report.setBaseline(Boolean.TRUE.equals(record.getIsBaseline()));
+	}
+
+	private DetectRecordView toRecordView(DetectRecord record) {
+		DetectRecordView view = new DetectRecordView();
+		view.setId(record.getId());
+		view.setSubjectId(record.getSubjectId());
+		view.setSubjectName(record.getSubjectName());
+		view.setGrade(record.getGrade());
+		view.setTerm(record.getTerm());
+		view.setSemester(record.getSemester());
+		view.setDetectType(record.getDetectType());
+		view.setBaseline(Boolean.TRUE.equals(record.getIsBaseline()));
+		view.setQuestionCount(record.getQuestionCount());
+		view.setTotal(record.getTotal());
+		view.setCorrect(record.getCorrectCount());
+		view.setAccuracy(record.getAccuracy());
+		view.setDurationMs(record.getDurationMs());
+		view.setCreateTime(record.getCreateAt());
+		List<String> names = fromJson(record.getChapterNames(), new TypeReference<List<String>>() {
+		});
+		if (names != null) {
+			view.setChapterNames(names);
+		}
+		List<DetectReportView.WeakPoint> weak = fromJson(record.getWeakPoints(),
+				new TypeReference<List<DetectReportView.WeakPoint>>() {
+				});
+		if (weak != null) {
+			view.setWeakPoints(weak);
+		}
+		return view;
+	}
+
+	private String toJson(Object value) {
+		if (value == null) {
+			return null;
+		}
+		try {
+			return objectMapper.writeValueAsString(value);
+		}
+		catch (Exception e) {
+			log.warn("detect record json serialize failed", e);
+			return null;
+		}
+	}
+
+	private <T> T fromJson(String json, TypeReference<T> type) {
+		if (!StringUtils.hasText(json)) {
+			return null;
+		}
+		try {
+			return objectMapper.readValue(json, type);
+		}
+		catch (Exception e) {
+			log.warn("detect record json parse failed", e);
+			return null;
+		}
 	}
 
 	/**

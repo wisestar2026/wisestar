@@ -6,6 +6,13 @@ import cn.wisestar.server.domain.dto.archive.StudentArchiveRecordRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveRecordView;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveSaveRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveView;
+import cn.wisestar.server.domain.dto.detect.DetectRecordView;
+import cn.wisestar.server.domain.dto.growth.GrowthCompareView;
+import cn.wisestar.server.domain.dto.growth.GrowthEventView;
+import cn.wisestar.server.domain.dto.growth.GrowthReportRequest;
+import cn.wisestar.server.domain.dto.growth.GrowthReportView;
+import cn.wisestar.server.service.DetectionService;
+import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.StudentArchiveService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * 学员档案接口。
@@ -31,6 +40,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class ArchiveApi {
 
 	private final StudentArchiveService archiveService;
+
+	private final DetectionService detectionService;
+
+	private final GrowthArchiveService growthArchiveService;
 
 	/**
 	 * 学员档案详情（含初始快照、薄弱点、上课记录、当日情况）。
@@ -128,6 +141,75 @@ public class ArchiveApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentArchiveView myArchive() {
 		return archiveService.myArchive();
+	}
+
+	/**
+	 * 指定学员检测历史（管理端）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/archive/detect-history?studentId=&amp;subjectId=&amp;semester=。</p>
+	 * <p><b>权限</b>：hasAuthority('student:archive')。</p>
+	 */
+	@GetMapping("/detect-history")
+	@PreAuthorize("hasAuthority('student:archive')")
+	public List<DetectRecordView> detectHistory(@RequestParam String studentId,
+			@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String semester) {
+		return detectionService.history(studentId, subjectId, semester);
+	}
+
+	/**
+	 * 指定学员学习轨迹时间轴（管理端）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/archive/timeline?studentId=&amp;subjectId=&amp;from=&amp;to=。</p>
+	 * <p><b>权限</b>：hasAuthority('student:archive')。</p>
+	 */
+	@GetMapping("/timeline")
+	@PreAuthorize("hasAuthority('student:archive')")
+	public List<GrowthEventView> timeline(@RequestParam String studentId,
+			@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String from,
+			@RequestParam(required = false) String to) {
+		return growthArchiveService.timeline(studentId, subjectId, from, to);
+	}
+
+	/**
+	 * 指定学员成长对比（管理端）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/archive/compare?studentId=&amp;subjectId=&amp;semester=。</p>
+	 * <p><b>权限</b>：hasAuthority('student:archive')。</p>
+	 */
+	@GetMapping("/compare")
+	@PreAuthorize("hasAuthority('student:archive')")
+	public GrowthCompareView compare(@RequestParam String studentId,
+			@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String semester) {
+		return growthArchiveService.compare(studentId, subjectId, semester);
+	}
+
+	/**
+	 * 生成指定学员成长报告（管理端）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/archive/growth/report/generate。</p>
+	 * <p><b>权限</b>：hasAuthority('student:archive:edit')。</p>
+	 */
+	@PostMapping("/growth/report/generate")
+	@PreAuthorize("hasAuthority('student:archive:edit')")
+	public GrowthReportView generateGrowthReport(@RequestBody GrowthReportRequest request) {
+		return growthArchiveService.generate(request);
+	}
+
+	/**
+	 * 读取指定学员成长报告（管理端）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/archive/growth/report?studentId=&amp;subjectId=&amp;semester=。</p>
+	 * <p><b>权限</b>：hasAuthority('student:archive')。</p>
+	 */
+	@GetMapping("/growth/report")
+	@PreAuthorize("hasAuthority('student:archive')")
+	public GrowthReportView growthReport(@RequestParam String studentId,
+			@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String semester) {
+		return growthArchiveService.report(studentId, subjectId, semester);
 	}
 
 }

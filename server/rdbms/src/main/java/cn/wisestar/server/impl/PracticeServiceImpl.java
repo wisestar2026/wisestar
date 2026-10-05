@@ -10,6 +10,7 @@ import cn.wisestar.server.domain.dto.PracticeSubmitRequest;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.WrongQuestionQuery;
 import cn.wisestar.server.domain.dto.WrongQuestionView;
+import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.student.PracticeEvaluationContext;
 import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.dto.student.SectionPassResult;
@@ -32,6 +33,7 @@ import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.EvaluationService;
+import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.PracticeService;
 import cn.wisestar.server.service.RewardService;
 import cn.wisestar.server.service.SectionPassService;
@@ -119,6 +121,9 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	/** 小节通关服务（通关记录写入）。 */
 	private final SectionPassService sectionPassService;
 
+	/** 成长档案服务（学习轨迹留痕）。 */
+	private final GrowthArchiveService growthArchiveService;
+
 	/**
 	 * 构造器注入。
 	 *
@@ -132,11 +137,13 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 	 * @param chapterMapper        章节 Mapper
 	 * @param sectionPracticeService 小节练习配置服务
 	 * @param sectionPassService   小节通关服务
+	 * @param growthArchiveService 成长档案服务
 	 */
 	public PracticeServiceImpl(PracticeDetailMapper practiceDetailMapper, TemplateServiceImpl templateService,
 			StudentMapper studentMapper, EvaluationService evaluationService, RewardService rewardService,
 			KnowledgePointMapper knowledgePointMapper, SectionMapper sectionMapper, ChapterMapper chapterMapper,
-			SectionPracticeService sectionPracticeService, SectionPassService sectionPassService) {
+			SectionPracticeService sectionPracticeService, SectionPassService sectionPassService,
+			GrowthArchiveService growthArchiveService) {
 		this.practiceDetailMapper = practiceDetailMapper;
 		this.templateService = templateService;
 		this.studentMapper = studentMapper;
@@ -147,6 +154,7 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		this.chapterMapper = chapterMapper;
 		this.sectionPracticeService = sectionPracticeService;
 		this.sectionPassService = sectionPassService;
+		this.growthArchiveService = growthArchiveService;
 	}
 
 	/**
@@ -319,6 +327,44 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 		}
 		catch (Exception e) {
 			log.warn("practice submit: reward settle failed, ignored", e);
+		}
+
+		// 4.2.1 成长档案：练习轨迹留痕（独立事务、幂等；异常不阻断交卷）
+		try {
+			GrowthEventContext growth = new GrowthEventContext();
+			growth.setStudentId(userId);
+			growth.setSubjectId(rc.getSubjectId());
+			growth.setEventType(trial ? "PRACTICE" : "PRACTICE");
+			growth.setSourceType("practice");
+			growth.setSourceId(record.getId());
+			int growthTotal = details.size();
+			int growthCorrect = correctCount;
+			growth.setQuestionCount(growthTotal);
+			growth.setCorrectCount(growthCorrect);
+			growth.setAccuracy(growthTotal == 0 ? 0 : Math.round(growthCorrect * 100f / growthTotal));
+			growth.setDurationMs(record.getDurationMs());
+			if (reward != null) {
+				growth.setPoints(reward.getPoints());
+				growth.setCoins(reward.getCoins());
+			}
+			List<String> kpNames = new ArrayList<>();
+			for (PracticeDetail detail : details) {
+				Template template = templateMap.get(detail.getQuestionId());
+				if (template == null || template.getKnowledgePoint() == null) {
+					continue;
+				}
+				for (String kp : template.getKnowledgePoint()) {
+					if (StringUtils.hasText(kp)) {
+						kpNames.add(kp);
+					}
+				}
+			}
+			growth.setKnowledgePoints(kpNames.stream().distinct().collect(Collectors.toList()));
+			growth.setTitle(trial ? "知识点试炼" : "在线练习");
+			growthArchiveService.record(growth);
+		}
+		catch (Exception e) {
+			log.warn("practice submit: growth record failed, ignored", e);
 		}
 
 		// 4.3 小节通关判定与记录（trial 且携带小节；异常不阻断交卷）

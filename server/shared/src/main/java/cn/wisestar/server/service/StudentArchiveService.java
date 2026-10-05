@@ -6,6 +6,9 @@ import cn.wisestar.server.domain.dto.archive.StudentArchiveRecordRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveRecordView;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveSaveRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveView;
+import cn.wisestar.server.domain.dto.student.StudentWeakView;
+
+import java.util.List;
 
 /**
  * 学员档案服务（学习规划 + 上课记录 + 学期报告）。
@@ -82,5 +85,18 @@ public interface StudentArchiveService {
 	 * @return 更新后的档案详情视图
 	 */
 	StudentArchiveView generateReport(String studentId, String semester);
+
+	/**
+	 * 定格成长基线：把学前检测结果写入「学员 + 学期 + 学科」档案的基线快照与基线检测ID。
+	 *
+	 * @param studentId  学员ID
+	 * @param subjectId  学科ID
+	 * @param semester   学期键
+	 * @param detectId   定格为基线的检测记录ID
+	 * @param accuracy   基线整体正确率
+	 * @param weakPoints 基线薄弱知识点（名称 + 正确率）
+	 */
+	void bindBaseline(String studentId, String subjectId, String semester, String detectId,
+			int accuracy, List<StudentWeakView> weakPoints);
 
 }

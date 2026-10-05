@@ -1,6 +1,7 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.detect.DetectGenerateRequest;
+import cn.wisestar.server.domain.dto.detect.DetectRecordView;
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.detect.DetectSubmitRequest;
 import cn.wisestar.server.domain.dto.detect.DetectUnitView;
@@ -45,5 +46,15 @@ public interface DetectionService {
 	 * @return 诊断报告
 	 */
 	DetectReportView submit(DetectSubmitRequest request);
+
+	/**
+	 * 检测历史查询（按时间倒序）。
+	 *
+	 * @param studentId 学员ID（为空时取当前登录学员）
+	 * @param subjectId 学科ID（可空）
+	 * @param semester 学期键（可空）
+	 * @return 检测记录列表
+	 */
+	List<DetectRecordView> history(String studentId, String subjectId, String semester);
 
 }

@@ -33,6 +33,9 @@ import cn.wisestar.server.domain.dto.student.StudentStudyProgressView;
 import cn.wisestar.server.domain.dto.student.StudentSubjectView;
 import cn.wisestar.server.domain.dto.student.StudentTodayView;
 import cn.wisestar.server.domain.dto.student.StudentWeakView;
+import cn.wisestar.server.domain.dto.student.StudentWeakTimelineView;
+import cn.wisestar.server.domain.dto.student.WeakCompareView;
+import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.student.StudentWeakConquerRequest;
 import cn.wisestar.server.domain.dto.student.StudentWeakConquerView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
@@ -66,6 +69,8 @@ import cn.wisestar.server.domain.model.UserKnowledgeProgress;
 import cn.wisestar.server.domain.model.UserLearningRecord;
 import cn.wisestar.server.domain.model.UserPoints;
 import cn.wisestar.server.domain.model.UserWeakKnowledge;
+import cn.wisestar.server.domain.model.WeakPointEvent;
+import cn.wisestar.server.domain.model.DetectRecord;
 import cn.wisestar.server.mapper.AccountMapper;
 import cn.wisestar.server.mapper.PracticeDetailMapper;
 import cn.wisestar.server.mapper.StudentMapper;
@@ -88,6 +93,8 @@ import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserLearningRecordMapper;
 import cn.wisestar.server.mapper.UserPointsMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
+import cn.wisestar.server.mapper.WeakPointEventMapper;
+import cn.wisestar.server.mapper.DetectRecordMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.CampusScopeService;
 import cn.wisestar.server.service.CampusService;
@@ -98,6 +105,8 @@ import cn.wisestar.server.service.StudentService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -159,6 +168,9 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	/** 章节测评小节名称标记（名称含该字样的章节小节以整章知识点为出题范围）。 */
 	private static final String CHAPTER_ASSESSMENT_SECTION_NAME = "章节测评";
 
+	/** 薄弱知识点组卷抽取权重（普通知识点为 1）。 */
+	private static final int WEAK_QUESTION_WEIGHT = 2;
+
 	private final StudentViewMapper studentViewMapper;
 
 	private final AccountMapper accountMapper;
@@ -214,6 +226,12 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	private final UserKnowledgeProgressMapper progressMapper;
 
 	private final UserWeakKnowledgeMapper weakMapper;
+
+	private final WeakPointEventMapper weakPointEventMapper;
+
+	private final DetectRecordMapper detectRecordMapper;
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	private final PracticeDetailMapper practiceDetailMapper;
 
@@ -399,24 +417,37 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				sectionMapper.selectCount(Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, v.getId()))));
 		// 学习完成度：章节下各小节完成度平均（有练习数据的小节）
 		fillChapterProgress(views);
+		// 识弱：章节薄弱标记（学员 active 薄弱知识点按章节聚合）
+		Map<String, Integer> weakByChapter = weakCountByChapter(currentStudentId());
+		views.forEach(v -> {
+			int count = weakByChapter.getOrDefault(v.getId(), 0);
+			v.setWeakCount(count);
+			v.setWeak(count > 0);
+		});
 		return views;
 	}
 
-	/** 章节完成度 = 章节下各小节完成度的平均值 */
+	/** 章节完成度 = 章节下各小节完成度的加权平均（薄弱小节权重更高） */
 	private void fillChapterProgress(List<ChapterView> views) {
 		if (views.isEmpty()) {
 			return;
 		}
 		String userId = SecurityContextUtils.getUserId();
+		Map<String, Integer> weakBySection = weakCountBySection(userId);
 		for (ChapterView chapter : views) {
 			List<SectionView> sections = sectionViewMapper.toView(sectionMapper.selectList(
 					Wrappers.<Section>lambdaQuery().eq(Section::getChapterId, chapter.getId())));
 			fillProgress(sections);
-			// 章节进度 = 全部小节完成度平均值（含未完成小节的 0，避免单个小节完成即整章点亮）
-			List<Integer> rates = sections.stream().map(SectionView::getProgress)
-					.map(p -> p == null ? 0 : p).collect(Collectors.toList());
-			chapter.setProgress(rates.isEmpty() ? 0
-					: rates.stream().mapToInt(Integer::intValue).sum() / rates.size());
+			// 章节进度 = 全部小节完成度加权平均（薄弱小节权重 2，含未完成小节的 0）
+			int weightedSum = 0;
+			int weightSum = 0;
+			for (SectionView sv : sections) {
+				int progress = sv.getProgress() == null ? 0 : sv.getProgress();
+				int weight = weakBySection.getOrDefault(sv.getId(), 0) > 0 ? WEAK_QUESTION_WEIGHT : 1;
+				weightedSum += progress * weight;
+				weightSum += weight;
+			}
+			chapter.setProgress(weightSum == 0 ? 0 : weightedSum / weightSum);
 		}
 	}
 
@@ -440,6 +471,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		fillSectionPass(views);
 		// 小节题目统计：题量 / 已答 / 答对
 		fillQuestionStats(views);
+		// 识弱：小节薄弱标记
+		Map<String, Integer> weakBySection = weakCountBySection(currentStudentId());
+		views.forEach(v -> {
+			int count = weakBySection.getOrDefault(v.getId(), 0);
+			v.setWeakCount(count);
+			v.setWeak(count > 0);
+		});
 		return views;
 	}
 
@@ -724,8 +762,210 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		if (chapter == null || !hasPermission(chapter.getSubjectId(), chapter.getGrade())) {
 			return Collections.emptyList();
 		}
-		return knowledgePointViewMapper.toView(knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
-				.eq(KnowledgePoint::getSectionId, sectionId).orderByAsc(KnowledgePoint::getSort)));
+		List<KnowledgePointView> points = knowledgePointViewMapper.toView(
+				knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+						.eq(KnowledgePoint::getSectionId, sectionId).orderByAsc(KnowledgePoint::getSort)));
+		Set<String> weakKpIds = activeWeakKpIds(currentStudentId());
+		points.forEach(p -> p.setWeak(weakKpIds.contains(p.getId())));
+		return points;
+	}
+
+	/** 学员当前未攻克的薄弱知识点ID集合（一次查询，供识弱聚合复用）。 */
+	private Set<String> activeWeakKpIds(String userId) {
+		if (!StringUtils.hasText(userId)) {
+			return Collections.emptySet();
+		}
+		return weakMapper.selectList(Wrappers.<UserWeakKnowledge>lambdaQuery()
+						.eq(UserWeakKnowledge::getUserId, userId)
+						.eq(UserWeakKnowledge::getStatus, "active"))
+				.stream().map(UserWeakKnowledge::getKnowledgePointId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+	}
+
+	/** 小节薄弱知识点数（active 薄弱点按所属小节聚合）。 */
+	private Map<String, Integer> weakCountBySection(String userId) {
+		Map<String, Integer> counts = new HashMap<>();
+		Set<String> kpIds = activeWeakKpIds(userId);
+		if (kpIds.isEmpty()) {
+			return counts;
+		}
+		for (KnowledgePoint kp : knowledgePointMapper.selectBatchIds(kpIds)) {
+			if (StringUtils.hasText(kp.getSectionId())) {
+				counts.merge(kp.getSectionId(), 1, Integer::sum);
+			}
+		}
+		return counts;
+	}
+
+	/** 章节薄弱知识点数（active 薄弱点按 知识点→小节→章节 聚合）。 */
+	private Map<String, Integer> weakCountByChapter(String userId) {
+		Map<String, Integer> counts = new HashMap<>();
+		Set<String> kpIds = activeWeakKpIds(userId);
+		if (kpIds.isEmpty()) {
+			return counts;
+		}
+		Set<String> sectionIds = new LinkedHashSet<>();
+		Map<String, String> sectionById = new HashMap<>();
+		for (KnowledgePoint kp : knowledgePointMapper.selectBatchIds(kpIds)) {
+			if (StringUtils.hasText(kp.getSectionId())) {
+				sectionIds.add(kp.getSectionId());
+				sectionById.put(kp.getId(), kp.getSectionId());
+			}
+		}
+		if (sectionIds.isEmpty()) {
+			return counts;
+		}
+		Map<String, String> chapterBySection = new HashMap<>();
+		sectionMapper.selectList(Wrappers.<Section>lambdaQuery().in(Section::getId, sectionIds))
+				.forEach(s -> {
+					if (StringUtils.hasText(s.getChapterId())) {
+						chapterBySection.put(s.getId(), s.getChapterId());
+					}
+				});
+		for (String sectionId : sectionById.values()) {
+			String chapterId = chapterBySection.get(sectionId);
+			if (chapterId != null) {
+				counts.merge(chapterId, 1, Integer::sum);
+			}
+		}
+		return counts;
+	}
+
+	/**
+	 * 跨单元薄弱点专攻组卷：聚合学员当前 active 薄弱知识点，按学科过滤后组卷。
+	 */
+	@Override
+	public List<StudentQuestionView> weakPractice(String subjectId, Integer count) {
+		String userId = SecurityContextUtils.getUserId();
+		Set<String> weakKpIds = activeWeakKpIds(userId);
+		if (weakKpIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		Set<String> kpIds = StringUtils.hasText(subjectId)
+				? filterWeakKpBySubject(weakKpIds, subjectId) : weakKpIds;
+		if (kpIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+		int limit = count == null ? 20 : Math.max(1, Math.min(count, 50));
+		return studyQuestions(null, new ArrayList<>(kpIds), null, null, limit, null, true, null, null,
+				Boolean.TRUE, Boolean.FALSE, null);
+	}
+
+	/** 将薄弱知识点集合收敛到指定学科（经 知识点 → 小节 → 章节 → 学科）。 */
+	private Set<String> filterWeakKpBySubject(Set<String> kpIds, String subjectId) {
+		List<KnowledgePoint> points = knowledgePointMapper.selectBatchIds(kpIds);
+		Map<String, String> chapterBySection = new HashMap<>();
+		Set<String> sectionIds = new LinkedHashSet<>();
+		for (KnowledgePoint kp : points) {
+			if (StringUtils.hasText(kp.getSectionId())) {
+				sectionIds.add(kp.getSectionId());
+			}
+		}
+		if (sectionIds.isEmpty()) {
+			return Collections.emptySet();
+		}
+		sectionMapper.selectList(Wrappers.<Section>lambdaQuery().in(Section::getId, sectionIds))
+				.forEach(s -> {
+					if (StringUtils.hasText(s.getChapterId())) {
+						chapterBySection.put(s.getId(), s.getChapterId());
+					}
+				});
+		if (chapterBySection.isEmpty()) {
+			return Collections.emptySet();
+		}
+		Set<String> validChapters = chapterMapper.selectList(Wrappers.<Chapter>lambdaQuery()
+						.in(Chapter::getId, new LinkedHashSet<>(chapterBySection.values()))
+						.eq(Chapter::getSubjectId, subjectId))
+				.stream().map(Chapter::getId).collect(Collectors.toSet());
+		if (validChapters.isEmpty()) {
+			return Collections.emptySet();
+		}
+		Set<String> validSections = chapterBySection.entrySet().stream()
+				.filter(e -> validChapters.contains(e.getValue()))
+				.map(Map.Entry::getKey).collect(Collectors.toSet());
+		return points.stream().filter(p -> validSections.contains(p.getSectionId()))
+				.map(KnowledgePoint::getId).collect(Collectors.toSet());
+	}
+
+	/**
+	 * 薄弱点对比：首次检测基线 vs 当前 active 薄弱点（仅呈现集合变化，不做提分数值评测）。
+	 */
+	@Override
+	public WeakCompareView weakCompare(String subjectId) {
+		String userId = currentStudentId();
+		WeakCompareView view = new WeakCompareView();
+		view.setSubjectId(subjectId);
+		DetectRecord baseline = detectRecordMapper.selectOne(Wrappers.<DetectRecord>lambdaQuery()
+				.eq(DetectRecord::getStudentId, userId)
+				.eq(DetectRecord::getIsBaseline, true)
+				.eq(StringUtils.hasText(subjectId), DetectRecord::getSubjectId, subjectId)
+				.orderByDesc(DetectRecord::getCreateAt).last("limit 1"));
+		view.setHasBaseline(baseline != null);
+		view.setSemester(baseline == null ? null : baseline.getSemester());
+		Map<String, DetectReportView.WeakPoint> baseByName = new LinkedHashMap<>();
+		if (baseline != null) {
+			for (DetectReportView.WeakPoint wp : parseWeakPoints(baseline.getWeakPoints())) {
+				if (StringUtils.hasText(wp.getName())) {
+					baseByName.putIfAbsent(wp.getName(), wp);
+				}
+			}
+		}
+		List<StudentWeakView> current = weakList();
+		if (StringUtils.hasText(subjectId)) {
+			current = current.stream().filter(w -> subjectId.equals(w.getSubjectId()))
+					.collect(Collectors.toList());
+		}
+		Map<String, StudentWeakView> currentByName = new LinkedHashMap<>();
+		for (StudentWeakView w : current) {
+			if (StringUtils.hasText(w.getName())) {
+				currentByName.putIfAbsent(w.getName(), w);
+			}
+		}
+		view.setBaselineCount(baseByName.size());
+		view.setCurrentCount(currentByName.size());
+		for (DetectReportView.WeakPoint wp : baseByName.values()) {
+			StudentWeakView cur = currentByName.get(wp.getName());
+			WeakCompareView.Item item = new WeakCompareView.Item();
+			item.setName(wp.getName());
+			item.setChapterName(wp.getChapter());
+			item.setBaselineAccuracy(wp.getAccuracy());
+			if (cur == null) {
+				view.getResolved().add(item);
+			}
+			else {
+				item.setKpId(cur.getKpId());
+				item.setMastery(cur.getMastery());
+				view.getRemaining().add(item);
+			}
+		}
+		for (StudentWeakView w : currentByName.values()) {
+			if (!baseByName.containsKey(w.getName())) {
+				WeakCompareView.Item item = new WeakCompareView.Item();
+				item.setKpId(w.getKpId());
+				item.setName(w.getName());
+				item.setMastery(w.getMastery());
+				view.getNewlyWeak().add(item);
+			}
+		}
+		view.setResolvedCount(view.getResolved().size());
+		return view;
+	}
+
+	/** 解析检测记录中冻结的薄弱点 JSON。 */
+	private List<DetectReportView.WeakPoint> parseWeakPoints(String json) {
+		if (!StringUtils.hasText(json)) {
+			return Collections.emptyList();
+		}
+		try {
+			List<DetectReportView.WeakPoint> list = objectMapper.readValue(json,
+					new TypeReference<List<DetectReportView.WeakPoint>>() {
+					});
+			return list == null ? Collections.emptyList() : list;
+		}
+		catch (Exception e) {
+			log.warn("weak compare: parse baseline weak points failed", e);
+			return Collections.emptyList();
+		}
 	}
 
 	/**
@@ -976,7 +1216,10 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		}
 		int limit = count == null ? Integer.MAX_VALUE : Math.min(count, 50);
 		Map<String, String> assignedKp = new HashMap<>();
-		List<Template> picked = pickByCoverage(candidates, questionsByKp, limit, perKp, group, random, assignedKp);
+		Set<String> weakKpIds = kpIds.isEmpty() ? Collections.emptySet()
+				: activeWeakKpIds(SecurityContextUtils.getUserId());
+		List<Template> picked = pickByCoverage(candidates, questionsByKp, limit, perKp, group, random, assignedKp,
+				weakKpIds);
 		return picked.stream().map(t -> {
 			StudentQuestionView view = expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t);
 			if (assignedKp.containsKey(t.getId())) {
@@ -1006,10 +1249,12 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 	 * @param groupByKp     是否按知识点分组输出
 	 * @param random        是否随机抽题/输出
 	 * @param assignedKp    出参：题目ID → 归属知识点ID
+	 * @param weakKpIds     学员当前薄弱知识点ID集合（组卷加权：薄弱知识点抽取权重更高）
 	 * @return 组卷结果
 	 */
 	private List<Template> pickByCoverage(List<Template> candidates, Map<String, Set<String>> questionsByKp,
-			int limit, Integer perKp, boolean groupByKp, Boolean random, Map<String, String> assignedKp) {
+			int limit, Integer perKp, boolean groupByKp, Boolean random, Map<String, String> assignedKp,
+			Set<String> weakKpIds) {
 		boolean shuffle = Boolean.TRUE.equals(random);
 		List<Template> ordered = new ArrayList<>(candidates);
 		if (shuffle) {
@@ -1060,7 +1305,8 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 						allocated++;
 					}
 				}
-				// 余量轮询：在仍有剩余题目的知识点间逐个补足，直到用满目标题量
+				// 余量轮询：在仍有剩余题目的知识点间补足，薄弱知识点每轮多取（权重 2），
+				// 保证覆盖全部知识点的前提下向薄弱点倾斜
 				boolean progress = true;
 				while (allocated < limit && progress) {
 					progress = false;
@@ -1069,7 +1315,11 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 							break;
 						}
 						int cap = Math.min(maxPerKp, pools.get(kpId).size());
-						if (quota.get(kpId) < cap) {
+						int weight = weakKpIds.contains(kpId) ? WEAK_QUESTION_WEIGHT : 1;
+						for (int w = 0; w < weight && allocated < limit; w++) {
+							if (quota.get(kpId) >= cap) {
+								break;
+							}
 							quota.put(kpId, quota.get(kpId) + 1);
 							allocated++;
 							progress = true;
@@ -1850,6 +2100,32 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 			int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
 			result.add(new StudentWeakView(w.getKnowledgePointId(), kp == null ? null : kp.getName(),
 					w.getSubjectId(), mastery));
+		}
+		return result;
+	}
+
+	/**
+	 * 薄弱点变化时间线（discovered / conquered / reopened 留痕，按时间倒序）。
+	 */
+	@Override
+	public List<StudentWeakTimelineView> weakTimeline(String subjectId) {
+		String userId = currentStudentId();
+		List<WeakPointEvent> events = weakPointEventMapper.selectList(Wrappers.<WeakPointEvent>lambdaQuery()
+				.eq(WeakPointEvent::getStudentId, userId)
+				.eq(StringUtils.hasText(subjectId), WeakPointEvent::getSubjectId, subjectId)
+				.orderByDesc(WeakPointEvent::getOccurredAt));
+		List<StudentWeakTimelineView> result = new ArrayList<>();
+		for (WeakPointEvent e : events) {
+			StudentWeakTimelineView view = new StudentWeakTimelineView();
+			view.setEventType(e.getEventType());
+			view.setKpId(e.getKnowledgePointId());
+			view.setKpName(e.getKpName());
+			view.setSectionName(e.getSectionName());
+			view.setChapterName(e.getChapterName());
+			view.setMastery(e.getMastery());
+			view.setSource(e.getSource());
+			view.setOccurredAt(e.getOccurredAt());
+			result.add(view);
 		}
 		return result;
 	}

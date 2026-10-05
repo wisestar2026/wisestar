@@ -2509,6 +2509,105 @@ CREATE TABLE IF NOT EXISTS `t_user_weak_knowledge` (
   KEY `idx_weak_status` (`user_id`,`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='薄弱知识点研判';
 
+-- ============================================================
+-- 精准破弱模型（WPB）：检测基线 + 薄弱点变化事件流
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `t_detect_record` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `subject_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科名称快照',
+  `grade` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级快照',
+  `term` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '册别快照',
+  `semester` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期键',
+  `detect_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'STAGE' COMMENT 'PRE/STAGE',
+  `is_baseline` tinyint(1) DEFAULT '0' COMMENT '是否成长基线',
+  `baseline_key` varchar(192) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '基线唯一键 学员:学科:学期，仅PRE写入',
+  `chapter_ids` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '勾选章节ID JSON数组',
+  `chapter_names` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '勾选章节名称 JSON数组',
+  `question_count` int DEFAULT '0' COMMENT '组卷题量',
+  `total` int DEFAULT '0' COMMENT '实际判分题数',
+  `correct_count` int DEFAULT '0' COMMENT '正确题数',
+  `accuracy` int DEFAULT '0' COMMENT '正确率0-100',
+  `duration_ms` bigint DEFAULT '0' COMMENT '作答耗时(ms)',
+  `weak_points` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '薄弱点JSON数组',
+  `details` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '逐题结果JSON数组',
+  `client_token` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '客户端幂等令牌',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_detect_record` (`student_id`,`subject_id`,`semester`,`create_at`),
+  UNIQUE KEY `uk_detect_baseline` (`student_id`,`subject_id`,`semester`,`baseline_key`),
+  UNIQUE KEY `uk_detect_client` (`student_id`,`client_token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='知识点检测记录(基线/阶段)';
+
+CREATE TABLE IF NOT EXISTS `t_weak_point_event` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `knowledge_point_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '知识点ID',
+  `section_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节ID',
+  `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节ID',
+  `event_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'discovered/conquered/reopened',
+  `mastery` int DEFAULT '0' COMMENT '事件发生时掌握度0-100',
+  `source` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'detect/practice/correction',
+  `ref_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '业务来源ID(幂等键)',
+  `kp_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '知识点名称快照',
+  `section_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '小节名称快照',
+  `chapter_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节名称快照',
+  `occurred_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发生时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_weak_event` (`student_id`,`knowledge_point_id`,`event_type`,`ref_id`),
+  KEY `idx_weak_event` (`student_id`,`subject_id`,`occurred_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='薄弱点变化事件流';
+
+-- 学习轨迹事件流水（学员成长档案；practice/detect/grammar/archive_record 幂等）
+CREATE TABLE IF NOT EXISTS `t_learning_growth` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `student_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '学员ID',
+  `subject_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科ID',
+  `subject_name` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学科名称快照',
+  `event_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'PRACTICE/DETECT/GRAMMAR/CLASS',
+  `source_type` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'practice/detect/grammar/archive_record',
+  `source_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '业务对象ID(幂等键)',
+  `event_date` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '发生日期 yyyy-MM-dd',
+  `occurred_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发生时间',
+  `chapter_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节/单元ID',
+  `chapter` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '章节/单元名称',
+  `knowledge_points` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '知识点名称JSON数组',
+  `question_count` int DEFAULT '0' COMMENT '题量',
+  `correct_count` int DEFAULT '0' COMMENT '正确数',
+  `accuracy` int DEFAULT '0' COMMENT '正确率0-100',
+  `duration_ms` bigint DEFAULT '0' COMMENT '时长(ms)',
+  `points` int DEFAULT '0' COMMENT '积分',
+  `coins` int DEFAULT '0' COMMENT '学习币',
+  `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '事件标题',
+  `remark` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '备注',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_growth_source` (`student_id`,`source_type`,`source_id`),
+  KEY `idx_growth_timeline` (`student_id`,`subject_id`,`occurred_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='学习轨迹事件流水';
+
+-- 学员档案：基线与报告元数据列 + 学员+学期+学科唯一
+ALTER TABLE `t_student_archive` ADD COLUMN IF NOT EXISTS `baseline_detect_id` varchar(64) DEFAULT NULL COMMENT '基线检测记录ID';
+ALTER TABLE `t_student_archive` ADD COLUMN IF NOT EXISTS `baseline_at` timestamp NULL DEFAULT NULL COMMENT '基线定格时间';
+ALTER TABLE `t_student_archive` ADD COLUMN IF NOT EXISTS `report_model` varchar(64) DEFAULT NULL COMMENT '报告生成模型(ai模型名或rule)';
+ALTER TABLE `t_student_archive` ADD COLUMN IF NOT EXISTS `report_generated_at` timestamp NULL DEFAULT NULL COMMENT '报告生成时间';
+CREATE UNIQUE INDEX IF NOT EXISTS `uk_student_archive` ON `t_student_archive` (`student_id`,`semester`,`subject_id`);
+
 -- 错题订正标记 + 手动发币学科归集
 ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `corrected` tinyint(1) DEFAULT '0' COMMENT '错题是否已订正';
 ALTER TABLE `t_practice_detail` ADD COLUMN IF NOT EXISTS `corrected_at` timestamp NULL DEFAULT NULL COMMENT '订正时间';

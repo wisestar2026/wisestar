@@ -87,4 +87,10 @@ public class SectionView {
 	/** 学员在该小节答对的不同题目数 */
 	private Integer correctCount;
 
+	/** 该小节是否存在学员未攻克的薄弱知识点 */
+	private Boolean weak;
+
+	/** 该小节学员未攻克的薄弱知识点数 */
+	private Integer weakCount;
+
 }

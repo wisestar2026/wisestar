@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.Date;
+
 /**
  * 学员档案（t_student_archive）。
  *
@@ -49,8 +51,14 @@ public class StudentArchive extends BaseModel {
 	/** 状态 draft/active/closed */
 	private String status;
 
-	/** 初始档案快照（JSON：薄弱知识点/掌握度） */
+	/** 初始档案快照（JSON：基线快照，含基线薄弱知识点/正确率） */
 	private String profileSnapshot;
+
+	/** 定格为基线的检测记录ID */
+	private String baselineDetectId;
+
+	/** 基线定格时间 */
+	private Date baselineAt;
 
 	/** 本学期目标规划表正文 */
 	private String goalPlan;
@@ -63,6 +71,12 @@ public class StudentArchive extends BaseModel {
 
 	/** 学期报告状态 none/draft/final */
 	private String reportStatus;
+
+	/** 报告生成模型（ai 模型名或 rule） */
+	private String reportModel;
+
+	/** 报告生成时间 */
+	private Date reportGeneratedAt;
 
 	/** 备注 */
 	private String remark;

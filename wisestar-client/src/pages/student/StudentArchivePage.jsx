@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Button, Card, Descriptions, Form, Input, InputNumber, Modal, Popconfirm, Select, Space,
+  Button, Card, Descriptions, Form, Input, InputNumber, List, Modal, Popconfirm, Select, Space,
   Table, Tag, Typography, message,
 } from 'antd';
 import {
@@ -31,6 +31,7 @@ import {
   deleteArchiveRecord, generateArchiveReport, getArchiveDetail, getArchiveDraft,
   saveArchive, saveArchiveRecord,
 } from '../../api/archive';
+import { getArchiveCompare, getArchiveTimeline } from '../../api/growth';
 import { usePermission } from '../../utils/usePermission';
 import './StudentArchivePage.css';
 
@@ -52,6 +53,8 @@ export default function StudentArchivePage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
+  const [growthCompare, setGrowthCompare] = useState(null);
+  const [growthTimeline, setGrowthTimeline] = useState([]);
 
   // 可编辑文本
   const [goalPlan, setGoalPlan] = useState('');
@@ -85,6 +88,18 @@ export default function StudentArchivePage() {
   }, [studentId, applyDetail]);
 
   useEffect(() => { load(); }, [load]);
+
+  // 成长对比 + 学习轨迹（按学员 + 学科）
+  useEffect(() => {
+    if (!studentId) return;
+    const params = { studentId, subjectId: detail?.subjectId };
+    getArchiveCompare(params)
+      .then((res) => setGrowthCompare(res?.data || null))
+      .catch(() => setGrowthCompare(null));
+    getArchiveTimeline(params)
+      .then((res) => setGrowthTimeline(res?.data || []))
+      .catch(() => setGrowthTimeline([]));
+  }, [studentId, detail?.subjectId]);
 
   // ---- 保存档案主体 ----
   const handleSave = (extra = {}) => {
@@ -295,8 +310,70 @@ export default function StudentArchivePage() {
         </Paragraph>
       </Card>
 
-      {/* ---- 二、目标规划表 ---- */}
-      <Card title="二、本学期目标规划表" className="archive-section">
+      {/* ---- 二、成长对比（基线 vs 当前） ---- */}
+      <Card title="二、成长对比（基线 vs 当前）" className="archive-section">
+        {growthCompare?.hasBaseline ? (
+          <>
+            <List
+              size="small"
+              header={(
+                <span>
+                  学前检测正确率 {growthCompare.baselineAccuracy ?? '-'}% ·
+                  基线薄弱 {growthCompare.baselineWeakCount || 0} 个 ·
+                  已攻克 {growthCompare.resolvedCount || 0} 个 ·
+                  仍需巩固 {growthCompare.remainingCount || 0} 个 ·
+                  新增薄弱 {growthCompare.newlyWeakCount || 0} 个 ·
+                  学习事件 {growthCompare.eventCount || 0} 次
+                </span>
+              )}
+              dataSource={growthCompare.deltas || []}
+              locale={{ emptyText: '暂无基线薄弱点' }}
+              renderItem={(d) => (
+                <List.Item>
+                  <span>{d.name || d.kpId}</span>
+                  <span>
+                    {d.baselineAccuracy ?? 0}% → {d.currentMastery ?? 0}%
+                    <Tag color={d.resolved ? 'green' : 'red'} style={{ marginLeft: 8 }}>
+                      {d.resolved ? '已攻克' : '巩固中'}
+                    </Tag>
+                  </span>
+                </List.Item>
+              )}
+            />
+          </>
+        ) : (
+          <Text className="archive-empty">尚未定格成长基线（学员完成本学期首次全面检测后生成）</Text>
+        )}
+      </Card>
+
+      {/* ---- 三、学习轨迹 ---- */}
+      <Card title="三、学习轨迹" className="archive-section">
+        {growthTimeline?.length ? (
+          <List
+            size="small"
+            dataSource={growthTimeline}
+            renderItem={(e) => (
+              <List.Item>
+                <List.Item.Meta
+                  title={`${e.eventDate || ''} ${e.title || e.eventType || ''}`}
+                  description={[
+                    e.chapter,
+                    e.questionCount ? `答题 ${e.correctCount || 0}/${e.questionCount} 题（${e.accuracy || 0}%）` : null,
+                    e.knowledgePoints?.length ? e.knowledgePoints.join('、') : null,
+                    e.points ? `积分 +${e.points}` : null,
+                    e.coins ? `学币 +${e.coins}` : null,
+                  ].filter(Boolean).join(' · ')}
+                />
+              </List.Item>
+            )}
+          />
+        ) : (
+          <Text className="archive-empty">暂无学习轨迹</Text>
+        )}
+      </Card>
+
+      {/* ---- 四、目标规划表 ---- */}
+      <Card title="四、本学期目标规划表" className="archive-section">
         {canEdit ? (
           <Input.TextArea
             value={goalPlan}
@@ -311,8 +388,8 @@ export default function StudentArchivePage() {
         )}
       </Card>
 
-      {/* ---- 三、承诺书 ---- */}
-      <Card title="三、学员承诺书" className="archive-section">
+      {/* ---- 五、承诺书 ---- */}
+      <Card title="五、学员承诺书" className="archive-section">
         {canEdit ? (
           <Input.TextArea
             value={promise}
@@ -332,9 +409,9 @@ export default function StudentArchivePage() {
         </div>
       </Card>
 
-      {/* ---- 四、上课记录 / 学习日志 ---- */}
+      {/* ---- 六、上课记录 / 学习日志 ---- */}
       <Card
-        title="四、上课记录 / 学习日志"
+        title="六、上课记录 / 学习日志"
         className="archive-section"
         extra={canEdit && (
           <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => openRecord()}>
@@ -352,9 +429,9 @@ export default function StudentArchivePage() {
         />
       </Card>
 
-      {/* ---- 五、学期报告 ---- */}
+      {/* ---- 七、学期报告 ---- */}
       <Card
-        title="五、学期报告"
+        title="七、学期报告"
         className="archive-section"
         extra={canEdit && (
           <Space className="no-print">

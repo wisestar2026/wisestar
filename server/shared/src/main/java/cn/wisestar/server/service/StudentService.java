@@ -27,6 +27,8 @@ import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.domain.dto.student.StudentWeakConquerRequest;
 import cn.wisestar.server.domain.dto.student.StudentWeakConquerView;
 import cn.wisestar.server.domain.dto.student.StudentWeakView;
+import cn.wisestar.server.domain.dto.student.StudentWeakTimelineView;
+import cn.wisestar.server.domain.dto.student.WeakCompareView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 
@@ -254,6 +256,13 @@ public interface StudentService {
 	List<StudentWeakView> weakList();
 
 	/**
+	 * 薄弱点变化时间线（discovered / conquered / reopened 留痕）。
+	 *
+	 * @param subjectId 学科ID（可空，空则返回全部学科）
+	 */
+	List<StudentWeakTimelineView> weakTimeline(String subjectId);
+
+	/**
 	 * 知识点详情（掌握度/评级/薄弱/是否已预习）。
 	 *
 	 * @param knowledgePointId 知识点ID
@@ -283,5 +292,22 @@ public interface StudentService {
 	 * @return 攻克结果
 	 */
 	StudentWeakConquerView weakConquer(StudentWeakConquerRequest request);
+
+	/**
+	 * 跨单元薄弱点专攻组卷（聚合学员 active 薄弱知识点，按学科过滤）。
+	 *
+	 * @param subjectId 学科ID（可空，空则聚合全部薄弱点）
+	 * @param count     题量（可空，默认 20，最大 50）
+	 * @return 题目列表（不含标准答案）
+	 */
+	List<StudentQuestionView> weakPractice(String subjectId, Integer count);
+
+	/**
+	 * 薄弱点对比（首次检测基线 vs 当前 active 薄弱点）。
+	 *
+	 * @param subjectId 学科ID（可空，空为全部学科）
+	 * @return 对比视图
+	 */
+	WeakCompareView weakCompare(String subjectId);
 
 }

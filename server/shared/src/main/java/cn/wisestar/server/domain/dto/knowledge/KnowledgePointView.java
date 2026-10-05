@@ -76,4 +76,7 @@ public class KnowledgePointView {
 	 */
 	private Long questionCount;
 
+	/** 该知识点是否为学员未攻克的薄弱点 */
+	private Boolean weak;
+
 }

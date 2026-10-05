@@ -18,11 +18,16 @@ import { useEffect, useState } from 'react';
 import { Button } from 'antd';
 import { PrinterOutlined } from '@ant-design/icons';
 import { getMyArchive } from '../../api/archive';
+import { getGrowthCompare, getGrowthTimeline } from '../../api/growth';
+import useStudentStore from '../../stores/useStudentStore';
 import './StudentMyArchivePage.css';
 
 export default function StudentMyArchivePage() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [compare, setCompare] = useState(null);
+  const [timeline, setTimeline] = useState([]);
+  const activeSubject = useStudentStore((s) => s.activeSubject);
 
   useEffect(() => {
     getMyArchive()
@@ -30,6 +35,12 @@ export default function StudentMyArchivePage() {
       .catch(() => setDetail(null))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const params = activeSubject ? { subjectId: activeSubject } : {};
+    getGrowthCompare(params).then((res) => setCompare(res?.data || null)).catch(() => setCompare(null));
+    getGrowthTimeline(params).then((res) => setTimeline(res?.data || [])).catch(() => setTimeline([]));
+  }, [activeSubject]);
 
   const today = detail?.today;
 
@@ -81,7 +92,49 @@ export default function StudentMyArchivePage() {
         </div>
       </div>
 
-      {/* 三、当日情况 */}
+      {/* 三、成长对比（以学前检测为基线） */}
+      {compare?.hasBaseline && (
+        <div className="sll-card my-archive-section">
+          <h3 className="my-archive-section-title">成长对比</h3>
+          <div className="my-archive-meta" style={{ marginBottom: 10 }}>
+            学前检测正确率 {compare.baselineAccuracy ?? '-'}% ·
+            基线薄弱 {compare.baselineWeakCount || 0} 个 ·
+            已攻克 {compare.resolvedCount || 0} 个 ·
+            仍需巩固 {compare.remainingCount || 0} 个 ·
+            新增薄弱 {compare.newlyWeakCount || 0} 个
+          </div>
+          <div className="my-archive-tags">
+            {compare.deltas?.length
+              ? compare.deltas.map((d) => (
+                <span key={d.kpId || d.name} className="my-archive-chip">
+                  {d.name || d.kpId} · {d.baselineAccuracy ?? 0}% → {d.currentMastery ?? 0}%
+                  {d.resolved ? '（已攻克）' : '（巩固中）'}
+                </span>
+              ))
+              : <span className="my-archive-empty">暂无基线薄弱点</span>}
+          </div>
+        </div>
+      )}
+
+      {/* 四、学习轨迹 */}
+      <div className="sll-card my-archive-section">
+        <h3 className="my-archive-section-title">学习轨迹</h3>
+        {timeline?.length ? timeline.map((e) => (
+          <div key={e.id} className="my-archive-record">
+            <span className="my-archive-record-date">{e.eventDate}</span>
+            <span className="my-archive-record-title">{e.title || e.eventType}</span>
+            <div className="my-archive-meta">
+              {e.chapter ? `${e.chapter} · ` : ''}
+              {e.questionCount ? `答题 ${e.correctCount || 0}/${e.questionCount} 题 · 正确率 ${e.accuracy || 0}%` : ''}
+              {e.knowledgePoints?.length ? ` · ${e.knowledgePoints.join('、')}` : ''}
+              {e.points ? ` · 积分 +${e.points}` : ''}
+              {e.coins ? ` · 学币 +${e.coins}` : ''}
+            </div>
+          </div>
+        )) : <span className="my-archive-empty">暂无学习轨迹</span>}
+      </div>
+
+      {/* 五、当日情况 */}
       <div className="sll-card my-archive-section">
         <h3 className="my-archive-section-title">当日学习情况</h3>
         {today ? (
@@ -102,7 +155,7 @@ export default function StudentMyArchivePage() {
         )}
       </div>
 
-      {/* 四、上课记录 */}
+      {/* 六、上课记录 */}
       <div className="sll-card my-archive-section">
         <h3 className="my-archive-section-title">上课记录 / 学习日志</h3>
         {detail?.records?.length ? detail.records.map((r) => (
@@ -117,7 +170,7 @@ export default function StudentMyArchivePage() {
         )) : <span className="my-archive-empty">暂无上课记录</span>}
       </div>
 
-      {/* 五、学期报告 */}
+      {/* 七、学期报告 */}
       <div className="sll-card my-archive-section">
         <h3 className="my-archive-section-title">学期报告</h3>
         <div className="my-archive-text">

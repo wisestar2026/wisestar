@@ -7,6 +7,7 @@ import cn.wisestar.server.domain.dto.archive.StudentArchiveRecordRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveRecordView;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveSaveRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveView;
+import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.student.StudentWeakView;
 import cn.wisestar.server.domain.dto.student.StudySummaryView;
 import cn.wisestar.server.domain.model.KnowledgePoint;
@@ -23,6 +24,7 @@ import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.StudentArchiveService;
 import cn.wisestar.server.service.StudySummaryService;
+import cn.wisestar.server.service.GrowthArchiveService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +38,7 @@ import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +85,7 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 	private final UserKnowledgeProgressMapper progressMapper;
 	private final KnowledgePointMapper knowledgePointMapper;
 	private final StudySummaryService studySummaryService;
+	private final GrowthArchiveService growthArchiveService;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -93,10 +97,18 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 			throw new ValidationException("学员ID不能为空");
 		}
 		String semesterKey = StringUtils.hasText(semester) ? semester : deriveSemester().semester;
+		// 优先定位全科条目（subject_id 为空），保持既有「学员 + 学期」档案语义；无则任取一条
 		StudentArchive archive = archiveMapper.selectOne(new LambdaQueryWrapper<StudentArchive>()
 				.eq(StudentArchive::getStudentId, studentId)
 				.eq(StudentArchive::getSemester, semesterKey)
+				.isNull(StudentArchive::getSubjectId)
 				.last("limit 1"));
+		if (archive == null) {
+			archive = archiveMapper.selectOne(new LambdaQueryWrapper<StudentArchive>()
+					.eq(StudentArchive::getStudentId, studentId)
+					.eq(StudentArchive::getSemester, semesterKey)
+					.last("limit 1"));
+		}
 
 		StudentArchiveView view = new StudentArchiveView();
 		Student student = studentMapper.selectById(studentId);
@@ -315,6 +327,36 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		} else {
 			recordMapper.updateById(record);
 		}
+		// 成长档案：上课记录定稿后留痕（CLASS 事件，幂等；失败不阻断）
+		if (REPORT_FINAL.equals(record.getStatus())) {
+			try {
+				GrowthEventContext growth = new GrowthEventContext();
+				growth.setStudentId(record.getStudentId());
+				growth.setSubjectId(StringUtils.hasText(record.getSubjectId())
+						? record.getSubjectId() : archive.getSubjectId());
+				growth.setEventType("CLASS");
+				growth.setSourceType("archive_record");
+				growth.setSourceId(record.getId());
+				growth.setEventDate(record.getRecordDate());
+				growth.setQuestionCount(0);
+				growth.setCorrectCount(0);
+				growth.setDurationMs(record.getDurationMinutes() == null ? 0L
+						: record.getDurationMinutes() * 60000L);
+				growth.setPoints(record.getPoints());
+				growth.setCoins(record.getCoins());
+				if (StringUtils.hasText(record.getStrengthenedKps())) {
+					List<String> names = new ArrayList<>();
+					names.add(record.getStrengthenedKps());
+					growth.setKnowledgePoints(names);
+				}
+				growth.setTitle(StringUtils.hasText(record.getTitle()) ? record.getTitle() : "上课记录");
+				growth.setRemark(record.getStudySummary());
+				growthArchiveService.record(growth);
+			}
+			catch (Exception e) {
+				log.warn("save archive record: growth record failed, ignored", e);
+			}
+		}
 		return toRecordView(record);
 	}
 
@@ -379,6 +421,47 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		archive.setReportStatus(REPORT_DRAFT);
 		archiveMapper.updateById(archive);
 		return getArchive(studentId, archive.getSemester());
+	}
+
+	@Override
+	@Transactional(rollbackFor = Exception.class)
+	public void bindBaseline(String studentId, String subjectId, String semester, String detectId,
+			int accuracy, List<StudentWeakView> weakPoints) {
+		if (!StringUtils.hasText(studentId) || !StringUtils.hasText(subjectId)
+				|| !StringUtils.hasText(semester)) {
+			return;
+		}
+		StudentArchive archive = archiveMapper.selectOne(new LambdaQueryWrapper<StudentArchive>()
+				.eq(StudentArchive::getStudentId, studentId)
+				.eq(StudentArchive::getSemester, semester)
+				.eq(StudentArchive::getSubjectId, subjectId)
+				.last("limit 1"));
+		boolean isNew = archive == null;
+		if (isNew) {
+			Student student = studentMapper.selectById(studentId);
+			if (student == null) {
+				return;
+			}
+			Semester sem = deriveSemester();
+			archive = new StudentArchive();
+			archive.setStudentId(studentId);
+			archive.setStudentNo(student.getStudentNo());
+			archive.setStudentName(student.getName());
+			archive.setSchoolYear(sem.schoolYear);
+			archive.setSemester(semester);
+			archive.setTermLabel(sem.termLabel);
+			archive.setSubjectId(subjectId);
+			archive.setStatus(STATUS_DRAFT);
+			archive.setReportStatus(REPORT_NONE);
+		}
+		archive.setProfileSnapshot(buildBaselineSnapshot(detectId, accuracy, weakPoints));
+		archive.setBaselineDetectId(detectId);
+		archive.setBaselineAt(new Date());
+		if (isNew) {
+			archiveMapper.insert(archive);
+		} else {
+			archiveMapper.updateById(archive);
+		}
 	}
 
 	// ------------------------------------------------------------------ 内部方法
@@ -507,6 +590,32 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		} catch (Exception e) {
 			log.warn("序列化档案快照失败：{}", e.getMessage());
 			return "[]";
+		}
+	}
+
+	/** 构建基线快照 JSON：{"baseline":true,"detectId":"...","accuracy":73,"weakPoints":[...]}。 */
+	private String buildBaselineSnapshot(String detectId, int accuracy, List<StudentWeakView> weakPoints) {
+		Map<String, Object> root = new LinkedHashMap<>();
+		root.put("baseline", true);
+		root.put("detectId", detectId);
+		root.put("accuracy", accuracy);
+		List<Map<String, Object>> arr = new ArrayList<>();
+		if (weakPoints != null) {
+			for (StudentWeakView w : weakPoints) {
+				Map<String, Object> item = new LinkedHashMap<>();
+				item.put("kpId", w.getKpId());
+				item.put("name", w.getName());
+				item.put("subjectId", w.getSubjectId());
+				item.put("accuracy", w.getMastery());
+				arr.add(item);
+			}
+		}
+		root.put("weakPoints", arr);
+		try {
+			return objectMapper.writeValueAsString(root);
+		} catch (Exception e) {
+			log.warn("序列化基线快照失败：{}", e.getMessage());
+			return "{}";
 		}
 	}
 

@@ -346,10 +346,19 @@ export default function KnowledgeDetectPage() {
           format={(p) => <span className="kd-report-percent">{p}<small>%</small></span>}
         />
         <div className="kd-report-summary">
-          <div className="kd-report-title">检测完成</div>
+          <div className="kd-report-title">
+            检测完成
+            {rep.detectType === 'PRE' && <Tag color="gold" style={{ marginLeft: 8 }}>学前检测 · 已定格基线</Tag>}
+            {rep.detectType === 'STAGE' && <Tag color="blue" style={{ marginLeft: 8 }}>阶段检测</Tag>}
+          </div>
           <div className="kd-report-line">
             答对 <b>{rep.correct}</b> / {rep.total} 题
           </div>
+          {rep.baseline && (
+            <div className="kd-report-line kd-report-hint">
+              本次为学期首次全面检测，已作为成长基线。此后薄弱点逐个攻克即可看到成长对比。
+            </div>
+          )}
           <div className="kd-report-line kd-report-hint">
             {rep.accuracy >= 80 ? '掌握不错，继续保持！' : rep.accuracy >= 60 ? '还有提升空间，针对薄弱点再练一练' : '基础需巩固，建议回到单元重点重新学习'}
           </div>

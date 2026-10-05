@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.domain.dto.detect.DetectGenerateRequest;
+import cn.wisestar.server.domain.dto.detect.DetectRecordView;
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.detect.DetectSubmitRequest;
 import cn.wisestar.server.domain.dto.detect.DetectUnitView;
@@ -61,6 +62,19 @@ public class DetectionApi {
 	@PreAuthorize("isAuthenticated()")
 	public DetectReportView submit(@RequestBody DetectSubmitRequest request) {
 		return detectionService.submit(request);
+	}
+
+	/**
+	 * 检测历史查询（按时间倒序）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/detect/history?subjectId=&amp;semester=。</p>
+	 */
+	@GetMapping("/history")
+	@PreAuthorize("isAuthenticated()")
+	public List<DetectRecordView> history(@RequestParam(required = false) String studentId,
+			@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) String semester) {
+		return detectionService.history(studentId, subjectId, semester);
 	}
 
 }

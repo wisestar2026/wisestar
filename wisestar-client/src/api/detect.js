@@ -29,6 +29,11 @@ export function submitDetectPaper(data) {
   return request.post('/student/detect/submit', data);
 }
 
+/** 检测历史（按时间倒序，含学前检测/阶段检测标识） */
+export function getDetectHistory(params) {
+  return request.get('/student/detect/history', { params });
+}
+
 /**
  * 按单元名取该单元题目（复用检测组卷接口，返回剥离答案的题目）。
  *

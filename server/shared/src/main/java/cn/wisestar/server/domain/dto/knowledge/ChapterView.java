@@ -61,4 +61,10 @@ public class ChapterView {
 	/** 学习完成度（0-100，学员维度：相关练习最高正确率） */
 	private Integer progress;
 
+	/** 该章节下是否存在学员未攻克的薄弱知识点 */
+	private Boolean weak;
+
+	/** 该章节下学员未攻克的薄弱知识点数 */
+	private Integer weakCount;
+
 }

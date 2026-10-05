@@ -27,6 +27,8 @@ import cn.wisestar.server.domain.dto.student.StudentView;
 import cn.wisestar.server.domain.dto.student.StudentWeakConquerRequest;
 import cn.wisestar.server.domain.dto.student.StudentWeakConquerView;
 import cn.wisestar.server.domain.dto.student.StudentWeakView;
+import cn.wisestar.server.domain.dto.student.StudentWeakTimelineView;
+import cn.wisestar.server.domain.dto.student.WeakCompareView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 import cn.wisestar.server.service.StudentService;
@@ -440,6 +442,35 @@ public class StudentApi {
 	}
 
 	/**
+	 * 薄弱点变化时间线（discovered / conquered / reopened 留痕）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/weak/timeline?subjectId=。</p>
+	 *
+	 * @param subjectId 学科ID（可空，空则返回全部学科）
+	 * @return 事件列表（时间倒序）
+	 */
+	@GetMapping("/weak/timeline")
+	@PreAuthorize("isAuthenticated()")
+	public List<StudentWeakTimelineView> weakTimeline(
+			@RequestParam(required = false) String subjectId) {
+		return studentService.weakTimeline(subjectId);
+	}
+
+	/**
+	 * 薄弱点对比（首次检测基线 vs 当前）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/weak/compare?subjectId=。</p>
+	 *
+	 * @param subjectId 学科ID（可空）
+	 * @return 对比视图
+	 */
+	@GetMapping("/weak/compare")
+	@PreAuthorize("isAuthenticated()")
+	public WeakCompareView weakCompare(@RequestParam(required = false) String subjectId) {
+		return studentService.weakCompare(subjectId);
+	}
+
+	/**
 	 * 知识点详情（掌握度/评级/薄弱/预习状态）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/knowledge/detail?knowledgePointId=。</p>
@@ -493,6 +524,22 @@ public class StudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public StudentWeakConquerView weakConquer(@RequestBody StudentWeakConquerRequest request) {
 		return studentService.weakConquer(request);
+	}
+
+	/**
+	 * 跨单元薄弱点专攻组卷。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/student/practice/weak?subjectId=&count=。</p>
+	 *
+	 * @param subjectId 学科ID（可空）
+	 * @param count     题量（可空，默认 20）
+	 * @return 题目列表（不含标准答案）
+	 */
+	@PostMapping("/practice/weak")
+	@PreAuthorize("isAuthenticated()")
+	public List<StudentQuestionView> weakPractice(@RequestParam(required = false) String subjectId,
+			@RequestParam(required = false) Integer count) {
+		return studentService.weakPractice(subjectId, count);
 	}
 
 }

@@ -38,4 +38,18 @@ public interface EvaluationService {
 	 */
 	void refreshWeakAfterCorrection(String userId, String knowledgePointId);
 
+	/**
+	 * 首次基线检测一次性播种薄弱知识点（口径 a：基线只写一次，此后检测不重写）。
+	 *
+	 * <p>按知识点名称在指定学科内定位实体；掌握度低于薄弱阈值者写入
+	 * {@code t_user_weak_knowledge}（active）并产生 discovered 事件。幂等：已存在则跳过。</p>
+	 *
+	 * @param userId           学员ID
+	 * @param subjectId        学科ID
+	 * @param refKey           基线来源键（用于事件幂等，如 {@code detect:{recordId}}）
+	 * @param kpMasteryByName  知识点名称 → 基线掌握度（正确率 0-100）
+	 */
+	void seedWeakFromBaseline(String userId, String subjectId, String refKey,
+			java.util.Map<String, Integer> kpMasteryByName);
+
 }

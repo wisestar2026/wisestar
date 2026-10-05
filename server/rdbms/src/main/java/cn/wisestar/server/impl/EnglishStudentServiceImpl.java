@@ -6,6 +6,7 @@ import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
+import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.model.EnglishGrammar;
@@ -26,6 +27,7 @@ import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.EnglishStudentService;
 import cn.wisestar.server.service.EnglishUnitService;
+import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.RewardService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +64,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final EnglishUnitService englishUnitService;
 	private final SubjectMapper subjectMapper;
 	private final RewardService rewardService;
+	private final GrowthArchiveService growthArchiveService;
 
 	@Override
 	public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term) {
@@ -203,6 +206,32 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		}
 
 		writeLog(userId, "grammar", grammarId, 0, correct ? 1 : 0);
+
+		// 成长档案：语法练习轨迹留痕（按 grammarId + 日期累加，幂等；失败不阻断）
+		try {
+			String date = LocalDate.now().toString();
+			GrowthEventContext growth = new GrowthEventContext();
+			growth.setStudentId(userId);
+			growth.setSubjectId(englishSubjectId());
+			growth.setEventType("GRAMMAR");
+			growth.setSourceType("grammar");
+			growth.setSourceId(grammarId + ":" + date);
+			growth.setEventDate(date);
+			growth.setQuestionCount(1);
+			growth.setCorrectCount(correct ? 1 : 0);
+			growth.setAccuracy(correct ? 100 : 0);
+			EnglishGrammar grammar = englishGrammarMapper.selectById(grammarId);
+			if (grammar != null && grammar.getTitle() != null) {
+				List<String> names = new ArrayList<>();
+				names.add(grammar.getTitle());
+				growth.setKnowledgePoints(names);
+			}
+			growth.setTitle("英语语法练习");
+			growthArchiveService.record(growth);
+		}
+		catch (Exception e) {
+			log.warn("record grammar: growth record failed, ignored", e);
+		}
 	}
 
 	@Override

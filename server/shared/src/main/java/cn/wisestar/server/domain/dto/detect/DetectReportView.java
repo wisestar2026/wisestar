@@ -32,6 +32,15 @@ public class DetectReportView {
 	/** 逐题明细（含标准答案与解析） */
 	private List<Detail> details = new ArrayList<>();
 
+	/** 检测类型 PRE（学前/基线）/ STAGE（阶段） */
+	private String detectType;
+
+	/** 本次是否定格为成长基线 */
+	private boolean baseline;
+
+	/** 检测记录ID（未落库时为 null） */
+	private String recordId;
+
 	/**
 	 * 单元维度统计。
 	 */
