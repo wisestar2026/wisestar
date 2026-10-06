@@ -490,6 +490,8 @@
   【学习币】分学科、单学期上限 #SUBJECT_COIN_LIMIT，只用于商品兑换； 【学海积分】全学科、终身、无上限，只用于荣誉评价（头衔/证书）。
 
   英语学习行为复用同一体系：`ACTION_EN_WORD`/`ACTION_EN_SENTENCE` 各 5 币 3 分， `ACTION_EN_WORD_QUIZ`/`ACTION_EN_REVIEW`/`ACTION_EN_DRILL` 各 20 币 6 分。
+
+  薄弱点攻克复用同一体系：`ACTION_WEAK_CONQUER`（weak_conquer）发放 25 币 12 分； `ACTION_WEAK_SECTION_CONQUER`（weak_section_conquer）发放 40 币 0 分（薄弱小节全部攻克）。 两者均已在 `reward` 与 `actionLabel` 登记。
 - 方法:
   - `public static int[] reward(String actionType, Integer stage)`
     奖励值：返回 `[学习币, 学海积分]`。
@@ -1287,19 +1289,26 @@
 - **类说明**：
   知识点检测组卷请求。字段：subjectId（学科ID）、grade（年级）、term（册别，服务端归一化比较上/下）、chapterIds（勾选单元ID列表）、questionCount（抽题数量，默认 10，上限 50）、difficulty（easy/medium/hard，可空不限）、types（题型过滤，可空不限）。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectRecordView.java`
+- 包: `cn.wisestar.server.domain.dto.detect`
+- 类型: `class DetectRecordView`
+- 注解: @Data
+- **类说明**：
+  检测记录视图（历史条目）。用于学员端/管理端查询检测历史，含类型、正确率、薄弱点摘要与基线标识。字段：id、subjectId、subjectName（学科名称快照）、grade、term（册别快照）、semester（学期键）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段）、baseline（是否成长基线）、questionCount（组卷题量）、total（实际判分题数）、correct（正确题数）、accuracy（正确率 0-100）、durationMs（作答耗时 ms）、chapterNames（勾选章节名称）、weakPoints（`List<DetectReportView.WeakPoint>` 薄弱点摘要）、createTime（检测时间）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectReportView.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
 - 类型: `class DetectReportView`
 - 注解: @Data
 - **类说明**：
-  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序且仅含有错题）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 正确/0 错误/null 未判分）/correctAnswers/studentAnswer/analysis）。
+  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序且仅含有错题）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 正确/0 错误/null 未判分）/correctAnswers/studentAnswer/analysis）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段）、baseline（本次是否定格为成长基线）、recordId（检测记录ID，未落库时为 null）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectSubmitRequest.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
 - 类型: `class DetectSubmitRequest`
 - 注解: @Data
 - **类说明**：
-  知识点检测交卷请求。字段：items（`List<Item>`：questionId（t_template.id）、answer（`Map<String,Object>`，形如 {type:'option',optionId} / {type:'options',optionIds} / {type:'text',text}））。
+  知识点检测交卷请求。字段：items（`List<Item>`：questionId（t_template.id）、answer（`Map<String,Object>`，形如 {type:'option',optionId} / {type:'options',optionIds} / {type:'text',text}））、subjectId（学科ID，WPB 落库与基线判定用，可空，为空时不参与基线）、grade（年级快照）、term（册别快照）、semester（学期键，可空，服务端按当前学期兜底）、chapterIds（勾选章节ID）、chapterNames（勾选章节名称）、questionCount（组卷题量）、durationMs（作答耗时 ms）、clientToken（客户端幂等令牌，重复提交返回既有记录）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectUnitView.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
@@ -1851,6 +1860,48 @@
 - **类说明**：
   英语智能复习条目视图 DTO（单词与句子混合队列）。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthCompareView.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthCompareView`
+- 注解: @Data
+- **类说明**：
+  成长对比视图（基线 vs 当前）。字段：studentId、subjectId、subjectName、semester、baselineDetectId（基线检测记录ID）、baselineAt（基线定格时间）、baselineAccuracy（基线整体正确率）、currentAccuracy（当前整体正确率，取检测记录最新值或练习汇总）、hasBaseline（是否已定格基线）、baselineWeakCount（基线薄弱点数量）、resolvedCount（已攻克数量）、remainingCount（仍需巩固数量）、newlyWeakCount（新增薄弱数量）、totalQuestionCount（练习/检测总题量）、totalCorrectCount（总正确数）、eventCount（轨迹事件数）、deltas（`List<DeltaItem>`：kpId/name/baselineAccuracy/currentMastery/delta（当前-基线）/resolved，逐知识点「基线掌握度 → 当前掌握度」变化）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthEventContext.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthEventContext`
+- 注解: @Data
+- **类说明**：
+  学习轨迹事件写入上下文（各埋点来源组装后交给 `GrowthArchiveService.record`）。字段：studentId、subjectId、subjectName（学科名称快照）、eventType（事件类型 PRACTICE/DETECT/GRAMMAR/CLASS）、sourceType（来源类型 practice/detect/grammar/archive_record）、sourceId（业务对象ID，幂等键）、eventDate（发生日期 yyyy-MM-dd）、occurredAt（发生时间）、chapterId（章节/单元ID）、chapter（章节/单元名称）、knowledgePoints（知识点名称列表）、questionCount（题量）、correctCount（正确数）、accuracy（正确率 0-100）、durationMs（时长 ms）、points（积分）、coins（学习币）、title（事件标题）、remark（备注）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthEventView.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthEventView`
+- 注解: @Data
+- **类说明**：
+  学习轨迹事件视图（成长时间轴条目）。字段：id、eventType（事件类型 PRACTICE/DETECT/GRAMMAR/CLASS）、sourceType（来源类型 practice/detect/grammar/archive_record）、subjectId、subjectName（学科名称快照）、eventDate（发生日期 yyyy-MM-dd）、occurredAt（发生时间）、chapter（章节/单元名称）、knowledgePoints（知识点名称列表）、questionCount（题量）、correctCount（正确数）、accuracy（正确率 0-100）、durationMs（时长 ms）、points（积分）、coins（学习币）、title（事件标题）、remark（备注）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthReportRequest.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthReportRequest`
+- 注解: @Data
+- **类说明**：
+  成长报告生成请求。字段：studentId（管理端生成他人报告时传入；学员端忽略取当前登录）、subjectId（学科ID，可空，空表示全科/通用档案）、semester（学期键，为空取当前学期）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthReportView.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthReportView`
+- 注解: @Data
+- **类说明**：
+  成长报告视图（正文 + 状态 + 打印头信息）。字段：studentId、studentNo（学号快照）、studentName（姓名快照）、subjectId、subjectName、semester、termLabel（学期名称，如 第一学期）、schoolYear（学年，如 2026-2027）、content（报告正文）、status（报告状态 none/draft/final）、model（生成模型，AI 模型名或 rule）、generatedAt（生成时间）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthTimelineQuery.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthTimelineQuery`
+- 注解: @Data
+- **类说明**：
+  学习轨迹查询条件。字段：studentId（管理端查询他人时传入；学员端忽略取当前登录）、subjectId（学科ID，可空）、from（起始日期 yyyy-MM-dd，可空）、to（结束日期 yyyy-MM-dd，可空）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/ChapterImportRequest.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
 - 类型: `class ChapterImportRequest`
@@ -1880,7 +1931,7 @@
 - 类型: `class ChapterView`
 - 注解: @Data
 - **类说明**：
-  章节视图（返回前端展示用，含小节数统计）。
+  章节视图（返回前端展示用，含小节数统计与学员薄弱标记）。另含 weak（该章节下是否存在学员未攻克的薄弱知识点）、weakCount（该章节下学员未攻克的薄弱知识点数）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/ImportResultView.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -1931,7 +1982,7 @@
 - 注解: @Data
 - **类说明**：
   知识点视图（返回前端展示用）。
-  含三级归属名称（学科/章节/小节，列表直接展示）与绑定题目数统计； 题目从题目库（t_template）选择绑定，不能在此新增。
+  含三级归属名称（学科/章节/小节，列表直接展示）与绑定题目数统计； 题目从题目库（t_template）选择绑定，不能在此新增。 另含 weak（该知识点是否为学员未攻克的薄弱点）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/SectionImportRequest.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -1985,7 +2036,7 @@
 - 类型: `class SectionView`
 - 注解: @Data
 - **类说明**：
-  小节视图（返回前端展示用，含内容/练习设置状态与知识点数统计）。
+  小节视图（返回前端展示用，含内容/练习设置状态与知识点数统计）。另含 weak（该小节是否存在学员未攻克的薄弱知识点）、weakCount（该小节学员未攻克的薄弱知识点数）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/SubjectRequest.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -2317,6 +2368,13 @@
 - **类说明**：
   薄弱点攻克结果视图。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/student/StudentWeakTimelineView.java`
+- 包: `cn.wisestar.server.domain.dto.student`
+- 类型: `class StudentWeakTimelineView`
+- 注解: @Data
+- **类说明**：
+  薄弱点变化事件视图（精准破弱「留痕」时间线）。字段：eventType（事件类型 discovered/conquered/reopened）、kpId（知识点ID）、kpName（知识点名称快照）、sectionName（小节名称快照）、chapterName（章节名称快照）、mastery（事件发生时掌握度）、source（来源 detect/practice/correction）、occurredAt（发生时间）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/StudentWeakView.java`
 - 包: `cn.wisestar.server.domain.dto.student`
 - 类型: `class StudentWeakView`
@@ -2361,6 +2419,13 @@
 - 注解: @Data
 - **类说明**：
   学习总结视图（学员本人 / 教师查看）。字段：id/studentId/studentName/summaryDate/sessionId/content/model（规则模板为 rule）/status/createTime、durationMs（当日累计学习时长）、practiceCount/questionCount/correctCount/accuracy/wrongCount/points/coins/knowledgeCount/avgMastery（当日学习数据聚合）、weakNames（当前薄弱点名称）、strengthenedNames（当日强化的知识点名称）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/student/WeakCompareView.java`
+- 包: `cn.wisestar.server.domain.dto.student`
+- 类型: `class WeakCompareView`
+- 注解: @Data
+- **类说明**：
+  薄弱点对比视图（成长基线 vs 当前）。基线取自首次全面检测冻结的薄弱点，当前取自学员 active 薄弱知识点；仅呈现「已攻克 / 仍薄弱 / 新出现」的集合变化，不做提分数值评测。字段：subjectId（可空，空为全部学科）、semester（基线学期键）、hasBaseline（是否存在成长基线）、baselineCount（基线薄弱点数）、currentCount（当前薄弱点数）、resolvedCount（已攻克薄弱点数）、resolved（`List<Item>`：已攻克，基线有、当前无）、remaining（`List<Item>`：仍薄弱，基线有、当前仍有）、newlyWeak（`List<Item>`：新出现，基线无、当前有）；Item 字段：kpId（知识点ID，基线条目可能为空）、name（知识点名称）、chapterName（所属章节名称）、baselineAccuracy（基线正确率 0-100，基线条目才有）、mastery（当前掌握度 0-100，当前薄弱条目才有）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/task/StudentTaskView.java`
 - 包: `cn.wisestar.server.domain.dto.task`
@@ -2461,6 +2526,8 @@
     自动组卷（剥离标准答案与解析）。
   - `public DetectReportView submit(DetectSubmitRequest request)`
     交卷并生成薄弱点诊断报告（不落库、不发放奖励）。
+  - `public List<DetectRecordView> history(String studentId, String subjectId, String semester)`
+    检测历史查询（按时间倒序）；studentId 为空时取当前登录学员，subjectId/semester 可空。
 
 ### `shared/src/main/java/cn/wisestar/server/service/DeptService.java`
 - 包: `cn.wisestar.server.service`
@@ -2543,6 +2610,9 @@
 - **类说明**：
   学员薄弱点·学习结果评价服务。
   以 `t_practice_detail` 为唯一数据源，按知识点刷新掌握度、研判薄弱、自动攻克； 掌握度采用「最近 5 次练习正确率加权（越近权重越高）」计算。
+- 方法:
+  - `public void seedWeakFromBaseline(String userId, String subjectId, String refKey, Map<String, Integer> kpMasteryByName)`
+    首次基线检测一次性播种薄弱知识点（口径 a：基线只写一次，此后检测不重写）；按知识点名称在指定学科内定位实体，掌握度低于薄弱阈值者写入 `t_user_weak_knowledge`（active）并产生 discovered 事件，幂等（已存在则跳过）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/FileService.java`
 - 包: `cn.wisestar.server.service`
@@ -2554,6 +2624,25 @@
   **类职责**：提供文件（附件/图片）的上传、列表查询、读取（预览/下载）、 删除能力，以及模板文件下载。底层文件存储依赖 cn.wisestar.server.storage.StorageService， 文件元数据记录在数据库（t_file）。实现类位于 rdbms 模块（FileServiceImpl）。
 
   **调用方**：api 模块 FileApi（/api/file/**，GET 读取路径在 WebSecurityConfig 中配置为 permitAll，支持公开访问预览）。
+
+### `shared/src/main/java/cn/wisestar/server/service/GrowthArchiveService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface GrowthArchiveService`
+- **类说明**：
+  成长档案服务（学习轨迹 + 成长对比 + 成长报告）。把学员每一次已落库的学习行为留痕为成长轨迹事件；以学前检测冻结的成长基线为参照，计算「基线 → 当前」的成长对比；汇总基线与轨迹生成面向家长、可打印的成长报告。实现类位于 rdbms 模块（GrowthArchiveServiceImpl）。
+- 方法:
+  - `public void record(GrowthEventContext context)`
+    幂等写入一条学习轨迹事件（语法类按 grammarId + 日期累加）。
+  - `public List<GrowthEventView> timeline(String studentId, String subjectId, String from, String to)`
+    查询学习轨迹时间轴（按发生时间倒序）；studentId 为空取当前登录学员，subjectId/from/to 可空。
+  - `public GrowthCompareView compare(String studentId, String subjectId, String semester)`
+    成长对比（基线 vs 当前）；studentId 为空取当前登录学员，subjectId 可空，semester 为空取当前学期。
+  - `public GrowthReportView generate(GrowthReportRequest request)`
+    生成成长报告（汇总基线 + 对比 + 轨迹 + 目标规划；AI 可用时润色，否则规则降级），并写入档案。
+  - `public GrowthReportView report(String studentId, String subjectId, String semester)`
+    读取已生成的成长报告；studentId 为空取当前登录学员，subjectId 可空，semester 为空取当前学期。
+  - `public void rebuild(String studentId, String subjectId, String semester)`
+    由来源业务数据重建轨迹（运维/补偿用，幂等）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/KnowledgePointService.java`
 - 包: `cn.wisestar.server.service`
@@ -2677,14 +2766,21 @@
 - 包: `cn.wisestar.server.service`
 - 类型: `interface StudentArchiveService`
 - **类说明**：
-  学员档案服务（学习规划 + 上课记录 + 学期报告）。以知识点检测/薄弱点为新学期档案的初始快照，老师据此填写本学期目标规划表与承诺书；每次上课记录逐条汇入档案形成学习日志，学期末汇总为可打印的学期报告。方法：`getArchive(studentId,semester)`、`myArchive()`、`save(request)`、`overview(studentId)`、`saveRecord(request)`、`deleteRecord(id)`、`draft(studentId,date)`、`generateReport(studentId,semester)`。
+  学员档案服务（学习规划 + 上课记录 + 学期报告）。以知识点检测/薄弱点为新学期档案的初始快照，老师据此填写本学期目标规划表与承诺书；每次上课记录逐条汇入档案形成学习日志，学期末汇总为可打印的学期报告。方法：`getArchive(studentId,semester)`、`myArchive()`、`save(request)`、`overview(studentId)`、`saveRecord(request)`、`deleteRecord(id)`、`draft(studentId,date)`、`generateReport(studentId,semester)`、`bindBaseline(studentId,subjectId,semester,detectId,accuracy,weakPoints)`（把学前检测结果定格为「学员 + 学期 + 学科」档案的成长基线快照与基线检测ID）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/StudentService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface StudentService`
 - **类说明**：
   学员管理服务（学员管理模块）。
-  **定位**：学员主数据 CRUD。新增学员时自动生成「字母 + 6 位数字」学号并创建 学员登录账号（t_account，user_type=Student，初始密码 123456）。
+  **定位**：学员主数据 CRUD。新增学员时自动生成「字母 + 6 位数字」学号并创建 学员登录账号（t_account，user_type=Student，初始密码 123456）。 另提供精准破弱模型（WPB）相关能力：薄弱点留痕时间线、跨单元薄弱专攻组卷与基线-当前对比。
+- 方法:
+  - `public List<StudentWeakTimelineView> weakTimeline(String subjectId)`
+    薄弱点变化时间线（discovered / conquered / reopened 留痕）；subjectId 可空，空则返回全部学科。
+  - `public List<StudentQuestionView> weakPractice(String subjectId, Integer count)`
+    跨单元薄弱点专攻组卷（聚合学员 active 薄弱知识点，按学科过滤）；subjectId 可空，count 可空（默认 20，最大 50），返回题目不含标准答案。
+  - `public WeakCompareView weakCompare(String subjectId)`
+    薄弱点对比（首次检测基线 vs 当前 active 薄弱点）；subjectId 可空，空为全部学科。
 
 ### `shared/src/main/java/cn/wisestar/server/service/StudentSupervisionService.java`
 - 包: `cn.wisestar.server.service`

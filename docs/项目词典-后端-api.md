@@ -47,6 +47,8 @@
   **被谁调用**：管理端学员档案页（学员列表行内「档案」入口，student:archive[:edit]）、 学员端「我的学习档案」页（/student/archive）。
 
   **数据权限**：管理端读写需 student:archive / student:archive:edit；学员端 /my 仅返回当前 登录学员本人档案（isAuthenticated）。
+
+  **依赖的服务**：注入 StudentArchiveService（档案主体）、DetectionService（管理端检测历史）与 GrowthArchiveService（管理端学习轨迹/成长对比/成长报告）；后两者支撑"精准破弱模型（WPB）+ 学员成长档案"在管理端的学员维度入口。
 - 方法:
   - `public StudentArchiveView detail(@RequestParam String studentId, @RequestParam(required = false) String semester)`
     学员档案详情（含初始快照、薄弱点、上课记录、当日情况）。权限 hasAuthority('student:archive')。
@@ -64,6 +66,16 @@
     生成学期报告（AI 可用时润色，否则规则模板）。权限 hasAuthority('student:archive:edit')。
   - `public StudentArchiveView myArchive()`
     我的档案（学员端只读，返回当前登录学员本人本学期档案）。
+  - `public List<DetectRecordView> detectHistory(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
+    指定学员检测历史（管理端）。权限 hasAuthority('student:archive')。
+  - `public List<GrowthEventView> timeline(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String from, @RequestParam(required = false) String to)`
+    指定学员学习轨迹时间轴（管理端）。权限 hasAuthority('student:archive')。
+  - `public GrowthCompareView compare(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
+    指定学员成长对比（管理端）。权限 hasAuthority('student:archive')。
+  - `public GrowthReportView generateGrowthReport(@RequestBody GrowthReportRequest request)`
+    生成指定学员成长报告（管理端）。权限 hasAuthority('student:archive:edit')。
+  - `public GrowthReportView growthReport(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
+    读取指定学员成长报告（管理端）。权限 hasAuthority('student:archive')。
 
 ### `api/src/main/java/cn/wisestar/server/api/CampusApi.java`
 - 包: `cn.wisestar.server.api`
@@ -195,7 +207,7 @@
 
   **依赖的服务**：注入 DetectionService（shared 模块接口，rdbms 模块实现）——负责单元统计、组卷取题、判分与报告聚合。
 
-  **权限**：三个方法均为 `@PreAuthorize("isAuthenticated()")`（登录即可，不设功能级权限点）。
+  **权限**：四个方法均为 `@PreAuthorize("isAuthenticated()")`（登录即可，不设功能级权限点）。
 - 方法:
   - `public List<DetectUnitView> units(String subjectId, String grade, String term)`
     检测可选单元列表（带可用题量）。
@@ -228,6 +240,19 @@
     **返回值结构**：`DetectReportView`（total/correct/accuracy/chapterStats/weakPoints/details）。
 
     **调用的下层 Service**：DetectionService#submit(DetectSubmitRequest)。
+  - `public List<DetectRecordView> history(String studentId, String subjectId, String semester)`
+    检测历史查询（按时间倒序）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/detect/history?studentId=&subjectId=&semester=。
+
+    **功能**：返回检测记录（按时间倒序）；管理端传入 studentId 时查询指定学员，学员端不传则查当前登录学员本人；`subjectId`/`semester` 为空时不作该维度过滤。
+
+    **请求参数**：studentId（可空，管理端指定学员）、subjectId（可空）、semester（可空）。
+
+    **返回值结构**：`List<DetectRecordView>`（检测记录视图列表）。
+
+    **调用的下层 Service**：DetectionService#history(String, String, String)。
+
+    **权限**：isAuthenticated()。
 
 ### `api/src/main/java/cn/wisestar/server/api/EnglishAiPackApi.java`
 - 包: `cn.wisestar.server.api`
@@ -346,6 +371,8 @@
     删除单词。
   - `public cn.wisestar.server.domain.dto.english.ImportResult importWords(@RequestParam MultipartFile file)`
     批量导入单词（Excel）。
+  - `public cn.wisestar.server.domain.dto.english.ImportResult fillDictionary(@RequestBody Map<String, Object> request)`
+    从免费词典接口批量补全音标、释义、例句（只填充空字段）。权限 hasAuthority('english:word:update')。
 
 ### `api/src/main/java/cn/wisestar/server/api/EnglishWordStudentApi.java`
 - 包: `cn.wisestar.server.api`
@@ -476,6 +503,77 @@
     **返回值结构**：ResponseEntity（Excel 模板文件字节流，附件下载）。
 
     **调用的下层 Service**：FileService#downloadTemplate(String)。
+
+### `api/src/main/java/cn/wisestar/server/api/GrowthArchiveApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class GrowthArchiveApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  学员本人成长档案接口（GrowthArchiveApi）。
+  **所属模块**：api 模块（Web 接口层，Spring MVC REST Controller）。
+
+  **类职责**：为学员提供"精准破弱模型（WPB）"下的成长档案能力——查看本人学习轨迹时间轴、以学前检测基线为参照的成长对比，以及可打印的成长报告；报告可手动触发重新生成。studentId 由服务层固定为当前登录学员本人（Controller 调用时传 null），接口不接收外部传入的学员标识，学员只能访问本人数据。
+
+  **请求路径前缀**：类级路径为 `${api.prefix}/student/growth`（api.prefix 通常为 /api）。
+
+  **被谁调用**：前端学员端「我的成长档案」页面（学习轨迹/成长对比/成长报告）。
+
+  **依赖的服务**：注入 GrowthArchiveService（shared 模块接口，rdbms 模块实现）——负责轨迹事件聚合、基线对比与成长报告读取/生成。
+
+  **权限**：四个方法均为 `@PreAuthorize("isAuthenticated()")`（登录即可，不设功能级权限点）。
+- 方法:
+  - `public List<GrowthEventView> timeline(@RequestParam(required = false) String subjectId, @RequestParam(required = false) String from, @RequestParam(required = false) String to)`
+    学习轨迹时间轴（按发生时间倒序）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/growth/timeline?subjectId=&from=&to=。
+
+    **功能**：返回当前登录学员的学习轨迹事件时间轴（按发生时间倒序）；`subjectId`/`from`/`to` 为空时不作该维度过滤。
+
+    **请求参数**：subjectId（可空）、from（可空，起始时间）、to（可空，结束时间）。
+
+    **返回值结构**：`List<GrowthEventView>`（轨迹事件视图）。
+
+    **调用的下层 Service**：GrowthArchiveService#timeline(null, subjectId, from, to)（studentId 固定为当前登录学员）。
+
+    **权限**：isAuthenticated()。
+  - `public GrowthCompareView compare(@RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
+    成长对比（基线 vs 当前）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/growth/compare?subjectId=&semester=。
+
+    **功能**：以学前检测基线为参照，返回本人当前各知识点/薄弱点的成长对比；`subjectId`/`semester` 为空时不作过滤。
+
+    **请求参数**：subjectId（可空）、semester（可空）。
+
+    **返回值结构**：`GrowthCompareView`（成长对比视图）。
+
+    **调用的下层 Service**：GrowthArchiveService#compare(null, subjectId, semester)（studentId 固定为当前登录学员）。
+
+    **权限**：isAuthenticated()。
+  - `public GrowthReportView report(@RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
+    读取本人成长报告。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/growth/report?subjectId=&semester=。
+
+    **功能**：读取当前登录学员已生成的成长报告；尚未生成时由服务层决定返回空或规则模板。
+
+    **请求参数**：subjectId（可空）、semester（可空）。
+
+    **返回值结构**：`GrowthReportView`（成长报告视图）。
+
+    **调用的下层 Service**：GrowthArchiveService#report(null, subjectId, semester)（studentId 固定为当前登录学员）。
+
+    **权限**：isAuthenticated()。
+  - `public GrowthReportView generate(@RequestBody GrowthReportRequest request)`
+    生成/重新生成本人成长报告。
+    **HTTP 方法 + 完整路径**：POST ${api.prefix}/student/growth/report/generate。
+
+    **功能**：按请求参数为当前登录学员生成或覆盖重新生成成长报告，返回生成结果。
+
+    **请求参数**：GrowthReportRequest（@RequestBody JSON：subjectId/semester 等）。
+
+    **返回值结构**：`GrowthReportView`（成长报告视图）。
+
+    **调用的下层 Service**：GrowthArchiveService#generate(GrowthReportRequest)。
+
+    **权限**：isAuthenticated()。
 
 ### `api/src/main/java/cn/wisestar/server/api/KnowledgePointApi.java`
 - 包: `cn.wisestar.server.api`
@@ -1121,6 +1219,16 @@
   - `public List<StudentWeakView> weakList()`
     薄弱知识点列表。
     **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/weak/list。
+  - `public List<StudentWeakTimelineView> weakTimeline(@RequestParam(required = false) String subjectId)`
+    薄弱点变化时间线（discovered / conquered / reopened 留痕）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/weak/timeline?subjectId=。
+
+    **权限**：isAuthenticated()。
+  - `public WeakCompareView weakCompare(@RequestParam(required = false) String subjectId)`
+    薄弱点对比（首次检测基线 vs 当前）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/weak/compare?subjectId=。
+
+    **权限**：isAuthenticated()。
   - `public StudentKnowledgeDetailView knowledgeDetail(@RequestParam String knowledgePointId)`
     知识点详情（掌握度/评级/薄弱/预习状态）。
     **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/knowledge/detail?knowledgePointId=。
@@ -1133,6 +1241,13 @@
   - `public StudentWeakConquerView weakConquer(@RequestBody StudentWeakConquerRequest request)`
     薄弱知识点攻克（复测达标后消除薄弱并结算奖励）。
     **HTTP 方法 + 完整路径**：POST ${api.prefix}/student/weak/conquer。
+  - `public List<StudentQuestionView> weakPractice(@RequestParam(required = false) String subjectId, @RequestParam(required = false) Integer count)`
+    跨单元薄弱点专攻组卷。
+    **HTTP 方法 + 完整路径**：POST ${api.prefix}/student/practice/weak?subjectId=&count=。
+
+    **功能**：按学科汇集薄弱知识点跨单元组卷，返回剥离标准答案的题目列表；`subjectId` 为空时不限定学科，`count` 为空时默认 20。
+
+    **权限**：isAuthenticated()。
 
 ### `api/src/main/java/cn/wisestar/server/api/StudentCheckinApi.java`
 - 包: `cn.wisestar.server.api`
