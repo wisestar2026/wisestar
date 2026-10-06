@@ -165,7 +165,7 @@ export default function EnglishCenterPage() {
             <div className="eng-unit-card" key={unit.unit}>
               {unit.reviewDue > 0 && <span className="eng-unit-badge">复习 {unit.reviewDue}</span>}
               <div className="eng-unit-name">{unit.unit}</div>
-              <div className="eng-unit-mastery" title="单词与句子综合熟练度">
+              <div className="eng-unit-mastery" title="单词 / 句子 / 语法 综合熟练度">
                 <span className="eng-unit-mastery-label">熟练度</span>
                 <StarRating value={unit.mastery || 0} size={15} className="eng-unit-mastery-stars" />
                 <span className="eng-unit-mastery-val">{unit.mastery || 0}%</span>
@@ -189,6 +189,15 @@ export default function EnglishCenterPage() {
                     <span style={{ width: `${percent(unit.sentenceFinished, unit.sentenceCount)}%` }} />
                   </div>
                 </div>
+                <div className="eng-stat">
+                  <div className="eng-stat-label">
+                    <span>语法</span>
+                    <span>{unit.grammarFinished || 0}/{unit.grammarCount || 0}</span>
+                  </div>
+                  <div className="eng-stat-bar grammar">
+                    <span style={{ width: `${percent(unit.grammarFinished, unit.grammarCount)}%` }} />
+                  </div>
+                </div>
               </div>
               <div className="eng-unit-actions">
                 <button type="button" className="eng-btn-word" onClick={() => goWord(unit.unit)}>单词学习</button>
@@ -204,8 +213,8 @@ export default function EnglishCenterPage() {
                 </button>
                 <button
                   type="button"
-                  className="eng-btn-practice"
-                  onClick={() => navigate(`/student/detect?unit=${encodeURIComponent(unit.unit)}`)}
+                  className="eng-btn-practice eng-btn-unit"
+                  onClick={() => navigate(`/student/english/unit-practice?unit=${encodeURIComponent(unit.unit)}`)}
                 >
                   单元练习
                 </button>

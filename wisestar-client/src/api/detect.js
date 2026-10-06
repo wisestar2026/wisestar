@@ -33,26 +33,3 @@ export function submitDetectPaper(data) {
 export function getDetectHistory(params) {
   return request.get('/student/detect/history', { params });
 }
-
-/**
- * 按单元名取该单元题目（复用检测组卷接口，返回剥离答案的题目）。
- *
- * 用途：英语单元重点语法/句型页展示该单元绑定题目，以及英语学习中心「单元练习」入口。
- * 实现：先按 学科+年级+册别 取单元列表，匹配同名单元拿到章节 ID，再组卷。
- *
- * @param {Object} params - { subjectId, grade, term, unit, count? }
- * @returns {Promise<Array>} 题目列表（无标准答案）
- */
-export async function getUnitQuestions({ subjectId, grade, term, unit, count = 20 }) {
-  const unitsRes = await getDetectUnits({ subjectId, grade, term });
-  const target = (unitsRes?.data || []).find((u) => u.name === unit);
-  if (!target) return [];
-  const genRes = await generateDetectPaper({
-    subjectId,
-    grade,
-    term,
-    chapterIds: [target.id],
-    questionCount: count,
-  });
-  return genRes?.data || [];
-}

@@ -77,6 +77,10 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.eq(version != null, EnglishSentence::getVersion, version)
 				.eq(grade != null, EnglishSentence::getGrade, grade)
 				.eq(term != null, EnglishSentence::getTerm, term));
+		List<EnglishGrammar> grammars = englishGrammarMapper.selectList(Wrappers.<EnglishGrammar>lambdaQuery()
+				.eq(version != null, EnglishGrammar::getVersion, version)
+				.eq(grade != null, EnglishGrammar::getGrade, grade)
+				.eq(term != null, EnglishGrammar::getTerm, term));
 
 		Map<String, String> wordUnitById = new HashMap<>();
 		for (EnglishWord word : words) {
@@ -86,10 +90,15 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		for (EnglishSentence sentence : sentences) {
 			sentenceUnitById.put(sentence.getId(), sentence.getUnit());
 		}
+		Map<String, String> grammarUnitById = new HashMap<>();
+		for (EnglishGrammar grammar : grammars) {
+			grammarUnitById.put(grammar.getId(), grammar.getUnit());
+		}
 
 		Date now = new Date();
 		List<EnglishWordBook> wordBooks = loadWordBooks(userId, new ArrayList<>(wordUnitById.keySet()));
 		List<EnglishSentenceBook> sentenceBooks = loadSentenceBooks(userId, new ArrayList<>(sentenceUnitById.keySet()));
+		List<EnglishGrammarBook> grammarBooks = loadGrammarBooks(userId, new ArrayList<>(grammarUnitById.keySet()));
 
 		List<EnglishUnitProgressView> result = new ArrayList<>();
 		for (EnglishUnitView unit : units) {
@@ -132,14 +141,28 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				}
 			}
 
-			// 综合熟练度 = (单词 + 句子 familiarity 之和) / (4 × 词句总数)，0~100
+			int grammarFinished = 0;
+			for (EnglishGrammarBook book : grammarBooks) {
+				if (!unit.getUnit().equals(grammarUnitById.get(book.getGrammarId()))) {
+					continue;
+				}
+				int familiarity = book.getFamiliarity() == null ? 0 : book.getFamiliarity();
+				familiaritySum += Math.min(Math.max(familiarity, 0), 4);
+				if (familiarity >= 1) {
+					grammarFinished++;
+				}
+			}
+
+			// 综合熟练度 = (单词 + 句子 + 语法 familiarity 之和) / (4 × 三类总数)，0~100
 			int totalItems = (unit.getWordCount() == null ? 0 : unit.getWordCount())
-					+ (unit.getSentenceCount() == null ? 0 : unit.getSentenceCount());
+					+ (unit.getSentenceCount() == null ? 0 : unit.getSentenceCount())
+					+ (unit.getGrammarCount() == null ? 0 : unit.getGrammarCount());
 			int mastery = totalItems == 0 ? 0
 					: (int) Math.round(familiaritySum * 100.0 / (4.0 * totalItems));
 
 			view.setWordFinished(wordFinished);
 			view.setSentenceFinished(sentenceFinished);
+			view.setGrammarFinished(grammarFinished);
 			view.setMastery(mastery);
 			view.setReviewDue(reviewDue);
 			result.add(view);
@@ -463,6 +486,15 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		return englishSentenceBookMapper.selectList(Wrappers.<EnglishSentenceBook>lambdaQuery()
 				.eq(EnglishSentenceBook::getUserId, userId)
 				.in(EnglishSentenceBook::getSentenceId, sentenceIds));
+	}
+
+	private List<EnglishGrammarBook> loadGrammarBooks(String userId, List<String> grammarIds) {
+		if (userId == null || grammarIds.isEmpty()) {
+			return new ArrayList<>();
+		}
+		return englishGrammarBookMapper.selectList(Wrappers.<EnglishGrammarBook>lambdaQuery()
+				.eq(EnglishGrammarBook::getUserId, userId)
+				.in(EnglishGrammarBook::getGrammarId, grammarIds));
 	}
 
 	private void fillSentenceFamiliarity(String userId, List<EnglishSentenceView> views) {

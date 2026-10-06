@@ -120,6 +120,7 @@
   background: linear-gradient(90deg, #4bb7e8, #7ed0f2);
 }
 .eng-stat-bar.sentence > span { background: linear-gradient(90deg, #ffb36b, #ff8a5c); }
+.eng-stat-bar.grammar > span { background: linear-gradient(90deg, #a98bf0, #c9a7ff); }
 .eng-unit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .eng-unit-actions button {
   border: none;
@@ -134,6 +135,7 @@
 .eng-unit-actions button:hover:not(:disabled) { transform: translateY(-1px); }
 .eng-btn-word { background: #e6f6fd; color: #1479a6; }
 .eng-btn-practice { background: #eafaf1; color: #1f8f4d; }
+.eng-btn-unit { background: #e8f0ff; color: #2f6bd0; }
 .eng-btn-sentence { background: #fff0e8; color: #d9603a; }
 .eng-btn-grammar { background: #f1ecff; color: #6a4bd0; }
 

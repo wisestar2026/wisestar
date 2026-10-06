@@ -4,12 +4,14 @@
  * 功能:
  *   1. 展示单元重点语法：规则标题 + 讲解 + 例句（可朗读）
  *   2. 语法为只读知识呈现，不参与熟练度与复习队列
+ *   3. 本单元练习只提供跳转入口，实际作答在独立界面 EnglishGrammarPracticePage
  *
  * URL: /student/english/grammar?unit=xxx
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片「重点语法」
  *
  * 数据流:
  *   GET /api/english/student/grammars?version&grade&term&unit → 单元语法
+ *   GET /api/student/detect/units?subjectId&grade&term      → 取本单元可用练习题量（仅展示）
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -17,9 +19,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishGrammars } from '../../api/englishStudent';
-import { getUnitQuestions } from '../../api/detect';
+import { getDetectUnits } from '../../api/detect';
 import { speakEnglish } from '../../utils/english';
-import RichContent from '../../components/common/RichContent';
 import './EnglishCenterPage.css';
 
 /** 解析后端 JSON 字符串列（examples/exercises），容错为空数组 */
@@ -57,9 +58,8 @@ export default function EnglishGrammarLearnPage() {
 
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
-  // 本单元绑定的练习题（长任务，失败静默降级为空）
-  const [questions, setQuestions] = useState([]);
-  const [qLoading, setQLoading] = useState(false);
+  // 本单元可用练习题量（用于练习入口展示，失败静默为 0）
+  const [questionCount, setQuestionCount] = useState(0);
 
   const load = useCallback(() => {
     if (!unit) {
@@ -77,24 +77,20 @@ export default function EnglishGrammarLearnPage() {
     load();
   }, [load]);
 
-  // 本单元绑定题目：按 学科+年级+册别 匹配同名单元后组卷（复用检测接口，已剥离答案）
+  // 仅取本单元可用练习题量用于入口展示；实际作答在独立的语法练习页完成
   useEffect(() => {
     if (!unit) {
-      setQuestions([]);
+      setQuestionCount(0);
       return undefined;
     }
     let cancelled = false;
-    setQLoading(true);
-    getUnitQuestions({
-      subjectId: activeSubject || '1003',
-      grade,
-      term,
-      unit,
-      count: 20,
-    })
-      .then((qs) => { if (!cancelled) setQuestions(qs || []); })
-      .catch(() => { if (!cancelled) setQuestions([]); })
-      .finally(() => { if (!cancelled) setQLoading(false); });
+    getDetectUnits({ subjectId: activeSubject || '1003', grade, term })
+      .then((res) => {
+        if (cancelled) return;
+        const target = (res?.data || []).find((u) => u.name === unit);
+        setQuestionCount(target?.questionCount || 0);
+      })
+      .catch(() => { if (!cancelled) setQuestionCount(0); });
     return () => { cancelled = true; };
   }, [activeSubject, grade, term, unit]);
 
@@ -168,49 +164,29 @@ export default function EnglishGrammarLearnPage() {
         })}
       </div>
 
-      {/* 本单元绑定练习：呈现单元题目（题干 + 选项，已剥离答案），可进入检测作答 */}
+      {/* 本单元练习：只提供跳转入口，实际作答在独立的语法练习页完成 */}
       <div className="eng-grammar-list" style={{ marginTop: 20 }}>
         <div className="eng-grammar-card">
           <div className="eng-grammar-head">
             <span className="eng-grammar-index">📝</span>
             <span className="eng-grammar-title">本单元练习</span>
-            {qLoading && <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>加载中…</span>}
-            {!qLoading && questions.length > 0 && (
-              <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>共 {questions.length} 题</span>
+            {questionCount > 0 && (
+              <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>共 {questionCount} 题</span>
             )}
           </div>
-          {!qLoading && questions.length === 0 && (
-            <div className="eng-grammar-content">该单元暂无绑定练习，先去学习单词和句子吧。</div>
-          )}
-          {questions.map((q, idx) => {
-            const children = q.schema?.children || [];
-            const isChoice = q.questionType === 'Radio' || q.questionType === 'Checkbox' || q.questionType === 'Judge';
-            return (
-              <div key={q.id} className="eng-unit-question">
-                <div className="eng-unit-q-stem">
-                  <span className="eng-unit-q-no">{idx + 1}.</span>
-                  <RichContent text={q.schema?.title || q.name || ''} />
-                </div>
-                {isChoice && children.length > 0 && (
-                  <ul className="eng-unit-q-options">
-                    {children.map((opt) => (
-                      <li key={opt.id}>
-                        <RichContent text={opt.title || ''} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            );
-          })}
-          {questions.length > 0 && (
+          <div className="eng-grammar-content">
+            {questionCount > 0
+              ? '语法学完了，去练习里实际做一遍，边做边巩固。'
+              : '该单元暂无绑定练习，先去学习单词和句子吧。'}
+          </div>
+          {questionCount > 0 && (
             <div style={{ marginTop: 12 }}>
               <button
                 type="button"
                 className="eng-btn eng-btn-primary"
-                onClick={() => navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}`)}
+                onClick={() => navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(activeSubject || '1003')}`)}
               >
-                开始本单元语法练习
+                进入语法练习
               </button>
             </div>
           )}

@@ -23,7 +23,6 @@ import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishWordBook, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
-import { WORD_PLACEHOLDER } from '../../utils/englishQuiz';
 import './EnglishCenterPage.css';
 
 /**
@@ -245,12 +244,12 @@ export default function EnglishWordLearnPage() {
           {current?.spell}
         </div>
         {current?.phonetic && <div className="eng-phonetic">/{current.phonetic}/</div>}
-        {revealed && (
+        {revealed && current?.imageUrl && (
           <img
             className="eng-image"
-            src={current?.imageUrl || WORD_PLACEHOLDER}
+            src={current.imageUrl}
             alt={current?.spell || ''}
-            onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         )}
         <div className={`eng-meaning ${revealed ? '' : 'hidden'}`}>
