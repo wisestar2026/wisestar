@@ -9,6 +9,8 @@
  *   - 知识点：点名称查看直绑题目；节点右侧 ✎ 按钮编辑（含简介 content.intro / 讲解要点 content.points）
  *   - 右侧：直绑题目 Label 面板（题目/选项/答案和解析/题目的图片 分块带字段标签），「编辑」复用题目管理弹窗；
  *     支持从题库勾选新题绑定（全量替换合并旧绑定，不覆盖）
+ *   - 英语学科：知识树为「册别 → 单元 → 单词/重点句子/语法/练习题」，内容只读浏览，
+ *     练习题可查看并编辑；单元与各内容数来自英语板块（/english/unit/books 等）
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -23,7 +25,7 @@ import {
   listMatchedKnowledgePointQuestions,
 } from '../../api/knowledge';
 import { updateTemplate, listTemplate } from '../../api/template';
-import { getUnitBooks, getUnitWords, getUnitSentences } from '../../api/englishAdmin';
+import { getUnitBooks, getUnitWords, getUnitSentences, getGrammars } from '../../api/englishAdmin';
 import NodeEditModal from '../../components/research/NodeEditModal';
 import AddQuestionModal from '../../components/research/AddQuestionModal';
 import ImportanceTag from '../../utils/importance';
@@ -33,9 +35,14 @@ import './TeachingResearchPlatformPage.css';
 
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Judge: '判断题', Fill: '填空题',
-  ShortAnswer: '简答题', MultipleBlank: '多空填空题', Select: '下拉题', Essay: '作文题',
+  FillBlank: '单项填空', MultipleBlank: '多项填空', Text: '多行文本',
+  ShortAnswer: '简答题', Select: '下拉题', Score: '评分题', Remark: '备注说明', Essay: '作文题',
 };
-const DIFF_LABELS = { 1: '容易', 2: '中等', 3: '困难' };
+const DIFF_LABELS = {
+  1: '容易', 2: '中等', 3: '困难',
+  easy: '容易', medium: '中等', hard: '困难',
+};
+const DIFF_COLORS = { 3: 'red', hard: 'red', 2: 'orange', medium: 'orange' };
 
 /* ---------- 工具：知识点 content 解析 / 答案文本 ---------- */
 function parseKpIntro(content) {
@@ -75,6 +82,16 @@ function stripImagePlaceholders(text) {
   return String(text || '').replace(/\{\{IMG:[^}]+\}\}/g, '').replace(/\s{2,}/g, ' ').trim();
 }
 
+/** 解析英语语法例句字段（JSON 数组字符串），失败返回空数组 */
+function parseExamples(raw) {
+  try {
+    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(arr) ? arr.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
 /* ---------- 题目 Label（标签式面板，答案显隐状态独立） ---------- */
 function ResearchQuestionCard({ q, onEdit, action }) {
   const [show, setShow] = useState(false);
@@ -98,7 +115,7 @@ function ResearchQuestionCard({ q, onEdit, action }) {
       <div className="trp-lbl-head">
         <Space size={4} wrap>
           <Tag color="blue">{TYPE_LABELS[qtype] || qtype || '未知题型'}</Tag>
-          <Tag color={q.difficulty === 3 ? 'red' : q.difficulty === 2 ? 'orange' : 'green'}>
+          <Tag color={DIFF_COLORS[q.difficulty] || 'green'}>
             {DIFF_LABELS[q.difficulty] || '难度未知'}
           </Tag>
         </Space>
@@ -195,9 +212,11 @@ export default function TeachingResearchPlatformPage() {
   const [addOpen, setAddOpen] = useState(false);
   const expandedRef = useRef([]);
 
-  // 英语学科专用：单元目录（册别 → 单元 → 单词/重点句子/练习题）与只读内容
+  // 英语学科专用：单元目录（册别 → 单元 → 单词/重点句子/语法/练习题）与只读内容
   const [englishUnits, setEnglishUnits] = useState([]);
   const [englishItems, setEnglishItems] = useState({ key: null, type: null, title: '', loading: false, list: [] });
+  // 英语各单元题目数（key = grade|chapter），用于知识树上展示「练习题（N）」
+  const [engQuestionCounts, setEngQuestionCounts] = useState({});
   // 英语练习题编辑中的题目 id（复用题目管理弹窗）
   const [englishEditing, setEnglishEditing] = useState(null);
 
@@ -240,7 +259,7 @@ export default function TeachingResearchPlatformPage() {
     setEnglishEditing(null);
   };
 
-  // 英语：加载单元目录（含单词数/句子数），年级选项取自单元数据
+  // 英语：加载单元目录（含单词数/句子数/语法数），年级选项取自单元数据
   const loadEnglishUnits = (keepGrade) => {
     setLoadingRoot(true);
     getUnitBooks({})
@@ -258,6 +277,20 @@ export default function TeachingResearchPlatformPage() {
       })
       .catch((e) => message.error('加载英语单元失败：' + (e?.message || e)))
       .finally(() => setLoadingRoot(false));
+    // 题目数：一次取回全部英语题目，按 年级+单元(chapter) 归组（失败不影响单元树）
+    listTemplate({ subject: currentSubject?.name || '英语', current: 1, pageSize: 5000 })
+      .then((res) => {
+        const raw = unwrap(res);
+        const arr = Array.isArray(raw) ? raw : raw?.list || [];
+        const counts = {};
+        arr.forEach((t) => {
+          if (!t.grade || !t.chapter) return;
+          const k = `${t.grade}|${t.chapter}`;
+          counts[k] = (counts[k] || 0) + 1;
+        });
+        setEngQuestionCounts(counts);
+      })
+      .catch(() => setEngQuestionCounts({}));
   };
 
   const loadChapters = (subject, keepGrade) => {
@@ -401,12 +434,17 @@ export default function TeachingResearchPlatformPage() {
             children: [
               { key: `ec:${idx}:word`, title: `单词（${u.wordCount || 0}）`, isLeaf: true },
               { key: `ec:${idx}:sentence`, title: `重点句子（${u.sentenceCount || 0}）`, isLeaf: true },
-              { key: `ec:${idx}:question`, title: '练习题', isLeaf: true },
+              { key: `ec:${idx}:grammar`, title: `语法（${u.grammarCount || 0}）`, isLeaf: true },
+              {
+                key: `ec:${idx}:question`,
+                title: `练习题（${engQuestionCounts[`${u.grade}|${u.unit}`] || 0}）`,
+                isLeaf: true,
+              },
             ],
           };
         }),
     }));
-  }, [englishUnits, grade]);
+  }, [englishUnits, grade, engQuestionCounts]);
 
   // 英语走英语板块数据，其他学科走章节/小节/知识点树
   const effectiveTreeData = isEnglish ? englishTreeData : treeData;
@@ -492,7 +530,8 @@ export default function TeachingResearchPlatformPage() {
     const unit = englishUnits[Number(parts[1])];
     if (!unit) return;
     const type = parts[2];
-    const label = type === 'word' ? '单词' : (type === 'sentence' ? '重点句子' : '练习题');
+    const labelMap = { word: '单词', sentence: '重点句子', grammar: '语法', question: '练习题' };
+    const label = labelMap[type] || '内容';
     setEnglishItems({ key, type, title: `${unit.unit} · ${label}`, loading: true, list: [] });
     setEnglishEditing(null);
     // 练习题：按 学科 + 年级 + 单元（章节名）从题库取该单元题目，支持编辑
@@ -516,9 +555,14 @@ export default function TeachingResearchPlatformPage() {
       return;
     }
     const params = { version: unit.version, grade: unit.grade, term: unit.term, unit: unit.unit };
-    const p = type === 'word'
-      ? getUnitWords({ ...params, current: 1, pageSize: 500 })
-      : getUnitSentences(params);
+    let p;
+    if (type === 'word') {
+      p = getUnitWords({ ...params, current: 1, pageSize: 500 });
+    } else if (type === 'grammar') {
+      p = getGrammars({ ...params, current: 1, pageSize: 500 });
+    } else {
+      p = getUnitSentences(params);
+    }
     p.then((res) => {
       const raw = unwrap(res);
       const list = Array.isArray(raw) ? raw : raw?.list || [];
@@ -636,7 +680,7 @@ export default function TeachingResearchPlatformPage() {
       >
         <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', margin: '4px 8px 8px' }}>
           {isEnglish
-            ? '英语知识来自英语板块：点单元下的「单词 / 重点句子」只读浏览；「练习题」可查看并编辑该单元题目。'
+            ? '英语知识来自英语板块：点单元下的「单词 / 重点句子 / 语法」只读浏览；「练习题」可查看并编辑该单元题目。'
             : '点「章节 / 小节」名称修改信息；点「知识点」查看直绑题目，右侧 ✎ 可编辑简介。'}
         </Typography.Text>
         <Spin spinning={loadingSubjects || (!!subjectId && loadingRoot)}>
@@ -720,7 +764,7 @@ export default function TeachingResearchPlatformPage() {
       >
         {isEnglish ? (
           !englishItems.key ? (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="点左侧单元下的「单词」「重点句子」或「练习题」查看内容" />
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="点左侧单元下的「单词」「重点句子」「语法」或「练习题」查看内容" />
           ) : englishItems.type === 'question' ? (
             <Spin spinning={englishItems.loading}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -751,6 +795,16 @@ export default function TeachingResearchPlatformPage() {
                           <Typography.Text>{row.meaning}</Typography.Text>
                           {row.exampleSentence && (
                             <Typography.Text type="secondary" style={{ fontSize: 12 }}>{row.exampleSentence}</Typography.Text>
+                          )}
+                        </>
+                      ) : englishItems.type === 'grammar' ? (
+                        <>
+                          <Typography.Text strong>{row.title}</Typography.Text>
+                          {row.content && <Typography.Text type="secondary">{row.content}</Typography.Text>}
+                          {parseExamples(row.examples).length > 0 && (
+                            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                              例句：{parseExamples(row.examples).join(' / ')}
+                            </Typography.Text>
                           )}
                         </>
                       ) : (

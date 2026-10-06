@@ -108,7 +108,9 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 			if (isBlank(word.getUnit())) {
 				continue;
 			}
-			EnglishUnitView view = map.computeIfAbsent(word.getUnit(), this::newUnitView);
+			String unit = word.getUnit();
+			EnglishUnitView view = map.computeIfAbsent(
+					bookKey(word.getVersion(), word.getGrade(), word.getTerm(), unit), k -> newUnitView(unit));
 			view.setWordCount(view.getWordCount() + 1);
 			fillBook(view, word.getVersion(), word.getGrade(), word.getTerm());
 		}
@@ -121,7 +123,9 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 			if (isBlank(sentence.getUnit())) {
 				continue;
 			}
-			EnglishUnitView view = map.computeIfAbsent(sentence.getUnit(), this::newUnitView);
+			String unit = sentence.getUnit();
+			EnglishUnitView view = map.computeIfAbsent(
+					bookKey(sentence.getVersion(), sentence.getGrade(), sentence.getTerm(), unit), k -> newUnitView(unit));
 			view.setSentenceCount(view.getSentenceCount() + 1);
 			fillBook(view, sentence.getVersion(), sentence.getGrade(), sentence.getTerm());
 		}
@@ -134,7 +138,9 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 			if (isBlank(grammar.getUnit())) {
 				continue;
 			}
-			EnglishUnitView view = map.computeIfAbsent(grammar.getUnit(), this::newUnitView);
+			String unit = grammar.getUnit();
+			EnglishUnitView view = map.computeIfAbsent(
+					bookKey(grammar.getVersion(), grammar.getGrade(), grammar.getTerm(), unit), k -> newUnitView(unit));
 			view.setGrammarCount(view.getGrammarCount() + 1);
 			fillBook(view, grammar.getVersion(), grammar.getGrade(), grammar.getTerm());
 		}
@@ -147,7 +153,9 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 			if (isBlank(row.getUnit())) {
 				continue;
 			}
-			EnglishUnitView view = map.computeIfAbsent(row.getUnit(), this::newUnitView);
+			String unit = row.getUnit();
+			EnglishUnitView view = map.computeIfAbsent(
+					bookKey(row.getVersion(), row.getGrade(), row.getTerm(), unit), k -> newUnitView(unit));
 			view.setId(row.getId());
 			view.setSort(row.getSort());
 			fillBook(view, row.getVersion(), row.getGrade(), row.getTerm());
@@ -172,6 +180,19 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 		view.setSentenceCount(0);
 		view.setGrammarCount(0);
 		return view;
+	}
+
+	/**
+	 * 单元归属键：版本 + 年级 + 册别 + 单元名。
+	 *
+	 * <p>不同年级/册别会出现同名单元（如各年级都有 Unit 1），必须按整套书维度区分，
+	 * 否则在不带筛选查询时会跨年级合并成同一单元，导致年级下拉与单元树缺失。</p>
+	 */
+	private String bookKey(String version, String grade, String term, String unit) {
+		return (version == null ? "" : version) + '\u0001'
+				+ (grade == null ? "" : grade) + '\u0001'
+				+ (term == null ? "" : term) + '\u0001'
+				+ unit;
 	}
 
 	private void fillBook(EnglishUnitView view, String version, String grade, String term) {
