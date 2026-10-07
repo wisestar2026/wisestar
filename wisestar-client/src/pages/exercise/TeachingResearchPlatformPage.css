@@ -30,6 +30,26 @@
   gap: 4px;
 }
 
+/* 章节节点：名称 + 归属题目数量 */
+.trp-ch-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.trp-ch-name {
+  font-weight: 600;
+}
+
+/* 节点名称后的「归属题目数量」，弱化展示 */
+.trp-q-count {
+  color: #8aa4bd;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 /* 小节节点：名称 + 重点程度标识 */
 .trp-sec-node {
   display: inline-flex;

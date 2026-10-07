@@ -949,7 +949,8 @@ export default function KnowledgePage() {
                                 <div style={{ fontSize: 18, fontWeight: 700, color: '#2e7d32' }}>
                                   🎉 完成 · 答对 {st.correct}/{st.total}
                                 </div>
-                                {st.wrong > 0 && (
+                                {/* 预习/例题检测闭环内不提供错题本入口（预习不落错题，仅处订正与练习/试炼） */}
+                                {st.wrong > 0 && !isPreviewFlow && (
                                   <Button type="primary" size="small" style={{ marginTop: 10 }} onClick={() => { setWrongList(wrongList); setWrongOpen(true); }}>
                                     📕 查看错题（{st.wrong}）
                                   </Button>

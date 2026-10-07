@@ -159,6 +159,8 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		List<Section> allSections = this.baseMapper.selectList(null);
 		Set<String> existing = allSections.stream()
 				.map(s -> s.getChapterId() + "|" + s.getName()).collect(Collectors.toSet());
+		Map<String, String> existingIds = allSections.stream()
+				.collect(Collectors.toMap(s -> s.getChapterId() + "|" + s.getName(), Section::getId, (a, b) -> a));
 		// 每个章节的「下一个可用排序号」，初始 = 现有最大 sort + 1；同一章节逐行递增，跨章节互不影响
 		Map<String, AtomicInteger> nextSortByChapter = allSections.stream()
 				.filter(s -> s.getSort() != null && s.getChapterId() != null)
@@ -167,15 +169,18 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 								Collectors.maxBy(java.util.Comparator.comparingInt(Section::getSort)),
 								max -> new AtomicInteger(max.get().getSort() + 1))));
 		AtomicInteger imported = new AtomicInteger(0);
+		AtomicInteger updated = new AtomicInteger(0);
 		AtomicInteger missingRequired = new AtomicInteger(0);
 		AtomicInteger sectionNotFound = new AtomicInteger(0);
 		AtomicInteger duplicate = new AtomicInteger(0);
 		List<Section> toSave = new ArrayList<>();
+		int[] importanceCol = { -1 };
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
 				try (Stream<Row> rows = sheet.openStream()) {
 					rows.forEach(r -> {
 						if (r.getRowNum() == 1) {
+							importanceCol[0] = findColumn(r, "重点程度");
 							return; // 跳过表头
 						}
 						String subjectName = cellText(r, 0);
@@ -192,8 +197,20 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 							sectionNotFound.incrementAndGet();
 							return;
 						}
+						String importance = importanceCol[0] < 0 ? null
+								: KnowledgeValueNormalizer.importance(cellText(r, importanceCol[0]));
 						if (existing.contains(key)) {
-							duplicate.incrementAndGet();
+							// 已存在小节：带「重点程度」列的模板视为同步文件，就地更新年级/学期/重点程度；否则计重名跳过
+							if (importanceCol[0] >= 0) {
+								update(Wrappers.<Section>lambdaUpdate().eq(Section::getId, existingIds.get(key))
+										.set(Section::getGrade, normalizeBlank(cellText(r, 3)))
+										.set(Section::getTerm, KnowledgeValueNormalizer.term(cellText(r, 4)))
+										.set(Section::getImportance, importance));
+								updated.incrementAndGet();
+							}
+							else {
+								duplicate.incrementAndGet();
+							}
 							return;
 						}
 						existing.add(key);
@@ -202,6 +219,9 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						section.setName(name.trim());
 						section.setGrade(normalizeBlank(cellText(r, 3)));
 						section.setTerm(KnowledgeValueNormalizer.term(cellText(r, 4)));
+						if (importance != null) {
+							section.setImportance(importance);
+						}
 						int nextSort = nextSortByChapter
 								.computeIfAbsent(chapterId, s -> new AtomicInteger(1)).getAndIncrement();
 						section.setSort(nextSort);
@@ -227,10 +247,23 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		}
 		ImportResultView result = new ImportResultView(imported.get(),
 				missingRequired.get() + sectionNotFound.get() + duplicate.get());
+		result.setUpdated(updated.get());
 		result.setMissingRequired(missingRequired.get());
 		result.setSectionNotFound(sectionNotFound.get());
 		result.setDuplicate(duplicate.get());
 		return result;
+	}
+
+	/** 按表头文本定位列（含关键字即命中，未命中返回 -1）。 */
+	private int findColumn(Row row, String keyword) {
+		int count = row.getCellCount();
+		for (int i = 0; i < count; i++) {
+			String text = cellText(row, i);
+			if (hasText(text) && text.contains(keyword)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */

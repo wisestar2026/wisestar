@@ -1,17 +1,16 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.domain.dto.student.PracticeEvaluationContext;
 import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.KnowledgePoint;
 import cn.wisestar.server.domain.model.Section;
+import cn.wisestar.server.domain.model.UserKnowledgeProgress;
 import cn.wisestar.server.domain.model.UserWeakKnowledge;
 import cn.wisestar.server.domain.model.WeakPointEvent;
 import cn.wisestar.server.event.WeakPointEventRecorder;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
-import cn.wisestar.server.mapper.PracticeDetailMapper;
-import cn.wisestar.server.mapper.PracticeRecordMapper;
 import cn.wisestar.server.mapper.SectionMapper;
-import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.RewardService;
@@ -63,15 +62,6 @@ class EvaluationServiceImplTest {
 	private ChapterMapper chapterMapper;
 
 	@Mock
-	private PracticeRecordMapper practiceRecordMapper;
-
-	@Mock
-	private PracticeDetailMapper practiceDetailMapper;
-
-	@Mock
-	private TemplateMapper templateMapper;
-
-	@Mock
 	private RewardService rewardService;
 
 	@Mock
@@ -82,8 +72,7 @@ class EvaluationServiceImplTest {
 	@BeforeEach
 	void setUp() {
 		service = new EvaluationServiceImpl(progressMapper, weakMapper, knowledgePointMapper, sectionMapper,
-				chapterMapper, practiceRecordMapper, practiceDetailMapper, templateMapper, rewardService,
-				weakPointEventRecorder);
+				chapterMapper, rewardService, weakPointEventRecorder);
 	}
 
 	@Test
@@ -137,6 +126,86 @@ class EvaluationServiceImplTest {
 
 		verify(chapterMapper, never()).selectList(any());
 		verify(weakMapper, never()).insert(any());
+	}
+
+	@Test
+	void recordPractice_createsWeakWhenMasteryBelowThreshold() {
+		stubResolvableContext();
+		when(progressMapper.selectOne(any())).thenReturn(null);
+		when(weakMapper.selectOne(any())).thenReturn(null);
+		when(progressMapper.selectList(any())).thenReturn(Collections.emptyList());
+
+		service.recordPractice(oneItemContext("k1", false));
+
+		ArgumentCaptor<UserWeakKnowledge> captor = ArgumentCaptor.forClass(UserWeakKnowledge.class);
+		verify(weakMapper).insert(captor.capture());
+		UserWeakKnowledge saved = captor.getValue();
+		assertThat(saved.getStatus()).isEqualTo("active");
+		assertThat(saved.getKnowledgePointId()).isEqualTo("k1");
+		assertThat(saved.getSubjectId()).isEqualTo("sub1");
+	}
+
+	@Test
+	void recordPractice_conquersWeakWhenMasteryReachesThreshold() {
+		stubResolvableContext();
+		UserKnowledgeProgress progress = new UserKnowledgeProgress();
+		progress.setId("pg1");
+		progress.setUserId("u1");
+		progress.setSubjectId("sub1");
+		progress.setVersionId("v1");
+		progress.setKnowledgePointId("k1");
+		progress.setMastery(0);
+		progress.setRecentRates("0");
+		progress.setTimes(1);
+		when(progressMapper.selectOne(any())).thenReturn(progress);
+		UserWeakKnowledge weak = new UserWeakKnowledge();
+		weak.setId("w1");
+		weak.setUserId("u1");
+		weak.setKnowledgePointId("k1");
+		weak.setStatus("active");
+		weak.setConquerTimes(0);
+		when(weakMapper.selectOne(any())).thenReturn(weak);
+		when(progressMapper.selectList(any())).thenReturn(Collections.emptyList());
+		when(knowledgePointMapper.selectList(any()))
+				.thenReturn(Collections.singletonList(knowledgePoint("k1", "分数", "sec1")));
+
+		service.recordPractice(oneItemContext("k1", true));
+
+		ArgumentCaptor<UserWeakKnowledge> captor = ArgumentCaptor.forClass(UserWeakKnowledge.class);
+		verify(weakMapper).updateById(captor.capture());
+		assertThat(captor.getValue().getStatus()).isEqualTo("conquered");
+	}
+
+	private void stubResolvableContext() {
+		when(knowledgePointMapper.selectById("k1")).thenReturn(knowledgePoint("k1", "分数", "sec1"));
+		Section section = new Section();
+		section.setId("sec1");
+		section.setChapterId("ch1");
+		when(sectionMapper.selectById("sec1")).thenReturn(section);
+		Chapter chapter = new Chapter();
+		chapter.setId("ch1");
+		chapter.setSubjectId("sub1");
+		chapter.setVersion("v1");
+		when(chapterMapper.selectById("ch1")).thenReturn(chapter);
+	}
+
+	private KnowledgePoint knowledgePoint(String id, String name, String sectionId) {
+		KnowledgePoint kp = new KnowledgePoint();
+		kp.setId(id);
+		kp.setName(name);
+		kp.setSectionId(sectionId);
+		return kp;
+	}
+
+	private PracticeEvaluationContext oneItemContext(String kpId, boolean correct) {
+		PracticeEvaluationContext context = new PracticeEvaluationContext();
+		context.setUserId("u1");
+		context.setKnowledgePointId(kpId);
+		PracticeEvaluationContext.Item item = new PracticeEvaluationContext.Item();
+		item.setQuestionId("q1");
+		item.setCorrect(correct);
+		context.getItems().add(item);
+		return context;
 	}
 
 	private void stubKnowledgeTree() {

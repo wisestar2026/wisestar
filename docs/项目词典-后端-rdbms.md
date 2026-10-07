@@ -774,9 +774,9 @@
   - `public String addChapter(ChapterRequest request)`
     新增章节（图标/排序走系统默认：图标缺省 📖，排序自动追加到该学科末尾）。
   - `public ImportResultView importChapters(ChapterImportRequest request)`
-    批量导入章节（Excel：学科名/章节名称/年级(选填)/学期(选填)/版本(选填)； 按学科名匹配 t_subject.name 定位归属，学科+章节名重名跳过）。
+    批量导入章节（Excel：学科名/章节名称/年级(选填)/学期(选填)/版本(选填)/重点程度(选填，按表头文本定位列)； 按学科名匹配 t_subject.name 定位归属； 带「重点程度」列时视为同步文件、命中既有「学科+章节名」即就地回写年级/学期/版本/重点程度并计入 updated； 不带该列则维持重名跳过）。
   - `public void updateChapter(ChapterRequest request)`
-    更新章节（仅更新管理端可维护列：名称/年级/学期/版本/排序； 图标由系统默认维护，不随本次更新改动；排序留空时不改动原值）。
+    更新章节（仅更新管理端可维护列：名称/年级/学期/版本/排序/重点程度； importance 空串表示清除； 图标由系统默认维护，不随本次更新改动；排序留空时不改动原值）。
   - `public void deleteChapter(ChapterRequest request)`
     删除章节（级联逻辑删除其下小节、知识点、知识点-题目绑定、章节题库绑定与各小节题库绑定）。
   - `public void saveRepos(ChapterRepoRequest request)`
@@ -980,13 +980,13 @@
 - 注解: @Slf4j, @Service, @Transactional, @RequiredArgsConstructor
 - **类说明**：
   学员学习评价实现。
-  掌握度 = 最近 5 次练习正确率的加权平均（越近权重越高 5,4,3,2,1）； 薄弱 = 掌握度 <55 或存在未订正错题；攻克 = 正确率 ≥80（显式）或 掌握度 ≥70 且本次正确率 ≥80（自动）。薄弱点跃迁（discovered/conquered/reopened，含知识点/小节/章节名称快照）经 WeakPointEventRecorder 提交后落库，攻克薄弱小节时终身后一次发放小节攻克奖励。
+  掌握度 = 最近 5 次练习正确率的加权平均（越近权重越高 5,4,3,2,1）； 薄弱 = 掌握度 <55，且仅对已产生学习记录（知识点进度）的知识点认定（未学习实体不参与），不再参考未订正错题；攻克 = 正确率 ≥80（显式）。薄弱点跃迁（discovered/conquered/reopened，含知识点/小节/章节名称快照）经 WeakPointEventRecorder 提交后落库，攻克薄弱小节时终身后一次发放小节攻克奖励。
 - 方法:
   - `public void recordPractice(PracticeEvaluationContext context)`
   - `public boolean conquer(String userId, String knowledgePointId, int correctRate)`
   - `public void refreshWeakAfterCorrection(String userId, String knowledgePointId)`
   - `public void seedWeakFromBaseline(String userId, String subjectId, String refKey, Map<String, Integer> kpMasteryByName)`
-    基线薄弱点播种：按名称定位学科下知识点，写入 active 薄弱标记并发布 discovered 事件。
+    基线薄弱点播种：按名称定位学科下知识点，掌握度低于阈值者写入 active 薄弱标记并发布 discovered 事件；仅检测实际答错（已考查）的知识点会进入报告，未学习实体不参与。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/FileServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1039,7 +1039,7 @@
   - `public String addKnowledgePoint(KnowledgePointRequest request)`
     新增知识点。
   - `public ImportResultView importKnowledgePoints(KnowledgePointImportRequest request)`
-    批量导入知识点（Excel：学科名/章节名/小节名/知识点名/排序(选填)/年级(选填)/学期(选填)/内容设置(选填，仅文本)； 内容设置不支持图片，整格文本作为一条讲解要点写入 content JSON； 按 sectionId+name 去重；跳过原因分类统计（缺失必填/归属未匹配/重名）。
+    批量导入知识点（Excel：学科名/章节名/小节名/知识点名/排序(选填)/年级(选填)/学期(选填)/内容设置(选填，仅文本)/重点程度(选填，按表头文本定位列，兼容不同模板列序)； 内容设置不支持图片，整格文本作为一条讲解要点写入 content JSON； 重点程度经 KnowledgeValueNormalizer.importance 映射 importance：核心→core、重点→key、次重点→minor、一般/非重点→normal（兼容系统原值）； 带「重点程度」列时视为同步文件、命中既有 sectionId+name 即就地回写排序/年级/学期/内容/重点程度并计入 updated，不带该列则重名跳过；跳过原因分类统计（缺失必填/归属未匹配/重名）。
   - `public void updateKnowledgePoint(KnowledgePointRequest request)`
     更新知识点（含内容设置 JSON 与图片地址）。 grade/term/importance 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null， 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容设置）不受影响）。
   - `public void deleteKnowledgePoint(KnowledgePointRequest request)`
@@ -1051,6 +1051,9 @@
   - `public List<TemplateView> listMatchedQuestions(String knowledgePointId)`
     查询题库中「知识点标签」匹配该知识点的题目（无论是否已绑定）。
     先用 LIKE 对 knowledge_point 列与 template JSON 文本做粗筛，再在内存中按知识点名 精确匹配（忽略大小写/首尾空格），避免 JSON 内其它字段（如解析文字）出现同名造成误命中。
+  - `public QuestionCountView countQuestionsBySubject(String subjectId)`
+    统计某学科题库按章节/小节/知识点标签归属的题目数量（教研平台知识树展示用）。
+    先按学科名（t_subject → t_template.subject）筛出该学科题库，再逐题读取顶层 chapter/section/knowledge_point 列（新格式），缺失时回退 template JSON 内 attribute 快照（旧数据），按名称计数（名称重名则累加），返回三张「名称 → 题目数」映射。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/MallGoodsServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1305,7 +1308,7 @@
   - `public String addSection(SectionRequest request)`
     新增小节（sort 为空时自动追加到所属章节现有最大 sort 之后）。
   - `public ImportResultView importSections(SectionImportRequest request)`
-    批量导入小节（Excel：学科名/章节名/小节名/年级(选填)/学期(选填)； 排序不参与导入，按所属章节自动追加；按 chapterId+name 去重）。
+    批量导入小节（Excel：学科名/章节名/小节名/年级(选填)/学期(选填)/重点程度(选填，按表头文本定位列)； 排序不参与导入，按所属章节自动追加； 带「重点程度」列时视为同步文件、命中既有 chapterId+name 即就地回写年级/学期/重点程度并计入 updated，不带该列则重名跳过）。
   - `public void updateSection(SectionRequest request)`
     更新小节（含内容设置/练习设置 JSON）。 grade/term/importance 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null， 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容/练习设置）不受影响）。
   - `public void deleteSection(SectionRequest request)`

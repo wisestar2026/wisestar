@@ -1800,7 +1800,7 @@ CREATE TABLE IF NOT EXISTS t_section (
   sort int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
   grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)',
   term varchar(32) DEFAULT NULL COMMENT '学期(上/下)',
-  importance varchar(16) DEFAULT NULL COMMENT '重点程度(core核心/key重点/normal一般)',
+  importance varchar(16) DEFAULT NULL COMMENT '重点程度(key重点/minor次重点/normal一般)',
   content text COMMENT '小节内容设置JSON(objective/overview/points)',
   practice text COMMENT '小节练习设置JSON(questionCount/difficulty/types)',
   is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
@@ -1827,7 +1827,7 @@ INSERT INTO t_section (id, chapter_id, name, sort, content, practice, is_deleted
 -- 老库表结构升级（新库已由上方 CREATE 建列，此块幂等）
 ALTER TABLE t_section ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)';
 ALTER TABLE t_section ADD COLUMN IF NOT EXISTS term varchar(32) DEFAULT NULL COMMENT '学期(上/下)';
-ALTER TABLE t_section ADD COLUMN IF NOT EXISTS importance varchar(16) DEFAULT NULL COMMENT '重点程度(core核心/key重点/normal一般)';
+ALTER TABLE t_section ADD COLUMN IF NOT EXISTS importance varchar(16) DEFAULT NULL COMMENT '重点程度(key重点/minor次重点/normal一般)';
 -- 小节种子历史数据补齐年级/学期（与所属章节一致；仅当年级为空时，避免覆盖用户后续修改）
 UPDATE t_section SET grade='一年级', term='上' WHERE id='3001' AND grade IS NULL;
 UPDATE t_section SET grade='一年级', term='上' WHERE id='3002' AND grade IS NULL;
@@ -1848,7 +1848,7 @@ CREATE TABLE IF NOT EXISTS t_knowledge_point (
   sort int DEFAULT '1' COMMENT '排序(数字越小越靠前)',
   grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)',
   term varchar(32) DEFAULT NULL COMMENT '学期(上/下)',
-  importance varchar(16) DEFAULT NULL COMMENT '重点程度(core核心/key重点/normal一般)',
+  importance varchar(16) DEFAULT NULL COMMENT '重点程度(key重点/minor次重点/normal一般)',
   content text COMMENT '知识点内容设置JSON(points讲解要点数组)',
   image_url varchar(512) DEFAULT NULL COMMENT '知识点图片地址(FileView.previewUrl，可为空)',
   is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
@@ -1878,7 +1878,7 @@ INSERT INTO t_knowledge_point (id, section_id, name, sort, content, image_url, i
 -- 老库表结构升级（新库已由上方 CREATE 建列，此块幂等）
 ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级(如 一年级)';
 ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS term varchar(32) DEFAULT NULL COMMENT '学期(上/下)';
-ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS importance varchar(16) DEFAULT NULL COMMENT '重点程度(core核心/key重点/normal一般)';
+ALTER TABLE t_knowledge_point ADD COLUMN IF NOT EXISTS importance varchar(16) DEFAULT NULL COMMENT '重点程度(key重点/minor次重点/normal一般)';
 -- 知识点种子历史数据补齐年级/学期（继承所属小节；仅当年级为空时，避免覆盖用户后续修改）
 UPDATE t_knowledge_point SET grade='一年级', term='上' WHERE id='4001' AND grade IS NULL;
 UPDATE t_knowledge_point SET grade='一年级', term='上' WHERE id='4002' AND grade IS NULL;
@@ -2206,6 +2206,8 @@ ALTER TABLE t_student_coin ADD COLUMN IF NOT EXISTS deleted tinyint DEFAULT 0;
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级（一年级~六年级）';
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS term varchar(16) DEFAULT NULL COMMENT '学期（上/下）';
 ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS version varchar(64) DEFAULT NULL COMMENT '教材版本（人教版/苏教版等）';
+-- 章节表添加重点程度字段（与 t_section/t_knowledge_point 口径一致）
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS importance varchar(16) DEFAULT NULL COMMENT '重点程度(key重点/minor次重点/normal一般)';
 -- 章节种子历史数据补齐年级/学期/版本（仅当三字段为空时，避免覆盖用户后续修改）
 UPDATE t_chapter SET grade='一年级', term='上', version='人教版' WHERE id='2001' AND grade IS NULL;
 UPDATE t_chapter SET grade='三年级', term='上', version='人教版' WHERE id='2002' AND grade IS NULL;

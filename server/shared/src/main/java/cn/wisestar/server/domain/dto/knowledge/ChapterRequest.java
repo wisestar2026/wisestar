@@ -44,6 +44,11 @@ public class ChapterRequest {
 	private String version;
 
 	/**
+	 * 重点程度：core=核心 / key=重点 / minor=次重点 / normal=一般；空串表示清除。
+	 */
+	private String importance;
+
+	/**
 	 * 图标（emoji）。
 	 */
 	private String icon;

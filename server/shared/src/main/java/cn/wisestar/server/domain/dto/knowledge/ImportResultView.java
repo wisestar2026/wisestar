@@ -17,6 +17,9 @@ public class ImportResultView {
 	/** 新增条数 */
 	private int imported;
 
+	/** 更新条数（已存在记录按「重点程度」列就地更新 importance） */
+	private int updated;
+
 	/** 跳过总条数（归属未找到或重复） */
 	private int skipped;
 

@@ -1,9 +1,9 @@
 /**
  * importance.jsx - 小节 / 知识点「重点程度」标识工具
  *
- * 三级取值（与后端 t_section.importance / t_knowledge_point.importance 对齐）：
- *   core   = 核心（红色）
+ * 三档取值（与后端 t_chapter/t_section/t_knowledge_point.importance 对齐）：
  *   key    = 重点（橙色）
+ *   minor  = 次重点（金色）
  *   normal = 一般（默认灰）
  * 空值表示未标注，不展示标识。
  *
@@ -14,15 +14,15 @@ import { Tag } from 'antd';
 
 /** 重点程度可选项（供 Select 使用） */
 export const IMPORTANCE_OPTIONS = [
-  { value: 'core', label: '核心' },
   { value: 'key', label: '重点' },
+  { value: 'minor', label: '次重点' },
   { value: 'normal', label: '一般' },
 ];
 
 /** 各取值的展示元数据：label + antd Tag color */
 export const IMPORTANCE_META = {
-  core: { label: '核心', color: 'red' },
   key: { label: '重点', color: 'orange' },
+  minor: { label: '次重点', color: 'gold' },
   normal: { label: '一般', color: 'default' },
 };
 

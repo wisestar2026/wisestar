@@ -953,6 +953,8 @@
     学期归一化：含「上」→「上」，含「下」→「下」；其余原样返回。
   - `public static String version(String text)`
     教材版本归一化：命中已知版本（兼容去掉「版」的简称，如 人教/苏教）时返回基础版本名，否则原样返回。
+  - `public static String importance(String text)`
+    重点程度归一化：核心/核心重点→core、次重点→minor、重点→key、一般/普通/非重点→normal，兼容系统原值（core/key/minor/normal），无法识别或为空返回 null（不写该字段）。章节/小节/知识点导入统一复用。
 
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/MapBeanUtils.java`
 - 包: `cn.wisestar.server.core.uitls`
@@ -1908,7 +1910,7 @@
 - 注解: @Data
 - **类说明**：
   章节批量导入请求（multipart 表单绑定）。
-  Excel 列格式（首行为表头自动跳过）：学科名 / 章节名 / 图标(选填) / 排序(选填，默认 1)。 归属学科由「学科名」列按 t_subject.name 匹配定位。
+  Excel 列格式（首行为表头自动跳过）：学科名 / 章节名 / 年级(选填) / 学期(选填) / 版本(选填) / 重点程度(选填，按表头文本定位列)。 归属学科由「学科名」列按 t_subject.name 匹配定位。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/ChapterRepoRequest.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -1925,13 +1927,14 @@
 - **类说明**：
   章节请求/查询（对应 t_chapter）。
   GET /list 时以 GET 参数绑定（subjectId 筛选）；POST create/update 时以 body 提交。
+  含 importance（重点程度：key重点/minor次重点/normal一般，空串表示清除）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/ChapterView.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
 - 类型: `class ChapterView`
 - 注解: @Data
 - **类说明**：
-  章节视图（返回前端展示用，含小节数统计与学员薄弱标记）。另含 weak（该章节下是否存在学员未攻克的薄弱知识点）、weakCount（该章节下学员未攻克的薄弱知识点数）。
+  章节视图（返回前端展示用，含小节数统计与学员薄弱标记）。另含 weak（该章节下是否存在学员未攻克的薄弱知识点）、weakCount（该章节下学员未攻克的薄弱知识点数）。含 importance（重点程度），供教研平台章节节点标签展示。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/ImportResultView.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -1939,7 +1942,7 @@
 - 注解: @Data
 - **类说明**：
   批量导入结果视图。
-  imported：实际新增条数；skipped：跳过总条数（= missingRequired + sectionNotFound + duplicate）。 分类字段由章节/小节/知识点导入共同填充，便于前端提示具体跳过原因。
+  imported：实际新增条数；updated：同步更新条数（已存在记录在带「重点程度」列的模板下就地回写文件字段）；skipped：跳过总条数（= missingRequired + sectionNotFound + duplicate）。 分类字段由章节/小节/知识点导入共同填充，便于前端提示具体跳过原因。
 - 方法:
   - `public ImportResultView()`
   - `public ImportResultView(int imported, int skipped)`
@@ -1950,7 +1953,7 @@
 - 注解: @Data
 - **类说明**：
   知识点批量导入请求（multipart 表单绑定）。
-  Excel 列格式（首行为表头自动跳过）： 学科名 / 章节名 / 小节名 / 知识点名 / 排序(选填，默认 1) / 年级(选填) / 学期(选填，上/下) / 内容设置(选填，仅文本)。 归属由「学科名 + 章节名 + 小节名」按 t_subject.name + t_chapter.name + t_section.name 匹配定位； 年级/学期留空则不写入（列表无需年级学期也能正常显示）； 内容设置不支持图片，整格文本作为一条讲解要点（`{"points":[文本]`}）。
+  Excel 列格式（首行为表头自动跳过）： 学科名 / 章节名 / 小节名 / 知识点名 / 排序(选填，默认 1) / 年级(选填) / 学期(选填，上/下) / 内容设置(选填，仅文本) / 重点程度(选填，按表头文本定位列)。 归属由「学科名 + 章节名 + 小节名」按 t_subject.name + t_chapter.name + t_section.name 匹配定位； 年级/学期留空则不写入（列表无需年级学期也能正常显示）； 内容设置不支持图片，整格文本作为一条讲解要点（`{"points":[文本]`}）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/KnowledgePointQuery.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -1984,13 +1987,21 @@
   知识点视图（返回前端展示用）。
   含三级归属名称（学科/章节/小节，列表直接展示）与绑定题目数统计； 题目从题目库（t_template）选择绑定，不能在此新增。 另含 weak（该知识点是否为学员未攻克的薄弱点）。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/QuestionCountView.java`
+- 包: `cn.wisestar.server.domain.dto.knowledge`
+- 类型: `class QuestionCountView`
+- 注解: @Data
+- **类说明**：
+  学科维度的「归属题目数量」视图（教研平台知识树名称后展示）。
+  按题目的章节/小节/知识点标签文本精确匹配（忽略大小写与首尾空格）统计， 三张映射的键为知识树节点名称、值为题库中命中该名称的题目数。名称在学科内重名时共用同一计数。 字段：chapter（章节名 → 题目数）、section（小节名 → 题目数）、knowledgePoint（知识点名 → 题目数）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/SectionImportRequest.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
 - 类型: `class SectionImportRequest`
 - 注解: @Data
 - **类说明**：
   小节批量导入请求（multipart 表单绑定）。
-  Excel 列格式（首行为表头自动跳过）：学科名 / 章节名 / 小节名 / 年级(选填) / 学期(选填)。 归属由「学科名 + 章节名」按 t_subject.name + t_chapter.name 匹配定位； 排序不参与导入，由系统按所属章节自动追加。
+  Excel 列格式（首行为表头自动跳过）：学科名 / 章节名 / 小节名 / 年级(选填) / 学期(选填) / 重点程度(选填，按表头文本定位列)。 归属由「学科名 + 章节名」按 t_subject.name + t_chapter.name 匹配定位； 排序不参与导入，由系统按所属章节自动追加。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/knowledge/SectionPracticeConfig.java`
 - 包: `cn.wisestar.server.domain.dto.knowledge`
@@ -2609,7 +2620,7 @@
 - 类型: `interface EvaluationService`
 - **类说明**：
   学员薄弱点·学习结果评价服务。
-  以 `t_practice_detail` 为唯一数据源，按知识点刷新掌握度、研判薄弱、自动攻克； 掌握度采用「最近 5 次练习正确率加权（越近权重越高）」计算。
+  以 `t_user_knowledge_progress` 为掌握度来源，按知识点刷新掌握度、研判薄弱、自动攻克； 掌握度采用「最近 5 次练习正确率加权（越近权重越高）」计算；薄弱判定以掌握度阈值为唯一依据，未产生学习记录的实体不参与；预习/检测产生的掌握度同样计入学习记录。
 - 方法:
   - `public void seedWeakFromBaseline(String userId, String subjectId, String refKey, Map<String, Integer> kpMasteryByName)`
     首次基线检测一次性播种薄弱知识点（口径 a：基线只写一次，此后检测不重写）；按知识点名称在指定学科内定位实体，掌握度低于薄弱阈值者写入 `t_user_weak_knowledge`（active）并产生 discovered 事件，幂等（已存在则跳过）。
@@ -2649,6 +2660,7 @@
 - 类型: `interface KnowledgePointService`
 - **类说明**：
   知识点管理服务（知识管理板块最小学习单元）。
+  除知识点 CRUD、题目绑定查询（含 `listMatchedQuestions` 按知识点标签匹配题库题目）外， 提供 `countQuestionsBySubject(subjectId)`：按题目的章节/小节/知识点标签文本统计该学科各节点归属题目数（返回 `QuestionCountView`），供教研平台知识树名称后展示「（N题）」。
 
 ### `shared/src/main/java/cn/wisestar/server/service/MallGoodsService.java`
 - 包: `cn.wisestar.server.service`

@@ -8,6 +8,7 @@ import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.QuestionCountView;
 
 import java.util.List;
 
@@ -92,5 +93,17 @@ public interface KnowledgePointService {
 	 * @return 题目标签匹配该知识点的题目视图列表（按知识点名精确匹配，忽略大小写与首尾空格）
 	 */
 	List<TemplateView> listMatchedQuestions(String knowledgePointId);
+
+	/**
+	 * 统计某学科题库中按 章节/小节/知识点 标签归属的题目数量。
+	 *
+	 * <p>按题目顶层 chapter/section/knowledge_point 列（新格式）或 template JSON 内
+	 * attribute 快照（旧数据）文本精确匹配学科下各节点名称，供教研平台在知识树
+	 * 章节/小节/知识点名称后展示「归属题目数量」。</p>
+	 *
+	 * @param subjectId 学科ID
+	 * @return 三张「名称 → 题目数」映射（章节/小节/知识点）
+	 */
+	QuestionCountView countQuestionsBySubject(String subjectId);
 
 }

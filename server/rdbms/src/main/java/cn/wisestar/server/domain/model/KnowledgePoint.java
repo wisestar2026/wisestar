@@ -46,7 +46,7 @@ public class KnowledgePoint extends BaseModel {
 	private String term;
 
 	/**
-	 * 重点程度（选填）：core=核心 / key=重点 / normal=一般；为空表示未标注。
+	 * 重点程度（选填）：key=重点 / minor=次重点 / normal=一般；为空表示未标注。
 	 */
 	private String importance;
 

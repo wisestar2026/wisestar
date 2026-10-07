@@ -39,6 +39,11 @@ public class ChapterView {
 	private String version;
 
 	/**
+	 * 重点程度：core=核心 / key=重点 / minor=次重点 / normal=一般；为空表示未标注。
+	 */
+	private String importance;
+
+	/**
 	 * 图标（emoji）。
 	 */
 	private String icon;

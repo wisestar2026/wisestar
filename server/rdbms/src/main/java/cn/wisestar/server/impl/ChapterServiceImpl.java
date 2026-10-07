@@ -192,6 +192,8 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 		List<Chapter> existingChapters = this.baseMapper.selectList(null);
 		Set<String> existing = existingChapters.stream()
 				.map(c -> c.getSubjectId() + "|" + c.getName()).collect(Collectors.toSet());
+		Map<String, String> existingIds = existingChapters.stream()
+				.collect(Collectors.toMap(c -> c.getSubjectId() + "|" + c.getName(), Chapter::getId, (a, b) -> a));
 		// 每个学科的「下一个可用排序号」，初始 = 现有最大 sort + 1；同一学科逐行递增，跨学科互不影响
 		Map<String, AtomicInteger> nextSortBySubject = existingChapters.stream()
 				.filter(c -> c.getSort() != null && c.getSubjectId() != null)
@@ -200,15 +202,18 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 								Collectors.maxBy(java.util.Comparator.comparingInt(Chapter::getSort)),
 								max -> new AtomicInteger(max.get().getSort() + 1))));
 		AtomicInteger imported = new AtomicInteger(0);
+		AtomicInteger updated = new AtomicInteger(0);
 		AtomicInteger missingRequired = new AtomicInteger(0);
 		AtomicInteger sectionNotFound = new AtomicInteger(0);
 		AtomicInteger duplicate = new AtomicInteger(0);
 		List<Chapter> toSave = new ArrayList<>();
+		int[] importanceCol = { -1 };
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
 				try (Stream<Row> rows = sheet.openStream()) {
 					rows.forEach(r -> {
 						if (r.getRowNum() == 1) {
+							importanceCol[0] = findColumn(r, "重点程度");
 							return; // 跳过表头
 						}
 						String subjectName = cellText(r, 0);
@@ -223,8 +228,20 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 							sectionNotFound.incrementAndGet();
 							return;
 						}
+						String importance = importanceCol[0] < 0 ? null
+								: KnowledgeValueNormalizer.importance(cellText(r, importanceCol[0]));
 						if (existing.contains(key)) {
-							duplicate.incrementAndGet();
+							// 已存在章节：带「重点程度」列的模板视为同步文件，就地更新年级/学期/版本/重点程度；否则计重名跳过
+							if (importanceCol[0] >= 0) {
+								update(Wrappers.<Chapter>lambdaUpdate().eq(Chapter::getId, existingIds.get(key))
+										.set(Chapter::getGrade, normalizeBlank(cellText(r, 2)))
+										.set(Chapter::getTerm, KnowledgeValueNormalizer.term(cellText(r, 3)))
+										.set(Chapter::getVersion, KnowledgeValueNormalizer.version(cellText(r, 4)))
+										.set(Chapter::getImportance, importance));
+								updated.incrementAndGet();
+							} else {
+								duplicate.incrementAndGet();
+							}
 							return;
 						}
 						existing.add(key);
@@ -234,6 +251,9 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 						chapter.setGrade(normalizeBlank(cellText(r, 2)));
 						chapter.setTerm(KnowledgeValueNormalizer.term(cellText(r, 3)));
 						chapter.setVersion(KnowledgeValueNormalizer.version(cellText(r, 4)));
+						if (importance != null) {
+							chapter.setImportance(importance);
+						}
 						int nextSort = nextSortBySubject
 								.computeIfAbsent(subjectId, s -> new AtomicInteger(1)).getAndIncrement();
 						chapter.setSort(nextSort);
@@ -260,10 +280,23 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 		}
 		ImportResultView result = new ImportResultView(imported.get(),
 				missingRequired.get() + sectionNotFound.get() + duplicate.get());
+		result.setUpdated(updated.get());
 		result.setMissingRequired(missingRequired.get());
 		result.setSectionNotFound(sectionNotFound.get());
 		result.setDuplicate(duplicate.get());
 		return result;
+	}
+
+	/** 按表头文本定位列（含关键字即命中，未命中返回 -1）。 */
+	private int findColumn(Row row, String keyword) {
+		int count = row.getCellCount();
+		for (int i = 0; i < count; i++) {
+			String text = cellText(row, i);
+			if (hasText(text) && text.contains(keyword)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */
@@ -284,12 +317,14 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 	}
 
 	/**
-	 * 更新章节（仅更新管理端可维护列：名称/年级/学期/版本/排序；
-	 * 图标由系统默认维护，不随本次更新改动；排序留空时不改动原值）。
+	 * 更新章节（仅更新管理端可维护列：名称/年级/学期/版本/排序/重点程度；
+	 * 图标由系统默认维护，不随本次更新改动；排序留空时不改动原值；
+	 * importance 支持清空：请求显式传空串表达清除，统一落 null）。
 	 */
 	@Override
 	public void updateChapter(ChapterRequest request) {
 		Chapter chapter = chapterViewMapper.fromRequest(request);
+		boolean touchImportance = request.getImportance() != null;
 		update(Wrappers.<Chapter>lambdaUpdate()
 				.eq(Chapter::getId, request.getId())
 				.set(Chapter::getName, chapter.getName())
@@ -297,6 +332,11 @@ public class ChapterServiceImpl extends BaseService<ChapterMapper, Chapter> impl
 				.set(Chapter::getTerm, chapter.getTerm())
 				.set(Chapter::getVersion, chapter.getVersion())
 				.set(request.getSort() != null, Chapter::getSort, chapter.getSort()));
+		if (touchImportance) {
+			update(Wrappers.<Chapter>lambdaUpdate()
+					.eq(Chapter::getId, request.getId())
+					.set(Chapter::getImportance, normalizeBlank(request.getImportance())));
+		}
 	}
 
 	/**

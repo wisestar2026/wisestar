@@ -54,6 +54,49 @@ public final class KnowledgeValueNormalizer {
 		return version;
 	}
 
+	/**
+	 * 重点程度归一化：把 Excel「重点程度」列的中文口径映射为系统三档 importance。
+	 *
+	 * <p>映射规则：核心/核心重点→key（核心并入重点），次重点→minor，重点→key，一般/普通/非重点/非核心→normal；
+	 * 已是系统原值（key/minor/normal）时原样返回，历史值 core 收敛为 key；
+	 * 无法识别或为空返回 null（不写该字段）。</p>
+	 *
+	 * @param text 原始文本（如「核心重点」「重点」「次重点」「一般」「非重点」）
+	 * @return key/minor/normal；无法识别返回 null
+	 */
+	public static String importance(String text) {
+		String value = blankToNull(text);
+		if (value == null) {
+			return null;
+		}
+		switch (value) {
+			case "key":
+			case "minor":
+			case "normal":
+				return value;
+			case "core":
+				return "key";
+			default:
+				break;
+		}
+		if (value.contains("非重点") || value.contains("非核心")) {
+			return "normal";
+		}
+		if (value.contains("核心")) {
+			return "key";
+		}
+		if (value.contains("次")) {
+			return "minor";
+		}
+		if (value.contains("重点")) {
+			return "key";
+		}
+		if (value.contains("一般") || value.contains("普通")) {
+			return "normal";
+		}
+		return null;
+	}
+
 	private static String blankToNull(String text) {
 		return text != null && !text.trim().isEmpty() ? text.trim() : null;
 	}

@@ -5,20 +5,14 @@ import cn.wisestar.server.domain.dto.student.PracticeEvaluationContext;
 import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.KnowledgePoint;
-import cn.wisestar.server.domain.model.PracticeDetail;
-import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Section;
-import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.domain.model.UserKnowledgeProgress;
 import cn.wisestar.server.domain.model.UserWeakKnowledge;
 import cn.wisestar.server.domain.model.WeakPointEvent;
 import cn.wisestar.server.event.WeakPointEventRecorder;
 import cn.wisestar.server.mapper.ChapterMapper;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
-import cn.wisestar.server.mapper.PracticeDetailMapper;
-import cn.wisestar.server.mapper.PracticeRecordMapper;
 import cn.wisestar.server.mapper.SectionMapper;
-import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.EvaluationService;
@@ -45,7 +39,7 @@ import java.util.stream.Collectors;
  * 学员学习评价实现。
  *
  * <p>掌握度 = 最近 5 次练习正确率的加权平均（越近权重越高 5,4,3,2,1）；
- * 薄弱 = 掌握度 &lt;55 或存在未订正错题；攻克 = 正确率 ≥80（显式）或 掌握度 ≥70 且本次正确率 ≥80（自动）。</p>
+ * 薄弱 = 掌握度 &lt;55，且仅对已产生学习记录（进度）的知识点认定，未学习实体不参与；攻克 = 正确率 ≥80（显式）。</p>
  *
  * @author wisestar
  * @date 2026/9/10
@@ -58,9 +52,6 @@ public class EvaluationServiceImpl implements EvaluationService {
 
 	/** 薄弱阈值 */
 	private static final int WEAK_THRESHOLD = 55;
-
-	/** 攻克所需掌握度 */
-	private static final int CONQUER_MASTERY = 70;
 
 	/** 攻克所需本次正确率 */
 	private static final int CONQUER_RATE = 80;
@@ -77,12 +68,6 @@ public class EvaluationServiceImpl implements EvaluationService {
 	private final SectionMapper sectionMapper;
 
 	private final ChapterMapper chapterMapper;
-
-	private final PracticeRecordMapper practiceRecordMapper;
-
-	private final PracticeDetailMapper practiceDetailMapper;
-
-	private final TemplateMapper templateMapper;
 
 	private final RewardService rewardService;
 
@@ -156,19 +141,15 @@ public class EvaluationServiceImpl implements EvaluationService {
 		if (!StringUtils.hasText(userId) || !StringUtils.hasText(knowledgePointId)) {
 			return;
 		}
-		KnowledgePoint kp = knowledgePointMapper.selectById(knowledgePointId);
-		if (kp == null) {
-			return;
-		}
 		KpContext ctx = resolveContext(knowledgePointId, null);
-		UserKnowledgeProgress p = findProgress(userId, ctx, knowledgePointId);
-		int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
 		UserWeakKnowledge w = findWeak(userId, ctx == null ? null : ctx.subjectId, knowledgePointId);
 		if (w == null) {
 			return;
 		}
-		boolean hasWrong = hasUncorrectedWrong(userId, kp.getName());
-		if (!hasWrong && mastery >= WEAK_THRESHOLD) {
+		// 薄弱以掌握度阈值为唯一依据：订正后掌握度回升到阈值即移出薄弱
+		UserKnowledgeProgress p = findProgress(userId, ctx, knowledgePointId);
+		int mastery = p == null || p.getMastery() == null ? 0 : p.getMastery();
+		if (mastery >= WEAK_THRESHOLD) {
 			markConquered(userId, ctx == null ? null : ctx.subjectId, knowledgePointId,
 					"correction:" + todayKey(), mastery);
 		}
@@ -313,7 +294,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 			p.setLastPracticeAt(new Date());
 			progressMapper.updateById(p);
 		}
-		// 薄弱研判
+		// 薄弱研判：以掌握度阈值为唯一依据；本次已产生学习记录（进度）的知识点才参与认定
 		int mastery = p.getMastery() == null ? rate : p.getMastery();
 		String subjectId = ctx == null ? null : ctx.subjectId;
 		UserWeakKnowledge w = findWeak(userId, subjectId, kpId);
@@ -337,10 +318,9 @@ public class EvaluationServiceImpl implements EvaluationService {
 						mastery, refBase + ":" + kpId + ":reopened"));
 			}
 		}
-		else if (mastery >= CONQUER_MASTERY && rate >= CONQUER_RATE) {
-			if (w != null && "active".equals(w.getStatus())) {
-				markConquered(userId, subjectId, kpId, refBase, rate);
-			}
+		else if (w != null && "active".equals(w.getStatus())) {
+			// 掌握度回到阈值以上：移出薄弱
+			markConquered(userId, subjectId, kpId, refBase, mastery);
 		}
 		// 掌握度达精通即「消灭知识点」，每学期每知识点结算一次
 		settleKpMaster(userId, ctx, kpId);
@@ -518,33 +498,6 @@ public class EvaluationServiceImpl implements EvaluationService {
 				log.warn("chapter stage reward failed: user={}, subject={}, stage={}", userId, subjectId, stage, e);
 			}
 		}
-	}
-
-	private boolean hasUncorrectedWrong(String userId, String kpName) {
-		if (!StringUtils.hasText(kpName)) {
-			return false;
-		}
-		List<PracticeRecord> records = practiceRecordMapper
-				.selectList(Wrappers.<PracticeRecord>lambdaQuery().eq(PracticeRecord::getUserId, userId));
-		List<String> practiceIds = records.stream().map(PracticeRecord::getId).collect(Collectors.toList());
-		if (practiceIds.isEmpty()) {
-			return false;
-		}
-		List<PracticeDetail> wrongs = practiceDetailMapper.selectList(Wrappers.<PracticeDetail>lambdaQuery()
-				.in(PracticeDetail::getPracticeId, practiceIds).eq(PracticeDetail::getIsCorrect, 0)
-				.eq(PracticeDetail::getCorrected, false));
-		for (PracticeDetail d : wrongs) {
-			Template t = templateMapper.selectById(d.getQuestionId());
-			if (t == null || t.getKnowledgePoint() == null) {
-				continue;
-			}
-			for (String name : t.getKnowledgePoint()) {
-				if (name != null && name.trim().equals(kpName)) {
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	private String resolveKpId(List<String> knowledgePointNames, KpContext sessionCtx, Map<String, String> cache) {

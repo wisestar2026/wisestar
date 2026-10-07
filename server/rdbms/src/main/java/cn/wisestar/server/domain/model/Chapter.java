@@ -44,6 +44,11 @@ public class Chapter extends BaseModel {
 	private String version;
 
 	/**
+	 * 重点程度：key=重点 / minor=次重点 / normal=一般；为空表示未标注。
+	 */
+	private String importance;
+
+	/**
 	 * 图标（emoji）。
 	 */
 	private String icon;

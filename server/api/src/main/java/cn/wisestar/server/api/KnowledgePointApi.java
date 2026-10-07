@@ -8,6 +8,7 @@ import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.QuestionCountView;
 import cn.wisestar.server.service.KnowledgePointService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -188,6 +189,27 @@ public class KnowledgePointApi {
 	@PreAuthorize("hasAuthority('knowledge:list')")
 	public List<TemplateView> listMatchedQuestions(@RequestParam("knowledgePointId") String knowledgePointId) {
 		return knowledgePointService.listMatchedQuestions(knowledgePointId);
+	}
+
+	/**
+	 * 统计学科题库按 章节/小节/知识点 名称归属的题目数量。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/knowledge-point/question-counts
+	 * （如 /api/knowledge-point/question-counts?subjectId=xxx）。</p>
+	 *
+	 * <p><b>功能</b>：按题目顶层 chapter/section/knowledge_point 标签（或 template JSON
+	 * 内 attribute 快照）文本精确匹配该学科各节点名称，返回三张「名称 → 题目数」映射，
+	 * 供教研平台在章节/小节/知识点名称后展示「归属题目数量」。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@link QuestionCountView}（chapter/section/knowledgePoint 三张映射）。</p>
+	 *
+	 * @param subjectId 学科ID
+	 * @return 章节/小节/知识点名称 → 归属题目数
+	 */
+	@GetMapping("/question-counts")
+	@PreAuthorize("hasAuthority('knowledge:list')")
+	public QuestionCountView questionCounts(@RequestParam("subjectId") String subjectId) {
+		return knowledgePointService.countQuestionsBySubject(subjectId);
 	}
 
 }

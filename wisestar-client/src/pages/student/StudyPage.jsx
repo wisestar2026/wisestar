@@ -152,8 +152,8 @@ export default function StudyPage() {
 
   // 研习首页看板：本学期重点（管理员标注重点程度）+ 学习情况 + 优势/不足
   const dash = useMemo(() => {
-    const IMP_RANK = { core: 3, key: 2, normal: 1 };
-    const rankLabel = (r) => (r >= 3 ? 'core' : r === 2 ? 'key' : r === 1 ? 'normal' : '');
+    const IMP_RANK = { key: 3, minor: 2, normal: 1 };
+    const rankLabel = (r) => (r >= 3 ? 'key' : r === 2 ? 'minor' : r === 1 ? 'normal' : '');
     const sectionMap = new Map();
     const strengths = [];
     const weaknesses = [];
@@ -183,7 +183,8 @@ export default function StudyPage() {
         sec.masterySum += mastery;
         sec.rank = Math.max(sec.rank, IMP_RANK[kp.sectionImportance] || 0, IMP_RANK[kp.importance] || 0);
         if (mastery >= 70) strengths.push({ ...kp, chapterName: ch.name, icon: ch.icon });
-        if (kp.weak || mastery < 40) weaknesses.push({ ...kp, chapterName: ch.name, icon: ch.icon });
+        // 薄弱仅取学员练习后由后端研判打标的 kp.weak（未被练习/评价过的知识点不按 0% 掌握度计入）
+        if (kp.weak) weaknesses.push({ ...kp, chapterName: ch.name, icon: ch.icon });
       });
     });
     const sections = [...sectionMap.values()].map((s) => ({
@@ -192,7 +193,7 @@ export default function StudyPage() {
       mastery: s.kps.length ? Math.round(s.masterySum / s.kps.length) : 0,
     }));
     const completedSections = sections.filter((s) => s.mastery >= 60).length;
-    let keySections = sections.filter((s) => s.rank >= 2).sort((a, b) => b.rank - a.rank || a.mastery - b.mastery);
+    let keySections = sections.filter((s) => s.rank >= 3).sort((a, b) => b.rank - a.rank || a.mastery - b.mastery);
     const keyFallback = keySections.length === 0;
     if (keyFallback) {
       // 管理员尚未标注重点时，按知识点密度给出参考重点，避免空白
@@ -349,7 +350,7 @@ export default function StudyPage() {
                         <div className="study-dash-secs">
                           {kc.sections.map((s) => (
                             <span key={s.id} className="study-dash-sec" onClick={() => focusSection(s)}>
-                              {s.importance === 'core' ? <b className="study-dash-tag core">核心</b> : s.importance === 'key' ? <b className="study-dash-tag key">重点</b> : null}
+                              {s.importance === 'key' ? <b className="study-dash-tag key">重点</b> : null}
                               {s.name}
                             </span>
                           ))}

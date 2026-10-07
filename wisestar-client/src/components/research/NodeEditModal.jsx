@@ -68,6 +68,7 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
         grade: record?.grade || undefined,
         term: record?.term || undefined,
         version: record?.version || '',
+        importance: record?.importance || undefined,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,6 +86,7 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
             grade: values.grade || '',
             term: values.term || '',
             version: values.version?.trim() || '',
+            importance: values.importance ?? '',
             sort: values.sort,
           });
         } else if (nodeType === 'section') {
@@ -161,6 +163,9 @@ export default function NodeEditModal({ open, nodeType, record, onCancel, onSave
             </Form.Item>
             <Form.Item name="version" label="教材版本" style={{ flex: 1.4 }}>
               <Input placeholder="如：人教版" maxLength={16} />
+            </Form.Item>
+            <Form.Item name="importance" label="重点程度" style={{ flex: 1 }}>
+              <Select allowClear placeholder="未标注" options={IMPORTANCE_OPTIONS} />
             </Form.Item>
           </div>
         )}

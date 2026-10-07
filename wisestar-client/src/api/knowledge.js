@@ -258,6 +258,17 @@ export async function listMatchedKnowledgePointQuestions(knowledgePointId) {
   return request.get('/knowledge-point/questions/matched', { params: { knowledgePointId } });
 }
 
+/**
+ * 统计学科题库按章节/小节/知识点名称归属的题目数量
+ * 后端接口: GET /api/knowledge-point/question-counts
+ * @param {String} subjectId - 学科ID
+ * @returns {Object} data: { chapter: {名称: 数量}, section: {...}, knowledgePoint: {...} }
+ * 调用方: TeachingResearchPlatformPage 知识树名称后展示「归属题目数量」
+ */
+export async function getQuestionCounts(subjectId) {
+  return request.get('/knowledge-point/question-counts', { params: { subjectId } });
+}
+
 // ------------------------------------------------------------
 // 知识批量导入（Excel，multipart）
 // ------------------------------------------------------------
@@ -323,8 +334,9 @@ export async function importSections(file) {
 }
 
 /**
- * 批量导入知识点（Excel 列：学科名/章节名/小节名/知识点名/排序(选填)，首行表头跳过）
- * 后端接口: POST /api/knowledge-point/import（按学科+章节+小节名定位归属，小节内重名跳过）
+ * 批量导入知识点（Excel 列：学科名/章节名/小节名/知识点名/排序(选填)/年级(选填)/学期(选填)/内容设置(选填)/重点程度(选填)，首行表头跳过）
+ * 后端接口: POST /api/knowledge-point/import（按学科+章节+小节名定位归属，小节内重名跳过；
+ *           重点程度映射 importance：重点→key、次重点→minor、一般→normal）
  * @param {File} file - Excel 文件
  * @returns {Object} data: { imported, skipped }
  */

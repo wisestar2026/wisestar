@@ -22,7 +22,7 @@ import {
   listSubjects, listChapters, listSections, listKnowledgePoints,
   updateChapter, updateSection, updateKnowledgePoint,
   listKnowledgePointQuestions, saveKnowledgePointQuestions,
-  listMatchedKnowledgePointQuestions,
+  listMatchedKnowledgePointQuestions, getQuestionCounts,
 } from '../../api/knowledge';
 import { updateTemplate, listTemplate } from '../../api/template';
 import { getUnitBooks, getUnitWords, getUnitSentences, getGrammars } from '../../api/englishAdmin';
@@ -203,6 +203,8 @@ export default function TeachingResearchPlatformPage() {
   const [chapters, setChapters] = useState([]);
   const [secMap, setSecMap] = useState({});   // chapterId -> 小节
   const [kpMap, setKpMap] = useState({});     // sectionId -> 知识点
+  // 学科维度的「归属题目数量」：{ chapter:{名称:数}, section:{}, knowledgePoint:{} }
+  const [qCounts, setQCounts] = useState({ chapter: {}, section: {}, knowledgePoint: {} });
   const [loadingRoot, setLoadingRoot] = useState(false);
   const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [expandedKeys, setExpandedKeys] = useState([]);
@@ -251,6 +253,7 @@ export default function TeachingResearchPlatformPage() {
     setChapters([]);
     setSecMap({});
     setKpMap({});
+    setQCounts({ chapter: {}, section: {}, knowledgePoint: {} });
     setGradeOptions([]);
     setExpandedKeys([]);
     expandedRef.current = [];
@@ -315,6 +318,17 @@ export default function TeachingResearchPlatformPage() {
       })
       .catch((e) => message.error('加载章节失败：' + (e?.message || e)))
       .finally(() => setLoadingRoot(false));
+    // 归属题目数量：按学科一次性取回名称→题数映射（失败不影响知识树）
+    getQuestionCounts(subject)
+      .then((res) => {
+        const raw = unwrap(res) || {};
+        setQCounts({
+          chapter: raw.chapter || {},
+          section: raw.section || {},
+          knowledgePoint: raw.knowledgePoint || {},
+        });
+      })
+      .catch(() => setQCounts({ chapter: {}, section: {}, knowledgePoint: {} }));
   };
 
   useEffect(() => {
@@ -365,11 +379,20 @@ export default function TeachingResearchPlatformPage() {
   /* ---------- 树数据（含简介摘要） ---------- */
   const treeData = useMemo(() => {
     const chaptersInGrade = chapters.filter((c) => !grade || !c.grade || c.grade === grade);
+    const chCount = (name) => qCounts.chapter[name] || 0;
+    const secCount = (name) => qCounts.section[name] || 0;
+    const kpCount = (name) => qCounts.knowledgePoint[name] || 0;
     return chaptersInGrade.map((ch) => {
       const sections = (secMap[ch.id] || []).filter(inGrade);
       return {
         key: 'ch:' + ch.id,
-        title: ch.name,
+        title: (
+          <span className="trp-ch-node">
+            <span className="trp-ch-name">{ch.name}</span>
+            <span className="trp-q-count">（{chCount(ch.name)}题）</span>
+            <ImportanceTag value={ch.importance} />
+          </span>
+        ),
         isLeaf: false,
         children: sections.map((sec) => {
           const kps = (kpMap[sec.id] || []).filter(inGrade);
@@ -379,6 +402,7 @@ export default function TeachingResearchPlatformPage() {
             title: (
               <span className="trp-sec-node">
                 <span className="trp-sec-name">{sec.name}</span>
+                <span className="trp-q-count">（{secCount(sec.name)}题）</span>
                 <ImportanceTag value={sec.importance} />
               </span>
             ),
@@ -391,6 +415,7 @@ export default function TeachingResearchPlatformPage() {
                   <Tooltip title={intro ? `简介：${intro}` : '暂无简介'} placement="right">
                     <span className="trp-kp-node">
                       <span className="trp-kp-name">{kp.name}</span>
+                      <span className="trp-q-count">（{kpCount(kp.name)}题）</span>
                       <ImportanceTag value={kp.importance} />
                       <span className="trp-kp-desc">{intro || '暂无简介'}</span>
                       <Button
@@ -410,7 +435,7 @@ export default function TeachingResearchPlatformPage() {
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chapters, secMap, kpMap, grade]);
+  }, [chapters, secMap, kpMap, grade, qCounts]);
 
   /* ---------- 英语树：册别 → 单元 → 单词/重点句子（只读） ---------- */
   const englishTreeData = useMemo(() => {

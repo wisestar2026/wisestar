@@ -2,6 +2,7 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.exception.InternalServerError;
+import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
 import cn.wisestar.server.domain.dto.TemplateView;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.dto.knowledge.ImportResultView;
@@ -10,6 +11,7 @@ import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuery;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointQuestionRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointRequest;
 import cn.wisestar.server.domain.dto.knowledge.KnowledgePointView;
+import cn.wisestar.server.domain.dto.knowledge.QuestionCountView;
 import cn.wisestar.server.domain.mapper.KnowledgePointViewMapper;
 import cn.wisestar.server.domain.mapper.TemplateViewMapper;
 import cn.wisestar.server.domain.model.Chapter;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -129,18 +132,25 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 				.collect(Collectors.toMap(c -> c.getSubjectId() + "|" + c.getName(), Chapter::getId, (a, b) -> a));
 		Map<String, String> sectionCache = sectionMapper.selectList(null).stream()
 				.collect(Collectors.toMap(s -> s.getChapterId() + "|" + s.getName(), Section::getId, (a, b) -> a));
-		Set<String> existing = this.baseMapper.selectList(null).stream()
+		List<KnowledgePoint> allPoints = this.baseMapper.selectList(null);
+		Set<String> existing = allPoints.stream()
 				.map(k -> k.getSectionId() + "|" + k.getName()).collect(Collectors.toSet());
+		Map<String, String> existingIds = allPoints.stream()
+				.collect(Collectors.toMap(k -> k.getSectionId() + "|" + k.getName(), KnowledgePoint::getId, (a, b) -> a));
 		AtomicInteger imported = new AtomicInteger(0);
+		AtomicInteger updated = new AtomicInteger(0);
 		AtomicInteger missingRequired = new AtomicInteger(0);
 		AtomicInteger sectionNotFound = new AtomicInteger(0);
 		AtomicInteger duplicate = new AtomicInteger(0);
 		List<KnowledgePoint> toSave = new ArrayList<>();
+		int[] importanceCol = { -1 };
 		try (InputStream is = request.getFile().getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
 			wb.getSheets().forEach(sheet -> {
 				try (Stream<Row> rows = sheet.openStream()) {
 					rows.forEach(r -> {
 						if (r.getRowNum() == 1) {
+							// 不同来源模板「重点程度」列位置不同，按表头文本定位
+							importanceCol[0] = findColumn(r, "重点程度");
 							return; // 跳过表头
 						}
 						String subjectName = cellText(r, 0);
@@ -159,8 +169,25 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 							sectionNotFound.incrementAndGet();
 							return;
 						}
+						String importance = importanceCol[0] < 0 ? null
+								: KnowledgeValueNormalizer.importance(cellText(r, importanceCol[0]));
 						if (existing.contains(key)) {
-							duplicate.incrementAndGet();
+							// 已存在知识点：带「重点程度」列的模板视为同步文件，就地更新排序/年级/学期/内容/重点程度；否则计重名跳过
+							if (importanceCol[0] >= 0) {
+								String g = cellText(r, 5).trim();
+								String tm = cellText(r, 6).trim();
+								update(Wrappers.<KnowledgePoint>lambdaUpdate()
+										.eq(KnowledgePoint::getId, existingIds.get(key))
+										.set(KnowledgePoint::getSort, cellAsInt(r, 4, 1))
+										.set(KnowledgePoint::getGrade, hasText(g) ? g : null)
+										.set(KnowledgePoint::getTerm, hasText(tm) ? tm : null)
+										.set(KnowledgePoint::getContent, buildContentJson(cellText(r, 7)))
+										.set(KnowledgePoint::getImportance, importance));
+								updated.incrementAndGet();
+							}
+							else {
+								duplicate.incrementAndGet();
+							}
 							return;
 						}
 						existing.add(key);
@@ -177,6 +204,9 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 							point.setTerm(term);
 						}
 						point.setContent(buildContentJson(cellText(r, 7)));
+						if (importance != null) {
+							point.setImportance(importance);
+						}
 						toSave.add(point);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);
@@ -199,10 +229,23 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		}
 		ImportResultView result = new ImportResultView(imported.get(),
 				missingRequired.get() + sectionNotFound.get() + duplicate.get());
+		result.setUpdated(updated.get());
 		result.setMissingRequired(missingRequired.get());
 		result.setSectionNotFound(sectionNotFound.get());
 		result.setDuplicate(duplicate.get());
 		return result;
+	}
+
+	/** 按表头文本定位列（含关键字即命中，未命中返回 -1）。 */
+	private int findColumn(Row row, String keyword) {
+		int count = row.getCellCount();
+		for (int i = 0; i < count; i++) {
+			String text = cellText(row, i);
+			if (hasText(text) && text.contains(keyword)) {
+				return i;
+			}
+		}
+		return -1;
 	}
 
 	/** 读取行中指定列文本（缺列/空单元格返回空串，不抛异常）。 */
@@ -344,6 +387,81 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		}
 		return candidates.stream().filter(template -> matchesKnowledgePoint(template, name))
 				.map(templateViewMapper::toView).collect(Collectors.toList());
+	}
+
+	/**
+	 * 统计某学科题库中按 章节/小节/知识点 标签归属的题目数量。
+	 *
+	 * <p>先用学科名（t_subject → t_template.subject）筛出该学科题库，再逐题读取
+	 * 顶层 chapter/section/knowledge_point 列（新格式），缺失时回退 template JSON 内
+	 * attribute 快照（旧数据），按名称计数（名称重名则累加）。</p>
+	 */
+	@Override
+	public QuestionCountView countQuestionsBySubject(String subjectId) {
+		QuestionCountView view = new QuestionCountView();
+		view.setChapter(new HashMap<>());
+		view.setSection(new HashMap<>());
+		view.setKnowledgePoint(new HashMap<>());
+		if (!hasText(subjectId)) {
+			return view;
+		}
+		Subject subject = subjectMapper.selectById(subjectId);
+		if (subject == null || !hasText(subject.getName())) {
+			return view;
+		}
+		List<Template> templates = templateMapper.selectList(Wrappers.<Template>lambdaQuery()
+				.eq(Template::getSubject, subject.getName()));
+		for (Template template : templates) {
+			addCount(view.getChapter(), chapterLabel(template));
+			addCount(view.getSection(), sectionLabel(template));
+			knowledgePointLabels(template).forEach(name -> addCount(view.getKnowledgePoint(), name));
+		}
+		return view;
+	}
+
+	/** 题目章节标签：优先顶层 chapter 列，回退 template JSON 内 attribute.chapter。 */
+	private String chapterLabel(Template template) {
+		if (hasText(template.getChapter())) {
+			return template.getChapter().trim();
+		}
+		SurveySchema schema = template.getTemplate();
+		return schema == null || schema.getAttribute() == null ? null
+				: trimToNull(schema.getAttribute().getChapter());
+	}
+
+	/** 题目小节标签：优先顶层 section 列，回退 template JSON 内 attribute.section。 */
+	private String sectionLabel(Template template) {
+		if (hasText(template.getSection())) {
+			return template.getSection().trim();
+		}
+		SurveySchema schema = template.getTemplate();
+		return schema == null || schema.getAttribute() == null ? null
+				: trimToNull(schema.getAttribute().getSection());
+	}
+
+	/** 题目知识点标签：优先顶层 knowledge_point 数组，回退 template JSON 内 attribute.knowledgePoint。 */
+	private List<String> knowledgePointLabels(Template template) {
+		if (template.getKnowledgePoint() != null && template.getKnowledgePoint().length > 0) {
+			return Stream.of(template.getKnowledgePoint()).filter(Objects::nonNull)
+					.map(String::trim).filter(name -> !name.isEmpty()).collect(Collectors.toList());
+		}
+		SurveySchema schema = template.getTemplate();
+		if (schema == null || schema.getAttribute() == null
+				|| CollectionUtils.isEmpty(schema.getAttribute().getKnowledgePoint())) {
+			return Collections.emptyList();
+		}
+		return schema.getAttribute().getKnowledgePoint().stream().filter(Objects::nonNull)
+				.map(String::trim).filter(name -> !name.isEmpty()).collect(Collectors.toList());
+	}
+
+	private String trimToNull(String value) {
+		return hasText(value) ? value.trim() : null;
+	}
+
+	private void addCount(Map<String, Long> counts, String name) {
+		if (hasText(name)) {
+			counts.merge(name.trim(), 1L, Long::sum);
+		}
 	}
 
 	/** 题目顶层 knowledge_point 列或 template JSON 内 attribute.knowledgePoint 命中该名称即视为匹配。 */
