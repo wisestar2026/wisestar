@@ -50,6 +50,12 @@ public class Section extends BaseModel {
 	private String importance;
 
 	/**
+	 * 小节类型（选填）：normal=普通小节 / exam=章节测评（测试节点）。
+	 * exam 节点以小节形式挂在章节下承载整章测评，出题范围覆盖整章知识点；为空按 normal 处理。
+	 */
+	private String type;
+
+	/**
 	 * 内容设置 JSON：{"objective":"学习目标","overview":"内容概述","points":["要点1"]}。
 	 */
 	private String content;

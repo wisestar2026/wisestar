@@ -70,6 +70,7 @@ import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
 import SectionManagePage from './pages/knowledge/SectionManagePage';
 import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
+import PracticeStrategyPage from './pages/knowledge/PracticeStrategyPage';
 import StudentManagePage from './pages/student/StudentManagePage';
 import StudentArchivePage from './pages/student/StudentArchivePage';
 import OrderManagePage from './pages/student/OrderManagePage';
@@ -252,6 +253,12 @@ export default function App() {
               path="/knowledge/points"
               element={
                 <AuthGuard required={['knowledge:list']}><KnowledgePointManagePage /></AuthGuard>
+              }
+            />
+            <Route
+              path="/knowledge/strategy"
+              element={
+                <AuthGuard required={['knowledge:strategy']}><PracticeStrategyPage /></AuthGuard>
               }
             />
 

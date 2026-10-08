@@ -1404,6 +1404,32 @@
     **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
 
     **调用的下层 Service**：SystemService#getSystemAiSetting()。
+  - `public SystemInfo.PracticeStrategy getPracticeStrategy()`
+    获取全局出题策略。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/system/practiceStrategy（如 /api/system/practiceStrategy）。
+
+    **功能**：返回全局出题策略（例题/预习题量、专项训练每知识点上限、小节通关分档题量、 章节测试题量与按知识点扩容、防重复滑窗、缺题储备目标）。数据库未配置时返回带默认值的策略对象。
+
+    **请求参数**：无。
+
+    **返回值结构**：`SystemInfo.PracticeStrategy`。
+
+    **权限**：@PreAuthorize("hasAuthority('knowledge:strategy')")。
+
+    **调用的下层 Service**：SystemService#getPracticeStrategy()。
+  - `public void updatePracticeStrategy(@RequestBody SystemInfo.PracticeStrategy request)`
+    更新全局出题策略。
+    **HTTP 方法 + 完整路径**：POST ${api.prefix}/system/practiceStrategy/update（如 /api/system/practiceStrategy/update）。
+
+    **功能**：合并保存全局出题策略（仅覆盖请求中非空的字段并对数值做范围收敛）， 缓存 key='practiceStrategy' 随之失效。
+
+    **请求参数**：SystemInfo.PracticeStrategy（@RequestBody JSON）。
+
+    **返回值结构**：无返回值（HTTP 200 空响应体）。
+
+    **权限**：@PreAuthorize("hasAuthority('knowledge:strategy')")。
+
+    **调用的下层 Service**：SystemService#updatePracticeStrategy(SystemInfo.PracticeStrategy)。
   - `public void updateSystemInfo(@RequestBody SystemInfoRequest request)`
     更新系统信息。
     **HTTP 方法 + 完整路径**：POST ${api.prefix}/system/update（如 /api/system/update）。

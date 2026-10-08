@@ -452,7 +452,7 @@
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
   小节实体（对应数据库表 t_section，知识管理板块三级维度）。
-  挂载于章节（chapterId）下，其下包含若干知识点（t_knowledge_point）。 content/practice 为 JSON 字符串，由前端序列化提交、解析展示，后端仅透传存储。
+  挂载于章节（chapterId）下，其下包含若干知识点（t_knowledge_point）。 content/practice 为 JSON 字符串，由前端序列化提交、解析展示，后端仅透传存储。 type 为小节类型：normal=普通小节 / exam=章节测评（测试节点，见 SectionType），为空按 normal 处理。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/SectionPass.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -578,8 +578,8 @@
 - 类型: `class SysInfo`
 - 注解: @TableName, @Data
 - **类说明**：
-  系统信息
-- 注入/字段: String id, String name, String description, String avatar, String locale, String version, Boolean isDefault, SystemInfo.RegisterInfo registerInfo, SystemInfo.SystemSetting setting, SystemInfo.AiSetting aiSetting, Date createAt, String createBy, Date updateAt, String updateBy, long serialVersionUID
+  系统信息（t_sys_info 单行 id='1'，autoResultMap=true）。aiSetting、practiceStrategy 等 JSON 列经 JacksonTypeHandler 序列化。
+- 注入/字段: String id, String name, String description, String avatar, String locale, String version, Boolean isDefault, SystemInfo.RegisterInfo registerInfo, SystemInfo.SystemSetting setting, SystemInfo.AiSetting aiSetting, SystemInfo.PracticeStrategy practiceStrategy, Date createAt, String createBy, Date updateAt, String updateBy, long serialVersionUID
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/Tag.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -1307,11 +1307,11 @@
   - `public List<SectionView> listSections(SectionRequest query)`
     小节列表（chapterId 可选，年级/学期可选等值过滤，sort 升序）， 并统计各小节下知识点数与已绑定题库数。
   - `public String addSection(SectionRequest request)`
-    新增小节（sort 为空时自动追加到所属章节现有最大 sort 之后）。
+    新增小节（sort 为空时自动追加到所属章节现有最大 sort 之后；type 为空按普通小节 normal 落库）。
   - `public ImportResultView importSections(SectionImportRequest request)`
-    批量导入小节（Excel：学科名/章节名/小节名/年级(选填)/学期(选填)/重点程度(选填，按表头文本定位列)； 排序不参与导入，按所属章节自动追加； 带「重点程度」列时视为同步文件、命中既有 chapterId+name 即就地回写年级/学期/重点程度并计入 updated，不带该列则重名跳过）。
+    批量导入小节（Excel：学科名/章节名/小节名/年级(选填)/学期(选填)/重点程度(选填，按表头文本定位列)； 排序不参与导入，按所属章节自动追加； 带「重点程度」列时视为同步文件、命中既有 chapterId+name 即就地回写年级/学期/重点程度并计入 updated，不带该列则重名跳过）。导入的小节类型固定为普通小节 normal。
   - `public void updateSection(SectionRequest request)`
-    更新小节（含内容设置/练习设置 JSON）。 grade/term/importance 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null， 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容/练习设置）不受影响）。
+    更新小节（含内容设置/练习设置 JSON）。 grade/term/importance 支持清空：请求显式传空串表达清除，统一落 null（updateById 忽略 null， 故清空需在 updateById 之外显式覆盖；未传的调用方（如仅存内容/练习设置）不受影响）。 type 未传时保持原值。
   - `public void deleteSection(SectionRequest request)`
     删除小节（级联逻辑删除其下知识点、知识点-题目绑定与本小节的题库绑定）。
   - `public void saveRepos(SectionRepoRequest request)`
@@ -1358,6 +1358,8 @@
   【核心逻辑】新增学员：校验姓名+联系号码组合查重 → 生成 8 位唯一学号 → 同一事务内写 t_student + t_account（user_type=Student、auth_account=学号、 初始密码 123456）。
 
   【WPB 识弱】章节/小节列表回填薄弱标记与薄弱数量，组卷对薄弱知识点加权抽取（权重 2）；另提供薄弱点专攻组卷（weakPractice）、薄弱对比（weakCompare）与薄弱跃迁时间线（weakTimeline）。
+
+  【出题策略】studyQuestions 统一读取全局出题策略（SystemService.getPracticeStrategy），小节可经 t_section.practice 的 perKp/repeatWindow 覆盖： 专项训练按 perKp 限制每知识点题量；小节通关按知识点数分档取 trialSmall/Medium/LargeCount； 章节测评取 examCount（examExpandByKp 时不低于本章知识点数）；并可按 repeatWindow 排除最近 N 次同范围已做题（loadRecentDoneQuestionIds）。
 - 方法:
   - `public StudentView createStudent(StudentRequest request)`
     新增学员：自动生成学号 + 创建登录账号（同一事务）。
@@ -1374,6 +1376,7 @@
   - `public StudentStudyProgressView studyProgress(String subjectId, String versionId, String grade, String term)`
     学科学习进度：章节 → 知识点掌握度/评级/薄弱（真实评价值，不返回 mock）。
   - `public List<StudentQuestionView> studyQuestions(String sectionId, List<String> knowledgePointIds, String repoId, String questionId, Integer count, Integer perKp, Boolean groupByKp, List<String> types, String difficulty, Boolean random, Boolean exposeAnswer, String usage)`
+    按范围组卷抽题。当 sectionId 指向的小节 type=exam（章节测评，兼容历史名称含「章节测评」）时，出题范围扩展为整章全部知识点。 题量/每知识点上限/防重复窗口缺省时套用全局出题策略（小节 practice 配置可覆盖）； 组卷时已命中知识点的题目受 perKp 上限约束（兜底补足跳过已命中题，避免绕过上限）。
   - `public SectionPracticeConfig sectionPracticeConfig(String sectionId)`
   - `public StudentStatsView stats()`
     学员学习统计（基于真实练习记录聚合：累计/今日/分科学币）。
@@ -1517,6 +1520,10 @@
   - `public List<PermissionView> getPermissions()`
   - `public void extractCodeDiffDbPermissions()`
   - `public SystemInfo.AiSetting getSystemAiSetting()`
+  - `public SystemInfo.PracticeStrategy getPracticeStrategy()`
+    读取全局出题策略（未配置返回默认值）。
+  - `public void updatePracticeStrategy(SystemInfo.PracticeStrategy request)`
+    合并保存全局出题策略（仅覆盖非空字段并收敛数值范围）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/TagServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

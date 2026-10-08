@@ -53,6 +53,8 @@ public final class PermissionConsts {
 	public static final String KNOWLEDGE_CREATE = "knowledge:create";
 	public static final String KNOWLEDGE_UPDATE = "knowledge:update";
 	public static final String KNOWLEDGE_DELETE = "knowledge:delete";
+	/** 出题策略配置（全局默认题量/防重复窗口/缺题储备目标） */
+	public static final String KNOWLEDGE_STRATEGY = "knowledge:strategy";
 
 	/** 学员管理 */
 	public static final String STUDENT_LIST = "student:list";
@@ -206,7 +208,8 @@ public final class PermissionConsts {
 		tree.add(node("question", "题目管理",
 				ops(QUESTION_LIST, "查看", QUESTION_CREATE, "新增", QUESTION_UPDATE, "修改", QUESTION_DELETE, "删除")));
 		tree.add(node("knowledge", "知识管理",
-				ops(KNOWLEDGE_LIST, "查看", KNOWLEDGE_CREATE, "新增", KNOWLEDGE_UPDATE, "修改", KNOWLEDGE_DELETE, "删除")));
+				ops(KNOWLEDGE_LIST, "查看", KNOWLEDGE_CREATE, "新增", KNOWLEDGE_UPDATE, "修改", KNOWLEDGE_DELETE, "删除",
+						KNOWLEDGE_STRATEGY, "出题策略")));
 		tree.add(node("student", "学员管理",
 				ops(STUDENT_LIST, "查看", STUDENT_CREATE, "新增", STUDENT_UPDATE, "修改", STUDENT_DELETE, "删除",
 						STUDENT_SUPERVISION, "督学", STUDENT_ARCHIVE, "学员档案", STUDENT_ARCHIVE_EDIT, "档案编辑")));
@@ -263,7 +266,7 @@ public final class PermissionConsts {
 	public static final String ADMIN_AUTHORITY = "home,exercise:list,"
 			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,"
 			+ "template:list,template:create,template:update,template:delete,"
-			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
+			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,"
 			+ "student:list,student:create,student:update,student:delete,student:supervision,student:archive,student:archive:edit,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
@@ -294,7 +297,7 @@ public final class PermissionConsts {
 	public static final String TEACHER_AUTHORITY = "home,exercise:list,"
 			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,"
 			+ "template:list,template:create,template:update,template:delete,"
-			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
+			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,"
 			+ "student:list,student:supervision,student:archive,student:archive:edit,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete";
@@ -312,7 +315,7 @@ public final class PermissionConsts {
 	public static final String ACADEMIC_AUTHORITY = "home,exercise:list,"
 			+ "repo:list,repo:detail,repo:create,repo:update,repo:delete,"
 			+ "template:list,template:create,template:update,template:delete,"
-			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,"
+			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,"
 			+ "student:list,student:archive,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"

@@ -54,6 +54,12 @@ const REPO_USAGE_OPTIONS = [
   { value: 'both', label: '通用' },
 ];
 
+// 小节类型：普通小节（学习内容+练习）/ 章节测评（测试节点，出题范围覆盖整章）
+const SECTION_TYPE_OPTIONS = [
+  { value: 'normal', label: '普通小节' },
+  { value: 'exam', label: '章节测评' },
+];
+
 export default function SectionManagePage() {
   const { can } = usePermission();
   const navigate = useNavigate();
@@ -210,6 +216,7 @@ export default function SectionManagePage() {
         sort: section.sort,
         grade: section.grade || undefined, term: section.term || undefined,
         importance: section.importance || undefined,
+        type: section.type || 'normal',
       });
       // 编辑：反查归属学科并加载该学科章节
       listChapters().then((res) => {
@@ -227,7 +234,7 @@ export default function SectionManagePage() {
       });
     } else {
       form.resetFields();
-      form.setFieldsValue({ chapterId: chapterId || undefined });
+      form.setFieldsValue({ chapterId: chapterId || undefined, type: 'normal' });
       setDialogSubjectId(subjectId || undefined);
       if (subjectId) {
         listChapters({ subjectId }).then((res) => setDialogChapters(res?.data || []));
@@ -255,7 +262,7 @@ export default function SectionManagePage() {
         return;
       }
       // 年级/学期/重点程度允许留空：空值归一为空串提交（后端将空串落为 null，表达清除）
-      const payload = { ...values, grade: values.grade || '', term: values.term || '', importance: values.importance || '' };
+      const payload = { ...values, grade: values.grade || '', term: values.term || '', importance: values.importance || '', type: values.type || 'normal' };
       if (editing) {
         updateSection({ ...payload, id: editing.id }).then(() => {
           message.success('小节已更新');
@@ -311,9 +318,11 @@ export default function SectionManagePage() {
       difficulty: practice.difficulty || '基础',
       types: practice.types || ['Radio'],
       preview: {
-        questionCount: practice.preview?.questionCount ?? 3,
+        questionCount: practice.preview?.questionCount ?? undefined,
         types: practice.preview?.types || [],
       },
+      perKp: practice.perKp ?? undefined,
+      repeatWindow: practice.repeatWindow ?? undefined,
     });
     // 回显已绑定练习 + 加载练习库（数据来自练习管理 t_repo）
     setBindKeyword('');
@@ -391,6 +400,10 @@ export default function SectionManagePage() {
     {
       title: '重点程度', dataIndex: 'importance', width: 90, align: 'center',
       render: (v) => <ImportanceTag value={v} />,
+    },
+    {
+      title: '类型', dataIndex: 'type', width: 90, align: 'center',
+      render: (t) => (t === 'exam' ? <Tag color="gold">章节测评</Tag> : <Tag>普通</Tag>),
     },
     {
       title: '内容设置', width: 110, align: 'center',
@@ -564,6 +577,9 @@ export default function SectionManagePage() {
           <Form.Item name="importance" label="重点程度（选填）">
             <Select allowClear placeholder="未标注" options={IMPORTANCE_OPTIONS} />
           </Form.Item>
+          <Form.Item name="type" label="小节类型" initialValue="normal" tooltip="章节测评是测试节点：学员端入口不变，出题范围覆盖整章知识点">
+            <Select options={SECTION_TYPE_OPTIONS} />
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -713,7 +729,7 @@ export default function SectionManagePage() {
             预习只从「预习专用 / 通用」题库取题，与专项练习、小节通关的题源区分。
           </Text>
           <Form.Item name={['preview', 'questionCount']} label="预习题量">
-            <InputNumber min={1} max={50} style={{ width: '100%' }} />
+            <InputNumber min={1} max={50} style={{ width: '100%' }} placeholder="留空继承全局策略" />
           </Form.Item>
           <Form.Item name={['preview', 'types']} label="预习题型（留空表示不限）">
             <Select
@@ -722,6 +738,16 @@ export default function SectionManagePage() {
               placeholder="不限题型"
               options={QUESTION_TYPES.map((t) => ({ value: t.value, label: t.label }))}
             />
+          </Form.Item>
+          <Divider orientation="left" plain>覆盖全局策略（留空继承全局）</Divider>
+          <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
+            以下留空时使用「出题策略」页面配置的全局默认值；填写后仅对本小节生效。
+          </Text>
+          <Form.Item name="perKp" label="专项训练每知识点出题上限">
+            <InputNumber min={1} max={50} style={{ width: '100%' }} placeholder="留空继承全局策略" />
+          </Form.Item>
+          <Form.Item name="repeatWindow" label="防重复滑窗（最近 N 次已做题不再出）">
+            <InputNumber min={0} max={20} style={{ width: '100%' }} placeholder="留空继承全局策略" />
           </Form.Item>
         </Form>
       </Modal>

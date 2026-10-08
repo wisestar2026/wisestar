@@ -2,6 +2,7 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.constant.SectionRepoUsage;
+import cn.wisestar.server.core.constant.SectionType;
 import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
 import cn.wisestar.server.domain.dto.RepoView;
 import cn.wisestar.server.domain.dto.knowledge.SectionImportRequest;
@@ -132,7 +133,7 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 		return section.getId();
 	}
 
-	/** 新增小节时补齐系统默认值：sort 为空则追加到所属章节现有最大 sort 之后。 */
+	/** 新增小节时补齐系统默认值：sort 为空则追加到所属章节现有最大 sort 之后；类型为空按普通小节。 */
 	private void fillDefaults(Section section) {
 		if (section.getSort() == null) {
 			Integer maxSort = getBaseMapper().selectList(Wrappers.<Section>lambdaQuery()
@@ -143,6 +144,7 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 					.stream().findFirst().map(Section::getSort).orElse(null);
 			section.setSort(maxSort == null ? 1 : maxSort + 1);
 		}
+		section.setType(SectionType.normalize(section.getType()));
 	}
 
 	/**
@@ -225,6 +227,7 @@ public class SectionServiceImpl extends BaseService<SectionMapper, Section> impl
 						int nextSort = nextSortByChapter
 								.computeIfAbsent(chapterId, s -> new AtomicInteger(1)).getAndIncrement();
 						section.setSort(nextSort);
+						section.setType(SectionType.NORMAL);
 						toSave.add(section);
 						if (toSave.size() >= 500) {
 							saveBatch(toSave);

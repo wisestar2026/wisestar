@@ -50,6 +50,11 @@ public class SectionRequest {
 	private String importance;
 
 	/**
+	 * 小节类型（选填）：normal=普通小节 / exam=章节测评（测试节点）；为空按 normal 处理。
+	 */
+	private String type;
+
+	/**
 	 * 小节内容设置 JSON：{"objective":"学习目标","overview":"内容概述","points":["要点1"]}。
 	 */
 	private String content;

@@ -388,7 +388,7 @@
   后台系统权限点清单（权限树数据源）。
   角色权限管理（人事管理）模块使用：角色编辑页的权限树按功能模块分组展示 权限点，勾选结果以权限编码列表保存到 `t_role.authority`（逗号分隔）， 后端接口通过 `@PreAuthorize("hasAuthority('module:action')")` 拦截。
 
-  本类集中定义后台全部功能模块的权限点，是权限树、内置角色默认权限、 管理员全量权限的唯一权威清单。学员管理新增「学员档案」权限点：`student:archive`（查看/打印，归 admin/principal/teacher/consultant/academic）、`student:archive:edit`（编辑定稿，归 admin/teacher/consultant）。
+  本类集中定义后台全部功能模块的权限点，是权限树、内置角色默认权限、 管理员全量权限的唯一权威清单。学员管理新增「学员档案」权限点：`student:archive`（查看/打印，归 admin/principal/teacher/consultant/academic）、`student:archive:edit`（编辑定稿，归 admin/teacher/consultant）。知识管理新增「出题策略」权限点：`knowledge:strategy`（归 admin/teacher/academic）。
 - 方法:
   - `public Node()`
   - `public Node(String key, String name)`
@@ -465,6 +465,17 @@
     判断用途是否属于预习链路可用范围（预习专用或通用）。
   - `public static boolean availableForPractice(String usage)`
     判断用途是否属于练习链路可用范围（练习专用或通用）。
+
+### `shared/src/main/java/cn/wisestar/server/core/constant/SectionType.java`
+- 包: `cn.wisestar.server.core.constant`
+- 类型: `class SectionType`
+- **类说明**：
+  小节类型常量（t_section.type）。普通小节（#NORMAL）承载学习内容与练习；章节测评（#EXAM）是以小节形式挂在章节下的「测试节点」，本身无知识点，学员端进入后出题范围覆盖整章知识点。历史数据缺省按普通小节处理。
+- 方法:
+  - `public static String normalize(String type)`
+    归一化类型：空值或非法值统一回退为普通小节。
+  - `public static boolean isExam(String type)`
+    判断是否为章节测评（测试节点）。
 
 ### `shared/src/main/java/cn/wisestar/server/core/constant/StorageTypeEnum.java`
 - 包: `cn.wisestar.server.core.constant`
@@ -1612,7 +1623,9 @@
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class SystemInfo`
 - 注解: @Data
-
+- **类说明**：
+  系统信息视图（t_sys_info 单行 id='1'）。
+  嵌套 RegisterInfo、SystemSetting、AiSetting，新增 PracticeStrategy（全局出题策略）： 例题/预习题量、专项训练每知识点上限、小节通关分档题量、章节测试题量与按知识点扩容、 防重复滑窗、缺题储备目标；所有小节默认继承，可在小节练习设置中按字段覆盖。
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/SystemInfoRequest.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class SystemInfoRequest`
@@ -2009,7 +2022,7 @@
 - 注解: @Data
 - **类说明**：
   小节练习配置（t_section.practice JSON 的强类型视图）。
-  字段缺省策略：mode 缺省 normal；passRate 缺省 80 并收敛到 0-100； unlockNext 缺省 false；preview 缺省题量 3、题型不限。 用于专项练习、小节通关与知识点预习统一出题引擎的策略来源。
+  字段缺省策略：mode 缺省 normal；passRate 缺省 80 并收敛到 0-100； unlockNext 缺省 false；preview 题量缺省时继承全局出题策略（previewCount）、题型不限。 新增 perKp（专项训练每知识点出题上限）、repeatWindow（防重复滑窗）， 二者留空表示继承全局出题策略（SystemInfo.PracticeStrategy）。 用于专项练习、小节通关与知识点预习统一出题引擎的策略来源。
 - 方法:
   - `public boolean isRandom()`
     是否为随机出题模式
@@ -2836,6 +2849,8 @@
   **类职责**：提供系统级管理能力：系统信息（名称/Logo/AI 设置）查询与更新、 角色 CRUD、权限码查询、角色与权限初始化。实现类位于 rdbms 模块 （SystemServiceImpl）。
 
   **缓存设计**：系统信息与 AI 设置使用 CacheConsts#commonCacheName 缓存（key 分别为 'systemInfo' 与 'aiInfo'），更新系统信息时通过 @Caching 同时失效这两个缓存 key。
+
+  新增全局出题策略读写：getPracticeStrategy（@Cacheable key='practiceStrategy'，未配置返回带默认值的对象）与 updatePracticeStrategy（@CacheEvict key='practiceStrategy'）， 供学员端出题引擎读取全局默认策略，经 SystemApi 的 /system/practiceStrategy 系列接口管理。
 
 ### `shared/src/main/java/cn/wisestar/server/service/TagService.java`
 - 包: `cn.wisestar.server.service`

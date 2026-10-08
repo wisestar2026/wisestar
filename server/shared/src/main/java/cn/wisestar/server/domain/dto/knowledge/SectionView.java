@@ -44,6 +44,11 @@ public class SectionView {
 	private String importance;
 
 	/**
+	 * 小节类型：normal=普通小节 / exam=章节测评（测试节点）；为空按 normal 处理。
+	 */
+	private String type;
+
+	/**
 	 * 内容设置 JSON 原文（可能为空，前端解析展示）。
 	 */
 	private String content;

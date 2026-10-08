@@ -96,4 +96,22 @@ public interface SystemService {
 	 */
 	@Cacheable(value = CacheConsts.commonCacheName, key = "'aiInfo'")
 	SystemInfo.AiSetting getSystemAiSetting();
+
+	/**
+	 * 获取全局出题策略（带缓存，key='practiceStrategy'）。
+	 *
+	 * <p>数据库未配置时返回带默认值的策略对象，保证出题引擎始终可用。</p>
+	 *
+	 * @return 全局出题策略（见 {@link SystemInfo.PracticeStrategy}）
+	 */
+	@Cacheable(value = CacheConsts.commonCacheName, key = "'practiceStrategy'")
+	SystemInfo.PracticeStrategy getPracticeStrategy();
+
+	/**
+	 * 更新全局出题策略（失效 practiceStrategy 缓存）。
+	 *
+	 * @param request 出题策略（字段为空保留原值/默认值）
+	 */
+	@CacheEvict(value = CacheConsts.commonCacheName, key = "'practiceStrategy'")
+	void updatePracticeStrategy(SystemInfo.PracticeStrategy request);
 }

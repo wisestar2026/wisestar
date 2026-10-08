@@ -180,6 +180,85 @@ public class SystemServiceImpl implements SystemService {
 		return info != null && info.getAiSetting() != null ? info.getAiSetting() : new SystemInfo.AiSetting();
 	}
 
+	@Override
+	public SystemInfo.PracticeStrategy getPracticeStrategy() {
+		// 数据库只有一条记录，id为1；未配置时返回带默认值的策略对象
+		SysInfo info = sysInfoMapper.selectById("1");
+		return info != null && info.getPracticeStrategy() != null ? info.getPracticeStrategy()
+				: new SystemInfo.PracticeStrategy();
+	}
+
+	@Override
+	public void updatePracticeStrategy(SystemInfo.PracticeStrategy request) {
+		if (request == null) {
+			return;
+		}
+		SysInfo sysInfo = sysInfoMapper.selectById("1");
+		boolean exists = sysInfo != null;
+		if (!exists) {
+			sysInfo = new SysInfo();
+			sysInfo.setId("1");
+		}
+		SystemInfo.PracticeStrategy target = sysInfo.getPracticeStrategy();
+		if (target == null) {
+			target = new SystemInfo.PracticeStrategy();
+		}
+		mergePracticeStrategy(target, request);
+		sysInfo.setPracticeStrategy(target);
+		if (exists) {
+			sysInfoMapper.updateById(sysInfo);
+		} else {
+			sysInfoMapper.insert(sysInfo);
+		}
+	}
+
+	/** 合并出题策略：仅覆盖请求中非空的字段，并对数值做下限/上限收敛。 */
+	private void mergePracticeStrategy(SystemInfo.PracticeStrategy target, SystemInfo.PracticeStrategy source) {
+		if (source.getPreviewCount() != null) {
+			target.setPreviewCount(clamp(source.getPreviewCount(), 1, 50));
+		}
+		if (source.getDrillPerKp() != null) {
+			target.setDrillPerKp(clamp(source.getDrillPerKp(), 1, 50));
+		}
+		if (source.getTrialSmallCount() != null) {
+			target.setTrialSmallCount(clamp(source.getTrialSmallCount(), 1, 50));
+		}
+		if (source.getTrialMediumCount() != null) {
+			target.setTrialMediumCount(clamp(source.getTrialMediumCount(), 1, 50));
+		}
+		if (source.getTrialLargeCount() != null) {
+			target.setTrialLargeCount(clamp(source.getTrialLargeCount(), 1, 50));
+		}
+		if (source.getTrialSmallMaxKp() != null) {
+			target.setTrialSmallMaxKp(clamp(source.getTrialSmallMaxKp(), 1, 50));
+		}
+		if (source.getTrialMediumMaxKp() != null) {
+			target.setTrialMediumMaxKp(clamp(source.getTrialMediumMaxKp(), 1, 50));
+		}
+		if (source.getExamCount() != null) {
+			target.setExamCount(clamp(source.getExamCount(), 1, 50));
+		}
+		if (source.getExamExpandByKp() != null) {
+			target.setExamExpandByKp(source.getExamExpandByKp());
+		}
+		if (source.getRepeatWindow() != null) {
+			target.setRepeatWindow(clamp(source.getRepeatWindow(), 0, 20));
+		}
+		if (source.getReserveNormal() != null) {
+			target.setReserveNormal(clamp(source.getReserveNormal(), 1, 200));
+		}
+		if (source.getReserveMinor() != null) {
+			target.setReserveMinor(clamp(source.getReserveMinor(), 1, 200));
+		}
+		if (source.getReserveKey() != null) {
+			target.setReserveKey(clamp(source.getReserveKey(), 1, 200));
+		}
+	}
+
+	private int clamp(int value, int min, int max) {
+		return Math.max(min, Math.min(max, value));
+	}
+
 	private void mergeSysInfo(SysInfo target, SystemInfoRequest request) {
 		if (isNotBlank(request.getName())) {
 			target.setName(request.getName());

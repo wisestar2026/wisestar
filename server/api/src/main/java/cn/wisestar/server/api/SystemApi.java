@@ -133,6 +133,41 @@ public class SystemApi {
 	}
 
 	/**
+	 * 获取全局出题策略。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/system/practiceStrategy。</p>
+	 *
+	 * <p><b>功能</b>：返回例题检测/专项训练/小节通关/章节测试的默认题量、
+	 * 防重复滑窗与缺题储备目标；未配置时返回带默认值的策略。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('knowledge:strategy')。</p>
+	 *
+	 * @return 全局出题策略
+	 */
+	@GetMapping("/practiceStrategy")
+	@PreAuthorize("hasAuthority('knowledge:strategy')")
+	public SystemInfo.PracticeStrategy getPracticeStrategy() {
+		return systemService.getPracticeStrategy();
+	}
+
+	/**
+	 * 更新全局出题策略。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/system/practiceStrategy/update。</p>
+	 *
+	 * <p><b>请求参数</b>：{@link SystemInfo.PracticeStrategy}（@RequestBody JSON）。</p>
+	 *
+	 * <p><b>权限</b>：hasAuthority('knowledge:strategy')。</p>
+	 *
+	 * @param request 出题策略
+	 */
+	@PostMapping("/practiceStrategy/update")
+	@PreAuthorize("hasAuthority('knowledge:strategy')")
+	public void updatePracticeStrategy(@RequestBody SystemInfo.PracticeStrategy request) {
+		systemService.updatePracticeStrategy(request);
+	}
+
+	/**
 	 * 更新系统信息。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/system/update（如 /api/system/update）。</p>

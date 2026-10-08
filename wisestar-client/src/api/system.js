@@ -179,3 +179,20 @@ export const getAiSetting = () => request.get('/system/aiSetting');
  * 后端接口: POST /api/system/update
  */
 export const saveAiSetting = (aiSetting) => request.post('/system/update', { aiSetting });
+
+// ------------------------------------------------------------
+// 出题策略（知识管理）
+// ------------------------------------------------------------
+
+/**
+ * 读取全局出题策略（例题/专项训练/小节通关/章节测试/防重复/缺题储备目标）
+ * 后端接口: GET /api/system/practiceStrategy
+ */
+export const getPracticeStrategy = () => request.get('/system/practiceStrategy');
+
+/**
+ * 保存全局出题策略（仅提交的字段被覆盖，空字段保留原值）
+ * 后端接口: POST /api/system/practiceStrategy/update
+ */
+export const updatePracticeStrategy = (practiceStrategy) =>
+  request.post('/system/practiceStrategy/update', practiceStrategy);

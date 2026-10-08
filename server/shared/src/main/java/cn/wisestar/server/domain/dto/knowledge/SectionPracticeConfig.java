@@ -9,7 +9,7 @@ import java.util.List;
  * 小节练习配置（t_section.practice JSON 的强类型视图）。
  *
  * <p>字段缺省策略：mode 缺省 normal；passRate 缺省 80 并收敛到 0-100；
- * unlockNext 缺省 false；preview 缺省题量 3、题型不限。
+ * unlockNext 缺省 false；preview 题量缺省时继承全局出题策略（previewCount），题型不限。
  * 用于专项练习、小节通关与知识点预习统一出题引擎的策略来源。</p>
  *
  * @author wisestar
@@ -48,8 +48,14 @@ public class SectionPracticeConfig {
 	/** 通关后是否解锁下一小节 */
 	private Boolean unlockNext;
 
-	/** 预习例题配置（题量/题型），缺省题量 3、题型不限 */
+	/** 预习例题配置（题量/题型）；题量缺省继承全局出题策略 previewCount，题型不限 */
 	private PreviewConfig preview;
+
+	/** 专项训练每知识点出题上限（覆盖全局策略，空表示继承全局） */
+	private Integer perKp;
+
+	/** 防重复滑窗：排除最近 N 次同范围已做题（覆盖全局策略，空表示继承全局） */
+	private Integer repeatWindow;
 
 	/** 是否为随机出题模式 */
 	public boolean isRandom() {
@@ -73,9 +79,7 @@ public class SectionPracticeConfig {
 		if (preview == null) {
 			preview = new PreviewConfig();
 		}
-		if (preview.getQuestionCount() == null || preview.getQuestionCount() < 1) {
-			preview.setQuestionCount(DEFAULT_PREVIEW_COUNT);
-		}
+		// 预习题量不再补默认值：留空表示继承全局出题策略 previewCount，题目题型缺省不限
 		if (preview.getTypes() == null) {
 			preview.setTypes(new ArrayList<>());
 		}

@@ -108,6 +108,7 @@ export default function MainLayout() {
         { key: '/knowledge/chapters', icon: <ProfileOutlined />, label: '章节管理' },
         { key: '/knowledge/sections', icon: <PartitionOutlined />, label: '小节管理' },
         { key: '/knowledge/points',   icon: <BulbOutlined />,    label: '知识点管理' },
+        { key: '/knowledge/strategy', icon: <SettingOutlined />, label: '出题策略', required: ['knowledge:strategy'] },
       ],
     },
     
@@ -197,7 +198,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /knowledge/chapters）。
   // 一级入口教研平台 key=/exercise/list，同样需要精确匹配到第一段路径规则之外
-  const SUB_PATH_KEYS = ['/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/word-image', '/english/sentence', '/english/grammar', '/english/questions', '/english/word-ai'];
+  const SUB_PATH_KEYS = ['/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/knowledge/strategy', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/word-image', '/english/sentence', '/english/grammar', '/english/questions', '/english/word-ai'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)
