@@ -1415,13 +1415,16 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                 try (Stream<Row> rows = first.get().openStream()) {
                     Iterator<Row> it = rows.iterator();
                     boolean headerPassed = false;
+                    int idCol = -1;
                     while (it.hasNext()) {
                         Row r = it.next();
                         if (!headerPassed) {
                             headerPassed = true;
+                            // 可选「题目ID」列：命中题库已有题目时按 id 就地更新，留空则新增
+                            idCol = findTemplateIdColumn(r);
                             continue;
                         }
-                        parseStandardRow(r, errors, result, kpCache);
+                        parseStandardRow(r, errors, result, kpCache, idCol);
                     }
                 }
             }
@@ -1438,10 +1441,27 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
     }
 
     /**
+     * 在表头行中定位可选「题目ID」列（兼容「题目ID」「题目id」「ID」等写法），未找到返回 -1。
+     */
+    private static int findTemplateIdColumn(Row header) {
+        for (int c = 0; c < 64; c++) {
+            String text = cellText(header, c);
+            if (!StringUtils.hasText(text)) {
+                continue;
+            }
+            String v = text.trim().toLowerCase();
+            if (v.equals("id") || v.contains("题目id") || v.equals("题目编号") || v.equals("题目id（勿改）")) {
+                return c;
+            }
+        }
+        return -1;
+    }
+
+    /**
      * 解析标准模板的一行数据（行级校验，错误累计进 errors）。
      */
     private void parseStandardRow(Row r, List<String> errors, List<TemplateRequest> result,
-            Map<String, Set<String>> kpCache) {
+            Map<String, Set<String>> kpCache, int idCol) {
         int rowNum = r.getRowNum();
         String subjectText = cellText(r, COL_SUBJECT);
         String title = cellText(r, COL_TITLE);
@@ -1449,6 +1469,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         if (!StringUtils.hasText(subjectText) && !StringUtils.hasText(title)) {
             return;
         }
+        String templateId = idCol >= 0 ? cellText(r, idCol).trim() : "";
         String typeText = cellText(r, COL_TYPE);
         String chapterText = cellText(r, COL_CHAPTER);
         String sectionText = cellText(r, COL_SECTION);
@@ -1739,6 +1760,7 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
                 .build();
 
         TemplateRequest request = TemplateRequest.builder()
+                .id(StringUtils.hasText(templateId) ? templateId : null)
                 .name(title)
                 .questionType(type)
                 .mode(ProjectModeEnum.exam)

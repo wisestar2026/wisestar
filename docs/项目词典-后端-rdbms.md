@@ -1207,6 +1207,7 @@
     从题库中随机挑选题目（考试随机抽题/练习出卷核心）。 【内部逻辑步骤】 1. 遍历每个抽题条件（RandomSurveyCondition）：按 repoId + 题型（types 可选）+ 标签（tags 可选，t_tag exists 子查询）筛选题目； 2. 若配置了 questionsNum：Collections.shuffle 打乱后截取前 N 题； 3. 给选中题目附加分值：配置了 examScore 时写入题目 attribute.examScore（无 attribute 则先创建），同一题目在多条件中重复命中时只保留第一个（去重）； 4. 把 Template 转为 SurveySchema（id 用模板 id，保证答案回填能对上题目）， 按题型排序返回（相同题型排在一起，便于前端分组展示）。 【为什么这么写】 - 随机性用 shuffle 而非数据库 RAND()：题目总量可控，内存打乱更稳定可控； - schema.id 复用模板 id：提交答案时 questionId 即模板 id，明细/计分能回源到原题。
   - `public void importFromTemplate(RepoTemplateRequest request)`
     从 Excel 文件导入题目（先解析再批量入库）。
+    表头在标准 30 列基础上可追加一列「题目ID」：命中库内题目 id 时该行按 id 就地更新（`TemplateRequest.id` 透传，`batchAddRepoTemplate` 复用同 id 走更新分支），留空则按新题新增；不追加该列时行为与原先一致。
   - `public List<RepoView> myRepos()`
     查询当前登录学员「我的题库」。
     **分配来源**（并集去重）：
