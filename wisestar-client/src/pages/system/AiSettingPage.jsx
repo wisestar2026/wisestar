@@ -40,7 +40,7 @@ export default function AiSettingPage() {
         prompt: s.prompt || '',
         token: undefined,
       });
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export default function AiSettingPage() {
     let values;
     try {
       values = await form.validateFields();
-    } catch (e) {
+    } catch {
       return;
     }
     setSaving(true);
@@ -73,7 +73,7 @@ export default function AiSettingPage() {
       await saveAiSetting(aiSetting);
       message.success('AI 服务设置已保存');
       form.setFieldValue('token', undefined);
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       setSaving(false);

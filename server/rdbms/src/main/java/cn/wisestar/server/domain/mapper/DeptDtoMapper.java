@@ -6,7 +6,6 @@ import cn.wisestar.server.domain.dto.DeptView;
 import cn.wisestar.server.domain.model.Dept;
 import org.mapstruct.Mapper;
 
-import java.util.List;
 
 /**
  * @author javahuang

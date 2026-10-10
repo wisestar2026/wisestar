@@ -205,6 +205,12 @@ public class MallOrderServiceImpl extends BaseService<MallOrderMapper, MallOrder
 		throw new ValidationException("核销码生成失败，请重试");
 	}
 
+	/**
+	 * 将兑换订单实体转换为视图对象。
+	 *
+	 * @param order 订单实体
+	 * @return 订单视图
+	 */
 	private MallOrderView toView(MallOrder order) {
 		MallOrderView view = new MallOrderView();
 		view.setId(order.getId());

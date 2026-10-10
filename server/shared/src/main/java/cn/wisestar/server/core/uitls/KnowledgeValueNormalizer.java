@@ -97,6 +97,12 @@ public final class KnowledgeValueNormalizer {
 		return null;
 	}
 
+	/**
+	 * 去除文本首尾空白，空文本返回 null。
+	 *
+	 * @param text 原始文本
+	 * @return 去空白后的文本；为 null 或全空白时返回 null
+	 */
 	private static String blankToNull(String text) {
 		return text != null && !text.trim().isEmpty() ? text.trim() : null;
 	}

@@ -246,13 +246,13 @@ function BindReposModal({ open, node, onClose, onSaved }) {
   const save = () => {
     setSaving(true);
     saveSectionRepos({ sectionId: node.id, repoIds: selected })
-      .then(() => { message.success('练习绑定已保存'); onClose(); onSaved && onSaved(); })
+      .then(() => { message.success('练习绑定已保存'); onClose(); if (onSaved) onSaved(); })
       .finally(() => setSaving(false));
   };
 
   const columns = [{
     title: '练习名称', dataIndex: 'name',
-    render: (n, r) => <Space><BookOutlined /><Text strong>{n}</Text></Space>,
+    render: (n) => <Space><BookOutlined /><Text strong>{n}</Text></Space>,
   }, {
     title: '题量', dataIndex: 'total', width: 80, align: 'center',
     render: (t) => (t || 0),
@@ -317,7 +317,7 @@ function BindQuestionsModal({ open, kp, onClose, onSaved }) {
   const save = () => {
     setSaving(true);
     saveKnowledgePointQuestions({ knowledgePointId: kp.id, questionIds: selected })
-      .then(() => { message.success('知识点题目绑定已保存'); onClose(); onSaved && onSaved(); })
+      .then(() => { message.success('知识点题目绑定已保存'); onClose(); if (onSaved) onSaved(); })
       .finally(() => setSaving(false));
   };
 
@@ -537,7 +537,7 @@ export default function ExerciseListPage() {
         <Space>
           <Text type="secondary">绑定/解绑也可在知识管理中操作，两处实时一致</Text>
           <Button icon={<ReloadOutlined />}
-            onClick={() => { sectionId && loadSectionData(sectionId); kpId && loadKpData(kpId); }}>
+            onClick={() => { if (sectionId) loadSectionData(sectionId); if (kpId) loadKpData(kpId); }}>
             刷新
           </Button>
         </Space>
@@ -708,7 +708,7 @@ export default function ExerciseListPage() {
                   { title: '标签', dataIndex: 'tag', width: 180, render: (tag) => (Array.isArray(tag) && tag.length ? <Space size={4} wrap>{tag.slice(0, 2).map((t) => <Tag key={t}>{t}</Tag>)}</Space> : '-') },
                   {
                     title: '操作', key: 'act', width: 120,
-                    render: (_, q) => (
+                    render: () => (
                       <Button size="small" icon={<EyeOutlined />}
                         onClick={() => setPreview({ scope: 'knowledgePoint', nodeId: kpId, nodeName: crumbKp?.name })}>
                         预览

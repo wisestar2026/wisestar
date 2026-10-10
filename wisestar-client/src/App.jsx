@@ -96,7 +96,7 @@ import WordImageReviewPage from './pages/english/WordImageReviewPage';
 
 
 export default function App() {
-  const { fetchCurrentUser, isLoggedIn } = useUserStore();
+  const { fetchCurrentUser } = useUserStore();
 
   // ============================================================
   // 应用初始化：尝试恢复登录态
@@ -105,6 +105,7 @@ export default function App() {
   //       刷新页面后 fetchCurrentUser() 携带 Cookie 验证身份
   useEffect(() => {
     fetchCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 空依赖数组 → 仅在组件首次挂载时执行一次
 
   return (

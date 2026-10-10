@@ -19,6 +19,11 @@ public class PageQuery {
 
 	private int pageSize = DEFAULT_PAGE_SIZE;
 
+	/**
+	 * 获取每页条数，并将取值收敛到合法区间（-1 表示不分页、拉取全量）。
+	 *
+	 * @return 实际生效的每页条数
+	 */
 	public int getPageSize() {
 		// -1 表示不分页、拉取全量（前端下拉/词库等既有契约，仅内部与受信调用使用）
 		if (this.pageSize == -1) {

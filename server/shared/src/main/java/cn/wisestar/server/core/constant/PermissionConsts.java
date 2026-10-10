@@ -150,37 +150,81 @@ public final class PermissionConsts {
 			this.name = name;
 		}
 
+		/**
+		 * 获取节点标识。
+		 *
+		 * @return 节点标识（叶节点为权限编码）
+		 */
 		public String getKey() {
 			return key;
 		}
 
+		/**
+		 * 设置节点标识。
+		 *
+		 * @param key 节点标识
+		 */
 		public void setKey(String key) {
 			this.key = key;
 		}
 
+		/**
+		 * 获取节点名称。
+		 *
+		 * @return 节点名称
+		 */
 		public String getName() {
 			return name;
 		}
 
+		/**
+		 * 设置节点名称。
+		 *
+		 * @param name 节点名称
+		 */
 		public void setName(String name) {
 			this.name = name;
 		}
 
+		/**
+		 * 获取子节点列表。
+		 *
+		 * @return 子节点列表
+		 */
 		public List<Node> getChildren() {
 			return children;
 		}
 
+		/**
+		 * 设置子节点列表。
+		 *
+		 * @param children 子节点列表
+		 */
 		public void setChildren(List<Node> children) {
 			this.children = children;
 		}
 	}
 
+	/**
+	 * 构建一个带子节点的权限树节点。
+	 *
+	 * @param key      节点标识
+	 * @param name     节点名称
+	 * @param children 子节点列表
+	 * @return 权限树节点
+	 */
 	private static Node node(String key, String name, List<Node> children) {
 		Node node = new Node(key, name);
 		node.setChildren(children);
 		return node;
 	}
 
+	/**
+	 * 将成对排列的权限编码与名称构建为操作点节点列表。
+	 *
+	 * @param keyAndName 键值成对排列的参数，依次为权限编码、显示名称
+	 * @return 操作点节点列表
+	 */
 	private static List<Node> ops(Object... keyAndName) {
 		List<Node> list = new ArrayList<>();
 		for (int i = 0; i < keyAndName.length; i += 2) {
@@ -198,6 +242,11 @@ public final class PermissionConsts {
 		return TREE;
 	}
 
+	/**
+	 * 构建完整的权限树（模块 → 操作点）。
+	 *
+	 * @return 完整权限树
+	 */
 	private static List<Node> buildTree() {
 		List<Node> tree = new ArrayList<>();
 		tree.add(node("dashboard", "仪表盘", ops(HOME, "查看")));

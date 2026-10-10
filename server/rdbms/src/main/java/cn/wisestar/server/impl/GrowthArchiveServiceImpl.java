@@ -166,6 +166,12 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		return list.stream().map(this::toEventView).collect(Collectors.toList());
 	}
 
+	/**
+	 * 将学习轨迹实体转换为展示视图对象。
+	 *
+	 * @param growth 学习轨迹实体
+	 * @return 轨迹展示视图
+	 */
 	private GrowthEventView toEventView(LearningGrowth growth) {
 		GrowthEventView view = new GrowthEventView();
 		view.setId(growth.getId());
@@ -536,6 +542,13 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		return kp == null ? null : kp.getId();
 	}
 
+	/**
+	 * 解析学科名称：优先使用传入的名称，其次按学科ID查询。
+	 *
+	 * @param subjectId 学科ID
+	 * @param fallback  优先采用的学科名称
+	 * @return 学科名称，无法确定时返回 null
+	 */
 	private String resolveSubjectName(String subjectId, String fallback) {
 		if (StringUtils.hasText(fallback)) {
 			return fallback;
@@ -547,6 +560,12 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		return subject == null ? null : subject.getName();
 	}
 
+	/**
+	 * 根据轨迹来源类型推导事件类型标识。
+	 *
+	 * @param sourceType 轨迹来源类型
+	 * @return 事件类型标识；未知来源时返回其大写形式
+	 */
 	private String deriveEventType(String sourceType) {
 		switch (sourceType) {
 			case "practice":
@@ -562,6 +581,12 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		}
 	}
 
+	/**
+	 * 将知识点名称列表序列化为 JSON 字符串。
+	 *
+	 * @param names 知识点名称列表
+	 * @return JSON 字符串；列表为空或序列化失败时返回 null
+	 */
 	private String toJson(List<String> names) {
 		if (names == null || names.isEmpty()) {
 			return null;
@@ -574,6 +599,12 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		}
 	}
 
+	/**
+	 * 将 JSON 字符串反序列化为字符串列表。
+	 *
+	 * @param json JSON 字符串
+	 * @return 解析得到的字符串列表；为空或解析失败时返回空列表
+	 */
 	private List<String> fromJsonStringList(String json) {
 		if (!StringUtils.hasText(json)) {
 			return new ArrayList<>();
@@ -588,10 +619,21 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		}
 	}
 
+	/**
+	 * 将可能为 null 的整数归一为 0。
+	 *
+	 * @param value 待处理整数
+	 * @return 非 null 时返回原值，否则返回 0
+	 */
 	private int nz(Integer value) {
 		return value == null ? 0 : value;
 	}
 
+	/**
+	 * 获取当前日期（ISO 格式：yyyy-MM-dd）。
+	 *
+	 * @return 当前日期字符串
+	 */
 	private String today() {
 		return LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
 	}
@@ -624,6 +666,11 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		return sem;
 	}
 
+	/**
+	 * 依据当前日期推导当前学期键（形如 yyyy-1 / yyyy-2）。
+	 *
+	 * @return 当前学期键
+	 */
 	private String currentSemester() {
 		LocalDate now = LocalDate.now();
 		int year = now.getYear();
@@ -643,6 +690,11 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		private String detectId;
 		private final List<BaselineItem> items = new ArrayList<>();
 
+		/**
+		 * 判断快照是否包含有效数据。
+		 *
+		 * @return 存在薄弱点或总体正确率时返回 true
+		 */
 		private boolean hasData() {
 			return !items.isEmpty() || accuracy != null;
 		}

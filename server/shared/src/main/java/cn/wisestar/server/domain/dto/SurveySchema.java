@@ -61,17 +61,32 @@ public class SurveySchema implements Serializable {
 		Pagination, Remark, SplitLine, Option, User, Dept, Nps, HorzBlank, Address, Barcode, Judge, RandomSurvey;
 
 		// 分为数据类型和空类型
+		/**
+		 * 返回属于「数据类型」的题型集合（会采集并保存作答数据）。
+		 *
+		 * @return 数据类型题型集合
+		 */
 		public static EnumSet<QuestionType> dataType() {
 			return EnumSet.of(FillBlank, Textarea, MultipleBlank, Signature, Score, Radio, Checkbox, Select, Cascader,
 					Upload, MatrixAuto, MatrixRadio, MatrixCheckbox, MatrixFillBlank, MatrixScore, MatrixNps, User,
 					Dept, Nps, HorzBlank, Address, Barcode, RichText, Judge);
 		}
 
+		/**
+		 * 返回不采集作答数据的「空类型」题型集合。
+		 *
+		 * @return 空类型题型集合
+		 */
 		public static EnumSet<QuestionType> voidType() {
 			return EnumSet.of(Survey, QuestionSet, Pagination, Remark, SplitLine, Option, RandomSurvey);
 		}
 
 		// 考试自动计分支持题型
+		/**
+		 * 返回考试自动计分所支持的题型集合。
+		 *
+		 * @return 支持自动计分的题型集合
+		 */
 		public static EnumSet<QuestionType> examType() {
 			return EnumSet.of(FillBlank, Textarea, MultipleBlank, Radio, Checkbox, Select, HorzBlank);
 		}
@@ -597,6 +612,11 @@ public class SurveySchema implements Serializable {
 
 	}
 
+	/**
+	 * 深拷贝当前 schema，返回互不影响的新对象。
+	 *
+	 * @return 深拷贝后的副本
+	 */
 	public SurveySchema deepCopy() {
 		return SerializationUtils.clone(this);
 	}

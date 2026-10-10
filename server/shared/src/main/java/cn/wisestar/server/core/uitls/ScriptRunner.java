@@ -98,6 +98,12 @@ public class ScriptRunner {
 		printlnError("\n-------\n" + timeStamp + "\n-------\n");
 	}
 
+	/**
+	 * 设置 SQL 语句分隔符及其匹配方式。
+	 *
+	 * @param delimiter         分隔符
+	 * @param fullLineDelimiter 为 true 时要求整行等于分隔符
+	 */
 	public void setDelimiter(String delimiter, boolean fullLineDelimiter) {
 		this.delimiter = delimiter;
 		this.fullLineDelimiter = fullLineDelimiter;
@@ -236,6 +242,14 @@ public class ScriptRunner {
 		this.execSqlCommand(conn, command, lineReader);
 	}
 
+	/**
+	 * 运行指定文件中的 SQL 脚本（SOURCE 命令的目标文件）。
+	 *
+	 * @param conn     数据库连接
+	 * @param filepath 脚本文件路径（相对于用户目录）
+	 * @throws IOException  读取脚本文件失败
+	 * @throws SQLException 执行 SQL 失败
+	 */
 	private void runScriptFile(Connection conn, String filepath) throws IOException, SQLException {
 		File file = new File(userDirectory, filepath);
 		this.runScript(conn, new BufferedReader(new FileReader(file)));
@@ -292,30 +306,53 @@ public class ScriptRunner {
 		}
 	}
 
+	/**
+	 * 获取当前 SQL 语句分隔符。
+	 *
+	 * @return 当前分隔符
+	 */
 	private String getDelimiter() {
 		return delimiter;
 	}
 
 	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 
+	/**
+	 * 将对象写入日志输出器（无换行）。
+	 *
+	 * @param o 待输出对象
+	 */
 	private void print(Object o) {
 		if (logWriter != null) {
 			logWriter.print(o);
 		}
 	}
 
+	/**
+	 * 将对象写入日志输出器（带换行）。
+	 *
+	 * @param o 待输出对象
+	 */
 	private void println(Object o) {
 		if (logWriter != null) {
 			logWriter.println(o);
 		}
 	}
 
+	/**
+	 * 将对象写入错误日志输出器（带换行）。
+	 *
+	 * @param o 待输出对象
+	 */
 	private void printlnError(Object o) {
 		if (errorLogWriter != null) {
 			errorLogWriter.println(o);
 		}
 	}
 
+	/**
+	 * 刷新日志与错误日志输出器。
+	 */
 	private void flush() {
 		if (logWriter != null) {
 			logWriter.flush();

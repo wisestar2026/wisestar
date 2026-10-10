@@ -20,6 +20,12 @@ import java.util.Map;
  */
 public class BarcodeReader {
 
+	/**
+	 * 使用宽松解码配置读取输入流图片中的条码/二维码内容。
+	 *
+	 * @param inputStream 图片输入流
+	 * @return 解码得到的文本内容
+	 */
 	@SneakyThrows
 	public static String readBarcode(InputStream inputStream) {
 

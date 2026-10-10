@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Progress, AutoComplete, Checkbox, Image } from 'antd';
+import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, AutoComplete, Checkbox, Image } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, ReadOutlined } from '@ant-design/icons';
 import { getSections, fillDictionary } from '../../api/englishAdmin';
 
@@ -100,6 +100,7 @@ export default function WordManagePage() {
 
   useEffect(() => {
     loadList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pageSize, onlyMissing]);
 
   // 重置筛选

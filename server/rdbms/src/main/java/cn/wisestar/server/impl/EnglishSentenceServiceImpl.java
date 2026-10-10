@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -169,6 +168,12 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 		}
 	}
 
+	/**
+	 * 将句库视图转换为数据库实体。
+	 *
+	 * @param view 句库视图
+	 * @return 句库实体
+	 */
 	private EnglishSentence toEntity(EnglishSentenceView view) {
 		EnglishSentence entity = new EnglishSentence();
 		entity.setId(view.getId());
@@ -184,6 +189,12 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 		return entity;
 	}
 
+	/**
+	 * 将句库实体转换为视图对象。
+	 *
+	 * @param entity 句库实体
+	 * @return 句库视图
+	 */
 	private EnglishSentenceView toView(EnglishSentence entity) {
 		EnglishSentenceView view = new EnglishSentenceView();
 		view.setId(entity.getId());

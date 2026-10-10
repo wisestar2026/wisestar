@@ -502,6 +502,12 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		return archive;
 	}
 
+	/**
+	 * 将学员档案实体的字段逐一拷贝到视图对象。
+	 *
+	 * @param view 目标视图
+	 * @param archive 档案实体
+	 */
 	private void fillView(StudentArchiveView view, StudentArchive archive) {
 		view.setId(archive.getId());
 		view.setStudentId(archive.getStudentId());
@@ -521,6 +527,13 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		view.setRemark(archive.getRemark());
 	}
 
+	/**
+	 * 查询指定档案下的上课记录，按记录日期与创建时间排序并转换为视图列表。
+	 *
+	 * @param archive 档案实体
+	 * @param desc 是否按时间倒序
+	 * @return 上课记录视图列表
+	 */
 	private List<StudentArchiveRecordView> listRecords(StudentArchive archive, boolean desc) {
 		List<StudentArchiveRecord> records = recordMapper.selectList(
 				new LambdaQueryWrapper<StudentArchiveRecord>()
@@ -530,6 +543,12 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		return records.stream().map(this::toRecordView).collect(Collectors.toList());
 	}
 
+	/**
+	 * 将上课记录实体转换为视图对象。
+	 *
+	 * @param record 上课记录实体
+	 * @return 上课记录视图
+	 */
 	private StudentArchiveRecordView toRecordView(StudentArchiveRecord record) {
 		StudentArchiveRecordView view = new StudentArchiveRecordView();
 		view.setId(record.getId());
@@ -714,14 +733,32 @@ public class StudentArchiveServiceImpl implements StudentArchiveService {
 		return sem;
 	}
 
+	/**
+	 * 获取当前日期（ISO 格式 yyyy-MM-dd）。
+	 *
+	 * @return 当前日期字符串
+	 */
 	private String today() {
 		return LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
 	}
 
+	/**
+	 * 将毫秒时长换算为分钟（四舍五入）。
+	 *
+	 * @param ms 毫秒数
+	 * @return 分钟数；入参为 null 时返回 0
+	 */
 	private int minutes(Long ms) {
 		return ms == null ? 0 : (int) Math.round(ms / 60000.0);
 	}
 
+	/**
+	 * 压缩文本中的连续空白并截断，超出长度时以省略号结尾。
+	 *
+	 * @param text 原始文本
+	 * @param max 最大保留长度
+	 * @return 处理后的文本；入参为 null 时返回空串
+	 */
 	private String trim(String text, int max) {
 		if (text == null) {
 			return "";

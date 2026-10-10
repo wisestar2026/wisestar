@@ -70,9 +70,10 @@ export default function PracticeSessionPage() {
   // 来源练习 ID（从练习整库练习时带上，落库记录来源；可空）
   const repoId = searchParams.get('repoId') || undefined;
   // 题目 id 数组（useMemo 缓存，避免每次渲染生成新数组导致 loadQuestions 无限重触发）
+  const idsParam = searchParams.get('ids') || '';
   const ids = useMemo(
-    () => (searchParams.get('ids') || '').split(',').filter(Boolean),
-    [searchParams.get('ids')],
+    () => idsParam.split(',').filter(Boolean),
+    [idsParam],
   );
 
   // ---- 题目数据 ----

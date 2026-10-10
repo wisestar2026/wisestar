@@ -35,10 +35,4 @@ public class MybatisPlugConfig {
 		return interceptor;
 	}
 
-	// @Bean
-	// public ConfigurationCustomizer configurationCustomizer() {
-	// return configuration ->{
-	// };
-	// }
-
 }

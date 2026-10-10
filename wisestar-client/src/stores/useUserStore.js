@@ -32,7 +32,7 @@
 import { create } from 'zustand';
 import { getCurrentUser, login as loginApi, logout as logoutApi } from '../api/user';
 
-const useUserStore = create((set, get) => ({
+const useUserStore = create((set) => ({
   // ---- 状态 ----
   user: null,        // 当前登录用户信息
   isLoggedIn: false, // 登录状态标记

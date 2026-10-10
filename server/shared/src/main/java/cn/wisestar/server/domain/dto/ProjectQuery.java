@@ -33,6 +33,11 @@ public class ProjectQuery extends PageQuery {
 
 	private ExamExerciseTypeEnum examExerciseType;
 
+	/**
+	 * 设置查询的作答内容。
+	 *
+	 * @param answer 作答内容（键值对）
+	 */
 	public void setAnswer(LinkedHashMap<String, Object> answer) {
 		this.answer = answer;
 

@@ -224,6 +224,12 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		}).collect(Collectors.toList()));
 	}
 
+	/**
+	 * 递归获取指定组织及其全部下级组织的 ID 列表。
+	 *
+	 * @param parentOrgId 父组织 ID
+	 * @return 包含自身及所有下级组织的 ID 列表
+	 */
 	private List<String> getChildOrgIds(String parentOrgId) {
 		List<String> result = new ArrayList<>();
 		if (parentOrgId == null) {
@@ -259,6 +265,11 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		addUserCampuses(request);
 	}
 
+	/**
+	 * 为用户批量添加角色绑定。
+	 *
+	 * @param request 用户请求，包含用户 ID 与角色 ID 列表
+	 */
 	private void addUserRoles(UserRequest request) {
 		if (!CollectionUtils.isEmpty(request.getRoles())) {
 			request.getRoles().forEach(roleId -> {
@@ -271,6 +282,11 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		}
 	}
 
+	/**
+	 * 为用户批量添加岗位绑定。
+	 *
+	 * @param request 用户请求，包含用户 ID 与岗位信息列表
+	 */
 	private void addUserPositions(UserRequest request) {
 		if (!CollectionUtils.isEmpty(request.getUserPositions())) {
 			request.getUserPositions().forEach(userPositionRequest -> {
@@ -281,6 +297,11 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		}
 	}
 
+	/**
+	 * 为用户批量添加校区绑定。
+	 *
+	 * @param request 用户请求，包含用户 ID 与校区 ID 列表
+	 */
 	private void addUserCampuses(UserRequest request) {
 		if (!CollectionUtils.isEmpty(request.getCampusIds())) {
 			request.getCampusIds().forEach(campusId -> {
@@ -386,9 +407,7 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 					groups.add("P:" + "ALL:" + userPosition.getPositionId());
 					groups.add("P:" + userPosition.getDeptId() + ":ALL");
 				});
-		// User current = getById(userId);
 		groups.add("U:" + userId);
-		// groups.add("P:" + current.getOrgId() + ":");
 		return groups;
 	}
 
@@ -435,6 +454,12 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 				.collect(Collectors.toList());
 	}
 
+	/**
+	 * 递归收集指定部门及其全部下级部门的 ID。
+	 *
+	 * @param deptId 部门 ID
+	 * @param list 用于收集部门 ID 的结果列表
+	 */
 	private void getTreeDeptId(String deptId, List<String> list) {
 		List<Dept> deptList = deptMapper.selectList(Wrappers.<Dept>lambdaQuery().eq(Dept::getParentId, deptId));
 		Optional.ofNullable(deptList).map(List::stream).orElseGet(Stream::empty).forEach(info -> {
@@ -693,6 +718,13 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		}
 	}
 
+	/**
+	 * 读取 Excel 单元格的文本值，取文本失败时回退到原始值。
+	 *
+	 * @param row 行对象
+	 * @param cellIndex 单元格索引
+	 * @return 去除首尾空白后的单元格值，为空时返回 Optional.empty()
+	 */
 	private Optional<String> getCellValue(Row row, int cellIndex) {
 		String cellValue;
 		try {
@@ -707,6 +739,13 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		return Optional.of(cellValue.trim());
 	}
 
+	/**
+	 * 按当前 Locale 获取指定消息编码的国际化文案。
+	 *
+	 * @param key 消息编码
+	 * @param args 消息参数
+	 * @return 国际化后的文案
+	 */
 	private String i18n(String key, Object... args) {
 		return messageSource.getMessage(key, args, LocaleContextHolder.getLocale());
 	}

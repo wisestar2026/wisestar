@@ -181,6 +181,13 @@ public class YoudaoDictionaryServiceImpl implements EnglishDictionaryService {
 		return node.isArray() && node.size() > 0 ? node.get(0) : null;
 	}
 
+	/**
+	 * 读取 JSON 节点指定字段的文本值。
+	 *
+	 * @param node JSON 节点
+	 * @param field 字段名
+	 * @return 字段文本；节点为 null、字段缺失或值为空时返回 null
+	 */
 	private String text(JsonNode node, String field) {
 		if (node == null) {
 			return null;
@@ -193,6 +200,12 @@ public class YoudaoDictionaryServiceImpl implements EnglishDictionaryService {
 		return text == null || text.isEmpty() ? null : text;
 	}
 
+	/**
+	 * 判断字符串是否为 null 或仅含空白字符。
+	 *
+	 * @param value 待判断字符串
+	 * @return 为空返回 true，否则返回 false
+	 */
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
 	}

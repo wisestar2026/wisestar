@@ -24,7 +24,6 @@ import cn.wisestar.server.mapper.RepoMapper;
 import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.SectionRepoMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
-import cn.wisestar.server.service.AnswerService;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.RepoService;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -1115,10 +1114,22 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         }
     }
 
+    /**
+     * 返回非 null 的字符串，入参为 null 时以空串替代。
+     *
+     * @param value 原始字符串
+     * @return 原值；为 null 时返回空串
+     */
     private static String orEmpty(String value) {
         return value == null ? "" : value;
     }
 
+    /**
+     * 返回第一个非空白的字符串。
+     *
+     * @param values 候选字符串（可变参数）
+     * @return 第一个非空白文本；均为空时返回 null
+     */
     private static String firstText(String... values) {
         if (values != null) {
             for (String v : values) {
@@ -1279,6 +1290,12 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         return value.trim();
     }
 
+    /**
+     * 将基于 0 的序号转换为对应的选项字母（0 对应 A，1 对应 B，依此类推）。
+     *
+     * @param index 选项序号（从 0 开始）
+     * @return 选项字母
+     */
     private static String letterOf(int index) {
         return String.valueOf((char) ('A' + index));
     }
@@ -1789,6 +1806,11 @@ public class RepoServiceImpl extends BaseService<RepoMapper, Repo> implements Re
         }
     }
 
+    /**
+     * 生成一个去除连字符的随机题目 id。
+     *
+     * @return 题目 id
+     */
     private static String newQuestionId() {
         return UUID.randomUUID().toString().replace("-", "");
     }

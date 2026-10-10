@@ -255,10 +255,24 @@ public class SystemServiceImpl implements SystemService {
 		}
 	}
 
+	/**
+	 * 将数值限制在 [min, max] 区间内。
+	 *
+	 * @param value 待限制的值
+	 * @param min   最小值
+	 * @param max   最大值
+	 * @return 限制后的值
+	 */
 	private int clamp(int value, int min, int max) {
 		return Math.max(min, Math.min(max, value));
 	}
 
+	/**
+	 * 将系统信息更新请求中的非空字段合并到目标系统信息对象。
+	 *
+	 * @param target  目标系统信息对象
+	 * @param request 系统信息更新请求
+	 */
 	private void mergeSysInfo(SysInfo target, SystemInfoRequest request) {
 		if (isNotBlank(request.getName())) {
 			target.setName(request.getName());

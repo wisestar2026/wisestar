@@ -77,6 +77,12 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
         return result;
     }
 
+    /**
+     * 获取项目视图：练习模板项目直接返回内置模板，否则按 ID 查询并转换。
+     *
+     * @param id 项目 ID
+     * @return 项目视图；ID 不存在时返回 null
+     */
     public ProjectView getProject(String id) {
         if (ExerciseProjectTemplate.EXERCISE_PROJECT_ID.equals(id)) {
             return ExerciseProjectTemplate.getExerciseTemplate();
@@ -109,6 +115,11 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
         return projectViewMapper.toView(project);
     }
 
+    /**
+     * 生成项目 ID：6 位随机串，需以字母开头且不与已有项目冲突。
+     *
+     * @return 可用的项目 ID
+     */
     private String generateProjectId() {
         String projectId = NanoIdUtils.randomNanoId(6);
         // 不要以数字开头，否则工作流 xml 保存会报错
@@ -192,6 +203,16 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
         getBaseMapper().restoreProject(request.getIds());
     }
 
+    /**
+     * 递归合并两个同类型对象：基础类型字段以 remote 的非空值优先，其余对象字段递归合并。
+     *
+     * @param local  本地对象
+     * @param remote 远端对象
+     * @param <T>    对象类型
+     * @return 合并后的新对象
+     * @throws IllegalAccessException 字段不可访问
+     * @throws InstantiationException 无法实例化对象
+     */
     private <T> T merge(T local, T remote) throws IllegalAccessException, InstantiationException {
         Class<?> clazz = local.getClass();
         Object merged = clazz.newInstance();

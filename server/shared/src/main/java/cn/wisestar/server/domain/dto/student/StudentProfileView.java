@@ -2,8 +2,6 @@ package cn.wisestar.server.domain.dto.student;
 
 import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 学员档案视图（个人中心用）。

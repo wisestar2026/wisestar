@@ -1,6 +1,5 @@
 package cn.wisestar.server.impl;
 
-import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.constant.SectionRepoUsage;
 import cn.wisestar.server.core.constant.SectionType;
 import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
@@ -41,11 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.validation.ValidationException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

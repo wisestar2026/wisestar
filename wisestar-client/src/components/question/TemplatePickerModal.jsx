@@ -28,7 +28,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Modal, Table, Input, Select, Space, Button, Tag, Typography, message, Image, Tooltip,
 } from 'antd';
-import { SearchOutlined, PictureOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { SearchOutlined, PictureOutlined } from '@ant-design/icons';
 import { listTemplate } from '../../api/template';
 import { templateToQuestion } from '../../utils/surveyHelpers';
 import { extractCorrectAnswers } from '../../utils/practiceHelpers';

@@ -110,6 +110,11 @@ public class UserInfo implements UserDetails, Serializable {
 		return this.password;
 	}
 
+	/**
+	 * 获取当前用户的权限标识列表。
+	 *
+	 * @return 权限标识列表；无权限信息时返回 null
+	 */
 	public List<String> getAuthorityList() {
 		if (this.authorities == null) {
 			return null;
@@ -117,6 +122,11 @@ public class UserInfo implements UserDetails, Serializable {
 		return this.authorities.stream().map(x -> x.getAuthority()).collect(Collectors.toList());
 	}
 
+	/**
+	 * 创建仅复制基础属性的精简用户信息副本，不包含权限列表。
+	 *
+	 * @return 精简用户信息
+	 */
 	public UserInfo simpleMode() {
 		UserInfo userInfo = new UserInfo();
 		BeanUtils.copyProperties(this, userInfo, "authorityList");

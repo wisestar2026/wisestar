@@ -33,16 +33,12 @@
 
 import { Layout, Menu, Avatar, Dropdown, Typography } from 'antd';
 import {
-  CalendarOutlined,
   ShoppingOutlined,  DashboardOutlined,
-  ProjectOutlined,
-  FileTextOutlined,
   SettingOutlined,
   LogoutOutlined,
   UserOutlined,
   BookOutlined,
   AppstoreOutlined,
-  PlayCircleOutlined,
   CompassOutlined,
   ReadOutlined,
   ProfileOutlined,

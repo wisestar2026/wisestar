@@ -55,13 +55,11 @@ import cn.wisestar.server.domain.model.Chapter;
 import cn.wisestar.server.domain.model.KnowledgePoint;
 import cn.wisestar.server.domain.model.KnowledgePointQuestion;
 import cn.wisestar.server.domain.model.PracticeDetail;
-import cn.wisestar.server.domain.model.RepoTemplate;
 import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.SectionPass;
 import cn.wisestar.server.domain.model.SectionRepo;
 import cn.wisestar.server.domain.model.StudentActivity;
 import cn.wisestar.server.domain.model.PracticeRecord;
-import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.StudentCoin;
 import cn.wisestar.server.domain.model.StudentPermission;
 import cn.wisestar.server.domain.model.SubjectSemester;
@@ -1611,6 +1609,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				&& containsKnowledgePointName(schema.getAttribute().getKnowledgePoint(), name);
 	}
 
+	/**
+	 * 判断知识点名称数组中是否包含指定名称（忽略大小写与首尾空格）。
+	 *
+	 * @param values 知识点名称数组
+	 * @param name   目标知识点名称
+	 * @return 命中返回 true，否则返回 false
+	 */
 	private boolean containsKnowledgePointName(String[] values, String name) {
 		if (values == null) {
 			return false;
@@ -1623,6 +1628,13 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		return false;
 	}
 
+	/**
+	 * 判断知识点名称列表中是否包含指定名称（忽略大小写与首尾空格）。
+	 *
+	 * @param values 知识点名称列表
+	 * @param name   目标知识点名称
+	 * @return 命中返回 true，否则返回 false
+	 */
 	private boolean containsKnowledgePointName(List<String> values, String name) {
 		if (values == null) {
 			return false;
@@ -2435,17 +2447,35 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 				done.contains(action), null, target);
 	}
 
+	/**
+	 * 统计学员当前处于生效状态的薄弱知识点数量。
+	 *
+	 * @param userId 学员用户 ID
+	 * @return 生效薄弱知识点数量
+	 */
 	private int activeWeakCount(String userId) {
 		Long count = weakMapper.selectCount(Wrappers.<UserWeakKnowledge>lambdaQuery()
 				.eq(UserWeakKnowledge::getUserId, userId).eq(UserWeakKnowledge::getStatus, "active"));
 		return count == null ? 0 : count.intValue();
 	}
 
+	/**
+	 * 查询学员的学习币账户。
+	 *
+	 * @param userId 学员用户 ID
+	 * @return 学习币账户，不存在时返回 null
+	 */
 	private UserPoints findPoints(String userId) {
 		return userPointsMapper.selectOne(
 				Wrappers.<UserPoints>lambdaQuery().eq(UserPoints::getUserId, userId).last("limit 1"));
 	}
 
+	/**
+	 * 获取学科名称，缺失或查询不到时返回「综合」。
+	 *
+	 * @param subjectId 学科 ID，可为空
+	 * @return 学科名称，缺省为「综合」
+	 */
 	private String subjectName(String subjectId) {
 		if (!StringUtils.hasText(subjectId)) {
 			return "综合";

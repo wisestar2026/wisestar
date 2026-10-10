@@ -308,6 +308,12 @@ public final class CycleDecimalJudge {
 		return normalizeInt(a).equals(normalizeInt(b));
 	}
 
+	/**
+	 * 归一化整数部分：去除前导零，空值按 0 处理。
+	 *
+	 * @param s 原始整数部分字符串
+	 * @return 归一化后的整数部分字符串
+	 */
 	private static String normalizeInt(String s) {
 		String x = orZero(s);
 		String r = x.replaceFirst("^0+(?=\\d)", "");
@@ -322,6 +328,12 @@ public final class CycleDecimalJudge {
 		return stripTrailingZeros(a.frac).equals(stripTrailingZeros(b.frac));
 	}
 
+	/**
+	 * 去除小数部分末尾的 0。
+	 *
+	 * @param s 原始小数部分字符串
+	 * @return 去除尾随 0 后的字符串
+	 */
 	private static String stripTrailingZeros(String s) {
 		String x = s == null ? "" : s;
 		int end = x.length();
@@ -348,10 +360,22 @@ public final class CycleDecimalJudge {
 		return s.length() <= len ? s : s.substring(0, len);
 	}
 
+	/**
+	 * 判断字符是否为循环点字符（组合上点或间隔上点）。
+	 *
+	 * @param c 待判断字符
+	 * @return 是循环点返回 true，否则 false
+	 */
 	private static boolean isDotChar(char c) {
 		return c == COMBINING_DOT || c == SPACING_DOT;
 	}
 
+	/**
+	 * 空值兜底：为 null 或空串时返回 "0"。
+	 *
+	 * @param s 原字符串
+	 * @return 原字符串或其兜底值 "0"
+	 */
 	private static String orZero(String s) {
 		return s == null || s.isEmpty() ? "0" : s;
 	}

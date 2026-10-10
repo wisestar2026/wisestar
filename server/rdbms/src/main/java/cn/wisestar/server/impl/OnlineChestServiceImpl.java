@@ -130,6 +130,12 @@ public class OnlineChestServiceImpl implements OnlineChestService {
 		return tiers;
 	}
 
+	/**
+	 * 将在线宝箱动作类型映射为对应的档位分钟数。
+	 *
+	 * @param action 动作类型
+	 * @return 档位分钟数，非在线宝箱动作时返回 null
+	 */
 	private Integer tierOfAction(String action) {
 		if (StudentRewardConstants.ACTION_ONLINE_CHEST_30.equals(action)) {
 			return 30;

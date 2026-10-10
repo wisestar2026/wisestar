@@ -13,6 +13,13 @@ import java.util.Map;
  */
 public class MapBeanUtils {
 
+	/**
+	 * 将 JavaBean 转换为字段名到值的 Map。
+	 *
+	 * @param <T>  Bean 类型
+	 * @param bean 待转换的 JavaBean
+	 * @return 字段名到值的 Map
+	 */
 	public static <T> Map<String, ?> beanToMap(T bean) {
 		BeanMap beanMap = BeanMap.create(bean);
 		Map<String, Object> map = new HashMap<>();
@@ -31,6 +38,13 @@ public class MapBeanUtils {
 		return bean;
 	}
 
+	/**
+	 * 将 JavaBean 列表批量转换为 Map 列表。
+	 *
+	 * @param <T>     Bean 类型
+	 * @param objList 待转换的 JavaBean 列表
+	 * @return Map 列表，入参为空时返回空列表
+	 */
 	public static <T> List<Map<String, ?>> objectsToMaps(List<T> objList) {
 		List<Map<String, ?>> list = new ArrayList<>();
 		if (objList != null && objList.size() > 0) {

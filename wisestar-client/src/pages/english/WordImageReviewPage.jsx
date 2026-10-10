@@ -85,6 +85,7 @@ export default function WordImageReviewPage() {
 
   useEffect(() => {
     loadList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pageSize, onlyMissing]);
 
   const handleReset = () => {

@@ -102,6 +102,13 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		return true;
 	}
 
+	/**
+	 * 构建用于按标题及教材维度去重查询的条件包装器。
+	 *
+	 * @param view  语法视图，提供版本 / 年级 / 学期 / 单元 / 板块等维度
+	 * @param title 已归一化的语法标题
+	 * @return 去重查询条件包装器
+	 */
 	private LambdaQueryWrapper<EnglishGrammar> dedupWrapper(EnglishGrammarView view, String title) {
 		return Wrappers.<EnglishGrammar>lambdaQuery()
 				.eq(EnglishGrammar::getTitle, title)
@@ -117,6 +124,12 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 				.isNull(view.getSection() == null, EnglishGrammar::getSection);
 	}
 
+	/**
+	 * 将语法视图转换为数据库实体，标题做去空格处理。
+	 *
+	 * @param view 语法视图
+	 * @return 语法实体
+	 */
 	private EnglishGrammar toEntity(EnglishGrammarView view) {
 		EnglishGrammar entity = new EnglishGrammar();
 		entity.setId(view.getId());
@@ -133,6 +146,12 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		return entity;
 	}
 
+	/**
+	 * 将语法实体转换为视图对象。
+	 *
+	 * @param entity 语法实体
+	 * @return 语法视图
+	 */
 	private EnglishGrammarView toView(EnglishGrammar entity) {
 		EnglishGrammarView view = new EnglishGrammarView();
 		view.setId(entity.getId());
@@ -150,6 +169,12 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		return view;
 	}
 
+	/**
+	 * 判断字符串是否为 null 或（去空格后）空串。
+	 *
+	 * @param value 待判断字符串
+	 * @return 为空返回 true，否则 false
+	 */
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
 	}

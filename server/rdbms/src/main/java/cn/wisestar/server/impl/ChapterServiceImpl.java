@@ -2,7 +2,6 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.constant.ErrorCode;
 import cn.wisestar.server.core.exception.ErrorCodeException;
-import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.uitls.ContextHelper;
 import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
 import cn.wisestar.server.domain.dto.RepoView;
@@ -46,7 +45,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.validation.ValidationException;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

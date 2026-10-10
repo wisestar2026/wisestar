@@ -6,7 +6,6 @@ import cn.wisestar.server.domain.dto.CampusView;
 import cn.wisestar.server.domain.model.Campus;
 import org.mapstruct.Mapper;
 
-import java.util.List;
 
 /**
  * 校区 请求DTO ↔ 实体 ↔ 视图DTO 转换（MapStruct 生成实现）。

@@ -257,6 +257,16 @@ public class EvaluationServiceImpl implements EvaluationService {
 		progressMapper.updateById(p);
 	}
 
+	/**
+	 * 更新用户对知识点的掌握进度，并据此维护薄弱知识点状态与相关奖励结算。
+	 *
+	 * @param userId 用户 ID
+	 * @param kpId 知识点 ID
+	 * @param rate 本次正确率
+	 * @param total 本次题目总数
+	 * @param correct 本次答对题数
+	 * @param refBase 事件幂等引用前缀
+	 */
 	private void updateProgress(String userId, String kpId, int rate, int total, int correct, String refBase) {
 		KpContext ctx = resolveContext(kpId, null);
 		UserKnowledgeProgress p = findProgress(userId, ctx, kpId);
@@ -352,6 +362,15 @@ public class EvaluationServiceImpl implements EvaluationService {
 		}
 	}
 
+	/**
+	 * 将薄弱知识点标记为已攻克；首次攻克（原先处于 active 或不存在）时发放奖励并记录事件。
+	 *
+	 * @param userId 用户 ID
+	 * @param subjectId 学科 ID
+	 * @param kpId 知识点 ID
+	 * @param refBase 事件幂等引用前缀
+	 * @param mastery 当前掌握度
+	 */
 	private void markConquered(String userId, String subjectId, String kpId, String refBase, int mastery) {
 		UserWeakKnowledge w = findWeak(userId, subjectId, kpId);
 		boolean firstConquer = false;
@@ -500,6 +519,14 @@ public class EvaluationServiceImpl implements EvaluationService {
 		}
 	}
 
+	/**
+	 * 依据知识点名称列表解析出知识点 ID，解析结果通过缓存复用（未命中以空串占位）。
+	 *
+	 * @param knowledgePointNames 知识点名称列表
+	 * @param sessionCtx 会话上下文
+	 * @param cache 知识点名称到 ID 的缓存
+	 * @return 命中的知识点 ID，未命中返回 null
+	 */
 	private String resolveKpId(List<String> knowledgePointNames, KpContext sessionCtx, Map<String, String> cache) {
 		if (knowledgePointNames == null || knowledgePointNames.isEmpty()) {
 			return null;
@@ -527,6 +554,13 @@ public class EvaluationServiceImpl implements EvaluationService {
 		return null;
 	}
 
+	/**
+	 * 依据知识点 ID 或小节 ID 解析出知识点上下文（章节、学科、版本等）。
+	 *
+	 * @param kpId 知识点 ID
+	 * @param sectionId 小节 ID
+	 * @return 解析出的知识点上下文，均无法解析时返回 null
+	 */
 	private KpContext resolveContext(String kpId, String sectionId) {
 		if (StringUtils.hasText(kpId)) {
 			KnowledgePoint kp = knowledgePointMapper.selectById(kpId);
@@ -540,6 +574,12 @@ public class EvaluationServiceImpl implements EvaluationService {
 		return null;
 	}
 
+	/**
+	 * 依据小节 ID 构建知识点上下文，逐级回溯小节与章节以取得学科和版本。
+	 *
+	 * @param sectionId 小节 ID
+	 * @return 知识点上下文，小节 ID 为空或小节不存在时返回 null
+	 */
 	private KpContext buildContext(String sectionId) {
 		if (!StringUtils.hasText(sectionId)) {
 			return null;
@@ -560,6 +600,14 @@ public class EvaluationServiceImpl implements EvaluationService {
 		return ctx;
 	}
 
+	/**
+	 * 查询用户在某知识点上的掌握进度记录。
+	 *
+	 * @param userId 用户 ID
+	 * @param ctx 知识点上下文
+	 * @param kpId 知识点 ID
+	 * @return 进度记录，上下文为空或查询不到时返回 null
+	 */
 	private UserKnowledgeProgress findProgress(String userId, KpContext ctx, String kpId) {
 		if (ctx == null) {
 			return null;
@@ -570,12 +618,26 @@ public class EvaluationServiceImpl implements EvaluationService {
 				.eq(UserKnowledgeProgress::getKnowledgePointId, kpId).last("limit 1"));
 	}
 
+	/**
+	 * 查询用户指定知识点的薄弱记录。
+	 *
+	 * @param userId 用户 ID
+	 * @param subjectId 学科 ID
+	 * @param kpId 知识点 ID
+	 * @return 薄弱记录，不存在时返回 null
+	 */
 	private UserWeakKnowledge findWeak(String userId, String subjectId, String kpId) {
 		return weakMapper.selectOne(Wrappers.<UserWeakKnowledge>lambdaQuery()
 				.eq(UserWeakKnowledge::getUserId, userId).eq(UserWeakKnowledge::getKnowledgePointId, kpId)
 				.eq(subjectId != null, UserWeakKnowledge::getSubjectId, subjectId).last("limit 1"));
 	}
 
+	/**
+	 * 将逗号分隔的正确率字符串解析为整数列表，忽略无法解析的项。
+	 *
+	 * @param raw 原始正确率字符串
+	 * @return 正确率列表
+	 */
 	private List<Integer> parseRates(String raw) {
 		List<Integer> list = new ArrayList<>();
 		if (StringUtils.hasText(raw)) {
@@ -606,6 +668,12 @@ public class EvaluationServiceImpl implements EvaluationService {
 		return den == 0 ? 0 : (int) Math.round(num * 1.0 / den);
 	}
 
+	/**
+	 * 依据掌握度返回对应的掌握等级名称。
+	 *
+	 * @param mastery 掌握度
+	 * @return 掌握等级名称
+	 */
 	private String level(int mastery) {
 		if (mastery >= 85) {
 			return "精通";

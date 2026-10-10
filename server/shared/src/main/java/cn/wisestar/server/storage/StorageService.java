@@ -41,11 +41,6 @@ public interface StorageService {
 	 */
 	void uploadFile(InputStream file, String path);
 
-	// /**
-	// * 上传附件并且生成缩略图 缩略图为上传文件名+缩略图后缀 _150x150，如 xxx.jpg，缩略图为 xxx_150x150.jpg
-	// */
-	// StorePath uploadImage(UploadFileRequest request);
-
 	/**
 	 * 按相对路径下载文件（返回全部字节）。
 	 *

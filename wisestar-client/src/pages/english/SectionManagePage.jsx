@@ -66,6 +66,7 @@ export default function SectionManagePage() {
 
   useEffect(() => {
     loadList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current, pageSize]);
 
   const handleReset = () => {

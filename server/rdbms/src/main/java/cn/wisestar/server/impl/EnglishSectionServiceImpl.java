@@ -109,6 +109,12 @@ public class EnglishSectionServiceImpl implements EnglishSectionService {
 		englishSectionMapper.deleteById(id);
 	}
 
+	/**
+	 * 将单元小节实体转换为视图对象。
+	 *
+	 * @param entity 小节实体
+	 * @return 小节视图
+	 */
 	private EnglishSectionView toView(EnglishSection entity) {
 		EnglishSectionView view = new EnglishSectionView();
 		view.setId(entity.getId());
@@ -121,6 +127,12 @@ public class EnglishSectionServiceImpl implements EnglishSectionService {
 		return view;
 	}
 
+	/**
+	 * 判断字符串是否为 null 或仅含空白字符。
+	 *
+	 * @param value 待判断字符串
+	 * @return 为空返回 true，否则返回 false
+	 */
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
 	}

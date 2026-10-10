@@ -87,6 +87,11 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final RestTemplate restTemplate = buildRestTemplate();
 
+	/**
+	 * 构建带连接与读取超时配置的 RestTemplate。
+	 *
+	 * @return RestTemplate 实例
+	 */
 	private static RestTemplate buildRestTemplate() {
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 		factory.setConnectTimeout(15_000);
@@ -317,6 +322,13 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 
 	// ------------------------------------------------------------------ 文本生成
 
+	/**
+	 * 依据当日学习数据聚合结果构建发送给大模型的提示词。
+	 *
+	 * @param summaryDate 总结日期
+	 * @param agg 当日学习数据聚合结果
+	 * @return 提示词文本
+	 */
 	private String buildPrompt(String summaryDate, Aggregation agg) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("日期：").append(summaryDate).append("\n");
@@ -333,6 +345,13 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		return sb.toString();
 	}
 
+	/**
+	 * 依据当日学习数据聚合结果生成规则模板总结文案（AI 不可用时的降级内容）。
+	 *
+	 * @param summaryDate 总结日期
+	 * @param agg 当日学习数据聚合结果
+	 * @return 规则模板总结文本
+	 */
 	private String buildRuleContent(String summaryDate, Aggregation agg) {
 		int accuracy = agg.questionCount == 0 ? 0 : (int) Math.round(agg.correctCount * 100.0 / agg.questionCount);
 		StringBuilder sb = new StringBuilder();
@@ -395,6 +414,14 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 
 	// ------------------------------------------------------------------ 工具
 
+	/**
+	 * 将学习总结实体与聚合数据组装为前端展示视图。
+	 *
+	 * @param summary 学习总结实体
+	 * @param agg 当日学习数据聚合结果
+	 * @param studentId 学员 ID
+	 * @return 学习总结视图
+	 */
 	private StudySummaryView toView(StudySummary summary, Aggregation agg, String studentId) {
 		StudySummaryView view = new StudySummaryView();
 		view.setId(summary.getId());
@@ -429,6 +456,12 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		return view;
 	}
 
+	/**
+	 * 计算指定日期在系统时区下的起止时间区间。
+	 *
+	 * @param summaryDate 日期字符串（yyyy-MM-dd）
+	 * @return 长度为 2 的数组，依次为当日 00:00:00 与次日 00:00:00
+	 */
 	private Date[] dayRange(String summaryDate) {
 		LocalDate date = LocalDate.parse(summaryDate, DateTimeFormatter.ISO_LOCAL_DATE);
 		ZoneId zone = ZoneId.systemDefault();
@@ -437,6 +470,12 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		return new Date[] { start, end };
 	}
 
+	/**
+	 * 将毫秒数换算为分钟数（四舍五入）。
+	 *
+	 * @param ms 毫秒数
+	 * @return 分钟数
+	 */
 	private long minutes(long ms) {
 		return Math.round(ms / 60000.0);
 	}

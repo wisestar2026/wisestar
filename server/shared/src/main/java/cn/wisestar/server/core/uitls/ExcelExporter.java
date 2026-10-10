@@ -43,6 +43,12 @@ public class ExcelExporter {
 		this.workbook = new Workbook(outputStream, "survey", "1.0");
 	}
 
+	/**
+	 * 新建工作表并初始化行索引，同时将其设为当前线程的工作表。
+	 *
+	 * @param sheetName 工作表名称
+	 * @return 新建的工作表
+	 */
 	public Worksheet createSheet(String sheetName) {
 		Worksheet worksheet = workbook.newWorksheet(sheetName);
 		worksheet.fitToWidth((short) 10);
@@ -52,6 +58,11 @@ public class ExcelExporter {
 		return worksheet;
 	}
 
+	/**
+	 * 在表头行写入列标题。
+	 *
+	 * @param columns 列标题列表
+	 */
 	public void createHeader(List<String> columns) {
 		Worksheet sheet = localSheet.get();
 		for (int i = 0; i < columns.size(); i++) {
@@ -59,6 +70,11 @@ public class ExcelExporter {
 		}
 	}
 
+	/**
+	 * 向当前工作表追加数据行，并按值类型写入单元格。
+	 *
+	 * @param rows 行数据集合，每个元素为一行中各单元格的值
+	 */
 	public void createRow(List<List<Object>> rows) {
 		Worksheet sheet = localSheet.get();
 		String sheetName = sheet.getName();
@@ -82,6 +98,11 @@ public class ExcelExporter {
 		rowIndexBySheet.put(sheetName, rowNum);
 	}
 
+	/**
+	 * 结束写入并将 Excel 导出为字节输入流。
+	 *
+	 * @return 包含 Excel 内容的字节输入流；导出失败时返回 null
+	 */
 	public ByteArrayInputStream export() {
 		try {
 			this.workbook.finish();
@@ -93,6 +114,9 @@ public class ExcelExporter {
 		return null;
 	}
 
+	/**
+	 * 结束写入并将 Excel 输出到构造时指定的输出流。
+	 */
 	public void exportToStream() {
 		try {
 			this.workbook.finish();
@@ -114,6 +138,11 @@ public class ExcelExporter {
 
 		private OutputStream outputStream;
 
+		/**
+		 * 构建导出器：按配置创建实例，按需移除 openid 列并写入表头与数据。
+		 *
+		 * @return 已填充数据的 Excel 导出器
+		 */
 		public ExcelExporter build() {
 			ExcelExporter excelExporter;
 			if (this.outputStream != null) {

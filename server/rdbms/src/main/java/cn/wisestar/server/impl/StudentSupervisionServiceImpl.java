@@ -225,10 +225,22 @@ public class StudentSupervisionServiceImpl implements StudentSupervisionService 
 		return String.join(", ", pieces);
 	}
 
+	/**
+	 * 将选项序号转换为字母标号（如序号 0 转为 "A."）。
+	 *
+	 * @param index 从 0 开始的选项序号
+	 * @return 形如 "A." 的字母标号
+	 */
 	private String letter(int index) {
 		return String.valueOf((char) ('A' + index)) + ".";
 	}
 
+	/**
+	 * 提取选项标题，非空时前置一个空格。
+	 *
+	 * @param option 选项 schema
+	 * @return 带前缀空格的选项标题，无标题时返回空串
+	 */
 	private String optionTitle(SurveySchema option) {
 		String title = option.getTitle();
 		return StringUtils.hasText(title) ? " " + title : "";

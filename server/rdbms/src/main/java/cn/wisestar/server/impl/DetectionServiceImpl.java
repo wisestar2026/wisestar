@@ -487,12 +487,24 @@ public class DetectionServiceImpl implements DetectionService {
 		applyMeta(report, record);
 	}
 
+	/**
+	 * 将检测记录的标识、检测类型与基线标记回填到检测报告。
+	 *
+	 * @param report 检测报告
+	 * @param record 检测记录
+	 */
 	private void applyMeta(DetectReportView report, DetectRecord record) {
 		report.setRecordId(record.getId());
 		report.setDetectType(record.getDetectType());
 		report.setBaseline(Boolean.TRUE.equals(record.getIsBaseline()));
 	}
 
+	/**
+	 * 将检测记录实体转换为视图对象，并反序列化章节与薄弱点 JSON 字段。
+	 *
+	 * @param record 检测记录实体
+	 * @return 检测记录视图
+	 */
 	private DetectRecordView toRecordView(DetectRecord record) {
 		DetectRecordView view = new DetectRecordView();
 		view.setId(record.getId());
@@ -523,6 +535,12 @@ public class DetectionServiceImpl implements DetectionService {
 		return view;
 	}
 
+	/**
+	 * 将对象序列化为 JSON 字符串。
+	 *
+	 * @param value 待序列化对象
+	 * @return JSON 字符串；入参为 null 或序列化失败时返回 null
+	 */
 	private String toJson(Object value) {
 		if (value == null) {
 			return null;
@@ -536,6 +554,14 @@ public class DetectionServiceImpl implements DetectionService {
 		}
 	}
 
+	/**
+	 * 将 JSON 字符串反序列化为指定类型。
+	 *
+	 * @param <T> 目标类型
+	 * @param json JSON 字符串
+	 * @param type 目标类型引用
+	 * @return 反序列化结果；入参为空或解析失败时返回 null
+	 */
 	private <T> T fromJson(String json, TypeReference<T> type) {
 		if (!StringUtils.hasText(json)) {
 			return null;
@@ -592,6 +618,13 @@ public class DetectionServiceImpl implements DetectionService {
 		return result;
 	}
 
+	/**
+	 * 将题库 id 追加到章节对应的题库集合中。
+	 *
+	 * @param map 章节到题库集合的映射
+	 * @param chapterId 章节 id
+	 * @param repoId 题库 id
+	 */
 	private void addRepo(Map<String, Set<String>> map, String chapterId, String repoId) {
 		if (StringUtils.hasText(chapterId) && StringUtils.hasText(repoId)) {
 			map.computeIfAbsent(chapterId, k -> new HashSet<>()).add(repoId);

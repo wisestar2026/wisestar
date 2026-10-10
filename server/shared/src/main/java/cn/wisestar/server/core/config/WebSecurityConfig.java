@@ -166,12 +166,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		return super.authenticationManagerBean();
 	}
 
-	// Remove the default ROLE_ prefix
-	// @Bean
-	// public GrantedAuthorityDefaults grantedAuthorityDefaults() {
-	// return new GrantedAuthorityDefaults("");
-	// }
-
 	/**
 	 * 获取 URL 参数令牌认证配置（供 JwtTokenFilter 读取开关状态）。
 	 *
@@ -194,10 +188,20 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 		 */
 		private boolean enabled = true;
 
+		/**
+		 * 是否开启 URL 参数令牌认证。
+		 *
+		 * @return 开启返回 true，否则返回 false
+		 */
 		public boolean isEnabled() {
 			return this.enabled;
 		}
 
+		/**
+		 * 设置是否开启 URL 参数令牌认证。
+		 *
+		 * @param enabled 是否开启
+		 */
 		public void setEnabled(boolean enabled) {
 			this.enabled = enabled;
 		}

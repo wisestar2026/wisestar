@@ -459,6 +459,15 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		return subject == null ? null : subject.getId();
 	}
 
+	/**
+	 * 写入一条英语学习记录。
+	 *
+	 * @param userId       学员用户 ID
+	 * @param type         学习类型
+	 * @param contentId    学习内容 ID
+	 * @param duration     学习时长
+	 * @param correctCount 正确题数
+	 */
 	private void writeLog(String userId, String type, String contentId, int duration, int correctCount) {
 		EnglishLearningLog log = new EnglishLearningLog();
 		log.setUserId(userId);
@@ -470,6 +479,13 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		englishLearningLogMapper.insert(log);
 	}
 
+	/**
+	 * 查询指定学员在一批单词上的单词本记录。
+	 *
+	 * @param userId  学员用户 ID
+	 * @param wordIds 单词 ID 列表
+	 * @return 单词本记录列表，入参无效时返回空列表
+	 */
 	private List<EnglishWordBook> loadWordBooks(String userId, List<String> wordIds) {
 		if (userId == null || wordIds.isEmpty()) {
 			return new ArrayList<>();
@@ -479,6 +495,13 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.in(EnglishWordBook::getWordId, wordIds));
 	}
 
+	/**
+	 * 查询指定学员在一批句子上的句子本记录。
+	 *
+	 * @param userId      学员用户 ID
+	 * @param sentenceIds 句子 ID 列表
+	 * @return 句子本记录列表，入参无效时返回空列表
+	 */
 	private List<EnglishSentenceBook> loadSentenceBooks(String userId, List<String> sentenceIds) {
 		if (userId == null || sentenceIds.isEmpty()) {
 			return new ArrayList<>();
@@ -488,6 +511,13 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.in(EnglishSentenceBook::getSentenceId, sentenceIds));
 	}
 
+	/**
+	 * 查询指定学员在一批语法点上的语法本记录。
+	 *
+	 * @param userId     学员用户 ID
+	 * @param grammarIds 语法点 ID 列表
+	 * @return 语法本记录列表，入参无效时返回空列表
+	 */
 	private List<EnglishGrammarBook> loadGrammarBooks(String userId, List<String> grammarIds) {
 		if (userId == null || grammarIds.isEmpty()) {
 			return new ArrayList<>();
@@ -497,6 +527,12 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				.in(EnglishGrammarBook::getGrammarId, grammarIds));
 	}
 
+	/**
+	 * 为句子视图回填当前学员的熟悉度与对错次数。
+	 *
+	 * @param userId 学员用户 ID
+	 * @param views  句子视图列表
+	 */
 	private void fillSentenceFamiliarity(String userId, List<EnglishSentenceView> views) {
 		if (userId == null || views.isEmpty()) {
 			return;
@@ -516,6 +552,12 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		});
 	}
 
+	/**
+	 * 为语法点视图回填当前学员的熟悉度与对错次数。
+	 *
+	 * @param userId 学员用户 ID
+	 * @param views  语法点视图列表
+	 */
 	private void fillGrammarFamiliarity(String userId, List<EnglishGrammarView> views) {
 		if (userId == null || views.isEmpty()) {
 			return;
@@ -535,10 +577,23 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		});
 	}
 
+	/**
+	 * 判断指定复习时间是否已到期。
+	 *
+	 * @param nextReviewTime 下次复习时间
+	 * @param now            当前时间
+	 * @return 已到期返回 true，否则返回 false
+	 */
 	private boolean isDue(Date nextReviewTime, Date now) {
 		return nextReviewTime != null && !nextReviewTime.after(now);
 	}
 
+	/**
+	 * 将英语句子实体转换为视图对象。
+	 *
+	 * @param entity 句子实体
+	 * @return 句子视图
+	 */
 	private EnglishSentenceView toView(EnglishSentence entity) {
 		EnglishSentenceView view = new EnglishSentenceView();
 		view.setId(entity.getId());
@@ -554,6 +609,12 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		return view;
 	}
 
+	/**
+	 * 将英语语法点实体转换为视图对象。
+	 *
+	 * @param entity 语法点实体
+	 * @return 语法点视图
+	 */
 	private EnglishGrammarView toGrammarView(EnglishGrammar entity) {
 		EnglishGrammarView view = new EnglishGrammarView();
 		view.setId(entity.getId());

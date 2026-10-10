@@ -37,6 +37,11 @@ public class DatabaseInitHelper {
 
 	private static String db = "mysql";
 
+	/**
+	 * 数据库初始化命令行入口：根据启动参数决定执行交互式初始化或按参数生成配置文件。
+	 *
+	 * @param args 启动命令行参数；首参为 "i" 时进入交互式初始化流程，否则解析参数生成配置文件
+	 */
 	public static void init(String[] args) {
 		try {
 			needCreateProperties();
@@ -54,6 +59,9 @@ public class DatabaseInitHelper {
 		}
 	}
 
+	/**
+	 * 交互式数据库初始化：提示用户选择数据库类型（MySQL/H2），并据此触发后续初始化。
+	 */
 	private static void initializeDatabase() {
 		colorOutput("请选择您的数据库类型 : ");
 		colorOutput("1) MySql");
@@ -72,12 +80,18 @@ public class DatabaseInitHelper {
 		initDb();
 	}
 
+	/**
+	 * 按当前选定的数据库类型执行初始化；目前仅支持 MySQL。
+	 */
 	private static void initDb() {
 		if ("mysql".equals(db)) {
 			initMySql();
 		}
 	}
 
+	/**
+	 * 执行 MySQL 初始化流程：收集连接参数、下载驱动、测试连接、生成启动配置文件并执行建库脚本。
+	 */
 	public static void initMySql() {
 		// 设置连接参数
 		DatabaseInitProperties properties = setProperties();
@@ -93,10 +107,18 @@ public class DatabaseInitHelper {
 		finish();
 	}
 
+	/**
+	 * 执行 H2 数据库初始化（当前尚未实现）。
+	 */
 	public static void initH2() {
 		// TODO
 	}
 
+	/**
+	 * 确保启动配置文件存在，缺失时创建空文件。
+	 *
+	 * @return 始终返回 true，表示需要（重新）写入配置
+	 */
 	@SneakyThrows
 	private static boolean needCreateProperties() {
 		File f = new File(CONFIG_FILE);
@@ -107,6 +129,11 @@ public class DatabaseInitHelper {
 		return true;
 	}
 
+	/**
+	 * 通过交互式提问收集 MySQL 连接参数并组装初始化配置对象。
+	 *
+	 * @return 数据库初始化配置
+	 */
 	private static DatabaseInitProperties setProperties() {
 		DatabaseInitProperties properties = new DatabaseInitProperties();
 		properties.setApplicationName(setProperty("请输入应用名称:", "名称不能为空", ".+", "SurveyKing"));
@@ -120,6 +147,12 @@ public class DatabaseInitHelper {
 		return properties;
 	}
 
+	/**
+	 * 从命令行参数解析连接配置（端口 / URL / 用户名 / 密码）。
+	 *
+	 * @param args 形如 key=value 的启动参数数组
+	 * @return 从参数解析得到的数据库初始化配置
+	 */
 	private static DatabaseInitProperties setPropertiesFromArguments(String[] args) {
 		DatabaseInitProperties properties = new DatabaseInitProperties();
 		for (String arg : args) {
@@ -141,6 +174,15 @@ public class DatabaseInitHelper {
 		return properties;
 	}
 
+	/**
+	 * 交互式读取单个配置项，支持默认值与正则校验，非法输入时提示并重试。
+	 *
+	 * @param prompt       输入提示语
+	 * @param errorMsg     校验失败时的错误提示
+	 * @param regex        输入需匹配的正则表达式
+	 * @param defaultValue 默认值，输入为空时采用
+	 * @return 用户输入值或默认值
+	 */
 	private static String setProperty(String prompt, String errorMsg, String regex, String defaultValue) {
 		String result;
 		colorOutput(prompt);
@@ -161,6 +203,11 @@ public class DatabaseInitHelper {
 		return result;
 	}
 
+	/**
+	 * 检测数据库驱动是否可用，并在用户确认后下载驱动 JAR 包。
+	 *
+	 * @param properties 数据库初始化配置，其中的驱动类名用于检测驱动是否可用
+	 */
 	private static void downloadDriverJar(DatabaseInitProperties properties) {
 		try {
 			Class.forName("com.mysql.cj.jdbc.Driver");
@@ -174,6 +221,11 @@ public class DatabaseInitHelper {
 		}
 	}
 
+	/**
+	 * 交互式测试数据库连接；连接不可用且用户确认时重新进入初始化流程。
+	 *
+	 * @param properties 数据库初始化配置
+	 */
 	private static void testDatabaseConnection(DatabaseInitProperties properties) {
 		if (!yesOrNo("是否测试数据库连接？")) {
 			return;
@@ -225,10 +277,18 @@ public class DatabaseInitHelper {
 		colorOutput("数据库初始化完成", 1);
 	}
 
+	/**
+	 * 输出初始化完成提示。
+	 */
 	private static void finish() {
 		colorOutput(String.format("初始化完成，有问题请联系作者。"), 1);
 	}
 
+	/**
+	 * 依据配置对象生成（覆盖写入）启动配置文件 application.properties。
+	 *
+	 * @param properties 数据库初始化配置
+	 */
 	@SneakyThrows
 	private static void createFileFromProperties(DatabaseInitProperties properties) {
 		File f = new File(CONFIG_FILE);
@@ -250,6 +310,13 @@ public class DatabaseInitHelper {
 		Files.write(f.toPath(), fileContent, StandardCharsets.UTF_8, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
+	/**
+	 * 向配置内容中写入或更新一行配置：已存在同名键则覆盖，否则追加。
+	 *
+	 * @param fileContent 配置文件内容行列表，方法会就地修改
+	 * @param key         配置项模板（可含格式化占位符）
+	 * @param value       配置项取值；为空（null）或未提供时跳过
+	 */
 	@SneakyThrows
 	private static void writeLine(List<String> fileContent, String key, Object... value) {
 		if (value.length > 0 && value[0] != null) {
@@ -265,6 +332,12 @@ public class DatabaseInitHelper {
 		}
 	}
 
+	/**
+	 * 交互式询问用户是/否，回答包含 Y 视为“是”。
+	 *
+	 * @param prompt 提示语
+	 * @return 用户选择“是”返回 true，否则 false
+	 */
 	private static boolean yesOrNo(String prompt) {
 		colorOutput(String.format("%s Y(是) N(否)", prompt));
 		String yesOrNo = sc.nextLine();
@@ -285,10 +358,21 @@ public class DatabaseInitHelper {
 		return new File(decodedPath.substring(0, decodedPath.indexOf("!/BOOT-INF")).split(":")[1]).getParent();
 	}
 
+	/**
+	 * 以默认信息级别输出带颜色的提示文本。
+	 *
+	 * @param output 待输出的文本
+	 */
 	private static void colorOutput(String output) {
 		colorOutput(output, 0);
 	}
 
+	/**
+	 * 按级别输出带颜色的提示文本（级别 1 成功、2 失败、其他为普通信息）。
+	 *
+	 * @param output 待输出的文本
+	 * @param level  输出级别
+	 */
 	private static void colorOutput(String output, int level) {
 		switch (level) {
 		case 1: // success

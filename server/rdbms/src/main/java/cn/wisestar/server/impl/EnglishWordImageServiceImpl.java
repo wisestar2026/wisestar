@@ -157,6 +157,12 @@ public class EnglishWordImageServiceImpl implements EnglishWordImageService {
 		return FILE_URL_PREFIX + fileView.getId();
 	}
 
+	/**
+	 * 构建文件上传请求。
+	 *
+	 * @param file 待上传文件
+	 * @return 文件上传请求
+	 */
 	private UploadFileRequest buildRequest(MultipartFile file) {
 		UploadFileRequest request = new UploadFileRequest();
 		request.setFile(file);
@@ -164,6 +170,12 @@ public class EnglishWordImageServiceImpl implements EnglishWordImageService {
 		return request;
 	}
 
+	/**
+	 * 校验并获取指定单词，ID 为空或单词不存在时抛出校验异常。
+	 *
+	 * @param wordId 单词 ID
+	 * @return 单词实体
+	 */
 	private EnglishWord requireWord(String wordId) {
 		if (isBlank(wordId)) {
 			throw new ValidationException("单词 ID 不能为空");
@@ -175,6 +187,12 @@ public class EnglishWordImageServiceImpl implements EnglishWordImageService {
 		return word;
 	}
 
+	/**
+	 * 将单词实体转换为单词图片视图。
+	 *
+	 * @param word 单词实体
+	 * @return 单词图片视图
+	 */
 	private WordImageView toView(EnglishWord word) {
 		WordImageView view = new WordImageView();
 		view.setWordId(word.getId());
@@ -222,6 +240,12 @@ public class EnglishWordImageServiceImpl implements EnglishWordImageService {
 		}
 	}
 
+	/**
+	 * 判断字符串是否为 null 或空白。
+	 *
+	 * @param value 待判断字符串
+	 * @return 为空或空白返回 true，否则返回 false
+	 */
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
 	}

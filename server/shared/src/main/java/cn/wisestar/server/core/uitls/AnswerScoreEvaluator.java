@@ -51,6 +51,12 @@ public class AnswerScoreEvaluator {
         return this.questionScore;
     }
 
+    /**
+     * 递归计算问题及其子问题的分值，并记录各数据型题目的分值明细。
+     *
+     * @param qSchema 当前问题的 schema
+     * @return 当前问题及其子问题的总分值
+     */
     private Double doEval(SurveySchema qSchema) {
         double score = evaluatorList.stream().filter(x -> x.support(qSchema)).findFirst().orElse(new DefaultEvaluator())
                 .eval(qSchema);

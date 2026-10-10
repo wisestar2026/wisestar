@@ -22,6 +22,11 @@ public class WeakPointTransitionEvent {
 		this.events = events;
 	}
 
+	/**
+	 * 获取本次跃迁事件包含的薄弱点事件列表。
+	 *
+	 * @return 薄弱点事件列表
+	 */
 	public List<WeakPointEvent> getEvents() {
 		return events;
 	}

@@ -181,6 +181,14 @@ public class RewardServiceImpl implements RewardService {
 
 	// ---------------- 内部方法 ----------------
 
+	/**
+	 * 构造被拦截（不可领取）时的预览完成视图，并回填当前积分与称号。
+	 *
+	 * @param view 待填充的视图
+	 * @param userId 用户 ID
+	 * @param message 提示信息
+	 * @return 填充后的视图
+	 */
 	private StudentPreviewCompleteView blocked(StudentPreviewCompleteView view, String userId, String message) {
 		view.setOk(true);
 		view.setFirstTime(false);
@@ -197,6 +205,14 @@ public class RewardServiceImpl implements RewardService {
 		return view;
 	}
 
+	/**
+	 * 判断指定用户、动作与引用下是否已存在学习记录（用于幂等校验）。
+	 *
+	 * @param userId 用户 ID
+	 * @param action 动作类型
+	 * @param refId 幂等引用
+	 * @return 已存在返回 true，否则返回 false
+	 */
 	private boolean existsRef(String userId, String action, String refId) {
 		Long count = learningRecordMapper.selectCount(Wrappers.<UserLearningRecord>lambdaQuery()
 				.eq(UserLearningRecord::getUserId, userId).eq(UserLearningRecord::getActionType, action)
@@ -204,6 +220,14 @@ public class RewardServiceImpl implements RewardService {
 		return count != null && count > 0;
 	}
 
+	/**
+	 * 获取用户在某学科学期下的记录，不存在时创建。
+	 *
+	 * @param userId 用户 ID
+	 * @param subjectId 学科 ID
+	 * @param semester 学期
+	 * @return 学科学期记录
+	 */
 	private SubjectSemester getOrCreateSemester(String userId, String subjectId, String semester) {
 		SubjectSemester ss = subjectSemesterMapper.selectOne(Wrappers.<SubjectSemester>lambdaQuery()
 				.eq(SubjectSemester::getUserId, userId).eq(SubjectSemester::getSubjectId, subjectId)
@@ -220,6 +244,12 @@ public class RewardServiceImpl implements RewardService {
 		return ss;
 	}
 
+	/**
+	 * 获取用户积分账户，不存在时创建初始账户。
+	 *
+	 * @param userId 用户 ID
+	 * @return 用户积分账户
+	 */
 	private UserPoints getOrCreatePoints(String userId) {
 		UserPoints up = userPointsMapper.selectOne(
 				Wrappers.<UserPoints>lambdaQuery().eq(UserPoints::getUserId, userId).last("limit 1"));
@@ -261,6 +291,14 @@ public class RewardServiceImpl implements RewardService {
 		}
 	}
 
+	/**
+	 * 以日期为幂等引用结算每日里程碑奖励，结算失败仅记录日志。
+	 *
+	 * @param userId 用户 ID
+	 * @param subjectId 学科 ID
+	 * @param action 动作类型
+	 * @param dateRef 幂等日期引用
+	 */
 	private void settleDaily(String userId, String subjectId, String action, String dateRef) {
 		RewardContext ctx = new RewardContext();
 		ctx.setUserId(userId);

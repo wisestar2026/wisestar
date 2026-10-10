@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- *
+ * 仪表盘服务实现，提供仪表盘的查询与保存能力。
  */
 @Service
 @Transactional(rollbackFor = Exception.class)

@@ -50,6 +50,11 @@ public class AppConfig implements AsyncConfigurer {
 	 */
 	private UserService userService;
 
+	/**
+	 * 注入用户服务。
+	 *
+	 * @param userService 用户服务
+	 */
 	@Autowired
 	public void setUserService(UserService userService) {
 		this.userService = userService;

@@ -45,7 +45,7 @@ export default function PracticeStrategyPage() {
         reserveMinor: s.reserveMinor,
         reserveKey: s.reserveKey,
       });
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       setLoading(false);
@@ -61,14 +61,14 @@ export default function PracticeStrategyPage() {
     let values;
     try {
       values = await form.validateFields();
-    } catch (e) {
+    } catch {
       return;
     }
     setSaving(true);
     try {
       await updatePracticeStrategy(values);
       message.success('出题策略已保存');
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       setSaving(false);

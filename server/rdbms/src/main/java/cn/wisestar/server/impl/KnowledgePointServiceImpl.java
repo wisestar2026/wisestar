@@ -1,7 +1,6 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
-import cn.wisestar.server.core.exception.InternalServerError;
 import cn.wisestar.server.core.uitls.KnowledgeValueNormalizer;
 import cn.wisestar.server.domain.dto.TemplateView;
 import cn.wisestar.server.domain.dto.SurveySchema;
@@ -38,12 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.validation.ValidationException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -454,10 +451,22 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 				.map(String::trim).filter(name -> !name.isEmpty()).collect(Collectors.toList());
 	}
 
+	/**
+	 * 去除首尾空白后返回文本，为空或仅含空白时返回 null。
+	 *
+	 * @param value 待处理字符串
+	 * @return 规整后的文本，或 null
+	 */
 	private String trimToNull(String value) {
 		return hasText(value) ? value.trim() : null;
 	}
 
+	/**
+	 * 将指定名称的计数累加到统计 Map 中，空白名称忽略。
+	 *
+	 * @param counts 计数统计 Map
+	 * @param name   名称
+	 */
 	private void addCount(Map<String, Long> counts, String name) {
 		if (hasText(name)) {
 			counts.merge(name.trim(), 1L, Long::sum);
@@ -474,6 +483,13 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 				&& containsName(schema.getAttribute().getKnowledgePoint(), name);
 	}
 
+	/**
+	 * 判断名称数组中是否包含指定名称（忽略大小写与首尾空格）。
+	 *
+	 * @param values 名称数组
+	 * @param name   目标名称
+	 * @return 命中返回 true，否则返回 false
+	 */
 	private boolean containsName(String[] values, String name) {
 		if (values == null) {
 			return false;
@@ -481,6 +497,13 @@ public class KnowledgePointServiceImpl extends BaseService<KnowledgePointMapper,
 		return Stream.of(values).anyMatch(value -> value != null && name.equalsIgnoreCase(value.trim()));
 	}
 
+	/**
+	 * 判断名称列表中是否包含指定名称（忽略大小写与首尾空格）。
+	 *
+	 * @param values 名称列表
+	 * @param name   目标名称
+	 * @return 命中返回 true，否则返回 false
+	 */
 	private boolean containsName(List<String> values, String name) {
 		if (CollectionUtils.isEmpty(values)) {
 			return false;

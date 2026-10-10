@@ -49,6 +49,11 @@ public class SchemaHelper {
 	@Deprecated
 	public static final String openidColumnName = OPENID_COLUMN_NAME;
 
+	/**
+	 * 构建并初始化用于读取 schema 国际化文案的消息源。
+	 *
+	 * @return 已配置资源基名与编码的消息源
+	 */
 	private static MessageSource initMessageSource() {
 		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasenames("i18n/schema");
@@ -57,10 +62,23 @@ public class SchemaHelper {
 		return messageSource;
 	}
 
+	/**
+	 * 获取自定义字段列名（按当前 Locale 国际化）。
+	 *
+	 * @return 自定义字段的列名
+	 */
 	public static String getOpenIdColumnName() {
 		return i18n("schema.column.customField", OPENID_COLUMN_NAME);
 	}
 
+	/**
+	 * 按当前 Locale 获取指定消息编码对应的国际化文案，找不到时返回默认文案。
+	 *
+	 * @param code 消息编码
+	 * @param defaultMessage 默认文案
+	 * @param args 消息占位符参数
+	 * @return 国际化后的文案
+	 */
 	private static String i18n(String code, String defaultMessage, Object... args) {
 		Locale locale = LocaleContextHolder.getLocale();
 		if (locale == null) {
@@ -704,6 +722,13 @@ public class SchemaHelper {
 				.build();
 	}
 
+	/**
+	 * 从登录表单答案中取出指定字段的作答值。
+	 *
+	 * @param answer 登录表单答案，键为字段名
+	 * @param field 登录表单字段枚举
+	 * @return 该字段的作答值，不存在时返回 null
+	 */
 	public static Object getLoginFormAnswer(LinkedHashMap<String, Object> answer, LoginFormFieldEnum field) {
 		Map<String, Object> questionValue = (Map<String, Object>) answer.get(field.name());
 		if (questionValue == null) {
@@ -725,11 +750,27 @@ public class SchemaHelper {
 		}
 	}
 
+	/**
+	 * 向答案结构中写入指定问题下选项的值，问题不存在时自动创建。
+	 *
+	 * @param answer 答案结构
+	 * @param qId 问题 ID
+	 * @param oId 选项 ID
+	 * @param newValue 待写入的值
+	 */
 	public static void setQuestionValue(LinkedHashMap<String, Object> answer, String qId, String oId, Object newValue) {
 		Map<String, Object> qValue = (Map<String, Object>) answer.computeIfAbsent(qId, k -> new LinkedHashMap<>());
 		qValue.put(oId, newValue);
 	}
 
+	/**
+	 * 从答案结构中读取指定问题或问题的某个选项的值。
+	 *
+	 * @param answer 答案结构
+	 * @param qId 问题 ID
+	 * @param oId 选项 ID，为 null 时返回整个问题的作答
+	 * @return 对应的问题或选项值，不存在时返回 null
+	 */
 	public static Object getQuestionValue(LinkedHashMap<String, Object> answer, String qId, String oId) {
 		Map<String, Object> qValue = (Map<String, Object>) answer.get(qId);
 		if (qValue == null) {
@@ -741,6 +782,12 @@ public class SchemaHelper {
 		return qValue.get(oId);
 	}
 
+	/**
+	 * 以问卷 schema 为根节点构建树节点结构。
+	 *
+	 * @param surveySchema 问卷 schema
+	 * @return 对应的根树节点
+	 */
 	public static TreeNode SurveySchema2TreeNode(SurveySchema surveySchema) {
 		return new TreeNode(surveySchema, null);
 	}
@@ -883,14 +930,29 @@ public class SchemaHelper {
 			}
 		}
 
+		/**
+		 * 获取整棵树的节点映射（schema ID 到节点），由根节点持有。
+		 *
+		 * @return 节点映射
+		 */
 		public Map<String, TreeNode> getTreeNodeMap() {
 			return treeNodeMap;
 		}
 
+		/**
+		 * 获取父节点。
+		 *
+		 * @return 父节点，根节点返回 null
+		 */
 		public TreeNode getParent() {
 			return parent;
 		}
 
+		/**
+		 * 获取该节点承载的问卷 schema。
+		 *
+		 * @return 节点数据
+		 */
 		public SurveySchema getData() {
 			return data;
 		}
@@ -916,10 +978,20 @@ public class SchemaHelper {
 			this.dataType = dataType;
 		}
 
+		/**
+		 * 获取该登录表单字段的国际化标题。
+		 *
+		 * @return 字段标题
+		 */
 		public String getTitle() {
 			return i18n(this.titleKey, this.defaultTitle);
 		}
 
+		/**
+		 * 获取该登录表单字段对应的数据类型。
+		 *
+		 * @return 数据类型
+		 */
 		public SurveySchema.DataType getDataType() {
 			return dataType;
 		}

@@ -22,7 +22,6 @@ import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Section;
 
 import javax.validation.ValidationException;
-import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.PracticeRecord;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.mapper.ChapterMapper;

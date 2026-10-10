@@ -43,7 +43,7 @@ function parseContent(view) {
   try {
     const obj = JSON.parse(view.content);
     if (obj && typeof obj === 'object') return obj;
-  } catch (e) {
+  } catch {
     // 容错：解析失败返回 null，页面展示不可预览提示
   }
   return null;
@@ -179,7 +179,7 @@ export default function WordAiManagePage() {
   // ---- 详情弹窗 ----
   const [detailVisible, setDetailVisible] = useState(false);
   const [detailPack, setDetailPack] = useState(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [, setLoadingDetail] = useState(false);
 
   const paramsReady = version && grade && unit;
 
@@ -194,7 +194,7 @@ export default function WordAiManagePage() {
       const data = dataOf(res);
       setList(data?.list || []);
       setTotal(data?.total || 0);
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       if (!silent) setLoadingList(false);
@@ -221,7 +221,7 @@ export default function WordAiManagePage() {
       });
       setPreview(dataOf(res));
       message.success('AI 内容生成完成，请预览后保存');
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示（含 AI 未配置等业务错误）
     } finally {
       setGenerating(false);
@@ -246,7 +246,7 @@ export default function WordAiManagePage() {
       setPreview(dataOf(res));
       message.success('内容包已保存（同单元重复保存将覆盖旧包）');
       loadList(page, pageSize, true);
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       setSaving(false);
@@ -265,7 +265,7 @@ export default function WordAiManagePage() {
       message.success(
         `同步完成：新增单词 ${r.wordsAdded} 个，更新 ${r.wordsUpdated} 个，语法 ${r.grammarSynced} 条`,
       );
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     } finally {
       setSyncingId(null);
@@ -283,7 +283,7 @@ export default function WordAiManagePage() {
       } else {
         loadList(page, pageSize, true);
       }
-    } catch (e) {
+    } catch {
       // 拦截器已统一提示
     }
   };
@@ -295,7 +295,7 @@ export default function WordAiManagePage() {
     try {
       const res = await request.get('/english/ai-pack/detail', { params: { id } });
       setDetailPack(dataOf(res));
-    } catch (e) {
+    } catch {
       setDetailVisible(false);
     } finally {
       setLoadingDetail(false);

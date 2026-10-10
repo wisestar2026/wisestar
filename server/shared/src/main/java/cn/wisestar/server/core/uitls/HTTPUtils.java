@@ -25,7 +25,6 @@ public final class HTTPUtils {
 		// 组装contentDisposition的值
 		StringBuilder contentDispositionValue = new StringBuilder();
 		contentDispositionValue.append("attachment; filename=").append(percentEncodedFileName);
-		// .append("filename*=").append("utf-8''").append(percentEncodedFileName);
 		return contentDispositionValue.toString();
 	}
 

@@ -9,7 +9,6 @@ import cn.wisestar.server.domain.mapper.OrderViewMapper;
 import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.StudentOrder;
 import cn.wisestar.server.domain.model.StudentPermission;
-import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.StudentOrderMapper;
 import cn.wisestar.server.mapper.StudentPermissionMapper;

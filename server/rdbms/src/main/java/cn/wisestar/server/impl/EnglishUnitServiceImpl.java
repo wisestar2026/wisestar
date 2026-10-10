@@ -173,6 +173,12 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 				.collect(Collectors.toList());
 	}
 
+	/**
+	 * 创建仅含单元名的空单元视图，各项计数初始化为 0。
+	 *
+	 * @param unit 单元名
+	 * @return 单元视图
+	 */
 	private EnglishUnitView newUnitView(String unit) {
 		EnglishUnitView view = new EnglishUnitView();
 		view.setUnit(unit);
@@ -195,6 +201,14 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 				+ unit;
 	}
 
+	/**
+	 * 在视图对应字段为空时，用所属版本、年级、册别进行填充。
+	 *
+	 * @param view 单元视图
+	 * @param version 版本
+	 * @param grade 年级
+	 * @param term 册别
+	 */
 	private void fillBook(EnglishUnitView view, String version, String grade, String term) {
 		if (view.getVersion() == null) {
 			view.setVersion(version);
@@ -225,6 +239,12 @@ public class EnglishUnitServiceImpl implements EnglishUnitService {
 		return DEFAULT_SORT;
 	}
 
+	/**
+	 * 判断字符串是否为 null 或仅含空白字符。
+	 *
+	 * @param value 待判断字符串
+	 * @return 为空返回 true，否则返回 false
+	 */
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
 	}

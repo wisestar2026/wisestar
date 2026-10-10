@@ -17,7 +17,6 @@ import static org.mapstruct.NullValuePropertyMappingStrategy.IGNORE;
 public interface UserEditMapper {
 
 	@BeanMapping(nullValueCheckStrategy = ALWAYS, nullValuePropertyMappingStrategy = IGNORE)
-	// @Mapping(target = "authorities", ignore = true)
 	void update(UpdateUserRequest request, @MappingTarget User user);
 
 }

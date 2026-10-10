@@ -18,8 +18,6 @@ import cn.wisestar.server.domain.model.User;
 import cn.wisestar.server.mapper.ProjectPartnerMapper;
 import cn.wisestar.server.service.BaseService;
 import cn.wisestar.server.service.ProjectPartnerService;
-import cn.wisestar.server.service.UserService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -191,6 +189,13 @@ public class ProjectPartnerServiceImpl extends BaseService<ProjectPartnerMapper,
         addProjectPartner(addRequest);
     }
 
+    /**
+     * 读取表格行指定列的文本值，空白视为无值。
+     *
+     * @param row       表格行
+     * @param cellIndex 列索引
+     * @return 单元格文本的 Optional，缺失或空白时为空
+     */
     private Optional<String> getCellValue(Row row, int cellIndex) {
         String cellValue = row.getCellAsString(cellIndex).orElse(null);
         if (isBlank(cellValue)) {

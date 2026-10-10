@@ -125,6 +125,11 @@ public class ContextHelper implements ApplicationContextAware {
 		return beanList;
 	}
 
+	/**
+	 * 获取当前线程绑定的 HTTP 请求。
+	 *
+	 * @return 当前 HTTP 请求；不在请求上下文中时返回 null
+	 */
 	public static HttpServletRequest getCurrentHttpRequest() {
 		RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
 		if (requestAttributes instanceof ServletRequestAttributes) {
@@ -135,6 +140,11 @@ public class ContextHelper implements ApplicationContextAware {
 		return null;
 	}
 
+	/**
+	 * 获取当前线程绑定的 HTTP 响应。
+	 *
+	 * @return 当前 HTTP 响应；不在请求上下文中时返回 null
+	 */
 	public static HttpServletResponse getCurrentHttpResponse() {
 		RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
 		if (requestAttributes instanceof ServletRequestAttributes) {
@@ -145,6 +155,12 @@ public class ContextHelper implements ApplicationContextAware {
 		return null;
 	}
 
+	/**
+	 * 从当前 HTTP 请求中读取指定名称的 Cookie 值。
+	 *
+	 * @param cookieName Cookie 名称
+	 * @return Cookie 值；不存在时返回 null
+	 */
 	public static String getCookie(String cookieName) {
 		Cookie cookie = WebUtils.getCookie(getCurrentHttpRequest(), cookieName);
 		if (cookie != null) {

@@ -10,6 +10,7 @@
  * 使用方：NodeEditModal（编辑选择）、SectionManagePage / KnowledgePointManagePage（列表）、
  *         TeachingResearchPlatformPage（教研平台知识树）、student/KnowledgePage（学员端知识页）。
  */
+/* eslint-disable react/only-export-components -- 该文件同时导出常量与展示组件，供 Select 与列表复用 */
 import { Tag } from 'antd';
 
 /** 重点程度可选项（供 Select 使用） */

@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
-*
-*/
+ * 用户题本服务实现，负责错题、收藏等用户题本数据的保存与维护。
+ */
 @Service
 @Transactional(rollbackFor = Exception.class)
 @RequiredArgsConstructor

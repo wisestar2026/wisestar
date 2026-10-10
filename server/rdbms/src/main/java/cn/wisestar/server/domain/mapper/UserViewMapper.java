@@ -14,7 +14,6 @@ import cn.wisestar.server.mapper.UserMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.List;
 
 /**
  * @author javahuang

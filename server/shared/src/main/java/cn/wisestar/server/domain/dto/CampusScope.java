@@ -50,18 +50,34 @@ public class CampusScope {
 	 */
 	private Set<String> campusNames = new LinkedHashSet<>();
 
+	/**
+	 * 构造全校可见（不受校区过滤）的范围。
+	 *
+	 * @return 全校可见范围
+	 */
 	public static CampusScope all() {
 		CampusScope scope = new CampusScope();
 		scope.setMode(MODE_ALL);
 		return scope;
 	}
 
+	/**
+	 * 构造空数据（不可见任何校区学员数据）的范围。
+	 *
+	 * @return 空数据范围
+	 */
 	public static CampusScope empty() {
 		CampusScope scope = new CampusScope();
 		scope.setMode(MODE_EMPTY);
 		return scope;
 	}
 
+	/**
+	 * 构造仅可见指定校区的受限范围。
+	 *
+	 * @param campusNames 可见校区名称集合，可为 null
+	 * @return 受限范围
+	 */
 	public static CampusScope scoped(Set<String> campusNames) {
 		CampusScope scope = new CampusScope();
 		scope.setMode(MODE_SCOPED);
@@ -71,18 +87,38 @@ public class CampusScope {
 		return scope;
 	}
 
+	/**
+	 * 是否全校可见。
+	 *
+	 * @return 全校可见返回 true，否则返回 false
+	 */
 	public boolean isAll() {
 		return MODE_ALL.equals(mode);
 	}
 
+	/**
+	 * 是否为空数据范围。
+	 *
+	 * @return 空数据范围返回 true，否则返回 false
+	 */
 	public boolean isEmpty() {
 		return MODE_EMPTY.equals(mode);
 	}
 
+	/**
+	 * 是否为仅可见绑定校区的受限范围。
+	 *
+	 * @return 受限范围返回 true，否则返回 false
+	 */
 	public boolean isScoped() {
 		return MODE_SCOPED.equals(mode);
 	}
 
+	/**
+	 * 获取可见校区名称集合。
+	 *
+	 * @return 可见校区名称集合，内部值为 null 时返回空集合
+	 */
 	public Set<String> getCampusNames() {
 		return campusNames == null ? Collections.emptySet() : campusNames;
 	}

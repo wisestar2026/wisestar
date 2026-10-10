@@ -134,6 +134,12 @@ public final class Ansi {
 		codes_str = _codes_str;
 	}
 
+	/**
+	 * 将当前样式与另一个样式组合，返回合并后的新样式。
+	 *
+	 * @param other 待组合的样式
+	 * @return 组合后的样式
+	 */
 	public Ansi and(Ansi other) {
 		List<String> both = new ArrayList<String>();
 		Collections.addAll(both, codes);
@@ -141,10 +147,23 @@ public final class Ansi {
 		return new Ansi(both.toArray(new String[] {}));
 	}
 
+	/**
+	 * 用当前样式的 ANSI 转义码包裹原始文本，并在末尾追加重置码。
+	 *
+	 * @param original 原始文本
+	 * @return 着色后的文本
+	 */
 	public String colorize(String original) {
 		return codes_str + original + SANE;
 	}
 
+	/**
+	 * 先按模板格式化文本，再用当前样式着色。
+	 *
+	 * @param template 格式模板
+	 * @param args 格式化参数
+	 * @return 着色后的文本
+	 */
 	public String format(String template, Object... args) {
 		return colorize(String.format(template, args));
 	}

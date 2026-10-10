@@ -150,6 +150,11 @@ public class TaskServiceImpl extends BaseService<TaskMapper, Task> implements Ta
 	/** 每学员每日最多任务数 */
 	private static final int MAX_DAILY_TASKS = 3;
 
+	/**
+	 * 校验任务请求的绑定学员与任务日期是否填写。
+	 *
+	 * @param request 任务请求
+	 */
 	private void validate(TaskRequest request) {
 		if (!StringUtils.hasText(request.getStudentId())) {
 			throw new ValidationException("请选择绑定学员");

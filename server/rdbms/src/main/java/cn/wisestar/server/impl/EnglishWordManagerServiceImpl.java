@@ -195,6 +195,12 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 		return new ImportResult(success + failed, success, failed, errors);
 	}
 
+	/**
+	 * 判断字符串是否为 null 或空白。
+	 *
+	 * @param value 待判断字符串
+	 * @return 为空或空白返回 true，否则返回 false
+	 */
 	private boolean isBlank(String value) {
 		return value == null || value.trim().isEmpty();
 	}

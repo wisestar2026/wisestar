@@ -9,6 +9,11 @@ public class ExerciseProjectTemplate {
 
     public static final String EXERCISE_PROJECT_ID = "exercise";
 
+    /**
+     * 构建练习模式的项目模板视图。
+     *
+     * @return 练习模式的项目视图
+     */
     public static ProjectView getExerciseTemplate() {
         ProjectView projectView = new ProjectView();
         projectView.setId(EXERCISE_PROJECT_ID);

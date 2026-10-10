@@ -197,6 +197,15 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		}
 	}
 
+	/**
+	 * 构建请求 AI 生成单元学习内容的用户提示词，并附带词库中已存在的本单元单词。
+	 *
+	 * @param version 教材版本
+	 * @param grade   年级
+	 * @param unit    单元
+	 * @param topic   单元主题，可为空
+	 * @return 拼接完成的提示词文本
+	 */
 	private String buildUserPrompt(String version, String grade, String unit, String topic) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("请为以下英语单元生成整套学习内容：\n");
@@ -481,6 +490,13 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 
 	// ------------------------------------------------------------------ 辅助
 
+	/**
+	 * 构造单条聊天消息（角色 + 内容）。
+	 *
+	 * @param role    消息角色，如 system、user
+	 * @param content 消息内容
+	 * @return 包含 role、content 的消息 Map
+	 */
 	private Map<String, String> message(String role, String content) {
 		Map<String, String> msg = new HashMap<>();
 		msg.put("role", role);
@@ -488,6 +504,12 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		return msg;
 	}
 
+	/**
+	 * 将 JSON 节点序列化为字符串，序列化失败时返回空对象字符串。
+	 *
+	 * @param node 待序列化的 JSON 节点
+	 * @return 序列化后的 JSON 字符串，失败时返回 {@code "{}"}
+	 */
 	private String writeJson(JsonNode node) {
 		try {
 			return objectMapper.writeValueAsString(node);
@@ -496,25 +518,57 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		}
 	}
 
+	/**
+	 * 将 null 字符串规整为空字符串，其它原样返回。
+	 *
+	 * @param s 待处理字符串
+	 * @return 非 null 的字符串
+	 */
 	private static String nullToEmpty(String s) {
 		return s == null ? "" : s;
 	}
 
+	/**
+	 * 去除首尾空白后返回文本，为空或仅含空白时返回 null。
+	 *
+	 * @param s 待处理字符串
+	 * @return 规整后的文本，或 null
+	 */
 	private static String textOrNull(String s) {
 		return (s == null || s.trim().isEmpty()) ? null : s.trim();
 	}
 
+	/**
+	 * 校验字符串非空白，否则抛出校验异常。
+	 *
+	 * @param value 待校验的值
+	 * @param name  字段名称，用于异常提示
+	 */
 	private static void requireNotBlank(String value, String name) {
 		if (value == null || value.trim().isEmpty()) {
 			throw new ValidationException(name + "不能为空");
 		}
 	}
 
+	/**
+	 * 按候选键顺序读取第一个命中的字符串字段值。
+	 *
+	 * @param node JSON 节点
+	 * @param keys 候选字段名（按优先级排列）
+	 * @return 命中的字符串值，未命中或非值节点时返回 null
+	 */
 	private static String firstString(JsonNode node, String... keys) {
 		JsonNode found = firstNode(node, keys);
 		return found == null || !found.isValueNode() ? null : found.asText();
 	}
 
+	/**
+	 * 按候选键读取第一个命中的子节点，先精确匹配再做大小写不敏感兜底。
+	 *
+	 * @param node JSON 节点
+	 * @param keys 候选字段名（按优先级排列）
+	 * @return 命中的子节点，未命中时返回 null
+	 */
 	private static JsonNode firstNode(JsonNode node, String... keys) {
 		if (node == null) {
 			return null;
@@ -541,6 +595,12 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		return null;
 	}
 
+	/**
+	 * 将内容包实体转换为视图对象。
+	 *
+	 * @param pack 内容包实体
+	 * @return 内容包视图
+	 */
 	private EnglishAiPackView toView(EnglishAiPack pack) {
 		EnglishAiPackView view = new EnglishAiPackView();
 		view.setId(pack.getId());

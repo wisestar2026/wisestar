@@ -22,10 +22,6 @@
  *   onJump: (index) => void - 跳题回调（index 从 0 开始）
  */
 
-import { Typography } from 'antd';
-
-const { Text } = Typography;
-
 export default function AnswerSheet({ total, current, answeredSet, confirmedSet, isExam, onJump }) {
   // 生成题号列表 1..total
   const numbers = Array.from({ length: total }, (_, i) => i + 1);

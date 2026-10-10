@@ -39,6 +39,11 @@ public class RepoTemplateExcelParseHelper {
         this.templateFile = templateFile;
     }
 
+    /**
+     * 解析上传的 Excel 模板，按 sheet 名称识别题型并逐行转换为题目请求列表。
+     *
+     * @return 解析得到的题目请求列表
+     */
     @SneakyThrows
     public List<TemplateRequest> parse() {
         try (InputStream is = templateFile.getInputStream(); ReadableWorkbook wb = new ReadableWorkbook(is)) {
@@ -83,6 +88,12 @@ public class RepoTemplateExcelParseHelper {
         return result;
     }
 
+    /**
+     * 解析单选题或判断题的一行数据，构建题目 schema 并加入结果集。
+     *
+     * @param r 数据行
+     * @param questionType 题目类型（单选或判断）
+     */
     @SneakyThrows
     private void parseRadioOrJudge(Row r, SurveySchema.QuestionType questionType) {
         SurveySchema schema = row2schema(r);
@@ -96,6 +107,11 @@ public class RepoTemplateExcelParseHelper {
         result.add(templateRequest);
     }
 
+    /**
+     * 解析多选题的一行数据，构建题目 schema 并加入结果集。
+     *
+     * @param r 数据行
+     */
     @SneakyThrows
     private void parseCheckbox(Row r) {
         SurveySchema schema = row2schema(r);
@@ -108,6 +124,11 @@ public class RepoTemplateExcelParseHelper {
         result.add(templateRequest);
     }
 
+    /**
+     * 解析填空题的一行数据，按空位数量区分为单空题或多空题并加入结果集。
+     *
+     * @param r 数据行
+     */
     @SneakyThrows
     private void parseFillBlank(Row r) {
         SurveySchema schema = row2schema(r);
@@ -123,6 +144,11 @@ public class RepoTemplateExcelParseHelper {
         result.add(templateRequest);
     }
 
+    /**
+     * 解析简答题的一行数据，构建含答案的题目 schema 并加入结果集。
+     *
+     * @param r 数据行
+     */
     @SneakyThrows
     private void parseTextarea(Row r) {
         SurveySchema schema = row2schema(r);
@@ -158,6 +184,12 @@ public class RepoTemplateExcelParseHelper {
         return false;
     }
 
+    /**
+     * 将一行数据转换为题目 schema，解析题干、解析、分值、标签与选项。
+     *
+     * @param r 数据行
+     * @return 题目 schema
+     */
     private SurveySchema row2schema(Row r) {
         String title = getCellAsString(r, "title");
         String correctAnswer = getCellAsString(r, "examCorrectAnswer");
@@ -242,6 +274,13 @@ public class RepoTemplateExcelParseHelper {
         return row.getCellAsString(name2index.get(cellName)).orElse(null);
     }
 
+    /**
+     * 按表头字段名读取指定列并解析为数值。
+     *
+     * @param row 数据行
+     * @param cellName 表头字段名
+     * @return 解析后的数值；列不存在或内容为空时返回 null
+     */
     private Double getCellAsDouble(Row row, String cellName) {
         if (name2index.get(cellName) == null) {
             return null;
@@ -253,6 +292,11 @@ public class RepoTemplateExcelParseHelper {
         return Double.parseDouble(value);
     }
 
+    /**
+     * 生成一个不与已用 id 重复的短随机 id，并登记到已用集合中。
+     *
+     * @return 随机 id
+     */
     private String generateId() {
         return NanoIdUtils.randomNanoId(4, ids);
     }

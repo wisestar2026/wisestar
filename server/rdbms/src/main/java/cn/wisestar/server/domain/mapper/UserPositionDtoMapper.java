@@ -6,7 +6,6 @@ import cn.wisestar.server.domain.dto.UserPositionView;
 import cn.wisestar.server.domain.model.UserPosition;
 import org.mapstruct.Mapper;
 
-import java.util.List;
 
 /**
  * @author javahuang

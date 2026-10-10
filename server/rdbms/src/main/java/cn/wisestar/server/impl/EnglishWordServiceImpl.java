@@ -251,6 +251,12 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		return cal.getTime();
 	}
 
+	/**
+	 * 将英语单词实体转换为视图对象。
+	 *
+	 * @param word 单词实体
+	 * @return 单词视图
+	 */
 	private EnglishWordView toView(EnglishWord word) {
 		EnglishWordView view = new EnglishWordView();
 		view.setId(word.getId());

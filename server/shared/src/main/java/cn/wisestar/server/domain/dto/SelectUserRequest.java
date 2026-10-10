@@ -22,6 +22,11 @@ public class SelectUserRequest extends PageQuery {
 
 	private List<String> selected = new ArrayList<>();
 
+	/**
+	 * 获取用户名，并以模糊匹配方式返回：非空时前后拼接 %。
+	 *
+	 * @return 模糊匹配用的用户名；原值为 null 时返回 null
+	 */
 	public String getName() {
 		if (name != null) {
 			return "%" + name + "%";
