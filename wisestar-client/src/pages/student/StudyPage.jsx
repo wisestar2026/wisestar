@@ -21,6 +21,7 @@ import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudent
 import { getStudySections, uploadActivity, getStudentStats } from '../../api/student';
 import IconTile from '../../components/common/IconTile';
 import StarRating from '../../components/common/StarRating';
+import { IMPORTANCE_META } from '../../utils/importance';
 import './StudyPage.css';
 
 // 四大核心功能按钮配置（short 用于小节行内的紧凑按钮；tone 为 3D 黏土图标色调）
@@ -33,6 +34,13 @@ const ACTION_BUTTONS = [
 
 // 章节图标底座循环色调（让左栏章节有层次、不单调）
 const CHAPTER_TONES = ['blue', 'orange', 'green', 'purple', 'teal', 'pink'];
+
+// 小节「掌握情况」文字挡位：未练习（0%）显示「陌生」，其余沿用掌握度评级
+const sectionMastery = (pct) => {
+  const p = Number(pct) || 0;
+  if (p <= 0) return { label: '陌生', color: '#94a3b8' };
+  return masteryLevel(p);
+};
 
 export default function StudyPage() {
   const navigate = useNavigate();
@@ -150,13 +158,11 @@ export default function StudyPage() {
     : (activeChapter?.kps || []);
   const sectionsLoading = realMode && !!selectedChapterId && sectionsMap[selectedChapterId] === undefined;
 
-  // 研习首页看板：本学期重点（管理员标注重点程度）+ 学习情况 + 优势/不足
+  // 研习首页看板：本学期重点（管理员标注重点程度）+ 学习情况 + 薄弱（按小节聚合）
   const dash = useMemo(() => {
     const IMP_RANK = { key: 3, minor: 2, normal: 1 };
     const rankLabel = (r) => (r >= 3 ? 'key' : r === 2 ? 'minor' : r === 1 ? 'normal' : '');
     const sectionMap = new Map();
-    const strengths = [];
-    const weaknesses = [];
     let totalKps = 0;
     let masterySum = 0;
     let weakCount = 0;
@@ -182,9 +188,6 @@ export default function StudyPage() {
         sec.kps.push(kp);
         sec.masterySum += mastery;
         sec.rank = Math.max(sec.rank, IMP_RANK[kp.sectionImportance] || 0, IMP_RANK[kp.importance] || 0);
-        if (mastery >= 70) strengths.push({ ...kp, chapterName: ch.name, icon: ch.icon });
-        // 薄弱仅取学员练习后由后端研判打标的 kp.weak（未被练习/评价过的知识点不按 0% 掌握度计入）
-        if (kp.weak) weaknesses.push({ ...kp, chapterName: ch.name, icon: ch.icon });
       });
     });
     const sections = [...sectionMap.values()].map((s) => ({
@@ -192,6 +195,12 @@ export default function StudyPage() {
       importance: rankLabel(s.rank),
       mastery: s.kps.length ? Math.round(s.masterySum / s.kps.length) : 0,
     }));
+    // 薄弱仅取学员练习后由后端研判打标的 kp.weak（未被练习/评价过的知识点不按 0% 掌握度计入），
+    // 并按其所属小节聚合：右侧只展示「薄弱小节 + 其中知识点」，不展示优势内容
+    const weakSections = sections
+      .map((s) => ({ ...s, weakKps: s.kps.filter((kp) => kp.weak) }))
+      .filter((s) => s.weakKps.length > 0)
+      .sort((a, b) => a.mastery - b.mastery || b.weakKps.length - a.weakKps.length);
     const completedSections = sections.filter((s) => s.mastery >= 60).length;
     let keySections = sections.filter((s) => s.rank >= 3).sort((a, b) => b.rank - a.rank || a.mastery - b.mastery);
     const keyFallback = keySections.length === 0;
@@ -206,8 +215,12 @@ export default function StudyPage() {
       }
       keyChapterMap.get(s.chapterId).sections.push(s);
     });
-    strengths.sort((a, b) => b.mastery - a.mastery);
-    weaknesses.sort((a, b) => a.mastery - b.mastery);
+    // 小节 → 知识点总数 / 已掌握数（掌握度 ≥ 60 视为已掌握），供中栏小节卡片展示
+    const sectionStats = new Map(sections.map((s) => [s.id, {
+      total: s.kps.length,
+      mastered: s.kps.filter((kp) => (kp.mastery || 0) >= 60).length,
+      mastery: s.mastery,
+    }]));
     return {
       totalKps,
       weakCount,
@@ -216,8 +229,8 @@ export default function StudyPage() {
       completedSections,
       keyChapters: [...keyChapterMap.values()],
       keyFallback,
-      strengths,
-      weaknesses,
+      weakSections,
+      sectionStats,
     };
   }, [studyContent.progress]);
 
@@ -362,28 +375,27 @@ export default function StudyPage() {
 
                 <div className="study-dash-col">
                   <section className="study-dash-block">
-                    <div className="study-dash-heading">优势 · 掌握较好</div>
-                    {dash.strengths.length === 0 ? (
-                      <div className="study-empty">继续学习后可查看优势知识点</div>
-                    ) : (
-                      dash.strengths.slice(0, 6).map((kp) => (
-                        <div key={kp.id} className="study-dash-item good" onClick={() => openKp(kp)}>
-                          <span className="study-dash-item-name">{kp.name}</span>
-                          <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%</span>
-                        </div>
-                      ))
-                    )}
-                  </section>
-
-                  <section className="study-dash-block">
-                    <div className="study-dash-heading">不足 · 待巩固 / 薄弱</div>
-                    {dash.weaknesses.length === 0 ? (
+                    <div className="study-dash-heading">不足 · 待巩固 / 薄弱（按小节）</div>
+                    {dash.weakSections.length === 0 ? (
                       <div className="study-empty">暂无明显薄弱环节</div>
                     ) : (
-                      dash.weaknesses.slice(0, 6).map((kp) => (
-                        <div key={kp.id} className="study-dash-item bad" onClick={() => openKp(kp)}>
-                          <span className="study-dash-item-name">{kp.name}</span>
-                          <span className="study-dash-item-meta">{kp.chapterName} · {kp.mastery}%{kp.weak ? ' · 薄弱' : ''}</span>
+                      dash.weakSections.slice(0, 6).map((s) => (
+                        <div key={s.id} className="study-dash-weak-sec">
+                          <div className="study-dash-weak-sec-head" onClick={() => focusSection(s)}>
+                            <span className="study-dash-item-name">{s.name}</span>
+                            <span className="study-dash-item-meta">{s.chapterName} · {s.mastery}%</span>
+                          </div>
+                          <div className="study-dash-weak-kps">
+                            {s.weakKps.map((kp) => (
+                              <span
+                                key={kp.id}
+                                className="study-dash-weak-kp"
+                                onClick={() => openKp(kp)}
+                              >
+                                {kp.name}<i>{kp.mastery}%</i>
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       ))
                     )}
@@ -447,6 +459,16 @@ export default function StudyPage() {
               </span>
             </div>
 
+            {realMode && (
+              <div className="study-chapter-bar">
+                <div className="study-chapter-bar-label">章节进度</div>
+                <div className="study-chapter-bar-track">
+                  <div className="study-chapter-bar-fill" style={{ width: `${activeChapter?.progress || 0}%` }} />
+                </div>
+                <div className="study-chapter-bar-val">{activeChapter?.progress || 0}%</div>
+              </div>
+            )}
+
             <div className="study-sections">
               {sectionsLoading ? (
                 <div className="study-empty">小节加载中…</div>
@@ -455,15 +477,22 @@ export default function StudyPage() {
               ) : realMode ? (
                 activeSections.map((sec) => {
                   const locked = !!sec.locked;
-                  // 通关进度 = 已通关题量（已答对的不同题目数）/ 该小节已有题量
                   const questionCount = sec.questionCount ?? 0;
-                  const passedCount = sec.correctCount ?? 0;
-                  const passRate = questionCount > 0 ? Math.round((passedCount / questionCount) * 100) : 0;
+                  const correctCount = sec.correctCount ?? 0;
+                  const answeredCount = sec.answeredCount ?? 0;
+                  // 星星沿用「通关进度」口径：已答对的不同题目数 / 该小节题量
+                  const passRate = questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
+                  const secProgress = sec.progress ?? 0;
+                  const lv = sectionMastery(secProgress);
+                  const imp = IMPORTANCE_META[sec.importance];
+                  const ss = dash.sectionStats.get(sec.id);
+                  const kpTotal = sec.knowledgePointCount ?? ss?.total ?? 0;
+                  const mastered = ss?.mastered ?? 0;
                   const sel = selectedSection && selectedSection.id === sec.id;
                   return (
                     <div
                       key={sec.id}
-                      className={`study-kp ${sel ? 'selected' : ''} ${locked ? 'locked' : ''}`}
+                      className={`study-sec ${sel ? 'selected' : ''} ${locked ? 'locked' : ''}`}
                       onClick={() => {
                         if (locked) {
                           message.warning('请先通关上一小节');
@@ -472,47 +501,49 @@ export default function StudyPage() {
                         setSelectedSection(sec);
                       }}
                     >
-                      <div className="study-kp-head">
-                        <div className="study-kp-main">
-                          <span className="study-kp-name">
-                            <IconTile emoji={locked ? '🔒' : '🌊'} tone={locked ? 'slate' : 'teal'} size="sm" />
-                            <span className="study-kp-name-text">{sec.name}</span>
-                            <StarRating value={passRate} size={20} className="study-kp-stars" />
-                          </span>
-                          <span className="study-kp-tags">
-                            {sec.passed && <span className="study-kp-pass">已通关</span>}
-                          </span>
+                      <IconTile
+                        emoji={locked ? '🔒' : '🌊'}
+                        tone={locked ? 'slate' : 'teal'}
+                        size="2xl"
+                        className="study-sec-icon"
+                      />
+                      <div className="study-sec-main">
+                        <div className="study-sec-top">
+                          <div className="study-sec-title">
+                            <span className="study-sec-name">{sec.name}</span>
+                            {imp && <span className={`study-sec-imp ${sec.importance}`}>{imp.label}</span>}
+                            <StarRating value={passRate} size={17} className="study-kp-stars" />
+                            <span className="study-sec-mastery" style={{ color: lv.color }}>{lv.label}</span>
+                          </div>
+                          <div className="study-sec-qstat">已完成 <b>{answeredCount}</b>/{questionCount} 题</div>
                         </div>
-                        <span className="study-kp-stats">
-                          <span className="study-kp-stat">已通关 <b>{passedCount}</b>/{questionCount} 题</span>
-                          <span className="study-kp-stat pct"><b>{passRate}%</b></span>
-                        </span>
-                      </div>
-                      <div className="study-kp-progress">
-                        <div className="study-kp-bar">
-                          <div className="study-kp-bar-fill" style={{ width: `${passRate}%` }} />
+                        <div className="study-sec-bottom">
+                          <div className="study-sec-meta">
+                            <span>共 <b>{kpTotal}</b> 个知识点</span>
+                            <span>已完成 <b>{mastered}</b> 个</span>
+                            <span>小节进度 <b>{secProgress}%</b></span>
+                          </div>
+                          <div className="study-kp-actions">
+                            {ACTION_BUTTONS.map((a) => (
+                              <button
+                                key={a.key}
+                                type="button"
+                                title={a.label}
+                                className={`study-kp-act ${a.color} ${locked ? 'disabled' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (locked) {
+                                    message.warning('请先通关上一小节');
+                                    return;
+                                  }
+                                  navigateToAction(sec, a);
+                                }}
+                              >
+                                <span>{a.short}</span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                      <div className="study-kp-actions">
-                        {ACTION_BUTTONS.map((a) => (
-                          <button
-                            key={a.key}
-                            type="button"
-                            title={a.label}
-                            className={`study-kp-act ${a.color} ${locked ? 'disabled' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (locked) {
-                                message.warning('请先通关上一小节');
-                                return;
-                              }
-                              navigateToAction(sec, a);
-                            }}
-                          >
-                            <IconTile emoji={a.icon} tone={a.tone} size="sm" className="study-kp-act-ico" />
-                            <span>{a.short}</span>
-                          </button>
-                        ))}
                       </div>
                     </div>
                   );
