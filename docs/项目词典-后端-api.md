@@ -68,8 +68,8 @@
     我的档案（学员端只读，返回当前登录学员本人本学期档案）。
   - `public List<DetectRecordView> detectHistory(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
     指定学员检测历史（管理端）。权限 hasAuthority('student:archive')。
-  - `public List<GrowthEventView> timeline(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String from, @RequestParam(required = false) String to)`
-    指定学员学习轨迹时间轴（管理端）。权限 hasAuthority('student:archive')。
+  - `public List<GrowthDailyView> timeline(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String from, @RequestParam(required = false) String to)`
+    指定学员每日学习轨迹（管理端，按天聚合为一句叙述）。权限 hasAuthority('student:archive')。
   - `public GrowthCompareView compare(@RequestParam String studentId, @RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`
     指定学员成长对比（管理端）。权限 hasAuthority('student:archive')。
   - `public GrowthReportView generateGrowthReport(@RequestBody GrowthReportRequest request)`
@@ -512,7 +512,7 @@
   学员本人成长档案接口（GrowthArchiveApi）。
   **所属模块**：api 模块（Web 接口层，Spring MVC REST Controller）。
 
-  **类职责**：为学员提供"精准破弱模型（WPB）"下的成长档案能力——查看本人学习轨迹时间轴、以学前检测基线为参照的成长对比，以及可打印的成长报告；报告可手动触发重新生成。studentId 由服务层固定为当前登录学员本人（Controller 调用时传 null），接口不接收外部传入的学员标识，学员只能访问本人数据。
+  **类职责**：为学员提供"精准破弱模型（WPB）"下的成长档案能力——查看本人每日学习轨迹（按天聚合叙述）、以学前检测基线为参照的成长对比，以及可打印的成长报告；报告可手动触发重新生成。studentId 由服务层固定为当前登录学员本人（Controller 调用时传 null），接口不接收外部传入的学员标识，学员只能访问本人数据。
 
   **请求路径前缀**：类级路径为 `${api.prefix}/student/growth`（api.prefix 通常为 /api）。
 
@@ -522,17 +522,17 @@
 
   **权限**：四个方法均为 `@PreAuthorize("isAuthenticated()")`（登录即可，不设功能级权限点）。
 - 方法:
-  - `public List<GrowthEventView> timeline(@RequestParam(required = false) String subjectId, @RequestParam(required = false) String from, @RequestParam(required = false) String to)`
-    学习轨迹时间轴（按发生时间倒序）。
+  - `public List<GrowthDailyView> timeline(@RequestParam(required = false) String subjectId, @RequestParam(required = false) String from, @RequestParam(required = false) String to)`
+    每日学习轨迹（按日期倒序，每天一句面向家长的叙述）。
     **HTTP 方法 + 完整路径**：GET ${api.prefix}/student/growth/timeline?subjectId=&from=&to=。
 
-    **功能**：返回当前登录学员的学习轨迹事件时间轴（按发生时间倒序）；`subjectId`/`from`/`to` 为空时不作该维度过滤。
+    **功能**：返回当前登录学员的每日学习轨迹（把同一天的全部轨迹事件聚合为一句面向家长的叙述，日期倒序）；优先调用系统 AI 生成，AI 未启用/失败时降级规则模板（纯文字不含数字）；`subjectId`/`from`/`to` 为空时不作该维度过滤。
 
     **请求参数**：subjectId（可空）、from（可空，起始时间）、to（可空，结束时间）。
 
-    **返回值结构**：`List<GrowthEventView>`（轨迹事件视图）。
+    **返回值结构**：`List<GrowthDailyView>`（每日学习轨迹视图：date/content/model）。
 
-    **调用的下层 Service**：GrowthArchiveService#timeline(null, subjectId, from, to)（studentId 固定为当前登录学员）。
+    **调用的下层 Service**：GrowthArchiveService#dailyTimeline(null, subjectId, from, to)（studentId 固定为当前登录学员）。
 
     **权限**：isAuthenticated()。
   - `public GrowthCompareView compare(@RequestParam(required = false) String subjectId, @RequestParam(required = false) String semester)`

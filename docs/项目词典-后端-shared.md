@@ -1625,7 +1625,7 @@
 - 注解: @Data
 - **类说明**：
   系统信息视图（t_sys_info 单行 id='1'）。
-  嵌套 RegisterInfo、SystemSetting、AiSetting，新增 PracticeStrategy（全局出题策略）： 例题/预习题量、专项训练每知识点上限、小节通关分档题量、章节测试题量与按知识点扩容、 防重复滑窗、缺题储备目标；所有小节默认继承，可在小节练习设置中按字段覆盖。
+  嵌套 RegisterInfo、SystemSetting、AiSetting（AI 服务设置：enabled、models、token、prompt、baseUrl 接口地址，OpenAI 兼容，留空默认 SiliconFlow），新增 PracticeStrategy（全局出题策略）： 例题/预习题量、专项训练每知识点上限、小节通关分档题量、章节测试题量与按知识点扩容、 防重复滑窗、缺题储备目标；所有小节默认继承，可在小节练习设置中按字段覆盖。
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/SystemInfoRequest.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class SystemInfoRequest`
@@ -1881,6 +1881,13 @@
 - 注解: @Data
 - **类说明**：
   成长对比视图（基线 vs 当前）。字段：studentId、subjectId、subjectName、semester、baselineDetectId（基线检测记录ID）、baselineAt（基线定格时间）、baselineAccuracy（基线整体正确率）、currentAccuracy（当前整体正确率，取检测记录最新值或练习汇总）、hasBaseline（是否已定格基线）、baselineWeakCount（基线薄弱点数量）、resolvedCount（已攻克数量）、remainingCount（仍需巩固数量）、newlyWeakCount（新增薄弱数量）、totalQuestionCount（练习/检测总题量）、totalCorrectCount（总正确数）、eventCount（轨迹事件数）、deltas（`List<DeltaItem>`：kpId/name/baselineAccuracy/currentMastery/delta（当前-基线）/resolved，逐知识点「基线掌握度 → 当前掌握度」变化）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthDailyView.java`
+- 包: `cn.wisestar.server.domain.dto.growth`
+- 类型: `class GrowthDailyView`
+- 注解: @Data
+- **类说明**：
+  每日学习轨迹视图（成长时间轴条目，按天聚合为一句叙述）。把同一名学员同一天的全部学习轨迹事件聚合为一条面向家长的叙述文字；优先由 AI 生成语气自然的总结，AI 不可用时降级为规则模板（纯文字不含数字）。字段：date（发生日期 yyyy-MM-dd）、subjectId（当天仅涉及单一学科时有值）、subjectName（学科名称快照）、content（当日学习叙述文字）、model（生成方式 ai/rule）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/growth/GrowthEventContext.java`
 - 包: `cn.wisestar.server.domain.dto.growth`
@@ -2659,6 +2666,8 @@
     幂等写入一条学习轨迹事件（语法类按 grammarId + 日期累加）。
   - `public List<GrowthEventView> timeline(String studentId, String subjectId, String from, String to)`
     查询学习轨迹时间轴（按发生时间倒序）；studentId 为空取当前登录学员，subjectId/from/to 可空。
+  - `public List<GrowthDailyView> dailyTimeline(String studentId, String subjectId, String from, String to)`
+    查询每日学习轨迹（按天聚合为一句面向家长的叙述，日期倒序）；优先调用系统 AI 生成，AI 未启用或失败时降级规则模板（纯文字不含数字，model=rule）。
   - `public GrowthCompareView compare(String studentId, String subjectId, String semester)`
     成长对比（基线 vs 当前）；studentId 为空取当前登录学员，subjectId 可空，semester 为空取当前学期。
   - `public GrowthReportView generate(GrowthReportRequest request)`

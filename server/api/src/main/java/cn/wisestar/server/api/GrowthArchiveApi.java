@@ -1,7 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.domain.dto.growth.GrowthCompareView;
-import cn.wisestar.server.domain.dto.growth.GrowthEventView;
+import cn.wisestar.server.domain.dto.growth.GrowthDailyView;
 import cn.wisestar.server.domain.dto.growth.GrowthReportRequest;
 import cn.wisestar.server.domain.dto.growth.GrowthReportView;
 import cn.wisestar.server.service.GrowthArchiveService;
@@ -33,17 +33,17 @@ public class GrowthArchiveApi {
 	private final GrowthArchiveService growthArchiveService;
 
 	/**
-	 * 学习轨迹时间轴（按发生时间倒序）。
+	 * 每日学习轨迹（按日期倒序，每天一句面向家长的叙述）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/growth/timeline?subjectId=&amp;from=&amp;to=。</p>
 	 * <p><b>权限</b>：isAuthenticated()。</p>
 	 */
 	@GetMapping("/timeline")
 	@PreAuthorize("isAuthenticated()")
-	public List<GrowthEventView> timeline(@RequestParam(required = false) String subjectId,
+	public List<GrowthDailyView> timeline(@RequestParam(required = false) String subjectId,
 			@RequestParam(required = false) String from,
 			@RequestParam(required = false) String to) {
-		return growthArchiveService.timeline(null, subjectId, from, to);
+		return growthArchiveService.dailyTimeline(null, subjectId, from, to);
 	}
 
 	/**

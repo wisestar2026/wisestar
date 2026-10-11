@@ -339,6 +339,10 @@ public class SystemServiceImpl implements SystemService {
 			if (isNotBlank(source.getPrompt())) {
 				aiSetting.setPrompt(source.getPrompt());
 			}
+			// 接口地址允许清空（清空后回退默认 SiliconFlow），故仅在非 null 时覆盖
+			if (source.getBaseUrl() != null) {
+				aiSetting.setBaseUrl(source.getBaseUrl().trim());
+			}
 		}
 	}
 }

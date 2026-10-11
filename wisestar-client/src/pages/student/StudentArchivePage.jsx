@@ -355,14 +355,8 @@ export default function StudentArchivePage() {
             renderItem={(e) => (
               <List.Item>
                 <List.Item.Meta
-                  title={`${e.eventDate || ''} ${e.title || e.eventType || ''}`}
-                  description={[
-                    e.chapter,
-                    e.questionCount ? `答题 ${e.correctCount || 0}/${e.questionCount} 题（${e.accuracy || 0}%）` : null,
-                    e.knowledgePoints?.length ? e.knowledgePoints.join('、') : null,
-                    e.points ? `积分 +${e.points}` : null,
-                    e.coins ? `学币 +${e.coins}` : null,
-                  ].filter(Boolean).join(' · ')}
+                  title={e.date || ''}
+                  description={e.content || ''}
                 />
               </List.Item>
             )}

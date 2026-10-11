@@ -175,7 +175,7 @@ export const getAiSetting = () => request.get('/system/aiSetting');
 
 /**
  * 保存 AI 服务设置（只更新 AI 相关字段，不影响其他系统配置）
- * body: { aiSetting: { enabled, models, token?, prompt? } }
+ * body: { aiSetting: { enabled, models, baseUrl?, token?, prompt? } }
  * 后端接口: POST /api/system/update
  */
 export const saveAiSetting = (aiSetting) => request.post('/system/update', { aiSetting });

@@ -107,14 +107,14 @@ public class SystemApi {
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/system/aiSetting（如 /api/system/aiSetting）。</p>
 	 *
-	 * <p><b>功能</b>：返回 AI 功能设置（是否启用、可用模型列表、提示词、Token）。
+	 * <p><b>功能</b>：返回 AI 功能设置（是否启用、可用模型列表、提示词、接口地址 baseUrl、Token）。
 	 * 安全处理：返回前将 token（AI 平台 API Key）置空，避免敏感凭证泄露给前端。
 	 * ai 模块的 SiliconflowChatServiceImpl 会通过 SystemService#getSystemAiSetting
 	 * 读取同样的配置（包含 token）用于调用大模型 API。</p>
 	 *
 	 * <p><b>请求参数</b>：无。</p>
 	 *
-	 * <p><b>返回值结构</b>：{@code SystemInfo.AiSetting}（enabled、models、prompt；token 恒为 null）。</p>
+	 * <p><b>返回值结构</b>：{@code SystemInfo.AiSetting}（enabled、models、prompt、baseUrl；token 恒为 null）。</p>
 	 *
 	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
 	 *

@@ -17,6 +17,7 @@ import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.StudySummaryService;
+import cn.wisestar.server.service.SystemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -75,12 +76,15 @@ class GrowthArchiveServiceImplTest {
 	@Mock
 	private StudySummaryService studySummaryService;
 
+	@Mock
+	private SystemService systemService;
+
 	private GrowthArchiveServiceImpl service;
 
 	@BeforeEach
 	void setUp() {
 		service = new GrowthArchiveServiceImpl(learningGrowthMapper, archiveMapper, detectRecordMapper, studentMapper,
-				subjectMapper, knowledgePointMapper, weakMapper, progressMapper, studySummaryService);
+				subjectMapper, knowledgePointMapper, weakMapper, progressMapper, studySummaryService, systemService);
 	}
 
 	// ------------------------------------------------------------------ 2.5 轨迹幂等

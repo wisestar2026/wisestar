@@ -1,6 +1,7 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackQuery;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackView;
@@ -52,9 +53,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class EnglishAiPackServiceImpl implements EnglishAiPackService {
-
-	/** SiliconFlow 对话补全接口 */
-	private static final String SILICONFLOW_CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions";
 
 	/** 未配置模型时的兜底模型 */
 	private static final String DEFAULT_MODEL = "deepseek-chat";
@@ -179,7 +177,7 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 
 			HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 			JsonNode resp = objectMapper.readTree(restTemplate.postForObject(
-					SILICONFLOW_CHAT_URL, request, String.class));
+					AiEndpointUtils.resolveChatUrl(aiSetting.getBaseUrl()), request, String.class));
 			JsonNode choices = resp.path("choices");
 			if (choices.isArray() && choices.size() > 0) {
 				String content = choices.get(0).path("message").path("content").asText("");

@@ -1,6 +1,7 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.growth.GrowthCompareView;
+import cn.wisestar.server.domain.dto.growth.GrowthDailyView;
 import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.growth.GrowthEventView;
 import cn.wisestar.server.domain.dto.growth.GrowthReportRequest;
@@ -36,6 +37,20 @@ public interface GrowthArchiveService {
 	 * @return 轨迹事件列表
 	 */
 	List<GrowthEventView> timeline(String studentId, String subjectId, String from, String to);
+
+	/**
+	 * 查询每日学习轨迹（按天聚合为一句面向家长的叙述，日期倒序）。
+	 *
+	 * <p>把同一名学员同一天的全部轨迹事件聚合为一条叙述文字；优先调用系统 AI 生成
+	 * 语气自然的总结，AI 未启用或调用失败时降级为规则模板，{@code model} 标记为 rule。</p>
+	 *
+	 * @param studentId 学员ID，为空取当前登录学员
+	 * @param subjectId 学科ID，可空
+	 * @param from      起始日期 yyyy-MM-dd，可空
+	 * @param to        结束日期 yyyy-MM-dd，可空
+	 * @return 每日学习轨迹列表
+	 */
+	List<GrowthDailyView> dailyTimeline(String studentId, String subjectId, String from, String to);
 
 	/**
 	 * 成长对比（基线 vs 当前）。

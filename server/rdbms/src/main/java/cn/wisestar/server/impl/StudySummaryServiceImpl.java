@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.student.StudySummaryView;
@@ -62,9 +63,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StudySummaryServiceImpl implements StudySummaryService {
-
-	/** SiliconFlow 对话补全接口（与 AI 问答同一套系统设置） */
-	private static final String CHAT_URL = "https://api.siliconflow.cn/v1/chat/completions";
 
 	/** 未配置模型时的兜底模型 */
 	private static final String DEFAULT_MODEL = "deepseek-chat";
@@ -401,7 +399,8 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		body.put("stream", false);
 
 		HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-		JsonNode resp = objectMapper.readTree(restTemplate.postForObject(CHAT_URL, request, String.class));
+		JsonNode resp = objectMapper.readTree(restTemplate.postForObject(
+				AiEndpointUtils.resolveChatUrl(aiSetting.getBaseUrl()), request, String.class));
 		JsonNode choices = resp.path("choices");
 		if (choices.isArray() && choices.size() > 0) {
 			String content = choices.get(0).path("message").path("content").asText("");

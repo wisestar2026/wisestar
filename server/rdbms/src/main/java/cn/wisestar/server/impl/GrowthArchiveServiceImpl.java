@@ -1,7 +1,9 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.growth.GrowthCompareView;
+import cn.wisestar.server.domain.dto.growth.GrowthDailyView;
 import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.growth.GrowthEventView;
 import cn.wisestar.server.domain.dto.growth.GrowthReportRequest;
@@ -24,6 +26,7 @@ import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.StudySummaryService;
+import cn.wisestar.server.service.SystemService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -40,10 +43,14 @@ import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +73,16 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 	private static final String REPORT_SYSTEM_PROMPT =
 			"你是一位负责的学习规划老师，擅长用客观、鼓励且可执行的语言撰写学员成长报告。";
 
+	/** 每日学习轨迹系统提示词（系统 AI 设置未填提示词时的兜底） */
+	private static final String DAILY_SYSTEM_PROMPT =
+			"你是一位耐心的学习教练，擅长用简洁、正向、鼓励的中文描述孩子每天的学习内容。";
+
+	/** 规则叙述中知识点/章节展示上限 */
+	private static final int DAILY_NAME_LIMIT = 5;
+
+	/** 规则叙述中薄弱知识点展示上限 */
+	private static final int DAILY_WEAK_LIMIT = 4;
+
 	/** 攻克判定掌握度阈值 */
 	private static final int CONQUER_MASTERY = 70;
 
@@ -84,6 +101,7 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 	private final UserWeakKnowledgeMapper weakMapper;
 	private final UserKnowledgeProgressMapper progressMapper;
 	private final StudySummaryService studySummaryService;
+	private final SystemService systemService;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -164,6 +182,209 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 				.le(StringUtils.hasText(to), LearningGrowth::getEventDate, to)
 				.orderByDesc(LearningGrowth::getOccurredAt));
 		return list.stream().map(this::toEventView).collect(Collectors.toList());
+	}
+
+	// ------------------------------------------------------------------ 每日轨迹
+
+	@Override
+	public List<GrowthDailyView> dailyTimeline(String studentId, String subjectId, String from, String to) {
+		String uid = StringUtils.hasText(studentId) ? studentId : SecurityContextUtils.getUserId();
+		if (!StringUtils.hasText(uid)) {
+			return new ArrayList<>();
+		}
+		List<LearningGrowth> list = learningGrowthMapper.selectList(Wrappers.<LearningGrowth>lambdaQuery()
+				.eq(LearningGrowth::getStudentId, uid)
+				.eq(StringUtils.hasText(subjectId), LearningGrowth::getSubjectId, subjectId)
+				.ge(StringUtils.hasText(from), LearningGrowth::getEventDate, from)
+				.le(StringUtils.hasText(to), LearningGrowth::getEventDate, to)
+				.orderByDesc(LearningGrowth::getOccurredAt));
+		if (list.isEmpty()) {
+			return new ArrayList<>();
+		}
+
+		// 按日期聚合（保持发生时间倒序）
+		Map<String, DayFacts> byDay = new LinkedHashMap<>();
+		for (LearningGrowth growth : list) {
+			String date = StringUtils.hasText(growth.getEventDate()) ? growth.getEventDate() : today();
+			DayFacts facts = byDay.computeIfAbsent(date, DayFacts::new);
+			facts.add(growth, fromJsonStringList(growth.getKnowledgePoints()));
+		}
+
+		// 当前薄弱知识点名称（规则叙述用）
+		Set<String> weakNames = activeWeakNames(uid, subjectId);
+
+		// 规则模板兜底文本
+		Map<String, String> ruleTexts = new LinkedHashMap<>();
+		for (Map.Entry<String, DayFacts> entry : byDay.entrySet()) {
+			ruleTexts.put(entry.getKey(), buildDailyRuleContent(entry.getValue(), weakNames));
+		}
+
+		// AI 优先（一次调用生成全部日期），失败或缺失时回退规则模板
+		Map<String, String> aiTexts = buildDailyAiTexts(byDay);
+
+		List<GrowthDailyView> result = new ArrayList<>();
+		for (Map.Entry<String, DayFacts> entry : byDay.entrySet()) {
+			String date = entry.getKey();
+			DayFacts facts = entry.getValue();
+			GrowthDailyView view = new GrowthDailyView();
+			view.setDate(date);
+			view.setSubjectId(facts.singleSubjectId());
+			view.setSubjectName(facts.singleSubjectName());
+			String ai = aiTexts.get(date);
+			if (StringUtils.hasText(ai)) {
+				view.setContent(ai);
+				view.setModel("ai");
+			} else {
+				view.setContent(ruleTexts.get(date));
+				view.setModel("rule");
+			}
+			result.add(view);
+		}
+		return result;
+	}
+
+	/**
+	 * 调用系统 AI 为每一天生成一句学习叙述。
+	 *
+	 * @param byDay 按日期聚合的学习事实
+	 * @return 日期 → AI 叙述文字的映射；AI 未启用、调用失败或解析失败时返回空映射
+	 */
+	private Map<String, String> buildDailyAiTexts(Map<String, DayFacts> byDay) {
+		Map<String, String> result = new HashMap<>();
+		if (byDay.isEmpty()) {
+			return result;
+		}
+		StringBuilder sb = new StringBuilder();
+		sb.append("下面是一名学员每天的学习记录，请为每一天写一句面向家长的中文学习小结。\n");
+		sb.append("要求：只写文字叙述，禁止出现任何数字；语气正面、简洁，每天一句，40 字以内。\n");
+		sb.append("严格输出 JSON 数组，元素形如 {\"date\":\"日期\",\"text\":\"小结\"}，不要输出 JSON 之外的任何内容。\n\n");
+		for (Map.Entry<String, DayFacts> entry : byDay.entrySet()) {
+			DayFacts facts = entry.getValue();
+			sb.append("日期：").append(entry.getKey()).append("\n");
+			if (!facts.knowledgePoints.isEmpty()) {
+				sb.append("知识点：").append(String.join("、", facts.knowledgePoints)).append("\n");
+			}
+			if (!facts.chapters.isEmpty()) {
+				sb.append("章节：").append(String.join("、", facts.chapters)).append("\n");
+			}
+			sb.append("学习类型：").append(facts.describeTypes()).append("\n\n");
+		}
+		String ai = studySummaryService.aiText(resolveDailySystemPrompt(), sb.toString());
+		if (!StringUtils.hasText(ai)) {
+			return result;
+		}
+		try {
+			String json = ai.trim();
+			int start = json.indexOf('[');
+			int end = json.lastIndexOf(']');
+			if (start >= 0 && end > start) {
+				json = json.substring(start, end + 1);
+			}
+			JsonNode arr = objectMapper.readTree(json);
+			if (arr.isArray()) {
+				for (JsonNode node : arr) {
+					String date = node.path("date").asText("");
+					String text = node.path("text").asText("");
+					if (StringUtils.hasText(date) && StringUtils.hasText(text)) {
+						result.put(date, text.trim());
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.warn("解析 AI 每日学习轨迹失败，降级规则模板：{}", e.getMessage());
+		}
+		return result;
+	}
+
+	/**
+	 * 解析每日学习轨迹使用的系统提示词：优先采用系统 AI 设置中的自定义提示词，留空时用内置默认。
+	 *
+	 * @return 系统提示词
+	 */
+	private String resolveDailySystemPrompt() {
+		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
+		if (aiSetting != null && StringUtils.hasText(aiSetting.getPrompt())) {
+			return aiSetting.getPrompt().trim();
+		}
+		return DAILY_SYSTEM_PROMPT;
+	}
+
+	/**
+	 * 依据某天聚合的学习事实生成规则模板叙述（AI 不可用时的降级内容，纯文字不含数字）。
+	 *
+	 * @param facts     某天的学习事实
+	 * @param weakNames 学员当前薄弱知识点名称集合
+	 * @return 规则模板叙述文本
+	 */
+	private String buildDailyRuleContent(DayFacts facts, Set<String> weakNames) {
+		List<String> clauses = new ArrayList<>();
+		if (!facts.knowledgePoints.isEmpty()) {
+			clauses.add("学习了「" + joinNames(facts.knowledgePoints, DAILY_NAME_LIMIT) + "」等知识点");
+		} else if (!facts.chapters.isEmpty()) {
+			clauses.add("学习了「" + joinNames(facts.chapters, 3) + "」");
+		}
+		if (facts.detect) {
+			clauses.add("完成了单元检测");
+		}
+		if (facts.grammar) {
+			clauses.add("进行了英语语法专项练习");
+		}
+		if (facts.classEvent) {
+			clauses.add("完成了课堂学习");
+		}
+		if (!weakNames.isEmpty()) {
+			List<String> hit = facts.knowledgePoints.stream()
+					.filter(weakNames::contains).collect(Collectors.toList());
+			if (!hit.isEmpty()) {
+				clauses.add("加强了对薄弱知识点「" + joinNames(hit, DAILY_WEAK_LIMIT) + "」的巩固");
+			}
+		}
+		if (clauses.isEmpty()) {
+			return "进行了日常学习。";
+		}
+		return String.join("，", clauses) + "。";
+	}
+
+	/**
+	 * 学员当前生效的薄弱知识点名称集合。
+	 *
+	 * @param studentId 学员ID
+	 * @param subjectId 学科ID，可空
+	 * @return 薄弱知识点名称集合
+	 */
+	private Set<String> activeWeakNames(String studentId, String subjectId) {
+		Set<String> names = new LinkedHashSet<>();
+		List<UserWeakKnowledge> weaks = weakMapper.selectList(Wrappers.<UserWeakKnowledge>lambdaQuery()
+				.eq(UserWeakKnowledge::getUserId, studentId)
+				.eq(StringUtils.hasText(subjectId), UserWeakKnowledge::getSubjectId, subjectId)
+				.eq(UserWeakKnowledge::getStatus, "active"));
+		Set<String> ids = weaks.stream().map(UserWeakKnowledge::getKnowledgePointId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		if (ids.isEmpty()) {
+			return names;
+		}
+		Map<String, String> idName = new HashMap<>();
+		for (KnowledgePoint kp : knowledgePointMapper.selectBatchIds(ids)) {
+			idName.put(kp.getId(), kp.getName());
+		}
+		for (UserWeakKnowledge w : weaks) {
+			String name = idName.get(w.getKnowledgePointId());
+			if (StringUtils.hasText(name)) {
+				names.add(name);
+			}
+		}
+		return names;
+	}
+
+	/**
+	 * 按上限拼接名称集合（以「、」分隔）。
+	 *
+	 * @param names 名称集合
+	 * @param limit 展示上限
+	 * @return 拼接后的名称字符串
+	 */
+	private String joinNames(Collection<String> names, int limit) {
+		return names.stream().filter(StringUtils::hasText).limit(limit).collect(Collectors.joining("、"));
 	}
 
 	/**
@@ -705,6 +926,106 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 		private String kpId;
 		private String name;
 		private Integer accuracy;
+	}
+
+	/** 某一天聚合后的学习事实（用于生成每日叙述）。 */
+	private static class DayFacts {
+		private final String date;
+		private final Set<String> chapters = new LinkedHashSet<>();
+		private final Set<String> knowledgePoints = new LinkedHashSet<>();
+		private final Set<String> subjects = new LinkedHashSet<>();
+		private final Set<String> subjectNames = new LinkedHashSet<>();
+		private boolean practice;
+		private boolean detect;
+		private boolean grammar;
+		private boolean classEvent;
+
+		/**
+		 * 构造某天的学习事实。
+		 *
+		 * @param date 日期 yyyy-MM-dd
+		 */
+		private DayFacts(String date) {
+			this.date = date;
+		}
+
+		/**
+		 * 累加一条轨迹事件。
+		 *
+		 * @param growth          轨迹事件
+		 * @param knowledgePoints 该事件的知识点名称列表
+		 */
+		private void add(LearningGrowth growth, List<String> knowledgePoints) {
+			if (StringUtils.hasText(growth.getSubjectId())) {
+				subjects.add(growth.getSubjectId());
+			}
+			if (StringUtils.hasText(growth.getSubjectName())) {
+				subjectNames.add(growth.getSubjectName());
+			}
+			if (StringUtils.hasText(growth.getChapter())) {
+				chapters.add(growth.getChapter());
+			}
+			for (String kp : knowledgePoints) {
+				if (StringUtils.hasText(kp)) {
+					this.knowledgePoints.add(kp);
+				}
+			}
+			String type = growth.getEventType() == null ? "" : growth.getEventType();
+			switch (type) {
+				case "DETECT":
+					detect = true;
+					break;
+				case "GRAMMAR":
+					grammar = true;
+					break;
+				case "CLASS":
+					classEvent = true;
+					break;
+				default:
+					practice = true;
+					break;
+			}
+		}
+
+		/**
+		 * 描述当天包含的学习类型（用于 AI 提示词）。
+		 *
+		 * @return 以「、」分隔的学习类型描述
+		 */
+		private String describeTypes() {
+			List<String> types = new ArrayList<>();
+			if (practice) {
+				types.add("在线练习");
+			}
+			if (detect) {
+				types.add("单元检测");
+			}
+			if (grammar) {
+				types.add("英语语法练习");
+			}
+			if (classEvent) {
+				types.add("课堂学习");
+			}
+			return types.isEmpty() ? "学习行为" : String.join("、", types);
+		}
+
+		/**
+		 * 当天仅涉及单一学科时返回其学科ID。
+		 *
+		 * @return 学科ID；跨学科时为 null
+		 */
+		private String singleSubjectId() {
+			return subjects.size() == 1 ? subjects.iterator().next() : null;
+		}
+
+		/**
+		 * 当天仅涉及单一学科时返回其学科名称。
+		 *
+		 * @return 学科名称；跨学科或无名称时为 null
+		 */
+		private String singleSubjectName() {
+			return subjectNames.size() == 1 ? subjectNames.iterator().next() : null;
+		}
 	}
 
 	/** 学年/学期推导结果。 */

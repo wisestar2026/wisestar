@@ -16,6 +16,7 @@ import cn.wisestar.server.ai.domain.EventTypeEnum;
 import cn.wisestar.server.ai.service.AiChatService;
 import cn.wisestar.server.service.SystemService;
 import cn.wisestar.server.domain.dto.SystemInfo;
+import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -87,13 +88,6 @@ public class SiliconflowChatServiceImpl implements AiChatService {
      * （SystemInfo.AiSetting：enabled、models、token、prompt）。
      */
     private final SystemService systemService;
-
-    /**
-     * SiliconFlow API 基础 URL（静态常量）。
-     * 实际请求地址为 SILICONFLOW_BASE_URL + "/v1/chat/completions"。
-     */
-    // SiliconFlow API基础URL
-    private static final String SILICONFLOW_BASE_URL = "https://api.siliconflow.cn";
 
     /**
      * 构造器：注入 WebClient、ObjectMapper、SystemService 三个依赖。
@@ -324,7 +318,7 @@ public class SiliconflowChatServiceImpl implements AiChatService {
         // 发送请求
         List<String> contentList = new ArrayList<>();
         return webClient.post()
-                .uri(SILICONFLOW_BASE_URL + "/v1/chat/completions")
+                .uri(AiEndpointUtils.resolveChatUrl(aiSetting.getBaseUrl()))
                 .header("Authorization", "Bearer " + aiSetting.getToken())
                 .header("Content-Type", "application/json")
                 .bodyValue(requestBody)

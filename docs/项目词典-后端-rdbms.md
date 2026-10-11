@@ -1012,6 +1012,8 @@
     写入一条学习轨迹事件（独立事务、幂等；语法类按 grammarId + 日期累加）。
   - `public List<GrowthEventView> timeline(String studentId, String subjectId, String from, String to)`
     学习轨迹时间线（按发生时间倒序，未传学员时取当前登录用户）。
+  - `public List<GrowthDailyView> dailyTimeline(String studentId, String subjectId, String from, String to)`
+    每日学习轨迹：把同一学员同一天的全部轨迹事件按日期聚合为一条面向家长的叙述；优先经 StudySummaryService.aiText 一次生成全部日期（严格 JSON 数组），AI 未启用、失败或解析失败时降级规则模板（纯文字不含数字）；同日涉及单一学科时回填 subjectId/subjectName。
   - `public GrowthCompareView compare(String studentId, String subjectId, String semester)`
     成长对比：基线快照 vs 当前掌握度，统计攻克/剩余/新增薄弱与累计题量正确率。
   - `public GrowthReportView generate(GrowthReportRequest request)`

@@ -120,16 +120,9 @@ export default function StudentMyArchivePage() {
       <div className="sll-card my-archive-section">
         <h3 className="my-archive-section-title">学习轨迹</h3>
         {timeline?.length ? timeline.map((e) => (
-          <div key={e.id} className="my-archive-record">
-            <span className="my-archive-record-date">{e.eventDate}</span>
-            <span className="my-archive-record-title">{e.title || e.eventType}</span>
-            <div className="my-archive-meta">
-              {e.chapter ? `${e.chapter} · ` : ''}
-              {e.questionCount ? `答题 ${e.correctCount || 0}/${e.questionCount} 题 · 正确率 ${e.accuracy || 0}%` : ''}
-              {e.knowledgePoints?.length ? ` · ${e.knowledgePoints.join('、')}` : ''}
-              {e.points ? ` · 积分 +${e.points}` : ''}
-              {e.coins ? ` · 学币 +${e.coins}` : ''}
-            </div>
+          <div key={e.date} className="my-archive-record">
+            <span className="my-archive-record-date">{e.date}</span>
+            <div className="my-archive-record-body">{e.content}</div>
           </div>
         )) : <span className="my-archive-empty">暂无学习轨迹</span>}
       </div>

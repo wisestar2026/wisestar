@@ -8,7 +8,7 @@ import cn.wisestar.server.domain.dto.archive.StudentArchiveSaveRequest;
 import cn.wisestar.server.domain.dto.archive.StudentArchiveView;
 import cn.wisestar.server.domain.dto.detect.DetectRecordView;
 import cn.wisestar.server.domain.dto.growth.GrowthCompareView;
-import cn.wisestar.server.domain.dto.growth.GrowthEventView;
+import cn.wisestar.server.domain.dto.growth.GrowthDailyView;
 import cn.wisestar.server.domain.dto.growth.GrowthReportRequest;
 import cn.wisestar.server.domain.dto.growth.GrowthReportView;
 import cn.wisestar.server.service.DetectionService;
@@ -158,18 +158,18 @@ public class ArchiveApi {
 	}
 
 	/**
-	 * 指定学员学习轨迹时间轴（管理端）。
+	 * 指定学员每日学习轨迹（管理端，按日期倒序，每天一句面向家长的叙述）。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/student/archive/timeline?studentId=&amp;subjectId=&amp;from=&amp;to=。</p>
 	 * <p><b>权限</b>：hasAuthority('student:archive')。</p>
 	 */
 	@GetMapping("/timeline")
 	@PreAuthorize("hasAuthority('student:archive')")
-	public List<GrowthEventView> timeline(@RequestParam String studentId,
+	public List<GrowthDailyView> timeline(@RequestParam String studentId,
 			@RequestParam(required = false) String subjectId,
 			@RequestParam(required = false) String from,
 			@RequestParam(required = false) String to) {
-		return growthArchiveService.timeline(studentId, subjectId, from, to);
+		return growthArchiveService.dailyTimeline(studentId, subjectId, from, to);
 	}
 
 	/**

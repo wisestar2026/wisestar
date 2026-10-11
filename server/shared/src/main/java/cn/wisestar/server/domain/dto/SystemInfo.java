@@ -106,6 +106,12 @@ public class SystemInfo {
 
 		private String prompt;
 
+		/**
+		 * 接口地址（基础地址或完整对话补全地址，OpenAI 兼容）。
+		 * 为空时使用默认 SiliconFlow 地址；支持任意 OpenAI 兼容服务（DeepSeek/通义/自建等）。
+		 */
+		private String baseUrl;
+
 	}
 
 	/**
