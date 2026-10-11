@@ -133,6 +133,41 @@ public class SystemApi {
 	}
 
 	/**
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/system/aiStatus（如 /api/system/aiStatus）。</p>
+	 *
+	 * <p><b>功能</b>：返回 AI 服务是否「已配置」的轻量状态（enabled、hasToken、configured、
+	 * baseUrl、model），供仪表盘做「AI 接口未配置」功能提醒。不返回 token 等敏感值。</p>
+	 *
+	 * <p><b>请求参数</b>：无。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@code AiStatusView}。</p>
+	 *
+	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 *
+	 * <p><b>调用的下层 Service</b>：{@link SystemService#getSystemAiSetting()}。</p>
+	 *
+	 * @return AI 配置状态（configured = enabled && token 非空）
+	 */
+	@GetMapping("/aiStatus")
+	@PreAuthorize("hasRole('admin')")
+	public AiStatusView getAiStatus() {
+		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
+		AiStatusView status = new AiStatusView();
+		if (aiSetting == null) {
+			return status;
+		}
+		boolean enabled = Boolean.TRUE.equals(aiSetting.getEnabled());
+		boolean hasToken = aiSetting.getToken() != null && !aiSetting.getToken().isBlank();
+		status.setEnabled(enabled);
+		status.setHasToken(hasToken);
+		status.setConfigured(enabled && hasToken);
+		status.setBaseUrl(aiSetting.getBaseUrl());
+		List<String> models = aiSetting.getModels();
+		status.setModel(models != null && !models.isEmpty() ? models.get(0) : null);
+		return status;
+	}
+
+	/**
 	 * 获取全局出题策略。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/system/practiceStrategy。</p>

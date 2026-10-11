@@ -1626,6 +1626,12 @@
 - **类说明**：
   系统信息视图（t_sys_info 单行 id='1'）。
   嵌套 RegisterInfo、SystemSetting、AiSetting（AI 服务设置：enabled、models、token、prompt、baseUrl 接口地址，OpenAI 兼容，留空默认 SiliconFlow），新增 PracticeStrategy（全局出题策略）： 例题/预习题量、专项训练每知识点上限、小节通关分档题量、章节测试题量与按知识点扩容、 防重复滑窗、缺题储备目标；所有小节默认继承，可在小节练习设置中按字段覆盖。
+### `shared/src/main/java/cn/wisestar/server/domain/dto/AiStatusView.java`
+- 包: `cn.wisestar.server.domain.dto`
+- 类型: `class AiStatusView`
+- 注解: @Data
+- **类说明**：
+  AI 服务配置状态视图（只读聚合，不落库），供管理端仪表盘「AI 接口未配置」功能提醒。字段：enabled（开关）、hasToken（是否已填 Token，不回显 token 本身）、configured（= enabled 且 token 非空）、baseUrl、model（models 列表第一项）。
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/SystemInfoRequest.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class SystemInfoRequest`

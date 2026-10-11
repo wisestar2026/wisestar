@@ -168,10 +168,16 @@ export const deleteCampus = (data) => request.post('/system/campus/delete', data
 // ------------------------------------------------------------
 
 /**
- * 读取 AI 服务设置（enabled/models/prompt；token 接口已脱敏，恒不返回）
+ * 读取 AI 服务设置（enabled/models/prompt/baseUrl；token 接口已脱敏，恒不返回）
  * 后端接口: GET /api/system/aiSetting
  */
 export const getAiSetting = () => request.get('/system/aiSetting');
+
+/**
+ * 读取 AI 配置状态（enabled/hasToken/configured/baseUrl/model，用于仪表盘功能提醒）
+ * 后端接口: GET /api/system/aiStatus
+ */
+export const getAiStatus = () => request.get('/system/aiStatus');
 
 /**
  * 保存 AI 服务设置（只更新 AI 相关字段，不影响其他系统配置）

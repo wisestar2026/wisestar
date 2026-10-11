@@ -1399,7 +1399,20 @@
 
     **请求参数**：无。
 
-    **返回值结构**：`SystemInfo.AiSetting`（enabled、models、prompt；token 恒为 null）。
+    **返回值结构**：`SystemInfo.AiSetting`（enabled、models、prompt、baseUrl；token 恒为 null）。
+
+    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
+
+    **调用的下层 Service**：SystemService#getSystemAiSetting()。
+  - `public AiStatusView getAiStatus()`
+    获取 AI 服务配置状态（供仪表盘功能提醒）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/system/aiStatus（如 /api/system/aiStatus）。
+
+    **功能**：返回 AI 服务是否「已配置」的轻量状态（enabled、hasToken、configured、baseUrl、model），不返回 token 等敏感值；configured = enabled 且 token 非空。供 DashboardPage 渲染「AI 接口未配置」提醒板块。
+
+    **请求参数**：无。
+
+    **返回值结构**：`AiStatusView`。
 
     **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
 
