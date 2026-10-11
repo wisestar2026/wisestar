@@ -58,4 +58,7 @@ surveyking-client/.vite
 
 ### H2 运行时库（禁止入库） ###
 *.mv.db
+
+### 内容导出产物（本地交付，不入库） ###
+/export/
 /application.properties
