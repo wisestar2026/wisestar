@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Table, Tag, Button, Modal, Typography, Space, message } from 'antd';
+import { Table, Tag, Button, Modal, Typography, Space, message, Image } from 'antd';
 import { EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { listActivities } from '../../api/student';
 import { getTemplate } from '../../api/template';
@@ -147,6 +147,11 @@ export default function StudentActivityPage() {
               {attr.examScore && <Tag>分值 {attr.examScore}</Tag>}
             </Space>
             <Paragraph style={{ fontWeight: 600, fontSize: 15 }}>{question.name}</Paragraph>
+            {attr.examOptionImage && (
+              <div style={{ marginBottom: 8 }}>
+                <Image src={attr.examOptionImage} alt="选项图" style={{ maxWidth: '100%', borderRadius: 6 }} />
+              </div>
+            )}
             {children.map((opt) => (
               <div key={opt.id} style={{ padding: '6px 10px', marginBottom: 6, background: '#f5f9fc', borderRadius: 8 }}>
                 {opt.title || opt.id}

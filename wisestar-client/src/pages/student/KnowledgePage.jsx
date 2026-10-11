@@ -868,7 +868,16 @@ export default function KnowledgePage() {
                           );
                         })() : (
                           <div className={`knowledge-options ${showResult ? 'readonly' : ''}`}>
+                            {/* 选项区整块图片（"四个选项是一张图"的题目） */}
+                            {schema.attribute?.examOptionImage && (
+                              <div style={{ marginBottom: 10 }}>
+                                <Image src={schema.attribute.examOptionImage} alt="选项图" style={{ maxWidth: '100%' }} />
+                              </div>
+                            )}
                             {options.map((opt, oi) => {
+                              const letter = String.fromCharCode(65 + oi);
+                              // 图片模式下选项文本即字母本身，避免 badge 与文本重复显示
+                              const isPlaceholder = String(opt.title || '').trim().toUpperCase() === letter;
                               const selected = picked?.type === 'option'
                                 ? picked.optionId === opt.id
                                 : (picked?.optionIds || []).includes(opt.id);
@@ -880,8 +889,8 @@ export default function KnowledgePage() {
                                   className={`knowledge-option ${selected ? 'selected' : ''} ${showRight ? 'right' : ''} ${showWrong ? 'wrong' : ''}`}
                                   onClick={() => realPick(question, opt.id)}
                                 >
-                                  <span className={`knowledge-opt-key ${multi ? 'multi' : ''}`}>{String.fromCharCode(65 + oi)}</span>
-                                  <span className="knowledge-opt-text"><RichContent text={opt.title} /></span>
+                                  <span className={`knowledge-opt-key ${multi ? 'multi' : ''}`}>{letter}</span>
+                                  <span className="knowledge-opt-text"><RichContent text={isPlaceholder ? '' : opt.title} /></span>
                                   {showRight && <span className="knowledge-opt-mark">✓</span>}
                                   {showWrong && <span className="knowledge-opt-mark wrong">✗</span>}
                                 </div>

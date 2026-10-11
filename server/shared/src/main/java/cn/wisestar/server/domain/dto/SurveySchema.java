@@ -333,6 +333,14 @@ public class SurveySchema implements Serializable {
 		private List<String> examImages;
 
 		/**
+		 * 选项区整块图片（图片存储的预览 URL）。
+		 * <p>
+		 * 用于"四个选项 A/B/C/D 合在一张图里"的题目：设置后学员端在选项区展示该图，
+		 * 选项文本可留空（由前端自动以 A/B/C/D 字母作为可点选项）。为空表示普通文字选项。
+		 */
+		private String examOptionImage;
+
+		/**
 		 * 学科（知识点一级维度，问卷快照）
 		 */
 		private String subject;

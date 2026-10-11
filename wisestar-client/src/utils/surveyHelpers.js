@@ -163,6 +163,8 @@ export function templateToQuestion(templateView) {
       ...(schemaAttr.examScore !== undefined ? { examScore: schemaAttr.examScore } : {}),
       ...(schemaAttr.examScoreMode !== undefined ? { examScoreMode: schemaAttr.examScoreMode } : {}),
       ...(schemaAttr.examImages !== undefined ? { examImages: schemaAttr.examImages } : {}),
+      // 选项区整块图片（"四个选项是一张图"的题目）快照，入卷后学员端据此在选项区渲染图片
+      ...(schemaAttr.examOptionImage !== undefined ? { examOptionImage: schemaAttr.examOptionImage } : {}),
       // 学科/章节/知识点/难度快照（供答题明细分析使用）
       // 注意: 题目顶层字段（t_template）也存一份，这里读的是 template.attribute 快照，
       //       因为题目被转换时其顶层字段不一定带知识点（兼容旧数据）

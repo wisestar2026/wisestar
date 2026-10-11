@@ -70,6 +70,9 @@ export default function QuestionCard({
   const children = schema.children || [];
   const qtype = question?.questionType;
 
+  // 选项区整块图片（"四个选项是一张图"的题目）：设置后选项文本通常为 A/B/C/D 字母
+  const optionImage = attr.examOptionImage || '';
+
   // 当前题判题结果（已确认的题存在，用于展示对错）
   const result = confirmed?.[question?.id];
 
@@ -232,6 +235,11 @@ export default function QuestionCard({
       {/* ---- 选项区 ---- */}
       {(qtype === 'Radio' || qtype === 'Judge' || qtype === 'Select') && (
         <div>
+          {optionImage && (
+            <div style={{ marginBottom: 12 }}>
+              <Image src={optionImage} alt="选项图" style={{ maxWidth: '100%' }} />
+            </div>
+          )}
           {children.map((opt) => {
             const selected = value?.type === 'option' && value.optionId === opt.id;
             return (
@@ -251,6 +259,11 @@ export default function QuestionCard({
 
       {(qtype === 'Checkbox') && (
         <div>
+          {optionImage && (
+            <div style={{ marginBottom: 12 }}>
+              <Image src={optionImage} alt="选项图" style={{ maxWidth: '100%' }} />
+            </div>
+          )}
           {children.map((opt) => {
             const selected = value?.type === 'options' && value.optionIds.includes(opt.id);
             return (

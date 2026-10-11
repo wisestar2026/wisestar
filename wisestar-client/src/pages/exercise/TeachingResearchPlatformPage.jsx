@@ -138,10 +138,18 @@ function ResearchQuestionCard({ q, onEdit, action }) {
             <div className="trp-lbl-text">{stem}</div>
           </div>
 
-          {options.length > 0 && (
+          {(options.length > 0 || attr.examOptionImage) && (
             <div className="trp-lbl-field">
               <span className="trp-lbl-tag">选项</span>
               <div className="trp-lbl-text">
+                {attr.examOptionImage && (
+                  <Image
+                    src={attr.examOptionImage}
+                    alt="选项图"
+                    style={{ maxWidth: 360, width: '100%', marginBottom: 8, borderRadius: 6 }}
+                    preview={{ mask: '查看大图' }}
+                  />
+                )}
                 {options.map((o, i) => (
                   <div key={o.id || i} className="trp-lbl-opt">
                     <b>{String.fromCharCode(65 + i)}.</b> {o.title}

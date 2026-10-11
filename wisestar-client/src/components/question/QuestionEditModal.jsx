@@ -79,6 +79,9 @@ const JUDGE_OPTIONS_RAW = [
 // 需要展示正确答案选择器的题型（答案从选项里选，而非自由输入）
 const CHOICE_LIKE_TYPES = ['Radio', 'Checkbox', 'Judge'];
 
+// 支持"选项区整块图片"的题型（多个选项合在一张图里，学员端按 A/B/C/D 字母作答）
+const OPTION_IMAGE_TYPES = ['Radio', 'Checkbox', 'Select'];
+
 // 完整题型列表（题库限定五类: 判断/单选/单项填空/多选/多项填空）
 // 为什么用 EXAM_TYPES 而非 surveyHelpers.QUESTION_TYPES: 题库题型按用户约定收窄到五类，
 // 下拉题/多行文本/评分/备注等问卷题型不可作为题库题目新建
@@ -140,6 +143,12 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   // ---- 题目图片 ----
   const [images, setImages] = useState([]); // [{ uid, name, url, status }] antd Upload 文件列表结构
   const [uploading, setUploading] = useState(false); // 图片上传中标记
+
+  // ---- 选项区整块图片 ----
+  // 适用于"四个选项 A/B/C/D 合在一张图里"的题目：设置后学员端在选项区展示该图，
+  // 选项文本可留空（保存时自动以 A/B/C/D 字母作为可点选项文本）。
+  const [optionImage, setOptionImage] = useState('');           // 选项区图片 URL（空串表示未启用）
+  const [uploadingOptionImage, setUploadingOptionImage] = useState(false); // 选项图上传中标记
 
   // 初始值备份（用于 cancel 时还原）
   const initialRef = useRef({});
@@ -215,6 +224,9 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         status: 'done',
       }));
       setImages(imgs);
+
+      // 回填选项区整块图片（"四个选项是一张图"的题目）
+      setOptionImage(attr.examOptionImage || '');
     } else {
       // 新建模式：清空所有字段
       setTitle('');
@@ -235,6 +247,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
       setKnowledgePoints([]);
       setDifficulty(undefined);
       setImages([]);
+      setOptionImage('');
     }
 
     // 备份初始值（title/题型/图片），供取消时对比是否需要还原
@@ -251,6 +264,8 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
     else if (val === 'MultipleBlank') { setOptions([]); setBlanks(['', '']); setAnswer(''); } // 多项填空: 多空位输入
     else if (!TYPES_WITH_OPTIONS.includes(val)) { setOptions([]); setBlanks(['', '']); setAnswer(''); } // 无选项题型
     else if (!TYPES_WITH_OPTIONS.includes(qType) && TYPES_WITH_OPTIONS.includes(val)) { setOptions(['', '']); setBlanks(['', '']); setAnswer(''); } // 填空→单选
+    // 切到不支持整块选项图的题型时清空选项图，避免残留无效配置
+    if (!OPTION_IMAGE_TYPES.includes(val)) setOptionImage('');
   };
 
   // ---- 图片上传 ----
@@ -286,15 +301,41 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
     setImages((prev) => prev.filter((i) => i.uid !== uid));
   };
 
+  // ---- 选项区整块图片上传 ----
+  // 与题目配图共用 uploadImage（POST /api/file/create → previewUrl），区别是只保留一张，
+  // 且上传后自动把选项补足到 4 个（A/B/C/D），因为整块选项图通常对应四个选项
+  const handleOptionImageUpload = async (file) => {
+    setUploadingOptionImage(true);
+    try {
+      const result = await uploadImage(file);
+      if (result?.previewUrl) {
+        setOptionImage(result.previewUrl);
+        setOptions((prev) => (prev.length >= 4 ? prev : [...prev, ...Array(4 - prev.length).fill('')]));
+        message.success('选项图上传成功');
+      } else {
+        message.error('图片上传失败：未获取到预览地址');
+      }
+    } catch {
+      message.error('图片上传失败');
+    } finally {
+      setUploadingOptionImage(false);
+    }
+    return false; // 阻止默认上传行为
+  };
+
+  // 是否处于"选项区整块图片"模式（选项文本可留空，学员端按字母作答）
+  const optionImageMode = !!optionImage && OPTION_IMAGE_TYPES.includes(qType);
+
   // ---- 保存 ----
   // 组装 TemplateRequest 并回调 onSave（由父组件决定 create 还是 update）
   const handleSave = async () => {
     // 前置校验: 标题必填
     if (!title.trim()) { message.warning('请输入题目内容'); return; }
 
-    // 需要选项的题型（选择题型 + 判断题）必须填满所有选项
+    // 需要选项的题型（选择题型 + 判断题）必须填满所有选项；
+    // 例外：启用"选项区整块图片"时选项文本可留空（保存时自动以 A/B/C/D 字母作为选项）。
     const needsOptions = TYPES_WITH_OPTIONS.includes(qType) || qType === 'Judge';
-    if (needsOptions && options.some((o) => !o.trim())) {
+    if (needsOptions && !optionImageMode && options.some((o) => !o.trim())) {
       message.warning('请填写所有选项'); return;
     }
     // 多项填空: 每个空位答案必填（空位数量=输入框数量，答案按顺序以 | 拼接后判分）
@@ -336,6 +377,8 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           : undefined,
         examScoreMode: scoreMode,
         examImages: images.length > 0 ? images.map((i) => i.url) : undefined,
+        // 选项区整块图片（"四个选项是一张图"的题目）；空串用 undefined 丢弃
+        examOptionImage: optionImageMode ? optionImage : undefined,
         // 知识点属性快照（写入 template.attribute，供题目转入问卷时随卷保存）
         subject: subject || undefined,
         grade: grade || undefined,
@@ -347,14 +390,16 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
       // 选项
       // 判断题: 固定用"正确/错误"两个选项（不可编辑）
+      // 图片模式: 保留全部选项，文本为空时以 A/B/C/D 字母作选项文本（学员端显示为字母可点项）
       // 选择题型: 过滤空选项后生成 Option 节点，ID 用随机字符串
       if (qType === 'Judge') {
         templateJson.children = JUDGE_OPTIONS_RAW;
       } else if (TYPES_WITH_OPTIONS.includes(qType)) {
-        templateJson.children = options.filter((o) => o.trim()).map((title) => ({
+        const src = optionImageMode ? options : options.filter((o) => o.trim());
+        templateJson.children = src.map((title, i) => ({
           id: 'opt_' + Math.random().toString(36).substring(2, 10),
           type: 'Option',
-          title,
+          title: optionImageMode ? (String(title).trim() || String.fromCharCode(65 + i)) : title,
           attribute: {},
         }));
       }
@@ -397,8 +442,12 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
   // 生成 { label: "A. 选项文本", value: "选项文本" } 格式
   // value 直接存选项文本（而非 ID），保证提交答案与题目 JSON 中选项文本一致，
   // 也便于后端判分（ExamScore 按文本匹配）
-  const answerOptions = (qType === 'Judge' ? ['正确', '错误'] : options.filter((o) => o.trim()))
-    .map((title, i) => ({ label: `${String.fromCharCode(65 + i)}. ${title}`, value: title }));
+  // 图片模式下选项文本即 A/B/C/D 字母，标签不再重复拼接文本
+  const answerOptions = (qType === 'Judge'
+    ? ['正确', '错误']
+    : optionImageMode
+      ? options.map((o, i) => { const letter = String.fromCharCode(65 + i); return { label: letter, value: String(o).trim() || letter }; })
+      : options.filter((o) => o.trim()).map((title, i) => ({ label: `${String.fromCharCode(65 + i)}. ${title}`, value: title })));
 
   // 题型下拉选项: 题库五类 + 存量历史题型（不在五类中时附加展示，避免编辑旧题回显异常）
   const typeOptions = record?.questionType && !EXAM_TYPE_VALUES.includes(record.questionType)
@@ -496,6 +545,32 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
               >
                 添加选项
               </Button>
+            )}
+
+            {/* ---- 选项区整块图片（可选）: 适用于"四个选项 A/B/C/D 合在一张图里"的题目 ---- */}
+            {qType !== 'Judge' && OPTION_IMAGE_TYPES.includes(qType) && (
+              <div style={{ marginTop: 10, borderTop: '1px dashed #e5e5e5', paddingTop: 8 }}>
+                <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 6 }}>
+                  选项区图片（可选）：四个选项是一张图时上传，学员端按 A/B/C/D 字母作答
+                </Text>
+                {optionImage ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Image src={optionImage} width={140} style={{ objectFit: 'contain', border: '1px solid #eee', borderRadius: 4 }} />
+                    <Button danger size="small" icon={<DeleteOutlined />} onClick={() => setOptionImage('')}>
+                      移除选项图
+                    </Button>
+                  </div>
+                ) : (
+                  <Upload beforeUpload={handleOptionImageUpload} showUploadList={false} accept="image/*" disabled={uploadingOptionImage}>
+                    <Button icon={<UploadOutlined />} loading={uploadingOptionImage} size="small">上传选项图</Button>
+                  </Upload>
+                )}
+                {optionImage && (
+                  <Text type="secondary" style={{ fontSize: 10, display: 'block', marginTop: 4 }}>
+                    已启用整块选项图：选项文字可留空，保存后学员端会把该图作为选项区展示并可按 A/B/C/D 选择
+                  </Text>
+                )}
+              </div>
             )}
           </div>
         )}

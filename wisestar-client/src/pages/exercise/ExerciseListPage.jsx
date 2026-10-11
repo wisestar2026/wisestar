@@ -29,7 +29,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Card, Table, Tag, Space, Button, Select, Breadcrumb, Switch, Empty,
-  Modal, Input, Popconfirm, Spin, Typography, Alert, message,
+  Modal, Input, Popconfirm, Spin, Typography, Alert, message, Image,
 } from 'antd';
 import {
   ApartmentOutlined, PartitionOutlined, BulbOutlined, BookOutlined,
@@ -130,8 +130,15 @@ function ReadonlyQuestion({ q, withAnswer }) {
 
       {(qtype === 'Radio' || qtype === 'Checkbox' || (qtype === 'Judge' && children.length > 0)) && (
         <div>
+          {schema.attribute?.examOptionImage && (
+            <div style={{ marginBottom: 8 }}>
+              <Image src={schema.attribute.examOptionImage} alt="选项图" style={{ maxWidth: 420, width: '100%', borderRadius: 6 }} />
+            </div>
+          )}
           {children.map((opt, i) => {
             const letter = String.fromCharCode(65 + i);
+            // 图片模式下选项文本即字母本身，避免与前面的字母编号重复
+            const isPlaceholder = String(opt.title || '').trim().toUpperCase() === letter;
             const isCorrect = withAnswer && answer.indexes.includes(i);
             return (
               <div key={opt.id || i} style={{
@@ -139,7 +146,7 @@ function ReadonlyQuestion({ q, withAnswer }) {
                 background: isCorrect ? '#f6ffed' : '#fff',
                 borderRadius: 6, padding: '6px 12px', marginBottom: 6, fontSize: 14,
               }}>
-                <Text strong>{letter}.</Text> {opt.title || opt.description || ''}
+                <Text strong>{letter}.</Text> {isPlaceholder ? '' : (opt.title || opt.description || '')}
               </div>
             );
           })}
