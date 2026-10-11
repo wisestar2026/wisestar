@@ -1,7 +1,7 @@
 -- H2 2.1.214; 
 SET DB_CLOSE_DELAY -1;         
 ;              
-CREATE USER IF NOT EXISTS "SA" SALT '3252399110b8a98c' HASH 'f6c6eb28758d7c9f6d82a39c76c8851ed68fb5b510a304f29fe1b366206727b2' ADMIN;          
+CREATE USER IF NOT EXISTS "SA" SALT 'dd37fa03bd497d06' HASH '1a8d28d40447318f4c72fe61a364b46ab18eed1310365182eb489da899eb7ad9' ADMIN;          
 DROP TABLE IF EXISTS "public"."t_account" CASCADE;             
 DROP TABLE IF EXISTS "public"."t_answer" CASCADE;              
 DROP TABLE IF EXISTS "public"."t_answer_detail" CASCADE;       
@@ -83,12 +83,14 @@ CREATE CACHED TABLE "public"."t_account"(
     "update_by" CHARACTER VARYING(256) DEFAULT NULL
 );           
 ALTER TABLE "public"."t_account" ADD CONSTRAINT "public"."CONSTRAINT_7" PRIMARY KEY("id");     
--- 4 +/- SELECT COUNT(*) FROM public.t_account;
+-- 6 +/- SELECT COUNT(*) FROM public.t_account;
 INSERT INTO "public"."t_account" VALUES
 ('1', 'SysUser', '1457995481966747649', 'PWD', 'admin', '$2a$10$vZk9P3XtbD2KrdLbQYPvBuPAkkUda0OlkDg7io1Q6VEtfFPig/tqO', NULL, 1, 0, TIMESTAMP '2021-11-09 16:56:26', NULL, TIMESTAMP '2022-02-01 23:57:27', '1457995481966747649'),
 ('2099463082341367810', 'Student', '2099463081942908930', 'PWD', 'a000001', '$2a$10$45eihfpohnAIUoR1VL598ustEgJ9.GdWmiNFOjKVE3NVn/iVv2/ae', NULL, 1, 0, TIMESTAMP '2026-09-14 11:39:39.625', '1457995481966747649', NULL, NULL),
 ('2100552625740152834', 'SysUser', '2100552625379442689', 'PWD', 'principal_tt', '$2a$10$qwrzh/4tGvF.6/HGTBP2aeROFEzIWWezhR2Q5aVTVEygmWUBa7p62', NULL, 1, 0, TIMESTAMP '2026-09-17 11:49:07.014', '1457995481966747649', NULL, NULL),
-('2100552793864634369', 'SysUser', '2100552793512312834', 'PWD', 'principal_dm', '$2a$10$i1EbrllwRJf.04J4zm0/5OIp82BmJCSE.nb7oCtxSVUoUUlkVbCJe', NULL, 1, 0, TIMESTAMP '2026-09-17 11:49:47.098', '1457995481966747649', NULL, NULL);       
+('2100552793864634369', 'SysUser', '2100552793512312834', 'PWD', 'principal_dm', '$2a$10$i1EbrllwRJf.04J4zm0/5OIp82BmJCSE.nb7oCtxSVUoUUlkVbCJe', NULL, 1, 0, TIMESTAMP '2026-09-17 11:49:47.098', '1457995481966747649', NULL, NULL),
+('2109281902253903874', 'SysUser', '2109281901901582338', 'PWD', 'hy1001', '$2a$10$j3..yMFVIibSuEl8lkl1q.XHe.jmMgpbyN4g0XyvrIVjG2TEywyIO', NULL, 1, 0, TIMESTAMP '2026-10-11 13:56:08.719', '1457995481966747649', NULL, NULL),
+('2109282029651693569', 'SysUser', '2109282029337120770', 'PWD', 'hy1002', '$2a$10$5RHAjPqosCKGttA.Pyeb7.w5jIGKp2w9gbXuZQb76Lod7kw7y5SF2', NULL, 1, 0, TIMESTAMP '2026-10-11 13:56:39.092', '1457995481966747649', NULL, NULL);       
 CREATE CACHED TABLE "public"."t_answer"(
     "id" CHARACTER VARYING(64) NOT NULL,
     "project_id" CHARACTER VARYING(64) NOT NULL,
@@ -10688,7 +10690,7 @@ CREATE CACHED TABLE "public"."t_template"(
     "is_deleted" TINYINT DEFAULT '0' SELECTIVITY 1 COMMENT U&'\662f\5426\5220\9664' NOT NULL,
     "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP SELECTIVITY 26 COMMENT U&'\521b\5efa\65f6\95f4' NOT NULL,
     "create_by" CHARACTER VARYING(256) DEFAULT NULL SELECTIVITY 1,
-    "update_at" TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP SELECTIVITY 48 COMMENT U&'\66f4\65b0\65f6\95f4',
+    "update_at" TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP SELECTIVITY 51 COMMENT U&'\66f4\65b0\65f6\95f4',
     "update_by" CHARACTER VARYING(256) DEFAULT NULL SELECTIVITY 1
 );    
 ALTER TABLE "public"."t_template" ADD CONSTRAINT "public"."CONSTRAINT_67" PRIMARY KEY("id");   
@@ -21142,11 +21144,13 @@ CREATE CACHED TABLE "public"."t_user"(
     "correct_times" INTEGER DEFAULT NULL COMMENT U&'\9519\9898\7b54\5bf9\6e05\9664\6b21\6570'
 );            
 ALTER TABLE "public"."t_user" ADD CONSTRAINT "public"."CONSTRAINT_CB63" PRIMARY KEY("id");     
--- 3 +/- SELECT COUNT(*) FROM public.t_user;   
+-- 5 +/- SELECT COUNT(*) FROM public.t_user;   
 INSERT INTO "public"."t_user" VALUES
 ('1457995481966747649', 'Admin', '1', 'F', NULL, '13800138000', 'surveyking@qq.com', NULL, 1, 0, TIMESTAMP '2021-11-09 16:56:26', NULL, TIMESTAMP '2022-02-11 13:29:17', '1457995481966747649', 'hello surveyking~', NULL),
 ('2100552625379442689', U&'\6d4b\8bd5\6821\957f(\4e09\53f0)', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, TIMESTAMP '2026-09-17 11:49:06.929', '1457995481966747649', NULL, NULL, NULL, NULL),
-('2100552793512312834', U&'\6539\540d\9a8c\8bc1', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, TIMESTAMP '2026-09-17 11:49:47.014', '1457995481966747649', TIMESTAMP '2026-09-17 11:51:08.764', '1457995481966747649', NULL, NULL); 
+('2100552793512312834', U&'\6539\540d\9a8c\8bc1', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, TIMESTAMP '2026-09-17 11:49:47.014', '1457995481966747649', TIMESTAMP '2026-09-17 11:51:08.764', '1457995481966747649', NULL, NULL),
+('2109281901901582338', U&'\4e09\53f0\6821\533a', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, TIMESTAMP '2026-10-11 13:56:08.635', '1457995481966747649', NULL, NULL, NULL, NULL),
+('2109282029337120770', U&'\4e1c\95e8\6821\533a', NULL, NULL, NULL, NULL, NULL, NULL, 1, 0, TIMESTAMP '2026-10-11 13:56:39.017', '1457995481966747649', NULL, NULL, NULL, NULL);               
 CREATE CACHED TABLE "public"."t_user_book" COMMENT U&'\9519\9898\672c'(
     "id" CHARACTER VARYING(64) NOT NULL,
     "name" CHARACTER VARYING(2048) DEFAULT NULL COMMENT U&'\95ee\9898\540d\79f0',
@@ -21190,11 +21194,13 @@ CREATE CACHED TABLE "public"."t_user_role"(
     "update_by" CHARACTER VARYING(256) DEFAULT NULL
 );            
 ALTER TABLE "public"."t_user_role" ADD CONSTRAINT "public"."CONSTRAINT_331" PRIMARY KEY("id"); 
--- 3 +/- SELECT COUNT(*) FROM public.t_user_role;              
+-- 5 +/- SELECT COUNT(*) FROM public.t_user_role;              
 INSERT INTO "public"."t_user_role" VALUES
 ('1488542015867121666', 'SysUser', '1457995481966747649', '1457995481928998914', TIMESTAMP '2022-02-01 23:57:27', '1457995481966747649', NULL, NULL),
 ('2100552625752735745', 'SysUser', '2100552625379442689', '2608130000000000001', TIMESTAMP '2026-09-17 11:49:07.017', '1457995481966747649', NULL, NULL),
-('2100552793873022978', 'SysUser', '2100552793512312834', '2608130000000000001', TIMESTAMP '2026-09-17 11:49:47.101', '1457995481966747649', NULL, NULL);            
+('2100552793873022978', 'SysUser', '2100552793512312834', '2608130000000000001', TIMESTAMP '2026-09-17 11:49:47.101', '1457995481966747649', NULL, NULL),
+('2109281902266486786', 'SysUser', '2109281901901582338', '2608130000000000003', TIMESTAMP '2026-10-11 13:56:08.721', '1457995481966747649', NULL, NULL),
+('2109282029655887873', 'SysUser', '2109282029337120770', '2608130000000000003', TIMESTAMP '2026-10-11 13:56:39.094', '1457995481966747649', NULL, NULL);        
 CREATE INDEX "public"."idx_t_user_role" ON "public"."t_user_role"("user_type" NULLS FIRST, "user_id" NULLS FIRST);             
 CREATE CACHED TABLE "public"."t_campus"(
     "id" CHARACTER VARYING(64) COMMENT 'ID' NOT NULL,
@@ -21488,14 +21494,16 @@ CREATE CACHED TABLE "public"."t_user_campus"(
     "is_deleted" TINYINT DEFAULT '0' NOT NULL
 );   
 ALTER TABLE "public"."t_user_campus" ADD CONSTRAINT "public"."CONSTRAINT_C8" PRIMARY KEY("id");
--- 6 +/- SELECT COUNT(*) FROM public.t_user_campus;            
+-- 8 +/- SELECT COUNT(*) FROM public.t_user_campus;            
 INSERT INTO "public"."t_user_campus" VALUES
 ('2100552625761124354', '2100552625379442689', '2099463001559072770', TIMESTAMP '2026-09-17 11:49:07.019', '1457995481966747649', NULL, NULL, 0),
 ('2100552688369500161', '3418456065', '2099462973130080257', TIMESTAMP '2026-09-17 11:49:21.947', '1457995481966747649', TIMESTAMP '2026-09-17 11:50:11.016394', NULL, 1),
 ('2100552793877217282', '2100552793512312834', '2099462973130080257', TIMESTAMP '2026-09-17 11:49:47.102', '1457995481966747649', NULL, NULL, 0),
 ('2100552894196580353', '3418456065', '2099462973130080257', TIMESTAMP '2026-09-17 11:50:11.02', '1457995481966747649', TIMESTAMP '2026-09-17 11:51:14.391129', NULL, 1),
 ('2100553159993819137', '3418456065', '2099462973130080257', TIMESTAMP '2026-09-17 11:51:14.391', '1457995481966747649', TIMESTAMP '2026-09-17 11:51:26.922846', NULL, 1),
-('2100553212552642561', '3418456065', '2099462973130080257', TIMESTAMP '2026-09-17 11:51:26.923', '1457995481966747649', NULL, NULL, 0);       
+('2100553212552642561', '3418456065', '2099462973130080257', TIMESTAMP '2026-09-17 11:51:26.923', '1457995481966747649', NULL, NULL, 0),
+('2109281902270681089', '2109281901901582338', '2099463001559072770', TIMESTAMP '2026-10-11 13:56:08.722', '1457995481966747649', NULL, NULL, 0),
+('2109282029664276482', '2109282029337120770', '2099462973130080257', TIMESTAMP '2026-10-11 13:56:39.095', '1457995481966747649', NULL, NULL, 0);   
 CREATE INDEX "public"."idx_user_campus_user" ON "public"."t_user_campus"("user_id" NULLS FIRST);               
 CREATE INDEX "public"."idx_user_campus_campus" ON "public"."t_user_campus"("campus_id" NULLS FIRST);           
 CREATE CACHED TABLE "public"."t_mall_order"(
@@ -24958,11 +24966,11 @@ CREATE CACHED TABLE "public"."t_role"(
 ALTER TABLE "public"."t_role" ADD CONSTRAINT "public"."CONSTRAINT_CB62" PRIMARY KEY("id");     
 -- 5 +/- SELECT COUNT(*) FROM public.t_role;   
 INSERT INTO "public"."t_role" VALUES
-('1457995481928998914', U&'\7ba1\7406\5458', 'admin', U&'\7cfb\7edf\521d\59cb\5316\89d2\8272\ff08\8d85\7ba1\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,english:section:list,english:section:create,english:section:update,english:section:delete,english:grammar:list,english:grammar:create,english:grammar:update,english:grammar:delete,campus:list,campus:create,campus:update,campus:delete,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2021-11-09 16:56:26', NULL, TIMESTAMP '2026-10-10 14:11:40.908249', '1457995481966747649', 'ALL'),
-('2608130000000000001', U&'\6821\957f', 'principal', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,template:list,knowledge:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-10 14:11:40.90773', NULL, 'CAMPUS'),
-('2608130000000000002', U&'\6559\5e08', 'teacher', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,student:supervision,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-10 14:11:40.908249', NULL, 'ALL'),
-('2608130000000000003', U&'\5b66\7ba1\5e08', 'consultant', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision,campus:list,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-10 14:11:40.908249', NULL, 'CAMPUS'),
-('2608130000000000004', U&'\6559\52a1', 'academic', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-10 14:11:40.90773', NULL, 'CAMPUS');               
+('1457995481928998914', U&'\7ba1\7406\5458', 'admin', U&'\7cfb\7edf\521d\59cb\5316\89d2\8272\ff08\8d85\7ba1\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,english:section:list,english:section:create,english:section:update,english:section:delete,english:grammar:list,english:grammar:create,english:grammar:update,english:grammar:delete,campus:list,campus:create,campus:update,campus:delete,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2021-11-09 16:56:26', NULL, TIMESTAMP '2026-10-11 14:19:28.019675', '1457995481966747649', 'ALL'),
+('2608130000000000001', U&'\6821\957f', 'principal', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,template:list,knowledge:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-11 14:19:28.018846', NULL, 'CAMPUS'),
+('2608130000000000002', U&'\6559\5e08', 'teacher', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,student:supervision,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-11 14:19:28.019675', NULL, 'ALL'),
+('2608130000000000003', U&'\5b66\7ba1\5e08', 'consultant', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision,campus:list,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-11 14:19:28.019675', '1457995481966747649', 'CAMPUS'),
+('2608130000000000004', U&'\6559\52a1', 'academic', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-11 14:19:28.018846', NULL, 'CAMPUS');            
 CREATE CACHED TABLE "public"."t_subject_semester"(
     "id" CHARACTER VARYING(64) NOT NULL,
     "user_id" CHARACTER VARYING(64) COMMENT U&'\5b66\5458ID' NOT NULL,
@@ -25065,7 +25073,7 @@ CREATE CACHED TABLE "public"."t_study_session"(
     "is_deleted" TINYINT DEFAULT 0
 );   
 ALTER TABLE "public"."t_study_session" ADD CONSTRAINT "public"."CONSTRAINT_BA8" PRIMARY KEY("id");             
--- 89 +/- SELECT COUNT(*) FROM public.t_study_session;         
+-- 90 +/- SELECT COUNT(*) FROM public.t_study_session;         
 INSERT INTO "public"."t_study_session" VALUES
 ('2099117458790072322', '1457995481966747649', NULL, '2026-09-13', TIMESTAMP '2026-09-13 12:46:16.534', TIMESTAMP '2026-09-13 12:56:48.361', NULL, 631827, 'active', TIMESTAMP '2026-09-13 12:46:16.559', '1457995481966747649', TIMESTAMP '2026-09-13 12:46:17.125', '1457995481966747649', 0),
 ('2099462788203216898', '1457995481966747649', NULL, '2026-09-14', TIMESTAMP '2026-09-14 11:38:29.491', TIMESTAMP '2026-09-14 11:38:29.741', NULL, 250, 'active', TIMESTAMP '2026-09-14 11:38:29.503', '1457995481966747649', TIMESTAMP '2026-09-14 11:38:29.677', '1457995481966747649', 0),
@@ -25160,7 +25168,8 @@ INSERT INTO "public"."t_study_session" VALUES
 ('2107837877986578434', '2099463081942908930', '1002', '2026-10-07', TIMESTAMP '2026-10-07 14:18:06.486', TIMESTAMP '2026-10-07 14:18:06.793', NULL, 307, 'active', TIMESTAMP '2026-10-07 14:18:06.51', '2099463081942908930', TIMESTAMP '2026-10-07 14:18:06.623', '2099463081942908930', 0),
 ('2108168851677011969', '2099463081942908930', '1002', '2026-10-08', TIMESTAMP '2026-10-08 12:13:16.765', TIMESTAMP '2026-10-08 12:21:34.969', NULL, 498204, 'active', TIMESTAMP '2026-10-08 12:13:16.781', '2099463081942908930', TIMESTAMP '2026-10-08 12:13:16.947', '2099463081942908930', 0),
 ('2108200395401633794', '2099463081942908930', '1002', '2026-10-08', TIMESTAMP '2026-10-08 14:18:37.367', TIMESTAMP '2026-10-08 14:56:35.208', NULL, 2277841, 'active', TIMESTAMP '2026-10-08 14:18:37.399', '2099463081942908930', TIMESTAMP '2026-10-08 14:18:37.514', '2099463081942908930', 0),
-('2109073073381580801', '2099463081942908930', '1002', '2026-10-11', TIMESTAMP '2026-10-11 00:06:20.02', TIMESTAMP '2026-10-11 00:06:20.45', NULL, 430, 'active', TIMESTAMP '2026-10-11 00:06:20.046', '2099463081942908930', TIMESTAMP '2026-10-11 00:06:20.215', '2099463081942908930', 0);             
+('2109073073381580801', '2099463081942908930', '1002', '2026-10-11', TIMESTAMP '2026-10-11 00:06:20.02', TIMESTAMP '2026-10-11 00:06:20.45', NULL, 430, 'active', TIMESTAMP '2026-10-11 00:06:20.046', '2099463081942908930', TIMESTAMP '2026-10-11 00:06:20.215', '2099463081942908930', 0),
+('2109282147188674562', '2109282029337120770', NULL, '2026-10-11', TIMESTAMP '2026-10-11 13:57:07.117', TIMESTAMP '2026-10-11 13:57:07.329', NULL, 212, 'active', TIMESTAMP '2026-10-11 13:57:07.121', '2109282029337120770', TIMESTAMP '2026-10-11 13:57:07.274', '2109282029337120770', 0);               
 CREATE INDEX "public"."idx_study_session_student_date" ON "public"."t_study_session"("student_id" NULLS FIRST, "session_date" NULLS FIRST);    
 CREATE CACHED TABLE "public"."t_user_weak_knowledge"(
     "id" CHARACTER VARYING(64) NOT NULL,
@@ -25301,7 +25310,7 @@ CREATE CACHED TABLE "public"."t_sys_info"(
 ALTER TABLE "public"."t_sys_info" ADD CONSTRAINT "public"."CONSTRAINT_2" PRIMARY KEY("id");    
 -- 1 +/- SELECT COUNT(*) FROM public.t_sys_info;               
 INSERT INTO "public"."t_sys_info" VALUES
-('1', U&'\5377\738b\95ee\5377\8003\8bd5\7cfb\7edf', U&'\505a\66f4\597d\7684\8c03\67e5\95ee\5377\7cfb\7edf', NULL, 'zh-CN', '{}', NULL, NULL, NULL, 1, TIMESTAMP '2022-02-11 10:13:19', NULL, TIMESTAMP '2022-11-07 15:13:02', NULL, '{"previewCount":6,"drillPerKp":8,"trialSmallCount":18,"trialMediumCount":20,"trialLargeCount":30,"trialSmallMaxKp":3,"trialMediumMaxKp":5,"examCount":20,"examExpandByKp":true,"repeatWindow":2,"reserveNormal":16,"reserveMinor":20,"reserveKey":24}');         
+('1', U&'\5377\738b\95ee\5377\8003\8bd5\7cfb\7edf', U&'\505a\66f4\597d\7684\8c03\67e5\95ee\5377\7cfb\7edf', NULL, 'zh-CN', '{}', NULL, '{"baseUrl":""}', NULL, 1, TIMESTAMP '2022-02-11 10:13:19', NULL, TIMESTAMP '2022-11-07 15:13:02', NULL, '{"previewCount":6,"drillPerKp":8,"trialSmallCount":18,"trialMediumCount":20,"trialLargeCount":30,"trialSmallMaxKp":3,"trialMediumMaxKp":5,"examCount":20,"examExpandByKp":true,"repeatWindow":2,"reserveNormal":16,"reserveMinor":20,"reserveKey":24}');             
 CREATE CACHED TABLE "public"."t_english_sentence"(
     "id" CHARACTER VARYING(64) NOT NULL,
     "en" CHARACTER VARYING COMMENT U&'\82f1\6587\53e5\5b50' NOT NULL,
