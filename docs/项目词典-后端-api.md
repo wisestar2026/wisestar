@@ -313,6 +313,8 @@
     智能复习会话（单词 + 句子混合队列）。
   - `public List<EnglishScenarioView> scenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
     情景对话练习：依据单元单词由 AI 实时生成（不落库）。
+  - `public List<EnglishPatternScenarioView> patternScenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
+    重点句式情景练习：依据单元重点句式由 AI 实时生成（不落库）。
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
 

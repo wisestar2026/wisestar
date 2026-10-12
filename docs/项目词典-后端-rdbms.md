@@ -872,6 +872,13 @@
   - `public EnglishAiPackView savePack(EnglishAiPackView pack)`
   - `public PackSyncResult syncToBank(String id)`
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishPatternScenarioServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishPatternScenarioServiceImpl`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  英语重点句式情景生成服务实现：按 版本+年级+册别+单元 取 t_english_sentence 重点句式，调用系统 AI 设置实时生成 3-4 个生活情景对话——部分轮次给出英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式；结果不落库。解析时对齐 answer 与 options（按字符串匹配正确项下标、必要时补齐）、过滤无作答轮的场景。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishReviewScheduler.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EnglishReviewScheduler`

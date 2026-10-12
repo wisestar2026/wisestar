@@ -88,6 +88,9 @@ public final class StudentRewardConstants {
 	/** 英语情景对话 */
 	public static final String ACTION_EN_SCENARIO = "en_scenario";
 
+	/** 英语重点句式情景 */
+	public static final String ACTION_EN_PATTERN = "en_pattern";
+
 	// ---------------- 奖励数值 ----------------
 
 	/** 在线宝箱档位（分钟），与 {@link #reward} 学币一一对应 */
@@ -157,6 +160,7 @@ public final class StudentRewardConstants {
 			case ACTION_EN_REVIEW:
 			case ACTION_EN_DRILL:
 			case ACTION_EN_SCENARIO:
+			case ACTION_EN_PATTERN:
 				return new int[] { 20, 6 };
 			default:
 				return null;
@@ -304,6 +308,8 @@ public final class StudentRewardConstants {
 				return "英语巩固强化";
 			case ACTION_EN_SCENARIO:
 				return "英语情景对话";
+			case ACTION_EN_PATTERN:
+				return "英语句式情景";
 			default:
 				return actionType;
 		}

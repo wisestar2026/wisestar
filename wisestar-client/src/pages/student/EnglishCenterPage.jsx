@@ -124,6 +124,13 @@ export default function EnglishCenterPage() {
     }
     navigate(`/student/english/scenario?unit=${encodeURIComponent(item.unit)}`);
   };
+  const goPatternScenario = (item) => {
+    if ((item.sentenceCount || 0) < 3) {
+      message.warning('本单元重点句式太少，暂不能生成句式情景');
+      return;
+    }
+    navigate(`/student/english/pattern-scenario?unit=${encodeURIComponent(item.unit)}`);
+  };
 
   return (
     <div className="eng-page">
@@ -231,6 +238,13 @@ export default function EnglishCenterPage() {
                   onClick={() => goScenario(unit)}
                 >
                   场景对话
+                </button>
+                <button
+                  type="button"
+                  className="eng-btn-practice eng-btn-pattern"
+                  onClick={() => goPatternScenario(unit)}
+                >
+                  句式情景
                 </button>
               </div>
             </div>

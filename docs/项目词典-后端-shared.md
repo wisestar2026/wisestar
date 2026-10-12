@@ -1819,6 +1819,20 @@
 - **类说明**：
   英语句子视图 DTO。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPatternScenarioView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPatternScenarioView`
+- 注解: @Data
+- **类说明**：
+  英语重点句式情景视图 DTO（学员端「句式情景」单个情景）：title/context/patterns/turns，由 AI 依据单元重点句式实时生成、不落库。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPatternTurn.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPatternTurn`
+- 注解: @Data
+- **类说明**：
+  英语重点句式情景单轮 DTO：已给出轮次含 speaker/en/zh；作答轮次含 speaker/cue/options/answerIndex/explanation，answerIndex=-1 表示无需作答。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishScenarioView`
@@ -2616,6 +2630,15 @@
 - 类型: `interface EnglishAiPackService`
 - **类说明**：
   英语 AI 单元内容包服务（生成/保存/同步词库与语法库）。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishPatternScenarioService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishPatternScenarioService`
+- **类说明**：
+  英语重点句式情景生成服务（学员端「句式情景」）：依据单元重点句式调用系统 AI 实时生成若干生活情景对话，作答轮由学员从候选项中选出正确句式，结果不落库。
+- 方法:
+  - `List<EnglishPatternScenarioView> generateScenarios(String version, String grade, String term, String unit)`
+    按单元重点句式生成情景练习（3-4 个场景），无可用句式时返回空列表。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioService.java`
 - 包: `cn.wisestar.server.service`

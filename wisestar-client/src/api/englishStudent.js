@@ -10,6 +10,8 @@
  *   POST /english/student/grammar/record   记录语法作答 { grammarId, correct }
  *   GET  /english/student/review           智能复习（单词 + 句子混合队列）
  *   POST /english/student/session          记录学习会话 { type, durationSeconds, correctCount }
+ *   GET  /english/student/scenarios        情景对话（AI 按单元单词实时生成，不落库）
+ *   GET  /english/student/pattern-scenarios 重点句式情景（AI 按单元重点句式实时生成，不落库）
  *   GET  /english/word/drill               进入学习前强制巩固单词（最近答错 + 复习到期）
  *   GET  /english/word/drill/completed     当天是否已完成强制巩固（账号维度，跨设备）
  *   GET  /english/word/word-book           单元单词列表（含熟练度，复用单词接口）
@@ -63,6 +65,11 @@ export function getEnglishReview(params) {
 /** 情景对话练习（AI 按单元单词实时生成，不落库） */
 export function getEnglishScenarios(params) {
   return request.get('/english/student/scenarios', { params });
+}
+
+/** 重点句式情景练习（AI 按单元重点句式实时生成，不落库） */
+export function getEnglishPatternScenarios(params) {
+  return request.get('/english/student/pattern-scenarios', { params });
 }
 
 /**

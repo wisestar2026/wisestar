@@ -446,6 +446,8 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				return StudentRewardConstants.ACTION_EN_DRILL;
 			case "scenario":
 				return StudentRewardConstants.ACTION_EN_SCENARIO;
+			case "pattern":
+				return StudentRewardConstants.ACTION_EN_PATTERN;
 			default:
 				return null;
 		}

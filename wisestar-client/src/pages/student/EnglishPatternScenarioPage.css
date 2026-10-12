@@ -1,0 +1,90 @@
+/* ============================================================
+ * EnglishPatternScenarioPage.css - 学员端英语「重点句式情景练习」样式
+ * 复用 sc-* 情景卡片骨架，此处补充「情景说明 + 选项按钮 + 解析」
+ * ============================================================ */
+
+.ps-context {
+  margin: 10px 0 2px;
+  padding: 8px 12px;
+  border-left: 3px solid #4bb7e8;
+  background: #f3fafd;
+  border-radius: 0 10px 10px 0;
+  font-size: 13px;
+  color: #42708a;
+  line-height: 1.6;
+}
+
+/* ---------- 作答轮：中文情景提示 ---------- */
+.ps-ask { padding-top: 12px; }
+.ps-cue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f6f96;
+  line-height: 1.6;
+}
+.ps-cue-tag {
+  flex: 0 0 auto;
+  background: #ff9a76;
+  color: #fff;
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ---------- 候选项 ---------- */
+.ps-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ps-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border: 1.5px solid #dcebf3;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1c3d4d;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.ps-option:hover:not(:disabled) { border-color: #4bb7e8; background: #f5fbfe; }
+.ps-option:disabled { cursor: default; }
+.ps-option-label {
+  flex: 0 0 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e6f6fd;
+  color: #1479a6;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ps-option-text { flex: 1; line-height: 1.5; }
+.ps-option.is-picked { border-color: #4bb7e8; background: #eaf7fd; box-shadow: 0 4px 12px rgba(75, 183, 232, 0.18); }
+.ps-option.is-picked .ps-option-label { background: #4bb7e8; color: #fff; }
+.ps-option.is-correct { border-color: #33b463; background: #eafaf1; }
+.ps-option.is-correct .ps-option-label { background: #33b463; color: #fff; }
+.ps-option.is-wrong { border-color: #e05a4f; background: #fdeeec; }
+.ps-option.is-wrong .ps-option-label { background: #e05a4f; color: #fff; }
+
+.ps-explain {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: #5b7f92;
+  line-height: 1.6;
+  background: #f7fafc;
+  border-radius: 10px;
+  padding: 8px 12px;
+}

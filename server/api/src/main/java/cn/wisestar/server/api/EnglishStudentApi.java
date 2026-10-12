@@ -2,11 +2,13 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
+import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.service.EnglishPatternScenarioService;
 import cn.wisestar.server.service.EnglishScenarioService;
 import cn.wisestar.server.service.EnglishStudentService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,8 @@ public class EnglishStudentApi {
 	private final EnglishStudentService englishStudentService;
 
 	private final EnglishScenarioService englishScenarioService;
+
+	private final EnglishPatternScenarioService englishPatternScenarioService;
 
 	/**
 	 * 单元列表 + 学习进度。
@@ -118,6 +122,18 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
 		return englishScenarioService.generateScenarios(version, grade, term, unit);
+	}
+
+	/**
+	 * 重点句式情景练习：依据单元重点句式由 AI 实时生成（不落库）。
+	 */
+	@GetMapping("/pattern-scenarios")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishPatternScenarioView> patternScenarios(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam(required = false) String unit) {
+		return englishPatternScenarioService.generateScenarios(version, grade, term, unit);
 	}
 
 	/**
