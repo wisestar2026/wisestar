@@ -884,6 +884,13 @@
   - `public static Date nextReviewTime(int familiarity)`
     根据熟练度计算下次复习时间。
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishScenarioServiceImpl`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  英语情景对话生成服务实现：按 版本+年级+册别+单元 取 t_english_word 单词，调用系统 AI 设置实时生成 3-4 个生活情景对话并把目标单词从英文台词中挖空形成填空练习；结果不落库。解析时统一空位标记 `___`、逐行对齐 answers、过滤无效场景。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EnglishSentenceServiceImpl`

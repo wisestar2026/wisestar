@@ -1819,6 +1819,20 @@
 - **类说明**：
   英语句子视图 DTO。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishScenarioView`
+- 注解: @Data
+- **类说明**：
+  英语情景对话视图 DTO（学员端「场景对话练习」单个场景）：title/words/lines，由 AI 依据单元单词实时生成、不落库。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioLine.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishScenarioLine`
+- 注解: @Data
+- **类说明**：
+  英语情景对话单行（一句台词）DTO：speaker/en/zh/answers，en 中以 `___` 表示待填目标单词，answers 按空位顺序给出标准答案。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitProgressView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishUnitProgressView`
@@ -2602,6 +2616,15 @@
 - 类型: `interface EnglishAiPackService`
 - **类说明**：
   英语 AI 单元内容包服务（生成/保存/同步词库与语法库）。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishScenarioService`
+- **类说明**：
+  英语情景对话生成服务（学员端「场景对话练习」）：依据单元单词调用系统 AI 实时生成若干生活情景对话并把目标单词挖空，结果不落库。
+- 方法:
+  - `List<EnglishScenarioView> generateScenarios(String version, String grade, String term, String unit)`
+    按单元单词生成情景对话练习（3-4 个场景），无可用单词时返回空列表。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishSentenceService.java`
 - 包: `cn.wisestar.server.service`

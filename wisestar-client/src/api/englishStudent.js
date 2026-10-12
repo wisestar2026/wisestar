@@ -60,6 +60,11 @@ export function getEnglishReview(params) {
   return request.get('/english/student/review', { params });
 }
 
+/** 情景对话练习（AI 按单元单词实时生成，不落库） */
+export function getEnglishScenarios(params) {
+  return request.get('/english/student/scenarios', { params });
+}
+
 /**
  * 记录学习会话，并展示奖励结算反馈。
  *

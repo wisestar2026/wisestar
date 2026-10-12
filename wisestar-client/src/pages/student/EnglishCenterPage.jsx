@@ -117,6 +117,13 @@ export default function EnglishCenterPage() {
     }
     navigate(`/student/english/practice?unit=${encodeURIComponent(item.unit)}`);
   };
+  const goScenario = (item) => {
+    if ((item.wordCount || 0) < 4) {
+      message.warning('本单元单词太少，暂不能生成情景对话');
+      return;
+    }
+    navigate(`/student/english/scenario?unit=${encodeURIComponent(item.unit)}`);
+  };
 
   return (
     <div className="eng-page">
@@ -217,6 +224,13 @@ export default function EnglishCenterPage() {
                   onClick={() => navigate(`/student/english/unit-practice?unit=${encodeURIComponent(unit.unit)}`)}
                 >
                   单元练习
+                </button>
+                <button
+                  type="button"
+                  className="eng-btn-practice eng-btn-scenario"
+                  onClick={() => goScenario(unit)}
+                >
+                  场景对话
                 </button>
               </div>
             </div>

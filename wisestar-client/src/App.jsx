@@ -65,6 +65,7 @@ import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
 import EnglishGrammarLearnPage from './pages/student/EnglishGrammarLearnPage';
 import EnglishGrammarPracticePage from './pages/student/EnglishGrammarPracticePage';
 import EnglishUnitPracticePage from './pages/student/EnglishUnitPracticePage';
+import EnglishScenarioPracticePage from './pages/student/EnglishScenarioPracticePage';
 import EnglishReviewPage from './pages/student/EnglishReviewPage';
 import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
 import ChapterManagePage from './pages/knowledge/ChapterManagePage';
@@ -164,6 +165,8 @@ export default function App() {
             <Route path="english/grammar-practice" element={<EnglishGrammarPracticePage />} />
             {/* 英语单元练习（?unit=，仅本单元题目） */}
             <Route path="english/unit-practice" element={<EnglishUnitPracticePage />} />
+            {/* 英语情景对话练习（?unit=，AI 按单元单词实时生成） */}
+            <Route path="english/scenario" element={<EnglishScenarioPracticePage />} />
             {/* 英语智能复习（单词 / 重点句子 / 语法 三类） */}
             <Route path="english/review" element={<EnglishReviewPage />} />
           </Route>

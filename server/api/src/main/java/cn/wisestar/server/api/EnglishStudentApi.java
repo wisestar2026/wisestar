@@ -2,10 +2,12 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
+import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.service.EnglishScenarioService;
 import cn.wisestar.server.service.EnglishStudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,6 +28,8 @@ import java.util.Map;
 public class EnglishStudentApi {
 
 	private final EnglishStudentService englishStudentService;
+
+	private final EnglishScenarioService englishScenarioService;
 
 	/**
 	 * 单元列表 + 学习进度。
@@ -102,6 +106,18 @@ public class EnglishStudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public List<ReviewSessionView> review(@RequestParam(defaultValue = "20") Integer limit) {
 		return englishStudentService.reviewSession(SecurityContextUtils.getUserId(), limit);
+	}
+
+	/**
+	 * 情景对话练习：依据单元单词由 AI 实时生成（不落库）。
+	 */
+	@GetMapping("/scenarios")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishScenarioView> scenarios(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam(required = false) String unit) {
+		return englishScenarioService.generateScenarios(version, grade, term, unit);
 	}
 
 	/**
