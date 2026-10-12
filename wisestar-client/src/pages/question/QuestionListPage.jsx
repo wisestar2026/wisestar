@@ -323,7 +323,7 @@ export default function QuestionListPage({ lockedSubject }) {
             <Space size={2} wrap>
               {String(correct).split('|').map((p, i) => (
                 <Tag key={i} color="green" style={{ fontSize: 10, lineHeight: '16px' }}>
-                  空{i + 1}: {p || '空'}
+                  空{i + 1}: {String(p || '空').replace(/@/g, '或')}
                 </Tag>
               ))}
             </Space>

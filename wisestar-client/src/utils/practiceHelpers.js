@@ -99,6 +99,24 @@ export function blankEquals(a, b) {
 }
 
 /**
+ * 空位答案匹配：先整体等值；标准答案某空含「一空多解」分隔符 `@` 时，
+ * 只要学生答案命中其中任一可选答案即判对（如标准答案 `1@2@3` 表示 1/2/3 皆可）。
+ * 与后端 AnswerJudgeUtil.blankMatches 语义一致。
+ *
+ * @param {string} correctCell 某空的标准答案（可能含 `@` 分隔的多个可选答案）
+ * @param {string} student 学生该空作答
+ * @returns {boolean} 命中任一答案返回 true
+ */
+export function blankMatches(correctCell, student) {
+  if (correctCell == null) return false;
+  if (blankEquals(correctCell, student)) return true;
+  if (String(correctCell).includes('@')) {
+    return String(correctCell).split('@').some((alt) => blankEquals(alt, student));
+  }
+  return false;
+}
+
+/**
  * 填空类题目（单项填空/多项填空）逐空判分。
  *
  * <p>仅当题型为 FillBlank/MultipleBlank 且标准答案含 {@code |} 多空分隔时生效；
@@ -129,11 +147,11 @@ export function judgeBlankAnswers(question, userAnswer) {
   if (stuBlanks.length === total) {
     // 空位数一致: 逐空等值比较（每空独立 trim/归一化，规避整串比较因单空尾随空格全判错）
     for (let i = 0; i < total; i++) {
-      if (blankEquals(stdBlanks[i], stuBlanks[i])) hits[i] = 1;
+      if (blankMatches(stdBlanks[i], stuBlanks[i])) hits[i] = 1;
     }
   } else if (studentText.trim()) {
     // 空位数不一致（如把整串答案粘进单框/漏填空位）：整串等值兜底视为全对
-    if (correctAnswers.some((ca) => blankEquals(ca, studentText))) hits.fill(1);
+    if (correctAnswers.some((ca) => blankMatches(ca, studentText))) hits.fill(1);
   }
 
   const attr = question?.template?.attribute || {};
@@ -232,7 +250,7 @@ export function evaluateAnswer(question, userAnswer) {
 
   // 单选/判断/单空填空/文本: 归一化后文本等值（与任一标准答案相等即正确）
   const correct = correctAnswers.some(
-    (ca) => blankEquals(ca, studentValue),
+    (ca) => blankMatches(ca, studentValue),
   ) ? 1 : 0;
   return { correct, correctAnswers, userAnswerText };
 }
@@ -262,10 +280,10 @@ export function formatCorrectAnswers(qtype, answers) {
   if (qtype === 'MultipleBlank') {
     return answers
       .flatMap((a) => String(a || '').split('|'))
-      .map((p, i) => `空${i + 1}: ${stdToDisplayText(p)}`)
+      .map((p, i) => `空${i + 1}: ${stdToDisplayText(p).replace(/@/g, '或')}`)
       .join('；');
   }
-  return answers.map((a) => stdToDisplayText(String(a))).join('、');
+  return answers.map((a) => stdToDisplayText(String(a)).replace(/@/g, '或')).join('、');
 }
 
 /**

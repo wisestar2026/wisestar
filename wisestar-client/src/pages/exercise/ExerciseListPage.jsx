@@ -169,7 +169,7 @@ function ReadonlyQuestion({ q, withAnswer }) {
           {withAnswer && answer.text ? (
             qtype === 'MultipleBlank'
               ? <div style={{ color: '#52c41a' }}><Text strong>答案：</Text>
-                  {answer.text.split('|').map((p, i) => <span key={i}>空{i + 1}: {p}　</span>)}
+                  {answer.text.split('|').map((p, i) => <span key={i}>空{i + 1}: {String(p).replace(/@/g, '或')}　</span>)}
                 </div>
               : <div style={{ color: '#52c41a' }}><Text strong>答案：</Text>{answer.text}</div>
           ) : (

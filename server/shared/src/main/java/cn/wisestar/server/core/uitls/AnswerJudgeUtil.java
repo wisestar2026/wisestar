@@ -115,7 +115,7 @@ public final class AnswerJudgeUtil {
 			if (correctBlanks.length == studentBlanks.length) {
 				boolean allMatch = true;
 				for (int i = 0; i < correctBlanks.length; i++) {
-					if (!blankEquals(correctBlanks[i], studentBlanks[i])) {
+					if (!blankMatches(correctBlanks[i], studentBlanks[i])) {
 						allMatch = false;
 						break;
 					}
@@ -123,7 +123,7 @@ public final class AnswerJudgeUtil {
 				if (allMatch) return 1;
 			}
 			// 兼容单空：归一化后直接比对
-			if (correct != null && blankEquals(correct, student)) {
+			if (correct != null && blankMatches(correct, student)) {
 				return 1;
 			}
 		}
@@ -168,7 +168,7 @@ public final class AnswerJudgeUtil {
 		if (studentBlanks.length != total) {
 			// 空位数不一致：尝试整体等值兜底（兼容单空直答）
 			for (String correct : correctAnswers) {
-				if (correct != null && blankEquals(correct, student)) {
+				if (correct != null && blankMatches(correct, student)) {
 					Arrays.fill(result, 1, result.length, 1);
 					return result;
 				}
@@ -184,7 +184,7 @@ public final class AnswerJudgeUtil {
 				continue;
 			}
 			for (int i = 0; i < total; i++) {
-				if (blankEquals(correctBlanks[i], studentBlanks[i])) {
+				if (blankMatches(correctBlanks[i], studentBlanks[i])) {
 					result[i + 1] = 1;
 				}
 			}
@@ -329,6 +329,31 @@ public final class AnswerJudgeUtil {
 		}
 		if (na.matches("[A-Za-z]+") && nb.matches("[A-Za-z]+")) {
 			return na.equalsIgnoreCase(nb);
+		}
+		return false;
+	}
+
+	/**
+	 * 空位答案匹配：先整体等值；标准答案某空含「一空多解」分隔符 {@code @} 时，
+	 * 只要学生答案命中其中任一可选答案即判对（如标准答案 {@code 1@2@3} 收纳 1/2/3 皆可）。
+	 *
+	 * @param correctCell 某空的标准答案（可能含 {@code @} 分隔的多个可选答案）
+	 * @param student     学生该空作答
+	 * @return 命中任一答案返回 true
+	 */
+	public static boolean blankMatches(String correctCell, String student) {
+		if (correctCell == null) {
+			return false;
+		}
+		if (blankEquals(correctCell, student)) {
+			return true;
+		}
+		if (correctCell.indexOf('@') >= 0) {
+			for (String alt : correctCell.split("@")) {
+				if (blankEquals(alt, student)) {
+					return true;
+				}
+			}
 		}
 		return false;
 	}

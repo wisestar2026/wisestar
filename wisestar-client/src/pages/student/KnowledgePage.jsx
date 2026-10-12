@@ -18,7 +18,7 @@ import { Input, Button, Modal, Select, Image, Progress, message } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getStudyPoints, getStudyQuestions, getSectionPracticeConfig, uploadActivity, completePreview, getKnowledgeDetail, wrongRedo } from '../../api/student';
 import { submitPractice, saveWrongReason } from '../../api/practice';
-import { extractCorrectAnswers } from '../../utils/practiceHelpers';
+import { extractCorrectAnswers, blankMatches } from '../../utils/practiceHelpers';
 import ImportanceTag from '../../utils/importance';
 import WrongBookPanel from '../../components/student/WrongBookPanel';
 import RichContent from '../../components/common/RichContent';
@@ -63,15 +63,6 @@ function normBlank(s) {
     .replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0))
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function blankEq(a, b) {
-  const na = normBlank(a);
-  const nb = normBlank(b);
-  if (na === nb) return true;
-  // 纯 ASCII 字母串（如选项字母 A/B/C）忽略大小写
-  if (/^[A-Za-z]+$/.test(na) && /^[A-Za-z]+$/.test(nb)) return na.toLowerCase() === nb.toLowerCase();
-  return false;
 }
 
 // 四种模式 tab 配置
@@ -320,9 +311,9 @@ export default function KnowledgePage() {
       const hits = Array(total).fill(0);
       if (stuBlanks.length === total) {
         for (let i = 0; i < total; i++) {
-          if (blankEq(stdBlanks[i], stuBlanks[i])) hits[i] = 1;
+          if (blankMatches(stdBlanks[i], stuBlanks[i])) hits[i] = 1;
         }
-      } else if (studentText.trim() && correctAnswers.some((ca) => blankEq(ca, studentText))) {
+      } else if (studentText.trim() && correctAnswers.some((ca) => blankMatches(ca, studentText))) {
         hits.fill(1);
       }
       const hitCount = hits.filter((h) => h === 1).length;
@@ -365,7 +356,7 @@ export default function KnowledgePage() {
     if (!judge) return '—';
     if (judge.blankTotal > 1 && judge.answer) {
       const parts = String(judge.answer).split('|');
-      return parts.map((p, i) => `空${i + 1}: ${p.trim()}`).join('；');
+      return parts.map((p, i) => `空${i + 1}: ${p.trim().replace(/@/g, '或')}`).join('；');
     }
     return judge.answer;
   };
