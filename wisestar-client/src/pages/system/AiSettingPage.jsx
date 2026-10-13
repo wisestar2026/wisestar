@@ -28,8 +28,11 @@ const MODEL_OPTIONS = [
   { value: 'THUDM/GLM-4-9B-0414', label: '硅基流动·免费：GLM-4-9B' },
   { value: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B', label: '硅基流动·免费：DeepSeek-R1-Distill-Qwen-7B' },
   // 智谱 AI（GLM Flash 系列官方标注永久免费，国内直连；baseUrl https://open.bigmodel.cn/api/paas/v4）
-  { value: 'glm-4.7-flash', label: '智谱·免费：glm-4.7-flash' },
-  { value: 'glm-4-flash', label: '智谱·免费：glm-4-flash' },
+  // 注意：glm-4.7-flash 为「推理(thinking)模型」，会先消耗大量 tokens 做推理再输出，
+  // 本系统生成类任务（英语情景/单元包）现有 max_tokens 限制下极易出现 content 为空，故不推荐；
+  // 生成类任务请用非推理的 glm-4-flash。
+  { value: 'glm-4-flash', label: '智谱·免费：glm-4-flash（推荐，非推理）' },
+  { value: 'glm-4.7-flash', label: '智谱·免费：glm-4.7-flash（推理模型，生成类任务不推荐）' },
   { value: 'glm-4.5-flash', label: '智谱·免费：glm-4.5-flash' },
   { value: 'glm-4.6v-flash', label: '智谱·免费：glm-4.6v-flash（视觉）' },
   // 百度千帆（部分模型永久免费；baseUrl https://qianfan.baidubce.com/v2）
@@ -231,7 +234,7 @@ export default function AiSettingPage() {
         title="完全免费方案（国内直连）"
         description={
           <div style={{ lineHeight: 1.9 }}>
-            <div>方案一 · 智谱 AI：接口地址填 <b>https://open.bigmodel.cn/api/paas/v4</b>，模型选 <b>glm-4.7-flash</b>（或 glm-4-flash），Token 在 bigmodel.cn 注册后获取（GLM Flash 系列官方标注永久免费）。</div>
+            <div>方案一 · 智谱 AI：接口地址填 <b>https://open.bigmodel.cn/api/paas/v4</b>，模型选 <b>glm-4-flash</b>（非推理、免费；勿选 glm-4.7-flash，它是推理模型，生成类任务易返回空内容），Token 在 bigmodel.cn 注册后获取（GLM Flash 系列官方标注永久免费）。</div>
             <div>方案二 · 硅基流动：接口地址留空即可，模型选 <b>Qwen/Qwen2.5-7B-Instruct</b> 等 9B 及以下小模型（永久免费），Token 在 siliconflow.cn 注册后获取。</div>
             <div>方案三 · 百度千帆：接口地址填 <b>https://qianfan.baidubce.com/v2</b>，模型选 <b>ernie-speed-8k</b>，Token 在百度智能云千帆控制台获取。</div>
             <div>填写「接口地址 + API Token + 模型」并启用后即可使用。免费额度/模型随平台政策调整，请以各平台官网为准。</div>

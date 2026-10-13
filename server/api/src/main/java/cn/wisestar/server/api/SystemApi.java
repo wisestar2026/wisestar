@@ -7,6 +7,7 @@ import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.*;
 import cn.wisestar.server.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -127,10 +128,15 @@ public class SystemApi {
 	@PreAuthorize("hasRole('admin')")
 	public SystemInfo.AiSetting getSystemAiSetting() {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
-		if (aiSetting != null) {
-			aiSetting.setToken(null);
+		if (aiSetting == null) {
+			return null;
 		}
-		return aiSetting;
+		// 返回副本并抹去 token：getSystemAiSetting() 为 @Cacheable，直接改原对象会污染共享缓存，
+		// 导致后续 aiStatus 与所有 AI 调用读到的 token 变为 null。
+		SystemInfo.AiSetting masked = new SystemInfo.AiSetting();
+		BeanUtils.copyProperties(aiSetting, masked);
+		masked.setToken(null);
+		return masked;
 	}
 
 	/**
