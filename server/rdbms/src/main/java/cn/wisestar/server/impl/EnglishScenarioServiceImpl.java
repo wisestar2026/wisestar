@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioLine;
@@ -113,7 +114,7 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 			headers.setBearerAuth(token.trim());
 
 			List<Map<String, String>> messages = new ArrayList<>();
-			messages.add(message("system", SYSTEM_PROMPT));
+			messages.add(message("system", AiPromptKeys.resolve(aiSetting, AiPromptKeys.EN_SCENARIO, null)));
 			messages.add(message("user", userPrompt));
 
 			Map<String, Object> body = new HashMap<>();
@@ -342,29 +343,5 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 		}
 		return null;
 	}
-
-	private static final String SYSTEM_PROMPT =
-			"你是一名资深小学英语教研员，擅长把单元词汇编入真实生活情景对话。"
-					+ "用户会给你：年级、单元，以及本单元要考查的单词。请据此编写情景对话练习，直接输出一个 JSON 对象，"
-					+ "不要输出任何解释、前后缀或代码块之外的文字。\n"
-					+ "JSON 结构必须严格如下：\n"
-					+ "{\n"
-					+ "  \"scenarios\": [\n"
-					+ "    {\n"
-					+ "      \"title\": \"情景标题(中文简短，如：在水果店)\",\n"
-					+ "      \"words\": [\"apple\", \"buy\"],\n"
-					+ "      \"lines\": [\n"
-					+ "        {\"speaker\": \"A\", \"en\": \"I want to buy an ___.\", \"zh\": \"我想买一个苹果。\", \"answers\": [\"apple\"]},\n"
-					+ "        {\"speaker\": \"B\", \"en\": \"OK, here you are.\", \"zh\": \"好的，给你。\", \"answers\": []}\n"
-					+ "      ]\n"
-					+ "    }\n"
-					+ "  ]\n"
-					+ "}\n"
-					+ "要求：\n"
-					+ "1) 对话自然、口语化、符合该年级水平；\n"
-					+ "2) 被挖空的单词必须是给定单词表里的单词，用 ___ (三个下划线) 表示；\n"
-					+ "3) 每行 en 的 ___ 数量必须与该行 answers 数组长度完全一致，answers 小写；\n"
-					+ "4) 一行可有 0-2 个空，不要连续挖空相邻单词；\n"
-					+ "5) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 
 }

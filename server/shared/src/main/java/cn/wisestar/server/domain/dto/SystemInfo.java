@@ -3,7 +3,9 @@ package cn.wisestar.server.domain.dto;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author javahuang
@@ -111,6 +113,13 @@ public class SystemInfo {
 		 * 为空时使用默认 SiliconFlow 地址；支持任意 OpenAI 兼容服务（DeepSeek/通义/自建等）。
 		 */
 		private String baseUrl;
+
+		/**
+		 * 分场景系统提示词：key 见 {@link cn.wisestar.server.core.constant.AiPromptKeys}。
+		 * 某个场景留空（或不配置）时回退到内置默认提示词；legacy 字段 {@link #prompt}
+		 * 仅作为「AI 问答」「学习轨迹·每日叙述」的历史兜底。
+		 */
+		private Map<String, String> prompts = new LinkedHashMap<>();
 
 	}
 

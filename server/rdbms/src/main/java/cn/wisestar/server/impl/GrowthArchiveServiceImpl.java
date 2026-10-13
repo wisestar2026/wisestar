@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.growth.GrowthCompareView;
@@ -72,10 +73,6 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 	/** 报告系统提示词 */
 	private static final String REPORT_SYSTEM_PROMPT =
 			"你是一位负责的学习规划老师，擅长用客观、鼓励且可执行的语言撰写学员成长报告。";
-
-	/** 每日学习轨迹系统提示词（系统 AI 设置未填提示词时的兜底） */
-	private static final String DAILY_SYSTEM_PROMPT =
-			"你是一位耐心的学习教练，擅长用简洁、正向、鼓励的中文描述孩子每天的学习内容。";
 
 	/** 规则叙述中知识点/章节展示上限 */
 	private static final int DAILY_NAME_LIMIT = 5;
@@ -297,16 +294,15 @@ public class GrowthArchiveServiceImpl implements GrowthArchiveService {
 	}
 
 	/**
-	 * 解析每日学习轨迹使用的系统提示词：优先采用系统 AI 设置中的自定义提示词，留空时用内置默认。
+	 * 解析每日学习轨迹使用的系统提示词：优先采用系统 AI 设置中的分场景提示词，
+	 * 其次历史通用提示词，留空时用内置默认。
 	 *
 	 * @return 系统提示词
 	 */
 	private String resolveDailySystemPrompt() {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
-		if (aiSetting != null && StringUtils.hasText(aiSetting.getPrompt())) {
-			return aiSetting.getPrompt().trim();
-		}
-		return DAILY_SYSTEM_PROMPT;
+		String legacy = aiSetting != null ? aiSetting.getPrompt() : null;
+		return AiPromptKeys.resolve(aiSetting, AiPromptKeys.STUDY_DAILY, legacy);
 	}
 
 	/**

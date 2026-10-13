@@ -56,7 +56,7 @@ function parseContent(view) {
 function PackPreview({ view }) {
   const content = useMemo(() => parseContent(view), [view]);
   if (!content) {
-    return <Alert type="warning" showIcon message="该内容包无可预览的结构化内容" />;
+    return <Alert type="warning" showIcon title="该内容包无可预览的结构化内容" />;
   }
 
   const words = Array.isArray(content.words) ? content.words : [];
@@ -397,7 +397,7 @@ export default function WordAiManagePage() {
         <Alert
           type="info"
           showIcon
-          message="AI 将依据所选版本/年级/单元生成同步学习内容（核心词汇+音标释义例句、语法讲解、配套单选题），并自动衔接本单元词库已有单词。生成内容可先预览确认，再保存并在确认后一键同步入正式词库与语法库。"
+          title="AI 将依据所选版本/年级/单元生成同步学习内容（核心词汇+音标释义例句、语法讲解、配套单选题），并自动衔接本单元词库已有单词。生成内容可先预览确认，再保存并在确认后一键同步入正式词库与语法库。"
         />
       </Card>
 

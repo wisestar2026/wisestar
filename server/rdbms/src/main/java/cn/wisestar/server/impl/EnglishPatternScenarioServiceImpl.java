@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
@@ -116,7 +117,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			headers.setBearerAuth(token.trim());
 
 			List<Map<String, String>> messages = new ArrayList<>();
-			messages.add(message("system", SYSTEM_PROMPT));
+			messages.add(message("system", AiPromptKeys.resolve(aiSetting, AiPromptKeys.EN_PATTERN, null)));
 			messages.add(message("user", userPrompt));
 
 			Map<String, Object> body = new HashMap<>();
@@ -375,32 +376,5 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		}
 		return null;
 	}
-
-	private static final String SYSTEM_PROMPT =
-			"你是一名资深小学英语教研员，擅长把单元重点句式编入真实生活情景对话。"
-					+ "用户会给你：年级、单元，以及本单元要考查的重点句式。请据此编写情景对话练习，直接输出一个 JSON 对象，"
-					+ "不要输出任何解释、前后缀或代码块之外的文字。\n"
-					+ "JSON 结构必须严格如下：\n"
-					+ "{\n"
-					+ "  \"scenarios\": [\n"
-					+ "    {\n"
-					+ "      \"title\": \"情景标题(中文简短，如：开学第一天)\",\n"
-					+ "      \"context\": \"一句话情景说明(中文)\",\n"
-					+ "      \"patterns\": [\"What's your name?\", \"My name is Lingling.\"],\n"
-					+ "      \"turns\": [\n"
-					+ "        {\"speaker\": \"A\", \"en\": \"Hello!\", \"zh\": \"你好！\"},\n"
-					+ "        {\"speaker\": \"B\", \"cue\": \"告诉对方你叫玲玲\", \"answer\": \"My name is Lingling.\", "
-					+ "\"options\": [\"My name is Lingling.\", \"How old are you?\", \"It's my schoolbag.\", \"Goodbye.\"], "
-					+ "\"explanation\": \"自我介绍用 My name is...\"}\n"
-					+ "      ]\n"
-					+ "    }\n"
-					+ "  ]\n"
-					+ "}\n"
-					+ "要求：\n"
-					+ "1) 每个情景 4-8 轮，A、B 交替，场景生活化、自然连贯；\n"
-					+ "2) 至少一半轮次为作答轮：只给 cue，不给 en；answer 必须是给定重点句式之一；\n"
-					+ "3) options 恰好 4 个，包含 answer 与 3 个明显不合本情景的干扰项，干扰项也要是合法的英文句子；\n"
-					+ "4) 已给出轮次必须有 en 与 zh；cue 用中文描述学员要表达的意思；\n"
-					+ "5) explanation 用简短中文说明选择依据；所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 
 }

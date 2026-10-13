@@ -1,6 +1,7 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.constant.PermissionConsts;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.*;
@@ -130,6 +131,28 @@ public class SystemApi {
 			aiSetting.setToken(null);
 		}
 		return aiSetting;
+	}
+
+	/**
+	 * 获取 AI 分场景提示词目录（含各场景内置默认提示词）。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：GET ${api.prefix}/system/aiPromptDefaults（如 /api/system/aiPromptDefaults）。</p>
+	 *
+	 * <p><b>功能</b>：返回各 AI 场景的 key、名称、用途说明与内置默认提示词，
+	 * 供「AI 服务设置」页按场景编辑提示词时展示与预填。</p>
+	 *
+	 * <p><b>请求参数</b>：无。</p>
+	 *
+	 * <p><b>返回值结构</b>：{@code List<AiPromptKeys.PromptMeta>}。</p>
+	 *
+	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 *
+	 * @return 场景提示词目录
+	 */
+	@GetMapping("/aiPromptDefaults")
+	@PreAuthorize("hasRole('admin')")
+	public List<AiPromptKeys.PromptMeta> getAiPromptDefaults() {
+		return AiPromptKeys.catalog();
 	}
 
 	/**

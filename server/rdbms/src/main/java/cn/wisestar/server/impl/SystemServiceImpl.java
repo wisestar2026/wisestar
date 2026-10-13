@@ -22,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.validation.ValidationException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
@@ -342,6 +344,25 @@ public class SystemServiceImpl implements SystemService {
 			// 接口地址允许清空（清空后回退默认 SiliconFlow），故仅在非 null 时覆盖
 			if (source.getBaseUrl() != null) {
 				aiSetting.setBaseUrl(source.getBaseUrl().trim());
+			}
+			// 分场景提示词：逐 key 合并；值为空串表示清除该场景覆盖（回退内置默认）
+			if (source.getPrompts() != null) {
+				Map<String, String> current = aiSetting.getPrompts();
+				if (current == null) {
+					current = new LinkedHashMap<>();
+					aiSetting.setPrompts(current);
+				}
+				final Map<String, String> targetPrompts = current;
+				source.getPrompts().forEach((key, value) -> {
+					if (key == null || key.trim().isEmpty()) {
+						return;
+					}
+					if (value == null || value.trim().isEmpty()) {
+						targetPrompts.remove(key);
+					} else {
+						targetPrompts.put(key, value);
+					}
+				});
 			}
 		}
 	}

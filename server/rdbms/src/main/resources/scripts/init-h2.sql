@@ -1516,7 +1516,7 @@ CREATE TABLE IF NOT EXISTS t_sys_info (
   locale varchar(64) DEFAULT NULL COMMENT '默认语言',
   version varchar(64) DEFAULT NULL COMMENT '版本号',
 
-  setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置',  ai_setting varchar(1024) DEFAULT NULL COMMENT 'AI设置',
+  setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置',  ai_setting text DEFAULT NULL COMMENT 'AI设置',
   practice_strategy varchar(2048) DEFAULT NULL COMMENT '出题策略(JSON：例题/专项/通关/章节测试/防重复等)',
   register_info varchar(1024) DEFAULT NULL COMMENT '注册信息',
   is_default tinyint(1) DEFAULT NULL COMMENT '是否默认设置',
@@ -1536,6 +1536,9 @@ COMMIT;
 
 -- 出题策略列（幂等迁移：旧库补列）
 ALTER TABLE t_sys_info ADD COLUMN IF NOT EXISTS practice_strategy varchar(2048) DEFAULT NULL COMMENT '出题策略(JSON：例题/专项/通关/章节测试/防重复等)';
+
+-- AI 设置列扩容为 text（幂等迁移：旧库 varchar(1024) 装不下分场景提示词）
+ALTER TABLE t_sys_info ALTER COLUMN ai_setting SET DATA TYPE text;
 
 -- ----------------------------
 -- Table structure for t_tag

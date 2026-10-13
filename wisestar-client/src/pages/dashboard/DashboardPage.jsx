@@ -66,7 +66,7 @@ export default function DashboardPage() {
           type="warning"
           showIcon
           style={{ marginBottom: 24 }}
-          message="AI 接口未配置"
+          title="AI 接口未配置"
           description="尚未启用 AI 或未填写 API Token，AI 问答、英语内容生成、学习轨迹 AI 叙述等功能暂不可用。请前往「系统管理 → AI 服务设置」完成配置。"
           action={
             <Button size="small" type="primary" onClick={() => navigate('/system/ai')}>

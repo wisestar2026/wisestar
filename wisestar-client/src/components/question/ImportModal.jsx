@@ -105,7 +105,7 @@ export default function ImportModal({ open, onCancel, onSuccess, repos = [] }) {
         <Alert
           type="info"
           showIcon
-          message="Excel 格式要求"
+          title="Excel 格式要求"
           description={
             <div style={{ fontSize: 12 }}>
               <p style={{ margin: '4px 0' }}>1. 使用<strong>标准单表模板</strong>：一个工作表，第一行为表头，第二行起每行一道题目</p>

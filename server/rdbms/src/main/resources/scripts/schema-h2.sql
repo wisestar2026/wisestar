@@ -349,7 +349,7 @@ CREATE TABLE IF NOT EXISTS t_sys_info (
   locale varchar(64) DEFAULT NULL COMMENT '默认语言',
   version varchar(64) DEFAULT NULL COMMENT '版本号',
   setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置',
-  ai_setting varchar(1024) DEFAULT NULL COMMENT 'AI设置',
+  ai_setting text DEFAULT NULL COMMENT 'AI设置',
   register_info varchar(1024) DEFAULT NULL COMMENT '注册信息',
   is_default tinyint(1) DEFAULT NULL COMMENT '是否默认设置',
   create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',

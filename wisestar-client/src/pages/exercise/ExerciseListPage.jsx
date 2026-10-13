@@ -288,7 +288,7 @@ function BindReposModal({ open, node, onClose, onSaved }) {
         rowSelection={{ selectedRowKeys: selected, onChange: setSelected }}
       />
       <Alert type="info" showIcon style={{ marginTop: 10 }}
-        message="保存为全量替换：勾选结果即该节点最终绑定的练习，解绑练习请取消勾选后保存。" />
+        title="保存为全量替换：勾选结果即该节点最终绑定的练习，解绑练习请取消勾选后保存。" />
     </Modal>
   );
 }
@@ -362,7 +362,7 @@ function BindQuestionsModal({ open, kp, onClose, onSaved }) {
         rowSelection={{ selectedRowKeys: selected, onChange: setSelected }}
       />
       <Alert type="info" showIcon style={{ marginTop: 10 }}
-        message="保存为全量替换：勾选结果即该知识点直绑题目（学员端「知识点刷题」的内容来源）。" />
+        title="保存为全量替换：勾选结果即该知识点直绑题目（学员端「知识点刷题」的内容来源）。" />
     </Modal>
   );
 }

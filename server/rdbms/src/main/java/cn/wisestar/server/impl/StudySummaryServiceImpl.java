@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
@@ -67,10 +68,6 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	/** 未配置模型时的兜底模型 */
 	private static final String DEFAULT_MODEL = "deepseek-chat";
 
-	/** 缺省系统提示词（面向家长反馈口吻） */
-	private static final String DEFAULT_SYSTEM_PROMPT =
-			"你是一位耐心细致的学习教练，擅长用简洁、鼓励的语言向家长反馈孩子的学习情况。";
-
 	private final StudySummaryMapper studySummaryMapper;
 	private final StudySessionMapper studySessionMapper;
 	private final PracticeRecordMapper practiceRecordMapper;
@@ -110,7 +107,9 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		if (aiSetting != null && Boolean.TRUE.equals(aiSetting.getEnabled())
 				&& aiSetting.getToken() != null && !aiSetting.getToken().trim().isEmpty()) {
 			try {
-				aiContent = callAi(aiSetting, DEFAULT_SYSTEM_PROMPT, buildPrompt(summaryDate, agg));
+				aiContent = callAi(aiSetting,
+						AiPromptKeys.resolve(aiSetting, AiPromptKeys.STUDY_SUMMARY, null),
+						buildPrompt(summaryDate, agg));
 				aiModel = (aiSetting.getModels() != null && !aiSetting.getModels().isEmpty())
 						? aiSetting.getModels().get(0) : DEFAULT_MODEL;
 			} catch (Exception e) {

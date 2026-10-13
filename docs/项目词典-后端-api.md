@@ -1408,6 +1408,19 @@
     **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
 
     **调用的下层 Service**：SystemService#getSystemAiSetting()。
+  - `public List<AiPromptKeys.PromptMeta> getAiPromptDefaults()`
+    获取 AI 分场景提示词目录（含各场景内置默认提示词）。
+    **HTTP 方法 + 完整路径**：GET ${api.prefix}/system/aiPromptDefaults（如 /api/system/aiPromptDefaults）。
+
+    **功能**：返回各 AI 场景的 key、名称、用途说明与内置默认提示词，供「AI 服务设置」页按场景编辑提示词时展示与预填（key 见 shared 常量类 AiPromptKeys：qa/study_daily/study_summary/en_scenario/en_pattern/en_pack）。
+
+    **请求参数**：无。
+
+    **返回值结构**：`List<AiPromptKeys.PromptMeta>`。
+
+    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
+
+    **调用的下层 Service**：AiPromptKeys#catalog()（无 DB 访问）。
   - `public AiStatusView getAiStatus()`
     获取 AI 服务配置状态（供仪表盘功能提醒）。
     **HTTP 方法 + 完整路径**：GET ${api.prefix}/system/aiStatus（如 /api/system/aiStatus）。

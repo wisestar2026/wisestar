@@ -264,6 +264,22 @@
   - `public boolean isEnabled()`
   - `public void setEnabled(boolean enabled)`
 
+### `shared/src/main/java/cn/wisestar/server/core/constant/AiPromptKeys.java`
+- 包: `cn.wisestar.server.core.constant`
+- 类型: `class AiPromptKeys`
+- 注解: 无（final 工具类 + 私有构造）
+- **类说明**：
+  AI 分场景系统提示词目录。系统 AI 配置 `t_sys_info.ai_setting.prompts` 以本类 key 为键；某场景留空/未配置时回退内置默认，历史通用字段 `aiSetting.prompt` 仅作为「AI 问答」「学习轨迹·每日叙述」兜底。
+  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）。
+- 内部类型 `PromptMeta`（key/label/description/defaultPrompt，getter 访问，Jackson 可序列化）
+- 方法:
+  - `public static List<PromptMeta> catalog()`
+    返回全部场景提示词元数据（供 SystemApi#getAiPromptDefaults）。
+  - `public static String defaultPrompt(String key)`
+    查询某场景内置默认提示词；未知 key 返回空串。
+  - `public static String resolve(SystemInfo.AiSetting aiSetting, String key, String legacyPrompt)`
+    解析某场景生效率提示词：分场景提示词 &gt; 历史通用提示词 &gt; 内置默认。
+
 ### `shared/src/main/java/cn/wisestar/server/core/constant/AnswerFreqEnum.java`
 - 包: `cn.wisestar.server.core.constant`
 - 类型: `enum AnswerFreqEnum`
@@ -1625,7 +1641,7 @@
 - 注解: @Data
 - **类说明**：
   系统信息视图（t_sys_info 单行 id='1'）。
-  嵌套 RegisterInfo、SystemSetting、AiSetting（AI 服务设置：enabled、models、token、prompt、baseUrl 接口地址，OpenAI 兼容，留空默认 SiliconFlow），新增 PracticeStrategy（全局出题策略）： 例题/预习题量、专项训练每知识点上限、小节通关分档题量、章节测试题量与按知识点扩容、 防重复滑窗、缺题储备目标；所有小节默认继承，可在小节练习设置中按字段覆盖。
+  嵌套 RegisterInfo、SystemSetting、AiSetting（AI 服务设置：enabled、models、token、prompt 历史通用提示词、baseUrl 接口地址、prompts 分场景提示词映射 key→提示词，OpenAI 兼容，留空默认 SiliconFlow），新增 PracticeStrategy（全局出题策略）： 例题/预习题量、专项训练每知识点上限、小节通关分档题量、章节测试题量与按知识点扩容、 防重复滑窗、缺题储备目标；所有小节默认继承，可在小节练习设置中按字段覆盖。
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/AiStatusView.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class AiStatusView`

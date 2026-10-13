@@ -401,8 +401,9 @@ public class SiliconflowChatServiceImpl implements AiChatService {
         AiMessage message = new AiMessage();
         message.setRole("system");
 
-        // 优先使用系统配置的提示词，如果没有则使用默认提示词
-        String prompt = aiSetting.getPrompt();
+        // 优先使用分场景提示词（qa），其次历史通用 prompt，最后内置 siliconflow.md
+        String prompt = cn.wisestar.server.core.constant.AiPromptKeys.resolve(aiSetting,
+                cn.wisestar.server.core.constant.AiPromptKeys.QA, aiSetting.getPrompt());
         if (StringUtils.isEmpty(prompt)) {
             ClassPathResource resource = new ClassPathResource("prompt/siliconflow.md");
             prompt = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);

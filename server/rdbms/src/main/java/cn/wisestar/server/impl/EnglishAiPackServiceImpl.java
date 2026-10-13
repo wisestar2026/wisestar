@@ -1,6 +1,7 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackQuery;
@@ -165,7 +166,7 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 			headers.setBearerAuth(token.trim());
 
 			List<Map<String, String>> messages = new ArrayList<>();
-			messages.add(message("system", SYSTEM_PROMPT));
+			messages.add(message("system", AiPromptKeys.resolve(aiSetting, AiPromptKeys.EN_PACK, null)));
 			messages.add(message("user", userPrompt));
 
 			Map<String, Object> body = new HashMap<>();
@@ -613,25 +614,4 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		return view;
 	}
 
-	private static final String SYSTEM_PROMPT =
-			"你是一名资深小学英语教研员，精通各版本教材同步单元教学。"
-					+ "用户会给你：教材版本、年级、单元（及主题）。请为该单元生成同步学习内容包，直接输出一个 JSON 对象，不要输出任何解释、前后缀或 Markdown 代码块之外的文字。\n"
-					+ "JSON 结构必须严格如下：\n"
-					+ "{\n"
-					+ "  \"title\": \"单元学习内容标题(简短)\",\n"
-					+ "  \"words\": [\n"
-					+ "    {\"spell\": \"apple\", \"phonetic\": \"/ˈæpl/\", \"meaning\": \"n. 苹果\", \"example\": \"I eat an apple every day.\", \"exampleZh\": \"我每天吃一个苹果。\"}\n"
-					+ "  ],\n"
-					+ "  \"grammar\": {\n"
-					+ "    \"title\": \"语法点标题\",\n"
-					+ "    \"content\": \"面向小学生的中文语法讲解，简明易懂，配 1-2 个英文小例句\",\n"
-					+ "    \"examples\": [{\"en\": \"英文例句\", \"zh\": \"中文翻译\"}],\n"
-					+ "    \"exercises\": [{\"q\": \"题干\", \"options\": [\"A. xxx\", \"B. xxx\", \"C. xxx\", \"D. xxx\"], \"answer\": \"A\", \"explanation\": \"解析\"}]\n"
-					+ "  }\n"
-					+ "}\n"
-					+ "要求：\n"
-					+ "1) words 为单元核心词汇，spell 全小写，meaning 中文释义含词性，phoenetic 用 IPA 音标，例句简单符合该年级水平；\n"
-					+ "2) exercises 为单选题，3-5 题，四个选项，answer 只填选项字母（A/B/C/D），且选项字母与选项内容一致；\n"
-					+ "3) 单词表与语法点必须贴合该单元主题；\n"
-					+ "4) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 }

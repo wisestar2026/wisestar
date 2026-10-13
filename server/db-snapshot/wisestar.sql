@@ -59,7 +59,6 @@ DROP TABLE IF EXISTS "public"."t_study_summary" CASCADE;
 DROP TABLE IF EXISTS "public"."t_section_pass" CASCADE;        
 DROP TABLE IF EXISTS "public"."t_english_unit" CASCADE;        
 DROP TABLE IF EXISTS "public"."t_english_sentence_book" CASCADE;               
-DROP TABLE IF EXISTS "public"."t_sys_info" CASCADE;            
 DROP TABLE IF EXISTS "public"."t_english_sentence" CASCADE;    
 DROP TABLE IF EXISTS "public"."t_student_order" CASCADE;       
 DROP TABLE IF EXISTS "public"."t_english_grammar_book" CASCADE;
@@ -67,6 +66,7 @@ DROP TABLE IF EXISTS "public"."t_detect_record" CASCADE;
 DROP TABLE IF EXISTS "public"."t_weak_point_event" CASCADE;    
 DROP TABLE IF EXISTS "public"."t_learning_growth" CASCADE;     
 DROP TABLE IF EXISTS "public"."t_chapter" CASCADE;             
+DROP TABLE IF EXISTS "public"."t_sys_info" CASCADE;            
 CREATE CACHED TABLE "public"."t_account"(
     "id" CHARACTER VARYING(64) COMMENT 'ID' NOT NULL,
     "user_type" CHARACTER VARYING(100) DEFAULT 'SysUser' COMMENT U&'\7528\6237\7c7b\578b' NOT NULL,
@@ -25009,11 +25009,11 @@ CREATE CACHED TABLE "public"."t_role"(
 ALTER TABLE "public"."t_role" ADD CONSTRAINT "public"."CONSTRAINT_CB62" PRIMARY KEY("id");     
 -- 5 +/- SELECT COUNT(*) FROM public.t_role;   
 INSERT INTO "public"."t_role" VALUES
-('1457995481928998914', U&'\7ba1\7406\5458', 'admin', U&'\7cfb\7edf\521d\59cb\5316\89d2\8272\ff08\8d85\7ba1\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,english:section:list,english:section:create,english:section:update,english:section:delete,english:grammar:list,english:grammar:create,english:grammar:update,english:grammar:delete,campus:list,campus:create,campus:update,campus:delete,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2021-11-09 16:56:26', NULL, TIMESTAMP '2026-10-12 14:33:00.872016', '1457995481966747649', 'ALL'),
-('2608130000000000001', U&'\6821\957f', 'principal', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,template:list,knowledge:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-12 14:33:00.871113', NULL, 'CAMPUS'),
-('2608130000000000002', U&'\6559\5e08', 'teacher', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,student:supervision,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-12 14:33:00.872016', NULL, 'ALL'),
-('2608130000000000003', U&'\5b66\7ba1\5e08', 'consultant', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision,campus:list,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-12 14:33:00.872016', '1457995481966747649', 'CAMPUS'),
-('2608130000000000004', U&'\6559\52a1', 'academic', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-12 14:33:00.871113', NULL, 'CAMPUS');            
+('1457995481928998914', U&'\7ba1\7406\5458', 'admin', U&'\7cfb\7edf\521d\59cb\5316\89d2\8272\ff08\8d85\7ba1\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,repo:export,repo:book,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,student:create,student:update,student:delete,student:supervision,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:role:list,system:role:create,system:role:update,system:role:delete,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:position:list,system:position:create,system:position:update,system:position:delete,system:dict:list,system:dict:create,system:dict:update,system:dict:delete,system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,user:update,english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,english:unit:list,english:unit:create,english:unit:update,english:unit:delete,english:sentence:list,english:sentence:create,english:sentence:update,english:sentence:delete,english:sentence:import,english:section:list,english:section:create,english:section:update,english:section:delete,english:grammar:list,english:grammar:create,english:grammar:update,english:grammar:delete,campus:list,campus:create,campus:update,campus:delete,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2021-11-09 16:56:26', NULL, TIMESTAMP '2026-10-13 03:07:04.265979', '1457995481966747649', 'ALL'),
+('2608130000000000001', U&'\6821\957f', 'principal', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,template:list,knowledge:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-13 03:07:04.265477', NULL, 'CAMPUS'),
+('2608130000000000002', U&'\6559\5e08', 'teacher', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,student:supervision,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-13 03:07:04.265979', NULL, 'ALL'),
+('2608130000000000003', U&'\5b66\7ba1\5e08', 'consultant', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,student:list,student:create,student:update,student:delete,order:list,order:create,order:update,order:delete,mall:list,task:list,knowledge:list,repo:list,repo:detail,student:supervision,campus:list,student:archive,student:archive:edit', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-13 03:07:04.265979', '1457995481966747649', 'CAMPUS'),
+('2608130000000000004', U&'\6559\52a1', 'academic', U&'\5185\7f6e\89d2\8272\ff08\4e0d\53ef\5220\9664\ff09', 'home,exercise:list,repo:list,repo:detail,repo:create,repo:update,repo:delete,template:list,template:create,template:update,template:delete,knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,student:list,order:list,mall:list,mall:create,mall:update,mall:delete,task:list,task:create,task:update,task:delete,system:dict:list,system:dictItem:list,campus:list,student:archive', 1, 0, 1, TIMESTAMP '2026-08-13 10:00:00', '1457995481966747649', TIMESTAMP '2026-10-13 03:07:04.265477', NULL, 'CAMPUS');            
 CREATE CACHED TABLE "public"."t_subject_semester"(
     "id" CHARACTER VARYING(64) NOT NULL,
     "user_id" CHARACTER VARYING(64) COMMENT U&'\5b66\5458ID' NOT NULL,
@@ -25333,27 +25333,6 @@ CREATE CACHED TABLE "public"."t_english_sentence_book"(
 );      
 ALTER TABLE "public"."t_english_sentence_book" ADD CONSTRAINT "public"."CONSTRAINT_9" PRIMARY KEY("id");       
 -- 0 +/- SELECT COUNT(*) FROM public.t_english_sentence_book;  
-CREATE CACHED TABLE "public"."t_sys_info"(
-    "id" CHARACTER VARYING(64) COMMENT U&'\4e3b\952e' NOT NULL,
-    "name" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\7cfb\7edf\540d\79f0',
-    "description" CHARACTER VARYING(128) DEFAULT NULL COMMENT U&'\7cfb\7edf\63cf\8ff0\4fe1\606f',
-    "avatar" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\56fe\6807',
-    "locale" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\9ed8\8ba4\8bed\8a00',
-    "version" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\7248\672c\53f7',
-    "setting" CHARACTER VARYING(1024) DEFAULT NULL COMMENT U&'\5176\4ed6\7cfb\7edf\8bbe\7f6e',
-    "ai_setting" CHARACTER VARYING(1024) DEFAULT NULL COMMENT U&'AI\8bbe\7f6e',
-    "register_info" CHARACTER VARYING(1024) DEFAULT NULL COMMENT U&'\6ce8\518c\4fe1\606f',
-    "is_default" TINYINT DEFAULT NULL COMMENT U&'\662f\5426\9ed8\8ba4\8bbe\7f6e',
-    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT U&'\521b\5efa\65f6\95f4' NOT NULL,
-    "create_by" CHARACTER VARYING(256) DEFAULT NULL,
-    "update_at" TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT U&'\66f4\65b0\65f6\95f4',
-    "update_by" CHARACTER VARYING(256) DEFAULT NULL,
-    "practice_strategy" CHARACTER VARYING(2048) DEFAULT NULL COMMENT U&'\51fa\9898\7b56\7565(JSON\ff1a\4f8b\9898/\4e13\9879/\901a\5173/\7ae0\8282\6d4b\8bd5/\9632\91cd\590d\7b49)'
-);           
-ALTER TABLE "public"."t_sys_info" ADD CONSTRAINT "public"."CONSTRAINT_2" PRIMARY KEY("id");    
--- 1 +/- SELECT COUNT(*) FROM public.t_sys_info;               
-INSERT INTO "public"."t_sys_info" VALUES
-('1', U&'\5377\738b\95ee\5377\8003\8bd5\7cfb\7edf', U&'\505a\66f4\597d\7684\8c03\67e5\95ee\5377\7cfb\7edf', NULL, 'zh-CN', '{}', NULL, '{"enabled":false,"models":[],"baseUrl":""}', NULL, 1, TIMESTAMP '2022-02-11 10:13:19', NULL, TIMESTAMP '2026-10-11 14:30:27.811988', NULL, '{"previewCount":6,"drillPerKp":8,"trialSmallCount":18,"trialMediumCount":20,"trialLargeCount":30,"trialSmallMaxKp":3,"trialMediumMaxKp":5,"examCount":20,"examExpandByKp":true,"repeatWindow":2,"reserveNormal":16,"reserveMinor":20,"reserveKey":24}');          
 CREATE CACHED TABLE "public"."t_english_sentence"(
     "id" CHARACTER VARYING(64) NOT NULL,
     "en" CHARACTER VARYING COMMENT U&'\82f1\6587\53e5\5b50' NOT NULL,
@@ -26014,6 +25993,27 @@ INSERT INTO "public"."t_chapter" VALUES
 ('2107752767463391234', '1002', U&'\767e\5206\6570', U&'\+01f4d6', 26, 0, TIMESTAMP '2026-10-07 08:39:54.574', '1457995481966747649', NULL, NULL, U&'\516d\5e74\7ea7', U&'\4e0a', U&'\4eba\6559\7248', NULL),
 ('2107752767467585537', '1002', U&'\6570\5b66\5e7f\89d2\2014\2014\9e3d\5de2\95ee\9898', U&'\+01f4d6', 27, 0, TIMESTAMP '2026-10-07 08:39:54.574', '1457995481966747649', NULL, NULL, U&'\516d\5e74\7ea7', U&'\4e0a', U&'\4eba\6559\7248', NULL);        
 CREATE INDEX "public"."idx_chapter_subject" ON "public"."t_chapter"("subject_id" NULLS FIRST); 
+CREATE CACHED TABLE "public"."t_sys_info"(
+    "id" CHARACTER VARYING(64) COMMENT U&'\4e3b\952e' NOT NULL,
+    "name" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\7cfb\7edf\540d\79f0',
+    "description" CHARACTER VARYING(128) DEFAULT NULL COMMENT U&'\7cfb\7edf\63cf\8ff0\4fe1\606f',
+    "avatar" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\56fe\6807',
+    "locale" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\9ed8\8ba4\8bed\8a00',
+    "version" CHARACTER VARYING(64) DEFAULT NULL COMMENT U&'\7248\672c\53f7',
+    "setting" CHARACTER VARYING(1024) DEFAULT NULL COMMENT U&'\5176\4ed6\7cfb\7edf\8bbe\7f6e',
+    "ai_setting" CHARACTER VARYING DEFAULT NULL COMMENT U&'AI\8bbe\7f6e',
+    "register_info" CHARACTER VARYING(1024) DEFAULT NULL COMMENT U&'\6ce8\518c\4fe1\606f',
+    "is_default" TINYINT DEFAULT NULL COMMENT U&'\662f\5426\9ed8\8ba4\8bbe\7f6e',
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT U&'\521b\5efa\65f6\95f4' NOT NULL,
+    "create_by" CHARACTER VARYING(256) DEFAULT NULL,
+    "update_at" TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT U&'\66f4\65b0\65f6\95f4',
+    "update_by" CHARACTER VARYING(256) DEFAULT NULL,
+    "practice_strategy" CHARACTER VARYING(2048) DEFAULT NULL COMMENT U&'\51fa\9898\7b56\7565(JSON\ff1a\4f8b\9898/\4e13\9879/\901a\5173/\7ae0\8282\6d4b\8bd5/\9632\91cd\590d\7b49)'
+); 
+ALTER TABLE "public"."t_sys_info" ADD CONSTRAINT "public"."CONSTRAINT_2" PRIMARY KEY("id");    
+-- 1 +/- SELECT COUNT(*) FROM public.t_sys_info;               
+INSERT INTO "public"."t_sys_info" VALUES
+('1', U&'\5377\738b\95ee\5377\8003\8bd5\7cfb\7edf', U&'\505a\66f4\597d\7684\8c03\67e5\95ee\5377\7cfb\7edf', NULL, 'zh-CN', '{}', NULL, '{"enabled":false,"models":[],"baseUrl":"","prompts":{}}', NULL, 1, TIMESTAMP '2022-02-11 10:13:19', NULL, TIMESTAMP '2026-10-13 03:04:50.172', NULL, '{"previewCount":6,"drillPerKp":8,"trialSmallCount":18,"trialMediumCount":20,"trialLargeCount":30,"trialSmallMaxKp":3,"trialMediumMaxKp":5,"examCount":20,"examExpandByKp":true,"repeatWindow":2,"reserveNormal":16,"reserveMinor":20,"reserveKey":24}');
 ALTER TABLE "public"."t_english_grammar_book" ADD CONSTRAINT "public"."uk_user_grammar" UNIQUE("user_id", "grammar_id");       
 ALTER TABLE "public"."t_english_section" ADD CONSTRAINT "public"."uk_section" UNIQUE("version", "grade", "term", "unit", "section");           
 ALTER TABLE "public"."t_english_sentence_book" ADD CONSTRAINT "public"."uk_user_sentence" UNIQUE("user_id", "sentence_id");    

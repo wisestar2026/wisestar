@@ -82,7 +82,7 @@ export default function PracticeStrategyPage() {
           type="info"
           showIcon
           style={{ marginBottom: 16 }}
-          message="以下为全局默认策略，所有小节默认继承；未单独配置的小节按此出题。"
+          title="以下为全局默认策略，所有小节默认继承；未单独配置的小节按此出题。"
         />
         <Form form={form} layout="vertical">
           <Divider orientation="left">例题 / 预习</Divider>

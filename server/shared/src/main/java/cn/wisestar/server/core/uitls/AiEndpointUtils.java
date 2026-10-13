@@ -21,8 +21,9 @@ public final class AiEndpointUtils {
 	/**
 	 * 依据基础地址解析对话补全地址。
 	 *
-	 * <p>支持填写：完整地址（含 /chat/completions）、以 /v1 结尾的基础地址、或仅到域名；
-	 * 为空时使用默认 SiliconFlow 地址。</p>
+	 * <p>支持填写：完整地址（含 /chat/completions）、以版本路径结尾的基础地址
+	 * （如 {@code /v1}、{@code /v4}、{@code /v1beta}、{@code /compatible-mode/v1}、
+	 * {@code /openai}）、或仅到域名；为空时使用默认 SiliconFlow 地址。</p>
 	 *
 	 * @param baseUrl 用户配置的基础地址，可空
 	 * @return 完整的对话补全地址
@@ -38,7 +39,12 @@ public final class AiEndpointUtils {
 		if (url.endsWith("/chat/completions")) {
 			return url;
 		}
-		if (url.endsWith("/v1")) {
+		// 已含版本段（如 /v1、/v4、/v1beta、/compatible-mode/v1）时直接补 /chat/completions
+		if (url.matches(".*/v\\d+[a-zA-Z]*$")) {
+			return url + "/chat/completions";
+		}
+		// Gemini 的 OpenAI 兼容入口以 /openai 结尾
+		if (url.endsWith("/openai")) {
 			return url + "/chat/completions";
 		}
 		return url + "/v1/chat/completions";

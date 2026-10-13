@@ -180,8 +180,14 @@ export const getAiSetting = () => request.get('/system/aiSetting');
 export const getAiStatus = () => request.get('/system/aiStatus');
 
 /**
+ * 读取 AI 分场景提示词目录（key/label/description/defaultPrompt，用于按场景编辑提示词）
+ * 后端接口: GET /api/system/aiPromptDefaults
+ */
+export const getAiPromptDefaults = () => request.get('/system/aiPromptDefaults');
+
+/**
  * 保存 AI 服务设置（只更新 AI 相关字段，不影响其他系统配置）
- * body: { aiSetting: { enabled, models, baseUrl?, token?, prompt? } }
+ * body: { aiSetting: { enabled, models, baseUrl?, token?, prompt?, prompts? } }
  * 后端接口: POST /api/system/update
  */
 export const saveAiSetting = (aiSetting) => request.post('/system/update', { aiSetting });

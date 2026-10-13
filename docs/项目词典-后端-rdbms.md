@@ -1529,6 +1529,7 @@
 - 方法:
   - `public SystemInfo getSystemInfo()`
   - `public void updateSystemInfo(SystemInfoRequest request)`
+    合并保存系统配置（含 AI 设置）：`prompt` 历史通用提示词仅在非空时覆盖；`prompts` 分场景提示词按 key 逐项合并，值为空串表示清除该场景覆盖（回退内置默认）。
   - `public PaginationResponse<RoleView> getRoles(RoleQuery query)`
   - `public void createRole(RoleRequest request)`
   - `public void updateRole(RoleRequest request)`
