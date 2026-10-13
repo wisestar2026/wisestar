@@ -1840,7 +1840,7 @@
 - 类型: `class EnglishPatternScenarioView`
 - 注解: @Data
 - **类说明**：
-  英语重点句式情景视图 DTO（学员端「句式情景」单个情景）：title/context/patterns/turns，由 AI 依据单元重点句式实时生成、不落库。
+  英语重点句式情景视图 DTO（学员端「句式情景」单个情景）：title/context/patterns/turns。由管理端「情景练习固化」按分组预生成并落库，学员端只读；「句式情景」由 `EnglishScenarioPackService.getPatternScenarios` 读取固化内容。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPatternTurn.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -1854,7 +1854,7 @@
 - 类型: `class EnglishScenarioView`
 - 注解: @Data
 - **类说明**：
-  英语情景对话视图 DTO（学员端「场景对话练习」单个场景）：title/words/lines，由 AI 依据单元单词实时生成、不落库。
+  英语情景对话视图 DTO（学员端「场景对话练习」单个场景）：title/words/lines。由管理端「情景练习固化」按分组预生成并落库，学员端只读；「场景对话」由 `EnglishScenarioPackService.getWordScenarios` 读取固化内容。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioLine.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -1862,6 +1862,34 @@
 - 注解: @Data
 - **类说明**：
   英语情景对话单行（一句台词）DTO：speaker/en/zh/answers，en 中以 `___` 表示待填目标单词，answers 按空位顺序给出标准答案。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioWord.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishScenarioWord`
+- 注解: @Data
+- **类说明**：
+  单词情景分组输入 DTO（分组子集内的单个单词）：spell/meaning。内容包服务把单元单词分组后以本 DTO 传递分组子集给情景生成服务，避免 shared 直接依赖 rdbms 实体 `EnglishWord`。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPatternSentence.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPatternSentence`
+- 注解: @Data
+- **类说明**：
+  句式情景分组输入 DTO（分组子集内的单条重点句式）：en/zh。内容包服务把单元句式分组后以本 DTO 传递分组子集给句式情景生成服务，避免 shared 直接依赖 rdbms 实体 `EnglishSentence`。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioPackView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishScenarioPackView`
+- 注解: @Data
+- **类说明**：
+  英语单元情景练习内容包视图 DTO。一条记录对应 版本+年级+册别+单元，分别保存单词情景（wordContent/wordCount）与句式情景（patternContent/patternCount）两套分组 JSON；学员端读取时按组顺序合并展示。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioPackQuery.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishScenarioPackQuery`
+- 注解: @Data, @EqualsAndHashCode
+- **类说明**：
+  英语单元情景练习内容包查询 DTO（version/grade/term/unit），继承 `PageQuery`。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitProgressView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2651,19 +2679,42 @@
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishPatternScenarioService`
 - **类说明**：
-  英语重点句式情景生成服务（学员端「句式情景」）：依据单元重点句式调用系统 AI 实时生成若干生活情景对话，作答轮由学员从候选项中选出正确句式，结果不落库。
+  英语重点句式情景生成服务（按分组子集生成，供内容包预生成调用）：依据给定的一组单元重点句式调用系统 AI 生成若干生活情景对话，作答轮由学员从候选项中选出正确句式；结果不落库，由调用方（情景内容包服务）负责分组编排与固化。
 - 方法:
-  - `List<EnglishPatternScenarioView> generateScenarios(String version, String grade, String term, String unit)`
-    按单元重点句式生成情景练习（3-4 个场景），无可用句式时返回空列表。
+  - `List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit, List<EnglishPatternSentence> sentences)`
+    按一组重点句式生成情景练习（3-4 个场景），无可用句式时返回空列表。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioPackService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishScenarioPackService`
+- **类说明**：
+  英语单元情景练习内容包服务（预生成 + 固化落库 + 学员端只读）：管理端按 版本+年级+册别+单元 分组调用 AI 生成单词情景与句式情景预览（不落库），确认后覆盖保存；学员端仅读取已固化内容并按组顺序合并展示，不再触发实时 AI。
+- 方法:
+  - `EnglishScenarioPackView generate(String version, String grade, String term, String unit)`
+    按单元生成情景内容包预览（分组调用 AI，不落库）。
+  - `EnglishScenarioPackView savePack(EnglishScenarioPackView pack)`
+    保存情景内容包（同 版本+年级+册别+单元 覆盖更新）。
+  - `PaginationResponse<EnglishScenarioPackView> listPacks(EnglishScenarioPackQuery query)`
+    情景内容包分页列表（不含正文）。
+  - `EnglishScenarioPackView getPack(String id)`
+    情景内容包详情（含正文）。
+  - `void deletePack(String id)`
+    逻辑删除情景内容包。
+  - `List<String> listUnits(String version, String grade, String term)`
+    该册下存在单词或句式的单元列表（用于批量生成）。
+  - `List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit)`
+    学员端读取：合并返回该单元已固化的单词情景（按组顺序展平），无内容时返回空列表。
+  - `List<EnglishPatternScenarioView> getPatternScenarios(String version, String grade, String term, String unit)`
+    学员端读取：合并返回该单元已固化的句式情景（按组顺序展平），无内容时返回空列表。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishScenarioService`
 - **类说明**：
-  英语情景对话生成服务（学员端「场景对话练习」）：依据单元单词调用系统 AI 实时生成若干生活情景对话并把目标单词挖空，结果不落库。
+  英语情景对话生成服务（按分组子集生成，供内容包预生成调用）：依据给定的一组单元单词调用系统 AI 生成若干生活情景对话并把目标单词挖空，结果不落库，由调用方（情景内容包服务）负责分组编排与固化。
 - 方法:
-  - `List<EnglishScenarioView> generateScenarios(String version, String grade, String term, String unit)`
-    按单元单词生成情景对话练习（3-4 个场景），无可用单词时返回空列表。
+  - `List<EnglishScenarioView> generateFromWords(String grade, String unit, List<EnglishScenarioWord> words)`
+    按一组单词生成情景对话练习（3-4 个场景），无可用单词时返回空列表。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishSentenceService.java`
 - 包: `cn.wisestar.server.service`

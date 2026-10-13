@@ -1,15 +1,16 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishPatternSentence;
 
 import java.util.List;
 
 /**
- * 英语重点句式情景生成服务（学员端「句式情景」）。
+ * 英语重点句式情景生成服务（按分组子集生成，供内容包预生成调用）。
  *
- * <p>依据指定 版本+年级+册别+单元 的重点句式（{@code t_english_sentence}），调用系统 AI 设置
- * 实时生成若干生活情景对话：给出部分英文台词，若干轮次仅给中文情景提示，由学员从候选项
- * 中选出符合情景的重点句式。结果不落库，每次调用按需重新生成。</p>
+ * <p>依据给定的一组单元重点句式调用系统 AI 设置生成若干生活情景对话：给出部分英文台词，
+ * 若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式。结果不落库，由调用方
+ * （情景内容包服务）负责分组编排与固化。</p>
  *
  * @author wisestar
  * @date 2026/10/12
@@ -17,14 +18,13 @@ import java.util.List;
 public interface EnglishPatternScenarioService {
 
 	/**
-	 * 按单元重点句式生成情景练习。
+	 * 依据一组单元重点句式生成情景练习。
 	 *
-	 * @param version 教材版本
-	 * @param grade   年级
-	 * @param term    学期/册别（可空）
-	 * @param unit    单元
-	 * @return 情景列表（3-4 个场景）；无可用句式时返回空列表
+	 * @param grade     年级
+	 * @param unit      单元
+	 * @param sentences 该分组内的重点句式（含释义），不能为空
+	 * @return 情景列表（3-4 个场景），无可用句式时返回空列表
 	 */
-	List<EnglishPatternScenarioView> generateScenarios(String version, String grade, String term, String unit);
+	List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit, List<EnglishPatternSentence> sentences);
 
 }

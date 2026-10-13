@@ -5,11 +5,9 @@ import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioLine;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
-import cn.wisestar.server.domain.model.EnglishWord;
-import cn.wisestar.server.mapper.EnglishWordMapper;
+import cn.wisestar.server.domain.dto.english.EnglishScenarioWord;
 import cn.wisestar.server.service.EnglishScenarioService;
 import cn.wisestar.server.service.SystemService;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +25,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 英语情景对话生成服务实现。
+ * 英语情景对话生成服务实现（按分组子集生成）。
  *
- * <p>依据指定 版本+年级+册别+单元 的单词，调用系统 AI 设置（与 AI 问答/单元内容包同一套
- * enabled/token/models/baseUrl 配置）实时生成 3-4 个生活情景对话，把单元目标单词从英文
- * 台词中挖空形成填空练习。结果不落库，每次调用按需重新生成。</p>
+ * <p>依据调用方给定的一组单元单词，调用系统 AI 设置（与 AI 问答/单元内容包同一套
+ * enabled/token/models/baseUrl 配置）生成 3-4 个生活情景对话，把目标单词从英文台词中
+ * 挖空形成填空练习。结果不落库，由「情景内容包服务」负责分组编排与固化。</p>
  *
  * @author wisestar
  * @date 2026/10/12
@@ -52,13 +50,11 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	/** 生成结果 JSON 允许的台词数组 key 别名 */
 	private static final String[] LINE_ARRAY_KEYS = { "lines", "dialog", "turns", "messages" };
 
-	private final EnglishWordMapper wordMapper;
 	private final SystemService systemService;
 	private final ObjectMapper objectMapper;
 	private final RestTemplate restTemplate;
 
-	public EnglishScenarioServiceImpl(EnglishWordMapper wordMapper, SystemService systemService) {
-		this.wordMapper = wordMapper;
+	public EnglishScenarioServiceImpl(SystemService systemService) {
 		this.systemService = systemService;
 		this.objectMapper = new ObjectMapper();
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
@@ -68,18 +64,10 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	}
 
 	@Override
-	public List<EnglishScenarioView> generateScenarios(String version, String grade, String term, String unit) {
-		requireNotBlank(version, "教材版本");
+	public List<EnglishScenarioView> generateFromWords(String grade, String unit, List<EnglishScenarioWord> words) {
 		requireNotBlank(grade, "年级");
 		requireNotBlank(unit, "单元");
-
-		List<EnglishWord> words = wordMapper.selectList(Wrappers.<EnglishWord>lambdaQuery()
-				.eq(EnglishWord::getVersion, version)
-				.eq(EnglishWord::getGrade, grade)
-				.eq(term != null && !term.trim().isEmpty(), EnglishWord::getTerm, term)
-				.eq(EnglishWord::getUnit, unit)
-				.orderByAsc(EnglishWord::getSpell));
-		if (words.isEmpty()) {
+		if (words == null || words.isEmpty()) {
 			return new ArrayList<>();
 		}
 
@@ -91,7 +79,7 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	/**
 	 * 调用大模型生成情景对话。
 	 */
-	private String callChat(String grade, String unit, List<EnglishWord> words) {
+	private String callChat(String grade, String unit, List<EnglishScenarioWord> words) {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		if (aiSetting == null || aiSetting.getEnabled() == null || !aiSetting.getEnabled()) {
 			throw new ValidationException("AI 服务未启用：请先在系统设置中开启 AI 并完成平台配置");
@@ -147,21 +135,21 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	/**
 	 * 构建请求 AI 生成情景对话的用户提示词。
 	 */
-	private String buildUserPrompt(String grade, String unit, List<EnglishWord> words, int scenarioCount) {
+	private String buildUserPrompt(String grade, String unit, List<EnglishScenarioWord> words, int scenarioCount) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("请基于以下英语单元单词，编写 ").append(scenarioCount).append(" 个贴近生活的情景对话：\n");
 		sb.append("年级：").append(grade).append("\n");
 		sb.append("单元：").append(unit).append("\n");
-		sb.append("本单元单词（务必全部考查到）：");
+		sb.append("本组单词（务必全部考查到）：");
 		List<String> parts = new ArrayList<>();
-		for (EnglishWord w : words) {
+		for (EnglishScenarioWord w : words) {
 			String meaning = w.getMeaning() == null ? "" : w.getMeaning().trim();
 			parts.add(meaning.isEmpty() ? w.getSpell() : w.getSpell() + "（" + meaning + "）");
 		}
 		sb.append(String.join("、", parts));
 		sb.append("\n\n要求：\n");
 		sb.append("1) 每个对话 4-8 轮，两个角色 A、B 交替你一言我一语，场景要生活化、自然连贯；\n");
-		sb.append("2) 每个对话考查本单元若干单词：把要考查的单词从英文台词中挖空，用三个下划线 ___ 表示；\n");
+		sb.append("2) 每个对话考查本组若干单词：把要考查的单词从英文台词中挖空，用三个下划线 ___ 表示；\n");
 		sb.append("3) 每行 en 里的 ___ 数量必须与 answers 数组长度一致，answers 按空位出现顺序给出小写单词；无空的台词 answers 为 []；\n");
 		sb.append("4) 一行可有 0-2 个空，每个对话至少考查 3 个单词，所有给出单词尽量覆盖；\n");
 		sb.append("5) zh 为该行英文的中文翻译。");

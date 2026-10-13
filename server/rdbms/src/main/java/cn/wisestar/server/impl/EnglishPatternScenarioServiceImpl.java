@@ -4,12 +4,10 @@ import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishPatternSentence;
 import cn.wisestar.server.domain.dto.english.EnglishPatternTurn;
-import cn.wisestar.server.domain.model.EnglishSentence;
-import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.service.EnglishPatternScenarioService;
 import cn.wisestar.server.service.SystemService;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +27,12 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * 英语重点句式情景生成服务实现。
+ * 英语重点句式情景生成服务实现（按分组子集生成）。
  *
- * <p>依据指定 版本+年级+册别+单元 的重点句式（{@code t_english_sentence}），调用系统 AI 设置
- * （与 AI 问答/单元内容包同一套 enabled/token/models/baseUrl 配置）实时生成 3-4 个生活情景
- * 对话：给出部分英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点
- * 句式完成交际。结果不落库，每次调用按需重新生成。</p>
+ * <p>依据调用方给定的一组单元重点句式，调用系统 AI 设置（与 AI 问答/单元内容包同一套
+ * enabled/token/models/baseUrl 配置）生成 3-4 个生活情景对话：给出部分英文台词，若干轮次
+ * 仅给中文情景提示，由学员从候选项中选出符合情景的重点句式完成交际。结果不落库，由
+ * 「情景内容包服务」负责分组编排与固化。</p>
  *
  * @author wisestar
  * @date 2026/10/12
@@ -55,13 +53,11 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	/** 生成结果 JSON 允许的候选项数组 key 别名 */
 	private static final String[] OPTION_ARRAY_KEYS = { "options", "choices", "candidates" };
 
-	private final EnglishSentenceMapper sentenceMapper;
 	private final SystemService systemService;
 	private final ObjectMapper objectMapper;
 	private final RestTemplate restTemplate;
 
-	public EnglishPatternScenarioServiceImpl(EnglishSentenceMapper sentenceMapper, SystemService systemService) {
-		this.sentenceMapper = sentenceMapper;
+	public EnglishPatternScenarioServiceImpl(SystemService systemService) {
 		this.systemService = systemService;
 		this.objectMapper = new ObjectMapper();
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
@@ -71,18 +67,11 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	}
 
 	@Override
-	public List<EnglishPatternScenarioView> generateScenarios(String version, String grade, String term, String unit) {
-		requireNotBlank(version, "教材版本");
+	public List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit,
+			List<EnglishPatternSentence> sentences) {
 		requireNotBlank(grade, "年级");
 		requireNotBlank(unit, "单元");
-
-		List<EnglishSentence> sentences = sentenceMapper.selectList(Wrappers.<EnglishSentence>lambdaQuery()
-				.eq(EnglishSentence::getVersion, version)
-				.eq(EnglishSentence::getGrade, grade)
-				.eq(term != null && !term.trim().isEmpty(), EnglishSentence::getTerm, term)
-				.eq(EnglishSentence::getUnit, unit)
-				.orderByAsc(EnglishSentence::getSort));
-		if (sentences.isEmpty()) {
+		if (sentences == null || sentences.isEmpty()) {
 			return new ArrayList<>();
 		}
 
@@ -94,7 +83,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	/**
 	 * 调用大模型生成句式情景。
 	 */
-	private String callChat(String grade, String unit, List<EnglishSentence> sentences) {
+	private String callChat(String grade, String unit, List<EnglishPatternSentence> sentences) {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		if (aiSetting == null || aiSetting.getEnabled() == null || !aiSetting.getEnabled()) {
 			throw new ValidationException("AI 服务未启用：请先在系统设置中开启 AI 并完成平台配置");
@@ -150,13 +139,13 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	/**
 	 * 构建请求 AI 生成句式情景的用户提示词。
 	 */
-	private String buildUserPrompt(String grade, String unit, List<EnglishSentence> sentences, int scenarioCount) {
+	private String buildUserPrompt(String grade, String unit, List<EnglishPatternSentence> sentences, int scenarioCount) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("请基于以下英语单元的重点句式，编写 ").append(scenarioCount).append(" 个贴近生活的情景对话练习：\n");
 		sb.append("年级：").append(grade).append("\n");
 		sb.append("单元：").append(unit).append("\n");
-		sb.append("本单元重点句式（answer 必须是其中之一，尽量全部覆盖）：\n");
-		for (EnglishSentence s : sentences) {
+		sb.append("本组重点句式（answer 必须是其中之一，尽量全部覆盖）：\n");
+		for (EnglishPatternSentence s : sentences) {
 			String en = s.getEn() == null ? "" : s.getEn().trim();
 			if (en.isEmpty()) {
 				continue;

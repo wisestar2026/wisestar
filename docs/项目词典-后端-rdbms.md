@@ -877,7 +877,7 @@
 - 类型: `class EnglishPatternScenarioServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语重点句式情景生成服务实现：按 版本+年级+册别+单元 取 t_english_sentence 重点句式，调用系统 AI 设置实时生成 3-4 个生活情景对话——部分轮次给出英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式；结果不落库。解析时对齐 answer 与 options（按字符串匹配正确项下标、必要时补齐）、过滤无作答轮的场景。
+  英语重点句式情景生成服务实现（按分组子集生成）：依据传入的一组重点句式 DTO 调用系统 AI 生成 3-4 个生活情景对话——部分轮次给出英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。解析时对齐 answer 与 options（按字符串匹配正确项下标、必要时补齐）、过滤无作答轮的场景。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishReviewScheduler.java`
 - 包: `cn.wisestar.server.impl`
@@ -891,12 +891,20 @@
   - `public static Date nextReviewTime(int familiarity)`
     根据熟练度计算下次复习时间。
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioPackServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishScenarioPackServiceImpl`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景并写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）。
+- 常量: `WORD_GROUP_SIZE=8`、`PATTERN_GROUP_SIZE=6`。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EnglishScenarioServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语情景对话生成服务实现：按 版本+年级+册别+单元 取 t_english_word 单词，调用系统 AI 设置实时生成 3-4 个生活情景对话并把目标单词从英文台词中挖空形成填空练习；结果不落库。解析时统一空位标记 `___`、逐行对齐 answers、过滤无效场景。
+  英语情景对话生成服务实现（按分组子集生成）：依据传入的一组单词 DTO 调用系统 AI 生成 3-4 个生活情景对话并把目标单词从英文台词中挖空形成填空练习；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。解析时统一空位标记 `___`、逐行对齐 answers、过滤无效场景。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

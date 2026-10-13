@@ -274,6 +274,26 @@
   - `public void delete(@RequestParam String id)`
     删除内容包。
 
+### `api/src/main/java/cn/wisestar/server/api/EnglishScenarioPackApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class EnglishScenarioPackApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  英语单元「情景练习固化」内容包接口（后台管理端：分组调用 AI 预生成单词/句式情景并固化）。
+- 方法:
+  - `public EnglishScenarioPackView generate(@RequestParam String version, @RequestParam String grade, @RequestParam String term, @RequestParam String unit)`
+    按单元分组调用 AI 生成情景内容包预览（不落库）。
+  - `public EnglishScenarioPackView save(@RequestBody EnglishScenarioPackView pack)`
+    保存情景内容包（同 版本+年级+册别+单元 覆盖更新）。
+  - `public PaginationResponse<EnglishScenarioPackView> list(EnglishScenarioPackQuery query)`
+    情景内容包分页列表（不含正文）。
+  - `public EnglishScenarioPackView detail(@RequestParam String id)`
+    情景内容包详情（含正文）。
+  - `public void delete(@RequestParam String id)`
+    删除情景内容包（逻辑删除）。
+  - `public List<String> units(@RequestParam String version, @RequestParam String grade, @RequestParam String term)`
+    该册下存在单词或句式的单元列表（用于整册批量生成）。
+
 ### `api/src/main/java/cn/wisestar/server/api/EnglishSentenceApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class EnglishSentenceApi`
@@ -312,9 +332,9 @@
   - `public List<ReviewSessionView> review(@RequestParam(defaultValue = "20") Integer limit)`
     智能复习会话（单词 + 句子混合队列）。
   - `public List<EnglishScenarioView> scenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
-    情景对话练习：依据单元单词由 AI 实时生成（不落库）。
+    情景对话练习：读取管理端固化的单词情景对话（按分组顺序展平，未固化返回空列表，不触发 AI）。
   - `public List<EnglishPatternScenarioView> patternScenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
-    重点句式情景练习：依据单元重点句式由 AI 实时生成（不落库）。
+    重点句式情景练习：读取管理端固化的句式情景（未固化返回空列表，不触发 AI）。
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
 

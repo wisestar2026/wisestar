@@ -8,8 +8,7 @@ import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
-import cn.wisestar.server.service.EnglishPatternScenarioService;
-import cn.wisestar.server.service.EnglishScenarioService;
+import cn.wisestar.server.service.EnglishScenarioPackService;
 import cn.wisestar.server.service.EnglishStudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,9 +30,7 @@ public class EnglishStudentApi {
 
 	private final EnglishStudentService englishStudentService;
 
-	private final EnglishScenarioService englishScenarioService;
-
-	private final EnglishPatternScenarioService englishPatternScenarioService;
+	private final EnglishScenarioPackService scenarioPackService;
 
 	/**
 	 * 单元列表 + 学习进度。
@@ -113,7 +110,7 @@ public class EnglishStudentApi {
 	}
 
 	/**
-	 * 情景对话练习：依据单元单词由 AI 实时生成（不落库）。
+	 * 情景对话练习：读取该单元已固化的情景内容（按组合并展示，不触发实时 AI）。
 	 */
 	@GetMapping("/scenarios")
 	@PreAuthorize("isAuthenticated()")
@@ -121,11 +118,11 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String grade,
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
-		return englishScenarioService.generateScenarios(version, grade, term, unit);
+		return scenarioPackService.getWordScenarios(version, grade, term, unit);
 	}
 
 	/**
-	 * 重点句式情景练习：依据单元重点句式由 AI 实时生成（不落库）。
+	 * 重点句式情景练习：读取该单元已固化的情景内容（按组合并展示，不触发实时 AI）。
 	 */
 	@GetMapping("/pattern-scenarios")
 	@PreAuthorize("isAuthenticated()")
@@ -133,7 +130,7 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String grade,
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
-		return englishPatternScenarioService.generateScenarios(version, grade, term, unit);
+		return scenarioPackService.getPatternScenarios(version, grade, term, unit);
 	}
 
 	/**

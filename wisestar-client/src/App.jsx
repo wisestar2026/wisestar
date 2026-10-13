@@ -85,6 +85,7 @@ import DictItemManagePage from './pages/system/DictItemManagePage';
 import AiSettingPage from './pages/system/AiSettingPage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
+import ScenarioPackManagePage from './pages/english/ScenarioPackManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
 import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
 import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
@@ -446,6 +447,14 @@ export default function App() {
               element={
                 <AuthGuard required={['english:word:ai']}>
                   <WordAiManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/scenario-pack"
+              element={
+                <AuthGuard required={['english:word:ai']}>
+                  <ScenarioPackManagePage />
                 </AuthGuard>
               }
             />

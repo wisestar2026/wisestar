@@ -2,16 +2,16 @@
  * EnglishPatternScenarioPage.jsx - 学员端英语「重点句式情景练习」
  *
  * 功能:
- *   1. 进入某单元的重点句式情景：由 AI 依据本单元重点句式实时生成 3-4 个生活情景（不落库）
+ *   1. 进入某单元的重点句式情景：读取管理端已固化的情景内容（按组合并展示，不触发实时 AI）
  *   2. 情景中给出部分英文台词，若干轮次仅给中文情景提示，学员从 4 个候选项中选出正确句式
  *   3. 交卷后逐轮判分（比对所选下标），标注对错并给出解析与统计
- *   4. 结束后记录会话（type=pattern），可「换一组」重新生成
+ *   4. 结束后记录会话（type=pattern），可「重做本组」
  *
  * URL: /student/english/pattern-scenario?unit=xxx
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片「句式情景」
  *
  * 数据流:
- *   GET  /api/english/student/pattern-scenarios → AI 生成句式情景（含答案下标，用于前端即时判分）
+ *   GET  /api/english/student/pattern-scenarios → 读取该单元固化句式情景（含答案下标，用于前端即时判分）
  *   POST /api/english/student/session           → 记录会话
  */
 
@@ -61,7 +61,7 @@ export default function EnglishPatternScenarioPage() {
         startAt.current = Date.now();
       })
       .catch((e) => {
-        message.error(e?.message || '句式情景生成失败，请稍后重试');
+        message.error(e?.message || '句式情景加载失败，请稍后重试');
         setStep('empty');
       });
   }, [version, grade, term, unit]);
@@ -111,7 +111,7 @@ export default function EnglishPatternScenarioPage() {
       <div className="eng-learn-wrap sc-wrap">
         <div className="sc-loading">
           <Spin size="large" />
-          <div className="sc-loading-text">AI 正在为「{unit}」生成重点句式情景，请稍候…</div>
+          <div className="sc-loading-text">正在加载「{unit}」的重点句式情景…</div>
         </div>
       </div>
     );
@@ -122,10 +122,9 @@ export default function EnglishPatternScenarioPage() {
       <div className="eng-learn-wrap sc-wrap">
         <div className="eng-empty">
           <div className="eng-empty-emoji">🐚</div>
-          <div className="eng-empty-title">{unit ? '暂时无法生成句式情景' : '未选择单元'}</div>
-          <div className="sc-empty-hint">请确认该单元已录入重点句式，且系统已配置并启用 AI。</div>
+          <div className="eng-empty-title">{unit ? '该单元练习尚未生成' : '未选择单元'}</div>
+          <div className="sc-empty-hint">请联系老师生成该单元情景练习后再来练习。</div>
           <div className="eng-actions">
-            <button type="button" className="eng-btn eng-btn-ghost" onClick={load}>重新生成</button>
             <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
               返回学习中心
             </button>
@@ -227,9 +226,6 @@ export default function EnglishPatternScenarioPage() {
       <div className="eng-actions">
         <button type="button" className="eng-btn eng-btn-ghost" onClick={reset} disabled={!submitted}>
           重做本组
-        </button>
-        <button type="button" className="eng-btn eng-btn-again" onClick={load}>
-          换一组
         </button>
         {!submitted ? (
           <button type="button" className="eng-btn eng-btn-primary" onClick={handleSubmit}>
