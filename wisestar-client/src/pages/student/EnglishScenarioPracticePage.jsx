@@ -176,7 +176,7 @@ export default function EnglishScenarioPracticePage() {
             {scene.lines.map((line, li) => {
               const { parts, blankCount } = splitLine(line.en);
               return (
-                <div className="sc-line" key={`${si}-${li}`}>
+                <div className={`sc-line ${line.speaker === 'B' ? 'is-b' : ''}`} key={`${si}-${li}`}>
                   <span className={`sc-speaker ${line.speaker === 'B' ? 'b' : ''}`}>{line.speaker || 'A'}</span>
                   <div className="sc-body">
                     <div className="sc-en">

@@ -72,18 +72,13 @@
   letter-spacing: 0.3px;
 }
 
-.sc-lines { margin-top: 6px; }
-.sc-line {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px dashed #eef2f5;
-}
-.sc-line:last-child { border-bottom: none; }
+.sc-lines { margin-top: 6px; display: flex; flex-direction: column; gap: 12px; }
+.sc-line { display: flex; align-items: flex-start; gap: 10px; }
+/* B 角色整行镜像，头像落到右侧，形成「A 左 B 右」的对话排布 */
+.sc-line.is-b { flex-direction: row-reverse; }
 .sc-speaker {
-  flex: 0 0 26px;
-  height: 26px;
+  flex: 0 0 28px;
+  height: 28px;
   border-radius: 50%;
   background: #4bb7e8;
   color: #fff;
@@ -95,7 +90,19 @@
   margin-top: 2px;
 }
 .sc-speaker.b { background: #ff9a76; }
-.sc-body { flex: 1; min-width: 0; }
+.sc-body {
+  flex: 0 1 auto;
+  max-width: 76%;
+  min-width: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: #eef8fd;
+  border: 1px solid #d6ecf6;
+}
+.sc-line.is-b .sc-body { background: #fff3ee; border-color: #fadfce; }
+/* 气泡朝向说话人的一角收窄，强化对话方向感 */
+.sc-line:not(.is-b) .sc-body { border-top-left-radius: 4px; }
+.sc-line.is-b .sc-body { border-top-right-radius: 4px; }
 
 .sc-en { font-size: 15px; color: #1c3d4d; line-height: 2; }
 .sc-blank {
