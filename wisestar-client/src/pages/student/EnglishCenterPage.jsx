@@ -1,11 +1,11 @@
 /**
- * EnglishCenterPage.jsx - 学员端英语学习中心（单元列表 + 进度 + 智能复习）
+ * EnglishCenterPage.jsx - 学员端英语学习中心（左侧单元导航 + 右侧单元概览 + 智能复习）
  *
- * 功能:
- *   1. 按 版本/年级/册别 展示单元网格与学习进度
- *   2. 每个单元提供「单词学习」「句子练习」「句子学习」入口
- *   3. 顶部一键进入智能复习（单词 + 句子混合队列）
- *   4. 进入本页时按「最近答错 + 复习到期」弹出强制巩固弹窗（账号维度：当天完成前会弹，完成后当天不再弹）
+ * 结构（对应「英语学习主界面」参考图）:
+ *   左侧：UNIT 竖排导航（当前单元高亮、待复习角标）
+ *   右侧：当前单元的 熟练度 + 单词/句子/语法进度 + 四张模块入口卡
+ *        （单词通关 / 句式通关 / 语法通关 / 单元练习）
+ *   顶部：一键进入智能复习；进入本页按「最近答错 + 复习到期」弹出强制巩固弹窗
  *
  * URL: /student/english
  * 被谁引用: App.jsx 路由表（/student 子路由）；入口来自首页学海研习卡片
@@ -17,7 +17,7 @@
  *   GET /api/english/word/drill → 待巩固单词（强制巩固弹窗）
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
@@ -25,6 +25,7 @@ import useUserStore from '../../stores/useUserStore';
 import StarRating from '../../components/common/StarRating';
 import { getEnglishUnits, getEnglishReview, getEnglishDrillWords, getEnglishDrillCompleted } from '../../api/englishStudent';
 import WordDrillModal from './WordDrillModal';
+import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 
 const TERMS = ['上册', '下册'];
@@ -43,6 +44,7 @@ export default function EnglishCenterPage() {
   const userId = useUserStore((s) => s.user?.userId ?? s.user?.id);
 
   const [units, setUnits] = useState([]);
+  const [activeUnit, setActiveUnit] = useState('');
   const [loading, setLoading] = useState(false);
   const [reviewCount, setReviewCount] = useState(0);
   const [drillWords, setDrillWords] = useState([]);
@@ -51,7 +53,11 @@ export default function EnglishCenterPage() {
   const loadUnits = useCallback(() => {
     setLoading(true);
     getEnglishUnits({ version, grade, term })
-      .then((res) => setUnits(res?.data || []))
+      .then((res) => {
+        const list = res?.data || [];
+        setUnits(list);
+        setActiveUnit((prev) => (list.some((u) => u.unit === prev) ? prev : (list[0]?.unit || '')));
+      })
       .catch(() => message.error('单元加载失败'))
       .finally(() => setLoading(false));
   }, [version, grade, term]);
@@ -102,35 +108,9 @@ export default function EnglishCenterPage() {
       .catch(() => {});
   };
 
-  const totalDue = useMemo(
-    () => units.reduce((sum, u) => sum + (u.reviewDue || 0), 0),
-    [units],
-  );
+  const go = (path, unit) => navigate(`${path}?unit=${encodeURIComponent(unit)}`);
 
-  const goWord = (unit) => navigate(`/student/english/word?unit=${encodeURIComponent(unit)}`);
-  const goSentence = (unit) => navigate(`/student/english/sentence?unit=${encodeURIComponent(unit)}`);
-  const goGrammar = (unit) => navigate(`/student/english/grammar?unit=${encodeURIComponent(unit)}`);
-  const goPractice = (item) => {
-    if ((item.wordCount || 0) < 4) {
-      message.warning('本单元单词太少，暂不能练习');
-      return;
-    }
-    navigate(`/student/english/practice?unit=${encodeURIComponent(item.unit)}`);
-  };
-  const goScenario = (item) => {
-    if ((item.wordCount || 0) < 4) {
-      message.warning('本单元单词太少，暂不能生成情景对话');
-      return;
-    }
-    navigate(`/student/english/scenario?unit=${encodeURIComponent(item.unit)}`);
-  };
-  const goPatternScenario = (item) => {
-    if ((item.sentenceCount || 0) < 3) {
-      message.warning('本单元重点句式太少，暂不能生成句式情景');
-      return;
-    }
-    navigate(`/student/english/pattern-scenario?unit=${encodeURIComponent(item.unit)}`);
-  };
+  const active = units.find((u) => u.unit === activeUnit) || units[0];
 
   return (
     <div className="eng-page">
@@ -160,95 +140,110 @@ export default function EnglishCenterPage() {
         </div>
       </div>
 
-      <div className="eng-section-title">
-        <span>单元列表</span>
-        {totalDue > 0 && <span style={{ fontSize: 12, color: '#ff7a59' }}>待复习 {totalDue} 项</span>}
-      </div>
-
       {!loading && units.length === 0 && (
-        <div className="eng-empty">
+        <div className="eng-empty" style={{ marginTop: 20 }}>
           <div className="eng-empty-emoji">🐚</div>
           <div className="eng-empty-title">当前学期暂无英语内容</div>
           <div>换一个版本 / 年级 / 册别，或等待老师录入单元内容</div>
         </div>
       )}
 
-      {units.length > 0 && (
-        <div className="eng-grid">
-          {units.map((unit) => (
-            <div className="eng-unit-card" key={unit.unit}>
-              {unit.reviewDue > 0 && <span className="eng-unit-badge">复习 {unit.reviewDue}</span>}
-              <div className="eng-unit-name">{unit.unit}</div>
-              <div className="eng-unit-mastery" title="单词 / 句子 / 语法 综合熟练度">
-                <span className="eng-unit-mastery-label">熟练度</span>
-                <StarRating value={unit.mastery || 0} size={15} className="eng-unit-mastery-stars" />
-                <span className="eng-unit-mastery-val">{unit.mastery || 0}%</span>
+      {active && (
+        <div className="eng-master" style={{ marginTop: 20 }}>
+          <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={setActiveUnit} />
+
+          <div className="eng-detail">
+            <div className="eng-detail-card">
+              <div className="eng-detail-head">
+                <div className="eng-detail-title">{active.unit}</div>
+                {active.reviewDue > 0 && (
+                  <button
+                    type="button"
+                    className="eng-review-pill"
+                    onClick={() => navigate('/student/english/review')}
+                  >
+                    复习 {active.reviewDue}
+                  </button>
+                )}
               </div>
-              <div className="eng-unit-stats">
-                <div className="eng-stat">
+              <div className="eng-detail-tip">
+                本单元共 {active.wordCount || 0} 个单词 · {active.sentenceCount || 0} 个句子 ·
+                {active.grammarCount || 0} 个语法点，逐个点亮你的通关进度吧
+              </div>
+
+              <div className="eng-mastery-row">
+                <span className="eng-mastery-label">熟练度</span>
+                <StarRating value={active.mastery || 0} size={16} className="eng-unit-mastery-stars" />
+                <span className="eng-mastery-val">{active.mastery || 0}%</span>
+              </div>
+
+              <div className="eng-progress-grid">
+                <div className="eng-progress-item">
                   <div className="eng-stat-label">
                     <span>单词</span>
-                    <span>{unit.wordFinished || 0}/{unit.wordCount || 0}</span>
+                    <span>{active.wordFinished || 0}/{active.wordCount || 0}</span>
                   </div>
                   <div className="eng-stat-bar">
-                    <span style={{ width: `${percent(unit.wordFinished, unit.wordCount)}%` }} />
+                    <span style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} />
                   </div>
                 </div>
-                <div className="eng-stat">
+                <div className="eng-progress-item">
                   <div className="eng-stat-label">
                     <span>句子</span>
-                    <span>{unit.sentenceFinished || 0}/{unit.sentenceCount || 0}</span>
+                    <span>{active.sentenceFinished || 0}/{active.sentenceCount || 0}</span>
                   </div>
                   <div className="eng-stat-bar sentence">
-                    <span style={{ width: `${percent(unit.sentenceFinished, unit.sentenceCount)}%` }} />
+                    <span style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} />
                   </div>
                 </div>
-                <div className="eng-stat">
+                <div className="eng-progress-item">
                   <div className="eng-stat-label">
                     <span>语法</span>
-                    <span>{unit.grammarFinished || 0}/{unit.grammarCount || 0}</span>
+                    <span>{active.grammarFinished || 0}/{active.grammarCount || 0}</span>
                   </div>
                   <div className="eng-stat-bar grammar">
-                    <span style={{ width: `${percent(unit.grammarFinished, unit.grammarCount)}%` }} />
+                    <span style={{ width: `${percent(active.grammarFinished, active.grammarCount)}%` }} />
                   </div>
                 </div>
               </div>
-              <div className="eng-unit-actions">
-                <button type="button" className="eng-btn-word" onClick={() => goWord(unit.unit)}>单词学习</button>
-                <button type="button" className="eng-btn-practice" onClick={() => goPractice(unit)}>单词练习</button>
-                <button type="button" className="eng-btn-sentence" onClick={() => goSentence(unit.unit)}>句子学习</button>
+
+              <div className="eng-mod-grid">
                 <button
                   type="button"
-                  className="eng-btn-grammar"
-                  disabled={!unit.grammarCount}
-                  onClick={() => goGrammar(unit.unit)}
+                  className="eng-mod-card eng-mod-word"
+                  onClick={() => go('/student/english/word', active.unit)}
                 >
-                  重点语法{unit.grammarCount ? ` · ${unit.grammarCount}` : ''}
+                  <span className="eng-mod-title">单词通关<em>{percent(active.wordFinished, active.wordCount)}%</em></span>
+                  <span className="eng-mod-sub">拼写 · 音标 · 释义</span>
                 </button>
                 <button
                   type="button"
-                  className="eng-btn-practice eng-btn-unit"
-                  onClick={() => navigate(`/student/english/unit-practice?unit=${encodeURIComponent(unit.unit)}`)}
+                  className="eng-mod-card eng-mod-sentence"
+                  onClick={() => go('/student/english/sentence', active.unit)}
                 >
-                  单元练习
+                  <span className="eng-mod-title">句式通关<em>{percent(active.sentenceFinished, active.sentenceCount)}%</em></span>
+                  <span className="eng-mod-sub">连词成句 · 情景</span>
                 </button>
                 <button
                   type="button"
-                  className="eng-btn-practice eng-btn-scenario"
-                  onClick={() => goScenario(unit)}
+                  className="eng-mod-card eng-mod-grammar"
+                  disabled={!active.grammarCount}
+                  onClick={() => go('/student/english/grammar', active.unit)}
                 >
-                  场景对话
+                  <span className="eng-mod-title">语法通关<em>{percent(active.grammarFinished, active.grammarCount)}%</em></span>
+                  <span className="eng-mod-sub">规则 · 例句</span>
                 </button>
                 <button
                   type="button"
-                  className="eng-btn-practice eng-btn-pattern"
-                  onClick={() => goPatternScenario(unit)}
+                  className="eng-mod-card eng-mod-unit"
+                  onClick={() => go('/student/english/unit-practice', active.unit)}
                 >
-                  句式情景
+                  <span className="eng-mod-title">单元练习</span>
+                  <span className="eng-mod-sub">本单元综合题</span>
                 </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       )}
 

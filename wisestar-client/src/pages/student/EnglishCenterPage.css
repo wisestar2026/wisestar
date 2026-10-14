@@ -495,3 +495,225 @@
 .eng-wrong-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .eng-wrong-unit { font-size: 14px; font-weight: 800; color: #14506e; }
 .eng-wrong-times { margin-left: auto; font-size: 12px; font-weight: 700; color: #e07856; }
+
+/* ============================================================
+ * 主从布局：左侧单元导航 + 右侧单元详情/模块入口
+ * 对应「单元学习主界面 / 单词通关 / 句式通关」三张界面图
+ * 设计：扁平柔和（无边框、弱阴影）、字号加大、学生友好
+ * 左侧导航与右侧内容容器等高（.eng-master align-items: stretch）
+ * ============================================================ */
+.eng-master { display: flex; gap: 20px; align-items: stretch; }
+.eng-aside {
+  flex: none;
+  width: 184px;
+  display: flex;
+  flex-direction: column;
+  background: #eef6fc;
+  border-radius: 24px;
+  padding: 18px 14px;
+}
+.eng-aside-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #3d7fa0;
+  text-align: center;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
+.eng-aside-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.eng-aside-item {
+  position: relative;
+  border: none;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #2b6c8f;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+}
+.eng-aside-item:hover { background: #ddeffb; transform: translateY(-2px); }
+.eng-aside-item.active {
+  background: linear-gradient(135deg, #4bb7e8, #2f9fd4);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(75, 183, 232, 0.35);
+}
+.eng-aside-name { display: block; line-height: 1.3; word-break: break-word; }
+.eng-aside-badge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  background: #ff7a59;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 8px;
+  box-shadow: 0 4px 10px rgba(255, 122, 89, 0.4);
+}
+.eng-detail { flex: 1; min-width: 0; display: flex; }
+.eng-detail-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #f7fbfe;
+  border-radius: 26px;
+  padding: 28px 30px 30px;
+}
+.eng-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.eng-detail-title { font-size: 26px; font-weight: 900; color: #14506e; letter-spacing: 0.5px; }
+.eng-detail-title-sub { color: #2f9fd4; margin-left: 10px; font-size: 22px; }
+.eng-detail-tip { margin-top: 8px; font-size: 14px; color: #6a93a8; }
+.eng-review-pill {
+  flex: none;
+  border: none;
+  background: #ff8a5c;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 9px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(255, 122, 89, 0.32);
+  transition: transform 0.15s ease;
+}
+.eng-review-pill:hover { transform: translateY(-2px); }
+
+/* 熟练度 */
+.eng-mastery-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+.eng-mastery-label { font-size: 15px; color: #5b7f92; font-weight: 700; }
+.eng-mastery-val { font-size: 20px; font-weight: 900; color: #2e9e5b; margin-left: auto; }
+
+/* 单词 / 句子 / 语法 三段进度 */
+.eng-progress-grid { display: flex; gap: 24px; margin-top: 20px; }
+.eng-progress-item { flex: 1; min-width: 0; }
+.eng-progress-item .eng-stat-label { font-size: 14px; }
+.eng-progress-item .eng-stat-bar { height: 10px; margin-top: 8px; }
+
+/* 四张模块入口大卡（底部对齐，撑满容器） */
+.eng-mod-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: auto;
+  padding-top: 28px;
+}
+.eng-mod-card {
+  border: none;
+  border-radius: 22px;
+  padding: 30px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.eng-mod-card:hover { transform: translateY(-3px); box-shadow: 0 14px 26px rgba(64, 140, 190, 0.22); }
+.eng-mod-card:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.eng-mod-card em { font-style: normal; font-size: 15px; }
+.eng-mod-title { display: inline-flex; align-items: baseline; gap: 8px; }
+.eng-mod-sub { font-size: 14px; font-weight: 600; opacity: 0.75; }
+.eng-mod-word { background: #dbe9fb; color: #2f6bd0; }
+.eng-mod-sentence { background: #fce4d6; color: #d9603a; }
+.eng-mod-grammar { background: #fdf1cf; color: #c1901a; }
+.eng-mod-unit { background: #d9f2df; color: #1f8f4d; }
+
+/* 单词通关：按小节(model)分组的卡片 */
+.eng-model-group {
+  background: #eef6fc;
+  border-radius: 20px;
+  padding: 18px 20px;
+  margin-top: 16px;
+}
+.eng-model-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.eng-model-name { font-size: 19px; font-weight: 900; color: #14506e; }
+.eng-model-done { font-size: 14px; font-weight: 800; color: #2e9e5b; }
+.eng-model-count { font-size: 13px; color: #7a9aac; margin-left: auto; }
+.eng-model-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #dbeaf4;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.eng-model-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5bd07f, #33b463);
+  transition: width 0.35s ease;
+}
+.eng-model-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.eng-model-actions button {
+  border: none;
+  border-radius: 16px;
+  padding: 18px 8px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.eng-model-actions button:hover:not(:disabled) { transform: translateY(-2px); }
+.eng-model-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+.eng-model-learn { background: #d9f2df; color: #1f8f4d; }
+.eng-model-practice { background: #fce4d6; color: #d9603a; }
+.eng-model-scenario { background: #fdf1cf; color: #c1901a; }
+
+/* 句式通关：两个入口大卡（底部对齐，撑满容器） */
+.eng-hub-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: auto;
+  padding-top: 30px;
+}
+.eng-hub-card {
+  border: none;
+  border-radius: 24px;
+  padding: 64px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.eng-hub-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px rgba(64, 140, 190, 0.22); }
+.eng-hub-learn { background: #d9f2df; color: #1f8f4d; }
+.eng-hub-scenario { background: #fce4d6; color: #d9603a; }
+
+.eng-learn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 14px;
+  border: none;
+  background: #eef4f8;
+  color: #4b7285;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.eng-learn-back:hover { background: #e2edf4; }
+
+@media (max-width: 760px) {
+  .eng-master { flex-direction: column; }
+  .eng-aside { width: 100%; }
+  .eng-aside-list { flex-direction: row; flex-wrap: wrap; }
+  .eng-aside-item { flex: 1 1 30%; }
+  .eng-mod-grid, .eng-hub-cards { grid-template-columns: 1fr; margin-top: 20px; }
+  .eng-hub-card { padding: 44px 18px; }
+  .eng-progress-grid { flex-direction: column; gap: 14px; }
+  .eng-model-actions { grid-template-columns: 1fr; }
+}

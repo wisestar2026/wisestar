@@ -1,27 +1,37 @@
 /**
- * EnglishSentenceLearnPage.jsx - 学员端英语句子学习（连词成句）
+ * EnglishSentenceLearnPage.jsx - 学员端英语「句式通关」（左侧单元导航 + 句子学习/句式情景）
  *
- * 功能:
- *   1. 展示单元句子（中文提示 + 英文朗读）
- *   2. 连词成句：点击词块按顺序拼句，自动判分
- *   3. 作答回写句子本熟练度与复习队列，结束记录会话
+ * 结构（对应「句式学习界面」参考图）:
+ *   顶部 hub：左侧 UNIT 导航，右侧「UnitX 句式通关」标题 + 句子进度 +
+ *            两张入口卡（句子学习 / 句式情景）
+ *   学习态：连词成句逐句练习（中文提示 + 英文朗读，点词块拼句自动判分）
  *
  * URL: /student/english/sentence?unit=xxx
- * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片
+ * 被谁引用: App.jsx 路由表；入口来自英语学习中心「句式通关」
  *
  * 数据流:
- *   GET  /api/english/student/sentences      → 单元句子
+ *   GET  /api/english/student/units           → 单元列表（左侧导航）
+ *   GET  /api/english/student/sentences       → 单元句子（含小节 section / 熟练度 familiarity）
  *   POST /api/english/student/sentence/record → 记录作答
- *   POST /api/english/student/session         → 记录会话
+ *   POST /api/english/student/session          → 记录会话
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishSentences, recordEnglishSentence, recordEnglishSession } from '../../api/englishStudent';
+import { getEnglishUnits, getEnglishSentences, recordEnglishSentence, recordEnglishSession } from '../../api/englishStudent';
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
+import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
+
+/** 后端以 familiarity>=1 视为「已学」，完成度按此口径统计。 */
+const FINISHED_FAMILIARITY = 1;
+
+function percent(finished, total) {
+  if (!total) return 0;
+  return Math.min(100, Math.round((finished / total) * 100));
+}
 
 /**
  * 按 section 将句子分组：有名称的小节保持后端顺序，「未分节」固定置末。
@@ -51,6 +61,8 @@ export default function EnglishSentenceLearnPage() {
   const grade = useStudentStore((s) => s.grade);
 
   const term = useStudentStore((s) => s.term);
+  const [units, setUnits] = useState([]);
+  const [mode, setMode] = useState('hub'); // hub | learn
   const [sentences, setSentences] = useState([]);
   const [sectionLabels, setSectionLabels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +74,15 @@ export default function EnglishSentenceLearnPage() {
   const [correctCount, setCorrectCount] = useState(0);
   const startAt = useRef(Date.now());
   const timerRef = useRef(null);
+
+  // 左侧单元导航
+  useEffect(() => {
+    let cancelled = false;
+    getEnglishUnits({ version, grade, term })
+      .then((res) => { if (!cancelled) setUnits(res?.data || []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [version, grade, term]);
 
   const loadSentences = useCallback(() => {
     if (!unit) {
@@ -80,6 +101,7 @@ export default function EnglishSentenceLearnPage() {
         }));
         setSentences(flat);
         setSectionLabels(labels);
+        setMode('hub');
       })
       .catch(() => message.error('句子加载失败'))
       .finally(() => setLoading(false));
@@ -88,6 +110,20 @@ export default function EnglishSentenceLearnPage() {
   useEffect(() => {
     loadSentences();
   }, [loadSentences]);
+
+  const activeUnit = units.find((u) => u.unit === unit);
+  const finishedCount = sentences.filter((s) => (s.familiarity || 0) >= FINISHED_FAMILIARITY).length;
+
+  const goUnit = (next) => navigate(`/student/english/sentence?unit=${encodeURIComponent(next)}`);
+  const backToCenter = () => navigate('/student/english');
+
+  /** 进入连词成句学习流 */
+  const startLearn = () => {
+    setIndex(0);
+    setCorrectCount(0);
+    startAt.current = Date.now();
+    setMode('learn');
+  };
 
   const current = sentences[index];
 
@@ -127,7 +163,7 @@ export default function EnglishSentenceLearnPage() {
     }
   };
 
-  const finished = !loading && sentences.length > 0 && index >= sentences.length;
+  const finished = mode === 'learn' && !loading && index >= sentences.length;
 
   useEffect(() => {
     if (finished) {
@@ -146,7 +182,7 @@ export default function EnglishSentenceLearnPage() {
         <div className="eng-empty">
           <div className="eng-empty-emoji">🐚</div>
           <div className="eng-empty-title">{unit ? '该单元暂无句子' : '未选择单元'}</div>
-          <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
+          <button type="button" className="eng-btn eng-btn-primary" onClick={backToCenter}>
             返回英语学习中心
           </button>
         </div>
@@ -154,9 +190,75 @@ export default function EnglishSentenceLearnPage() {
     );
   }
 
+  // ---------- hub：句式通关总览 ----------
+  if (mode === 'hub') {
+    return (
+      <div className="eng-page">
+        <div className="eng-master">
+          <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
+
+          <div className="eng-detail">
+            <div className="eng-detail-card">
+              <div className="eng-detail-head">
+                <div className="eng-detail-title">{unit}<span className="eng-detail-title-sub">句式通关</span></div>
+                {activeUnit?.reviewDue > 0 && (
+                  <button
+                    type="button"
+                    className="eng-review-pill"
+                    onClick={() => navigate('/student/english/review')}
+                  >
+                    复习 {activeUnit.reviewDue}
+                  </button>
+                )}
+              </div>
+              <div className="eng-detail-tip">
+                本单元共 {sentences.length} 个重点句子，先连词成句，再去情景里用一用吧
+              </div>
+
+              <div className="eng-progress-grid">
+                <div className="eng-progress-item">
+                  <div className="eng-stat-label">
+                    <span>句子</span>
+                    <span>{finishedCount}/{sentences.length}</span>
+                  </div>
+                  <div className="eng-stat-bar sentence">
+                    <span style={{ width: `${percent(finishedCount, sentences.length)}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="eng-hub-cards">
+                <button type="button" className="eng-hub-card eng-hub-learn" onClick={startLearn}>
+                  <span>句子学习</span>
+                  <span className="eng-mod-sub">连词成句，边拼边记</span>
+                </button>
+                <button
+                  type="button"
+                  className="eng-hub-card eng-hub-scenario"
+                  onClick={() => navigate(`/student/english/pattern-scenario?unit=${encodeURIComponent(unit)}`)}
+                >
+                  <span>句式情景</span>
+                  <span className="eng-mod-sub">在生活情景里选一选</span>
+                </button>
+              </div>
+
+              <div className="eng-actions" style={{ marginTop: 22 }}>
+                <button type="button" className="eng-btn eng-btn-ghost" onClick={backToCenter}>
+                  返回英语学习中心
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- learn：连词成句 ----------
   if (finished) {
     return (
       <div className="eng-learn-wrap">
+        <button type="button" className="eng-learn-back" onClick={() => setMode('hub')}>← 返回句式通关</button>
         <div className="eng-empty">
           <div className="eng-empty-emoji">🌟</div>
           <div className="eng-empty-title">本单元句子已学完</div>
@@ -164,9 +266,10 @@ export default function EnglishSentenceLearnPage() {
             <div className="eng-done-stat"><b>{correctCount}</b><span>答对</span></div>
             <div className="eng-done-stat"><b>{sentences.length}</b><span>句子总数</span></div>
           </div>
-          <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-            返回学习中心
-          </button>
+          <div className="eng-actions">
+            <button type="button" className="eng-btn eng-btn-ghost" onClick={() => setMode('hub')}>返回句式通关</button>
+            <button type="button" className="eng-btn eng-btn-primary" onClick={backToCenter}>返回学习中心</button>
+          </div>
         </div>
       </div>
     );
@@ -176,6 +279,7 @@ export default function EnglishSentenceLearnPage() {
 
   return (
     <div className="eng-learn-wrap">
+      <button type="button" className="eng-learn-back" onClick={() => setMode('hub')}>← 返回句式通关</button>
       {sectionLabels[index] && <div className="eng-section-title">{sectionLabels[index]}</div>}
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
@@ -242,7 +346,7 @@ export default function EnglishSentenceLearnPage() {
       </div>
 
       <div className="eng-actions">
-        <button type="button" className="eng-btn eng-btn-ghost" onClick={() => navigate('/student/english')}>
+        <button type="button" className="eng-btn eng-btn-ghost" onClick={() => setMode('hub')}>
           结束学习
         </button>
       </div>
