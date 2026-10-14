@@ -28,6 +28,7 @@
  *   confirmed: Object   - 已确认判题结果缓存 { [questionId]: {correct, correctAnswers} }
  *   onConfirm: () => void - 确认提交回调（点击「确认提交」按钮触发判题）
  *   judgeMode: boolean - 是否需要确认判题（true=专项/随机，false=套卷）
+ *   showSymbolBar: boolean - 是否显示填空数学符号辅助条（默认 true；英语练习传 false 隐藏）
  *
  * 专注力交互要点（对齐路线图 5.2/5.4）:
  *   - 大按钮式选项，悬停/选中高亮
@@ -62,7 +63,7 @@ const DIFFICULTY_LABELS = {
 };
 
 export default function QuestionCard({
-  question, index, total, value, onChange, confirmed, onConfirm, judgeMode,
+  question, index, total, value, onChange, confirmed, onConfirm, judgeMode, showSymbolBar = true,
 }) {
   // 题目 schema（template 内嵌问卷 JSON）
   const schema = question?.template || {};
@@ -320,7 +321,7 @@ export default function QuestionCard({
               </div>
             );
           })}
-          {!locked && Array.from({ length: blankCount }).some((_, i) => !isStdCycle(stdParts[i])) && (
+          {showSymbolBar && !locked && Array.from({ length: blankCount }).some((_, i) => !isStdCycle(stdParts[i])) && (
             <MathSymbolBar
               label="符号："
               onPick={insertBlankSymbol}
@@ -360,7 +361,7 @@ export default function QuestionCard({
               disabled={locked}
             />
           )}
-          {qtype === 'FillBlank' && !isStdCycle(stdParts[0]) && !locked && (
+          {showSymbolBar && qtype === 'FillBlank' && !isStdCycle(stdParts[0]) && !locked && (
             <MathSymbolBar label="符号：" onPick={insertFillSymbol} />
           )}
         </div>

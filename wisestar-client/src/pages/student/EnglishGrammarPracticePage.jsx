@@ -197,6 +197,7 @@ export default function EnglishGrammarPracticePage() {
             value={answers[q.id]}
             onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
             judgeMode={false}
+            showSymbolBar={false}
           />
         </div>
 
