@@ -2,11 +2,12 @@
  * WrongDrillModal.jsx - 错题本「消灭错题 / 消灭知识点」页内做题弹层
  *
  * 功能:
- *   1. 组题：原题（含标准答案）+ 同题型新题，全部在弹层内作答，不跳转学习页
- *      - 消灭错题(single)：原题 1 道 + 同题型新题至多 2 道（合计 ≤ 3）
- *      - 消灭知识点(kp)：该知识点下全部原题，每题再补 2 道同题型新题
+ *   1. 组题：先放入原错题（含标准答案），逐题作答后按需增补「同类型提高题」，全部在弹层内作答，不跳转学习页
+ *      - 消灭错题(single)：原错题 1 道
+ *      - 消灭知识点(kp)：该知识点下全部原错题
+ *      - 答对一道原错题后，即时增补 1 道同类型更高难度题（easy→medium→hard，取不到更高难度则同难度）
  *   2. 逐题渲染 QuestionCard 判分，展示对错与正确答案
- *   3. 结算：整组全部答对才把原题移出错题本（POST /student/wrong/redo）
+ *   3. 结算：整组（原错题 + 已增补提高题）全部答对才把原错题移出错题本（POST /student/wrong/redo）
  *
  * Props:
  *   open          boolean        是否可见
@@ -18,7 +19,7 @@
  * 被谁引用: WrongBookPanel
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Modal, Progress, Typography, Space, message } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import { getStudyQuestions, wrongRedo } from '../../api/student';
@@ -27,6 +28,9 @@ import QuestionCard from '../../components/practice/QuestionCard';
 import { typeLabel } from '../../utils/wrongBook';
 
 const { Text } = Typography;
+
+/** 难度递进：easy→medium→hard（hard 已最高，维持 hard） */
+const NEXT_DIFFICULTY = { easy: 'medium', medium: 'hard', hard: 'hard' };
 
 /** study/questions 返回项 → QuestionCard 需要的题目结构 */
 function toCardQuestion(source, fallbackType) {
@@ -38,43 +42,15 @@ function toCardQuestion(source, fallbackType) {
   };
 }
 
-/** 生成原题的同题型新题（排除已出现题目），不足时按实际数量返回 */
-async function fetchNewQuestions(origin, need, seen) {
-  if (need <= 0) {
-    return [];
-  }
-  const params = {
-    // 后端 @RequestParam List<String> types 以逗号拼接绑定（勿传数组，会被序列化成 types[] 而丢失）
-    types: origin.questionType,
-    count: Math.min(50, need + 3),
-    random: true,
-    exposeAnswer: true,
-  };
-  if (origin.knowledgePointId) {
-    params.knowledgePointId = origin.knowledgePointId;
-  } else if (origin.sectionId) {
-    params.sectionId = origin.sectionId;
-  } else if (origin.repoId) {
-    params.repoId = origin.repoId;
-  }
-  const res = await getStudyQuestions(params);
-  const picked = [];
-  (res?.data || []).forEach((q) => {
-    if (!q?.id || seen.has(q.id) || picked.length >= need) {
-      return;
-    }
-    seen.add(q.id);
-    picked.push(toCardQuestion(q, origin.questionType));
-  });
-  return picked;
+/** 取题目难度（题目 schema.attribute.difficulty） */
+function difficultyOf(question) {
+  return question?.template?.attribute?.difficulty || question?.difficulty || '';
 }
 
-/** 组装一次错题组（原题 + 同题型新题） */
-async function buildDrillSequence(mode, originals) {
+/** 组装一次错题组：先放入原错题，逐题答对后再按需增补提高题 */
+async function buildDrillSequence(originals, seen) {
   const questions = [];
   const originalIds = [];
-  const seen = new Set();
-  const needPerOriginal = 2;
   for (const item of originals) {
     // 原题详情（含标准答案）
     // eslint-disable-next-line no-await-in-loop
@@ -84,14 +60,58 @@ async function buildDrillSequence(mode, originals) {
       continue;
     }
     seen.add(source.id);
-    questions.push({ ...toCardQuestion(source, item.questionType), isOriginal: true });
+    questions.push({
+      ...toCardQuestion(source, item.questionType),
+      isOriginal: true,
+      knowledgePointId: item.knowledgePointId || source.knowledgePointId || '',
+      sectionId: item.sectionId || '',
+      repoId: item.repoId || '',
+    });
     originalIds.push(source.id);
-    // 同题型新题
-    // eslint-disable-next-line no-await-in-loop
-    const news = await fetchNewQuestions(item, needPerOriginal, seen);
-    news.forEach((q) => questions.push({ ...q, isOriginal: false }));
   }
   return { questions, originalIds };
+}
+
+/**
+ * 答对后增补一道同类型更高难度题（复用原题知识点/小节/题库范围；不限范围兜底）。
+ *
+ * <p>难度优先取更高一档，其次同难度，最后不限难度；同一难度档再依次尝试
+ * 知识点 / 小节 / 题库范围（不同题库的出题数据源绑定方式不同，逐级回退兜底），
+ * 排除本组已出现的题目；全部取不到时返回 null。</p>
+ */
+async function fetchHarderQuestion(base, seen) {
+  const cur = difficultyOf(base);
+  const next = NEXT_DIFFICULTY[cur];
+  const diffs = [];
+  if (next) diffs.push(next);
+  if (cur && cur !== next) diffs.push(cur);
+  diffs.push('');
+  const scopes = [];
+  if (base.knowledgePointId) scopes.push({ knowledgePointId: base.knowledgePointId });
+  if (base.sectionId) scopes.push({ sectionId: base.sectionId });
+  if (base.repoId) scopes.push({ repoId: base.repoId });
+  scopes.push({});
+  for (const diff of diffs) {
+    for (const scope of scopes) {
+      const params = {
+        // 后端 @RequestParam List<String> types 以逗号拼接绑定（勿传数组，会被序列化成 types[] 而丢失）
+        types: base.questionType,
+        count: 12,
+        random: true,
+        exposeAnswer: true,
+        ...scope,
+      };
+      if (diff) params.difficulty = diff;
+      // eslint-disable-next-line no-await-in-loop
+      const res = await getStudyQuestions(params);
+      const found = (res?.data || []).find((q) => q?.id && !seen.has(q.id));
+      if (found) {
+        seen.add(found.id);
+        return toCardQuestion(found, base.questionType);
+      }
+    }
+  }
+  return null;
 }
 
 export default function WrongDrillModal({ open, mode, originals, onClose, onEliminated }) {
@@ -103,6 +123,9 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
   const [confirmed, setConfirmed] = useState({});
   const [finished, setFinished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [preparingNext, setPreparingNext] = useState(false);
+  const seenRef = useRef(new Set());
+  const spawnedRef = useRef(new Set());
 
   const start = useCallback(async () => {
     setLoading(true);
@@ -112,8 +135,11 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     setFinished(false);
     setQuestions([]);
     setOriginalIds([]);
+    setPreparingNext(false);
+    seenRef.current = new Set();
+    spawnedRef.current = new Set();
     try {
-      const { questions: qs, originalIds: ids } = await buildDrillSequence(mode, originals || []);
+      const { questions: qs, originalIds: ids } = await buildDrillSequence(originals || [], seenRef.current);
       setQuestions(qs);
       setOriginalIds(ids);
     } catch {
@@ -122,7 +148,7 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     } finally {
       setLoading(false);
     }
-  }, [mode, originals]);
+  }, [originals]);
 
   useEffect(() => {
     if (open) {
@@ -135,10 +161,26 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
   const allCorrect = questions.length > 0 && questions.every((q) => confirmed[q.id]?.correct === 1);
   const progress = questions.length ? Math.round(((index + (currentResult ? 1 : 0)) / questions.length) * 100) : 0;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!current) return;
     const result = evaluateAnswer(current, answers[current.id]);
     setConfirmed((prev) => ({ ...prev, [current.id]: result }));
+    // 答对原错题后，即时增补一道同类型更高难度题（提高题）；每题只增补一次
+    if (result?.correct !== 1 || !current.isOriginal || spawnedRef.current.has(current.id)) {
+      return;
+    }
+    spawnedRef.current.add(current.id);
+    setPreparingNext(true);
+    try {
+      const harder = await fetchHarderQuestion(current, seenRef.current);
+      if (harder) {
+        setQuestions((prev) => [...prev, harder]);
+      }
+    } catch {
+      // 增补提高题失败不阻断本轮作答
+    } finally {
+      setPreparingNext(false);
+    }
   };
 
   const settle = async () => {
@@ -167,6 +209,7 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
   };
 
   const handleNext = () => {
+    if (preparingNext) return;
     if (index < questions.length - 1) {
       setIndex((i) => i + 1);
       return;
@@ -224,6 +267,11 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
           onConfirm={handleConfirm}
           judgeMode
         />
+        {preparingNext && (
+          <Text type="secondary" style={{ display: 'block', marginTop: 12, textAlign: 'center' }}>
+            答对啦！正在准备一道同类型提高题…
+          </Text>
+        )}
       </>
     );
   };
@@ -240,8 +288,8 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     return (
       <Button
         type="primary"
-        disabled={!currentResult || loading || questions.length === 0}
-        loading={submitting}
+        disabled={!currentResult || loading || questions.length === 0 || preparingNext}
+        loading={submitting || preparingNext}
         onClick={handleNext}
       >
         {index + 1 >= questions.length ? '提交' : '下一题'}

@@ -26,10 +26,15 @@ const LIST_RE = new RegExp(
   ].join(''),
 );
 
+// 空位标记 __①__（单项/多项填空题干规范，见 utils/blankMarkers.js）：
+// 圈号是空位编号而非小问分隔符，含空位标记的题干一律不做自动小问断行，
+// 否则会在每个空位前误插换行，把一行口算题拆成「① __；…」多行错位
+const BLANK_MARKER_RE = /__[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]__/;
+
 // 先补换行再解析：统一 CRLF；无换行时按连续小问标记断行
 export function normalizeStructuredText(raw) {
   const s = String(raw == null ? '' : raw).replace(/\r\n?/g, '\n');
-  if (!s || s.includes('\n')) return s;
+  if (!s || s.includes('\n') || BLANK_MARKER_RE.test(s)) return s;
   const markers = collectSubQuestionMarkers(s);
   if (!markers) return s;
   let out = '';

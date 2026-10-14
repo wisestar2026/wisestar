@@ -4,7 +4,8 @@
  * 功能:
  *   1. 顶部统计区：知识点错题环形图 + 按知识点错题数据 + 按错题类型错题数据
  *   2. 页签「知识点错题」（章节 / 小节 / 错题卡片三栏）与「错误类型错题」（按题型分组卡片）
- *   3. 错题卡片：知识点、错误次数、题目、我的答案（最近一次）、正确答案 + 消灭错题
+ *   3. 错题卡片：知识点、错误次数、题目、我的答案（最近一次）+ 消灭错题
+ *      （正确答案不在错题界面展示，避免孩子直接记答案；判题时由做题弹层给出）
  *   4. 页内弹层消灭错题 / 消灭知识点（整组全对才移除，不跳转学习页）
  *
  * 被谁引用:
@@ -123,7 +124,6 @@ function WrongCard({ item, onEliminate }) {
       </div>
       <div className="wrong-question">{item.questionTitle || '（无题干）'}</div>
       <div className="wrong-ans wrong-ans-mine">我的答案：{item.lastAnswer || '—'}</div>
-      <div className="wrong-ans wrong-ans-right">正确答案：{item.correctAnswer || '—'}</div>
       <div className="wrong-card-foot">
         <span className="wrong-meta">错误 {item.wrongCount ?? 0} 次 · 最后错误 {formatTime(item.lastWrongTime)}</span>
         <Button
