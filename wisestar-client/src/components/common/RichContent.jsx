@@ -49,6 +49,13 @@ const MATH_OPTS = { throwOnError: false, strict: false };
 // 循环小数（如 0.(6)、3.4(897)）
 const CYCLE_IN_LINE = /\d+\.\d*\(\d+\)/g;
 
+// 下划线标记（导入模板/题目编辑约定）：
+//   <u>...</u>   单横线（实线）
+//   <uu>...</uu> 双横线
+//   <wave>...</wave> 波浪线
+// 顺序敏感：<uu>/<wave> 需在 <u> 之前匹配，避免与单横线混淆
+const UNDERLINE_RE = /<uu>([\s\S]*?)<\/uu>|<wave>([\s\S]*?)<\/wave>|<u>([\s\S]*?)<\/u>/g;
+
 // 知识点讲解高亮：循环小数 | 引号术语/数字 | 圈号
 const HL_RE = new RegExp(
   [`\\d+\\.\\d*\\(\\d+\\)`, `“[^”]{1,24}”|「[^」]{1,24}」|\\d[\\d,.·]*`, `[${CIRCLED}]`].join('|'),
@@ -148,6 +155,31 @@ function renderInline(text, keyRef, highlight) {
   return out;
 }
 
+// 行内下划线：先按 <u>/<uu>/<wave> 切分，标记内文本整体套下划线样式，其余走行内富文本
+function renderUnderline(text, keyRef, highlight) {
+  const s = String(text == null ? '' : text);
+  if (!s || s.indexOf('<') === -1) return renderInline(s, keyRef, highlight);
+
+  const out = [];
+  let last = 0;
+  let m;
+  UNDERLINE_RE.lastIndex = 0;
+  while ((m = UNDERLINE_RE.exec(s)) !== null) {
+    if (m.index > last) out.push(...renderInline(s.slice(last, m.index), keyRef, highlight));
+    const inner = m[1] ?? m[2] ?? m[3] ?? '';
+    const cls = m[1] !== undefined ? 'rc-u-double'
+      : m[2] !== undefined ? 'rc-u-wavy' : 'rc-u-single';
+    out.push(
+      <span className={cls} key={`u-${keyRef.k++}`}>
+        {renderInline(inner, keyRef, highlight)}
+      </span>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < s.length) out.push(...renderInline(s.slice(last), keyRef, highlight));
+  return out;
+}
+
 export default function RichContent({ text, className, highlight = false }) {
   const s = useMemo(() => normalizeStructuredText(text), [text]);
   const blocks = useMemo(() => parseRichBlocks(s), [s]);
@@ -156,7 +188,7 @@ export default function RichContent({ text, className, highlight = false }) {
 
   // 单段纯文本：保持行内 <span>，兼容选项/短题干等内联场景
   if (blocks.length === 1 && blocks[0].type === 'para') {
-    const inline = renderInline(blocks[0].text, { k: 0 }, highlight);
+    const inline = renderUnderline(blocks[0].text, { k: 0 }, highlight);
     return inline.length ? <span className={className}>{inline}</span> : null;
   }
 
@@ -169,8 +201,8 @@ export default function RichContent({ text, className, highlight = false }) {
         if (b.type === 'heading') {
           return (
             <span className="rich-content-h" key={key}>
-              {renderInline(b.text, keyRef, highlight)}
-              {b.tail ? <span> {renderInline(b.tail, keyRef, highlight)}</span> : null}
+              {renderUnderline(b.text, keyRef, highlight)}
+              {b.tail ? <span> {renderUnderline(b.tail, keyRef, highlight)}</span> : null}
             </span>
           );
         }
@@ -178,13 +210,13 @@ export default function RichContent({ text, className, highlight = false }) {
           return (
             <span className={`rich-content-item level-${b.level}`} key={key}>
               <span className={`rich-content-marker${b.bullet ? ' is-bullet' : ''}`}>{b.marker}</span>
-              <span className="rich-content-item-body">{renderInline(b.body, keyRef, highlight)}</span>
+              <span className="rich-content-item-body">{renderUnderline(b.body, keyRef, highlight)}</span>
             </span>
           );
         }
         return (
           <span className="rich-content-p" key={key}>
-            {renderInline(b.text, keyRef, highlight)}
+            {renderUnderline(b.text, keyRef, highlight)}
           </span>
         );
       })}

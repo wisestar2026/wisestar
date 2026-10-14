@@ -152,6 +152,31 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
 
   // 初始值备份（用于 cancel 时还原）
   const initialRef = useRef({});
+  // 题干输入框 ref（下划线标记在光标处/选区包裹插入）
+  const titleRef = useRef(null);
+
+  // 用下划线标记包裹题干选区（无选区时插入空标记，光标置于标记内）
+  // 标记约定（学员端 RichContent 渲染）: <u>单横线</u> / <uu>双横线</uu> / <wave>波浪线</wave>
+  const wrapTitleSelection = (open, close) => {
+    const el = titleRef.current?.resizableTextArea?.textArea
+      || titleRef.current?.input
+      || titleRef.current;
+    const s = String(title || '');
+    const start = typeof el?.selectionStart === 'number' ? el.selectionStart : s.length;
+    const end = typeof el?.selectionEnd === 'number' ? el.selectionEnd : s.length;
+    const selected = s.slice(start, end);
+    setTitle(s.slice(0, start) + open + selected + close + s.slice(end));
+    const pos = start + open.length + selected.length;
+    requestAnimationFrame(() => {
+      if (!el) return;
+      try {
+        el.focus();
+        el.setSelectionRange(pos, pos);
+      } catch {
+        // 忽略不支持 setSelectionRange 的场景
+      }
+    });
+  };
 
   // ---- 初始化（编辑回填 / 新建清空） ----
   // 依赖 [open, record]: 弹窗每次打开时执行一次，用 record 填充或清空表单
@@ -473,6 +498,7 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
         <Text type="secondary" style={{ fontSize: 11 }}>基础信息</Text>
 
         <Input.TextArea
+          ref={titleRef}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="请输入题目内容"
@@ -480,8 +506,21 @@ export default function QuestionEditModal({ open, onCancel, onSave, record, repo
           maxLength={500}
           showCount
         />
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>下划线：</Text>
+          <Button size="small" onClick={() => wrapTitleSelection('<u>', '</u>')}>
+            <span style={{ textDecoration: 'underline', textUnderlineOffset: 2 }}>单横线</span>
+          </Button>
+          <Button size="small" onClick={() => wrapTitleSelection('<uu>', '</uu>')}>
+            <span style={{ textDecoration: 'underline', textDecorationStyle: 'double', textUnderlineOffset: 2 }}>双横线</span>
+          </Button>
+          <Button size="small" onClick={() => wrapTitleSelection('<wave>', '</wave>')}>
+            <span style={{ textDecoration: 'underline', textDecorationStyle: 'wavy', textDecorationColor: '#e53935', textUnderlineOffset: 2 }}>波浪线</span>
+          </Button>
+          <Text type="secondary" style={{ fontSize: 10 }}>先选中被引用的数字/文字，再点按钮</Text>
+        </div>
         <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>
-          支持换行排版；小问可分行或用「（1）（2）」「1. 2.」「①②」标注，学员端会自动分行缩进；公式用 $...$、加粗用 **...**
+          支持换行排版；小问可分行或用「（1）（2）」「1. 2.」「①②」标注，学员端会自动分行缩进；公式用 $...$、加粗用 **...**、下划线用上方按钮
         </Text>
         {qType === 'FillBlank' && (
           <Text type="secondary" style={{ fontSize: 10, display: 'block' }}>

@@ -27,6 +27,7 @@ import { ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import { getDetectUnits, generateDetectPaper, submitDetectPaper } from '../../api/detect';
 import QuestionCard from '../../components/practice/QuestionCard';
+import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
@@ -424,6 +425,12 @@ export default function KnowledgeDetectPage() {
                 <span className="kd-detail-kp">{d.knowledgePoint}</span>
               </div>
               <div className="kd-detail-body">
+                {d.question && (
+                  <div className="kd-detail-question">
+                    <div className="kd-detail-question-label">原题</div>
+                    <QuestionPreview question={d.question} />
+                  </div>
+                )}
                 <div className="kd-detail-line">
                   <span className="kd-detail-label">正确答案：</span>
                   <span className="kd-detail-correct">

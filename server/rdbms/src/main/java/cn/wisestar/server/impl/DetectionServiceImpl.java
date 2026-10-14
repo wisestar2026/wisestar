@@ -254,6 +254,8 @@ public class DetectionServiceImpl implements DetectionService {
 			detail.setKnowledgePoint(kp);
 			detail.setQuestionType(template.getQuestionType() == null ? null : template.getQuestionType().name());
 			detail.setCorrect(correct);
+			// 原题（题干 + 选项，剥离答案与解析）供解析页对照，避免学生只看答案无法核对题目信息
+			detail.setQuestion(toView(template));
 			detail.setCorrectAnswers(AnswerJudgeUtil.extractCorrectAnswers(schema));
 			detail.setStudentAnswer(AnswerJudgeUtil.formatAnswer(schema, item.getAnswer()));
 			if (schema != null && schema.getAttribute() != null) {

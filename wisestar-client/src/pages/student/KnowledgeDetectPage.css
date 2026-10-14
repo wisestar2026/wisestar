@@ -231,3 +231,10 @@
   border-radius: 8px;
   background: #f2f8fd;
 }
+.kd-detail-question { margin-bottom: 8px; }
+.kd-detail-question-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7d97b0;
+  margin-bottom: 4px;
+}

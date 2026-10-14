@@ -1,5 +1,6 @@
 package cn.wisestar.server.domain.dto.detect;
 
+import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -96,6 +97,9 @@ public class DetectReportView {
 
 		/** 1 正确 / 0 错误 / null 未判分 */
 		private Integer correct;
+
+		/** 原题（题干 + 选项，已剥离标准答案与解析，供解析页对照题目信息） */
+		private StudentQuestionView question;
 
 		/** 标准答案（选项标题或文本） */
 		private List<String> correctAnswers;

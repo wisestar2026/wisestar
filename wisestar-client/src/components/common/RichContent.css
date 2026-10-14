@@ -105,3 +105,21 @@
   color: #e65100;
   margin-right: 2px;
 }
+
+/* 下划线标记（题干中被引用的数字/文字） */
+.rc-u-single {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-underline-offset: 3px;
+}
+.rc-u-double {
+  text-decoration-line: underline;
+  text-decoration-style: double;
+  text-underline-offset: 3px;
+}
+.rc-u-wavy {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: #e53935;
+  text-underline-offset: 3px;
+}

@@ -1,0 +1,54 @@
+/* ============================================================
+   QuestionPreview - 题目只读回显（诊断报告/阶段检测逐题解析）
+   ============================================================ */
+
+.q-preview {
+  border: 1px solid #e6eef6;
+  border-radius: 10px;
+  background: #fff;
+  padding: 10px 12px;
+}
+
+.q-preview-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.q-preview-stem {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #2b3a4a;
+}
+
+.q-preview-images {
+  margin-top: 8px;
+}
+
+.q-preview-options {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.q-preview-option {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #33475b;
+}
+
+.q-preview-option-letter {
+  flex: none;
+  color: #7d97b0;
+  font-weight: 600;
+}
+
+.q-preview-option-text {
+  flex: 1;
+  min-width: 0;
+}
