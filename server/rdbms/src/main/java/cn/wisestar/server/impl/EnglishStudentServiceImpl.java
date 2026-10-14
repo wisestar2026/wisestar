@@ -1,14 +1,17 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.constant.StudentRewardConstants;
+import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitView;
+import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
 import cn.wisestar.server.domain.dto.student.RewardContext;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.domain.model.DetectRecord;
 import cn.wisestar.server.domain.model.EnglishGrammar;
 import cn.wisestar.server.domain.model.EnglishGrammarBook;
 import cn.wisestar.server.domain.model.EnglishLearningLog;
@@ -24,21 +27,26 @@ import cn.wisestar.server.mapper.EnglishSentenceBookMapper;
 import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
+import cn.wisestar.server.mapper.DetectRecordMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.service.EnglishStudentService;
 import cn.wisestar.server.service.EnglishUnitService;
 import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.RewardService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,10 +69,12 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final EnglishLearningLogMapper englishLearningLogMapper;
 	private final EnglishGrammarMapper englishGrammarMapper;
 	private final EnglishGrammarBookMapper englishGrammarBookMapper;
+	private final DetectRecordMapper detectRecordMapper;
 	private final EnglishUnitService englishUnitService;
 	private final SubjectMapper subjectMapper;
 	private final RewardService rewardService;
 	private final GrowthArchiveService growthArchiveService;
+	private final ObjectMapper objectMapper;
 
 	@Override
 	public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term) {
@@ -391,6 +401,78 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	public StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount) {
 		writeLog(userId, type, "-", durationSeconds, correctCount);
 		return settleSessionReward(userId, type);
+	}
+
+	@Override
+	public List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit) {
+		if (userId == null) {
+			return new ArrayList<>();
+		}
+		String subjectId = englishSubjectId();
+		if (subjectId == null) {
+			return new ArrayList<>();
+		}
+		// 该学员在英语学科下的全部检测记录（最近在前，取最近一次题目快照与做错时间）
+		List<DetectRecord> records = detectRecordMapper.selectList(Wrappers.<DetectRecord>lambdaQuery()
+				.eq(DetectRecord::getStudentId, userId)
+				.eq(DetectRecord::getSubjectId, subjectId)
+				.orderByDesc(DetectRecord::getCreateAt));
+		Map<String, EnglishWrongQuestionView> byQuestion = new LinkedHashMap<>();
+		for (DetectRecord record : records) {
+			List<DetectReportView.Detail> details = fromJson(record.getDetails(),
+					new TypeReference<List<DetectReportView.Detail>>() {
+					});
+			if (details == null) {
+				continue;
+			}
+			for (DetectReportView.Detail detail : details) {
+				// 只统计做错的题（correct=0），未作答/未判分不计入
+				if (detail.getCorrect() == null || detail.getCorrect() != 0
+						|| detail.getQuestion() == null
+						|| !StringUtils.hasText(detail.getQuestionId())) {
+					continue;
+				}
+				EnglishWrongQuestionView view = byQuestion.get(detail.getQuestionId());
+				if (view == null) {
+					view = new EnglishWrongQuestionView();
+					view.setQuestionId(detail.getQuestionId());
+					view.setQuestionType(detail.getQuestionType());
+					view.setChapter(detail.getChapter());
+					view.setKnowledgePoint(detail.getKnowledgePoint());
+					view.setQuestion(detail.getQuestion());
+					view.setWrongCount(0);
+					view.setLastWrongTime(record.getCreateAt());
+					byQuestion.put(detail.getQuestionId(), view);
+				}
+				view.setWrongCount(view.getWrongCount() + 1);
+			}
+		}
+		List<EnglishWrongQuestionView> list = new ArrayList<>(byQuestion.values());
+		if (limit != null && limit > 0 && list.size() > limit) {
+			return new ArrayList<>(list.subList(0, limit));
+		}
+		return list;
+	}
+
+	/**
+	 * 将 JSON 字符串反序列化为指定类型（解析失败返回 null）。
+	 *
+	 * @param <T>    目标类型
+	 * @param json   JSON 字符串
+	 * @param type   目标类型引用
+	 * @return 反序列化结果
+	 */
+	private <T> T fromJson(String json, TypeReference<T> type) {
+		if (json == null || json.isBlank()) {
+			return null;
+		}
+		try {
+			return objectMapper.readValue(json, type);
+		}
+		catch (Exception e) {
+			log.warn("english review: detect record json parse failed, ignored", e);
+			return null;
+		}
 	}
 
 	/**

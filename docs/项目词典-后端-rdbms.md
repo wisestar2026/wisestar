@@ -935,6 +935,8 @@
   - `public void recordGrammar(String userId, String grammarId, boolean correct)`
     记录语法作答（熟练度 +1/-1 夹取 0~4、复习调度、学习日志 `type=grammar`）。
   - `public List<ReviewSessionView> reviewSession(String userId, int limit)`
+  - `public List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit)`
+    取该学员英语学科（`t_subject.code='ENGLISH'`）全部检测记录（倒序）解析 `details` JSON，收集 `correct=0` 的题按 questionId 去重聚合、累计 wrongCount、保留最近做错时间与已剥离答案的题目快照。
   - `public StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
     写学习日志并结算奖励（异常不阻断学习）。
 

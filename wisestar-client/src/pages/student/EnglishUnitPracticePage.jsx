@@ -21,6 +21,7 @@ import { ReloadOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import { getDetectUnits, generateDetectPaper, submitDetectPaper } from '../../api/detect';
 import QuestionCard from '../../components/practice/QuestionCard';
+import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
@@ -97,7 +98,8 @@ export default function EnglishUnitPracticePage() {
     const items = questions.map((q) => ({ questionId: q.id, answer: answers[q.id] || {} }));
     setSubmitting(true);
     try {
-      const res = await submitDetectPaper({ items });
+      // 带上学科/年级/册别，便于检测记录归属英语学科（复习错题据此聚合）
+      const res = await submitDetectPaper({ items, subjectId, grade, term });
       setReport(res?.data || null);
       setStep('report');
       message.success('单元练习完成');
@@ -235,6 +237,12 @@ export default function EnglishUnitPracticePage() {
                 <span className="kd-detail-kp">{d.knowledgePoint}</span>
               </div>
               <div className="kd-detail-body">
+                {d.question && (
+                  <div className="kd-detail-question">
+                    <div className="kd-detail-question-label">原题</div>
+                    <QuestionPreview question={d.question} />
+                  </div>
+                )}
                 <div className="kd-detail-line">
                   <span className="kd-detail-label">正确答案：</span>
                   <span className="kd-detail-correct">

@@ -42,6 +42,7 @@ export default function EnglishScenarioPracticePage() {
 
   const [step, setStep] = useState('loading'); // loading | ready | empty
   const [scenarios, setScenarios] = useState([]);
+  const [page, setPage] = useState(0); // 当前情景页（每项情景一页）
   const [values, setValues] = useState({}); // key `si-li-bi` -> 输入值
   const [submitted, setSubmitted] = useState(false);
   const startAt = useRef(Date.now());
@@ -53,6 +54,7 @@ export default function EnglishScenarioPracticePage() {
     }
     setStep('loading');
     setSubmitted(false);
+    setPage(0);
     setValues({});
     getEnglishScenarios({ version, grade, term, unit })
       .then((res) => {
@@ -113,6 +115,7 @@ export default function EnglishScenarioPracticePage() {
 
   const reset = () => {
     setSubmitted(false);
+    setPage(0);
     setValues({});
   };
 
@@ -161,7 +164,7 @@ export default function EnglishScenarioPracticePage() {
         </div>
       )}
 
-      {scenarios.map((scene, si) => (
+      {scenarios.map((scene, si) => (si !== page ? null : (
         <div className="sc-scene" key={`${scene.title || 'scene'}-${si}`}>
           <div className="sc-scene-head">
             <span className="sc-scene-index">{si + 1}</span>
@@ -222,7 +225,31 @@ export default function EnglishScenarioPracticePage() {
             })}
           </div>
         </div>
-      ))}
+      )))}
+
+      {scenarios.length > 1 && (
+        <div className="sc-pager">
+          <button
+            type="button"
+            className="sc-pager-btn"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            上一页
+          </button>
+          <span className="sc-pager-info">
+            <b>{page + 1}</b> / {scenarios.length}
+          </span>
+          <button
+            type="button"
+            className="sc-pager-btn"
+            disabled={page === scenarios.length - 1}
+            onClick={() => setPage((p) => Math.min(scenarios.length - 1, p + 1))}
+          >
+            下一页
+          </button>
+        </div>
+      )}
 
       <div className="eng-actions">
         <button type="button" className="eng-btn eng-btn-ghost" onClick={reset} disabled={!submitted}>

@@ -1,20 +1,23 @@
 /**
- * EnglishReviewPage.jsx - 学员端英语分类复习
+ * EnglishReviewPage.jsx - 学员端英语分类复习（待复习清单）
  *
  * 功能:
- *   1. 按 单词 / 重点句子 / 语法 三类组织复习入口
- *   2. 单词：按单元统计 陌生 / 一般 / 熟悉 三档，点击进入单词练习
- *   3. 重点句子：按单元列出句子与熟练度，点击进入句子练习
- *   4. 语法：按单元列出语法点与掌握度，点击进入语法练习（回写掌握度）
+ *   1. 只列出「待复习」内容：有作答记录、且 生疏（familiarity≤1）或 做错过（wrongCount>0）
+ *      的 单词 / 重点句子 / 语法；没有做过、没有提交记录的一律不出现
+ *   2. 单词：按单元统计待复习数量，点击进入单词练习
+ *   3. 重点句子：按单元列出待复习句子，点击进入句子练习
+ *   4. 语法：按单元列出待复习语法点，点击进入语法练习（回写掌握度）
+ *   5. 错题：聚合英语练习（单元练习/语法练习）做错的题目，仅回显题干、隐藏答案解析
  *
  * URL: /student/english/review
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心「智能复习」
  *
  * 数据流:
- *   GET /api/english/student/units      单元进度（单词总数）
- *   GET /api/english/word/word-book     单词本（含熟练度，pageSize=-1）
- *   GET /api/english/student/sentences  句子列表（含熟练度）
- *   GET /api/english/student/grammars   语法列表（含掌握度）
+ *   GET /api/english/student/units            单元进度（用于单元排序）
+ *   GET /api/english/word/word-book           单词本（含熟练度，pageSize=-1）
+ *   GET /api/english/student/sentences        句子列表（含熟练度）
+ *   GET /api/english/student/grammars         语法列表（含掌握度）
+ *   GET /api/english/student/wrong-questions  英语复习错题（来自检测记录，隐藏答案解析）
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -26,18 +29,22 @@ import {
   getEnglishWordBook,
   getEnglishSentences,
   getEnglishGrammars,
+  getEnglishWrongQuestions,
 } from '../../api/englishStudent';
+import QuestionPreview from '../../components/practice/QuestionPreview';
 import './EnglishCenterPage.css';
 
 const FAMILIARITY_LABELS = ['未学习', '生疏', '熟悉', '熟练', '精通'];
 const FAMILIARITY_COLORS = ['default', 'orange', 'blue', 'cyan', 'green'];
 
-/** 单词三档：陌生(0-1) / 一般(2) / 熟悉(3-4) */
-function wordBucket(familiarity) {
-  const f = Math.min(Math.max(familiarity || 0, 0), 4);
-  if (f <= 1) return 'unfamiliar';
-  if (f === 2) return 'normal';
-  return 'familiar';
+/** 是否有作答记录（做过 / 提交过）；未学习的一律不算 */
+function hasRecord(item) {
+  return (item.correctCount || 0) + (item.wrongCount || 0) > 0;
+}
+
+/** 是否待复习：做过，且 生疏（熟悉度≤1）或 做错过 */
+function needsReview(item) {
+  return hasRecord(item) && ((item.familiarity || 0) <= 1 || (item.wrongCount || 0) > 0);
 }
 
 function famTag(familiarity) {
@@ -45,7 +52,7 @@ function famTag(familiarity) {
   return <Tag color={FAMILIARITY_COLORS[lv]}>{FAMILIARITY_LABELS[lv]}</Tag>;
 }
 
-/** 按单元分组（保持后端返回顺序） */
+/** 按单元分组（保持传入顺序） */
 function groupByUnit(list) {
   const map = new Map();
   list.forEach((item) => {
@@ -54,15 +61,6 @@ function groupByUnit(list) {
     map.get(key).push(item);
   });
   return Array.from(map.entries());
-}
-
-function Bucket({ label, value, color }) {
-  return (
-    <div style={{ flex: 1, textAlign: 'center', background: '#f4f9fc', borderRadius: 10, padding: '8px 4px' }}>
-      <div style={{ fontSize: 18, fontWeight: 800, color }}>{value}</div>
-      <div style={{ fontSize: 12, color: '#5b7f92' }}>{label}</div>
-    </div>
-  );
 }
 
 export default function EnglishReviewPage() {
@@ -77,6 +75,7 @@ export default function EnglishReviewPage() {
   const [words, setWords] = useState([]);
   const [sentences, setSentences] = useState([]);
   const [grammars, setGrammars] = useState([]);
+  const [wrongQuestions, setWrongQuestions] = useState([]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -85,12 +84,14 @@ export default function EnglishReviewPage() {
       getEnglishWordBook({ version, grade, term, pageSize: -1 }).catch(() => ({ data: { list: [] } })),
       getEnglishSentences({ version, grade, term }).catch(() => ({ data: [] })),
       getEnglishGrammars({ version, grade, term }).catch(() => ({ data: [] })),
+      getEnglishWrongQuestions({ limit: 100 }).catch(() => ({ data: [] })),
     ])
-      .then(([uRes, wRes, sRes, gRes]) => {
+      .then(([uRes, wRes, sRes, gRes, wqRes]) => {
         setUnits(uRes?.data || []);
         setWords(wRes?.data?.list || []);
         setSentences(sRes?.data || []);
         setGrammars(gRes?.data || []);
+        setWrongQuestions(wqRes?.data || []);
       })
       .catch(() => message.error('复习数据加载失败'))
       .finally(() => setLoading(false));
@@ -100,28 +101,32 @@ export default function EnglishReviewPage() {
     load();
   }, [load]);
 
-  // 单词按单元三档统计
+  // 待复习清单（做过 + 生疏/做错过）
+  const reviewWords = useMemo(() => words.filter(needsReview), [words]);
+  const reviewSentences = useMemo(() => sentences.filter(needsReview), [sentences]);
+  const reviewGrammars = useMemo(() => grammars.filter(needsReview), [grammars]);
+
+  // 单词按单元统计待复习数量
   const wordBuckets = useMemo(() => {
     const map = {};
-    words.forEach((w) => {
+    reviewWords.forEach((w) => {
       const key = w.unit || '未分单元';
-      if (!map[key]) map[key] = { total: 0, unfamiliar: 0, normal: 0, familiar: 0 };
-      map[key].total += 1;
-      map[key][wordBucket(w.familiarity)] += 1;
+      if (!map[key]) map[key] = 0;
+      map[key] += 1;
     });
     return map;
-  }, [words]);
+  }, [reviewWords]);
 
   const wordUnits = useMemo(() => {
-    const names = units.map((u) => u.unit).filter(Boolean);
+    const names = units.map((u) => u.unit).filter((n) => wordBuckets[n]);
     Object.keys(wordBuckets).forEach((k) => {
       if (!names.includes(k)) names.push(k);
     });
     return names;
   }, [units, wordBuckets]);
 
-  const sentenceGroups = useMemo(() => groupByUnit(sentences), [sentences]);
-  const grammarGroups = useMemo(() => groupByUnit(grammars), [grammars]);
+  const sentenceGroups = useMemo(() => groupByUnit(reviewSentences), [reviewSentences]);
+  const grammarGroups = useMemo(() => groupByUnit(reviewGrammars), [reviewGrammars]);
 
   const goPractice = (unit) => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`);
   const goSentence = (unit) => navigate(`/student/english/sentence?unit=${encodeURIComponent(unit)}`);
@@ -135,29 +140,24 @@ export default function EnglishReviewPage() {
   }
 
   const wordTab = wordUnits.length === 0 ? (
-    <Empty description="暂无单词数据，先去学习中心学习单词吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    <Empty description="暂无待复习的单词，先去学习中心学习吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
   ) : (
     <div className="eng-grid">
       {wordUnits.map((unit) => {
-        const b = wordBuckets[unit] || { total: 0, unfamiliar: 0, normal: 0, familiar: 0 };
-        const canPractice = b.total >= 4;
+        const count = wordBuckets[unit] || 0;
         return (
           <div className="eng-unit-card" key={unit}>
             <div className="eng-unit-name">{unit}</div>
-            <div style={{ display: 'flex', gap: 8, margin: '12px 0' }}>
-              <Bucket label="陌生" value={b.unfamiliar} color="#ff7043" />
-              <Bucket label="一般" value={b.normal} color="#f5a623" />
-              <Bucket label="熟悉" value={b.familiar} color="#34c759" />
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0' }}>
+              <span style={{ fontSize: 15, fontWeight: 800, color: '#ff7043' }}>待复习 {count} 词</span>
             </div>
             <div className="eng-unit-actions" style={{ gridTemplateColumns: '1fr' }}>
               <button
                 type="button"
                 className="eng-btn-practice"
-                disabled={!canPractice}
-                title={canPractice ? '' : '本单元单词太少，暂不能练习'}
                 onClick={() => goPractice(unit)}
               >
-                去练习{canPractice ? ` · ${b.total}` : ''}
+                去练习 · {count}
               </button>
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function EnglishReviewPage() {
   );
 
   const sentenceTab = sentenceGroups.length === 0 ? (
-    <Empty description="暂无句子数据，先去学习中心学习句子吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    <Empty description="暂无待复习的重点句子，先去学习中心学习吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
   ) : (
     <div className="eng-grammar-list">
       {sentenceGroups.map(([unit, list]) => (
@@ -203,7 +203,7 @@ export default function EnglishReviewPage() {
   );
 
   const grammarTab = grammarGroups.length === 0 ? (
-    <Empty description="暂无语法数据，先去学习中心学习重点语法吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    <Empty description="暂无待复习的语法，先去学习中心学习吧" image={Empty.PRESENTED_IMAGE_SIMPLE} />
   ) : (
     <div className="eng-grammar-list">
       {grammarGroups.map(([unit, list]) => (
@@ -232,22 +232,40 @@ export default function EnglishReviewPage() {
     </div>
   );
 
+  const wrongTab = wrongQuestions.length === 0 ? (
+    <Empty description="暂无错题，继续加油" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+  ) : (
+    <div className="eng-wrong-list">
+      {wrongQuestions.map((w) => (
+        <div className="eng-wrong-item" key={w.questionId}>
+          <div className="eng-wrong-head">
+            <span className="eng-wrong-unit">{w.chapter || '未分单元'}</span>
+            {w.knowledgePoint && <Tag color="blue">{w.knowledgePoint}</Tag>}
+            <span className="eng-wrong-times">做错 {(w.wrongCount || 1)} 次</span>
+          </div>
+          <QuestionPreview question={w.question} />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="eng-page">
       <div className="eng-hero">
         <div>
           <div className="eng-hero-title">英语智能复习</div>
           <div className="eng-hero-sub">
-            {version} · {grade} · 按 单词 / 重点句子 / 语法 分类复习，点击进入对应练习
+            {version} · {grade} · 只复习做过且生疏/做错的内容（陌生词汇 · 重点句子 · 语法 · 错题）
           </div>
         </div>
       </div>
 
       <Tabs
         items={[
-          { key: 'word', label: `单词（${words.length}）`, children: wordTab },
-          { key: 'sentence', label: `重点句子（${sentences.length}）`, children: sentenceTab },
-          { key: 'grammar', label: `语法（${grammars.length}）`, children: grammarTab },
+          { key: 'word', label: `待复习单词（${reviewWords.length}）`, children: wordTab },
+          { key: 'sentence', label: `待复习句子（${reviewSentences.length}）`, children: sentenceTab },
+          { key: 'grammar', label: `待复习语法（${reviewGrammars.length}）`, children: grammarTab },
+          { key: 'wrong', label: `错题（${wrongQuestions.length}）`, children: wrongTab },
         ]}
       />
 

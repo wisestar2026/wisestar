@@ -483,3 +483,15 @@
   border-radius: 50%;
   background: #b7d6ee;
 }
+
+/* ---------- 智能复习：错题回顾 ---------- */
+.eng-wrong-list { display: flex; flex-direction: column; gap: 14px; }
+.eng-wrong-item {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 18px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 20px rgba(64, 140, 190, 0.14);
+}
+.eng-wrong-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.eng-wrong-unit { font-size: 14px; font-weight: 800; color: #14506e; }
+.eng-wrong-times { margin-left: auto; font-size: 12px; font-weight: 700; color: #e07856; }

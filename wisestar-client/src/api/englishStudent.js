@@ -62,6 +62,11 @@ export function getEnglishReview(params) {
   return request.get('/english/student/review', { params });
 }
 
+/** 英语复习错题（来自检测记录聚合，隐藏答案解析） */
+export function getEnglishWrongQuestions(params) {
+  return request.get('/english/student/wrong-questions', { params });
+}
+
 /** 情景对话练习（AI 按单元单词实时生成，不落库） */
 export function getEnglishScenarios(params) {
   return request.get('/english/student/scenarios', { params });

@@ -157,3 +157,11 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - 分片还原按序号 `cat *.part-00..08 > big.tar.gz` 再解压；图片数据目录为 `/workspace/server/api/files/`（gitignore），扁平文件名与 `t_file.file_path`/`thumb_file_path` 一一对应，新环境需另行拷贝或重新下载
 
 
+
+[学员端接口鉴权与复习错题数据来源]
+- Date: 2026-10-14
+- Context: Agent 验证英语智能复习「错题」接口（`GET /api/english/student/wrong-questions`）时确认
+- Category: 排错调试
+- Instructions:
+  - 学员端接口用 cookie/header `sk-token` 鉴权（`curl -b "sk-token=<token>"`），`Authorization: Bearer` 无效；未带 token 返回 401 `Full authentication is required`
+  - 英语复习错题取自学员英语学科（`t_subject.code='ENGLISH'`）的检测记录 `t_detect_record.details`，按 `correct=0` 聚合；因此英语单元/语法练习交卷必须带 `subjectId`（含 `grade`/`term`），否则记录 `subjectId` 为空、聚合取不到

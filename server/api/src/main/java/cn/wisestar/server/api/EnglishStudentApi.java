@@ -6,6 +6,7 @@ import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
+import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.service.EnglishScenarioPackService;
@@ -131,6 +132,15 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
 		return scenarioPackService.getPatternScenarios(version, grade, term, unit);
+	}
+
+	/**
+	 * 英语复习错题：聚合学员在英语学科检测记录里做错的题目（隐藏答案解析）。
+	 */
+	@GetMapping("/wrong-questions")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishWrongQuestionView> wrongQuestions(@RequestParam(required = false) Integer limit) {
+		return englishStudentService.wrongQuestions(SecurityContextUtils.getUserId(), limit);
 	}
 
 	/**

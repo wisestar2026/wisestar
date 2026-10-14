@@ -1927,6 +1927,14 @@
 - **类说明**：
   英语单词视图 DTO。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishWrongQuestionView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishWrongQuestionView`
+- 注解: @Data
+- **类说明**：
+  英语复习错题视图（来自学员检测记录 t_detect_record 聚合）；题目快照已剥离标准答案与解析，仅用于「英语智能复习」错题只读回显。
+- 字段: questionId / questionType / chapter / knowledgePoint / wrongCount / lastWrongTime / question(`StudentQuestionView`)
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/ImportResult.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class ImportResult`
@@ -2728,6 +2736,8 @@
 - **类说明**：
   英语学员学习服务（学员端学习中心）。
 - 方法:
+  - `List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit)`
+    英语复习错题（聚合该学员英语学科检测记录里做错的题目，按 questionId 去重、累计错误次数、保留最近做错时间；题目快照已剥离标准答案与解析）。
   - `StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
     记录一次学习会话（写学习日志 + 结算学习币/积分奖励）。
 

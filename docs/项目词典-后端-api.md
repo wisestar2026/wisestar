@@ -337,6 +337,8 @@
     重点句式情景练习：读取管理端固化的句式情景（未固化返回空列表，不触发 AI）。
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
+  - `public List<EnglishWrongQuestionView> wrongQuestions(@RequestParam(required = false) Integer limit)`
+    英语复习错题（检测记录聚合，题目快照已剥离答案；`limit` 可选）。
 
 ### `api/src/main/java/cn/wisestar/server/api/EnglishUnitApi.java`
 - 包: `cn.wisestar.server.api`

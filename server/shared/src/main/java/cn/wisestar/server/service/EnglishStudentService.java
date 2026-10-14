@@ -3,6 +3,7 @@ package cn.wisestar.server.service;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
+import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 
@@ -97,5 +98,18 @@ public interface EnglishStudentService {
 	 * @return 奖励结算结果
 	 */
 	StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount);
+
+	/**
+	 * 英语复习错题（从学员检测记录聚合英语学科做错的题目）。
+	 *
+	 * <p>只取「有提交记录」的错题：遍历该学员在本学科下的检测记录，
+	 * 提取逐题明细中 {@code correct=0} 的题目，按题目去重并累计做错次数，
+	 * 返回的题目快照已剥离标准答案与解析。</p>
+	 *
+	 * @param userId 用户 ID
+	 * @param limit  数量上限（为空或非正数时不限制）
+	 * @return 错题列表（最近做错的在前）
+	 */
+	List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit);
 
 }

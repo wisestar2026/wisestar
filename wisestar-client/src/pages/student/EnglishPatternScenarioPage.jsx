@@ -41,6 +41,7 @@ export default function EnglishPatternScenarioPage() {
 
   const [step, setStep] = useState('loading'); // loading | ready | empty
   const [scenarios, setScenarios] = useState([]);
+  const [page, setPage] = useState(0); // 当前情景页（每项情景一页）
   const [picked, setPicked] = useState({}); // key `si-ti` -> 所选下标
   const [submitted, setSubmitted] = useState(false);
   const startAt = useRef(Date.now());
@@ -52,6 +53,7 @@ export default function EnglishPatternScenarioPage() {
     }
     setStep('loading');
     setSubmitted(false);
+    setPage(0);
     setPicked({});
     getEnglishPatternScenarios({ version, grade, term, unit })
       .then((res) => {
@@ -103,6 +105,7 @@ export default function EnglishPatternScenarioPage() {
 
   const reset = () => {
     setSubmitted(false);
+    setPage(0);
     setPicked({});
   };
 
@@ -151,7 +154,7 @@ export default function EnglishPatternScenarioPage() {
         </div>
       )}
 
-      {scenarios.map((scene, si) => (
+      {scenarios.map((scene, si) => (si !== page ? null : (
         <div className="sc-scene" key={`${scene.title || 'scene'}-${si}`}>
           <div className="sc-scene-head">
             <span className="sc-scene-index">{si + 1}</span>
@@ -167,10 +170,11 @@ export default function EnglishPatternScenarioPage() {
             {scene.turns.map((turn, ti) => {
               const respond = isRespondTurn(turn);
               const key = `${si}-${ti}`;
+              const isB = turn.speaker === 'B';
               if (!respond) {
                 return (
-                  <div className="sc-line" key={key}>
-                    <span className={`sc-speaker ${turn.speaker === 'B' ? 'b' : ''}`}>{turn.speaker || 'A'}</span>
+                  <div className={`sc-line${isB ? ' is-b' : ''}`} key={key}>
+                    <span className={`sc-speaker ${isB ? 'b' : ''}`}>{turn.speaker || 'A'}</span>
                     <div className="sc-body">
                       <div className="sc-en">{turn.en}</div>
                       {turn.zh && <div className="sc-zh">{turn.zh}</div>}
@@ -180,8 +184,8 @@ export default function EnglishPatternScenarioPage() {
               }
               const chosen = picked[key];
               return (
-                <div className="sc-line ps-ask" key={key}>
-                  <span className={`sc-speaker ${turn.speaker === 'B' ? 'b' : ''}`}>{turn.speaker || 'A'}</span>
+                <div className={`sc-line ps-ask${isB ? ' is-b' : ''}`} key={key}>
+                  <span className={`sc-speaker ${isB ? 'b' : ''}`}>{turn.speaker || 'A'}</span>
                   <div className="sc-body">
                     <div className="ps-cue">
                       <span className="ps-cue-tag">说</span>
@@ -221,7 +225,31 @@ export default function EnglishPatternScenarioPage() {
             })}
           </div>
         </div>
-      ))}
+      )))}
+
+      {scenarios.length > 1 && (
+        <div className="sc-pager">
+          <button
+            type="button"
+            className="sc-pager-btn"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            上一页
+          </button>
+          <span className="sc-pager-info">
+            <b>{page + 1}</b> / {scenarios.length}
+          </span>
+          <button
+            type="button"
+            className="sc-pager-btn"
+            disabled={page === scenarios.length - 1}
+            onClick={() => setPage((p) => Math.min(scenarios.length - 1, p + 1))}
+          >
+            下一页
+          </button>
+        </div>
+      )}
 
       <div className="eng-actions">
         <button type="button" className="eng-btn eng-btn-ghost" onClick={reset} disabled={!submitted}>

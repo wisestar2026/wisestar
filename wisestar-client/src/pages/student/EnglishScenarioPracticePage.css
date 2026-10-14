@@ -135,3 +135,28 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+/* ---------- 情景翻页 ---------- */
+.sc-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 18px 0 4px;
+}
+.sc-pager-btn {
+  border: 1px solid #cbe6f2;
+  background: #fff;
+  color: #1479a6;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 7px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.sc-pager-btn:hover:not(:disabled) { border-color: #4bb7e8; background: #eef8fd; }
+.sc-pager-btn:disabled { color: #b8d0dc; border-color: #e6eff4; cursor: default; background: #f7fbfd; }
+.sc-pager-info { font-size: 14px; font-weight: 700; color: #5b7f92; letter-spacing: 0.5px; }
+.sc-pager-info b { font-size: 18px; color: #1479a6; }
+

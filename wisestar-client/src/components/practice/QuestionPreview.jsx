@@ -1,10 +1,11 @@
 /**
  * QuestionPreview.jsx - 题目只读回显（题干 + 配图 + 选项，不含答案）
  *
- * 用途：诊断报告 / 阶段检测「逐题解析」中原样回显题目信息，
+ * 用途：诊断报告 / 阶段检测「逐题解析」、练习结果「题目回顾」与英语复习错题中原样回显题目信息，
  *       便于学生对照题干核对失误，不提供作答交互。
  *
- * 被谁引用: KnowledgeDetectPage（逐题解析）
+ * 被谁引用: KnowledgeDetectPage、PracticeSessionPage、EnglishUnitPracticePage、
+ *           EnglishGrammarPracticePage、EnglishReviewPage
  *
  * Props:
  *   question: Object - 题目视图（StudentQuestionView: { name, questionType, schema, difficulty }）

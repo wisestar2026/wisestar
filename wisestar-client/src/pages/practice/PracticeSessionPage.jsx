@@ -37,6 +37,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getTemplate } from '../../api/template';
 import { submitPractice } from '../../api/practice';
 import QuestionCard from '../../components/practice/QuestionCard';
+import QuestionPreview from '../../components/practice/QuestionPreview';
 import AnswerSheet from '../../components/practice/AnswerSheet';
 import ExamIntro from '../../components/practice/ExamIntro';
 import { evaluateAnswer, calculateScore, formatCorrectAnswers } from '../../utils/practiceHelpers';
@@ -330,9 +331,10 @@ export default function PracticeSessionPage() {
                   {partial && <CheckCircleOutlined style={{ color: '#fa8c16' }} />}
                   {result.correct === null && <Tag>未判分</Tag>}
                   {partial && <Tag color="orange">部分正确 {hitCount}/{result.blankTotal} 空</Tag>}
-                  <Text strong>{idx + 1}. {question?.name || question?.template?.title}</Text>
+                  <Text strong>{idx + 1}.</Text>
                   <Tag color="blue">{TYPE_LABELS[question?.questionType] || question?.questionType}</Tag>
                 </Space>
+                <QuestionPreview question={question} />
                 {wrong && result.correctAnswers.length > 0 && (
                   <div>
                     <Text type="secondary">正确答案：</Text>
