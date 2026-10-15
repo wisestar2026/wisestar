@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
@@ -37,6 +37,8 @@ function percent(finished, total) {
 
 export default function EnglishCenterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const unitParam = searchParams.get('unit') || '';
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
   // 册别由首页统一选择，本页只读展示（不可切换）
@@ -65,6 +67,13 @@ export default function EnglishCenterPage() {
   useEffect(() => {
     loadUnits();
   }, [loadUnits]);
+
+  // 其它页面点击左侧单元后跳转到本页并带 ?unit=，此处按参数选中对应单元
+  useEffect(() => {
+    if (unitParam && units.some((u) => u.unit === unitParam)) {
+      setActiveUnit(unitParam);
+    }
+  }, [unitParam, units]);
 
   useEffect(() => {
     getEnglishReview({ limit: 50 })
@@ -109,6 +118,8 @@ export default function EnglishCenterPage() {
   };
 
   const go = (path, unit) => navigate(`${path}?unit=${encodeURIComponent(unit)}`);
+  // 左侧单元导航：在本页内切换单元，同时把 ?unit= 同步到地址栏
+  const selectUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`, { replace: true });
 
   const active = units.find((u) => u.unit === activeUnit) || units[0];
 
@@ -150,7 +161,7 @@ export default function EnglishCenterPage() {
 
       {active && (
         <div className="eng-master" style={{ marginTop: 20 }}>
-          <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={setActiveUnit} />
+          <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={selectUnit} />
 
           <div className="eng-detail">
             <div className="eng-detail-card">

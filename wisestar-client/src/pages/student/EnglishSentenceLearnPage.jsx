@@ -115,7 +115,8 @@ export default function EnglishSentenceLearnPage() {
   const activeUnit = units.find((u) => u.unit === unit);
   const finishedCount = sentences.filter((s) => (s.familiarity || 0) >= FINISHED_FAMILIARITY).length;
 
-  const goUnit = (next) => navigate(`/student/english/sentence?unit=${encodeURIComponent(next)}`);
+  // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
+  const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
   const backToCenter = () => navigate('/student/english');
 
   /** 进入连词成句学习流 */

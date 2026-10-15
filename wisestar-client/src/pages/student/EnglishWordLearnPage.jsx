@@ -128,7 +128,8 @@ export default function EnglishWordLearnPage() {
   const finishedCount = words.filter((w) => (w.familiarity || 0) >= FINISHED_FAMILIARITY).length;
   const unitProgress = percent(finishedCount, words.length);
 
-  const goUnit = (next) => navigate(`/student/english/word?unit=${encodeURIComponent(next)}`);
+  // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
+  const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
 
   /** 进入某小节的学习卡片流；section 为空表示整单元 */
   const startLearn = (section) => {

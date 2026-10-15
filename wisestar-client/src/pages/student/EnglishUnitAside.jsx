@@ -2,7 +2,8 @@
  * EnglishUnitAside.jsx - 英语学习左侧单元导航（单元学习主界面 / 单词通关 / 句式通关 共用）
  *
  * 结构：竖排单元列表，当前单元高亮，有待复习任务的单元右上角显示橙色角标。
- * 仅负责展示与选中回调，数据与跳转由父页决定（中心页本地切换、学习页用路由切换）。
+ * 仅负责展示与选中回调；数据与跳转由父页决定，当前各页点击单元统一跳转到该单元的
+ * 英语学习中心主页（/student/english?unit=...），不在子页原地切换。
  *
  * Props:
  *   units       Array<{ unit: string, reviewDue?: number }>  单元列表
@@ -10,7 +11,7 @@
  *   onSelect    (unit: string) => void                        点击单元回调
  *   title       string                                        列表标题（默认「单元」）
  *
- * 被谁引用: EnglishCenterPage / EnglishWordLearnPage / EnglishSentenceLearnPage
+ * 被谁引用: EnglishCenterPage / EnglishWordLearnPage / EnglishSentenceLearnPage / EnglishGrammarLearnPage
  */
 
 export default function EnglishUnitAside({ units = [], activeUnit, onSelect, title = '单元' }) {

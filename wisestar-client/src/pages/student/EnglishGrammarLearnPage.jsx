@@ -89,7 +89,8 @@ export default function EnglishGrammarLearnPage() {
     return () => { cancelled = true; };
   }, [version, grade, term]);
 
-  const goUnit = (next) => navigate(`/student/english/grammar?unit=${encodeURIComponent(next)}`);
+  // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
+  const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
 
   // 仅取本单元可用练习题量用于入口展示；实际作答在独立的语法练习页完成
   useEffect(() => {
