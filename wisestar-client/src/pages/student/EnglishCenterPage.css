@@ -721,6 +721,7 @@
 .eng-hub-card:hover { transform: translateY(-3px); box-shadow: 0 16px 30px rgba(64, 140, 190, 0.22); }
 .eng-hub-learn { background: #d9f2df; color: #1f8f4d; }
 .eng-hub-scenario { background: #fce4d6; color: #d9603a; }
+.eng-hub-practice { background: #e0ecff; color: #2f6bd0; }
 
 .eng-learn-back {
   display: inline-flex;

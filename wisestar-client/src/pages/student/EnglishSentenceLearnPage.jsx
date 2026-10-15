@@ -23,6 +23,7 @@ import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishUnits, getEnglishSentences, recordEnglishSentence, recordEnglishSession } from '../../api/englishStudent';
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
 import EnglishUnitAside from './EnglishUnitAside';
+import EnglishSentenceExercise from './EnglishSentenceExercise';
 import './EnglishCenterPage.css';
 
 /** 后端以 familiarity>=1 视为「已学」，完成度按此口径统计。 */
@@ -62,7 +63,7 @@ export default function EnglishSentenceLearnPage() {
 
   const term = useStudentStore((s) => s.term);
   const [units, setUnits] = useState([]);
-  const [mode, setMode] = useState('hub'); // hub | learn
+  const [mode, setMode] = useState('hub'); // hub | learn | exercise
   const [sentences, setSentences] = useState([]);
   const [sectionLabels, setSectionLabels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -240,6 +241,14 @@ export default function EnglishSentenceLearnPage() {
                   <span>句式情景</span>
                   <span className="eng-mod-sub">在生活情景里选一选</span>
                 </button>
+                <button
+                  type="button"
+                  className="eng-hub-card eng-hub-practice"
+                  onClick={() => setMode('exercise')}
+                >
+                  <span>句子练习</span>
+                  <span className="eng-mod-sub">拼句 · 默写 · 选择</span>
+                </button>
               </div>
 
               <div className="eng-actions" style={{ marginTop: 22 }}>
@@ -247,6 +256,28 @@ export default function EnglishSentenceLearnPage() {
                   返回英语学习中心
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- exercise：多题型句子练习（读取管理端固化内容） ----------
+  if (mode === 'exercise') {
+    return (
+      <div className="eng-page">
+        <div className="eng-master">
+          <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
+          <div className="eng-detail">
+            <div className="eng-detail-card">
+              <EnglishSentenceExercise
+                unit={unit}
+                version={version}
+                grade={grade}
+                term={term}
+                onBack={() => setMode('hub')}
+              />
             </div>
           </div>
         </div>

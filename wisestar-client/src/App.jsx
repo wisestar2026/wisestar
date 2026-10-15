@@ -87,6 +87,7 @@ import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import ScenarioPackManagePage from './pages/english/ScenarioPackManagePage';
 import UnitPaperManagePage from './pages/english/UnitPaperManagePage';
+import SentencePackManagePage from './pages/english/SentencePackManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
 import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
 import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
@@ -464,6 +465,14 @@ export default function App() {
               element={
                 <AuthGuard required={['template:list']}>
                   <UnitPaperManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/sentence-pack"
+              element={
+                <AuthGuard required={['english:word:ai']}>
+                  <SentencePackManagePage />
                 </AuthGuard>
               }
             />

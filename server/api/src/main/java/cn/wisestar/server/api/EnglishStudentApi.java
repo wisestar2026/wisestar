@@ -4,6 +4,7 @@ import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishSentenceExercise;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
@@ -13,6 +14,7 @@ import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 import cn.wisestar.server.service.EnglishScenarioPackService;
+import cn.wisestar.server.service.EnglishSentencePackService;
 import cn.wisestar.server.service.EnglishStudentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +37,8 @@ public class EnglishStudentApi {
 	private final EnglishStudentService englishStudentService;
 
 	private final EnglishScenarioPackService scenarioPackService;
+
+	private final EnglishSentencePackService sentencePackService;
 
 	/**
 	 * 单元列表 + 学习进度。
@@ -135,6 +139,18 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
 		return scenarioPackService.getPatternScenarios(version, grade, term, unit);
+	}
+
+	/**
+	 * 单元句子同步练习：读取该单元已固化的多题型练习（连词成句/句子默写/句子选择，不触发实时 AI）。
+	 */
+	@GetMapping("/sentence-exercises")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishSentenceExercise> sentenceExercises(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam(required = false) String unit) {
+		return sentencePackService.getExercises(version, grade, term, unit);
 	}
 
 	/**

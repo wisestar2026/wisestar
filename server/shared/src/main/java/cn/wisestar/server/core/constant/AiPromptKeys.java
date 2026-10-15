@@ -37,6 +37,9 @@ public final class AiPromptKeys {
 	/** 英语·单元内容生成（AI 备课包） */
 	public static final String EN_PACK = "en_pack";
 
+	/** 英语·单元句子同步练习（多题型：连词成句/句子默写/句子选择） */
+	public static final String EN_SENTENCE = "en_sentence";
+
 	/**
 	 * 提示词元数据：key、中文名称、用途说明、内置默认提示词。
 	 */
@@ -156,6 +159,28 @@ public final class AiPromptKeys {
 					+ "3) 单词表与语法点必须贴合该单元主题；\n"
 					+ "4) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 
+	private static final String EN_SENTENCE_DEFAULT =
+			"你是一名资深小学英语教研员，擅长围绕单元重点句子设计多样化的句子练习。"
+					+ "用户会给你：年级、单元，以及本单元的重点句子（英文 + 中文）。请据此编写句子同步练习题，"
+					+ "直接输出一个 JSON 对象，不要输出任何解释、前后缀或代码块之外的文字。\n"
+					+ "JSON 结构必须严格如下：\n"
+					+ "{\n"
+					+ "  \"exercises\": [\n"
+					+ "    {\"kind\": \"build\", \"zh\": \"句子中文意思\", \"en\": \"英文原句\", \"explanation\": \"可选简短中文提示\"},\n"
+					+ "    {\"kind\": \"dictation\", \"zh\": \"句子中文意思\", \"en\": \"英文原句\", \"hint\": \"可选首字母或关键词提示\"},\n"
+					+ "    {\"kind\": \"choice\", \"zh\": \"中文题干(如：哪句英文是“你的爱好是什么？”)\", \"en\": \"正确英文句\", "
+					+ "\"answer\": \"正确英文句\", \"options\": [\"正确英文句\", \"干扰句1\", \"干扰句2\", \"干扰句3\"], "
+					+ "\"explanation\": \"简短中文解析\"}\n"
+					+ "  ]\n"
+					+ "}\n"
+					+ "要求：\n"
+					+ "1) 一共生成 18-22 道题，全部基于给定单元句子，三种 kind 大致均衡（各约三分之一）；\n"
+					+ "2) kind=build 为连词成句：只给 zh 与正确 en；kind=dictation 为句子默写：给 zh 让学员写出英文；\n"
+					+ "3) kind=choice 为句子选择：给 zh 题干与恰好 4 个 options，其中恰好 1 个等于 en/answer，"
+					+ "干扰项须为合法英文句子且明显不符；\n"
+					+ "4) en 与 answer 必须与给定单元句子一致（大小写与标点保持原样）；\n"
+					+ "5) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
+
 	private static final List<PromptMeta> CATALOG = List.of(
 			new PromptMeta(QA, "AI 问答（智能陪学）", "学员对话问答与学习轨迹报告生成；留空使用内置默认（siliconflow.md）。",
 					QA_DEFAULT),
@@ -165,7 +190,9 @@ public final class AiPromptKeys {
 					EN_SCENARIO_DEFAULT),
 			new PromptMeta(EN_PATTERN, "英语·重点句式情景", "把单元重点句式编入情景选择练习，输出严格 JSON。",
 					EN_PATTERN_DEFAULT),
-			new PromptMeta(EN_PACK, "英语·单元内容生成", "为单元同步生成词汇/语法学习内容包，输出严格 JSON。", EN_PACK_DEFAULT));
+			new PromptMeta(EN_PACK, "英语·单元内容生成", "为单元同步生成词汇/语法学习内容包，输出严格 JSON。", EN_PACK_DEFAULT),
+			new PromptMeta(EN_SENTENCE, "英语·单元句子同步练习", "围绕单元重点句子生成多题型练习（连词成句/句子默写/句子选择），输出严格 JSON。",
+					EN_SENTENCE_DEFAULT));
 
 	/**
 	 * 返回全部场景提示词元数据（key、名称、说明、内置默认提示词）。

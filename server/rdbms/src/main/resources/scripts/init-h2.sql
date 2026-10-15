@@ -2427,6 +2427,30 @@ ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS update_at timestamp
 ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS update_by varchar(256);
 ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 
+-- 英语单元句子同步练习内容包（预生成固化：多题型句子练习，按 版本/年级/册别/单元 唯一）
+CREATE TABLE IF NOT EXISTS t_english_sentence_pack (
+  id varchar(64) NOT NULL,
+  version varchar(32) COMMENT '教材版本',
+  grade varchar(16) COMMENT '年级',
+  term varchar(16) COMMENT '学期（上册/下册）',
+  unit varchar(32) COMMENT '单元',
+  content text COMMENT '题目 JSON 数组',
+  count int DEFAULT 0 COMMENT '题目总数',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) COMMENT '创建人',
+  update_at timestamp COMMENT '更新时间',
+  update_by varchar(256) COMMENT '更新人',
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
+
+-- 补齐 BaseModel 审计列（幂等，兼容历史表结构）
+ALTER TABLE t_english_sentence_pack ADD COLUMN IF NOT EXISTS create_at timestamp DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE t_english_sentence_pack ADD COLUMN IF NOT EXISTS create_by varchar(256);
+ALTER TABLE t_english_sentence_pack ADD COLUMN IF NOT EXISTS update_at timestamp;
+ALTER TABLE t_english_sentence_pack ADD COLUMN IF NOT EXISTS update_by varchar(256);
+ALTER TABLE t_english_sentence_pack ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
+
 -- 英语单元目录（词库/句库单元 + 自定义排序/占位单元）
 CREATE TABLE IF NOT EXISTS t_english_unit (
   id varchar(64) NOT NULL,

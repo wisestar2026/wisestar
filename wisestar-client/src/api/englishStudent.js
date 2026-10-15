@@ -87,6 +87,11 @@ export function getEnglishPatternScenarios(params) {
   return request.get('/english/student/pattern-scenarios', { params });
 }
 
+/** 单元句子同步练习（多题型：连词成句/句子默写/句子选择，读取管理端已固化内容） */
+export function getEnglishSentenceExercises(params) {
+  return request.get('/english/student/sentence-exercises', { params });
+}
+
 /**
  * 记录学习会话，并展示奖励结算反馈。
  *
