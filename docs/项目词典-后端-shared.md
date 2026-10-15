@@ -1926,6 +1926,7 @@
 - 注解: @Data
 - **类说明**：
   英语单词视图 DTO。
+- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishWrongQuestionView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2737,7 +2738,11 @@
   英语学员学习服务（学员端学习中心）。
 - 方法:
   - `List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit)`
-    英语复习错题（聚合该学员英语学科检测记录里做错的题目，按 questionId 去重、累计错误次数、保留最近做错时间；题目快照已剥离标准答案与解析）。
+    英语复习错题（聚合该学员英语学科检测记录里做错的题目，按 questionId 去重、累计错误次数、保留最近做错时间，并剔除已消灭题；题目快照已剥离标准答案与解析）。
+  - `StudentQuestionView wrongQuestion(String userId, String questionId)`
+    取单道英语错题的重做用题目（含标准答案，仅本人英语错题可读，否则返回 null）。
+  - `StudentWrongRedoView redoWrong(String userId, StudentWrongRedoRequest request)`
+    英语错题重做：判分正确则落一条 `t_english_wrong_redo` 消灭记录（幂等），返回 ok/removed。
   - `StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
     记录一次学习会话（写学习日志 + 结算学习币/积分奖励）。
 

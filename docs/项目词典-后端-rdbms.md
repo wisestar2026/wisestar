@@ -318,6 +318,7 @@
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
   英语单词实体（对应数据库表 t_english_word）。
+- 字段: spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节=人为 model）/ level（掌握层级：四会/三会）
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishWordBook.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -325,6 +326,13 @@
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
   用户单词本实体（对应数据库表 t_english_word_book）。
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishWrongRedo.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishWrongRedo`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语错题消灭记录实体（对应数据库表 t_english_wrong_redo）。字段 studentId/questionId，唯一键 (student_id, question_id) 保证幂等；学员重做正确后落库，作为「该错题已消灭」的持久化依据，聚合英语错题时剔除。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/File.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -1749,6 +1757,12 @@
 - 类型: `interface EnglishWordMapper`
 - **类说明**：
   EnglishWord Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishWrongRedoMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishWrongRedoMapper`
+- **类说明**：
+  EnglishWrongRedo Mapper（MyBatis-Plus 基础 CRUD）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/FileMapper.java`
 - 包: `cn.wisestar.server.mapper`

@@ -338,7 +338,11 @@
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
   - `public List<EnglishWrongQuestionView> wrongQuestions(@RequestParam(required = false) Integer limit)`
-    英语复习错题（检测记录聚合，题目快照已剥离答案；`limit` 可选）。
+    英语复习错题（检测记录聚合并剔除已消灭题，题目快照已剥离答案；`limit` 可选）。
+  - `public StudentQuestionView wrongQuestion(@RequestParam String questionId)`
+    取单道英语错题的重做用题目（含标准答案，仅本人错题可读）。
+  - `public StudentWrongRedoView wrongRedo(@RequestBody StudentWrongRedoRequest request)`
+    英语错题重做（答对即消灭，幂等落库）。
 
 ### `api/src/main/java/cn/wisestar/server/api/EnglishUnitApi.java`
 - 包: `cn.wisestar.server.api`
