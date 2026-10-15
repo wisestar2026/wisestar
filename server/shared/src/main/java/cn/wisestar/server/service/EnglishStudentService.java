@@ -6,6 +6,9 @@ import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 
 import java.util.List;
 
@@ -111,5 +114,24 @@ public interface EnglishStudentService {
 	 * @return 错题列表（最近做错的在前）
 	 */
 	List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit);
+
+	/**
+	 * 取单道英语错题的重做用题目（含标准答案，仅当确为本人英语错题时返回）。
+	 *
+	 * @param userId     用户 ID
+	 * @param questionId 题目 ID
+	 * @return 含标准答案的题目视图；非本人错题或题目不存在时返回 {@code null}
+	 */
+	StudentQuestionView wrongQuestion(String userId, String questionId);
+
+	/**
+	 * 英语错题重做：判分正确则把该题标记为「已消灭」（落库，幂等），
+	 * 之后聚合英语错题时不再返回该题。
+	 *
+	 * @param userId  用户 ID
+	 * @param request 重做请求（题目 ID + 学员作答）
+	 * @return 重做结果（ok / 是否已消灭 removed）
+	 */
+	StudentWrongRedoView redoWrong(String userId, StudentWrongRedoRequest request);
 
 }

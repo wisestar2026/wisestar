@@ -67,6 +67,16 @@ export function getEnglishWrongQuestions(params) {
   return request.get('/english/student/wrong-questions', { params });
 }
 
+/** 取单道英语错题的重做用题目（含标准答案，仅本人错题可读） */
+export function getEnglishWrongQuestion(params) {
+  return request.get('/english/student/wrong-question', { params });
+}
+
+/** 英语错题重做：答对即消灭（后端幂等落库） */
+export function redoEnglishWrong(data) {
+  return request.post('/english/student/wrong/redo', data);
+}
+
 /** 情景对话练习（AI 按单元单词实时生成，不落库） */
 export function getEnglishScenarios(params) {
   return request.get('/english/student/scenarios', { params });

@@ -9,6 +9,9 @@ import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
+import cn.wisestar.server.domain.dto.student.StudentQuestionView;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
+import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 import cn.wisestar.server.service.EnglishScenarioPackService;
 import cn.wisestar.server.service.EnglishStudentService;
 import lombok.RequiredArgsConstructor;
@@ -141,6 +144,24 @@ public class EnglishStudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public List<EnglishWrongQuestionView> wrongQuestions(@RequestParam(required = false) Integer limit) {
 		return englishStudentService.wrongQuestions(SecurityContextUtils.getUserId(), limit);
+	}
+
+	/**
+	 * 取单道英语错题的重做用题目（含标准答案，仅本人错题可读）。
+	 */
+	@GetMapping("/wrong-question")
+	@PreAuthorize("isAuthenticated()")
+	public StudentQuestionView wrongQuestion(@RequestParam String questionId) {
+		return englishStudentService.wrongQuestion(SecurityContextUtils.getUserId(), questionId);
+	}
+
+	/**
+	 * 英语错题重做：答对即消灭（幂等落库），之后不再出现在复习错题中。
+	 */
+	@PostMapping("/wrong/redo")
+	@PreAuthorize("isAuthenticated()")
+	public StudentWrongRedoView wrongRedo(@RequestBody StudentWrongRedoRequest request) {
+		return englishStudentService.redoWrong(SecurityContextUtils.getUserId(), request);
 	}
 
 	/**

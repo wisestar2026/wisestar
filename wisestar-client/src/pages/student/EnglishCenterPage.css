@@ -140,6 +140,7 @@
 .eng-btn-grammar { background: #f1ecff; color: #6a4bd0; }
 .eng-btn-scenario { background: #e6f7f4; color: #128a72; }
 .eng-btn-pattern { background: #fdf1e6; color: #c2762a; }
+.eng-btn-eliminate { background: #ffe9e6; color: #d94a3a; padding: 8px 18px; font-size: 14px; }
 
 /* ---------- 重点语法页 ---------- */
 .eng-grammar-hero { margin-bottom: 18px; }

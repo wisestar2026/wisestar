@@ -7,7 +7,8 @@
  *   2. 单词：按单元统计待复习数量，点击进入单词练习
  *   3. 重点句子：按单元列出待复习句子，点击进入句子练习
  *   4. 语法：按单元列出待复习语法点，点击进入语法练习（回写掌握度）
- *   5. 错题：聚合英语练习（单元练习/语法练习）做错的题目，仅回显题干、隐藏答案解析
+ *   5. 错题：聚合英语练习（单元练习/语法练习）做错的题目，仅回显题干、隐藏答案解析；
+ *      每道错题可「消灭」，页内弹层重做，答对即从复习错题中移除（与数学错题消灭一致）
  *
  * URL: /student/english/review
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心「智能复习」
@@ -18,6 +19,8 @@
  *   GET /api/english/student/sentences        句子列表（含熟练度）
  *   GET /api/english/student/grammars         语法列表（含掌握度）
  *   GET /api/english/student/wrong-questions  英语复习错题（来自检测记录，隐藏答案解析）
+ *   GET /api/english/student/wrong-question   单道错题详情（含标准答案，重做用）
+ *   POST /api/english/student/wrong/redo      错题重做（答对即消灭）
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -30,12 +33,18 @@ import {
   getEnglishSentences,
   getEnglishGrammars,
   getEnglishWrongQuestions,
+  getEnglishWrongQuestion,
+  redoEnglishWrong,
 } from '../../api/englishStudent';
 import QuestionPreview from '../../components/practice/QuestionPreview';
+import WrongDrillModal from './WrongDrillModal';
 import './EnglishCenterPage.css';
 
 const FAMILIARITY_LABELS = ['未学习', '生疏', '熟悉', '熟练', '精通'];
 const FAMILIARITY_COLORS = ['default', 'orange', 'blue', 'cyan', 'green'];
+
+/** 英语错题消灭不增补提高题（提高题数据源为数学专用），显式返回 null */
+const noopHarder = async () => null;
 
 /** 是否有作答记录（做过 / 提交过）；未学习的一律不算 */
 function hasRecord(item) {
@@ -76,6 +85,13 @@ export default function EnglishReviewPage() {
   const [sentences, setSentences] = useState([]);
   const [grammars, setGrammars] = useState([]);
   const [wrongQuestions, setWrongQuestions] = useState([]);
+  const [drillItem, setDrillItem] = useState(null);
+
+  /** 英语错题重做的取题函数（含标准答案），注入给通用错题消灭弹层 */
+  const fetchWrongQuestion = useCallback(async (item) => {
+    const res = await getEnglishWrongQuestion({ questionId: item.questionId });
+    return res?.data;
+  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -98,6 +114,11 @@ export default function EnglishReviewPage() {
   }, [version, grade, term]);
 
   useEffect(() => {
+    load();
+  }, [load]);
+
+  const onEliminated = useCallback(() => {
+    setDrillItem(null);
     load();
   }, [load]);
 
@@ -242,6 +263,11 @@ export default function EnglishReviewPage() {
             <span className="eng-wrong-unit">{w.chapter || '未分单元'}</span>
             {w.knowledgePoint && <Tag color="blue">{w.knowledgePoint}</Tag>}
             <span className="eng-wrong-times">做错 {(w.wrongCount || 1)} 次</span>
+            <span style={{ marginLeft: 'auto' }}>
+              <button type="button" className="eng-btn-eliminate eng-btn" onClick={() => setDrillItem(w)}>
+                消灭错题
+              </button>
+            </span>
           </div>
           <QuestionPreview question={w.question} />
         </div>
@@ -274,6 +300,17 @@ export default function EnglishReviewPage() {
           返回学习中心
         </button>
       </div>
+
+      <WrongDrillModal
+        open={Boolean(drillItem)}
+        mode="single"
+        originals={drillItem ? [drillItem] : []}
+        onClose={() => setDrillItem(null)}
+        onEliminated={onEliminated}
+        fetchOriginal={fetchWrongQuestion}
+        redoQuestion={redoEnglishWrong}
+        fetchHarder={noopHarder}
+      />
     </div>
   );
 }

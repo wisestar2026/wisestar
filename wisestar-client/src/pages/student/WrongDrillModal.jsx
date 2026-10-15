@@ -15,8 +15,11 @@
  *   originals     Array          原错题项（wrong-list 元素）
  *   onClose       () => void     关闭
  *   onEliminated  () => void     成功消灭后的刷新回调
+ *   fetchOriginal (item) => 题目  取原题（含标准答案）；默认走数学 study/questions
+ *   redoQuestion  ({questionId, answer}) => res  单题消灭；默认走数学 /student/wrong/redo
+ *   fetchHarder   (base, seen) => 题目|null      增补同类型提高题；默认走数学数据源
  *
- * 被谁引用: WrongBookPanel
+ * 被谁引用: WrongBookPanel（数学）、EnglishReviewPage（英语，注入英语数据源）
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -31,6 +34,12 @@ const { Text } = Typography;
 
 /** 难度递进：easy→medium→hard（hard 已最高，维持 hard） */
 const NEXT_DIFFICULTY = { easy: 'medium', medium: 'hard', hard: 'hard' };
+
+/** 默认取原题：数学 study/questions 单题重做（含标准答案） */
+async function defaultFetchOriginal(item) {
+  const res = await getStudyQuestions({ questionId: item.questionId, exposeAnswer: true });
+  return (res?.data || [])[0];
+}
 
 /** study/questions 返回项 → QuestionCard 需要的题目结构 */
 function toCardQuestion(source, fallbackType) {
@@ -48,14 +57,13 @@ function difficultyOf(question) {
 }
 
 /** 组装一次错题组：先放入原错题，逐题答对后再按需增补提高题 */
-async function buildDrillSequence(originals, seen) {
+async function buildDrillSequence(originals, seen, fetchOriginal) {
   const questions = [];
   const originalIds = [];
   for (const item of originals) {
     // 原题详情（含标准答案）
     // eslint-disable-next-line no-await-in-loop
-    const res = await getStudyQuestions({ questionId: item.questionId, exposeAnswer: true });
-    const source = (res?.data || [])[0];
+    const source = await fetchOriginal(item);
     if (!source?.id || seen.has(source.id)) {
       continue;
     }
@@ -114,7 +122,16 @@ async function fetchHarderQuestion(base, seen) {
   return null;
 }
 
-export default function WrongDrillModal({ open, mode, originals, onClose, onEliminated }) {
+export default function WrongDrillModal({
+  open,
+  mode,
+  originals,
+  onClose,
+  onEliminated,
+  fetchOriginal,
+  redoQuestion,
+  fetchHarder,
+}) {
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [originalIds, setOriginalIds] = useState([]);
@@ -139,7 +156,11 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     seenRef.current = new Set();
     spawnedRef.current = new Set();
     try {
-      const { questions: qs, originalIds: ids } = await buildDrillSequence(originals || [], seenRef.current);
+      const { questions: qs, originalIds: ids } = await buildDrillSequence(
+        originals || [],
+        seenRef.current,
+        fetchOriginal || defaultFetchOriginal,
+      );
       setQuestions(qs);
       setOriginalIds(ids);
     } catch {
@@ -148,7 +169,7 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     } finally {
       setLoading(false);
     }
-  }, [originals]);
+  }, [originals, fetchOriginal]);
 
   useEffect(() => {
     if (open) {
@@ -172,7 +193,7 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     spawnedRef.current.add(current.id);
     setPreparingNext(true);
     try {
-      const harder = await fetchHarderQuestion(current, seenRef.current);
+      const harder = await (fetchHarder || fetchHarderQuestion)(current, seenRef.current);
       if (harder) {
         setQuestions((prev) => [...prev, harder]);
       }
@@ -192,7 +213,7 @@ export default function WrongDrillModal({ open, mode, originals, onClose, onElim
     for (const qid of originalIds) {
       try {
         // eslint-disable-next-line no-await-in-loop
-        const res = await wrongRedo({ questionId: qid, answer: answers[qid] });
+        const res = await (redoQuestion || wrongRedo)({ questionId: qid, answer: answers[qid] });
         if (!res?.data?.removed) {
           removedAll = false;
         }

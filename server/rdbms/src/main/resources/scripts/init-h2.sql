@@ -2335,6 +2335,20 @@ CREATE TABLE IF NOT EXISTS t_english_learning_log (
 );
 CREATE INDEX IF NOT EXISTS idx_english_log_user ON t_english_learning_log (user_id, created_at);
 
+-- 英语错题消灭记录表（学员重做正确后落库，作为「已消灭」依据，复习聚合错题时剔除）
+CREATE TABLE IF NOT EXISTS t_english_wrong_redo (
+  id varchar(64) NOT NULL,
+  student_id varchar(64) NOT NULL COMMENT '学员ID',
+  question_id varchar(64) NOT NULL COMMENT '已消灭的题目ID',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL COMMENT '创建人',
+  update_at timestamp DEFAULT NULL COMMENT '更新时间',
+  update_by varchar(256) DEFAULT NULL COMMENT '更新人',
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uk_english_wrong_redo ON t_english_wrong_redo (student_id, question_id);
+
 -- 学员学习记录表（学员督学功能）
 CREATE TABLE IF NOT EXISTS t_student_record (
   id varchar(64) NOT NULL,
