@@ -46,6 +46,9 @@ public class EnglishWordView {
 	/** 小节 */
 	private String section;
 
+	/** 掌握层级（四会/三会） */
+	private String level;
+
 	/** 熟练度（用户单词本） */
 	private Integer familiarity;
 

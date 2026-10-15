@@ -374,6 +374,18 @@
   font-size: 13px;
   font-weight: 800;
 }
+/* 掌握层级标记（四会/三会） */
+.eng-level-tag {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.eng-level-four { background: #e8f2ff; color: #2f6fd0; }
+.eng-level-three { background: #eef1f4; color: #6b7683; }
 .eng-weak-list { margin: 18px auto 0; max-width: 620px; text-align: left; }
 .eng-weak-list-title { font-size: 14px; font-weight: 800; color: #d9603a; margin-bottom: 10px; text-align: center; }
 .eng-weak-item {

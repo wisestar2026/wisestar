@@ -49,4 +49,7 @@ public class EnglishWord extends BaseModel {
 	/** 小节 */
 	private String section;
 
+	/** 掌握层级（四会/三会）：四会=听、说、读、写；三会=听、说、读 */
+	private String level;
+
 }

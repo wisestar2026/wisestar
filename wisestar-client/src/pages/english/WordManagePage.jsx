@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, AutoComplete, Checkbox, Image } from 'antd';
+import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, AutoComplete, Checkbox, Image, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, ReadOutlined } from '@ant-design/icons';
 import { getSections, fillDictionary } from '../../api/englishAdmin';
 
@@ -37,6 +37,7 @@ export default function WordManagePage() {
   const [term, setTerm] = useState('');
   const [unit, setUnit] = useState('');
   const [section, setSection] = useState('');
+  const [level, setLevel] = useState('');
   const [spell, setSpell] = useState('');
   const [onlyMissing, setOnlyMissing] = useState(false);
 
@@ -82,6 +83,7 @@ export default function WordManagePage() {
       ...(term && { term }),
       ...(unit && { unit }),
       ...(section && { section }),
+      ...(level && { level }),
       ...(spell && { spell }),
       ...(onlyMissing && { hasImage: 'false' }),
     });
@@ -110,6 +112,7 @@ export default function WordManagePage() {
     setTerm('');
     setUnit('');
     setSection('');
+    setLevel('');
     setSpell('');
     setOnlyMissing(false);
     setCurrent(1);
@@ -218,8 +221,8 @@ export default function WordManagePage() {
   // 下载模板
   const downloadTemplate = () => {
     const template = [
-      ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元', '学期', '小节'],
-      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '外研版', '三年级', 'Unit 1', '上册', ''],
+      ['单词拼写', '音标', '释义', '图片 URL', '音频 URL', '例句', '版本', '年级', '单元', '学期', '小节', '层级'],
+      ['apple', '/æpl/', '苹果', '', '', 'This is an apple.', '外研版', '三年级', 'Unit 1', '上册', '', '四会'],
     ];
     const csv = template.map((row) => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -239,6 +242,13 @@ export default function WordManagePage() {
     { title: '册别', dataIndex: 'term', width: 70 },
     { title: '单元', dataIndex: 'unit', width: 80 },
     { title: '小节', dataIndex: 'section', width: 120, ellipsis: true },
+    {
+      title: '层级',
+      dataIndex: 'level',
+      width: 70,
+      render: (v) =>
+        v ? <Tag color={v === '四会' ? 'blue' : 'default'}>{v}</Tag> : <span style={{ color: '#bbb' }}>—</span>,
+    },
     {
       title: '配图',
       dataIndex: 'imageUrl',
@@ -328,6 +338,10 @@ export default function WordManagePage() {
         ]} />
         <Input placeholder="单元" allowClear style={{ width: 100 }} value={unit} onChange={(e) => setUnit(e.target.value)} />
         <Input placeholder="小节" allowClear style={{ width: 120 }} value={section} onChange={(e) => setSection(e.target.value)} onPressEnter={loadList} />
+        <Select placeholder="层级" allowClear style={{ width: 90 }} value={level} onChange={setLevel} options={[
+          { value: '四会', label: '四会' },
+          { value: '三会', label: '三会' },
+        ]} />
         <Input placeholder="单词拼写" allowClear style={{ width: 150 }} value={spell} onChange={(e) => setSpell(e.target.value)} onPressEnter={loadList} />
         <Checkbox checked={onlyMissing} onChange={(e) => { setOnlyMissing(e.target.checked); setCurrent(1); }}>仅看无图</Checkbox>
         <Button type="primary" onClick={loadList}>查询</Button>
@@ -418,6 +432,12 @@ export default function WordManagePage() {
                 placeholder="选择或输入小节"
                 filterOption={(input, option) => (option?.value || '').toLowerCase().includes(input.toLowerCase())}
               />
+            </Form.Item>
+            <Form.Item name="level" label="层级">
+              <Select allowClear placeholder="四会/三会" options={[
+                { value: '四会', label: '四会' },
+                { value: '三会', label: '三会' },
+              ]} />
             </Form.Item>
           </div>
         </Form>

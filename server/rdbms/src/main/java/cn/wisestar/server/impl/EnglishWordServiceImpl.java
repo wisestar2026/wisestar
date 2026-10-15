@@ -54,6 +54,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
 				.eq(query.getSection() != null, EnglishWord::getSection, query.getSection())
+				.eq(query.getLevel() != null, EnglishWord::getLevel, query.getLevel())
 				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
 				.orderByAsc(EnglishWord::getGrade)
 				.orderByAsc(EnglishWord::getTerm)
@@ -79,6 +80,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 				.eq(query.getTerm() != null, EnglishWord::getTerm, query.getTerm())
 				.eq(query.getUnit() != null, EnglishWord::getUnit, query.getUnit())
 				.eq(query.getSection() != null, EnglishWord::getSection, query.getSection())
+				.eq(query.getLevel() != null, EnglishWord::getLevel, query.getLevel())
 				.like(query.getSpell() != null, EnglishWord::getSpell, query.getSpell())
 				.orderByAsc(EnglishWord::getGrade)
 				.orderByAsc(EnglishWord::getTerm)
@@ -271,6 +273,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		view.setTerm(word.getTerm());
 		view.setUnit(word.getUnit());
 		view.setSection(word.getSection());
+		view.setLevel(word.getLevel());
 		return view;
 	}
 

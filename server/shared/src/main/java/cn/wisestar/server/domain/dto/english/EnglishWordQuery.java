@@ -29,6 +29,9 @@ public class EnglishWordQuery extends PageQuery {
 	/** 小节 */
 	private String section;
 
+	/** 掌握层级（四会/三会） */
+	private String level;
+
 	/** 单词拼写（模糊） */
 	private String spell;
 

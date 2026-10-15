@@ -373,6 +373,11 @@ export default function EnglishWordLearnPage() {
 
       <div className="eng-card eng-card-word">
         {currentWeak && <div className="eng-weak-tag">需加强</div>}
+        {current?.level && (
+          <div className={`eng-level-tag ${current.level === '四会' ? 'eng-level-four' : 'eng-level-three'}`}>
+            {current.level}
+          </div>
+        )}
         <div
           className="eng-word eng-word-clickable"
           role="button"
