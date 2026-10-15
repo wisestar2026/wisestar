@@ -4,8 +4,12 @@
  * 原创声明: 本页布局与视觉为自研，未复制第三方产品素材
  * ============================================================ */
 
+/* 英语学习页统一外壳：左侧单元导航 + 中间内容合计约占主界面 75%，
+ * 宽度随窗口比例自适应（过宽时封顶 1440，窄屏逐级放宽到满宽）。 */
 .eng-page {
-  max-width: 1080px;
+  width: 75%;
+  max-width: 1440px;
+  min-width: 0;
   margin: 0 auto;
   padding: 20px 20px 80px;
 }
@@ -147,49 +151,49 @@
 .eng-grammar-list { display: flex; flex-direction: column; gap: 14px; }
 .eng-grammar-card {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 18px;
-  padding: 16px 18px;
+  border-radius: 20px;
+  padding: 20px 22px;
   box-shadow: 0 8px 20px rgba(64, 140, 190, 0.14);
 }
 .eng-grammar-head { display: flex; align-items: flex-start; gap: 10px; }
 .eng-grammar-index {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: #f1ecff;
   color: #6a4bd0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.eng-grammar-title { font-size: 15px; font-weight: 800; color: #14506e; line-height: 1.5; }
-.eng-grammar-content { margin: 8px 0 0 32px; font-size: 13px; color: #43647a; line-height: 1.7; }
-.eng-grammar-examples { margin: 10px 0 0 32px; }
-.eng-grammar-examples-label { font-size: 12px; font-weight: 700; color: #6a4bd0; margin-bottom: 4px; }
-.eng-grammar-examples ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.eng-grammar-title { font-size: clamp(17px, 1.2vw, 20px); font-weight: 800; color: #14506e; line-height: 1.5; }
+.eng-grammar-content { margin: 8px 0 0 36px; font-size: 15px; color: #43647a; line-height: 1.75; }
+.eng-grammar-examples { margin: 12px 0 0 36px; }
+.eng-grammar-examples-label { font-size: 13px; font-weight: 700; color: #6a4bd0; margin-bottom: 6px; }
+.eng-grammar-examples ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .eng-grammar-examples li {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
   background: #f7f4ff;
-  border-radius: 10px;
-  padding: 7px 10px;
+  border-radius: 12px;
+  padding: 9px 12px;
 }
-.eng-grammar-en { font-size: 13px; color: #14506e; font-weight: 600; }
-.eng-grammar-zh { font-size: 12px; color: #7a8fa0; }
+.eng-grammar-en { font-size: 15px; color: #14506e; font-weight: 600; }
+.eng-grammar-zh { font-size: 14px; color: #7a8fa0; }
 .eng-grammar-sound {
   margin-left: auto;
   border: none;
   border-radius: 999px;
   background: #e6f6fd;
   color: #1479a6;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 3px 12px;
+  padding: 4px 14px;
   cursor: pointer;
 }
 .eng-grammar-sound:hover { background: #d5eefb; }
@@ -284,6 +288,17 @@
   max-height: 300px;
   border-radius: 20px;
   box-shadow: 0 10px 24px rgba(64, 140, 190, 0.18);
+}
+/* 看图选单词：图片下方给出中文释义提示，帮助理解词义 */
+.eng-quiz-image-hint {
+  display: inline-block;
+  margin: 2px auto 6px;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: #fff0e8;
+  color: #d9603a;
+  font-size: 18px;
+  font-weight: 800;
 }
 .eng-quiz-prompt-meaning { font-size: 36px; font-weight: 900; color: #d9603a; }
 .eng-quiz-options {
@@ -533,22 +548,22 @@
  * 设计：扁平柔和（无边框、弱阴影）、字号加大、学生友好
  * 左侧导航与右侧内容容器等高（.eng-master align-items: stretch）
  * ============================================================ */
-.eng-master { display: flex; gap: 20px; align-items: stretch; }
+.eng-master { display: flex; gap: 24px; align-items: stretch; }
 .eng-aside {
   flex: none;
-  width: 184px;
+  width: 216px;
   display: flex;
   flex-direction: column;
   background: #eef6fc;
-  border-radius: 24px;
-  padding: 18px 14px;
+  border-radius: 26px;
+  padding: 20px 16px;
 }
 .eng-aside-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   color: #3d7fa0;
   text-align: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   letter-spacing: 2px;
 }
 .eng-aside-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
@@ -556,9 +571,9 @@
   position: relative;
   border: none;
   background: #ffffff;
-  border-radius: 16px;
-  padding: 18px 8px;
-  font-size: 16px;
+  border-radius: 18px;
+  padding: 20px 10px;
+  font-size: 18px;
   font-weight: 800;
   color: #2b6c8f;
   cursor: pointer;
@@ -590,13 +605,13 @@
   display: flex;
   flex-direction: column;
   background: #f7fbfe;
-  border-radius: 26px;
-  padding: 28px 30px 30px;
+  border-radius: 28px;
+  padding: 32px 36px 34px;
 }
 .eng-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.eng-detail-title { font-size: 26px; font-weight: 900; color: #14506e; letter-spacing: 0.5px; }
-.eng-detail-title-sub { color: #2f9fd4; margin-left: 10px; font-size: 22px; }
-.eng-detail-tip { margin-top: 8px; font-size: 14px; color: #6a93a8; }
+.eng-detail-title { font-size: clamp(26px, 1.8vw, 34px); font-weight: 900; color: #14506e; letter-spacing: 0.5px; }
+.eng-detail-title-sub { color: #2f9fd4; margin-left: 12px; font-size: clamp(20px, 1.4vw, 26px); }
+.eng-detail-tip { margin-top: 10px; font-size: 16px; color: #6a93a8; }
 .eng-review-pill {
   flex: none;
   border: none;
@@ -613,15 +628,15 @@
 .eng-review-pill:hover { transform: translateY(-2px); }
 
 /* 熟练度 */
-.eng-mastery-row { display: flex; align-items: center; gap: 10px; margin-top: 18px; }
-.eng-mastery-label { font-size: 15px; color: #5b7f92; font-weight: 700; }
-.eng-mastery-val { font-size: 20px; font-weight: 900; color: #2e9e5b; margin-left: auto; }
+.eng-mastery-row { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
+.eng-mastery-label { font-size: 16px; color: #5b7f92; font-weight: 700; }
+.eng-mastery-val { font-size: 24px; font-weight: 900; color: #2e9e5b; margin-left: auto; }
 
 /* 单词 / 句子 / 语法 三段进度 */
-.eng-progress-grid { display: flex; gap: 24px; margin-top: 20px; }
+.eng-progress-grid { display: flex; gap: 24px; margin-top: 22px; }
 .eng-progress-item { flex: 1; min-width: 0; }
-.eng-progress-item .eng-stat-label { font-size: 14px; }
-.eng-progress-item .eng-stat-bar { height: 10px; margin-top: 8px; }
+.eng-progress-item .eng-stat-label { font-size: 15px; }
+.eng-progress-item .eng-stat-bar { height: 12px; margin-top: 8px; }
 
 /* 四张模块入口大卡（底部对齐，撑满容器） */
 .eng-mod-grid {
@@ -633,13 +648,13 @@
 }
 .eng-mod-card {
   border: none;
-  border-radius: 22px;
-  padding: 30px 18px;
+  border-radius: 24px;
+  padding: 40px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  font-size: 20px;
+  gap: 8px;
+  font-size: clamp(20px, 1.4vw, 26px);
   font-weight: 900;
   cursor: pointer;
   text-align: center;
@@ -647,9 +662,9 @@
 }
 .eng-mod-card:hover { transform: translateY(-3px); box-shadow: 0 14px 26px rgba(64, 140, 190, 0.22); }
 .eng-mod-card:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-.eng-mod-card em { font-style: normal; font-size: 15px; }
+.eng-mod-card em { font-style: normal; font-size: 16px; }
 .eng-mod-title { display: inline-flex; align-items: baseline; gap: 8px; }
-.eng-mod-sub { font-size: 14px; font-weight: 600; opacity: 0.75; }
+.eng-mod-sub { font-size: 16px; font-weight: 600; opacity: 0.75; }
 .eng-mod-word { background: #dbe9fb; color: #2f6bd0; }
 .eng-mod-sentence { background: #fce4d6; color: #d9603a; }
 .eng-mod-grammar { background: #fdf1cf; color: #c1901a; }
@@ -658,20 +673,20 @@
 /* 单词通关：按小节(model)分组的卡片 */
 .eng-model-group {
   background: #eef6fc;
-  border-radius: 20px;
-  padding: 18px 20px;
+  border-radius: 22px;
+  padding: 20px 22px;
   margin-top: 16px;
 }
 .eng-model-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
-.eng-model-name { font-size: 19px; font-weight: 900; color: #14506e; }
-.eng-model-done { font-size: 14px; font-weight: 800; color: #2e9e5b; }
-.eng-model-count { font-size: 13px; color: #7a9aac; margin-left: auto; }
+.eng-model-name { font-size: clamp(19px, 1.3vw, 24px); font-weight: 900; color: #14506e; }
+.eng-model-done { font-size: 15px; font-weight: 800; color: #2e9e5b; }
+.eng-model-count { font-size: 14px; color: #7a9aac; margin-left: auto; }
 .eng-model-bar {
-  height: 8px;
+  height: 10px;
   border-radius: 999px;
   background: #dbeaf4;
   overflow: hidden;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 .eng-model-bar > span {
   display: block;
@@ -684,8 +699,8 @@
 .eng-model-actions button {
   border: none;
   border-radius: 16px;
-  padding: 18px 8px;
-  font-size: 16px;
+  padding: 20px 10px;
+  font-size: 18px;
   font-weight: 800;
   cursor: pointer;
   transition: transform 0.15s ease;
@@ -713,7 +728,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 22px;
+  font-size: clamp(22px, 1.5vw, 28px);
   font-weight: 900;
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
@@ -739,7 +754,13 @@
 }
 .eng-learn-back:hover { background: #e2edf4; }
 
+/* 中等屏幕：75% 会偏窄，放宽到 88% 保证左+中两块仍有足够空间 */
+@media (max-width: 1280px) {
+  .eng-page { width: 88%; }
+}
+
 @media (max-width: 760px) {
+  .eng-page { width: 100%; padding: 16px 14px 80px; }
   .eng-master { flex-direction: column; }
   .eng-aside { width: 100%; }
   .eng-aside-list { flex-direction: row; flex-wrap: wrap; }

@@ -2,9 +2,10 @@
  * EnglishGrammarLearnPage.jsx - 学员端英语重点语法（只读学习）
  *
  * 功能:
- *   1. 展示单元重点语法：规则标题 + 讲解 + 例句（可朗读）
- *   2. 语法为只读知识呈现，不参与熟练度与复习队列
- *   3. 本单元练习只提供跳转入口，实际作答在独立界面 EnglishGrammarPracticePage
+ *   1. 左侧单元导航 + 中间内容容器（与学习中心 / 单词通关同构、同宽）
+ *   2. 展示单元重点语法：规则标题 + 讲解 + 例句（可朗读）
+ *   3. 语法为只读知识呈现，不参与熟练度与复习队列
+ *   4. 本单元练习只提供跳转入口，实际作答在独立界面 EnglishGrammarPracticePage
  *
  * URL: /student/english/grammar?unit=xxx
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片「重点语法」
@@ -18,9 +19,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishGrammars } from '../../api/englishStudent';
+import { getEnglishGrammars, getEnglishUnits } from '../../api/englishStudent';
 import { getDetectUnits } from '../../api/detect';
 import { speakEnglish } from '../../utils/english';
+import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 
 /** 解析后端 JSON 字符串列（examples/exercises），容错为空数组 */
@@ -57,6 +59,7 @@ export default function EnglishGrammarLearnPage() {
   const activeSubject = useStudentStore((s) => s.activeSubject);
 
   const [list, setList] = useState([]);
+  const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   // 本单元可用练习题量（用于练习入口展示，失败静默为 0）
   const [questionCount, setQuestionCount] = useState(0);
@@ -76,6 +79,17 @@ export default function EnglishGrammarLearnPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // 左侧单元导航：与学习中心 / 单词通关一致的单元列表
+  useEffect(() => {
+    let cancelled = false;
+    getEnglishUnits({ version, grade, term })
+      .then((res) => { if (!cancelled) setUnits(res?.data || []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [version, grade, term]);
+
+  const goUnit = (next) => navigate(`/student/english/grammar?unit=${encodeURIComponent(next)}`);
 
   // 仅取本单元可用练习题量用于入口展示；实际作答在独立的语法练习页完成
   useEffect(() => {
@@ -113,90 +127,109 @@ export default function EnglishGrammarLearnPage() {
   }
 
   return (
-    <div className="eng-learn-wrap">
-      <div className="eng-hero eng-grammar-hero">
-        <div>
-          <div className="eng-hero-title">重点语法</div>
-          <div className="eng-hero-sub">{unit} · 共 {list.length} 条语法点，学完单词和句子再来巩固一下</div>
-        </div>
-      </div>
+    <div className="eng-page">
+      <div className="eng-master">
+        <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
 
-      <div className="eng-grammar-list">
-        {list.map((item, idx) => {
-          const examples = parseList(item.examples);
-          const showContent = item.content && item.content.trim() !== (item.title || '').trim();
-          return (
-            <div className="eng-grammar-card" key={item.id || `${unit}-${idx}`}>
-              <div className="eng-grammar-head">
-                <span className="eng-grammar-index">{idx + 1}</span>
-                <span className="eng-grammar-title">{item.title}</span>
+        <div className="eng-detail">
+          <div className="eng-detail-card">
+            <div className="eng-detail-head">
+              <div className="eng-detail-title">
+                {unit}<span className="eng-detail-title-sub">重点语法</span>
               </div>
-              {showContent && <div className="eng-grammar-content">{item.content}</div>}
-              {examples.length > 0 && (
-                <div className="eng-grammar-examples">
-                  <div className="eng-grammar-examples-label">例句</div>
-                  <ul>
-                    {examples.map((ex, i) => {
-                      const en = exampleText(ex);
-                      const zh = exampleZh(ex);
-                      return (
-                        <li key={`${item.id || idx}-ex-${i}`}>
-                          <span className="eng-grammar-en">{en}</span>
-                          {zh && <span className="eng-grammar-zh">{zh}</span>}
-                          {en && (
-                            <button
-                              type="button"
-                              className="eng-grammar-sound"
-                              title="朗读例句"
-                              onClick={() => speakEnglish(en)}
-                            >
-                              朗读
-                            </button>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+              {questionCount > 0 && (
+                <button
+                  type="button"
+                  className="eng-review-pill"
+                  onClick={() => navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(activeSubject || '1003')}`)}
+                >
+                  练习 {questionCount}
+                </button>
               )}
             </div>
-          );
-        })}
-      </div>
+            <div className="eng-detail-tip">
+              本单元共 {list.length} 条语法点，学完单词和句子再来巩固一下
+            </div>
 
-      {/* 本单元练习：只提供跳转入口，实际作答在独立的语法练习页完成 */}
-      <div className="eng-grammar-list" style={{ marginTop: 20 }}>
-        <div className="eng-grammar-card">
-          <div className="eng-grammar-head">
-            <span className="eng-grammar-index">📝</span>
-            <span className="eng-grammar-title">本单元练习</span>
-            {questionCount > 0 && (
-              <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>共 {questionCount} 题</span>
-            )}
-          </div>
-          <div className="eng-grammar-content">
-            {questionCount > 0
-              ? '语法学完了，去练习里实际做一遍，边做边巩固。'
-              : '该单元暂无绑定练习，先去学习单词和句子吧。'}
-          </div>
-          {questionCount > 0 && (
-            <div style={{ marginTop: 12 }}>
-              <button
-                type="button"
-                className="eng-btn eng-btn-primary"
-                onClick={() => navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(activeSubject || '1003')}`)}
-              >
-                进入语法练习
+            <div className="eng-grammar-list" style={{ marginTop: 18 }}>
+              {list.map((item, idx) => {
+                const examples = parseList(item.examples);
+                const showContent = item.content && item.content.trim() !== (item.title || '').trim();
+                return (
+                  <div className="eng-grammar-card" key={item.id || `${unit}-${idx}`}>
+                    <div className="eng-grammar-head">
+                      <span className="eng-grammar-index">{idx + 1}</span>
+                      <span className="eng-grammar-title">{item.title}</span>
+                    </div>
+                    {showContent && <div className="eng-grammar-content">{item.content}</div>}
+                    {examples.length > 0 && (
+                      <div className="eng-grammar-examples">
+                        <div className="eng-grammar-examples-label">例句</div>
+                        <ul>
+                          {examples.map((ex, i) => {
+                            const en = exampleText(ex);
+                            const zh = exampleZh(ex);
+                            return (
+                              <li key={`${item.id || idx}-ex-${i}`}>
+                                <span className="eng-grammar-en">{en}</span>
+                                {zh && <span className="eng-grammar-zh">{zh}</span>}
+                                {en && (
+                                  <button
+                                    type="button"
+                                    className="eng-grammar-sound"
+                                    title="朗读例句"
+                                    onClick={() => speakEnglish(en)}
+                                  >
+                                    朗读
+                                  </button>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* 本单元练习：只提供跳转入口，实际作答在独立的语法练习页完成 */}
+            <div className="eng-grammar-list" style={{ marginTop: 20 }}>
+              <div className="eng-grammar-card">
+                <div className="eng-grammar-head">
+                  <span className="eng-grammar-index">📝</span>
+                  <span className="eng-grammar-title">本单元练习</span>
+                  {questionCount > 0 && (
+                    <span style={{ marginLeft: 8, color: '#8aa4bd', fontSize: 13 }}>共 {questionCount} 题</span>
+                  )}
+                </div>
+                <div className="eng-grammar-content">
+                  {questionCount > 0
+                    ? '语法学完了，去练习里实际做一遍，边做边巩固。'
+                    : '该单元暂无绑定练习，先去学习单词和句子吧。'}
+                </div>
+                {questionCount > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <button
+                      type="button"
+                      className="eng-btn eng-btn-primary"
+                      onClick={() => navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(activeSubject || '1003')}`)}
+                    >
+                      进入语法练习
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="eng-actions">
+              <button type="button" className="eng-btn eng-btn-ghost" onClick={() => navigate('/student/english')}>
+                返回学习中心
               </button>
             </div>
-          )}
+          </div>
         </div>
-      </div>
-
-      <div className="eng-actions">
-        <button type="button" className="eng-btn eng-btn-ghost" onClick={() => navigate('/student/english')}>
-          返回学习中心
-        </button>
       </div>
     </div>
   );

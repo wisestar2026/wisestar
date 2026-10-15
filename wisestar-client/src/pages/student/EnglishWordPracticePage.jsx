@@ -203,12 +203,18 @@ export default function EnglishWordPracticePage() {
         <div className="eng-quiz-badge">{current.typeLabel}</div>
 
         {current.promptType === 'image' && (
-          <img
-            className="eng-quiz-image"
-            src={current.imageUrl || WORD_PLACEHOLDER}
-            alt="看图选单词"
-            onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
-          />
+          <>
+            <img
+              className="eng-quiz-image"
+              src={current.imageUrl || WORD_PLACEHOLDER}
+              alt="看图选单词"
+              onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
+            />
+            {/* 中文提示：图片下方给出该单词的中文释义，帮助理解词义 */}
+            {current.word?.meaning && (
+              <div className="eng-quiz-image-hint">提示：{current.word.meaning}</div>
+            )}
+          </>
         )}
 
         {current.promptType === 'meaning' && (
