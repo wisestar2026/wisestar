@@ -8,6 +8,8 @@
  * 设计（对齐参考图「填空题键盘」）:
  *   - 右下角悬浮开关按钮（「⌨ 虚拟键盘」），点击展开/收起，不答题时不渲染
  *   - 展开后为底部贴边面板，含 符号 / 字母 / 中文 三个页签 + 「删除」键
+ *   - 面板可拖动：按住顶部标题栏（页签/按钮以外区域）或左侧拖拽把手，可把键盘
+ *     移到屏幕任意位置，不再固定贴在底部；松手后停留在拖动位置（视口内自动收敛）
  *   - 字母页支持 Shift 大小写切换与空格
  *
  * Props:
@@ -20,7 +22,7 @@
  * 被谁引用: QuestionCard（单项填空 / 多项填空 / 多行文本）
  */
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { CloseOutlined, DeleteOutlined } from '@ant-design/icons';
 import './VirtualKeyboard.css';
 
@@ -59,6 +61,55 @@ export default function VirtualKeyboard({
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState(defaultTab);
   const [shift, setShift] = useState(false);
+  // 拖动后的面板左上角坐标（视口坐标系）；null 表示默认底部居中
+  const [pos, setPos] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const panelRef = useRef(null);
+  const dragRef = useRef({ dx: 0, dy: 0, active: false });
+
+  // 把坐标收敛到视口内（留 8px 边距），避免拖出屏幕后无法拖回
+  const clampPos = useCallback((x, y) => {
+    const el = panelRef.current;
+    const w = el?.offsetWidth || 0;
+    const h = el?.offsetHeight || 0;
+    const maxX = Math.max(8, window.innerWidth - w - 8);
+    const maxY = Math.max(8, window.innerHeight - h - 8);
+    return { x: Math.min(Math.max(8, x), maxX), y: Math.min(Math.max(8, y), maxY) };
+  }, []);
+
+  const onDragStart = (e) => {
+    if (e.button != null && e.button !== 0) return;
+    // 页签、删除、关闭等按钮保持正常点击，只有拖拽标题栏空白处才移动面板
+    if (e.target?.closest?.('button')) return;
+    const el = panelRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    dragRef.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top, active: true };
+    setPos({ x: rect.left, y: rect.top });
+    setDragging(true);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const onDragMove = (e) => {
+    if (!dragRef.current.active) return;
+    setPos(clampPos(e.clientX - dragRef.current.dx, e.clientY - dragRef.current.dy));
+  };
+
+  const onDragEnd = (e) => {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    setDragging(false);
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+  };
+
+  // 窗口尺寸变化时重新收敛位置，避免面板被挤出视口
+  const moved = pos != null;
+  useEffect(() => {
+    if (!moved) return undefined;
+    const onResize = () => setPos((p) => (p ? clampPos(p.x, p.y) : p));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [moved, clampPos]);
 
   if (!visible) return null;
 
@@ -85,19 +136,34 @@ export default function VirtualKeyboard({
       </button>
 
       {open && (
-        <div className="vk-panel" role="dialog" aria-label="虚拟键盘">
-          <div className="vk-head">
-            <div className="vk-tabs">
-              {TABS.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  className={`vk-tab ${tab === t.key ? 'is-active' : ''}`}
-                  onClick={() => setTab(t.key)}
-                >
-                  {t.label}
-                </button>
-              ))}
+        <div
+          ref={panelRef}
+          className={`vk-panel ${moved ? 'is-moved' : ''} ${dragging ? 'is-dragging' : ''}`}
+          role="dialog"
+          aria-label="虚拟键盘"
+          style={moved ? { left: pos.x, top: pos.y, bottom: 'auto', transform: 'none', animation: 'none' } : undefined}
+        >
+          <div
+            className="vk-head"
+            onPointerDown={onDragStart}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragEnd}
+            onPointerCancel={onDragEnd}
+          >
+            <div className="vk-head-left">
+              <span className="vk-grip" aria-hidden="true" title="按住拖动移动键盘">⠿</span>
+              <div className="vk-tabs">
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    className={`vk-tab ${tab === t.key ? 'is-active' : ''}`}
+                    onClick={() => setTab(t.key)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="vk-head-right">
               <button type="button" className="vk-del" onClick={del} disabled={disabled}>

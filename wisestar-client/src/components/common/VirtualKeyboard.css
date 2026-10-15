@@ -49,6 +49,9 @@
   from { transform: translateX(-50%) translateY(24px); opacity: 0.4; }
   to   { transform: translateX(-50%) translateY(0); opacity: 1; }
 }
+/* 拖动过后面板改为按 left/top 定位，不再走底部居中的滑入动画 */
+.vk-panel.is-moved { animation: none; }
+.vk-panel.is-dragging { user-select: none; box-shadow: 0 18px 44px rgba(2, 60, 100, 0.3); }
 
 .vk-head {
   display: flex;
@@ -56,6 +59,21 @@
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 10px;
+  /* 标题栏可拖动：空白处按住移动整个键盘 */
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.vk-panel.is-dragging .vk-head { cursor: grabbing; }
+.vk-head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* 拖拽把手 */
+.vk-grip {
+  flex: none;
+  color: #9db4c6;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -2px;
+  cursor: grab;
 }
 .vk-tabs { display: flex; gap: 6px; }
 .vk-tab {
