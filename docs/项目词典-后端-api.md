@@ -310,6 +310,26 @@
   - `public ImportResult importSentences(@RequestParam MultipartFile file)`
     批量导入句子（Excel）。
 
+### `api/src/main/java/cn/wisestar/server/api/EnglishSentencePackApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class EnglishSentencePackApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  英语单元「句子练习固化」内容包接口（后台管理端：分组调用 AI 预生成多题型句子练习并固化）。类级路径 `${api.prefix}/english/sentence-pack`，权限复用 `english:word:ai`。
+- 方法:
+  - `public EnglishSentencePackView generate(@RequestParam String version, @RequestParam String grade, @RequestParam String term, @RequestParam String unit)`
+    按单元分组调用 AI 生成句子练习内容包预览（不落库）。
+  - `public EnglishSentencePackView save(@RequestBody EnglishSentencePackView pack)`
+    保存句子练习内容包（同 版本+年级+册别+单元 覆盖更新）。
+  - `public PaginationResponse<EnglishSentencePackView> list(EnglishSentencePackQuery query)`
+    句子练习内容包分页列表（不含正文）。
+  - `public EnglishSentencePackView detail(@RequestParam String id)`
+    句子练习内容包详情（含正文）。
+  - `public void delete(@RequestParam String id)`
+    删除句子练习内容包（逻辑删除）。
+  - `public List<String> units(@RequestParam String version, @RequestParam String grade, @RequestParam String term)`
+    该册下存在重点句子的单元列表（用于整册批量生成）。
+
 ### `api/src/main/java/cn/wisestar/server/api/EnglishStudentApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class EnglishStudentApi`
@@ -335,6 +355,8 @@
     情景对话练习：读取管理端固化的单词情景对话（按分组顺序展平，未固化返回空列表，不触发 AI）。
   - `public List<EnglishPatternScenarioView> patternScenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
     重点句式情景练习：读取管理端固化的句式情景（未固化返回空列表，不触发 AI）。
+  - `public List<EnglishSentenceExercise> sentenceExercises(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
+    单元句子同步练习：读取管理端固化的多题型句子练习（连词成句/句子默写/句子选择，未固化返回空列表，不触发 AI）。
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
   - `public List<EnglishWrongQuestionView> wrongQuestions(@RequestParam(required = false) Integer limit)`

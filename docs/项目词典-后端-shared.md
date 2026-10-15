@@ -1835,6 +1835,27 @@
 - **类说明**：
   英语句子视图 DTO。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSentenceExercise.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishSentenceExercise`
+- 注解: @Data
+- **类说明**：
+  英语单元句子同步练习题目 DTO（多题型）。kind=build 连词成句 / dictation 句子默写 / choice 句子选择；字段 kind/zh/en/options/answer/hint/explanation/sentenceId。由管理端「句子练习固化」预生成并落库，学员端 `/english/student/sentence-exercises` 只读。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSentencePackView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishSentencePackView`
+- 注解: @Data
+- **类说明**：
+  英语单元句子同步练习内容包视图 DTO。一条记录对应 版本+年级+册别+单元，content 为 `EnglishSentenceExercise` 列表 JSON 数组，count 为题数；管理端生成预览后确认固化，学员端只读。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSentencePackQuery.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishSentencePackQuery`
+- 注解: @Data, @EqualsAndHashCode
+- **类说明**：
+  英语单元句子同步练习内容包查询 DTO（version/grade/term/unit），继承 `PageQuery`。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPatternScenarioView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishPatternScenarioView`
@@ -2724,6 +2745,21 @@
 - 方法:
   - `List<EnglishScenarioView> generateFromWords(String grade, String unit, List<EnglishScenarioWord> words)`
     按一组单词生成情景对话练习（3-4 个场景），无可用单词时返回空列表。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishSentencePackService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishSentencePackService`
+- **类说明**：
+  英语单元句子同步练习内容包服务（预生成 + 固化落库 + 学员端只读）：管理端按 版本+年级+册别+单元 分组调用 AI 生成多题型句子练习预览（不落库），确认后覆盖保存；学员端仅读取已固化内容，不再触发实时 AI。
+- 方法:
+  - `EnglishSentencePackView generate(String version, String grade, String term, String unit)`
+  - `EnglishSentencePackView savePack(EnglishSentencePackView pack)`
+  - `PaginationResponse<EnglishSentencePackView> listPacks(EnglishSentencePackQuery query)`
+  - `EnglishSentencePackView getPack(String id)`
+  - `void deletePack(String id)`
+  - `List<String> listUnits(String version, String grade, String term)`
+  - `List<EnglishSentenceExercise> getExercises(String version, String grade, String term, String unit)`
+    学员端读取：该单元已固化的句子练习题（无内容时返回空列表）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishSentenceService.java`
 - 包: `cn.wisestar.server.service`
