@@ -1,0 +1,137 @@
+/* UnitPaperManagePage.css - 英语单元练习卷（后台组卷 + 打印） */
+
+.paper-page {
+  max-width: 900px;
+}
+
+.paper-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* 试卷主体 */
+.paper {
+  background: #fff;
+  padding: 28px 32px 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  color: #1f2329;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.paper-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 16px;
+}
+
+.paper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 14px;
+  color: #333;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.paper-tip {
+  margin: 10px 0 20px;
+  font-size: 13px;
+  color: #888;
+}
+
+.paper-question {
+  margin-bottom: 22px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.paper-q-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.paper-q-no {
+  font-weight: 800;
+}
+
+.paper-q-stem {
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.paper-q-images {
+  margin: 8px 0;
+}
+
+.paper-q-images img {
+  max-width: 320px;
+  max-height: 240px;
+  margin-right: 8px;
+}
+
+.paper-q-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 20px;
+  margin: 8px 0 4px;
+}
+
+.paper-option {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.paper-option-letter {
+  font-weight: 700;
+}
+
+.paper-option-text {
+  word-break: break-word;
+}
+
+.paper-answer-line {
+  margin-top: 10px;
+  border-bottom: 1px solid #c8c8c8;
+  height: 22px;
+}
+
+/* 打印：仅输出试卷主体，隐藏后台框架与工具栏 */
+@media print {
+  .ant-layout-sider,
+  .ant-layout-header,
+  .ant-layout-footer,
+  .no-print,
+  .ant-message {
+    display: none !important;
+  }
+
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .paper-page {
+    max-width: none;
+  }
+
+  .paper {
+    box-shadow: none !important;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}

@@ -86,6 +86,7 @@ import AiSettingPage from './pages/system/AiSettingPage';
 import WordManagePage from './pages/english/WordManagePage';
 import WordAiManagePage from './pages/english/WordAiManagePage';
 import ScenarioPackManagePage from './pages/english/ScenarioPackManagePage';
+import UnitPaperManagePage from './pages/english/UnitPaperManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
 import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
 import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
@@ -455,6 +456,14 @@ export default function App() {
               element={
                 <AuthGuard required={['english:word:ai']}>
                   <ScenarioPackManagePage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/english/unit-paper"
+              element={
+                <AuthGuard required={['template:list']}>
+                  <UnitPaperManagePage />
                 </AuthGuard>
               }
             />
