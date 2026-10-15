@@ -28,7 +28,8 @@
  *   confirmed: Object   - 已确认判题结果缓存 { [questionId]: {correct, correctAnswers} }
  *   onConfirm: () => void - 确认提交回调（点击「确认提交」按钮触发判题）
  *   judgeMode: boolean - 是否需要确认判题（true=专项/随机，false=套卷）
- *   showSymbolBar: boolean - 是否显示填空数学符号辅助条（默认 true；英语练习传 false 隐藏）
+ *   showKeyboard: boolean - 是否启用独立可收起虚拟键盘（默认 true；无文本输入时不渲染）
+ *   keyboardDefaultTab: 'symbol'|'letter'|'zh' - 键盘默认页签（数学默认 symbol，英语可传 letter）
  *
  * 专注力交互要点（对齐路线图 5.2/5.4）:
  *   - 大按钮式选项，悬停/选中高亮
@@ -46,7 +47,7 @@ import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import { isStdCycle } from '../../utils/cycleDecimal';
 import RichContent from '../common/RichContent';
 import CycleDecimalInput from '../common/CycleDecimalInput';
-import MathSymbolBar from '../common/MathSymbolBar';
+import VirtualKeyboard from '../common/VirtualKeyboard';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -63,7 +64,8 @@ const DIFFICULTY_LABELS = {
 };
 
 export default function QuestionCard({
-  question, index, total, value, onChange, confirmed, onConfirm, judgeMode, showSymbolBar = true,
+  question, index, total, value, onChange, confirmed, onConfirm, judgeMode,
+  showKeyboard = true, keyboardDefaultTab = 'symbol',
 }) {
   // 题目 schema（template 内嵌问卷 JSON）
   const schema = question?.template || {};
@@ -107,9 +109,9 @@ export default function QuestionCard({
       }
     }
     return {
-      border, background: bg, borderRadius: 8, padding: '12px 16px',
+      border, background: bg, borderRadius: 8, padding: '14px 18px',
       cursor: locked ? 'default' : 'pointer', marginBottom: 12,
-      display: 'flex', alignItems: 'center', gap: 10, fontSize: 15,
+      display: 'flex', alignItems: 'center', gap: 10, fontSize: 17,
       transition: 'all .2s',
     };
   };
@@ -165,12 +167,42 @@ export default function QuestionCard({
     onChange({ type: 'text', text: arr.join('|') });
   };
 
-  // ---- 数学符号工具条: 在指定输入框光标处插入符号 ----
+  // ---- 虚拟键盘: 在指定输入框光标处插入符号 / 退格 ----
   const fillInputRef = useRef(null); // 单项填空原生 input
   const blankInputRefs = useRef([]); // 多项填空各空位原生 input
   const activeBlankRef = useRef(0); // 多项填空最近聚焦的空位下标
+  const textAreaRef = useRef(null); // 多行文本原生 textarea
 
-  // 在原生 input 的当前光标处插入符号，并回填光标位置
+  // 当前可输入的文本目标（虚拟键盘的插入/退格对象）；无文本输入时返回 null
+  const resolveTextTarget = () => {
+    if (qtype === 'MultipleBlank') {
+      const i = activeBlankRef.current || 0;
+      if (isStdCycle(stdParts[i])) return null; // 循环小数空位走专用输入器
+      return {
+        el: blankInputRefs.current[i],
+        current: blankValues[i] || '',
+        apply: (v) => handleBlankChange(i, v),
+      };
+    }
+    if (qtype === 'FillBlank') {
+      if (isStdCycle(stdParts[0])) return null;
+      return {
+        el: fillInputRef.current,
+        current: value?.type === 'text' ? value.text : '',
+        apply: handleTextChange,
+      };
+    }
+    if (qtype === 'Text') {
+      return {
+        el: textAreaRef.current,
+        current: value?.type === 'text' ? value.text : '',
+        apply: handleTextChange,
+      };
+    }
+    return null;
+  };
+
+  // 在原生输入框的当前光标处插入字符串，并回填光标位置
   const insertSymbolInto = (el, current, symbol, apply) => {
     if (locked) return;
     const text = String(current == null ? '' : current);
@@ -189,21 +221,46 @@ export default function QuestionCard({
     });
   };
 
-  // 单项填空: 插入到单输入框
-  const insertFillSymbol = (symbol) => {
-    const cur = value?.type === 'text' ? value.text : '';
-    insertSymbolInto(fillInputRef.current, cur, symbol, handleTextChange);
+  // 虚拟键盘: 插入一个键
+  const handleKeyPick = (key) => {
+    const target = resolveTextTarget();
+    if (!target) return;
+    insertSymbolInto(target.el, target.current, key, target.apply);
   };
 
-  // 多项填空: 插入到最近聚焦的空位（无聚焦时默认第 1 个空位）
-  const insertBlankSymbol = (symbol) => {
-    const i = activeBlankRef.current || 0;
-    if (isStdCycle(stdParts[i])) return; // 循环小数空位走专用输入器，不插入普通符号
-    insertSymbolInto(blankInputRefs.current[i], blankValues[i] || '', symbol, (v) => handleBlankChange(i, v));
+  // 虚拟键盘: 退格（有选区删除选区，否则删除光标前一个字符）
+  const handleKeyDelete = () => {
+    if (locked) return;
+    const target = resolveTextTarget();
+    if (!target) return;
+    const el = target.el;
+    const text = String(target.current == null ? '' : target.current);
+    const start = typeof el?.selectionStart === 'number' ? el.selectionStart : text.length;
+    const end = typeof el?.selectionEnd === 'number' ? el.selectionEnd : text.length;
+    if (start === 0 && end === 0) return;
+    const nextStart = start === end ? start - 1 : start;
+    target.apply(text.slice(0, nextStart) + text.slice(end));
+    requestAnimationFrame(() => {
+      if (!el) return;
+      try {
+        el.focus();
+        el.setSelectionRange(nextStart, nextStart);
+      } catch {
+        // 忽略不支持 setSelectionRange 的场景
+      }
+    });
   };
+
+  // 是否展示虚拟键盘（存在可输入的文本空位且未锁定）
+  const keyboardUsable = showKeyboard && !locked && (
+    (qtype === 'FillBlank' && !isStdCycle(stdParts[0]))
+    || qtype === 'Text'
+    || (qtype === 'MultipleBlank'
+      && Array.from({ length: blankCount }).some((_, i) => !isStdCycle(stdParts[i])))
+  );
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto' }}>
       {/* ---- 题号 + 题型 + 难度 ---- */}
       <Space style={{ marginBottom: 16 }}>
         <Tag color="blue">{TYPE_LABELS[qtype] || qtype}</Tag>
@@ -215,7 +272,7 @@ export default function QuestionCard({
       </Space>
 
       {/* ---- 题干 ---- */}
-      <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6 }}>
+      <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6, fontSize: 20 }}>
         <span style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
           <span style={{ flex: 'none' }}>{index}.</span>
           <span style={{ flex: 1, minWidth: 0 }}>
@@ -321,11 +378,10 @@ export default function QuestionCard({
               </div>
             );
           })}
-          {showSymbolBar && !locked && Array.from({ length: blankCount }).some((_, i) => !isStdCycle(stdParts[i])) && (
-            <MathSymbolBar
-              label="符号："
-              onPick={insertBlankSymbol}
-            />
+          {keyboardUsable && qtype === 'MultipleBlank' && (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              符号 / 字母难输入？点右下角「虚拟键盘」
+            </Text>
           )}
           <Text type="secondary" style={{ fontSize: 12 }}>
             按题目空位顺序作答，全部空位填写后提交判分
@@ -355,14 +411,17 @@ export default function QuestionCard({
           ) : (
             <Input.TextArea
               rows={3}
+              ref={(el) => { textAreaRef.current = el?.resizableTextArea?.textArea ?? el?.input ?? el; }}
               placeholder="请输入答案"
               value={value?.type === 'text' ? value.text : ''}
               onChange={(e) => handleTextChange(e.target.value)}
               disabled={locked}
             />
           )}
-          {showSymbolBar && qtype === 'FillBlank' && !isStdCycle(stdParts[0]) && !locked && (
-            <MathSymbolBar label="符号：" onPick={insertFillSymbol} />
+          {keyboardUsable && (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              符号 / 字母难输入？点右下角「虚拟键盘」
+            </Text>
           )}
         </div>
       )}
@@ -445,6 +504,15 @@ export default function QuestionCard({
           作答后点击「下一题」继续，全部完成后交卷统一判分
         </Text>
       )}
+
+      {/* ---- 独立可收起虚拟键盘（右下角悬浮，仅在存在文本空位时渲染） ---- */}
+      <VirtualKeyboard
+        visible={keyboardUsable}
+        defaultTab={keyboardDefaultTab}
+        disabled={locked}
+        onPick={handleKeyPick}
+        onDelete={handleKeyDelete}
+      />
     </div>
   );
 }

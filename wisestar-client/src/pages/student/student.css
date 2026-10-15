@@ -18,12 +18,13 @@
 /* ---------- 背景波浪 ---------- */
 .sll-wave {
   position: absolute;
-  left: 0;
+  left: -320px; /* 额外左宽，配合 transform 平移保证循环无空隙 */
   right: 0;
   bottom: 0;
   pointer-events: none;
   background-repeat: repeat-x;
   background-size: 320px 100%;
+  will-change: transform; /* 走合成层平移，避免每帧重绘背景 */
 }
 .sll-wave-back {
   height: 140px;
@@ -40,8 +41,8 @@
   animation: sll-wave-drift 10s linear infinite reverse;
 }
 @keyframes sll-wave-drift {
-  from { background-position-x: 0; }
-  to   { background-position-x: 320px; }
+  from { transform: translateX(0); }
+  to   { transform: translateX(320px); }
 }
 
 /* ---------- 云朵装饰 ---------- */
@@ -400,6 +401,33 @@
 .shp-ai-btn:hover { transform: scale(1.06); }
 .shp-ai-line1 { font-size: 14px; font-weight: 600; }
 .shp-ai-line2 { font-size: 16px; font-weight: 800; }
+
+/* 左下角悬浮「返回上一级」（学员端二级页通用；首页不渲染） */
+.sll-back-float {
+  position: fixed;
+  left: 26px;
+  bottom: 26px;
+  z-index: 110;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 3px solid #fff;
+  background: linear-gradient(160deg, #ffb64d, #ff8a3d);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255, 138, 61, 0.45);
+  transition: transform 0.2s;
+}
+.sll-back-float:hover { transform: translateY(-2px) scale(1.03); }
+@media (max-width: 760px) {
+  /* 窄屏时抬高，避免与底部导航栏重叠 */
+  .sll-back-float { left: 14px; bottom: 96px; height: 46px; padding: 0 16px; font-size: 14px; }
+}
 
 /* ---------- 响应式（≥1024 平板横屏可用） ---------- */
 @media (max-width: 1360px) {

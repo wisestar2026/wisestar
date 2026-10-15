@@ -6,7 +6,7 @@
  */
 
 .kd-wrap {
-  max-width: 900px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 8px 4px 40px;
 }
@@ -110,7 +110,7 @@
 }
 
 /* ---------- 作答 ---------- */
-.kd-answer-wrap { max-width: 860px; }
+.kd-answer-wrap { max-width: 1080px; }
 .kd-answer-top {
   display: flex;
   align-items: center;

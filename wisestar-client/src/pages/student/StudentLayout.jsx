@@ -308,6 +308,13 @@ export default function StudentLayout() {
         })}
       </nav>
 
+      {/* ---- 左下角悬浮「返回上一级」（首页不显示，降低误退账号风险） ---- */}
+      {location.pathname !== '/student' && (
+        <button className="sll-back-float" onClick={() => navigate(-1)} title="返回上一级">
+          <ArrowLeftOutlined /> 返回上一级
+        </button>
+      )}
+
       {/* ---- 右下角悬浮 AI 按钮 ---- */}
       <button className="shp-ai-btn" onClick={() => message.info('小鲸向导即将上线')}>
         <span className="shp-ai-line1">问一问</span>

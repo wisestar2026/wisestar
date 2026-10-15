@@ -267,6 +267,17 @@ export default function EnglishWordPracticePage() {
           </div>
         )}
 
+        {/* 汉语提示：作答后回显该单词的拼写 / 音标 / 中文释义，帮助记忆巩固 */}
+        {answered && current.word?.meaning && (
+          <div className="eng-quiz-reinforce">
+            <b className="eng-quiz-reinforce-word">{current.word.spell}</b>
+            {current.word.phonetic && (
+              <span className="eng-quiz-reinforce-phonetic">/{current.word.phonetic}/</span>
+            )}
+            <span className="eng-quiz-reinforce-zh">汉语：{current.word.meaning}</span>
+          </div>
+        )}
+
         <div className="eng-actions">
           <button
             type="button"

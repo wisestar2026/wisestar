@@ -176,7 +176,7 @@ export default function EnglishUnitPracticePage() {
             value={answers[q.id]}
             onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
             judgeMode={false}
-            showSymbolBar={false}
+            keyboardDefaultTab="letter"
           />
         </div>
 
