@@ -34,6 +34,19 @@ import './student.css';
 
 // 底部导航配置在组件内按当前学科动态生成（学习/错题本在英语学科下指向英语模块）
 
+/**
+ * 解析「结构上的上一级」页面（按信息架构，而非浏览器 history）：
+ *   - 英语模块子页（/student/english/*）→ 英语学习中心 /student/english
+ *   - 知识点详情（/student/knowledge、/student/knowledge/:id）→ 学海研习 /student/study
+ *   - 其余二级页（学习/错题本/检测/档案/个人中心/商城/英语学习中心）→ 学员端首页 /student
+ */
+function resolveParentPath(pathname) {
+  const path = (pathname || '').replace(/\/+$/, '') || '/student';
+  if (path.startsWith('/student/english/')) return '/student/english';
+  if (path.startsWith('/student/knowledge')) return '/student/study';
+  return '/student';
+}
+
 export default function StudentLayout() {
   const {
     activeSubject, version, term, pureMode,
@@ -308,9 +321,9 @@ export default function StudentLayout() {
         })}
       </nav>
 
-      {/* ---- 左下角悬浮「返回上一级」（首页不显示，降低误退账号风险） ---- */}
+      {/* ---- 左下角悬浮「返回上一级」：按信息架构回父级页面（非浏览器 history），首页不显示 ---- */}
       {location.pathname !== '/student' && (
-        <button className="sll-back-float" onClick={() => navigate(-1)} title="返回上一级">
+        <button className="sll-back-float" onClick={() => navigate(resolveParentPath(location.pathname))} title="返回上一级">
           <ArrowLeftOutlined /> 返回上一级
         </button>
       )}
