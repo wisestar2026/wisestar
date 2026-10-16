@@ -174,12 +174,13 @@ public final class AiPromptKeys {
 					+ "  ]\n"
 					+ "}\n"
 					+ "要求：\n"
-					+ "1) 一共生成 18-22 道题，全部基于给定单元句子，三种 kind 大致均衡（各约三分之一）；\n"
-					+ "2) kind=build 为连词成句：只给 zh 与正确 en；kind=dictation 为句子默写：给 zh 让学员写出英文；\n"
-					+ "3) kind=choice 为句子选择：给 zh 题干与恰好 4 个 options，其中恰好 1 个等于 en/answer，"
+					+ "1) 逐句出题：为每句生成 1-2 道题，同一句最多 2 道，禁止对同一句反复出题；\n"
+					+ "2) 全部基于给定单元句子，三种 kind 混用、尽量均衡（build/dictation/choice 都用上）；\n"
+					+ "3) kind=build 为连词成句：只给 zh 与正确 en；kind=dictation 为句子默写：给 zh 让学员写出英文；\n"
+					+ "4) kind=choice 为句子选择：给 zh 题干与恰好 4 个 options，其中恰好 1 个等于 en/answer，"
 					+ "干扰项须为合法英文句子且明显不符；\n"
-					+ "4) en 与 answer 必须与给定单元句子一致（大小写与标点保持原样）；\n"
-					+ "5) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
+					+ "5) en 与 answer 必须与给定单元句子一致（大小写与标点保持原样）；\n"
+					+ "6) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 
 	private static final List<PromptMeta> CATALOG = List.of(
 			new PromptMeta(QA, "AI 问答（智能陪学）", "学员对话问答与学习轨迹报告生成；留空使用内置默认（siliconflow.md）。",

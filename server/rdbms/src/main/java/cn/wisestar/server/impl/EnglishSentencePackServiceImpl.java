@@ -192,11 +192,10 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			sb.append("- ").append(s.getEn().trim()).append("（").append(zh).append("）\n");
 		}
 		sb.append("\n要求：\n");
-		sb.append("1) 本组共 ").append(sentences.size()).append(" 句，请生成不少于 ")
-				.append(Math.max(18, sentences.size() * 3)).append(" 道题，三种 kind 大致均衡；\n");
+		sb.append("1) 本组共 ").append(sentences.size()).append(" 句，请逐句出题：每句 1~2 道题、同一句最多 2 道（禁止对同一句反复出题），三种 kind 混用、尽量均衡；\n");
 		sb.append("2) kind=build 连词成句、kind=dictation 句子默写、kind=choice 句子选择；\n");
 		sb.append("3) choice 的 options 恰好 4 个，含 1 个正确项（等于 answer/en）；\n");
-		sb.append("4) 所有 en/answer 与给定句子一致（大小写与标点保持原样）。");
+		sb.append("4) 所有 en/answer 与给定句子一致（大小写与标点保持原样），不得改写或拼接其它句子。");
 		return sb.toString();
 	}
 
@@ -281,7 +280,28 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			ex.setSentenceId(matchSentenceId(sentences, ex.getEn()));
 			result.add(ex);
 		}
-		return result;
+		return capPerSource(result);
+	}
+
+	/**
+	 * 限制同一来源句子最多保留 2 道题（已匹配来源按 sentenceId，未匹配按归一化英文），
+	 * 避免对同一句反复出题。
+	 */
+	private List<EnglishSentenceExercise> capPerSource(List<EnglishSentenceExercise> list) {
+		Map<String, Integer> used = new HashMap<>();
+		List<EnglishSentenceExercise> filtered = new ArrayList<>();
+		for (EnglishSentenceExercise ex : list) {
+			String key = ex.getSentenceId() != null
+					? "id:" + ex.getSentenceId()
+					: "en:" + normalizeKey(ex.getEn() == null ? "" : ex.getEn());
+			int count = used.getOrDefault(key, 0);
+			if (count >= 2) {
+				continue;
+			}
+			used.put(key, count + 1);
+			filtered.add(ex);
+		}
+		return filtered;
 	}
 
 	/**
