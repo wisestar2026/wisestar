@@ -25,6 +25,7 @@ import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
+import './EnglishCenterPage.css';
 
 export default function EnglishUnitPracticePage() {
   const navigate = useNavigate();
@@ -112,12 +113,12 @@ export default function EnglishUnitPracticePage() {
 
   // ============================ 加载 / 无题 ============================
   if (step === 'loading') {
-    return <div className="kd-wrap sll-page-enter"><div className="kd-loading"><Spin /></div></div>;
+    return <div className="kd-wrap sll-page-enter eng-stage"><div className="kd-loading"><Spin /></div></div>;
   }
 
   if (step === 'empty') {
     return (
-      <div className="kd-wrap sll-page-enter">
+      <div className="kd-wrap sll-page-enter eng-stage">
         <Empty
           description={unit ? `${unit} 暂无可用单元练习，先去学习单词和句子吧` : '未选择单元'}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -134,7 +135,7 @@ export default function EnglishUnitPracticePage() {
   if (step === 'answer') {
     const q = questions[current];
     return (
-      <div className="kd-wrap kd-answer-wrap sll-page-enter">
+      <div className="kd-wrap kd-answer-wrap sll-page-enter eng-stage">
         <div className="kd-answer-top">
           <div className="kd-answer-title">
             <span className="kd-answer-emoji">📘</span>
@@ -204,7 +205,7 @@ export default function EnglishUnitPracticePage() {
   // ============================ 报告 ============================
   const rep = report || { total: 0, correct: 0, accuracy: 0, details: [] };
   return (
-    <div className="kd-wrap sll-page-enter">
+    <div className="kd-wrap sll-page-enter eng-stage">
       <div className="kd-report-hero">
         <Progress
           type="circle"

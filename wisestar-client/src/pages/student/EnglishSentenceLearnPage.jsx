@@ -175,12 +175,12 @@ export default function EnglishSentenceLearnPage() {
   }, [finished, correctCount]);
 
   if (loading) {
-    return <div className="eng-learn-wrap"><Spin /></div>;
+    return <div className="eng-learn-wrap eng-stage"><Spin /></div>;
   }
 
   if (!unit || sentences.length === 0) {
     return (
-      <div className="eng-learn-wrap">
+      <div className="eng-learn-wrap eng-stage">
         <div className="eng-empty">
           <div className="eng-empty-emoji">🐚</div>
           <div className="eng-empty-title">{unit ? '该单元暂无句子' : '未选择单元'}</div>
@@ -289,7 +289,7 @@ export default function EnglishSentenceLearnPage() {
   // ---------- learn：连词成句 ----------
   if (finished) {
     return (
-      <div className="eng-learn-wrap">
+      <div className="eng-learn-wrap eng-stage">
         <button type="button" className="eng-learn-back" onClick={() => setMode('hub')}>← 返回句式通关</button>
         <div className="eng-empty">
           <div className="eng-empty-emoji">🌟</div>
@@ -310,7 +310,7 @@ export default function EnglishSentenceLearnPage() {
   const progress = Math.round((index / sentences.length) * 100);
 
   return (
-    <div className="eng-learn-wrap">
+    <div className="eng-learn-wrap eng-stage">
       <button type="button" className="eng-learn-back" onClick={() => setMode('hub')}>← 返回句式通关</button>
       {sectionLabels[index] && <div className="eng-section-title">{sectionLabels[index]}</div>}
       <div className="eng-progress-row">

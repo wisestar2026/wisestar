@@ -12,15 +12,22 @@
 // 缓存后避免每次朗读都重新遍历，并在 voiceschanged 后刷新
 let englishVoice = null;
 let voicesBound = false;
+let warmedUp = false;
 
-/** 从浏览器语音列表中挑选最合适的英文音色（优先 en-US，其次 en-GB，再次任意 en） */
+/**
+ * 从浏览器语音列表中挑选最合适的英文音色。
+ * 优先「本地合成」音色（localService=true），避免选中需要联网下载的音色导致首播卡顿。
+ */
 function pickEnglishVoice() {
   const voices = window.speechSynthesis.getVoices() || [];
-  if (!voices.length) return null;
+  const en = voices.filter((v) => /^en([-_]|$)/i.test(v.lang));
+  if (!en.length) return null;
+  const local = en.filter((v) => v.localService);
+  const pool = local.length ? local : en;
   return (
-    voices.find((v) => /^en[-_]US/i.test(v.lang))
-    || voices.find((v) => /^en[-_]GB/i.test(v.lang))
-    || voices.find((v) => /^en/i.test(v.lang))
+    pool.find((v) => /^en[-_]US/i.test(v.lang))
+    || pool.find((v) => /^en[-_]GB/i.test(v.lang))
+    || pool[0]
     || null
   );
 }
@@ -30,8 +37,40 @@ function ensureVoiceListener() {
   if (voicesBound) return;
   voicesBound = true;
   const synth = window.speechSynthesis;
-  if (typeof synth.addEventListener === 'function') {
+  if (synth && typeof synth.addEventListener === 'function') {
     synth.addEventListener('voiceschanged', () => { englishVoice = pickEnglishVoice(); });
+  }
+}
+
+/**
+ * 预热语音引擎：模块加载即触发音色列表加载；首次用户交互时静音播报一次，
+ * 消除首次 speak() 的引擎初始化延迟（这也是「点了半天才朗读」的主因之一）。
+ */
+export function warmupSpeechSynthesis() {
+  if (typeof window === 'undefined') return;
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  ensureVoiceListener();
+  if (!englishVoice) englishVoice = pickEnglishVoice();
+  if (warmedUp) return;
+  warmedUp = true;
+  try {
+    const warm = new SpeechSynthesisUtterance(' ');
+    warm.volume = 0;
+    warm.lang = 'en-US';
+    if (englishVoice) warm.voice = englishVoice;
+    synth.speak(warm);
+  } catch {
+    // 预热失败不影响正常朗读
+  }
+}
+
+// 模块加载即预热音色列表，并在首次用户交互时静音预热引擎
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  ensureVoiceListener();
+  if (typeof window.addEventListener === 'function') {
+    window.addEventListener('pointerdown', warmupSpeechSynthesis, { once: true, passive: true });
   }
 }
 
@@ -43,12 +82,15 @@ function speakByTTS(text) {
   const synth = window.speechSynthesis;
   ensureVoiceListener();
   if (!englishVoice) englishVoice = pickEnglishVoice();
+  // Chrome 空闲一段时间后会「卡住」，resume 唤醒后再播
+  if (synth.paused) synth.resume();
+  // 仅在确实在播/排队时才打断，避免每次点击都重置队列带来的额外延迟
+  if (synth.speaking || synth.pending) synth.cancel();
   const utterance = new SpeechSynthesisUtterance(String(text));
   utterance.lang = 'en-US';
   utterance.rate = 0.9;
   // 显式指定英文音色，避免系统默认音色（可能是中文）读不出英文
   if (englishVoice) utterance.voice = englishVoice;
-  synth.cancel();
   synth.speak(utterance);
 }
 

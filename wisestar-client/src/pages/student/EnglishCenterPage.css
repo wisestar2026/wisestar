@@ -200,6 +200,8 @@
 
 /* ---------- 学习卡片 ---------- */
 .eng-learn-wrap { max-width: 1080px; margin: 0 auto; padding: 20px 20px 100px; font-size: 16px; }
+/* 句子练习（内嵌 EnglishSentenceExercise）：铺满中间容器，不再受子页 1080 上限压缩 */
+.eng-detail-card > .eng-learn-wrap { max-width: none; width: 100%; margin: 0; }
 /* 单词学习页：撑满可用宽度（避免 flex 子项因 margin:auto 收缩为内容宽度） */
 .eng-learn-wide { width: 100%; max-width: 1440px; }
 .eng-progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -770,3 +772,63 @@
   .eng-progress-grid { flex-direction: column; gap: 14px; }
   .eng-model-actions { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+ * 英语学习/练习页「中间内容」加宽 + 字号放大
+ * 目标：中间卡片约占整体页面 60%（窄屏逐级放宽，兜底不低于原宽度，防止过窄），
+ *       卡片内字号/控件同步放大，保持比例协调、随视口自适应。
+ * 应用：句子学习 / 场景对话 / 语法练习 / 单元练习 等页根容器（叠加 .eng-stage）
+ * 说明：用 .sll-main .eng-stage 提高优先级，覆盖 .eng-learn-wrap / .sc-wrap / .kd-wrap 的窄宽度上限
+ * ============================================================ */
+.sll-main .eng-stage {
+  width: clamp(1120px, 60%, 1500px);
+  max-width: none;
+  margin: 0 auto;
+  font-size: 17px;
+}
+/* 窄屏：60% 会偏窄，改为占满可用宽度 */
+@media (max-width: 1180px) {
+  .sll-main .eng-stage { width: 100%; }
+}
+
+/* --- 句子学习（连词成句卡片）--- */
+.eng-stage .eng-section-title { font-size: 20px; padding: 8px 18px; }
+.eng-stage .eng-progress-text { font-size: 15px; }
+.eng-stage .eng-card { padding: 34px 30px; }
+.eng-stage .eng-sentence-hint { font-size: 24px; }
+.eng-stage .eng-answer-slot { min-height: 74px; padding: 14px; }
+.eng-stage .eng-token { font-size: 18px; padding: 11px 18px; }
+.eng-stage .eng-feedback { font-size: 18px; }
+.eng-stage .eng-learn-back { font-size: 16px; padding: 9px 18px; }
+.eng-stage .eng-btn { font-size: 17px; padding: 13px 30px; }
+
+/* --- 场景对话（情景对话练习）--- */
+.eng-stage .sc-hero-title { font-size: 24px; }
+.eng-stage .sc-hero-sub { font-size: 15px; }
+.eng-stage .sc-summary-score { font-size: 26px; }
+.eng-stage .sc-summary-rate { font-size: 17px; }
+.eng-stage .sc-summary-hint { font-size: 15px; }
+.eng-stage .sc-scene { padding: 22px 26px 16px; }
+.eng-stage .sc-scene-title { font-size: 19px; }
+.eng-stage .sc-word { font-size: 14px; padding: 3px 12px; }
+.eng-stage .sc-speaker { flex: 0 0 32px; height: 32px; font-size: 15px; }
+.eng-stage .sc-en { font-size: 18px; line-height: 2.15; }
+.eng-stage .sc-blank { width: 128px; font-size: 18px; }
+.eng-stage .sc-zh { font-size: 15px; }
+.eng-stage .sc-answer-chip { font-size: 14px; }
+.eng-stage .sc-pager-info { font-size: 16px; }
+
+/* --- 语法练习 / 单元练习（沿用知识点检测版式）--- */
+.eng-stage .kd-answer-title { font-size: 22px; }
+.eng-stage .kd-answer-meta { font-size: 15px; }
+.eng-stage .kd-nav-dot { width: 34px; height: 34px; font-size: 14px; }
+.eng-stage .kd-question-box { padding: 28px 30px; }
+.eng-stage .kd-card { padding: 22px 26px; }
+.eng-stage .kd-card-title { font-size: 19px; }
+.eng-stage .kd-report-title { font-size: 24px; }
+.eng-stage .kd-report-line { font-size: 16px; }
+.eng-stage .kd-report-percent { font-size: 30px; }
+.eng-stage .kd-detail-line { font-size: 15px; }
+.eng-stage .kd-detail-analysis { font-size: 14px; }
+.eng-stage .kd-weak-name { font-size: 15px; }
+.eng-stage .kd-weak-chapter { font-size: 13px; }

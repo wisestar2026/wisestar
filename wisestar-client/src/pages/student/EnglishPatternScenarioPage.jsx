@@ -111,7 +111,7 @@ export default function EnglishPatternScenarioPage() {
 
   if (step === 'loading') {
     return (
-      <div className="eng-learn-wrap sc-wrap">
+      <div className="eng-learn-wrap sc-wrap eng-stage">
         <div className="sc-loading">
           <Spin size="large" />
           <div className="sc-loading-text">正在加载「{unit}」的重点句式情景…</div>
@@ -122,7 +122,7 @@ export default function EnglishPatternScenarioPage() {
 
   if (step === 'empty') {
     return (
-      <div className="eng-learn-wrap sc-wrap">
+      <div className="eng-learn-wrap sc-wrap eng-stage">
         <div className="eng-empty">
           <div className="eng-empty-emoji">🐚</div>
           <div className="eng-empty-title">{unit ? '该单元练习尚未生成' : '未选择单元'}</div>
@@ -140,7 +140,7 @@ export default function EnglishPatternScenarioPage() {
   const accuracy = totalCount ? Math.round((countCorrect(picked) / totalCount) * 100) : 0;
 
   return (
-    <div className="eng-learn-wrap sc-wrap">
+    <div className="eng-learn-wrap sc-wrap eng-stage">
       <div className="sc-hero">
         <div className="sc-hero-title">重点句式情景 · {unit}</div>
         <div className="sc-hero-sub">读一读情景，从每题的句子里选出最符合这一情景的重点句式</div>

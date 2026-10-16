@@ -121,7 +121,7 @@ export default function EnglishScenarioPracticePage() {
 
   if (step === 'loading') {
     return (
-      <div className="eng-learn-wrap sc-wrap">
+      <div className="eng-learn-wrap sc-wrap eng-stage">
         <div className="sc-loading">
           <Spin size="large" />
           <div className="sc-loading-text">正在加载「{unit}」的情景对话…</div>
@@ -132,7 +132,7 @@ export default function EnglishScenarioPracticePage() {
 
   if (step === 'empty') {
     return (
-      <div className="eng-learn-wrap sc-wrap">
+      <div className="eng-learn-wrap sc-wrap eng-stage">
         <div className="eng-empty">
           <div className="eng-empty-emoji">🐚</div>
           <div className="eng-empty-title">{unit ? '该单元练习尚未生成' : '未选择单元'}</div>
@@ -150,7 +150,7 @@ export default function EnglishScenarioPracticePage() {
   const accuracy = blankTotal ? Math.round((submittedBlanks / blankTotal) * 100) : 0;
 
   return (
-    <div className="eng-learn-wrap sc-wrap">
+    <div className="eng-learn-wrap sc-wrap eng-stage">
       <div className="sc-hero">
         <div className="sc-hero-title">情景对话 · {unit}</div>
         <div className="sc-hero-sub">把本单元单词填进对话里，看看你能不能完成整段交流</div>
