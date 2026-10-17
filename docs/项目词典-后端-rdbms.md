@@ -37,6 +37,16 @@
   - `public void insertFill(MetaObject metaObject)`
   - `public void updateFill(MetaObject metaObject)`
 
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishContentTagSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishContentTagSeeder implements ApplicationRunner`
+- 注解: @Component, @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  英语题目打标标签初始化器。应用启动时读取 classpath:english/content-tags.json，与表中已有 content_key 比对后只批量写入缺失标签（当前 4374 条真实考题标签）；已存在则跳过，避免重复导入。写入失败仅记 WARN，不阻塞启动。
+- 注入/字段: JdbcTemplate jdbcTemplate, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
 ### `rdbms/src/main/java/cn/wisestar/server/core/mybatis/MybatisPlugConfig.java`
 - 包: `cn.wisestar.server.core.mybatis`
 - 类型: `class MybatisPlugConfig`
@@ -303,6 +313,14 @@
 - **类说明**：
   英语单元句子同步练习内容包实体（对应数据库表 t_english_sentence_pack）。
   一条记录对应 版本+年级+册别+单元，content 保存多题型题目（连词成句/句子默写/句子选择）JSON 数组，管理端预生成固化、学员端只读。字段 version/grade/term/unit/content/count + 审计列。
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishContentTag.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishContentTag`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语题目打标标签实体（对应数据库表 t_english_content_tag）。
+  保存《英语题库打标结果》中每道真实考题的诊断标签：知识点（新）、语言技能、认知层级、干扰项强度、难度初标（D1~D5）。content_key 按「句子=版本+年级+册别+单元+来源句子ID+题型」「情景=版本+年级+册别+单元+分组+情景标题+轮次」绑定句子包/情景包中的题目，不重复存题干。字段 module/contentKey/version/grade/term/unit/groupNo/sceneTitle/turnNo/questionType/knowledgePoint/languageSkill/cognitiveLevel/distractorStrength/difficultySeed/isExamQuestion + 审计列。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishGrammarBook.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -1747,6 +1765,12 @@
 - 类型: `interface EnglishGrammarMapper`
 - **类说明**：
   EnglishGrammar Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishContentTagMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishContentTagMapper`
+- **类说明**：
+  EnglishContentTag Mapper（MyBatis-Plus 基础 CRUD）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishGrammarBookMapper.java`
 - 包: `cn.wisestar.server.mapper`
