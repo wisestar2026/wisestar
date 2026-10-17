@@ -167,11 +167,6 @@ export default function EnglishPatternScenarioPage() {
             <span className="sc-scene-title">{scene.title || `情景 ${si + 1}`}</span>
           </div>
           {scene.context && <div className="ps-context">{scene.context}</div>}
-          {scene.patterns?.length > 0 && (
-            <div className="sc-words">
-              {scene.patterns.map((p) => <span className="sc-word" key={p}>{p}</span>)}
-            </div>
-          )}
           <div className="sc-lines">
             {scene.turns.map((turn, ti) => {
               const respond = isRespondTurn(turn);
@@ -230,6 +225,12 @@ export default function EnglishPatternScenarioPage() {
               );
             })}
           </div>
+          {submitted && scene.patterns?.length > 0 && (
+            <div className="sc-words ps-patterns">
+              <span className="ps-patterns-label">本情景重点句式</span>
+              {scene.patterns.map((p) => <span className="sc-word" key={p}>{p}</span>)}
+            </div>
+          )}
         </div>
       )))}
 

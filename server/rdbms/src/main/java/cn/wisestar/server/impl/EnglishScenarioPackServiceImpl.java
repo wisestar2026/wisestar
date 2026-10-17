@@ -2,6 +2,7 @@ package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishPatternTurn;
 import cn.wisestar.server.domain.dto.english.EnglishPatternSentence;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioPackQuery;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioPackView;
@@ -29,8 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.ValidationException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -276,7 +279,73 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		if (pack == null || isBlank(pack.getPatternContent())) {
 			return new ArrayList<>();
 		}
-		return readScenarios(pack.getPatternContent(), EnglishPatternScenarioView.class);
+		List<EnglishPatternScenarioView> scenes = readScenarios(pack.getPatternContent(),
+				EnglishPatternScenarioView.class);
+		return dedupeAndShuffle(scenes);
+	}
+
+	/**
+	 * 学员端句式情景：去除重复对话，并打乱候选句式顺序。
+	 *
+	 * <p>AI 生成的内容存在同一段对话被写入多个情景（标题不同、台词完全相同）的情况，
+	 * 直接展示会重复练习；候选项又总是把正确句式放在首位，等于提前给出答案。
+	 * 这里按台词序列去重，并用「情景标题 + 轮次 + 候选内容」作为随机种子打乱选项，
+	 * 保证同一内容每次展示顺序稳定、正确答案不再固定在最上面。</p>
+	 */
+	private List<EnglishPatternScenarioView> dedupeAndShuffle(List<EnglishPatternScenarioView> scenes) {
+		List<EnglishPatternScenarioView> result = new ArrayList<>();
+		Set<String> seen = new LinkedHashSet<>();
+		for (EnglishPatternScenarioView scene : scenes) {
+			String signature = patternSignature(scene);
+			if (!seen.add(signature)) {
+				continue;
+			}
+			shuffleOptions(scene);
+			result.add(scene);
+		}
+		return result;
+	}
+
+	/**
+	 * 情景去重签名：说话人 + 台词/情景提示 + 正确项下标。
+	 */
+	private String patternSignature(EnglishPatternScenarioView scene) {
+		StringBuilder sb = new StringBuilder();
+		if (scene.getTurns() != null) {
+			for (EnglishPatternTurn turn : scene.getTurns()) {
+				sb.append(turn.getSpeaker()).append('\u0001')
+						.append(turn.getEn() == null ? "" : turn.getEn().trim()).append('\u0001')
+						.append(turn.getCue() == null ? "" : turn.getCue().trim()).append('\u0001')
+						.append(turn.getAnswerIndex()).append('\u0002');
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * 打乱单个情景内各作答轮的候选顺序，并同步正确项下标。
+	 */
+	private void shuffleOptions(EnglishPatternScenarioView scene) {
+		if (scene.getTurns() == null) {
+			return;
+		}
+		for (int i = 0; i < scene.getTurns().size(); i++) {
+			EnglishPatternTurn turn = scene.getTurns().get(i);
+			List<String> options = turn.getOptions();
+			Integer answerIndex = turn.getAnswerIndex();
+			if (options == null || options.size() < 2 || answerIndex == null
+					|| answerIndex < 0 || answerIndex >= options.size()) {
+				continue;
+			}
+			int size = options.size();
+			// 至少左移 1 位：AI 原本总把正确项放在首位，移位后正确答案不会再出现在最上面
+			int offset = 1 + Math.floorMod(Objects.hash(scene.getTitle(), i, String.join("|", options)),
+					size - 1);
+			List<String> rotated = new ArrayList<>(options);
+			Collections.rotate(rotated, -offset);
+			turn.setOptions(rotated);
+			turn.setAnswerIndex((answerIndex - offset + size) % size);
+		}
 	}
 
 	// ------------------------------------------------------------------ 辅助

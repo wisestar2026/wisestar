@@ -428,11 +428,17 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 						q.type = SurveySchema.QuestionType.Radio;
 						String cue = node.path("cue").asText();
 						q.title = (StringUtils.hasText(cue) ? cue : title) + "（选择符合情景的句子）";
-						q.options = options;
-						q.answer = options.get(answerIndex);
-						q.analysis = node.path("explanation").asText();
+						// 正确答案不再固定放在首位：按内容稳定打乱候选项
 						String key = "pattern:" + version + ":" + grade + ":" + term + ":" + unit + ":"
 								+ groupNo + ":" + title + ":" + turn;
+						String correct = options.get(answerIndex);
+						int size = options.size();
+						int offset = 1 + Math.floorMod((key + "|" + String.join("|", options)).hashCode(),
+								size - 1);
+						Collections.rotate(options, -offset);
+						q.options = options;
+						q.answer = correct;
+						q.analysis = node.path("explanation").asText();
 						result.put(key, q);
 					}
 				}

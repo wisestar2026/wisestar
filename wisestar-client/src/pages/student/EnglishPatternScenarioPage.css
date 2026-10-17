@@ -88,3 +88,7 @@
   border-radius: 10px;
   padding: 8px 12px;
 }
+
+/* 重点句式：交卷后再展示，避免提前泄露答案 */
+.ps-patterns { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(65, 103, 140, 0.25); }
+.ps-patterns-label { width: 100%; font-size: 12px; font-weight: 800; color: #5b7fa3; }

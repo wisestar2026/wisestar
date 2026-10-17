@@ -930,7 +930,7 @@
 - 类型: `class EnglishScenarioPackServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景并写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）。
+  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景并写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）；句式情景在展平后按「说话人+台词/提示+正确项」签名去重（AI 会把同一段对话写进不同标题的情景），并用「标题+轮次+候选内容」稳定旋转候选项，保证正确项不再固定出现在首位。
 - 常量: `WORD_GROUP_SIZE=8`、`PATTERN_GROUP_SIZE=6`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioServiceImpl.java`
