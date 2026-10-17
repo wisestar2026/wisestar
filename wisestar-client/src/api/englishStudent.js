@@ -133,3 +133,17 @@ export function getEnglishDrillCompleted() {
 export function recordEnglishWord(data) {
   return request.post('/english/word/record', data);
 }
+
+/**
+ * 英语单元练习组卷（内容包阶梯卷：按知识点 D1→D3 取题，缺档用最近难度补位）
+ */
+export function getEnglishUnitPaper(data) {
+  return request.post('/english/student/unit-paper', data);
+}
+
+/**
+ * 英语单元练习交卷（按内容键回读题库判分，返回诊断报告）
+ */
+export function submitEnglishUnitPaper(data) {
+  return request.post('/english/student/unit-paper/submit', data);
+}

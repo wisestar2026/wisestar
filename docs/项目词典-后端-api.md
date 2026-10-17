@@ -345,6 +345,10 @@
     单元重点语法列表（含掌握度，按 sort + id 升序）。
   - `public void recordGrammar(@RequestBody Map<String, Object> request)`
     记录语法作答（{grammarId, correct}），回写熟练度与复习调度。
+  - `public List<StudentQuestionView> unitPaper(@RequestBody EnglishUnitPaperRequest request)`
+    英语单元练习组卷：按标签知识点分组、D1→D3 递进取题，缺档用最近难度补位（内容包阶梯卷，剥离答案）。
+  - `public DetectReportView submitUnitPaper(@RequestBody EnglishUnitPaperSubmitRequest request)`
+    英语单元练习交卷：按内容键回读句子包/情景包判分，生成诊断报告并按「单元·模块」入账。
   - `public List<EnglishSentenceView> studySentences(@RequestParam(defaultValue = "10") Integer limit)`
     待学习/复习句子。
   - `public void recordSentence(@RequestBody Map<String, Object> request)`

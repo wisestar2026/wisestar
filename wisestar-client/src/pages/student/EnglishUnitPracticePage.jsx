@@ -10,8 +10,8 @@
  *
  * 数据流:
  *   GET  /api/student/detect/units          找到同名单元章节 ID
- *   POST /api/student/detect/generate       自动组卷（仅该单元，剥离答案）
- *   POST /api/student/detect/submit         交卷生成报告
+ *   POST /api/english/student/unit-paper        内容包阶梯组卷（知识点 D1→D3，剥离答案）
+ *   POST /api/english/student/unit-paper/submit 交卷判分并生成报告
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -19,7 +19,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Empty, Progress, Spin, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
-import { getDetectUnits, generateDetectPaper, submitDetectPaper } from '../../api/detect';
+import { getDetectUnits } from '../../api/detect';
+import { getEnglishUnitPaper, submitEnglishUnitPaper } from '../../api/englishStudent';
 import QuestionCard from '../../components/practice/QuestionCard';
 import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
@@ -33,6 +34,7 @@ export default function EnglishUnitPracticePage() {
   const unit = searchParams.get('unit') || '';
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
+  const version = useStudentStore((s) => s.version);
   const activeSubject = useStudentStore((s) => s.activeSubject);
   const subjectId = searchParams.get('subjectId') || activeSubject || '1003';
 
@@ -59,11 +61,12 @@ export default function EnglishUnitPracticePage() {
         setStep('empty');
         return;
       }
-      const genRes = await generateDetectPaper({
-        subjectId,
+      const genRes = await getEnglishUnitPaper({
+        version,
         grade,
         term,
-        chapterIds: [target.id],
+        unit,
+        chapterId: target.id,
         questionCount: 20,
       });
       const list = genRes?.data || [];
@@ -81,7 +84,7 @@ export default function EnglishUnitPracticePage() {
       message.error(e?.message || '组卷失败，请稍后重试');
       setStep('empty');
     }
-  }, [unit, subjectId, grade, term]);
+  }, [unit, subjectId, grade, term, version]);
 
   useEffect(() => {
     loadPaper();
@@ -102,7 +105,9 @@ export default function EnglishUnitPracticePage() {
     setSubmitting(true);
     try {
       // 带上学科/年级/册别，便于检测记录归属英语学科（复习错题据此聚合）
-      const res = await submitDetectPaper({ items, subjectId, grade, term, chapterIds: chapterId ? [chapterId] : undefined });
+      const res = await submitEnglishUnitPaper({
+        version, grade, term, unit, chapterId: chapterId || undefined, items,
+      });
       setReport(res?.data || null);
       setStep('report');
       message.success('单元练习完成');

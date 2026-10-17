@@ -16,7 +16,7 @@ import lombok.EqualsAndHashCode;
  *
  * 【被谁调用】
  * - EnglishContentTagSeeder：应用启动时把打标 JSON 批量写入空表；
- * - 后续薄弱点组卷（DetectionServiceImpl）按 module/unit/difficultySeed 查询。
+ * - EnglishUnitPaperServiceImpl 按 module/unit/difficultySeed 查询并组阶梯卷。
  *
  * 【依赖什么】
  * - 继承 BaseModel，自动获得 id、createAt、createBy、updateAt、updateBy、deleted 字段。

@@ -1,11 +1,14 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
+import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceExercise;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
+import cn.wisestar.server.domain.dto.english.EnglishUnitPaperRequest;
+import cn.wisestar.server.domain.dto.english.EnglishUnitPaperSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
@@ -16,6 +19,7 @@ import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
 import cn.wisestar.server.service.EnglishScenarioPackService;
 import cn.wisestar.server.service.EnglishSentencePackService;
 import cn.wisestar.server.service.EnglishStudentService;
+import cn.wisestar.server.service.EnglishUnitPaperService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +43,8 @@ public class EnglishStudentApi {
 	private final EnglishScenarioPackService scenarioPackService;
 
 	private final EnglishSentencePackService sentencePackService;
+
+	private final EnglishUnitPaperService unitPaperService;
 
 	/**
 	 * 单元列表 + 学习进度。
@@ -194,6 +200,24 @@ public class EnglishStudentApi {
 				stringValue(request.get("term")), stringValue(request.get("unit")),
 				stringValue(request.get("module")), parseInt(request.get("correct")),
 				parseInt(request.get("total")));
+	}
+
+	/**
+	 * 英语单元练习组卷（内容包阶梯卷，按知识点 D1→D3 递进取题）。
+	 */
+	@PostMapping("/unit-paper")
+	@PreAuthorize("isAuthenticated()")
+	public List<StudentQuestionView> unitPaper(@RequestBody EnglishUnitPaperRequest request) {
+		return unitPaperService.generate(request);
+	}
+
+	/**
+	 * 英语单元练习交卷：按内容键回读题库判分并生成诊断报告。
+	 */
+	@PostMapping("/unit-paper/submit")
+	@PreAuthorize("isAuthenticated()")
+	public DetectReportView submitUnitPaper(@RequestBody EnglishUnitPaperSubmitRequest request) {
+		return unitPaperService.submit(request);
 	}
 
 	/**

@@ -1056,6 +1056,16 @@
   - `public void recordBatch(String userId, String version, String grade, String term, String unit, String module, int correct, int total)`
     整组结果按正确率入账（用于情景练习）。
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishUnitPaperServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService`
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语单元练习组卷实现（内容包阶梯卷）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位，题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先；交卷按内容键复核答案（句子忽略大小写、空白与句末标点，多空逐空比对，选择题按选项文本），生成 `DetectReportView` 并按「单元·模块」调用 `EnglishPracticeEvaluator.recordBatch` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。
+- 方法:
+  - `public List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
+  - `public DetectReportView submit(EnglishUnitPaperSubmitRequest request)`
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EvaluationServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EvaluationServiceImpl`
