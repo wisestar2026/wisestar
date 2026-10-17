@@ -252,6 +252,33 @@ export default function EnglishUnitPracticePage() {
 
       <div className="kd-card">
         <div className="kd-card-head">
+          <span className="kd-card-title">能力分析</span>
+          <span className="kd-dim-tip">按语言技能、认知层级、题型与难度聚合本次作答</span>
+        </div>
+        <div className="kd-dim-grid">
+          {[
+            { title: '语言技能', list: rep.skillStats },
+            { title: '认知层级', list: rep.cognitiveStats },
+            { title: '题型', list: rep.typeStats },
+            { title: '难度', list: rep.difficultyStats },
+          ].map((group) => (
+            <div className="kd-dim-block" key={group.title}>
+              <div className="kd-dim-title">{group.title}</div>
+              {!group.list?.length && <div className="kd-dim-empty">暂无数据</div>}
+              {group.list?.map((item) => (
+                <div className="kd-dim-row" key={item.name}>
+                  <span className="kd-dim-name">{item.name}</span>
+                  <span className="kd-dim-bar"><span style={{ width: `${item.masteryScore}%` }} /></span>
+                  <span className="kd-dim-value">{item.masteryScore}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="kd-card">
+        <div className="kd-card-head">
           <span className="kd-card-title">逐题解析</span>
         </div>
         <div className="kd-detail-list">

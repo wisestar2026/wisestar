@@ -42,6 +42,18 @@ public class DetectReportView {
 	/** 加权得分（掌握 100 / 不稳定 60 / 漏洞 0，0-100 整数） */
 	private int masteryScore;
 
+	/** 语言技能维度（词汇/语法/语用） */
+	private List<DimensionStat> skillStats = new ArrayList<>();
+
+	/** 认知层级维度（记忆/理解/应用） */
+	private List<DimensionStat> cognitiveStats = new ArrayList<>();
+
+	/** 题型维度 */
+	private List<DimensionStat> typeStats = new ArrayList<>();
+
+	/** 难度维度（D1~D5） */
+	private List<DimensionStat> difficultyStats = new ArrayList<>();
+
 	/** 逐题明细（含标准答案与解析） */
 	private List<Detail> details = new ArrayList<>();
 
@@ -67,6 +79,27 @@ public class DetectReportView {
 		private int correct;
 
 		private int accuracy;
+
+	}
+
+	/**
+	 * 维度聚合项（语言技能/认知层级/题型/难度）。
+	 */
+	@Data
+	public static class DimensionStat {
+
+		/** 维度名称 */
+		private String name;
+
+		private int total;
+
+		private int correct;
+
+		/** 全对率（0-100 整数） */
+		private int accuracy;
+
+		/** 三态加权得分（0-100 整数） */
+		private int masteryScore;
 
 	}
 

@@ -137,6 +137,10 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		Map<String, int[]> kpAgg = new LinkedHashMap<>();
 		Map<String, int[]> moduleAgg = new LinkedHashMap<>();
 		Map<String, List<Integer>> moduleScores = new LinkedHashMap<>();
+		Map<String, int[]> skillAgg = new LinkedHashMap<>();
+		Map<String, int[]> cognitiveAgg = new LinkedHashMap<>();
+		Map<String, int[]> typeAgg = new LinkedHashMap<>();
+		Map<String, int[]> difficultyAgg = new LinkedHashMap<>();
 		for (EnglishUnitPaperSubmitRequest.Item item : request.getItems()) {
 			Q q = questions.get(item.getContentKey());
 			if (q == null) {
@@ -169,6 +173,10 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				module[1] += 1;
 			}
 			moduleScores.computeIfAbsent(q.tag.getModule(), k -> new ArrayList<>()).add(score);
+			accumulate(skillAgg, q.tag.getLanguageSkill(), mastery, score);
+			accumulate(cognitiveAgg, q.tag.getCognitiveLevel(), mastery, score);
+			accumulate(typeAgg, q.tag.getQuestionType(), mastery, score);
+			accumulate(difficultyAgg, q.tag.getDifficultySeed(), mastery, score);
 		}
 		int total = report.getDetails().size();
 		int correctCount = (int) report.getDetails().stream()
@@ -211,12 +219,50 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		});
 		weakPoints.sort((a, b) -> Integer.compare(a.getAccuracy(), b.getAccuracy()));
 		report.setWeakPoints(weakPoints);
+		report.setSkillStats(dimensionStats(skillAgg));
+		report.setCognitiveStats(dimensionStats(cognitiveAgg));
+		report.setTypeStats(dimensionStats(typeAgg));
+		report.setDifficultyStats(dimensionStats(difficultyAgg));
 
 		String userId = SecurityContextUtils.getUserId();
 		moduleAgg.forEach((module, stat) -> practiceEvaluator.recordScores(userId, request.getVersion(),
 				request.getGrade(), request.getTerm(), request.getUnit(), module,
 				moduleScores.getOrDefault(module, Collections.emptyList())));
 		return report;
+	}
+
+	/**
+	 * 维度聚合：total / 全对数 / 三态得分。
+	 */
+	private void accumulate(Map<String, int[]> agg, String name, EnglishBehaviorJudge.Mastery mastery,
+			int score) {
+		if (!StringUtils.hasText(name)) {
+			return;
+		}
+		int[] stat = agg.computeIfAbsent(name.trim(), k -> new int[3]);
+		stat[0] += 1;
+		stat[2] += score;
+		if (mastery == EnglishBehaviorJudge.Mastery.MASTERED) {
+			stat[1] += 1;
+		}
+	}
+
+	/**
+	 * 维度聚合结果按题量降序输出。
+	 */
+	private List<DetectReportView.DimensionStat> dimensionStats(Map<String, int[]> agg) {
+		List<DetectReportView.DimensionStat> stats = new ArrayList<>(agg.size());
+		agg.forEach((name, stat) -> {
+			DetectReportView.DimensionStat item = new DetectReportView.DimensionStat();
+			item.setName(name);
+			item.setTotal(stat[0]);
+			item.setCorrect(stat[1]);
+			item.setAccuracy(stat[0] == 0 ? 0 : Math.round(stat[1] * 100f / stat[0]));
+			item.setMasteryScore(stat[0] == 0 ? 0 : Math.round(stat[2] / (float) stat[0]));
+			stats.add(item);
+		});
+		stats.sort((a, b) -> Integer.compare(b.getTotal(), a.getTotal()));
+		return stats;
 	}
 
 	/**
