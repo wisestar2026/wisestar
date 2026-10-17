@@ -45,6 +45,12 @@ public class EnglishUnitPaperSubmitRequest {
 		/** 学生答案：{type:'option',optionId} / {type:'text',text} */
 		private Map<String, Object> answer;
 
+		/** 选项改选次数（>0 表示改选后作答，用于「不稳定」判定） */
+		private Integer changes;
+
+		/** 是否使用过提示（用于「不稳定」判定） */
+		private Boolean hintUsed;
+
 	}
 
 }

@@ -42,6 +42,7 @@ export default function EnglishUnitPracticePage() {
   const [step, setStep] = useState('loading');
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
+  const [changes, setChanges] = useState({});
   const [current, setCurrent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [report, setReport] = useState(null);
@@ -77,6 +78,7 @@ export default function EnglishUnitPracticePage() {
       setChapterId(target.id);
       setQuestions(list);
       setAnswers({});
+      setChanges({});
       setCurrent(0);
       setReport(null);
       setStep('answer');
@@ -100,8 +102,22 @@ export default function EnglishUnitPracticePage() {
     [questions, answers],
   );
 
+  // 记录选项改选次数：交给后端做「掌握 / 不稳定 / 漏洞」三态判定
+  const handleAnswerChange = (id, value) => {
+    const before = answers[id];
+    if (value?.type === 'option' && before?.type === 'option'
+      && before.optionId && before.optionId !== value.optionId) {
+      setChanges((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+    }
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  };
+
   const handleSubmit = async () => {
-    const items = questions.map((q) => ({ questionId: q.id, answer: answers[q.id] || {} }));
+    const items = questions.map((q) => ({
+      contentKey: q.id,
+      answer: answers[q.id] || {},
+      changes: changes[q.id] || 0,
+    }));
     setSubmitting(true);
     try {
       // 带上学科/年级/册别，便于检测记录归属英语学科（复习错题据此聚合）
@@ -182,7 +198,7 @@ export default function EnglishUnitPracticePage() {
             index={current + 1}
             total={questions.length}
             value={answers[q.id]}
-            onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
+            onChange={(v) => handleAnswerChange(q.id, v)}
             judgeMode={false}
             keyboardDefaultTab="letter"
           />
@@ -224,6 +240,10 @@ export default function EnglishUnitPracticePage() {
         <div className="kd-report-summary">
           <div className="kd-report-title">单元练习完成 · {unit}</div>
           <div className="kd-report-line">答对 <b>{rep.correct}</b> / {rep.total} 题</div>
+          <div className="kd-report-line">
+            掌握 <b>{rep.mastered ?? 0}</b> · 不稳定 <b>{rep.unstable ?? 0}</b> · 漏洞 <b>{rep.flawed ?? 0}</b>
+            <span className="kd-report-hint">（加权得分 {rep.masteryScore ?? rep.accuracy}）</span>
+          </div>
           <div className="kd-report-line kd-report-hint">
             {rep.accuracy >= 60 ? '不错，继续保持' : '把错题对应的小节再练一遍吧'}
           </div>
@@ -239,8 +259,8 @@ export default function EnglishUnitPracticePage() {
             <div key={d.questionId} className={`kd-detail-item ${d.correct === 1 ? 'is-right' : 'is-wrong'}`}>
               <div className="kd-detail-head">
                 <span className="kd-detail-index">{idx + 1}</span>
-                <span className={`kd-detail-flag ${d.correct === 1 ? 'ok' : 'bad'}`}>
-                  {d.correct === 1 ? '答对' : d.correct === 0 ? '答错' : '未判分'}
+                <span className={`kd-detail-flag ${d.mastery === '掌握' ? 'ok' : d.mastery === '不稳定' ? 'warn' : d.mastery === '漏洞' ? 'bad' : d.correct === 1 ? 'ok' : 'bad'}`}>
+                  {d.mastery || (d.correct === 1 ? '答对' : d.correct === 0 ? '答错' : '未判分')}
                 </span>
                 <span className="kd-detail-kp">{d.knowledgePoint}</span>
               </div>

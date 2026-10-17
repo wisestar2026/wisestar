@@ -27,8 +27,20 @@ public class DetectReportView {
 	/** 按单元统计 */
 	private List<ChapterStat> chapterStats = new ArrayList<>();
 
-	/** 薄弱知识点（按正确率升序，仅含有错题的项） */
+	/** 薄弱知识点（按正确率升序；内容包阶梯卷按三态加权得分低于 55 收录） */
 	private List<WeakPoint> weakPoints = new ArrayList<>();
+
+	/** 掌握题数（行为三态） */
+	private int mastered;
+
+	/** 不稳定题数（行为三态） */
+	private int unstable;
+
+	/** 漏洞题数（行为三态） */
+	private int flawed;
+
+	/** 加权得分（掌握 100 / 不稳定 60 / 漏洞 0，0-100 整数） */
+	private int masteryScore;
 
 	/** 逐题明细（含标准答案与解析） */
 	private List<Detail> details = new ArrayList<>();
@@ -97,6 +109,12 @@ public class DetectReportView {
 
 		/** 1 正确 / 0 错误 / null 未判分 */
 		private Integer correct;
+
+		/** 行为三态：掌握 / 不稳定 / 漏洞（内容包阶梯卷生效，其余报告为 null） */
+		private String mastery;
+
+		/** 单题得分（掌握 100 / 不稳定 60 / 漏洞 0） */
+		private Integer score;
 
 		/** 原题（题干 + 选项，已剥离标准答案与解析，供解析页对照题目信息） */
 		private StudentQuestionView question;

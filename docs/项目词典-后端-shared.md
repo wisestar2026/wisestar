@@ -1330,7 +1330,7 @@
 - 类型: `class DetectReportView`
 - 注解: @Data
 - **类说明**：
-  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序且仅含有错题）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 正确/0 错误/null 未判分）/question（`StudentQuestionView`，原题题干+选项，已剥离 `examCorrectAnswer`/`examAnalysis`，供逐题解析对照）/correctAnswers/studentAnswer/analysis）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段）、baseline（本次是否定格为成长基线）、recordId（检测记录ID，未落库时为 null）。
+  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序，内容包阶梯卷按加权得分低于 55 收录）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 掌握/0 不稳定或漏洞/null 未判分）/mastery（掌握/不稳定/漏洞，仅内容包阶梯卷）/score（100/60/0）/question（`StudentQuestionView`，原题题干+选项，已剥离 `examCorrectAnswer`/`examAnalysis`，供逐题解析对照）/correctAnswers/studentAnswer/analysis）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段）、baseline（本次是否定格为成长基线）、recordId（检测记录ID，未落库时为 null）、mastered/unstable/flawed（行为三态题数）、masteryScore（三态加权得分 0-100）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectSubmitRequest.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
@@ -2249,7 +2249,7 @@
 - 注解: @Data
 - **类说明**：
   一次练习的学情评价上下文（跨模块传递，避免 shared 依赖 rdbms 实体）。
-  由练习交卷方（rdbms）从逐题明细与题目 schema 组装后交给评价服务。
+  由练习交卷方（rdbms）从逐题明细与题目 schema 组装后交给评价服务。`Item` 字段：questionId、correct（是否全对）、score（0-100 三态得分，可空；为空时按 correct 折算 0/100）、knowledgePointNames。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/RewardContext.java`
 - 包: `cn.wisestar.server.domain.dto.student`

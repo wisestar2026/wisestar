@@ -43,6 +43,9 @@ public class PracticeEvaluationContext {
 		/** 是否答对 */
 		private boolean correct;
 
+		/** 题目得分（0-100；为空时按 correct 折算 0/100，用于三态加权） */
+		private Integer score;
+
 		/** 题目绑定的知识点名称（可为空） */
 		private List<String> knowledgePointNames;
 

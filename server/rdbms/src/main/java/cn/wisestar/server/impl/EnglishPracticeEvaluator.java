@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * 英语练习结果入账：把单词/句子/句式练习折算为英语模块知识点的掌握度与薄弱状态。
@@ -93,6 +94,43 @@ public class EnglishPracticeEvaluator {
 				PracticeEvaluationContext.Item item = new PracticeEvaluationContext.Item();
 				item.setQuestionId("en-" + module + "-" + chapter.getId() + "-" + i);
 				item.setCorrect(i < hit);
+				item.setKnowledgePointNames(Collections.singletonList(knowledgePoint));
+				context.getItems().add(item);
+			}
+			evaluationService.recordPractice(context);
+		}
+		catch (Exception e) {
+			log.warn("english practice evaluation failed: user={}, unit={}, module={}", userId, unit, module, e);
+		}
+	}
+
+	/**
+	 * 记录一批带三态得分的作答（掌握 100 / 不稳定 60 / 漏洞 0）。
+	 *
+	 * <p>与 {@link #recordBatch} 的区别：得分参与掌握度加权，
+	 * 使「不稳定」不落入薄弱阈值（55）以下、「漏洞」落入。</p>
+	 */
+	public void recordScores(String userId, String version, String grade, String term, String unit,
+			String module, List<Integer> scores) {
+		if (!StringUtils.hasText(userId) || !StringUtils.hasText(unit) || !StringUtils.hasText(module)
+				|| scores == null || scores.isEmpty()) {
+			return;
+		}
+		try {
+			Chapter chapter = findChapter(version, grade, term, unit);
+			if (chapter == null) {
+				return;
+			}
+			String knowledgePoint = unit.trim() + "·" + module;
+			PracticeEvaluationContext context = new PracticeEvaluationContext();
+			context.setUserId(userId);
+			context.setChapterId(chapter.getId());
+			for (int i = 0; i < scores.size(); i++) {
+				int score = scores.get(i) == null ? 0 : Math.max(0, Math.min(scores.get(i), 100));
+				PracticeEvaluationContext.Item item = new PracticeEvaluationContext.Item();
+				item.setQuestionId("en-" + module + "-" + chapter.getId() + "-" + i);
+				item.setScore(score);
+				item.setCorrect(score >= 100);
 				item.setKnowledgePointNames(Collections.singletonList(knowledgePoint));
 				context.getItems().add(item);
 			}

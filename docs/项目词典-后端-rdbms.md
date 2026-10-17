@@ -1061,10 +1061,22 @@
 - 类型: `class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语单元练习组卷实现（内容包阶梯卷）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位，题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先；交卷按内容键复核答案（句子忽略大小写、空白与句末标点，多空逐空比对，选择题按选项文本），生成 `DetectReportView` 并按「单元·模块」调用 `EnglishPracticeEvaluator.recordBatch` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。
+  英语单元练习组卷实现（内容包阶梯卷）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位，题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先；交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数与加权得分的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。
 - 方法:
   - `public List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
   - `public DetectReportView submit(EnglishUnitPaperSubmitRequest request)`
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishBehaviorJudge.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `final class EnglishBehaviorJudge`
+- **类说明**：
+  英语作答行为三态判定（掌握/不稳定/漏洞），依据《检测模型与题目处理策略》L4。规则：连词成句全对=掌握、词全用对但顺序错=不稳定、漏词/多词/空白=漏洞；句子默写全对=掌握、拼写错 1~2 处=不稳定、结构错/空白=漏洞；选择题首答对=掌握、改选后对=不稳定、选错=漏洞；挖空全对且未用提示=掌握、提示后对或部分对=不稳定、全错/空白=漏洞；作答轮完整正确=掌握、部分对/改选后对=不稳定、不对/空白=漏洞。得分为掌握 100、不稳定 60、漏洞 0，其中不稳定高于 `EvaluationServiceImpl.WEAK_THRESHOLD`（55）、漏洞低于阈值，保证报告薄弱清单与掌握度入账一致。
+- 方法:
+  - `static Mastery judgeChoice(boolean correct, Integer changes)`
+  - `static Mastery judgeBuild(String expected, String actual)`
+  - `static Mastery judgeDictation(String expected, String actual)`
+  - `static Mastery judgeBlanks(List<String> expected, String actualText, Boolean hintUsed)`
+  - `static Mastery judgeTurn(List<String> expected, String actualText, Integer changes)`
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EvaluationServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

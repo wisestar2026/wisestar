@@ -50,8 +50,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EvaluationServiceImpl implements EvaluationService {
 
-	/** 薄弱阈值 */
-	private static final int WEAK_THRESHOLD = 55;
+	/** 薄弱阈值（报告三态的「不稳定」得分需高于此值） */
+	public static final int WEAK_THRESHOLD = 55;
 
 	/** 攻克所需本次正确率 */
 	private static final int CONQUER_RATE = 80;
@@ -115,11 +115,14 @@ public class EvaluationServiceImpl implements EvaluationService {
 			if (!StringUtils.hasText(kpId)) {
 				continue;
 			}
-			int[] slot = agg.computeIfAbsent(kpId, k -> new int[2]);
+			int[] slot = agg.computeIfAbsent(kpId, k -> new int[3]);
 			slot[1]++;
 			if (item.isCorrect()) {
 				slot[0]++;
 			}
+			// 三态得分优先（掌握 100 / 不稳定 60 / 漏洞 0）；未提供时按对错折算
+			slot[2] += item.getScore() == null ? (item.isCorrect() ? 100 : 0)
+					: Math.max(0, Math.min(item.getScore(), 100));
 		}
 		for (Map.Entry<String, int[]> e : agg.entrySet()) {
 			int total = e.getValue()[1];
@@ -127,7 +130,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 				continue;
 			}
 			int correct = e.getValue()[0];
-			int rate = (int) Math.round(correct * 100.0 / total);
+			int rate = (int) Math.round(e.getValue()[2] / (double) total);
 			updateProgress(userId, e.getKey(), rate, total, correct, refBase);
 		}
 		if (ctx != null && StringUtils.hasText(ctx.subjectId)) {

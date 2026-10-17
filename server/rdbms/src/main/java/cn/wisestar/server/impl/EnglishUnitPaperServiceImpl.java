@@ -136,32 +136,39 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				request.getUnit()).stream().collect(Collectors.toMap(q -> q.tag.getContentKey(), q -> q, (a, b) -> a));
 		Map<String, int[]> kpAgg = new LinkedHashMap<>();
 		Map<String, int[]> moduleAgg = new LinkedHashMap<>();
+		Map<String, List<Integer>> moduleScores = new LinkedHashMap<>();
 		for (EnglishUnitPaperSubmitRequest.Item item : request.getItems()) {
 			Q q = questions.get(item.getContentKey());
 			if (q == null) {
 				continue;
 			}
-			boolean correct = judge(q, item.getAnswer());
+			EnglishBehaviorJudge.Mastery mastery = behavior(q, item);
+			int score = mastery.getScore();
 			DetectReportView.Detail detail = new DetectReportView.Detail();
 			detail.setQuestionId(q.tag.getContentKey());
 			detail.setChapter(request.getUnit());
 			detail.setKnowledgePoint(q.tag.getKnowledgePoint());
 			detail.setQuestionType(q.type.name());
-			detail.setCorrect(correct ? 1 : 0);
+			detail.setMastery(mastery.getLabel());
+			detail.setScore(score);
+			detail.setCorrect(mastery == EnglishBehaviorJudge.Mastery.MASTERED ? 1 : 0);
 			detail.setQuestion(toView(q));
 			detail.setCorrectAnswers(q.correctAnswers());
 			detail.setStudentAnswer(formatStudentAnswer(q, item.getAnswer()));
 			detail.setAnalysis(q.analysis);
 			report.getDetails().add(detail);
 
-			int[] kp = kpAgg.computeIfAbsent(q.tag.getKnowledgePoint(), k -> new int[2]);
+			int[] kp = kpAgg.computeIfAbsent(q.tag.getKnowledgePoint(), k -> new int[3]);
 			kp[0] += 1;
-			int[] module = moduleAgg.computeIfAbsent(q.tag.getModule(), k -> new int[2]);
+			kp[2] += score;
+			int[] module = moduleAgg.computeIfAbsent(q.tag.getModule(), k -> new int[3]);
 			module[0] += 1;
-			if (correct) {
+			module[2] += score;
+			if (mastery == EnglishBehaviorJudge.Mastery.MASTERED) {
 				kp[1] += 1;
 				module[1] += 1;
 			}
+			moduleScores.computeIfAbsent(q.tag.getModule(), k -> new ArrayList<>()).add(score);
 		}
 		int total = report.getDetails().size();
 		int correctCount = (int) report.getDetails().stream()
@@ -169,6 +176,15 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		report.setTotal(total);
 		report.setCorrect(correctCount);
 		report.setAccuracy(total == 0 ? 0 : Math.round(correctCount * 100f / total));
+		report.setMastered((int) report.getDetails().stream()
+				.filter(d -> "掌握".equals(d.getMastery())).count());
+		report.setUnstable((int) report.getDetails().stream()
+				.filter(d -> "不稳定".equals(d.getMastery())).count());
+		report.setFlawed((int) report.getDetails().stream()
+				.filter(d -> "漏洞".equals(d.getMastery())).count());
+		report.setMasteryScore(total == 0 ? 0
+				: (int) Math.round(report.getDetails().stream()
+						.mapToInt(d -> d.getScore() == null ? 0 : d.getScore()).sum() / (double) total));
 
 		DetectReportView.ChapterStat chapterStat = new DetectReportView.ChapterStat();
 		chapterStat.setName(request.getUnit());
@@ -180,7 +196,8 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		List<DetectReportView.WeakPoint> weakPoints = new ArrayList<>();
 		kpAgg.forEach((name, stat) -> {
 			int wrong = stat[0] - stat[1];
-			if (wrong <= 0) {
+			// 与薄弱阈值对齐：加权得分（掌握 100 / 不稳定 60 / 漏洞 0）低于阈值才列为薄弱
+			if (wrong <= 0 || stat[2] >= EvaluationServiceImpl.WEAK_THRESHOLD * stat[0]) {
 				return;
 			}
 			DetectReportView.WeakPoint wp = new DetectReportView.WeakPoint();
@@ -196,8 +213,9 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		report.setWeakPoints(weakPoints);
 
 		String userId = SecurityContextUtils.getUserId();
-		moduleAgg.forEach((module, stat) -> practiceEvaluator.recordBatch(userId, request.getVersion(),
-				request.getGrade(), request.getTerm(), request.getUnit(), module, stat[1], stat[0]));
+		moduleAgg.forEach((module, stat) -> practiceEvaluator.recordScores(userId, request.getVersion(),
+				request.getGrade(), request.getTerm(), request.getUnit(), module,
+				moduleScores.getOrDefault(module, Collections.emptyList())));
 		return report;
 	}
 
@@ -254,6 +272,7 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				}
 				String key = sentenceKey(version, grade, term, unit, item);
 				Q q = new Q();
+				q.kind = item.getKind();
 				q.answer = item.getEn();
 				q.analysis = StringUtils.hasText(item.getExplanation()) ? item.getExplanation() : item.getZh();
 				if ("choice".equals(item.getKind())) {
@@ -530,28 +549,31 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		return view;
 	}
 
-	private boolean judge(Q q, Map<String, Object> answer) {
+	/**
+	 * 按题型执行行为三态判定（掌握 / 不稳定 / 漏洞）。
+	 */
+	private EnglishBehaviorJudge.Mastery behavior(Q q, EnglishUnitPaperSubmitRequest.Item item) {
+		Map<String, Object> answer = item.getAnswer();
 		if (answer == null) {
-			return false;
+			return EnglishBehaviorJudge.Mastery.FLAW;
 		}
 		if (SurveySchema.QuestionType.Radio.equals(q.type)) {
 			String selected = optionTitle(q, answer);
-			return selected != null && normalizeSentence(selected).equals(normalizeSentence(q.answer));
+			boolean correct = selected != null
+					&& normalizeSentence(selected).equals(normalizeSentence(q.answer));
+			return EnglishBehaviorJudge.judgeChoice(correct, item.getChanges());
 		}
 		String text = answer.get("text") == null ? "" : String.valueOf(answer.get("text"));
 		if (SurveySchema.QuestionType.MultipleBlank.equals(q.type)) {
-			String[] blanks = text.split("\\|", -1);
-			if (q.answers == null || blanks.length != q.answers.size()) {
-				return false;
-			}
-			for (int i = 0; i < blanks.length; i++) {
-				if (!normalizeWord(blanks[i]).equals(normalizeWord(q.answers.get(i)))) {
-					return false;
-				}
-			}
-			return true;
+			return EnglishBehaviorJudge.judgeBlanks(q.answers, text, item.getHintUsed());
 		}
-		return StringUtils.hasText(q.answer) && normalizeSentence(text).equals(normalizeSentence(q.answer));
+		if ("build".equals(q.kind)) {
+			return EnglishBehaviorJudge.judgeBuild(q.answer, text);
+		}
+		if ("dictation".equals(q.kind)) {
+			return EnglishBehaviorJudge.judgeDictation(q.answer, text);
+		}
+		return EnglishBehaviorJudge.judgeTurn(q.correctAnswers(), text, item.getChanges());
 	}
 
 	private String optionTitle(Q q, Map<String, Object> answer) {
@@ -661,6 +683,9 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		private String title;
 
 		private SurveySchema.QuestionType type;
+
+		/** 句子题型：choice / build / dictation（单词与句式为 null） */
+		private String kind;
 
 		private List<String> options;
 
