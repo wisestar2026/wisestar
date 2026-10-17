@@ -28,6 +28,9 @@ public class PracticeEvaluationContext {
 	/** 会话级小节ID（可空） */
 	private String sectionId;
 
+	/** 会话级章节ID（可空，用于同名知识点按册/单元收敛） */
+	private String chapterId;
+
 	/** 逐题结果 */
 	private List<Item> items = new ArrayList<>();
 

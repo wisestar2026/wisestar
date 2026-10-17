@@ -92,6 +92,21 @@ public interface EnglishStudentService {
 	List<ReviewSessionView> reviewSession(String userId, int limit);
 
 	/**
+	 * 记录一次情景练习结果（单词情景 / 句式情景），纳入「单元·模块」掌握度。
+	 *
+	 * @param userId 用户 ID
+	 * @param version 版本
+	 * @param grade 年级
+	 * @param term 学期/册别
+	 * @param unit 单元
+	 * @param module 模块（单词/句式）
+	 * @param correct 答对题数
+	 * @param total 参与判定的题数
+	 */
+	void recordScenarioPractice(String userId, String version, String grade, String term, String unit,
+			String module, int correct, int total);
+
+	/**
 	 * 记录一次学习会话（写学习日志 + 结算学习币/积分奖励）。
 	 *
 	 * @param userId 用户 ID

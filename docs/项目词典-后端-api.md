@@ -359,6 +359,8 @@
     单元句子同步练习：读取管理端固化的多题型句子练习（连词成句/句子默写/句子选择，未固化返回空列表，不触发 AI）。
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
+  - `public void recordScenario(@RequestBody Map<String, Object> request)`
+    记录情景练习结果（{version, grade, term, unit, module, correct, total}），按整组正确率纳入「单元·模块」掌握度与薄弱点。
   - `public List<EnglishWrongQuestionView> wrongQuestions(@RequestParam(required = false) Integer limit)`
     英语复习错题（检测记录聚合并剔除已消灭题，题目快照已剥离答案；`limit` 可选）。
   - `public StudentQuestionView wrongQuestion(@RequestParam String questionId)`

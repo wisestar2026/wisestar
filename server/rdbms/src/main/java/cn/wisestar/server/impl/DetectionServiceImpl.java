@@ -11,6 +11,7 @@ import cn.wisestar.server.domain.dto.detect.DetectReportView;
 import cn.wisestar.server.domain.dto.detect.DetectSubmitRequest;
 import cn.wisestar.server.domain.dto.detect.DetectUnitView;
 import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
+import cn.wisestar.server.domain.dto.student.PracticeEvaluationContext;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentWeakView;
 import cn.wisestar.server.domain.model.Chapter;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -301,11 +303,15 @@ public class DetectionServiceImpl implements DetectionService {
 		try {
 			persistRecord(request, report);
 			String studentId = SecurityContextUtils.getUserId();
+			// 学情评价：每次检测逐题刷新掌握度与薄弱状态（英语单元/语法练习依赖此处入账）
+			boolean evaluated = recordDetectEvaluation(request, report, studentId);
 			// 成长档案：检测轨迹留痕
 			recordDetectGrowth(request, report, studentId);
-			// 首次基线：一次性播种薄弱知识点（口径 a，此后检测不重写）并定格成长基线
+			// 首次基线：一次性播种未被逐题评价覆盖的薄弱知识点，并定格成长基线
 			if (report.isBaseline()) {
-				seedBaselineWeak(request.getSubjectId(), report);
+				if (!evaluated) {
+					seedBaselineWeak(request.getSubjectId(), report);
+				}
 				bindBaselineArchive(request, report, studentId);
 			}
 		}
@@ -313,6 +319,65 @@ public class DetectionServiceImpl implements DetectionService {
 			log.warn("detect submit: persist record failed, ignored", e);
 		}
 		return report;
+	}
+
+	/**
+	 * 把本次检测的逐题结果纳入学情评价（刷新知识点掌握度与薄弱状态）。
+	 *
+	 * <p>检测此前只落记录与基线播种，非基线检测（英语单元/语法练习）不会产生掌握度。
+	 * 这里按题目绑定的知识点名称逐题入账，并带章节 ID 以收敛同名知识点。</p>
+	 *
+	 * @param request 交卷请求
+	 * @param report 诊断报告
+	 * @param studentId 学员 ID
+	 * @return 是否成功纳入至少一道有效作答
+	 */
+	private boolean recordDetectEvaluation(DetectSubmitRequest request, DetectReportView report, String studentId) {
+		if (!StringUtils.hasText(studentId) || report == null || report.getDetails() == null
+				|| report.getDetails().isEmpty()) {
+			return false;
+		}
+		try {
+			List<String> ids = report.getDetails().stream().map(DetectReportView.Detail::getQuestionId)
+					.filter(StringUtils::hasText).distinct().collect(Collectors.toList());
+			if (ids.isEmpty()) {
+				return false;
+			}
+			Map<String, Template> templates = templateMapper.selectBatchIds(ids).stream()
+					.collect(Collectors.toMap(Template::getId, t -> t, (a, b) -> a));
+			PracticeEvaluationContext evalCtx = new PracticeEvaluationContext();
+			evalCtx.setUserId(studentId);
+			evalCtx.setPracticeId(report.getRecordId());
+			if (request.getChapterIds() != null && !request.getChapterIds().isEmpty()) {
+				evalCtx.setChapterId(request.getChapterIds().get(0));
+			}
+			for (DetectReportView.Detail detail : report.getDetails()) {
+				// 未作答/未判分的题不计入，避免跳过拉低掌握度
+				if (detail.getQuestionId() == null || detail.getCorrect() == null) {
+					continue;
+				}
+				Template template = templates.get(detail.getQuestionId());
+				if (template == null) {
+					continue;
+				}
+				PracticeEvaluationContext.Item item = new PracticeEvaluationContext.Item();
+				item.setQuestionId(detail.getQuestionId());
+				item.setCorrect(detail.getCorrect() == 1);
+				if (template.getKnowledgePoint() != null) {
+					item.setKnowledgePointNames(Arrays.asList(template.getKnowledgePoint()));
+				}
+				evalCtx.getItems().add(item);
+			}
+			if (evalCtx.getItems().isEmpty()) {
+				return false;
+			}
+			evaluationService.recordPractice(evalCtx);
+			return true;
+		}
+		catch (Exception e) {
+			log.warn("detect submit: record evaluation failed, ignored", e);
+			return false;
+		}
 	}
 
 	/** 成长档案：写入一条 DETECT 轨迹事件（幂等，失败不阻断）。 */

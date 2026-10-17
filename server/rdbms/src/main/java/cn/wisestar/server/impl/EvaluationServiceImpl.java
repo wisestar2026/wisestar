@@ -80,10 +80,26 @@ public class EvaluationServiceImpl implements EvaluationService {
 			return;
 		}
 		String userId = context.getUserId();
+		// 同名知识点跨册/单元复用，优先按本次会话章节收敛
+		Map<String, String> chapterKpIndex = chapterKnowledgePointIndex(context.getChapterId());
 		// 会话级知识点上下文
-		KpContext ctx = resolveContext(context.getKnowledgePointId(), context.getSectionId());
+		KpContext ctx = resolveContext(context.getKnowledgePointId(), context.getSectionId(),
+				context.getChapterId());
+		if (ctx == null) {
+			// 仅带逐题知识点名称时（检测/英语练习），用首个可解析知识点补全学科与版本上下文
+			String firstKpId = null;
+			for (PracticeEvaluationContext.Item item : context.getItems()) {
+				firstKpId = resolveKpId(item.getKnowledgePointNames(), chapterKpIndex, new HashMap<>());
+				if (StringUtils.hasText(firstKpId)) {
+					break;
+				}
+			}
+			if (StringUtils.hasText(firstKpId)) {
+				ctx = resolveContext(firstKpId, null, null);
+			}
+		}
 		if (ctx == null && !StringUtils.hasText(context.getKnowledgePointId())
-				&& !StringUtils.hasText(context.getSectionId())) {
+				&& !StringUtils.hasText(context.getSectionId()) && !StringUtils.hasText(context.getChapterId())) {
 			return;
 		}
 		Map<String, int[]> agg = new LinkedHashMap<>();
@@ -92,7 +108,7 @@ public class EvaluationServiceImpl implements EvaluationService {
 		String refBase = StringUtils.hasText(context.getPracticeId()) ? "practice:" + context.getPracticeId()
 				: "practice:" + todayKey();
 		for (PracticeEvaluationContext.Item item : context.getItems()) {
-			String kpId = resolveKpId(item.getKnowledgePointNames(), ctx, nameCache);
+			String kpId = resolveKpId(item.getKnowledgePointNames(), chapterKpIndex, nameCache);
 			if (!StringUtils.hasText(kpId)) {
 				kpId = context.getKnowledgePointId();
 			}
@@ -527,7 +543,8 @@ public class EvaluationServiceImpl implements EvaluationService {
 	 * @param cache 知识点名称到 ID 的缓存
 	 * @return 命中的知识点 ID，未命中返回 null
 	 */
-	private String resolveKpId(List<String> knowledgePointNames, KpContext sessionCtx, Map<String, String> cache) {
+	private String resolveKpId(List<String> knowledgePointNames, Map<String, String> chapterKpIndex,
+			Map<String, String> cache) {
 		if (knowledgePointNames == null || knowledgePointNames.isEmpty()) {
 			return null;
 		}
@@ -543,15 +560,46 @@ public class EvaluationServiceImpl implements EvaluationService {
 				}
 				continue;
 			}
-			List<KnowledgePoint> list = knowledgePointMapper
-					.selectList(Wrappers.<KnowledgePoint>lambdaQuery().eq(KnowledgePoint::getName, key).last("limit 1"));
-			String id = list.isEmpty() ? null : list.get(0).getId();
+			// 先按会话章节收敛（同名知识点跨年级/册别复用），未命中再回退全局
+			String id = chapterKpIndex == null ? null : chapterKpIndex.get(key);
+			if (!StringUtils.hasText(id)) {
+				List<KnowledgePoint> list = knowledgePointMapper.selectList(
+						Wrappers.<KnowledgePoint>lambdaQuery().eq(KnowledgePoint::getName, key).last("limit 1"));
+				id = list.isEmpty() ? null : list.get(0).getId();
+			}
 			cache.put(key, id == null ? "" : id);
 			if (StringUtils.hasText(id)) {
 				return id;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * 构建章节内知识点名称索引（章节 → 小节 → 知识点），用于同名知识点跨册收敛。
+	 *
+	 * @param chapterId 章节 ID
+	 * @return 知识点名称到 ID 的索引，章节为空或无知识点时返回空 Map
+	 */
+	private Map<String, String> chapterKnowledgePointIndex(String chapterId) {
+		if (!StringUtils.hasText(chapterId)) {
+			return Collections.emptyMap();
+		}
+		List<Section> sections = sectionMapper.selectList(Wrappers.<Section>lambdaQuery()
+				.eq(Section::getChapterId, chapterId));
+		if (sections.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		Set<String> sectionIds = sections.stream().map(Section::getId).collect(Collectors.toSet());
+		List<KnowledgePoint> list = knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+				.in(KnowledgePoint::getSectionId, sectionIds));
+		Map<String, String> index = new HashMap<>();
+		for (KnowledgePoint kp : list) {
+			if (StringUtils.hasText(kp.getName())) {
+				index.putIfAbsent(kp.getName().trim(), kp.getId());
+			}
+		}
+		return index;
 	}
 
 	/**
@@ -562,6 +610,18 @@ public class EvaluationServiceImpl implements EvaluationService {
 	 * @return 解析出的知识点上下文，均无法解析时返回 null
 	 */
 	private KpContext resolveContext(String kpId, String sectionId) {
+		return resolveContext(kpId, sectionId, null);
+	}
+
+	/**
+	 * 依据知识点 ID、小节 ID 或章节 ID 解析出知识点上下文（章节、学科、版本等）。
+	 *
+	 * @param kpId 知识点 ID
+	 * @param sectionId 小节 ID
+	 * @param chapterId 章节 ID
+	 * @return 解析出的知识点上下文，均无法解析时返回 null
+	 */
+	private KpContext resolveContext(String kpId, String sectionId, String chapterId) {
 		if (StringUtils.hasText(kpId)) {
 			KnowledgePoint kp = knowledgePointMapper.selectById(kpId);
 			if (kp != null) {
@@ -569,9 +629,33 @@ public class EvaluationServiceImpl implements EvaluationService {
 			}
 		}
 		if (StringUtils.hasText(sectionId)) {
-			return buildContext(sectionId);
+			KpContext bySection = buildContext(sectionId);
+			if (bySection != null) {
+				return bySection;
+			}
+		}
+		if (StringUtils.hasText(chapterId)) {
+			return buildChapterContext(chapterId);
 		}
 		return null;
+	}
+
+	/**
+	 * 依据章节 ID 构建知识点上下文（仅到章节层级，不含小节）。
+	 *
+	 * @param chapterId 章节 ID
+	 * @return 知识点上下文，章节不存在时返回 null
+	 */
+	private KpContext buildChapterContext(String chapterId) {
+		Chapter chapter = chapterMapper.selectById(chapterId);
+		if (chapter == null) {
+			return null;
+		}
+		KpContext ctx = new KpContext();
+		ctx.chapterId = chapterId;
+		ctx.subjectId = chapter.getSubjectId();
+		ctx.versionId = chapter.getVersion();
+		return ctx;
 	}
 
 	/**

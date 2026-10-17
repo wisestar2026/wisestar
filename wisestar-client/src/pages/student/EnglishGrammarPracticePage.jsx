@@ -53,6 +53,7 @@ export default function EnglishGrammarPracticePage() {
   const [submitting, setSubmitting] = useState(false);
   const [report, setReport] = useState(null);
   const [grammars, setGrammars] = useState([]);
+  const [chapterId, setChapterId] = useState('');
 
   // 组卷：找到同名单元 → 生成题目
   const loadPaper = useCallback(async () => {
@@ -80,6 +81,7 @@ export default function EnglishGrammarPracticePage() {
         setStep('empty');
         return;
       }
+      setChapterId(target.id);
       setQuestions(list);
       setAnswers({});
       setCurrent(0);
@@ -110,7 +112,7 @@ export default function EnglishGrammarPracticePage() {
     setSubmitting(true);
     try {
       // 带上学科/年级/册别，便于检测记录归属英语学科（复习错题据此聚合）
-      const res = await submitDetectPaper({ items, subjectId, grade, term });
+      const res = await submitDetectPaper({ items, subjectId, grade, term, chapterIds: chapterId ? [chapterId] : undefined });
       const rep = res?.data || null;
       setReport(rep);
       setStep('report');

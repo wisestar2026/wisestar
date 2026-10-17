@@ -841,14 +841,14 @@
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
   学员端知识点检测服务实现（DetectionServiceImpl），实现 shared 模块 DetectionService。
-  **取题口径**：单元统计与组卷优先用「章节/小节 → 题库」绑定（`t_chapter_repo` 与经 `t_section.chapter_id` 关联的 `t_section_repo` 取并集）精确圈定到册别/单元，避免 `t_template` 无年级/册别列导致跨册串题；无任何绑定时回退到「学科 + 章节名（+ 年级）」匹配。组卷时剥离 `examCorrectAnswer`/`examAnalysis`，判分复用 AnswerJudgeUtil，报告按单元与知识点标签聚合。**WPB 定基**：交卷后落库检测记录（`t_detect_record`，客户端令牌与基线键双重幂等），某学科本学期首次检测标为 PRE 且定格为成长基线，并一次性播种薄弱知识点、写入学员档案基线（异常不阻断诊断报告返回）。
+  **取题口径**：单元统计与组卷优先用「章节/小节 → 题库」绑定（`t_chapter_repo` 与经 `t_section.chapter_id` 关联的 `t_section_repo` 取并集）精确圈定到册别/单元，避免 `t_template` 无年级/册别列导致跨册串题；无任何绑定时回退到「学科 + 章节名（+ 年级）」匹配。组卷时剥离 `examCorrectAnswer`/`examAnalysis`，判分复用 AnswerJudgeUtil，报告按单元与知识点标签聚合。**逐题入账**：每次交卷按题目绑定知识点调用 `EvaluationService.recordPractice` 刷新掌握度与薄弱状态（非基线检测同样生效，英语单元/语法练习依赖此链路），未作答/未判分题不计入。**WPB 定基**：交卷后落库检测记录（`t_detect_record`，客户端令牌与基线键双重幂等），某学科本学期首次检测标为 PRE 且定格为成长基线，并一次性播种薄弱知识点、写入学员档案基线（异常不阻断诊断报告返回）。
 - 方法:
   - `public List<DetectUnitView> units(String subjectId, String grade, String term)`
     检测可选单元列表（按学科 + 年级 + 册别过滤，带可用题量）。
   - `public List<StudentQuestionView> generate(DetectGenerateRequest request)`
     自动组卷（剥离标准答案与解析）。
   - `public DetectReportView submit(DetectSubmitRequest request)`
-    交卷并生成薄弱点诊断报告；落库检测记录、判成长基线并联动薄弱播种与档案定格。
+    交卷并生成薄弱点诊断报告；逐题刷新掌握度/薄弱，落库检测记录、判成长基线并联动薄弱播种与档案定格。
   - `public List<DetectRecordView> history(String studentId, String subjectId, String semester)`
     检测历史记录（按创建时间倒序）。
 
@@ -949,7 +949,7 @@
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
   英语学员学习服务实现。
-  `recordSession` 在写学习日志后调用 `RewardService` 结算学习币/学海积分（与主系统同一套），按英语行为类型映射奖励、按自然日幂等、subjectId 解析为英语学科；`recordGrammar` 在熟练度与学习日志处理后，另将语法练习写入成长轨迹（`GrowthArchiveService`，按 grammarId + 日期累加，幂等、失败不阻断）。
+  `recordSession` 在写学习日志后调用 `RewardService` 结算学习币/学海积分（与主系统同一套），按英语行为类型映射奖励、按自然日幂等、subjectId 解析为英语学科；`recordGrammar` 在熟练度与学习日志处理后，另将语法练习写入成长轨迹（`GrowthArchiveService`，按 grammarId + 日期累加，幂等、失败不阻断）；`recordSentence` 与 `recordScenarioPractice` 另按 `单元·句子` / `单元·句式` 口径调用 `EnglishPracticeEvaluator` 入账掌握度。
 - 方法:
   - `public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term)`
   - `public List<EnglishSentenceView> sentences(String userId, String version, String grade, String term, String unit)`
@@ -957,6 +957,8 @@
     单元语法列表，按用户回填 `familiarity/correctCount/wrongCount`。
   - `public List<EnglishSentenceView> studySentences(String userId, int limit)`
   - `public void recordSentence(String userId, String sentenceId, boolean correct)`
+  - `public void recordScenarioPractice(String userId, String version, String grade, String term, String unit, String module, int correct, int total)`
+    单词/句式情景整组结果按正确率纳入 `单元·模块` 掌握度。
   - `public void recordGrammar(String userId, String grammarId, boolean correct)`
     记录语法作答（熟练度 +1/-1 夹取 0~4、复习调度、学习日志 `type=grammar`）。
   - `public List<ReviewSessionView> reviewSession(String userId, int limit)`
@@ -1012,7 +1014,7 @@
 - 注解: @Service, @RequiredArgsConstructor
 - **类说明**：
   英语单词学习服务实现。
-- 注入/字段: EnglishWordMapper englishWordMapper, EnglishWordBookMapper englishWordBookMapper, EnglishLearningLogMapper englishLearningLogMapper
+- 注入/字段: EnglishWordMapper englishWordMapper, EnglishWordBookMapper englishWordBookMapper, EnglishLearningLogMapper englishLearningLogMapper, EnglishPracticeEvaluator englishPracticeEvaluator
 - 方法:
   - `public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query)`
   - `public PaginationResponse<EnglishWordView> wordBook(String userId, EnglishWordQuery query)`
@@ -1022,6 +1024,19 @@
   - `public boolean hasDrillCompletedToday(String userId)`
     查 t_english_learning_log 中该账号当天是否存在 type=drill 记录（LocalDate.now() 起算）。
   - `public void recordLearning(String userId, String wordId, boolean correct)`
+    更新单词熟练度与复习调度后，按 `单元·单词` 口径将该词作答纳入掌握度与薄弱点。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishPracticeEvaluator.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishPracticeEvaluator`
+- 注解: @Slf4j, @Component, @RequiredArgsConstructor
+- **类说明**：
+  英语练习结果入账组件：把单词/句子/句式练习折算为 `单元·模块` 知识点的掌握度与薄弱状态。按「版本 + 年级 + 册别 + 单元名」定位英语章节并以 `chapterId` 收敛同名单元，再组装 `PracticeEvaluationContext` 交给 `EvaluationService.recordPractice`；异常仅记日志，不阻断学习主流程。
+- 方法:
+  - `public void record(String userId, String version, String grade, String term, String unit, String module, boolean correct)`
+    单题/单次结果入账。
+  - `public void recordBatch(String userId, String version, String grade, String term, String unit, String module, int correct, int total)`
+    整组结果按正确率入账（用于情景练习）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EvaluationServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1029,7 +1044,7 @@
 - 注解: @Slf4j, @Service, @Transactional, @RequiredArgsConstructor
 - **类说明**：
   学员学习评价实现。
-  掌握度 = 最近 5 次练习正确率的加权平均（越近权重越高 5,4,3,2,1）； 薄弱 = 掌握度 <55，且仅对已产生学习记录（知识点进度）的知识点认定（未学习实体不参与），不再参考未订正错题；攻克 = 正确率 ≥80（显式）。薄弱点跃迁（discovered/conquered/reopened，含知识点/小节/章节名称快照）经 WeakPointEventRecorder 提交后落库，攻克薄弱小节时终身后一次发放小节攻克奖励。
+  掌握度 = 最近 5 次练习正确率的加权平均（越近权重越高 5,4,3,2,1）； 薄弱 = 掌握度 <55，且仅对已产生学习记录（知识点进度）的知识点认定（未学习实体不参与），不再参考未订正错题；攻克 = 正确率 ≥80（显式）。知识点解析支持按会话章节收敛同名知识点（英语跨年级/册别单元），并可在仅带逐题知识点名称时自动补全学科/版本上下文。薄弱点跃迁（discovered/conquered/reopened，含知识点/小节/章节名称快照）经 WeakPointEventRecorder 提交后落库，攻克薄弱小节时终身后一次发放小节攻克奖励。
 - 方法:
   - `public void recordPractice(PracticeEvaluationContext context)`
   - `public boolean conquer(String userId, String knowledgePointId, int correctRate)`

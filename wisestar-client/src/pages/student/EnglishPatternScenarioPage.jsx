@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishPatternScenarios, recordEnglishSession } from '../../api/englishStudent';
+import { getEnglishPatternScenarios, recordEnglishScenarioPractice, recordEnglishSession } from '../../api/englishStudent';
 import './EnglishCenterPage.css';
 import './EnglishScenarioPracticePage.css';
 import './EnglishPatternScenarioPage.css';
@@ -101,6 +101,12 @@ export default function EnglishPatternScenarioPage() {
     const durationSeconds = Math.round((Date.now() - startAt.current) / 1000);
     const correct = countCorrect(picked);
     recordEnglishSession({ type: 'pattern', durationSeconds, correctCount: correct }).catch(() => {});
+    // 纳入「单元·句式」掌握度，供薄弱点检测
+    if (totalCount > 0) {
+      recordEnglishScenarioPractice({
+        version, grade, term, unit, module: '句式', correct, total: totalCount,
+      }).catch(() => {});
+    }
   };
 
   const reset = () => {

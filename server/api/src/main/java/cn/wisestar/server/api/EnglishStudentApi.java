@@ -181,6 +181,22 @@ public class EnglishStudentApi {
 	}
 
 	/**
+	 * 记录情景练习结果（{version, grade, term, unit, module, correct, total}）。
+	 *
+	 * <p>用于单词情景对话与重点句式情景：整组提交后按正确率纳入「单元·模块」掌握度。</p>
+	 */
+	@PostMapping("/scenario/record")
+	@PreAuthorize("isAuthenticated()")
+	public void recordScenario(@RequestBody Map<String, Object> request) {
+		String userId = SecurityContextUtils.getUserId();
+		englishStudentService.recordScenarioPractice(userId,
+				stringValue(request.get("version")), stringValue(request.get("grade")),
+				stringValue(request.get("term")), stringValue(request.get("unit")),
+				stringValue(request.get("module")), parseInt(request.get("correct")),
+				parseInt(request.get("total")));
+	}
+
+	/**
 	 * 记录学习会话（{type, durationSeconds, correctCount}），返回奖励结算结果。
 	 */
 	@PostMapping("/session")
@@ -202,6 +218,14 @@ public class EnglishStudentApi {
 		} catch (NumberFormatException e) {
 			return 0;
 		}
+	}
+
+	private String stringValue(Object value) {
+		if (value == null) {
+			return null;
+		}
+		String text = String.valueOf(value).trim();
+		return text.isEmpty() ? null : text;
 	}
 
 }

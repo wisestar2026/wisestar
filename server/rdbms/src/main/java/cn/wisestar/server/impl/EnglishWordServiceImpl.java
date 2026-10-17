@@ -39,6 +39,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	private final EnglishWordMapper englishWordMapper;
 	private final EnglishWordBookMapper englishWordBookMapper;
 	private final EnglishLearningLogMapper englishLearningLogMapper;
+	private final EnglishPracticeEvaluator englishPracticeEvaluator;
 
 	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
 	private static final int WEAK_WRONG_TIMES = 2;
@@ -230,6 +231,12 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			book.setWrongCount((book.getWrongCount() == null ? 0 : book.getWrongCount()) + (correct ? 0 : 1));
 			book.setNextReviewTime(calculateNextReviewTime(familiarity));
 			englishWordBookMapper.updateById(book);
+		}
+		// 逐词结果纳入「单元·单词」掌握度，供薄弱点检测使用
+		EnglishWord word = englishWordMapper.selectById(wordId);
+		if (word != null) {
+			englishPracticeEvaluator.record(userId, word.getVersion(), word.getGrade(), word.getTerm(),
+					word.getUnit(), EnglishPracticeEvaluator.MODULE_WORD, correct);
 		}
 	}
 

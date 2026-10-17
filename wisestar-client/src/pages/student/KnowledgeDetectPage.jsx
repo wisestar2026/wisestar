@@ -146,7 +146,13 @@ export default function KnowledgeDetectPage() {
     }));
     setSubmitting(true);
     try {
-      const res = await submitDetectPaper({ items });
+      const res = await submitDetectPaper({
+        items,
+        subjectId: activeSubject,
+        grade,
+        term,
+        chapterIds: selectedUnits,
+      });
       setReport(res?.data || null);
       setStep('report');
       message.success('检测完成，已生成诊断报告');

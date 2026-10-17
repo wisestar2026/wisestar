@@ -108,8 +108,14 @@ export function recordEnglishSession(data) {
   });
 }
 
-/** 单元单词列表（含熟练度，复用单词接口） */
-export function getEnglishWordBook(params) {
+/**
+ * 记录情景练习结果（单词情景 / 句式情景），按整组正确率纳入「单元·模块」掌握度。
+ */
+export function recordEnglishScenarioPractice(data) {
+  return request.post('/english/student/scenario/record', data);
+}
+
+/** 单元单词列表（含熟练度，复用单词接口） */export function getEnglishWordBook(params) {
   return request.get('/english/word/word-book', { params });
 }
 

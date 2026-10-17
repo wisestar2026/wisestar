@@ -19,7 +19,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishScenarios, recordEnglishSession } from '../../api/englishStudent';
+import { getEnglishScenarios, recordEnglishScenarioPractice, recordEnglishSession } from '../../api/englishStudent';
 import { blankMatches } from '../../utils/practiceHelpers';
 import './EnglishCenterPage.css';
 import './EnglishScenarioPracticePage.css';
@@ -111,6 +111,12 @@ export default function EnglishScenarioPracticePage() {
       }
     }));
     recordEnglishSession({ type: 'scenario', durationSeconds, correctCount: correct }).catch(() => {});
+    // 纳入「单元·单词」掌握度，供薄弱点检测
+    if (blankTotal > 0) {
+      recordEnglishScenarioPractice({
+        version, grade, term, unit, module: '单词', correct, total: blankTotal,
+      }).catch(() => {});
+    }
   };
 
   const reset = () => {

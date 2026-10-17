@@ -88,6 +88,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final RewardService rewardService;
 	private final GrowthArchiveService growthArchiveService;
 	private final ObjectMapper objectMapper;
+	private final EnglishPracticeEvaluator englishPracticeEvaluator;
 
 	@Override
 	public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term) {
@@ -337,6 +338,19 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		}
 
 		writeLog(userId, "sentence", sentenceId, 0, correct ? 1 : 0);
+		// 逐句结果纳入「单元·句子」掌握度，供薄弱点检测使用
+		EnglishSentence sentence = englishSentenceMapper.selectById(sentenceId);
+		if (sentence != null) {
+			englishPracticeEvaluator.record(userId, sentence.getVersion(), sentence.getGrade(), sentence.getTerm(),
+					sentence.getUnit(), EnglishPracticeEvaluator.MODULE_SENTENCE, correct);
+		}
+	}
+
+	@Override
+	public void recordScenarioPractice(String userId, String version, String grade, String term, String unit,
+			String module, int correct, int total) {
+		// 情景练习按整组正确率折算，纳入「单元·模块」掌握度
+		englishPracticeEvaluator.recordBatch(userId, version, grade, term, unit, module, correct, total);
 	}
 
 	@Override

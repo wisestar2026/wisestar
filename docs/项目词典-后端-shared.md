@@ -2781,6 +2781,8 @@
     英语错题重做：判分正确则落一条 `t_english_wrong_redo` 消灭记录（幂等），返回 ok/removed。
   - `StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
     记录一次学习会话（写学习日志 + 结算学习币/积分奖励）。
+  - `void recordScenarioPractice(String userId, String version, String grade, String term, String unit, String module, int correct, int total)`
+    记录单词/句式情景练习整组结果，按 `单元·模块` 口径入账掌握度与薄弱点。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishUnitService.java`
 - 包: `cn.wisestar.server.service`
