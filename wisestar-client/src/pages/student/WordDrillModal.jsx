@@ -163,12 +163,18 @@ export default function WordDrillModal({ open, words, onFinish }) {
     <>
       <div className="eng-quiz-badge">{question.typeLabel}</div>
       {question.promptType === 'image' && (
-        <img
-          className="eng-quiz-image"
-          src={question.imageUrl || WORD_PLACEHOLDER}
-          alt="看图选单词"
-          onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
-        />
+        <>
+          {/* 中文提示：图片上方给出该单词的中文释义，帮助理解词义 */}
+          {question.word?.meaning && (
+            <div className="eng-quiz-image-hint">提示：{question.word.meaning}</div>
+          )}
+          <img
+            className="eng-quiz-image"
+            src={question.imageUrl || WORD_PLACEHOLDER}
+            alt="看图选单词"
+            onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
+          />
+        </>
       )}
       {question.promptType === 'meaning' && (
         <>

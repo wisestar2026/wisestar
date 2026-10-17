@@ -291,7 +291,7 @@
   border-radius: 20px;
   box-shadow: 0 10px 24px rgba(64, 140, 190, 0.18);
 }
-/* 看图选单词：图片下方给出中文释义提示，帮助理解词义 */
+/* 看图选单词：图片上方给出中文释义提示，帮助理解词义 */
 .eng-quiz-image-hint {
   display: inline-block;
   margin: 2px auto 6px;
