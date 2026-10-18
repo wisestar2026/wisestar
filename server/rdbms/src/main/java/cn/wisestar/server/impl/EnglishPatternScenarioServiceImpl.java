@@ -62,7 +62,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		this.objectMapper = new ObjectMapper();
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 		factory.setConnectTimeout(15_000);
-		factory.setReadTimeout(180_000);
+		factory.setReadTimeout(300_000);
 		this.restTemplate = new RestTemplate(factory);
 	}
 
@@ -141,6 +141,8 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	 */
 	private String buildUserPrompt(String grade, String unit, List<EnglishPatternSentence> sentences,
 			int scenarioCount, List<String> avoidTitles) {
+		String[] settings = {"教室", "操场", "图书馆", "家中客厅", "超市", "公园", "餐厅", "公交车站", "医院", "动物园",
+				"文具店", "火车站", "电影院", "博物馆", "朋友家", "海滩", "农场", "体育馆", "机场", "邮局"};
 		StringBuilder sb = new StringBuilder();
 		sb.append("请基于以下英语单元的重点句式，编写 ").append(scenarioCount).append(" 个贴近生活的情景对话练习：\n");
 		sb.append("年级：").append(grade).append("\n");
@@ -154,6 +156,9 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			String zh = s.getZh() == null ? "" : s.getZh().trim();
 			sb.append("- ").append(en).append(zh.isEmpty() ? "" : "（" + zh + "）").append("\n");
 		}
+		sb.append("参考场景（请为每个情景分配不同场景）：")
+				.append(String.join("、", java.util.Arrays.copyOf(settings, Math.min(settings.length, scenarioCount))))
+				.append("\n");
 		if (avoidTitles != null && !avoidTitles.isEmpty()) {
 			sb.append("\n本单元已使用的情景（禁止重复）：").append(String.join("、", avoidTitles)).append("\n");
 		}
@@ -163,7 +168,9 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		sb.append("2) 每个情景至少一半轮次为作答轮：只给 cue（中文情景提示），不给 en；\n");
 		sb.append("3) 作答轮的 answer 必须是上面列出的重点句式之一，options 给出 4 个英文句子（含 answer 与 3 个明显不合本情景的干扰项）；\n");
 		sb.append("4) 作答轮的 cue 用中文描述学员要表达的意思，与 answer 严格对应；已给出轮次必须有 en 与 zh；\n");
-		sb.append("5) explanation 用简短中文说明选择依据。");
+		sb.append("5) explanation 用简短中文说明选择依据；\n");
+		sb.append("6) title 必须是具体的中文场景名（如「在文具店买铅笔」），禁止「情景标题1」这类编号占位；")
+				.append("每个情景的地点、人物、目的都要不同，禁止复用已有情景的台词或情节。");
 		return sb.toString();
 	}
 
@@ -208,9 +215,11 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		if (rawScenarios == null || !rawScenarios.isArray()) {
 			return result;
 		}
+		int rawSize = rawScenarios.size();
 		for (JsonNode raw : rawScenarios) {
 			EnglishPatternScenarioView view = new EnglishPatternScenarioView();
-			view.setTitle(firstString(raw, "title", "name", "scene"));
+			String title = cleanTitle(firstString(raw, "title", "name", "scene"));
+			view.setTitle(title == null || title.isEmpty() ? "情景 " + (result.size() + 1) : title);
 			view.setContext(nullToEmpty(firstString(raw, "context", "background", "desc", "description")));
 
 			JsonNode rawPatterns = firstNode(raw, "patterns", "sentences", "patternList");
@@ -246,6 +255,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 				result.add(view);
 			}
 		}
+		log.info("AI 情景原始 {} 个，规整后 {} 个", rawSize, result.size());
 		return result;
 	}
 
@@ -330,6 +340,16 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		} catch (Exception e) {
 			return "{}";
 		}
+	}
+
+	/**
+	 * 清理模型偶尔带出的「情景标题1：」前缀。
+	 */
+	private static String cleanTitle(String value) {
+		if (value == null) {
+			return null;
+		}
+		return value.replaceFirst("^\\s*情景标题\\s*\\d+\\s*[:：]?\\s*", "").trim();
 	}
 
 	private static String nullToEmpty(String s) {

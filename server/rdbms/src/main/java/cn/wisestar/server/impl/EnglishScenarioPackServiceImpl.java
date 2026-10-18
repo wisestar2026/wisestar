@@ -448,6 +448,7 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		int patternGroupNo = 1;
 		List<List<EnglishSentence>> patternChunks = partition(sentences, PATTERN_GROUP_SIZE);
 		List<String> usedScenarioTitles = new ArrayList<>();
+		Set<String> usedScenarioSignatures = new java.util.HashSet<>();
 		if (!patternChunks.isEmpty()) {
 			int patternCountPerUnit = 10;
 			int basePerGroup = patternCountPerUnit / patternChunks.size();
@@ -458,14 +459,30 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 				List<EnglishPatternSentence> input = chunk.stream()
 						.map(s -> new EnglishPatternSentence(s.getEn(), s.getZh()))
 						.collect(Collectors.toList());
-				List<EnglishPatternScenarioView> scenarios = patternScenarioService.generateFromSentences(
-						grade, unit, input, groupScenarioCount, usedScenarioTitles);
-				patternScenarioTotal += scenarios.size();
-				for (EnglishPatternScenarioView scenario : scenarios) {
-					if (scenario.getTitle() != null && !scenario.getTitle().trim().isEmpty()) {
-						usedScenarioTitles.add(scenario.getTitle().trim());
+				// 模型容易在后半段重复同一段对话，先多要一些，再按台词签名去重；不足则继续补生成
+				List<EnglishPatternScenarioView> scenarios = new ArrayList<>();
+				int round = 0;
+				while (scenarios.size() < groupScenarioCount && round < 3) {
+					int missing = groupScenarioCount - scenarios.size();
+					int requestCount = missing + Math.max(2, missing / 2);
+					List<EnglishPatternScenarioView> rawScenarios = patternScenarioService.generateFromSentences(
+							grade, unit, input, requestCount, usedScenarioTitles);
+					for (EnglishPatternScenarioView scenario : rawScenarios) {
+						String signature = patternSignature(scenario);
+						if (!usedScenarioSignatures.add(signature)) {
+							continue;
+						}
+						scenarios.add(scenario);
+						if (scenario.getTitle() != null && !scenario.getTitle().trim().isEmpty()) {
+							usedScenarioTitles.add(scenario.getTitle().trim());
+						}
+						if (scenarios.size() >= groupScenarioCount) {
+							break;
+						}
 					}
+					round++;
 				}
+				patternScenarioTotal += scenarios.size();
 				ObjectNode group = patternGroups.addObject();
 				group.put("groupNo", patternGroupNo++);
 				ArrayNode groupSentences = group.putArray("sentences");

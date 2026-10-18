@@ -911,7 +911,7 @@
 - 类型: `class EnglishPatternScenarioServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语重点句式情景生成服务实现（按分组子集生成）：依据传入的一组重点句式 DTO 调用系统 AI 生成调用方指定数量的生活情景对话——部分轮次给出英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式；可传入本单元已用情景标题避免跨组重复；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。解析时对齐 answer 与 options（按字符串匹配正确项下标、必要时补齐）、过滤无作答轮的场景。
+  英语重点句式情景生成服务实现（按分组子集生成）：依据传入的一组重点句式 DTO 调用系统 AI 生成调用方指定数量的生活情景对话——部分轮次给出英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式；可传入本单元已用情景标题避免跨组重复，并按参考场景列表强制每个情景使用不同地点、标题须为具体中文场景名；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。解析时对齐 answer 与 options（按字符串匹配正确项下标、必要时补齐）、过滤无作答轮的场景。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishReviewScheduler.java`
 - 包: `cn.wisestar.server.impl`
@@ -937,7 +937,7 @@
 - 类型: `class EnglishScenarioPackServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景；句式情景全单元固定 10 个，按分组数量均分（如 2 组各 5 个、4 组按 3/3/2/2 分配），并把已生成标题传给后续分组避免重复；结果写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）；句式情景在展平后按「说话人+台词/提示+正确项」签名去重（AI 会把同一段对话写进不同标题的情景），并用「标题+轮次+候选内容」稳定旋转候选项，保证正确项不再固定出现在首位。
+  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景；句式情景全单元固定 10 个，按分组数量均分（如 2 组各 5 个、4 组按 3/3/2/2 分配），并按「缺口 + 缓冲」请求数量、按台词签名全局去重后不足 10 个继续补生成（最多 3 轮），跨组共享已用标题与签名；结果写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）；句式情景在展平后按「说话人+台词/提示+正确项」签名去重（AI 会把同一段对话写进不同标题的情景），并用「标题+轮次+候选内容」稳定旋转候选项，保证正确项不再固定出现在首位。
 - 常量: `WORD_GROUP_SIZE=8`、`PATTERN_GROUP_SIZE=6`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioServiceImpl.java`
