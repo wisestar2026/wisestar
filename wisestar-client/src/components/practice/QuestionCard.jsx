@@ -143,16 +143,20 @@ export default function QuestionCard({
 
   // ---- 多项填空: 空位数与当前空位值 ----
   // 空位数优先取标准答案按 | 拆分的数量（题目编辑时空位必须与答案一致）；
-  // 答案被剥离时回退到题干空位标记（如 __①__）的数量，再回退到已填空位数 / 默认 2，
-  // 保证练习端始终可作答且空位数量正确
+  // 答案被剥离时回退到题干空位标记的数量（英语情景题用「_____」逐空展示，数学用 __①__ 编号），
+  // 再回退到已填空位数 / 默认 2，保证练习端始终可作答且空位数量正确
   const stdAnswerRaw = String(attr.examCorrectAnswer || '');
   const stdParts = stdAnswerRaw ? stdAnswerRaw.split('|') : [];
-  const titleBlankCount = (String(schema.title || '').match(/__[^_]+__/g) || []).length;
+  const titleText = String(schema.title || '');
+  const titleBlankCount = (titleText.match(/__[^_]+__/g) || []).length
+    || (titleText.match(/_{3,}/g) || []).length;
+  const attrBlankCount = Number(attr.blankCount) || 0;
   const blankCount = qtype === 'MultipleBlank'
     ? (stdParts.length > 0 ? stdParts.length
-      : (titleBlankCount > 0 ? titleBlankCount
-        : ((value?.type === 'text' && String(value.text || '').split('|').length > 0)
-          ? String(value.text).split('|').length : 2)))
+      : (attrBlankCount > 0 ? attrBlankCount
+        : (titleBlankCount > 0 ? titleBlankCount
+          : ((value?.type === 'text' && String(value.text || '').split('|').length > 0)
+            ? String(value.text).split('|').length : 2))))
     : 0;
   const blankValues = qtype === 'MultipleBlank'
     ? (value?.type === 'text' ? String(value.text || '') : '').split('|')

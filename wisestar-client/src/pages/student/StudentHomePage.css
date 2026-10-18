@@ -60,7 +60,7 @@
   box-shadow: 0 24px 54px rgba(40, 110, 170, 0.28), 0 8px 18px rgba(40, 110, 170, 0.14);
 }
 
-/* ---------- 左栏：竖向卡通入口（四个入口，尺寸适配） ---------- */
+/* ---------- 左栏：竖向卡通入口（五个入口，尺寸适配） ---------- */
 .slh-side {
   display: flex;
   flex-direction: column;
@@ -151,6 +151,7 @@
 .slh-side-wrong { --accent: #5b6fe0; --accent-soft: rgba(91, 111, 224, 0.42); }
 .slh-side-task { --accent: #17a5b8; --accent-soft: rgba(23, 165, 184, 0.42); }
 .slh-side-detect { --accent: #8a5cf6; --accent-soft: rgba(138, 92, 246, 0.42); }
+.slh-side-diagnose { --accent: #e0663f; --accent-soft: rgba(224, 102, 63, 0.42); }
 
 /* ---------- 船图舞台：船图仅展示，「开始学习」按钮为唯一入口 ---------- */
 .slh-stage {

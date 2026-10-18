@@ -20,9 +20,14 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.validation.ValidationException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 英语情景对话生成服务实现（按分组子集生成）。
@@ -43,6 +48,21 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 
 	/** 英文台词中的空位标记（统一为三个下划线） */
 	private static final String BLANK = "___";
+
+	/** AI 输出中用于标出目标词的标记，如 [[apple]] */
+	private static final Pattern TARGET_MARKER = Pattern.compile("\\[\\[\\s*([^\\]]+?)\\s*\\]\\]?");
+
+	/** 仅作句子骨架、不适合强行挖空的功能词 */
+	private static final Set<String> FUNCTION_WORDS = new HashSet<>(Arrays.asList(
+			"a", "an", "the", "i", "you", "he", "she", "it", "we", "they",
+			"my", "your", "his", "her", "its", "our", "their", "me", "him", "us", "them",
+			"this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been",
+			"do", "does", "did", "have", "has", "had", "can", "could", "will", "would",
+			"shall", "should", "may", "might", "must", "to", "of", "in", "on", "at",
+			"for", "with", "from", "by", "about", "and", "or", "but", "so",
+			"what", "where", "when", "who", "why", "how", "yes", "no", "not", "very", "too",
+			"also", "here", "there", "up", "down",
+			"mr", "ms", "mrs", "miss"));
 
 	/** 生成结果 JSON 允许的场景数组 key 别名 */
 	private static final String[] SCENARIO_ARRAY_KEYS = { "scenarios", "dialogs", "dialogues", "conversations" };
@@ -108,7 +128,7 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 			Map<String, Object> body = new HashMap<>();
 			body.put("model", model);
 			body.put("messages", messages);
-			body.put("temperature", 0.7);
+			body.put("temperature", 0.3);
 			body.put("max_tokens", 4096);
 			body.put("stream", false);
 
@@ -133,6 +153,25 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	}
 
 	/**
+	 * 判断单词是否只由功能词构成（如 a、be (am,is,are)、to），这类词不适合强行挖空。
+	 */
+	private boolean isFunctionWord(String spell) {
+		if (spell == null) {
+			return true;
+		}
+		String normalized = spell.toLowerCase().replaceAll("[^a-z ]", " ").trim();
+		if (normalized.isEmpty()) {
+			return true;
+		}
+		for (String part : normalized.split("\\s+")) {
+			if (!FUNCTION_WORDS.contains(part)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * 构建请求 AI 生成情景对话的用户提示词。
 	 */
 	private String buildUserPrompt(String grade, String unit, List<EnglishScenarioWord> words, int scenarioCount) {
@@ -140,19 +179,37 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 		sb.append("请基于以下英语单元单词，编写 ").append(scenarioCount).append(" 个贴近生活的情景对话：\n");
 		sb.append("年级：").append(grade).append("\n");
 		sb.append("单元：").append(unit).append("\n");
-		sb.append("本组单词（务必全部考查到）：");
-		List<String> parts = new ArrayList<>();
+		List<String> targets = new ArrayList<>();
+		List<String> optional = new ArrayList<>();
 		for (EnglishScenarioWord w : words) {
 			String meaning = w.getMeaning() == null ? "" : w.getMeaning().trim();
-			parts.add(meaning.isEmpty() ? w.getSpell() : w.getSpell() + "（" + meaning + "）");
+			String item = meaning.isEmpty() ? w.getSpell() : w.getSpell() + "（" + meaning + "）";
+			if (isFunctionWord(w.getSpell())) {
+				optional.add(item);
+			} else {
+				targets.add(item);
+			}
 		}
-		sb.append(String.join("、", parts));
+		// 整组都是功能词时退回全量，避免无词可考
+		if (targets.isEmpty()) {
+			targets.addAll(optional);
+			optional.clear();
+		}
+		sb.append("本组重点考查单词（务必全部考查到）：").append(String.join("、", targets));
+		if (!optional.isEmpty()) {
+			sb.append("\n本组也会自然出现的功能词（只用于把句子说通顺，不要为了考查而强行挖空）：")
+					.append(String.join("、", optional));
+		}
 		sb.append("\n\n要求：\n");
 		sb.append("1) 每个对话 4-8 轮，两个角色 A、B 交替你一言我一语，场景要生活化、自然连贯；\n");
-		sb.append("2) 每个对话考查本组若干单词：把要考查的单词从英文台词中挖空，用三个下划线 ___ 表示；\n");
-		sb.append("3) 每行 en 里的 ___ 数量必须与 answers 数组长度一致，answers 按空位出现顺序给出小写单词；无空的台词 answers 为 []；\n");
-		sb.append("4) 一行可有 0-2 个空，每个对话至少考查 3 个单词，所有给出单词尽量覆盖；\n");
-		sb.append("5) zh 为该行英文的中文翻译。");
+		sb.append("2) 先写出完整、语法正确的英文句，再把每行要考查的 1 个目标词用 [[word]] 包裹；不要使用 ___；\n");
+		sb.append("3) [[...]] 里的词必须逐字来自上面的重点考查单词；一行最多标记 1 个；没有目标词的行不要加任何标记；\n");
+		sb.append("4) 每个对话至少自然用到 ").append(Math.min(3, targets.size()))
+				.append(" 个重点单词；优先把目标词放在它天然的语法位置；\n");
+		sb.append("5) 禁止连续重复词（a a / the the / is is / can can / to to 等）；同一个词不要在同一行标记两次；\n");
+		sb.append("6) 标记后不得留下残句：主语、谓语、宾语等必要成分必须完整；宁可换一种说法，也不要硬塞目标词；\n");
+		sb.append("7) 每行必须是通顺、正确、自然的英文；zh 为该行英文的中文翻译；\n");
+		sb.append("8) answers 可以留空，系统会根据 [[...]] 自动生成。");
 		return sb.toString();
 	}
 
@@ -222,6 +279,23 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 					en = en.replaceAll("_{2,}", BLANK).trim();
 
 					List<String> answers = new ArrayList<>();
+					Matcher marker = TARGET_MARKER.matcher(en);
+					if (marker.find()) {
+						// 标记模式：只保留第一个 [[word]] 作为空位，其余标记恢复原词，避免一行多空
+						marker.reset();
+						StringBuffer sb = new StringBuffer();
+						while (marker.find()) {
+							String word = marker.group(1).trim();
+							if (answers.isEmpty() && !word.isEmpty()) {
+								marker.appendReplacement(sb, Matcher.quoteReplacement(BLANK));
+								answers.add(word.toLowerCase());
+							} else {
+								marker.appendReplacement(sb, Matcher.quoteReplacement(word));
+							}
+						}
+						marker.appendTail(sb);
+						en = sb.toString();
+					}
 					JsonNode rawAnswers = firstNode(rawLine, "answers", "words", "blanks");
 					if (rawAnswers != null && rawAnswers.isArray()) {
 						for (JsonNode a : rawAnswers) {
@@ -231,6 +305,12 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 						}
 					}
 					int blanks = countBlanks(en);
+					if (!answers.isEmpty()) {
+						// 标记模式已给出答案，忽略模型返回的 answers
+						while (answers.size() > blanks) {
+							answers.remove(answers.size() - 1);
+						}
+					}
 					// 对齐答案数量：不足补空、超出截断，避免前后端空位错位
 					while (answers.size() < blanks) {
 						answers.add("");

@@ -54,6 +54,7 @@ import StudentHomePage from './pages/student/StudentHomePage';
 import StudyPage from './pages/student/StudyPage';
 import KnowledgePage from './pages/student/KnowledgePage';
 import KnowledgeDetectPage from './pages/student/KnowledgeDetectPage';
+import EnglishDiagnosePage from './pages/student/EnglishDiagnosePage';
 import StudentMyArchivePage from './pages/student/StudentMyArchivePage';
 import ProfilePage from './pages/student/ProfilePage';
 import MallPage from './pages/student/MallPage';
@@ -149,6 +150,8 @@ export default function App() {
             <Route path="wrong" element={<WrongBookPage />} />
             {/* 知识点检测: 勾选单元自动组卷 + 薄弱点诊断报告（诊断性质，不发奖） */}
             <Route path="detect" element={<KnowledgeDetectPage />} />
+            {/* 英语学习诊断: 三档诊断卷 + 家长向可打印报告 */}
+            <Route path="diagnose" element={<EnglishDiagnosePage />} />
             {/* 我的学习档案: 学习目标/知识点/当日情况/上课记录/学期报告（只读可打印） */}
             <Route path="archive" element={<StudentMyArchivePage />} />
             {/* 我的档案荣誉墙: 证书陈列 + 成长统计 */}

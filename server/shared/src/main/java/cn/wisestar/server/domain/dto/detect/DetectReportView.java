@@ -42,6 +42,9 @@ public class DetectReportView {
 	/** 加权得分（掌握 100 / 不稳定 60 / 漏洞 0，0-100 整数） */
 	private int masteryScore;
 
+	/** 知识模块维度（英语：句子/单词/句式） */
+	private List<DimensionStat> moduleStats = new ArrayList<>();
+
 	/** 语言技能维度（词汇/语法/语用） */
 	private List<DimensionStat> skillStats = new ArrayList<>();
 
@@ -65,6 +68,9 @@ public class DetectReportView {
 
 	/** 检测记录ID（未落库时为 null） */
 	private String recordId;
+
+	/** 学习趋势（按诊断时间升序；仅学习诊断报告返回） */
+	private List<TrendPoint> trend = new ArrayList<>();
 
 	/**
 	 * 单元维度统计。
@@ -123,6 +129,26 @@ public class DetectReportView {
 
 		/** 正确率（0-100 整数） */
 		private int accuracy;
+
+	}
+
+	/**
+	 * 学习趋势点。
+	 */
+	@Data
+	public static class TrendPoint {
+
+		/** 诊断日期（MM-dd） */
+		private String date;
+
+		/** 当次加权得分（0-100 整数） */
+		private int masteryScore;
+
+		/** 当次正确率（0-100 整数） */
+		private int accuracy;
+
+		/** 当次题量 */
+		private int total;
 
 	}
 

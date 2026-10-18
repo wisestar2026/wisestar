@@ -177,6 +177,11 @@ export default function StudentHomePage() {
             <span className="slh-side-main">知识点检测</span>
             <span className="slh-side-sub">测薄弱点</span>
           </button>
+          <button type="button" className="slh-side-btn slh-side-diagnose" onClick={() => navigate('/student/diagnose')}>
+            <span className="slh-side-emoji">🩺</span>
+            <span className="slh-side-main">学习诊断</span>
+            <span className="slh-side-sub">家长报告 · 可打印</span>
+          </button>
         </aside>
 
         <div className="slh-stage">

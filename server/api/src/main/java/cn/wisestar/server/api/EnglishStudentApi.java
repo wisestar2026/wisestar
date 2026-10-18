@@ -2,6 +2,9 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
+import cn.wisestar.server.domain.dto.english.EnglishDiagnosePaperView;
+import cn.wisestar.server.domain.dto.english.EnglishDiagnoseRequest;
+import cn.wisestar.server.domain.dto.english.EnglishDiagnoseSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
@@ -218,6 +221,24 @@ public class EnglishStudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public DetectReportView submitUnitPaper(@RequestBody EnglishUnitPaperSubmitRequest request) {
 		return unitPaperService.submit(request);
+	}
+
+	/**
+	 * 英语学习诊断组卷：D1→D3 三档各 8 题（共 24 题），跨单元抽取知识点（家长向诊断卷）。
+	 */
+	@PostMapping("/diagnose-paper")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishDiagnosePaperView diagnosePaper(@RequestBody EnglishDiagnoseRequest request) {
+		return unitPaperService.diagnosePaper(request);
+	}
+
+	/**
+	 * 英语学习诊断交卷：生成家长向报告并落诊断记录（含学习趋势）。
+	 */
+	@PostMapping("/diagnose-submit")
+	@PreAuthorize("isAuthenticated()")
+	public DetectReportView diagnoseSubmit(@RequestBody EnglishDiagnoseSubmitRequest request) {
+		return unitPaperService.diagnoseSubmit(request);
 	}
 
 	/**

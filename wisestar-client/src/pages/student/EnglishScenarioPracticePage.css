@@ -106,7 +106,7 @@
 
 .sc-en { font-size: 15px; color: #1c3d4d; line-height: 2; }
 .sc-blank {
-  width: 104px;
+  width: 128px;
   border: none;
   border-bottom: 2px solid #4bb7e8;
   outline: none;
@@ -160,3 +160,72 @@
 .sc-pager-info { font-size: 14px; font-weight: 700; color: #5b7f92; letter-spacing: 0.5px; }
 .sc-pager-info b { font-size: 18px; color: #1479a6; }
 
+
+/* ---------- 单空聚焦 ---------- */
+.sc-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+.sc-progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: #e3f2f9;
+  overflow: hidden;
+}
+.sc-progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4bb7e8, #33b463);
+  transition: width 0.25s ease;
+}
+.sc-progress-text { font-size: 12px; font-weight: 700; color: #5b7f92; white-space: nowrap; }
+.sc-scene-count { margin-left: auto; font-size: 12px; font-weight: 700; color: #7aa0b2; }
+
+.sc-line.is-active .sc-body { background: #e4f6ff; border-color: #9fdcf3; }
+.sc-line.is-b.is-active .sc-body { background: #fff0e8; border-color: #f6c9b2; }
+
+.sc-blank-static {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0 4px;
+  padding: 0 2px;
+  font-size: 15px;
+  font-weight: 700;
+  border-bottom: 2px solid #cfe6f1;
+  line-height: 1.6;
+}
+.sc-blank-static.is-pending { color: #a9c3d1; font-weight: 600; }
+.sc-blank-static.is-correct { color: #1f8f4d; border-color: #33b463; }
+.sc-blank-static.is-wrong { color: #c0392b; border-color: #e05a4f; }
+.sc-mark { font-size: 12px; font-style: normal; }
+.sc-correct { font-style: normal; font-size: 12px; font-weight: 700; color: #d9603a; }
+
+.sc-focus-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7aa0b2;
+}
+
+.sc-scene-done {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #eafaf1;
+}
+.sc-scene-done-title { font-size: 14px; font-weight: 800; color: #1f8f4d; }
+.sc-scene-done-score { margin-top: 4px; font-size: 13px; color: #3d6b55; }
+.sc-scene-done-score b { font-size: 18px; color: #1f8f4d; }
+.sc-wrongs { margin-top: 10px; }
+.sc-wrongs-title { font-size: 12px; font-weight: 800; color: #a15a34; }
+.sc-wrong-item { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+.sc-wrong-word { font-size: 14px; font-weight: 800; color: #c0392b; }
+.sc-wrong-zh { font-size: 12px; color: #5b7f92; }
+.sc-scene-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.sc-pager-btn.is-primary { background: #4bb7e8; border-color: #4bb7e8; color: #fff; }
+.sc-pager-btn.is-primary:hover:not(:disabled) { background: #2f9fd4; border-color: #2f9fd4; color: #fff; }

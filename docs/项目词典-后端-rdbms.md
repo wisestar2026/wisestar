@@ -264,7 +264,7 @@
 - 类型: `class DetectRecord`
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
-  知识点检测记录实体（对应数据库表 t_detect_record）。精准破弱模型（WPB）的「定基」载体：学员某学科本学期首次全面检测标为 PRE 且 isBaseline=1，其薄弱点集合作为成长基线，其余为 STAGE；记录检测类型（detectType）、基线唯一键（baselineKey=studentId:subjectId:semester）、勾选章节（chapterIds/chapterNames JSON 数组）、组卷题量（questionCount）、实际判分题数（total）、正确题数（correctCount）、正确率（accuracy）、作答耗时（durationMs）、薄弱点（weakPoints JSON 数组）、逐题结果（details JSON 数组）与客户端幂等令牌（clientToken），并含 studentId/subjectId/subjectName/grade/term/semester 及审计列。
+  知识点检测记录实体（对应数据库表 t_detect_record）。精准破弱模型（WPB）的「定基」载体：学员某学科本学期首次全面检测标为 PRE 且 isBaseline=1，其薄弱点集合作为成长基线，其余为 STAGE，英语学习诊断为 DIAG；记录检测类型（detectType）、基线唯一键（baselineKey=studentId:subjectId:semester）、勾选章节（chapterIds/chapterNames JSON 数组）、组卷题量（questionCount）、实际判分题数（total）、正确题数（correctCount）、正确率（accuracy）、作答耗时（durationMs）、薄弱点（weakPoints JSON 数组）、逐题结果（details JSON 数组）与客户端幂等令牌（clientToken），并含 studentId/subjectId/subjectName/grade/term/semester 及审计列。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishAiPack.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -938,7 +938,7 @@
 - 类型: `class EnglishScenarioServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语情景对话生成服务实现（按分组子集生成）：依据传入的一组单词 DTO 调用系统 AI 生成 3-4 个生活情景对话并把目标单词从英文台词中挖空形成填空练习；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。解析时统一空位标记 `___`、逐行对齐 answers、过滤无效场景。
+  英语情景对话生成服务实现（按分组子集生成）：依据传入的一组单词 DTO 调用系统 AI 生成 3-4 个生活情景对话并把目标单词从英文台词中挖空形成填空练习；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。生成提示词要求 AI 先写完整句、再用 `[[word]]` 标记 1 个目标词，服务端机械替换为 `___` 并生成 answers；`a/an/the/i/you/my/to/what/how/am/is/are/can` 等功能词只作句子骨架、不强制挖空；一行最多 1 个空，解析时多余标记恢复原词。解析时统一空位标记 `___`、逐行对齐 answers、过滤无效场景。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentencePackServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1056,15 +1056,28 @@
   - `public void recordBatch(String userId, String version, String grade, String term, String unit, String module, int correct, int total)`
     整组结果按正确率入账（用于情景练习）。
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishFusionQuestionFactory.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishFusionQuestionFactory`
+- 注解: @Component, @RequiredArgsConstructor
+- **类说明**：
+  英语单元融合题派生器。不调用 AI、不依赖管理端重新生成内容包，直接读取本单元 `t_english_sentence` / `t_english_word` / `t_english_grammar`：单词模块从原句挖核心词并生成四词词库的选词填空（排除缩写与功能词）；句式模块生成原句短语挖空、换人称改写与情景选原句；语法模块从语法点 `examples` 挖 be/do/情态/冠词/介词/代词/动词形式生成单选。题目标识 `contentKey=fusion:{type}:{version}:{grade}:{term}:{unit}:{sourceId}:{hash}`，只依赖稳定 ID 与源内容，保证组卷与交卷可重复对齐。
+- 方法:
+  - `public List<DerivedQuestion> build(String version, String grade, String term, String unit)`
+    返回该单元可派生的单词/句式/语法题；无句子数据或源内容不足时返回空列表。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishUnitPaperServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语单元练习组卷实现（内容包阶梯卷）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位，题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先；交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数与加权得分的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。
+  英语单元练习组卷与学习诊断实现（内容包阶梯卷 + 融合派生题）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，并追加 `EnglishFusionQuestionFactory` 从原句/单词/语法例句派生的题目；模块统一为「单词 / 句式 / 语法」，请求可传 `module` 只组单模块，不传时按「单词→句式→语法」固定路径平均分题。题内按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位；同一知识点题量超过 3 道时继续按 D1→D3 顺序补足，避免单一知识点只出 3 题；题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先。交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数、加权得分、知识模块（`moduleStats`）与语言技能/认知层级/题型/难度聚合的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。诊断卷（`diagnosePaper`）跨当前册别全部单元按 D1/D2/D3 各取 8 题（共 24 题）、同档内优先覆盖不同单元；单词·情景题按「情景标题 + 本轮之前全部台词（中英对照）」生成题干，历史空位显示为「……」、作答行前缀「【作答】」并只保留本轮 `_____`（答案几个单词就几个空），单空按 `FillBlank`、多空按 `MultipleBlank`，并经 `attribute.blankCount` 下发空位数；诊断交卷（`diagnoseSubmit`）复用同一判分与聚合逻辑，额外落 `t_detect_record`（`detect_type=DIAG`，不计成长基线）并按最近 8 次重算 `trend` 学习趋势。
 - 方法:
   - `public List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
+    支持 `module` 单模块过滤；融合题与内容包题共用同一套 `contentKey`。
   - `public DetectReportView submit(EnglishUnitPaperSubmitRequest request)`
+  - `public EnglishDiagnosePaperView diagnosePaper(EnglishDiagnoseRequest request)`
+  - `public DetectReportView diagnoseSubmit(EnglishDiagnoseSubmitRequest request)`
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishBehaviorJudge.java`
 - 包: `cn.wisestar.server.impl`

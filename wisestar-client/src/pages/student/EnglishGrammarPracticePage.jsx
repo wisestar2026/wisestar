@@ -2,7 +2,7 @@
  * EnglishGrammarPracticePage.jsx - 学员端英语语法练习
  *
  * 功能:
- *   1. 进入单元语法练习：按 单元 组卷（复用知识点检测组卷接口，剥离答案）
+ *   1. 进入单元语法练习：只取本单元「语法」板块的融合题（由单元语法例句派生）
  *   2. 逐题作答（套卷模式），交卷后生成得分与逐题解析
  *   3. 按整体正确率回写该单元语法点掌握度（POST /english/student/grammar/record）
  *
@@ -10,9 +10,8 @@
  * 被谁引用: App.jsx 路由表；入口来自英语复习页「语法」分类与重点语法页
  *
  * 数据流:
- *   GET  /api/student/detect/units          找到同名单元章节 ID
- *   POST /api/student/detect/generate       自动组卷（无答案）
- *   POST /api/student/detect/submit         交卷生成报告
+ *   POST /api/english/student/unit-paper       只生成「语法」板块题目（无答案）
+ *   POST /api/english/student/unit-paper/submit 交卷判分并生成报告
  *   GET  /api/english/student/grammars      单元语法点（写掌握度前取 ID）
  *   POST /api/english/student/grammar/record 记录语法作答 { grammarId, correct }
  */
@@ -22,8 +21,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Empty, Progress, Spin, Tag, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
-import { getDetectUnits, generateDetectPaper, submitDetectPaper } from '../../api/detect';
-import { getEnglishGrammars, recordEnglishGrammar } from '../../api/englishStudent';
+import { getEnglishGrammars, recordEnglishGrammar, getEnglishUnitPaper, submitEnglishUnitPaper } from '../../api/englishStudent';
 import QuestionCard from '../../components/practice/QuestionCard';
 import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
@@ -42,8 +40,6 @@ export default function EnglishGrammarPracticePage() {
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
   const version = useStudentStore((s) => s.version);
-  const activeSubject = useStudentStore((s) => s.activeSubject);
-  const subjectId = searchParams.get('subjectId') || activeSubject || '1003';
 
   // 步骤：loading 加载 → answer 作答 → report 报告 → empty 无题
   const [step, setStep] = useState('loading');
@@ -53,7 +49,6 @@ export default function EnglishGrammarPracticePage() {
   const [submitting, setSubmitting] = useState(false);
   const [report, setReport] = useState(null);
   const [grammars, setGrammars] = useState([]);
-  const [chapterId, setChapterId] = useState('');
 
   // 组卷：找到同名单元 → 生成题目
   const loadPaper = useCallback(async () => {
@@ -63,17 +58,12 @@ export default function EnglishGrammarPracticePage() {
     }
     setStep('loading');
     try {
-      const unitsRes = await getDetectUnits({ subjectId, grade, term });
-      const target = (unitsRes?.data || []).find((u) => u.name === unit);
-      if (!target) {
-        setStep('empty');
-        return;
-      }
-      const genRes = await generateDetectPaper({
-        subjectId,
+      const genRes = await getEnglishUnitPaper({
+        version,
         grade,
         term,
-        chapterIds: [target.id],
+        unit,
+        module: '语法',
         questionCount: 20,
       });
       const list = genRes?.data || [];
@@ -81,7 +71,6 @@ export default function EnglishGrammarPracticePage() {
         setStep('empty');
         return;
       }
-      setChapterId(target.id);
       setQuestions(list);
       setAnswers({});
       setCurrent(0);
@@ -91,7 +80,7 @@ export default function EnglishGrammarPracticePage() {
       message.error(e?.message || '组卷失败，请稍后重试');
       setStep('empty');
     }
-  }, [unit, subjectId, grade, term]);
+  }, [unit, version, grade, term]);
 
   useEffect(() => {
     loadPaper();
@@ -108,11 +97,10 @@ export default function EnglishGrammarPracticePage() {
   );
 
   const handleSubmit = async () => {
-    const items = questions.map((q) => ({ questionId: q.id, answer: answers[q.id] || {} }));
+    const items = questions.map((q) => ({ contentKey: q.id, answer: answers[q.id] || {} }));
     setSubmitting(true);
     try {
-      // 带上学科/年级/册别，便于检测记录归属英语学科（复习错题据此聚合）
-      const res = await submitDetectPaper({ items, subjectId, grade, term, chapterIds: chapterId ? [chapterId] : undefined });
+      const res = await submitEnglishUnitPaper({ version, grade, term, unit, items });
       const rep = res?.data || null;
       setReport(rep);
       setStep('report');

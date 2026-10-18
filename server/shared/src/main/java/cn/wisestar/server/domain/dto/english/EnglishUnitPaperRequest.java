@@ -29,6 +29,9 @@ public class EnglishUnitPaperRequest {
 	/** 章节 ID（用于收敛同名单元的薄弱点） */
 	private String chapterId;
 
+	/** 只生成指定板块（单词 / 句式 / 语法），为空时按三板块融合组卷 */
+	private String module;
+
 	/** 题量，默认 20，最大 30 */
 	private Integer questionCount;
 

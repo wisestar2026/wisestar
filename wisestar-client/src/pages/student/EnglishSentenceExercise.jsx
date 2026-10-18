@@ -25,6 +25,16 @@ import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../
 
 const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择' };
 
+/** 默写提示：按原句词数生成下划线骨架（标点保留），帮助学员对齐词数 */
+function buildDictationSkeleton(sentence) {
+  const tokens = String(sentence || '').match(/[A-Za-z0-9][A-Za-z0-9'’-]*|[^A-Za-z0-9\s]/g) || [];
+  if (!tokens.length) return '';
+  return tokens
+    .map((token) => (/^[A-Za-z0-9]/.test(token) ? '_____' : token))
+    .join(' ')
+    .replace(/\s+([,.!?;:])/g, '$1');
+}
+
 export default function EnglishSentenceExercise({ unit, version, grade, term, onBack }) {
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
@@ -105,6 +115,11 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   };
 
   const handleDictationCheck = () => submit(typed);
+
+  const dictationSkeleton = useMemo(
+    () => (current?.kind === 'dictation' ? buildDictationSkeleton(current.en) : ''),
+    [current],
+  );
 
   const optionList = useMemo(() => {
     if (current?.kind !== 'choice') return [];
@@ -197,9 +212,12 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
         {/* 句子默写 */}
         {current?.kind === 'dictation' && (
           <div style={{ margin: '4px 0 8px' }}>
+            {dictationSkeleton && (
+              <div className="eng-dictation-skeleton">按词数提示：{dictationSkeleton}</div>
+            )}
             <Input
               size="large"
-              placeholder="请写出英文句子"
+              placeholder={dictationSkeleton || '请写出英文句子'}
               value={typed}
               disabled={feedback === 'ok'}
               onChange={(e) => setTyped(e.target.value)}

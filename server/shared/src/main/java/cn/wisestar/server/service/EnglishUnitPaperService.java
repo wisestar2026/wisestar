@@ -1,6 +1,9 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
+import cn.wisestar.server.domain.dto.english.EnglishDiagnosePaperView;
+import cn.wisestar.server.domain.dto.english.EnglishDiagnoseRequest;
+import cn.wisestar.server.domain.dto.english.EnglishDiagnoseSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishUnitPaperRequest;
 import cn.wisestar.server.domain.dto.english.EnglishUnitPaperSubmitRequest;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
@@ -34,5 +37,21 @@ public interface EnglishUnitPaperService {
 	 * @return 诊断报告
 	 */
 	DetectReportView submit(EnglishUnitPaperSubmitRequest request);
+
+	/**
+	 * 生成学习诊断卷：D1→D3 三档各 5 题，跨单元抽取知识点。
+	 *
+	 * @param request 诊断组卷请求
+	 * @return 分档诊断卷（剥离答案）
+	 */
+	EnglishDiagnosePaperView diagnosePaper(EnglishDiagnoseRequest request);
+
+	/**
+	 * 诊断卷交卷：判分、生成家长向报告并落诊断记录（供趋势追踪）。
+	 *
+	 * @param request 交卷请求
+	 * @return 诊断报告（含学习趋势）
+	 */
+	DetectReportView diagnoseSubmit(EnglishDiagnoseSubmitRequest request);
 
 }

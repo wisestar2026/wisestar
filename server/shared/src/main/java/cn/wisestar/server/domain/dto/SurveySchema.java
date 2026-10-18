@@ -217,6 +217,11 @@ public class SurveySchema implements Serializable {
 		private String content;
 
 		/**
+		 * 多项填空的空位数（内容包阶梯卷按答案数量下发，避免题干上下文中的空位干扰计数）
+		 */
+		private Integer blankCount;
+
+		/**
 		 * 是否允许移动地图修改位置
 		 */
 		private Boolean mapMove;

@@ -330,6 +330,7 @@
 
 /* ---------- 组句 ---------- */
 .eng-sentence-hint { font-size: 20px; color: #d9603a; font-weight: 700; margin-bottom: 16px; }
+.eng-dictation-skeleton { font-size: 14px; letter-spacing: 1px; color: #7aa0b2; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
 .eng-answer-slot {
   min-height: 60px;
   border: 2px dashed #b8dcee;

@@ -147,3 +147,17 @@ export function getEnglishUnitPaper(data) {
 export function submitEnglishUnitPaper(data) {
   return request.post('/english/student/unit-paper/submit', data);
 }
+
+/**
+ * 英语学习诊断组卷（D1→D3 三档各 8 题，共 24 题，跨单元抽取知识点）
+ */
+export function getEnglishDiagnosePaper(data) {
+  return request.post('/english/student/diagnose-paper', data);
+}
+
+/**
+ * 英语学习诊断交卷（生成家长向报告，含学习趋势）
+ */
+export function submitEnglishDiagnose(data) {
+  return request.post('/english/student/diagnose-submit', data);
+}

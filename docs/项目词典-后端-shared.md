@@ -1323,14 +1323,49 @@
 - 类型: `class DetectRecordView`
 - 注解: @Data
 - **类说明**：
-  检测记录视图（历史条目）。用于学员端/管理端查询检测历史，含类型、正确率、薄弱点摘要与基线标识。字段：id、subjectId、subjectName（学科名称快照）、grade、term（册别快照）、semester（学期键）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段）、baseline（是否成长基线）、questionCount（组卷题量）、total（实际判分题数）、correct（正确题数）、accuracy（正确率 0-100）、durationMs（作答耗时 ms）、chapterNames（勾选章节名称）、weakPoints（`List<DetectReportView.WeakPoint>` 薄弱点摘要）、createTime（检测时间）。
+  检测记录视图（历史条目）。用于学员端/管理端查询检测历史，含类型、正确率、薄弱点摘要与基线标识。字段：id、subjectId、subjectName（学科名称快照）、grade、term（册别快照）、semester（学期键）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段 / DIAG 学习诊断）、baseline（是否成长基线）、questionCount（组卷题量）、total（实际判分题数）、correct（正确题数）、accuracy（正确率 0-100）、durationMs（作答耗时 ms）、chapterNames（勾选章节名称）、weakPoints（`List<DetectReportView.WeakPoint>` 薄弱点摘要）、createTime（检测时间）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectReportView.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
 - 类型: `class DetectReportView`
 - 注解: @Data
 - **类说明**：
-  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序，内容包阶梯卷按加权得分低于 55 收录）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 掌握/0 不稳定或漏洞/null 未判分）/mastery（掌握/不稳定/漏洞，仅内容包阶梯卷）/score（100/60/0）/question（`StudentQuestionView`，原题题干+选项，已剥离 `examCorrectAnswer`/`examAnalysis`，供逐题解析对照）/correctAnswers/studentAnswer/analysis）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段）、baseline（本次是否定格为成长基线）、recordId（检测记录ID，未落库时为 null）、mastered/unstable/flawed（行为三态题数）、masteryScore（三态加权得分 0-100）、skillStats/cognitiveStats/typeStats/difficultyStats（`List<DimensionStat>`：name/total/correct/accuracy/masteryScore，按题量降序，分别聚合语言技能、认知层级、题型与难度）。
+  知识点检测诊断报告。字段：total（总题数）、correct（正确数）、accuracy（正确率 0-100 整数）、chapterStats（`List<ChapterStat>`：name/total/correct/accuracy）、weakPoints（`List<WeakPoint>`：name/chapter/total/correct/wrong/accuracy，按正确率升序，内容包阶梯卷按加权得分低于 55 收录）、details（`List<Detail>`：questionId/chapter/knowledgePoint/questionType/correct（1 掌握/0 不稳定或漏洞/null 未判分）/mastery（掌握/不稳定/漏洞，仅内容包阶梯卷）/score（100/60/0）/question（`StudentQuestionView`，原题题干+选项，已剥离 `examCorrectAnswer`/`examAnalysis`，供逐题解析对照）/correctAnswers/studentAnswer/analysis）、detectType（检测类型 PRE 学前/基线 / STAGE 阶段 / DIAG 学习诊断）、baseline（本次是否定格为成长基线）、recordId（检测记录ID，未落库时为 null）、mastered/unstable/flawed（行为三态题数）、masteryScore（三态加权得分 0-100）、moduleStats（`List<DimensionStat>`：知识模块维度，英语为单词/句式/语法；句子包题目归入句式）、skillStats/cognitiveStats/typeStats/difficultyStats（`List<DimensionStat>`：name/total/correct/accuracy/masteryScore，按题量降序，分别聚合语言技能、认知层级、题型与难度）、trend（`List<TrendPoint>`：date（MM-dd）/masteryScore/accuracy/total，学习诊断最近 8 次，按时间升序）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitPaperRequest.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishUnitPaperRequest`
+- 注解: @Data
+- **类说明**：
+  英语单元练习组卷请求。字段：version（教材版本）、grade（年级）、term（学期/册别）、unit（单元名）、chapterId（章节 ID，兼容旧调用）、questionCount（题量，默认 20）、module（可选；取「单词」「句式」「语法」时只组该模块，为空时按单词→句式→语法固定路径融合组卷）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitPaperSubmitRequest.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishUnitPaperSubmitRequest`
+- 注解: @Data
+- **类说明**：
+  英语单元练习交卷请求。字段：version/grade/term/unit/chapterId（教材与单元定位）、items（`List<Item>`：contentKey（与组卷题目 id 一致）、answer（`{type:'option',optionId}` 或 `{type:'text',text}`）、changes（选项改选次数）、hintUsed（是否用过提示））。后端按 `contentKey` 回读内容包与融合派生题复核答案，不信任前端判分。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishDiagnosePaperView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishDiagnosePaperView`
+- 注解: @Data
+- **类说明**：
+  英语学习诊断卷。字段：title（卷面标题）、sections（`List<Section>`：level（D1/D2/D3）、label（基础/进阶/挑战）、questions（`List<StudentQuestionView>`，已剥离答案））。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishDiagnoseRequest.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishDiagnoseRequest`
+- 注解: @Data
+- **类说明**：
+  英语学习诊断组卷请求。字段：version（教材版本）、grade（年级）、term（学期/册别）、units（`List<String>`，指定单元；为空时取当前版本/年级/册别全部单元）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishDiagnoseSubmitRequest.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishDiagnoseSubmitRequest`
+- 注解: @Data
+- **类说明**：
+  英语学习诊断交卷请求。字段：version/grade/term（教材定位）、items（`List<EnglishUnitPaperSubmitRequest.Item>`：contentKey/answer/changes/hintUsed）、durationMs（作答耗时 ms）、clientToken（客户端幂等令牌）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/detect/DetectSubmitRequest.java`
 - 包: `cn.wisestar.server.domain.dto.detect`
