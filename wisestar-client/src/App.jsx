@@ -62,6 +62,8 @@ import WrongBookPage from './pages/student/WrongBookPage';
 import EnglishCenterPage from './pages/student/EnglishCenterPage';
 import EnglishWordLearnPage from './pages/student/EnglishWordLearnPage';
 import EnglishWordPracticePage from './pages/student/EnglishWordPracticePage';
+import EnglishReadingPage from './pages/student/EnglishReadingPage';
+import EnglishReadAloudPage from './pages/student/EnglishReadAloudPage';
 import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
 import EnglishGrammarLearnPage from './pages/student/EnglishGrammarLearnPage';
 import EnglishGrammarPracticePage from './pages/student/EnglishGrammarPracticePage';
@@ -177,6 +179,8 @@ export default function App() {
             {/* 英语重点句式情景练习（?unit=，AI 按单元重点句式实时生成） */}
             <Route path="english/pattern-scenario" element={<EnglishPatternScenarioPage />} />
             {/* 英语智能复习（单词 / 重点句子 / 语法 三类） */}
+            <Route path="english/reading" element={<EnglishReadingPage />} />
+            <Route path="english/read-aloud" element={<EnglishReadAloudPage />} />
             <Route path="english/review" element={<EnglishReviewPage />} />
           </Route>
 

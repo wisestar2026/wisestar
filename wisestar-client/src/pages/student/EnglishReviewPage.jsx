@@ -51,9 +51,11 @@ function hasRecord(item) {
   return (item.correctCount || 0) + (item.wrongCount || 0) > 0;
 }
 
-/** 是否待复习：做过，且 生疏（熟悉度≤1）或 做错过 */
+/** 是否待复习：做错过，或已到复习时间（按间隔复习算法，不把刚学完的单词全部列入） */
 function needsReview(item) {
-  return hasRecord(item) && ((item.familiarity || 0) <= 1 || (item.wrongCount || 0) > 0);
+  if (!hasRecord(item)) return false;
+  if ((item.wrongCount || 0) > 0) return true;
+  return Boolean(item.nextReviewTime) && new Date(item.nextReviewTime).getTime() <= Date.now();
 }
 
 function famTag(familiarity) {
@@ -127,19 +129,19 @@ export default function EnglishReviewPage() {
   const reviewSentences = useMemo(() => sentences.filter(needsReview), [sentences]);
   const reviewGrammars = useMemo(() => grammars.filter(needsReview), [grammars]);
 
-  // 单词按单元统计待复习数量
+  // 单词按单元归集待复习词条（只练这些词，避免把整单元单词重做一遍）
   const wordBuckets = useMemo(() => {
     const map = {};
     reviewWords.forEach((w) => {
       const key = w.unit || '未分单元';
-      if (!map[key]) map[key] = 0;
-      map[key] += 1;
+      if (!map[key]) map[key] = [];
+      map[key].push(w.id);
     });
     return map;
   }, [reviewWords]);
 
   const wordUnits = useMemo(() => {
-    const names = units.map((u) => u.unit).filter((n) => wordBuckets[n]);
+    const names = units.map((u) => u.unit).filter((n) => wordBuckets[n]?.length);
     Object.keys(wordBuckets).forEach((k) => {
       if (!names.includes(k)) names.push(k);
     });
@@ -149,7 +151,10 @@ export default function EnglishReviewPage() {
   const sentenceGroups = useMemo(() => groupByUnit(reviewSentences), [reviewSentences]);
   const grammarGroups = useMemo(() => groupByUnit(reviewGrammars), [reviewGrammars]);
 
-  const goPractice = (unit) => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`);
+  const goPractice = (unit) => {
+    const ids = (wordBuckets[unit] || []).join(',');
+    navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}${ids ? `&ids=${encodeURIComponent(ids)}` : ''}`);
+  };
   const goSentence = (unit) => navigate(`/student/english/sentence?unit=${encodeURIComponent(unit)}`);
   const goGrammar = (unit) => {
     const sid = activeSubject || '1003';
@@ -165,7 +170,7 @@ export default function EnglishReviewPage() {
   ) : (
     <div className="eng-grid">
       {wordUnits.map((unit) => {
-        const count = wordBuckets[unit] || 0;
+        const count = wordBuckets[unit]?.length || 0;
         return (
           <div className="eng-unit-card" key={unit}>
             <div className="eng-unit-name">{unit}</div>

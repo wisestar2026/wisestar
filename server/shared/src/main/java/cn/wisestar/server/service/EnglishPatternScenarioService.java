@@ -23,8 +23,11 @@ public interface EnglishPatternScenarioService {
 	 * @param grade     年级
 	 * @param unit      单元
 	 * @param sentences 该分组内的重点句式（含释义），不能为空
-	 * @return 情景列表（3-4 个场景），无可用句式时返回空列表
+	 * @param count      本组需要生成的情景数量
+	 * @param avoidTitles 本单元已使用的情景标题，生成时需避开
+	 * @return 情景列表，无可用句式时返回空列表
 	 */
-	List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit, List<EnglishPatternSentence> sentences);
+	List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit,
+			List<EnglishPatternSentence> sentences, int count, List<String> avoidTitles);
 
 }

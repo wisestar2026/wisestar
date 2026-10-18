@@ -1,0 +1,68 @@
+/* EnglishReadAloudPage.css - 课本跟读 */
+.eng-ra-wrap { width: 100%; max-width: 980px; margin: 0 auto; padding: 18px 16px 56px; }
+.eng-ra-loading { display: grid; place-items: center; padding: 100px 0; }
+.eng-ra-empty {
+  margin: 80px auto; max-width: 440px; padding: 38px 26px; border-radius: 24px;
+  background: #fff8f3; text-align: center; box-shadow: 0 16px 38px rgba(180, 100, 50, 0.12);
+}
+.eng-ra-empty-emoji { font-size: 46px; }
+.eng-ra-empty-title { margin: 12px 0 20px; font-size: 18px; font-weight: 800; color: #7c4525; }
+
+.eng-ra-head { display: flex; align-items: center; gap: 18px; margin-bottom: 18px; }
+.eng-ra-back {
+  border: 0; background: #fff0e6; color: #b3542a; border-radius: 999px;
+  padding: 9px 16px; font-size: 14px; font-weight: 800; cursor: pointer;
+}
+.eng-ra-back:hover { background: #ffe3d3; }
+.eng-ra-unit { font-size: 13px; font-weight: 700; color: #b07a5a; letter-spacing: 1px; }
+.eng-ra-title { margin-top: 2px; font-size: 25px; font-weight: 900; color: #7a3f20; }
+.eng-ra-progress { margin-left: auto; color: #a06a4a; font-size: 13px; font-weight: 700; }
+.eng-ra-progress b { font-size: 28px; color: #e0663f; margin-right: 2px; }
+
+.eng-ra-list { display: flex; flex-direction: column; gap: 14px; }
+.eng-ra-card {
+  display: flex; gap: 16px; align-items: center; padding: 18px 20px;
+  border-radius: 20px; background: #fff; border: 2px solid #f7e6da;
+  box-shadow: 0 10px 26px rgba(160, 100, 60, 0.08);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.eng-ra-card.done { border-color: #bfe8cf; background: #f7fdf9; }
+.eng-ra-index {
+  flex: none; width: 34px; height: 34px; border-radius: 12px;
+  background: #fff0e6; color: #c05a34; font-size: 14px; font-weight: 900; display: grid; place-items: center;
+}
+.eng-ra-card.done .eng-ra-index { background: #d9f4e3; color: #1e8a4f; }
+.eng-ra-body { flex: 1; min-width: 0; }
+.eng-ra-en { font-size: 19px; font-weight: 800; color: #4a2b1c; line-height: 1.5; }
+.eng-ra-zh { margin-top: 4px; font-size: 13px; color: #9a7a68; }
+.eng-ra-audio { width: 100%; margin-top: 10px; height: 36px; }
+.eng-ra-actions { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.eng-ra-play, .eng-ra-record {
+  border: 0; border-radius: 999px; padding: 9px 18px; font-size: 14px; font-weight: 800; cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.eng-ra-play { background: #eaf6fd; color: #1d6d99; }
+.eng-ra-play:hover { background: #d8effb; transform: translateY(-1px); }
+.eng-ra-record { background: #ffe9dd; color: #b3542a; }
+.eng-ra-record:hover { background: #ffdcc9; transform: translateY(-1px); }
+.eng-ra-record.is-recording { background: #ff5b5b; color: #fff; animation: eng-ra-pulse 1.1s infinite; }
+@keyframes eng-ra-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 91, 91, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(255, 91, 91, 0); }
+}
+.eng-ra-tip {
+  margin-top: 20px; text-align: center; font-size: 13px; color: #a58b7c;
+  background: #fffaf6; border-radius: 14px; padding: 12px;
+}
+.eng-ra-btn {
+  border: 0; border-radius: 999px; padding: 11px 26px; background: #e0663f; color: #fff;
+  font-weight: 800; cursor: pointer;
+}
+@media (max-width: 720px) {
+  .eng-ra-head { flex-wrap: wrap; gap: 10px; }
+  .eng-ra-title { font-size: 20px; }
+  .eng-ra-progress { width: 100%; }
+  .eng-ra-card { flex-wrap: wrap; }
+  .eng-ra-actions { width: 100%; flex-direction: row; }
+  .eng-ra-play, .eng-ra-record { flex: 1; }
+}

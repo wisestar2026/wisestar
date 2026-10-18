@@ -204,6 +204,13 @@ export default function EnglishWordLearnPage() {
     });
   };
 
+  // 进入新单词卡片时尝试自动朗读（部分浏览器需先有交互，失败不影响使用）
+  useEffect(() => {
+    if (mode !== 'learn' || finished || !current?.spell) return undefined;
+    const timer = setTimeout(() => speakEnglish(current.spell, current.audioUrl), 260);
+    return () => clearTimeout(timer);
+  }, [mode, finished, current?.id, current?.spell, current?.audioUrl]);
+
   const progress = total ? Math.round((mastered / total) * 100) : 0;
 
   const backToCenter = () => navigate('/student/english');
@@ -353,8 +360,24 @@ export default function EnglishWordLearnPage() {
             </div>
           )}
           <div className="eng-actions">
+            {weakWords.length > 0 && (
+              <button
+                type="button"
+                className="eng-btn eng-btn-again"
+                onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(weakWords.map((w) => w.id).join(','))}`)}
+              >
+                复习需加强 · {weakWords.length}
+              </button>
+            )}
+            <button
+              type="button"
+              className="eng-btn eng-btn-primary"
+              onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`)}
+            >
+              去单词练习
+            </button>
             <button type="button" className="eng-btn eng-btn-ghost" onClick={backToHub}>返回单词通关</button>
-            <button type="button" className="eng-btn eng-btn-primary" onClick={backToCenter}>返回学习中心</button>
+            <button type="button" className="eng-btn eng-btn-ghost" onClick={backToCenter}>返回学习中心</button>
           </div>
         </div>
       </div>

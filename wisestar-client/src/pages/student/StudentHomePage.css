@@ -387,3 +387,25 @@
   .slh-start { bottom: 28px; }
   .slh-start-text { font-size: 22px; }
 }
+
+/* 学习检测统一入口弹窗 */
+.slh-assess-label { font-size: 14px; font-weight: 800; color: #2d6a8a; margin-bottom: 10px; }
+.slh-assess-empty { padding: 16px; border-radius: 12px; background: #f3f8fb; color: #7a96a8; font-size: 14px; text-align: center; }
+.slh-assess-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.slh-assess-mode {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding: 18px 16px; border: 2px solid #d9ecf6; border-radius: 16px;
+  background: linear-gradient(145deg, #f7fcff, #eef8fd); text-align: left; cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.slh-assess-mode:hover:not(:disabled) { transform: translateY(-2px); border-color: #5cb8e0; box-shadow: 0 10px 22px rgba(64, 140, 190, 0.16); }
+.slh-assess-mode:disabled { opacity: 0.5; cursor: not-allowed; }
+.slh-assess-mode.diagnose { background: linear-gradient(145deg, #fff9f5, #fdeee6); border-color: #f6d7c8; }
+.slh-assess-mode.diagnose:hover:not(:disabled) { border-color: #e0885e; }
+.slh-assess-emoji { font-size: 26px; }
+.slh-assess-title { font-size: 18px; font-weight: 900; color: #14506e; }
+.slh-assess-mode.diagnose .slh-assess-title { color: #b9502b; }
+.slh-assess-desc { font-size: 13px; color: #6f8ea1; line-height: 1.5; }
+@media (max-width: 560px) {
+  .slh-assess-modes { grid-template-columns: 1fr; }
+}

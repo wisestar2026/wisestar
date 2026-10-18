@@ -2412,6 +2412,7 @@ CREATE TABLE IF NOT EXISTS t_english_scenario_pack (
   word_count int DEFAULT 0 COMMENT '单词情景场景总数',
   pattern_content text COMMENT '句式情景分组 JSON',
   pattern_count int DEFAULT 0 COMMENT '句式情景情景总数',
+  reading_content text COMMENT '单元阅读理解 JSON',
   create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   create_by varchar(256) COMMENT '创建人',
   update_at timestamp COMMENT '更新时间',
@@ -2426,6 +2427,7 @@ ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS create_by varchar(2
 ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS update_at timestamp;
 ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS update_by varchar(256);
 ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
+ALTER TABLE t_english_scenario_pack ADD COLUMN IF NOT EXISTS reading_content text;
 
 -- 英语单元句子同步练习内容包（预生成固化：多题型句子练习，按 版本/年级/册别/单元 唯一）
 CREATE TABLE IF NOT EXISTS t_english_sentence_pack (

@@ -144,14 +144,16 @@ export function buildQuestionForWord(word, pool, preferredType, key) {
 
 /**
  * 为一组单元单词生成一轮题目（题型在可用题型间轮换）。
- * @param {object[]} words 单元单词列表
+ * @param {object[]} words 需要出题的单词列表
+ * @param {object[]} [pool] 干扰项候选池（默认同 words），复习时传入整单元单词
  * @returns {object[]} 题目数组
  */
-export function buildQuiz(words) {
-  const pool = words || [];
+export function buildQuiz(words, pool = words) {
+  const source = words || [];
+  const candidates = pool || source;
   const rotation = [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD];
   const questions = [];
-  pool.forEach((word, index) => {
+  source.forEach((word, index) => {
     const types = availableTypes(word);
     let preferred = types[0];
     for (let k = 0; k < rotation.length; k += 1) {
@@ -161,7 +163,7 @@ export function buildQuiz(words) {
         break;
       }
     }
-    const question = buildQuestionForWord(word, pool, preferred, `${index}-${word.id}`);
+    const question = buildQuestionForWord(word, candidates, preferred, `${index}-${word.id}`);
     if (question) {
       questions.push(question);
     }

@@ -61,4 +61,7 @@ public class EnglishWordView {
 	/** 是否需加强（多次不认识） */
 	private Boolean weak;
 
+	/** 下次复习时间（为空表示尚未进入复习队列） */
+	private java.util.Date nextReviewTime;
+
 }

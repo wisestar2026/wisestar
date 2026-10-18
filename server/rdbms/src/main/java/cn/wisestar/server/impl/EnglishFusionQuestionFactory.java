@@ -593,11 +593,11 @@ public class EnglishFusionQuestionFactory {
 			variant++;
 			String key = keyBase + "-" + variant;
 			Collections.shuffle(options, new Random(key.hashCode()));
-			String questionTitle = "语法变形：从本单元语法例句中选出正确形式。\n"
-					+ "语法点：" + title + "\n" + blanked;
+			// 题干隐藏语法点，避免直接提示答案；语法点只在交卷后的答案解析中展示
+			String questionTitle = "语法变形：从本单元语法例句中选出正确形式。\n" + blanked;
 			result.add(new DerivedQuestion(key, "语法", unit + "·语法", "语法变形",
 					"语法", "应用", "D2", questionTitle, SurveySchema.QuestionType.Radio,
-					token, null, options, "结合本单元语法点「" + title + "」判断正确形式。"));
+					token, null, options, "语法点：" + title + "。结合该语法点判断正确形式。"));
 		}
 		return result;
 	}

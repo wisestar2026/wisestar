@@ -30,7 +30,7 @@ import java.util.Map;
  * 英语重点句式情景生成服务实现（按分组子集生成）。
  *
  * <p>依据调用方给定的一组单元重点句式，调用系统 AI 设置（与 AI 问答/单元内容包同一套
- * enabled/token/models/baseUrl 配置）生成 3-4 个生活情景对话：给出部分英文台词，若干轮次
+ * enabled/token/models/baseUrl 配置）生成 10 个生活情景对话：给出部分英文台词，若干轮次
  * 仅给中文情景提示，由学员从候选项中选出符合情景的重点句式完成交际。结果不落库，由
  * 「情景内容包服务」负责分组编排与固化。</p>
  *
@@ -68,14 +68,14 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 
 	@Override
 	public List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit,
-			List<EnglishPatternSentence> sentences) {
+			List<EnglishPatternSentence> sentences, int count, List<String> avoidTitles) {
 		requireNotBlank(grade, "年级");
 		requireNotBlank(unit, "单元");
 		if (sentences == null || sentences.isEmpty()) {
 			return new ArrayList<>();
 		}
 
-		String raw = callChat(grade, unit, sentences);
+		String raw = callChat(grade, unit, sentences, Math.max(1, count), avoidTitles);
 		JsonNode root = parseRawJson(raw);
 		return normalizeScenarios(root);
 	}
@@ -83,7 +83,8 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	/**
 	 * 调用大模型生成句式情景。
 	 */
-	private String callChat(String grade, String unit, List<EnglishPatternSentence> sentences) {
+	private String callChat(String grade, String unit, List<EnglishPatternSentence> sentences,
+			int scenarioCount, List<String> avoidTitles) {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		if (aiSetting == null || aiSetting.getEnabled() == null || !aiSetting.getEnabled()) {
 			throw new ValidationException("AI 服务未启用：请先在系统设置中开启 AI 并完成平台配置");
@@ -97,8 +98,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 				? aiSetting.getModels().get(0)
 				: DEFAULT_MODEL;
 
-		int scenarioCount = sentences.size() >= 8 ? 4 : 3;
-		String userPrompt = buildUserPrompt(grade, unit, sentences, scenarioCount);
+		String userPrompt = buildUserPrompt(grade, unit, sentences, scenarioCount, avoidTitles);
 
 		try {
 			HttpHeaders headers = new HttpHeaders();
@@ -113,7 +113,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			body.put("model", model);
 			body.put("messages", messages);
 			body.put("temperature", 0.7);
-			body.put("max_tokens", 4096);
+			body.put("max_tokens", 8192);
 			body.put("stream", false);
 
 			HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
@@ -139,7 +139,8 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	/**
 	 * 构建请求 AI 生成句式情景的用户提示词。
 	 */
-	private String buildUserPrompt(String grade, String unit, List<EnglishPatternSentence> sentences, int scenarioCount) {
+	private String buildUserPrompt(String grade, String unit, List<EnglishPatternSentence> sentences,
+			int scenarioCount, List<String> avoidTitles) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("请基于以下英语单元的重点句式，编写 ").append(scenarioCount).append(" 个贴近生活的情景对话练习：\n");
 		sb.append("年级：").append(grade).append("\n");
@@ -153,8 +154,12 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			String zh = s.getZh() == null ? "" : s.getZh().trim();
 			sb.append("- ").append(en).append(zh.isEmpty() ? "" : "（" + zh + "）").append("\n");
 		}
+		if (avoidTitles != null && !avoidTitles.isEmpty()) {
+			sb.append("\n本单元已使用的情景（禁止重复）：").append(String.join("、", avoidTitles)).append("\n");
+		}
 		sb.append("\n要求：\n");
-		sb.append("1) 每个情景 4-8 轮，A、B 交替你一言我一语，场景生活化、自然连贯；\n");
+		sb.append("1) 每个情景 4-8 轮，A、B 交替你一言我一语，场景生活化、自然连贯；")
+				.append(scenarioCount).append(" 个情景必须是不同场景，禁止重复；情景 title、cue、explanation 统一用中文；\n");
 		sb.append("2) 每个情景至少一半轮次为作答轮：只给 cue（中文情景提示），不给 en；\n");
 		sb.append("3) 作答轮的 answer 必须是上面列出的重点句式之一，options 给出 4 个英文句子（含 answer 与 3 个明显不合本情景的干扰项）；\n");
 		sb.append("4) 作答轮的 cue 用中文描述学员要表达的意思，与 answer 严格对应；已给出轮次必须有 en 与 zh；\n");

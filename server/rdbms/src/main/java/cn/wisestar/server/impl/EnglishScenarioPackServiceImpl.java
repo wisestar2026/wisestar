@@ -126,34 +126,46 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		view.setWordContent(writeGroups(wordGroups));
 		view.setWordCount(wordScenarioTotal);
 
-		// 句式情景：分组后逐组生成，按组序号合并
-		ArrayNode patternGroups = objectMapper.createArrayNode();
-		int patternScenarioTotal = 0;
-		int patternGroupNo = 1;
-		for (List<EnglishSentence> chunk : partition(sentences, PATTERN_GROUP_SIZE)) {
-			List<EnglishPatternSentence> input = chunk.stream()
-					.map(s -> new EnglishPatternSentence(s.getEn(), s.getZh()))
-					.collect(Collectors.toList());
-			List<EnglishPatternScenarioView> scenarios = patternScenarioService.generateFromSentences(grade, unit, input);
-			patternScenarioTotal += scenarios.size();
-
-			ObjectNode group = patternGroups.addObject();
-			group.put("groupNo", patternGroupNo++);
-			ArrayNode groupSentences = group.putArray("sentences");
-			for (EnglishSentence s : chunk) {
-				if (s.getEn() != null && !s.getEn().trim().isEmpty()) {
-					groupSentences.add(s.getEn().trim());
-				}
-			}
-			group.set("scenarios", objectMapper.valueToTree(scenarios));
-		}
-		view.setPatternContent(writeGroups(patternGroups));
-		view.setPatternCount(patternScenarioTotal);
+		// 句式情景：全单元共生成 10 个情景，按组均分后逐组生成
+		PatternDraft patternDraft = buildPatternDraft(grade, unit, sentences);
+		view.setPatternContent(patternDraft.content);
+		view.setPatternCount(patternDraft.count);
 
 		return view;
 	}
 
 	// ------------------------------------------------------------------ 保存 / 查询
+
+	@Override
+	public EnglishScenarioPackView regeneratePattern(String version, String grade, String term, String unit) {
+		requireNotBlank(version, "教材版本");
+		requireNotBlank(grade, "年级");
+		requireNotBlank(term, "册别");
+		requireNotBlank(unit, "单元");
+		EnglishScenarioPack entity = packMapper.selectOne(Wrappers.<EnglishScenarioPack>lambdaQuery()
+				.eq(EnglishScenarioPack::getVersion, version)
+				.eq(EnglishScenarioPack::getGrade, grade)
+				.eq(EnglishScenarioPack::getTerm, term)
+				.eq(EnglishScenarioPack::getUnit, unit)
+				.last("limit 1"));
+		if (entity == null) {
+			throw new ValidationException("该单元情景内容包尚未固化，请先生成并保存");
+		}
+		List<EnglishSentence> sentences = sentenceMapper.selectList(Wrappers.<EnglishSentence>lambdaQuery()
+				.eq(EnglishSentence::getVersion, version)
+				.eq(EnglishSentence::getGrade, grade)
+				.eq(EnglishSentence::getTerm, term)
+				.eq(EnglishSentence::getUnit, unit)
+				.orderByAsc(EnglishSentence::getSort));
+		if (sentences.isEmpty()) {
+			throw new ValidationException("本单元暂无重点句式，无法生成句式情景");
+		}
+		PatternDraft patternDraft = buildPatternDraft(grade, unit, sentences);
+		entity.setPatternContent(patternDraft.content);
+		entity.setPatternCount(patternDraft.count);
+		packMapper.updateById(entity);
+		return toView(packMapper.selectById(entity.getId()));
+	}
 
 	@Override
 	public EnglishScenarioPackView savePack(EnglishScenarioPackView pack) {
@@ -425,6 +437,62 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		} catch (Exception e) {
 			return "{\"groups\":[]}";
 		}
+	}
+
+	/**
+	 * 构建句式情景分组 JSON：全单元固定 10 个情景，按分组数量均分，并把已用标题传给后续分组避免重复。
+	 */
+	private PatternDraft buildPatternDraft(String grade, String unit, List<EnglishSentence> sentences) {
+		ArrayNode patternGroups = objectMapper.createArrayNode();
+		int patternScenarioTotal = 0;
+		int patternGroupNo = 1;
+		List<List<EnglishSentence>> patternChunks = partition(sentences, PATTERN_GROUP_SIZE);
+		List<String> usedScenarioTitles = new ArrayList<>();
+		if (!patternChunks.isEmpty()) {
+			int patternCountPerUnit = 10;
+			int basePerGroup = patternCountPerUnit / patternChunks.size();
+			int extraGroups = patternCountPerUnit % patternChunks.size();
+			for (int chunkIndex = 0; chunkIndex < patternChunks.size(); chunkIndex++) {
+				List<EnglishSentence> chunk = patternChunks.get(chunkIndex);
+				int groupScenarioCount = basePerGroup + (chunkIndex < extraGroups ? 1 : 0);
+				List<EnglishPatternSentence> input = chunk.stream()
+						.map(s -> new EnglishPatternSentence(s.getEn(), s.getZh()))
+						.collect(Collectors.toList());
+				List<EnglishPatternScenarioView> scenarios = patternScenarioService.generateFromSentences(
+						grade, unit, input, groupScenarioCount, usedScenarioTitles);
+				patternScenarioTotal += scenarios.size();
+				for (EnglishPatternScenarioView scenario : scenarios) {
+					if (scenario.getTitle() != null && !scenario.getTitle().trim().isEmpty()) {
+						usedScenarioTitles.add(scenario.getTitle().trim());
+					}
+				}
+				ObjectNode group = patternGroups.addObject();
+				group.put("groupNo", patternGroupNo++);
+				ArrayNode groupSentences = group.putArray("sentences");
+				for (EnglishSentence s : chunk) {
+					if (s.getEn() != null && !s.getEn().trim().isEmpty()) {
+						groupSentences.add(s.getEn().trim());
+					}
+				}
+				group.set("scenarios", objectMapper.valueToTree(scenarios));
+			}
+		}
+		return new PatternDraft(writeGroups(patternGroups), patternScenarioTotal);
+	}
+
+	/**
+	 * 句式情景草稿：分组 JSON 与情景总数。
+	 */
+	private static final class PatternDraft {
+
+		private final String content;
+		private final int count;
+
+		private PatternDraft(String content, int count) {
+			this.content = content;
+			this.count = count;
+		}
+
 	}
 
 	private static <T> List<List<T>> partition(List<T> list, int size) {

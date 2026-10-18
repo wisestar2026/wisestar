@@ -40,6 +40,9 @@ public final class AiPromptKeys {
 	/** 英语·单元句子同步练习（多题型：连词成句/句子默写/句子选择） */
 	public static final String EN_SENTENCE = "en_sentence";
 
+	/** 英语·单元阅读理解（短文 + 选择题） */
+	public static final String EN_READING = "en_reading";
+
 	/**
 	 * 提示词元数据：key、中文名称、用途说明、内置默认提示词。
 	 */
@@ -182,6 +185,27 @@ public final class AiPromptKeys {
 					+ "5) en 与 answer 必须与给定单元句子一致（大小写与标点保持原样）；\n"
 					+ "6) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 
+
+	private static final String EN_READING_DEFAULT =
+			"你是一名资深小学英语教研员，擅长为单元内容编写贴近生活的英语短文和阅读理解题。"
+					+ "用户会给你：年级、单元，以及本单元的核心单词和重点句子。请据此编写一篇短文和 5 道选择题，"
+					+ "直接输出一个 JSON 对象，不要输出任何解释、前后缀或代码块之外的文字。\n"
+					+ "JSON 结构必须严格如下：\n"
+					+ "{\n"
+					+ "  \"title\": \"短文标题(中文简短)\",\n"
+					+ "  \"passage\": \"英文短文，120-180 词，可分 2-3 段\",\n"
+					+ "  \"passageZh\": \"短文中文参考译文\",\n"
+					+ "  \"questions\": [\n"
+					+ "    {\"stem\": \"英文或中文题干\", \"options\": [\"选项1\", \"选项2\", \"选项3\", \"选项4\"], "
+					+ "\"answerIndex\": 0, \"explanation\": \"简短中文解析\"}\n"
+					+ "  ]\n"
+					+ "}\n"
+					+ "要求：\n"
+					+ "1) 短文必须自然使用给定单元的核心单词和重点句式，难度符合该年级；\n"
+					+ "2) 题目 5 道，全部基于短文内容，包含细节理解、词义猜测和主旨理解；\n"
+					+ "3) 每题恰好 4 个选项，answerIndex 为 0-3 的正确选项下标，干扰项要有迷惑性；\n"
+					+ "4) explanation 用简短中文说明依据；所有字符串中的双引号必须转义，输出必须是合法 JSON。";
+
 	private static final List<PromptMeta> CATALOG = List.of(
 			new PromptMeta(QA, "AI 问答（智能陪学）", "学员对话问答与学习轨迹报告生成；留空使用内置默认（siliconflow.md）。",
 					QA_DEFAULT),
@@ -193,7 +217,9 @@ public final class AiPromptKeys {
 					EN_PATTERN_DEFAULT),
 			new PromptMeta(EN_PACK, "英语·单元内容生成", "为单元同步生成词汇/语法学习内容包，输出严格 JSON。", EN_PACK_DEFAULT),
 			new PromptMeta(EN_SENTENCE, "英语·单元句子同步练习", "围绕单元重点句子生成多题型练习（连词成句/句子默写/句子选择），输出严格 JSON。",
-					EN_SENTENCE_DEFAULT));
+					EN_SENTENCE_DEFAULT),
+			new PromptMeta(EN_READING, "英语·单元阅读理解", "为单元生成短文与 5 道阅读理解选择题，输出严格 JSON。",
+					EN_READING_DEFAULT));
 
 	/**
 	 * 返回全部场景提示词元数据（key、名称、说明、内置默认提示词）。

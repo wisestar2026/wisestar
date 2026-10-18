@@ -27,9 +27,10 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Drawer, message } from 'antd';
+import { Button, Drawer, Modal, Select, Spin, message } from 'antd';
 import useStudentStore, { SUBJECTS } from '../../stores/useStudentStore';
 import { getStudentStats, getMyToday, getCheckin, doCheckin } from '../../api/student';
+import { getDetectUnits } from '../../api/detect';
 import { listMyStudentTasks, completeStudentTask } from '../../api/studentTask';
 import { getMyStudySummary } from '../../api/studentStudy';
 import IconTile from '../../components/common/IconTile';
@@ -95,6 +96,36 @@ export default function StudentHomePage() {
     listMyStudentTasks().then((res) => setTasks(res?.data || [])).catch(() => setTasks([]));
   }, []);
   const [taskOpen, setTaskOpen] = useState(false);
+  // 学习检测统一入口：选单元后二选一（知识点检测 / 学习诊断）
+  const [assessOpen, setAssessOpen] = useState(false);
+  const [assessUnits, setAssessUnits] = useState([]);
+  const [assessUnit, setAssessUnit] = useState('');
+  const [assessLoading, setAssessLoading] = useState(false);
+  useEffect(() => {
+    if (!assessOpen) return;
+    setAssessLoading(true);
+    const { grade: g, term: t } = useStudentStore.getState();
+    getDetectUnits({ subjectId: activeSubject, grade: g, term: t })
+      .then((res) => {
+        const list = res?.data || [];
+        setAssessUnits(list);
+        setAssessUnit((prev) => (list.some((u) => u.name === prev) ? prev : (list[0]?.name || '')));
+      })
+      .catch(() => setAssessUnits([]))
+      .finally(() => setAssessLoading(false));
+  }, [assessOpen, activeSubject]);
+  const startAssess = (mode) => {
+    if (!assessUnit) {
+      message.warning('请先选择单元');
+      return;
+    }
+    setAssessOpen(false);
+    if (mode === 'diagnose') {
+      navigate('/student/diagnose');
+      return;
+    }
+    navigate(`/student/detect?unit=${encodeURIComponent(assessUnit)}`);
+  };
   const [completingTaskId, setCompletingTaskId] = useState(null);
   const pendingTaskCount = tasks.filter((t) => t.status !== 'completed').length;
 
@@ -172,15 +203,10 @@ export default function StudentHomePage() {
               {pendingTaskCount > 0 ? `${pendingTaskCount} 项待完成` : '全部完成'}
             </span>
           </button>
-          <button type="button" className="slh-side-btn slh-side-detect" onClick={() => navigate('/student/detect')}>
+          <button type="button" className="slh-side-btn slh-side-detect" onClick={() => setAssessOpen(true)}>
             <span className="slh-side-emoji">🎯</span>
-            <span className="slh-side-main">知识点检测</span>
-            <span className="slh-side-sub">测薄弱点</span>
-          </button>
-          <button type="button" className="slh-side-btn slh-side-diagnose" onClick={() => navigate('/student/diagnose')}>
-            <span className="slh-side-emoji">🩺</span>
-            <span className="slh-side-main">学习诊断</span>
-            <span className="slh-side-sub">家长报告 · 可打印</span>
+            <span className="slh-side-main">学习检测</span>
+            <span className="slh-side-sub">知识点检测 / 学习诊断</span>
           </button>
         </aside>
 
@@ -305,6 +331,44 @@ export default function StudentHomePage() {
 
       {/* 在线时长宝箱：时长进度条 + 三只小宝箱（达成点击领取；纯净学习模式隐藏）
           置于主容器内，拖动位置以主容器为基准，随容器居中/缩窄一起移动 */}
+      <Modal
+        open={assessOpen}
+        onCancel={() => setAssessOpen(false)}
+        footer={null}
+        title="学习检测"
+        width={560}
+        destroyOnClose
+      >
+        <div className="slh-assess">
+          <div className="slh-assess-label">先选择要检测的单元</div>
+          {assessLoading ? (
+            <div style={{ padding: '16px 0', textAlign: 'center' }}><Spin /></div>
+          ) : assessUnits.length === 0 ? (
+            <div className="slh-assess-empty">当前学科暂无可检测单元，请先在顶部切换学科或册别</div>
+          ) : (
+            <Select
+              style={{ width: '100%' }}
+              value={assessUnit || undefined}
+              onChange={setAssessUnit}
+              placeholder="请选择单元"
+              options={assessUnits.map((u) => ({ value: u.name, label: `${u.name}（${u.questionCount} 题）` }))}
+            />
+          )}
+          <div className="slh-assess-modes">
+            <button type="button" className="slh-assess-mode" disabled={!assessUnit} onClick={() => startAssess('detect')}>
+              <span className="slh-assess-emoji">🎯</span>
+              <span className="slh-assess-title">知识点检测</span>
+              <span className="slh-assess-desc">自选题量与难度，快速定位薄弱知识点</span>
+            </button>
+            <button type="button" className="slh-assess-mode diagnose" disabled={!assessUnit} onClick={() => startAssess('diagnose')}>
+              <span className="slh-assess-emoji">🩺</span>
+              <span className="slh-assess-title">学习诊断</span>
+              <span className="slh-assess-desc">按系统设置出 24 题，生成可打印家长报告</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {!pureMode && <OnlineChestFloat />}
 
       {/* ---- 今日任务抽屉 ---- */}

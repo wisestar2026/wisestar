@@ -120,6 +120,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			v.setCorrectCount(book == null || book.getCorrectCount() == null ? 0 : book.getCorrectCount());
 			v.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());
 			v.setWeak(v.getWrongCount() >= WEAK_WRONG_TIMES);
+			v.setNextReviewTime(book == null ? null : book.getNextReviewTime());
 		});
 	}
 

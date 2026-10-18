@@ -43,4 +43,7 @@ public class EnglishScenarioPack extends BaseModel {
 	/** 句式情景情景总数 */
 	private Integer patternCount;
 
+	/** 单元阅读理解 JSON（短文 + 选择题，首次访问时生成并缓存） */
+	private String readingContent;
+
 }

@@ -32,6 +32,8 @@ export default function EnglishWordPracticePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const unit = searchParams.get('unit') || '';
+  // 复习页可只传待复习单词 id（逗号分隔），避免把整单元单词重做一遍
+  const idsParam = searchParams.get('ids') || '';
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
@@ -41,6 +43,7 @@ export default function EnglishWordPracticePage() {
   const [index, setIndex] = useState(0);
   const [selectedKey, setSelectedKey] = useState(null);
   const [correctCount, setCorrectCount] = useState(0);
+  const [wrongIds, setWrongIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
   const startAt = useRef(Date.now());
@@ -58,11 +61,15 @@ export default function EnglishWordPracticePage() {
     getEnglishWordBook({ version, grade, term, unit, pageSize: -1 })
       .then((res) => {
         const list = res?.data?.list || [];
+        const ids = idsParam.split(',').map((id) => id.trim()).filter(Boolean);
+        const target = ids.length ? list.filter((w) => ids.includes(w.id)) : list;
         setWords(list);
-        setQuestions(buildQuiz(list));
+        // 干扰项始终从整单元单词中取，保证 4 个选项可用
+        setQuestions(buildQuiz(target, list));
         setIndex(0);
         setSelectedKey(null);
         setCorrectCount(0);
+        setWrongIds([]);
         wrongAttempts.current = new Map();
         sessionRecorded.current = false;
         startAt.current = Date.now();
@@ -72,7 +79,7 @@ export default function EnglishWordPracticePage() {
         message.error('单词加载失败');
       })
       .finally(() => setLoading(false));
-  }, [version, grade, term, unit]);
+  }, [version, grade, term, unit, idsParam]);
 
   useEffect(() => {
     load();
@@ -102,6 +109,7 @@ export default function EnglishWordPracticePage() {
     recordEnglishWord({ wordId: current.wordId, correct: option.correct }).catch(() => {});
     // 答错：本轮末尾重出，直到答对（每词最多重出 MAX_RETRY 次，防卡死）
     if (!option.correct) {
+      setWrongIds((prev) => (prev.includes(current.wordId) ? prev : [...prev, current.wordId]));
       const attempts = (wrongAttempts.current.get(current.wordId) || 0) + 1;
       wrongAttempts.current.set(current.wordId, attempts);
       if (attempts < MAX_RETRY) {
@@ -184,7 +192,18 @@ export default function EnglishWordPracticePage() {
             <div className="eng-done-stat"><b>{correctCount}</b><span>答对</span></div>
             <div className="eng-done-stat"><b>{questions.length}</b><span>总题数</span></div>
           </div>
-          {backButton}
+          <div className="eng-actions">
+            {wrongIds.length > 0 && (
+              <button
+                type="button"
+                className="eng-btn eng-btn-again"
+                onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(wrongIds.join(','))}`)}
+              >
+                复习错词 · {wrongIds.length}
+              </button>
+            )}
+            {backButton}
+          </div>
         </div>
       </div>
     );
@@ -245,6 +264,15 @@ export default function EnglishWordPracticePage() {
             {current.phonetic && <div className="eng-phonetic">/{current.phonetic}/</div>}
           </>
         )}
+
+        <button
+          type="button"
+          className="eng-quiz-sound"
+          onClick={() => speakEnglish(current.word?.spell, current.audioUrl)}
+          title="听单词发音"
+        >
+          🔊 听发音
+        </button>
 
         <div className="eng-quiz-options">
           {current.options.map((option) => {

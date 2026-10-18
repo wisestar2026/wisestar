@@ -647,3 +647,56 @@
     width: 64px;
   }
 }
+
+/* ---------------- 历史诊断记录 ---------------- */
+.eng-diag-history {
+  max-width: 760px;
+  margin: 26px auto 0;
+  padding: 22px 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 34px rgba(40, 110, 170, 0.12);
+}
+.eng-diag-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 17px;
+  font-weight: 800;
+  color: #12405f;
+  margin-bottom: 14px;
+}
+.eng-diag-history-count { font-size: 13px; font-weight: 600; color: #8aa2b5; }
+.eng-diag-history-list { display: flex; flex-direction: column; gap: 10px; }
+.eng-diag-history-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #f7fbfe;
+  border: 1px solid #e2f0f9;
+}
+.eng-diag-history-score {
+  min-width: 76px;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+.eng-diag-history-score small { font-size: 12px; font-weight: 700; margin-left: 2px; }
+.eng-diag-history-main { flex: 1; min-width: 0; }
+.eng-diag-history-date { font-size: 15px; font-weight: 800; color: #1b5478; }
+.eng-diag-history-meta { font-size: 13px; color: #7d94a6; margin-top: 4px; }
+.eng-diag-history-weak { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 45%; }
+.eng-diag-history-weak span {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff0e8;
+  color: #c05a34;
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .eng-diag-history-item { flex-wrap: wrap; }
+  .eng-diag-history-weak { max-width: 100%; justify-content: flex-start; }
+}

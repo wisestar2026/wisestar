@@ -1933,6 +1933,14 @@
 - **类说明**：
   句式情景分组输入 DTO（分组子集内的单条重点句式）：en/zh。内容包服务把单元句式分组后以本 DTO 传递分组子集给句式情景生成服务，避免 shared 直接依赖 rdbms 实体 `EnglishSentence`。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishReadingView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishReadingView`
+- 注解: @Data
+- **类说明**：
+  英语单元阅读理解视图：短文、中文参考译文与选择题；内部类 `Question` 含题干、选项、正确项下标与解析。
+- 字段: title / passage / passageZh / questions(`List<Question>`)
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioPackView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishScenarioPackView`
@@ -1982,7 +1990,7 @@
 - 注解: @Data
 - **类说明**：
   英语单词视图 DTO。
-- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak
+- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishWrongQuestionView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2744,10 +2752,19 @@
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishPatternScenarioService`
 - **类说明**：
-  英语重点句式情景生成服务（按分组子集生成，供内容包预生成调用）：依据给定的一组单元重点句式调用系统 AI 生成若干生活情景对话，作答轮由学员从候选项中选出正确句式；结果不落库，由调用方（情景内容包服务）负责分组编排与固化。
+  英语重点句式情景生成服务（按分组子集生成，供内容包预生成调用）：依据给定的一组单元重点句式调用系统 AI 生成指定数量的生活情景对话，作答轮由学员从候选项中选出正确句式；支持传入本单元已用标题避免跨组重复；结果不落库，由调用方（情景内容包服务）负责分组编排与固化。
 - 方法:
-  - `List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit, List<EnglishPatternSentence> sentences)`
-    按一组重点句式生成情景练习（3-4 个场景），无可用句式时返回空列表。
+  - `List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit, List<EnglishPatternSentence> sentences, int count, List<String> avoidTitles)`
+    按一组重点句式生成 `count` 个情景练习，避开 `avoidTitles` 中已使用的情景标题；无可用句式时返回空列表。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishReadingService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishReadingService`
+- **类说明**：
+  英语单元阅读理解服务：按版本/年级/册别/单元读取短文与选择题，首次访问由 AI 生成并缓存到情景内容包，后续直接回读。
+- 方法:
+  - `EnglishReadingView getReading(String version, String grade, String term, String unit)`
+    取该单元阅读理解，无缓存时生成并落库。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioPackService.java`
 - 包: `cn.wisestar.server.service`

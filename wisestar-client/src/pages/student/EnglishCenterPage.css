@@ -672,6 +672,8 @@
 .eng-mod-sentence { background: #fce4d6; color: #d9603a; }
 .eng-mod-grammar { background: #fdf1cf; color: #c1901a; }
 .eng-mod-unit { background: #d9f2df; color: #1f8f4d; }
+.eng-mod-reading { background: #d8ecfb; color: #176b9e; }
+.eng-mod-readaloud { background: #ffe6d8; color: #b3542a; }
 
 /* 单词通关：按小节(model)分组的卡片 */
 .eng-model-group {
@@ -833,3 +835,22 @@
 .eng-stage .kd-detail-analysis { font-size: 14px; }
 .eng-stage .kd-weak-name { font-size: 15px; }
 .eng-stage .kd-weak-chapter { font-size: 13px; }
+
+/* 单词选择题：统一发音提示按钮 */
+.eng-quiz-sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 14px auto 0;
+  padding: 9px 20px;
+  border: 1px solid #bfe6f5;
+  border-radius: 999px;
+  background: #eefaff;
+  color: #1479a6;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.eng-quiz-sound:hover { background: #ddf4fe; transform: translateY(-1px); }
+.eng-quiz-sound:active { transform: scale(0.98); }

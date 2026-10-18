@@ -39,6 +39,19 @@ public class EnglishScenarioPackApi {
 	}
 
 	/**
+	 * 只重新生成已固化内容包的句式情景（保留单词情景与阅读缓存）。
+	 */
+	@PostMapping("/regenerate-pattern")
+	@PreAuthorize("hasAuthority('english:word:ai')")
+	public EnglishScenarioPackView regeneratePattern(
+			@RequestParam String version,
+			@RequestParam String grade,
+			@RequestParam String term,
+			@RequestParam String unit) {
+		return scenarioPackService.regeneratePattern(version, grade, term, unit);
+	}
+
+	/**
 	 * 保存情景内容包（同 版本+年级+册别+单元 覆盖更新）。
 	 */
 	@PostMapping("/save")

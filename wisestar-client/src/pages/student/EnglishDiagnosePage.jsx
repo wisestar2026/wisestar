@@ -23,6 +23,7 @@ import { LeftOutlined, PrinterOutlined, ThunderboltOutlined } from '@ant-design/
 import useStudentStore from '../../stores/useStudentStore';
 import { getMyArchive } from '../../api/archive';
 import { getEnglishDiagnosePaper, submitEnglishDiagnose } from '../../api/englishStudent';
+import { getDetectHistory } from '../../api/detect';
 import QuestionCard from '../../components/practice/QuestionCard';
 import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
@@ -107,13 +108,33 @@ function DimensionBars({ list, emptyText = '暂无数据' }) {
   );
 }
 
+/** 历史记录时间格式化：YYYY-MM-DD HH:mm */
+function formatDate(value) {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** 作答用时格式化 */
+function formatDuration(ms) {
+  if (!ms || ms < 0) return '—';
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.round((ms % 60000) / 1000);
+  return minutes > 0 ? `${minutes} 分 ${seconds} 秒` : `${seconds} 秒`;
+}
+
 export default function EnglishDiagnosePage() {
   const navigate = useNavigate();
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
   const version = useStudentStore((s) => s.version);
+  const activeSubject = useStudentStore((s) => s.activeSubject);
+  const subjectId = activeSubject || '1003';
 
-  const [step, setStep] = useState('intro'); // intro / answer / report
+  const [step, setStep] = useState('intro');
+  const [history, setHistory] = useState([]); // intro / answer / report
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [sections, setSections] = useState([]);
@@ -127,6 +148,17 @@ export default function EnglishDiagnosePage() {
   useEffect(() => {
     getMyArchive().then((res) => setArchive(res?.data || null)).catch(() => setArchive(null));
   }, []);
+
+  // 学习诊断历史：只展示 DIAG 记录，保留每次诊断的得分与时间
+  const loadHistory = useCallback(() => {
+    getDetectHistory({ subjectId })
+      .then((res) => setHistory((res?.data || []).filter((r) => r.detectType === 'DIAG')))
+      .catch(() => setHistory([]));
+  }, [subjectId]);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   const questions = useMemo(() => sections.flatMap((section) => (
     section.questions.map((q) => ({ ...q, level: section.level, levelLabel: section.label }))
@@ -191,6 +223,7 @@ export default function EnglishDiagnosePage() {
       });
       setReport(res?.data || null);
       setStep('report');
+      loadHistory();
       window.scrollTo({ top: 0, behavior: 'smooth' });
       message.success('诊断完成，报告已生成');
     } catch (e) {
@@ -243,6 +276,33 @@ export default function EnglishDiagnosePage() {
           </Button>
           <Button type="link" onClick={() => navigate('/student')}>返回首页</Button>
         </div>
+
+        {history.length > 0 && (
+          <div className="eng-diag-history">
+            <div className="eng-diag-history-head">
+              <span>历史诊断记录</span>
+              <span className="eng-diag-history-count">共 {history.length} 次</span>
+            </div>
+            <div className="eng-diag-history-list">
+              {history.map((item) => (
+                <div className="eng-diag-history-item" key={item.id}>
+                  <div className="eng-diag-history-score" style={{ color: scoreColor(item.accuracy || 0) }}>
+                    {item.accuracy ?? 0}<small>分</small>
+                  </div>
+                  <div className="eng-diag-history-main">
+                    <div className="eng-diag-history-date">{formatDate(item.createTime)}</div>
+                    <div className="eng-diag-history-meta">
+                      {item.correct ?? 0}/{item.total ?? 0} 题 · 用时 {formatDuration(item.durationMs)}
+                    </div>
+                  </div>
+                  <div className="eng-diag-history-weak">
+                    {(item.weakPoints || []).slice(0, 2).map((w) => <span key={w.name}>{w.name}</span>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

@@ -246,6 +246,22 @@ export default function EnglishCenterPage() {
                 </button>
                 <button
                   type="button"
+                  className="eng-mod-card eng-mod-reading"
+                  onClick={() => go('/student/english/reading', active.unit)}
+                >
+                  <span className="eng-mod-title">阅读理解</span>
+                  <span className="eng-mod-sub">短文 · 选择题</span>
+                </button>
+                <button
+                  type="button"
+                  className="eng-mod-card eng-mod-readaloud"
+                  onClick={() => go('/student/english/read-aloud', active.unit)}
+                >
+                  <span className="eng-mod-title">课本跟读</span>
+                  <span className="eng-mod-sub">听原音 · 录音跟读</span>
+                </button>
+                <button
+                  type="button"
                   className="eng-mod-card eng-mod-unit"
                   onClick={() => go('/student/english/unit-practice', active.unit)}
                 >

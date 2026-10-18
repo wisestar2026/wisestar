@@ -31,6 +31,17 @@ public interface EnglishScenarioPackService {
 	EnglishScenarioPackView generate(String version, String grade, String term, String unit);
 
 	/**
+	 * 只重新生成已固化内容包的句式情景，保留单词情景与阅读理解缓存。
+	 *
+	 * @param version 教材版本
+	 * @param grade   年级
+	 * @param term    册别
+	 * @param unit    单元
+	 * @return 更新后的内容包
+	 */
+	EnglishScenarioPackView regeneratePattern(String version, String grade, String term, String unit);
+
+	/**
 	 * 保存情景内容包（同 版本+年级+册别+单元 覆盖更新）。
 	 *
 	 * @param pack 内容包（含分组 JSON 正文）

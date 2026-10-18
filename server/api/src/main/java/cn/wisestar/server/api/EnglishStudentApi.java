@@ -7,6 +7,7 @@ import cn.wisestar.server.domain.dto.english.EnglishDiagnoseRequest;
 import cn.wisestar.server.domain.dto.english.EnglishDiagnoseSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishReadingView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceExercise;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
@@ -19,6 +20,7 @@ import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
+import cn.wisestar.server.service.EnglishReadingService;
 import cn.wisestar.server.service.EnglishScenarioPackService;
 import cn.wisestar.server.service.EnglishSentencePackService;
 import cn.wisestar.server.service.EnglishStudentService;
@@ -46,6 +48,8 @@ public class EnglishStudentApi {
 	private final EnglishScenarioPackService scenarioPackService;
 
 	private final EnglishSentencePackService sentencePackService;
+
+	private final EnglishReadingService readingService;
 
 	private final EnglishUnitPaperService unitPaperService;
 
@@ -148,6 +152,18 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
 		return scenarioPackService.getPatternScenarios(version, grade, term, unit);
+	}
+
+	/**
+	 * 单元阅读理解：首次读取时生成短文与 5 道选择题并缓存，之后直接读取。
+	 */
+	@GetMapping("/reading")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishReadingView reading(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam(required = false) String unit) {
+		return readingService.getReading(version, grade, term, unit);
 	}
 
 	/**
