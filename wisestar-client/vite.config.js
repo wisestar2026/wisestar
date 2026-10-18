@@ -57,5 +57,19 @@ export default defineConfig(({ mode }) => {
       },
     },
   },
+
+  // 生产构建预览服务：用单个打包产物替代开发期的大量模块请求，适合公网预览
+  preview: {
+    port: 3000,
+    strictPort: true,
+    host: '0.0.0.0',
+    allowedHosts: ['.monkeycode-ai.online'],
+    proxy: {
+      '/api': {
+        target: env.API_TARGET || 'http://localhost:1991',
+        changeOrigin: true,
+      },
+    },
+  },
   };
 });
