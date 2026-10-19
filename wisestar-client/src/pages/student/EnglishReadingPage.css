@@ -1,10 +1,9 @@
 /* EnglishReadingPage.css - 阅读理解（左侧白底短文 + 右侧题目） */
 .eng-read-wrap {
-  flex: 1;
+  flex: none;
   min-height: 0;
   width: 100%;
   max-width: 1240px;
-  height: 100%;
   margin: 0 auto;
   padding: 6px 16px 8px;
   display: flex;

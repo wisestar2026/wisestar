@@ -10,7 +10,7 @@
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心模块卡
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
@@ -54,6 +54,37 @@ export default function EnglishReadingPage() {
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [showZh, setShowZh] = useState(false);
+  const wrapRef = useRef(null);
+
+  // 用实际可用高度约束整页：顶部通栏和底部导航留白之外全部给两栏容器，
+  // 这样页面本身不滚动，短文和题目各自在容器内滚动。
+  const measureHeight = useCallback(() => {
+    const el = wrapRef.current;
+    const parent = el?.parentElement;
+    if (!el || !parent) return;
+    const top = el.getBoundingClientRect().top + window.scrollY;
+    const bottomPadding = parseFloat(getComputedStyle(parent).paddingBottom) || 0;
+    const available = Math.floor(window.innerHeight - top - bottomPadding);
+    if (available > 0) el.style.height = `${available}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    measureHeight();
+  });
+
+  useEffect(() => {
+    window.addEventListener('resize', measureHeight);
+    let observer;
+    const header = wrapRef.current?.closest('.sll-page')?.querySelector('.sll-header');
+    if (header && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(measureHeight);
+      observer.observe(header);
+    }
+    return () => {
+      window.removeEventListener('resize', measureHeight);
+      observer?.disconnect();
+    };
+  }, [measureHeight]);
 
   const load = useCallback(() => {
     if (!unit) {
@@ -91,7 +122,7 @@ export default function EnglishReadingPage() {
 
   if (loading) {
     return (
-      <div className="eng-read-wrap">
+      <div className="eng-read-wrap" ref={wrapRef}>
         <div className="eng-read-loading">
           <Spin size="large" />
           <div className="eng-read-loading-text">正在准备本单元阅读短文…</div>
@@ -102,7 +133,7 @@ export default function EnglishReadingPage() {
 
   if (!unit || failed || !reading) {
     return (
-      <div className="eng-read-wrap">
+      <div className="eng-read-wrap" ref={wrapRef}>
         <div className="eng-read-empty">
           <div className="eng-read-empty-emoji">📖</div>
           <div className="eng-read-empty-title">{!unit ? '未选择单元' : failed || '暂无阅读内容'}</div>
@@ -118,7 +149,7 @@ export default function EnglishReadingPage() {
   const paragraphs = buildParagraphs(reading.passage);
 
   return (
-    <div className="eng-read-wrap">
+    <div className="eng-read-wrap" ref={wrapRef}>
       <div className="eng-read-head">
         <button type="button" className="eng-read-back" onClick={() => navigate('/student/english')}>← 返回学习中心</button>
         <div>
