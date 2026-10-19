@@ -147,8 +147,8 @@ export default function QuestionCard({
   // 再回退到已填空位数 / 默认 2，保证练习端始终可作答且空位数量正确
   const stdAnswerRaw = String(attr.examCorrectAnswer || '');
   const stdParts = stdAnswerRaw ? stdAnswerRaw.split('|') : [];
-  const titleText = String(schema.title || '');
-  // 选词填空：提示行保持常规字重，仅英文句子行通过 ** 加粗
+  const titleText = String(schema.title || question?.name || '');
+  // 选词填空：首行提示保持常规字重，英文句子行统一加粗（不依赖题干中的星号标记）
   const isWordCloze = titleText.startsWith('选词填空：');
   const titleBlankCount = (titleText.match(/__[^_]+__/g) || []).length
     || (titleText.match(/_{3,}/g) || []).length;
@@ -290,7 +290,7 @@ export default function QuestionCard({
                 </div>
               </>
             ) : (
-              <RichContent text={schema.title || question?.name || '(未命名题目)'} />
+              <RichContent text={titleText || '(未命名题目)'} />
             )}
           </span>
         </span>
