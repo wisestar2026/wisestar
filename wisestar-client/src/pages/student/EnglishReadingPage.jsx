@@ -21,6 +21,25 @@ function percent(correct, total) {
   return total ? Math.round((correct / total) * 100) : 0;
 }
 
+// 短文按句换行返回；把连续句子合并成 2~4 个自然段，避免每句一段过于零碎
+function buildParagraphs(passage) {
+  const blocks = String(passage || '')
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+  if (blocks.length > 1) {
+    return blocks.map((block) => block.replace(/\n+/g, ' '));
+  }
+  const lines = (blocks[0] || '').split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length <= 3) return lines.length ? [lines.join(' ')] : [];
+  const perParagraph = Math.max(2, Math.ceil(lines.length / 4));
+  const paragraphs = [];
+  for (let i = 0; i < lines.length; i += perParagraph) {
+    paragraphs.push(lines.slice(i, i + perParagraph).join(' '));
+  }
+  return paragraphs;
+}
+
 export default function EnglishReadingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -96,7 +115,7 @@ export default function EnglishReadingPage() {
     );
   }
 
-  const paragraphs = String(reading.passage || '').split(/\n+/).filter(Boolean);
+  const paragraphs = buildParagraphs(reading.passage);
 
   return (
     <div className="eng-read-wrap">
