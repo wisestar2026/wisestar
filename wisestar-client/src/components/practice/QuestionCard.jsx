@@ -282,7 +282,16 @@ export default function QuestionCard({
         <span style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
           <span style={{ flex: 'none' }}>{index}.</span>
           <span style={{ flex: 1, minWidth: 0 }}>
-            <RichContent text={schema.title || question?.name || '(未命名题目)'} />
+            {isWordCloze ? (
+              <>
+                <RichContent text={titleText.split('\n')[0]} />
+                <div style={{ fontWeight: 700 }}>
+                  <RichContent text={titleText.split('\n').slice(1).join('\n')} />
+                </div>
+              </>
+            ) : (
+              <RichContent text={schema.title || question?.name || '(未命名题目)'} />
+            )}
           </span>
         </span>
       </Title>

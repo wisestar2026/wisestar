@@ -201,7 +201,7 @@ public class EnglishFusionQuestionFactory {
 				}
 				String zh = StringUtils.hasText(sentence.getZh()) ? sentence.getZh().trim() : "根据句意选择单词";
 				String title = "选词填空：选择合适的单词补全句子。（" + String.join(" / ", bank) + "）\n"
-						+ "**" + blanked + " （" + zh + "）**";
+						+ blanked + " （" + zh + "）";
 				result.add(new DerivedQuestion(key, "单词", unit + "·单词", "选词填空",
 						"词汇", "理解", difficulty(part), title, SurveySchema.QuestionType.FillBlank,
 						target, null, null, "根据句意和词库选择正确的单词。"));
@@ -215,7 +215,7 @@ public class EnglishFusionQuestionFactory {
 						List<String> secondBank = wordBank(second, pool, unitWords, secondKey);
 						if (secondBank.size() >= 4) {
 							String secondTitle = "选词填空：选择合适的单词补全句子。（" + String.join(" / ", secondBank) + "）\n"
-									+ "**" + secondBlanked + " （" + zh + "）**";
+									+ secondBlanked + " （" + zh + "）";
 							result.add(new DerivedQuestion(secondKey, "单词", unit + "·单词", "选词填空",
 									"词汇", "理解", difficulty(part), secondTitle,
 									SurveySchema.QuestionType.FillBlank, second, null, null,
