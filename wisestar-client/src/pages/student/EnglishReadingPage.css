@@ -1,4 +1,5 @@
 /* EnglishReadingPage.css - 阅读理解（左侧白底短文 + 右侧题目） */
+.sll-focus-read .eng-read-wrap { padding-top: 0; padding-bottom: 0; }
 .eng-read-wrap {
   flex: none;
   min-height: 0;

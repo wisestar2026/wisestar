@@ -240,6 +240,12 @@
   min-height: 0;
 }
 
+/* 阅读理解专注模式：隐藏底部导航与悬浮入口，压缩内容区上下留白 */
+.sll-focus-read .sll-tabbar,
+.sll-focus-read .sll-back-float,
+.sll-focus-read .shp-ai-btn { display: none; }
+.sll-focus-read .sll-main { padding: 8px 24px 10px; }
+
 /* ============================================================
  * 通用组件（各学生端页面复用）
  * ============================================================ */
@@ -427,6 +433,7 @@
 @media (max-width: 760px) {
   /* 窄屏时抬高，避免与底部导航栏重叠 */
   .sll-back-float { left: 14px; bottom: 96px; height: 46px; padding: 0 16px; font-size: 14px; }
+  .sll-focus-read .sll-main { padding: 6px 10px 8px; }
 }
 
 /* ---------- 响应式（≥1024 平板横屏可用） ---------- */
