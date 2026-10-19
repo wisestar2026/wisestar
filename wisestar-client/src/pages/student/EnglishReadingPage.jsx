@@ -114,64 +114,68 @@ export default function EnglishReadingPage() {
         )}
       </div>
 
-      <article className="eng-read-passage">
-        <div className="eng-read-passage-top">
-          <span className="eng-read-passage-tag">Read</span>
-          <button type="button" className="eng-read-zh-toggle" onClick={() => setShowZh((v) => !v)}>
-            {showZh ? '隐藏译文' : '查看译文'}
-          </button>
-        </div>
-        {paragraphs.map((p, index) => (
-          <p className="eng-read-paragraph" key={index}>{p}</p>
-        ))}
-        {showZh && reading.passageZh && (
-          <div className="eng-read-translation">{reading.passageZh}</div>
-        )}
-      </article>
-
-      <div className="eng-read-questions">
-        {questions.map((q, qi) => (
-          <div className="eng-read-question" key={`${q.stem}-${qi}`}>
-            <div className="eng-read-question-head">
-              <span className="eng-read-question-no">{qi + 1}</span>
-              <span className="eng-read-question-stem">{q.stem}</span>
-            </div>
-            <div className="eng-read-options">
-              {(q.options || []).map((option, oi) => {
-                const picked = answers[qi] === oi;
-                let cls = 'eng-read-option';
-                if (submitted && oi === q.answerIndex) cls += ' correct';
-                else if (submitted && picked) cls += ' wrong';
-                else if (picked) cls += ' picked';
-                return (
-                  <button
-                    key={`${option}-${oi}`}
-                    type="button"
-                    className={cls}
-                    disabled={submitted}
-                    onClick={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
-                  >
-                    <span className="eng-read-option-label">{String.fromCharCode(65 + oi)}</span>
-                    <span>{option}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {submitted && (
-              <div className={`eng-read-explain ${answers[qi] === q.answerIndex ? 'ok' : 'bad'}`}>
-                {answers[qi] === q.answerIndex ? '回答正确' : `正确答案：${String.fromCharCode(65 + q.answerIndex)}`}
-                {q.explanation ? ` · ${q.explanation}` : ''}
-              </div>
+      <div className="eng-read-main">
+        <article className="eng-read-passage">
+          <div className="eng-read-passage-top">
+            <span className="eng-read-passage-tag">Read</span>
+            {submitted && reading.passageZh && (
+              <button type="button" className="eng-read-zh-toggle" onClick={() => setShowZh((v) => !v)}>
+                {showZh ? '隐藏译文' : '查看译文'}
+              </button>
             )}
           </div>
-        ))}
+          {paragraphs.map((p, index) => (
+            <p className="eng-read-paragraph" key={index}>{p}</p>
+          ))}
+          {submitted && showZh && reading.passageZh && (
+            <div className="eng-read-translation">{reading.passageZh}</div>
+          )}
+        </article>
+
+        <div className="eng-read-questions">
+          {questions.map((q, qi) => (
+            <div className="eng-read-question" key={`${q.stem}-${qi}`}>
+              <div className="eng-read-question-head">
+                <span className="eng-read-question-no">{qi + 1}</span>
+                <span className="eng-read-question-stem">{q.stem}</span>
+              </div>
+              <div className="eng-read-options">
+                {(q.options || []).map((option, oi) => {
+                  const picked = answers[qi] === oi;
+                  let cls = 'eng-read-option';
+                  if (submitted && oi === q.answerIndex) cls += ' correct';
+                  else if (submitted && picked) cls += ' wrong';
+                  else if (picked) cls += ' picked';
+                  return (
+                    <button
+                      key={`${option}-${oi}`}
+                      type="button"
+                      className={cls}
+                      disabled={submitted}
+                      onClick={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
+                    >
+                      <span className="eng-read-option-label">{String.fromCharCode(65 + oi)}</span>
+                      <span>{option}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {submitted && (
+                <div className={`eng-read-explain ${answers[qi] === q.answerIndex ? 'ok' : 'bad'}`}>
+                  {answers[qi] === q.answerIndex ? '回答正确' : `正确答案：${String.fromCharCode(65 + q.answerIndex)}`}
+                  {q.explanation ? ` · ${q.explanation}` : ''}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="eng-read-actions">
         {!submitted ? (
           <button type="button" className="eng-read-btn" onClick={submit}>提交答案</button>
         ) : (
-          <button type="button" className="eng-read-btn" onClick={() => { setAnswers({}); setSubmitted(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+          <button type="button" className="eng-read-btn" onClick={() => { setAnswers({}); setSubmitted(false); setShowZh(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
             再做一次
           </button>
         )}

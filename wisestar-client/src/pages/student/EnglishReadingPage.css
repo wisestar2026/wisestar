@@ -1,7 +1,7 @@
-/* EnglishReadingPage.css - 阅读理解（蓝色短文卡片 + 选择题） */
+/* EnglishReadingPage.css - 阅读理解（左侧白底短文 + 右侧题目） */
 .eng-read-wrap {
   width: 100%;
-  max-width: 980px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 18px 16px 56px;
 }
@@ -31,40 +31,48 @@
 .eng-read-score small { font-size: 13px; color: #77a0b8; font-weight: 700; }
 .eng-read-score span { font-size: 13px; color: #4c8caf; }
 
-/* 蓝色背景短文：对应参考图的阅读呈现 */
-.eng-read-passage {
-  position: relative;
-  padding: 26px 30px 28px;
-  border-radius: 26px;
-  background: linear-gradient(150deg, #1e6fa8 0%, #2d8cc4 55%, #4aa6d6 100%);
-  box-shadow: 0 20px 42px rgba(22, 92, 140, 0.28);
-  color: #fff;
-}
-.eng-read-passage::after {
-  content: ''; position: absolute; inset: 10px; border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.22); pointer-events: none;
-}
-.eng-read-passage-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.eng-read-passage-tag {
-  padding: 4px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.2);
-  font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
-}
-.eng-read-zh-toggle {
-  border: 1px solid rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.12);
-  color: #fff; border-radius: 999px; padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
-}
-.eng-read-zh-toggle:hover { background: rgba(255, 255, 255, 0.24); }
-.eng-read-paragraph { margin: 0 0 14px; font-size: 18px; line-height: 2; letter-spacing: 0.2px; }
-.eng-read-paragraph:last-of-type { margin-bottom: 0; }
-.eng-read-translation {
-  margin-top: 18px; padding: 16px 18px; border-radius: 16px;
-  background: rgba(8, 47, 76, 0.28); color: #e8f6ff; font-size: 14px; line-height: 1.9;
+/* 左右分栏：左侧短文，右侧题目，方便对照做题 */
+.eng-read-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  gap: 22px;
+  align-items: start;
 }
 
-.eng-read-questions { display: flex; flex-direction: column; gap: 16px; margin-top: 22px; }
+/* 白底短文：深灰黑正文、常规字重，减少作答时的视觉干扰 */
+.eng-read-passage {
+  min-width: 0;
+  padding: 26px 30px 28px;
+  border-radius: 22px;
+  border: 1px solid #e2eaf1;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(30, 80, 120, 0.08);
+  color: #2f343a;
+}
+.eng-read-passage-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.eng-read-passage-tag {
+  padding: 4px 14px; border-radius: 999px; border: 1px solid #dbe8f2; background: #eff6fb;
+  color: #4a7a99; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+}
+.eng-read-zh-toggle {
+  border: 1px solid #cfe1ee; background: #f5faff;
+  color: #3d7899; border-radius: 999px; padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.eng-read-zh-toggle:hover { background: #e9f4fc; }
+.eng-read-paragraph {
+  margin: 0 0 16px; color: #2f343a; font-size: 17.5px; font-weight: 400;
+  line-height: 1.95; letter-spacing: 0.1px;
+}
+.eng-read-paragraph:last-of-type { margin-bottom: 0; }
+.eng-read-translation {
+  margin-top: 20px; padding: 15px 17px; border-radius: 12px;
+  background: #f6f8fa; color: #5b6570; font-size: 14px; font-weight: 400; line-height: 1.9;
+}
+
+.eng-read-questions { display: flex; flex-direction: column; gap: 14px; margin-top: 0; min-width: 0; }
 .eng-read-question {
-  padding: 20px 22px; border-radius: 20px; background: #fff;
-  box-shadow: 0 10px 26px rgba(40, 110, 170, 0.1);
+  padding: 18px 20px; border-radius: 18px; background: #fff;
+  box-shadow: 0 8px 22px rgba(40, 110, 170, 0.09);
 }
 .eng-read-question-head { display: flex; gap: 12px; align-items: flex-start; }
 .eng-read-question-no {
@@ -103,6 +111,11 @@
 }
 .eng-read-btn:hover { background: #1a6fa8; }
 .eng-read-btn.ghost { background: #eef5fa; color: #456f85; box-shadow: none; }
+
+@media (max-width: 980px) {
+  .eng-read-main { grid-template-columns: 1fr; gap: 18px; }
+  .eng-read-questions { margin-top: 0; }
+}
 
 @media (max-width: 720px) {
   .eng-read-wrap { padding: 12px 10px 40px; }
