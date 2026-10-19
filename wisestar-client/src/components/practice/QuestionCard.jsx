@@ -480,9 +480,6 @@ export default function QuestionCard({
                       />
                     ))}
                   </div>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    答案共 {wordBlankCount} 个单词，每个空填一个单词
-                  </Text>
                 </div>
               ) : (
                 <Input
