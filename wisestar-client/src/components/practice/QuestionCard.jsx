@@ -48,6 +48,7 @@ import { isStdCycle } from '../../utils/cycleDecimal';
 import RichContent from '../common/RichContent';
 import CycleDecimalInput from '../common/CycleDecimalInput';
 import VirtualKeyboard from '../common/VirtualKeyboard';
+import './QuestionCard.css';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -455,15 +456,24 @@ export default function QuestionCard({
             ) : (
               hasWordSlots ? (
                 <div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div className="practice-word-slots">
                     {Array.from({ length: wordBlankCount }).map((_, i) => (
                       <Input
                         key={i}
                         size="large"
-                        style={{ width: 140, maxWidth: '100%' }}
+                        variant="borderless"
+                        className="practice-word-slot"
+                        style={{
+                          boxShadow: 'none',
+                          outline: 'none',
+                          background: 'transparent',
+                          textAlign: 'center',
+                          padding: '4px 2px 6px',
+                        }}
                         ref={(el) => { blankInputRefs.current[i] = el?.input ?? el; }}
                         onFocus={() => { activeBlankRef.current = i; }}
-                        placeholder="_____"
+                        placeholder=""
+                        aria-label={`第 ${i + 1} 个单词`}
                         value={wordValues[i] || ''}
                         onChange={(e) => handleWordChange(i, e.target.value)}
                         disabled={locked}
