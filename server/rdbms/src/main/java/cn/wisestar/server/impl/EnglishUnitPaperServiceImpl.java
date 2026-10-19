@@ -700,7 +700,8 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				}
 				else if ("build".equals(item.getKind())) {
 					q.type = SurveySchema.QuestionType.FillBlank;
-					q.title = item.getZh() + "（用所给单词连成句子：" + wordBank(item) + "）";
+					q.title = "连词成句，用所给单词连成句子\n"
+							+ item.getZh() + "（" + wordBank(item) + "）";
 				}
 				else {
 					q.type = SurveySchema.QuestionType.FillBlank;
@@ -1070,7 +1071,7 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 	private String wordBank(EnglishSentenceExercise item) {
 		List<String> tokens = new ArrayList<>(List.of(item.getEn().trim().split("\\s+")));
 		Collections.shuffle(tokens, new Random(item.getEn().hashCode()));
-		return String.join(" / ", tokens);
+		return String.join(" 、 ", tokens);
 	}
 
 	/**
