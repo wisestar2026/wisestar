@@ -155,6 +155,13 @@ export default function QuestionCard({
   const titleBlankCount = (titleText.match(/__[^_]+__/g) || []).length
     || (titleText.match(/_{3,}/g) || []).length;
   const attrBlankCount = Number(attr.blankCount) || 0;
+  // 句子填空按答案单词数拆成多个输入框；题目只有一个空位时，展示层同步展开为逐词空位
+  const wordBlankCount = qtype === 'FillBlank' ? attrBlankCount : 0;
+  const hasWordSlots = wordBlankCount > 1;
+  let displayTitleText = titleText;
+  if (hasWordSlots && titleBlankCount === 1) {
+    displayTitleText = titleText.replace(/_{3,}/, Array(wordBlankCount).fill('_____').join(' '));
+  }
   const blankCount = qtype === 'MultipleBlank'
     ? (stdParts.length > 0 ? stdParts.length
       : (attrBlankCount > 0 ? attrBlankCount
@@ -165,6 +172,19 @@ export default function QuestionCard({
   const blankValues = qtype === 'MultipleBlank'
     ? (value?.type === 'text' ? String(value.text || '') : '').split('|')
     : [];
+  const wordValues = Array.from({ length: hasWordSlots ? wordBlankCount : 0 }, (_, i) => {
+    const parts = value?.type === 'text' ? String(value.text || '').split(' ') : [];
+    return parts[i] || '';
+  });
+  // 逐词空位以空格拼回整句，交给后端按单词序列判分
+  const handleWordChange = (idx, text) => {
+    if (locked) return;
+    const arr = [...wordValues];
+    arr[idx] = String(text);
+    let last = arr.length - 1;
+    while (last >= 0 && !arr[last]) last -= 1;
+    onChange({ type: 'text', text: last < 0 ? '' : arr.slice(0, last + 1).join(' ') });
+  };
 
   // 多项填空某个空位变更: 各空位按序拼成 "空1|空2|..." 存入 text（与后端判分分隔一致）
   const handleBlankChange = (idx, text) => {
@@ -193,7 +213,15 @@ export default function QuestionCard({
       };
     }
     if (qtype === 'FillBlank') {
-      if (isStdCycle(stdParts[0])) return null;
+      if (!hasWordSlots && isStdCycle(stdParts[0])) return null;
+      if (hasWordSlots) {
+        const i = activeBlankRef.current || 0;
+        return {
+          el: blankInputRefs.current[i],
+          current: wordValues[i] || '',
+          apply: (v) => handleWordChange(i, v),
+        };
+      }
       return {
         el: fillInputRef.current,
         current: value?.type === 'text' ? value.text : '',
@@ -261,7 +289,7 @@ export default function QuestionCard({
 
   // 是否展示虚拟键盘（存在可输入的文本空位且未锁定）
   const keyboardUsable = showKeyboard && !locked && (
-    (qtype === 'FillBlank' && !isStdCycle(stdParts[0]))
+    (qtype === 'FillBlank' && (hasWordSlots || !isStdCycle(stdParts[0])))
     || qtype === 'Text'
     || (qtype === 'MultipleBlank'
       && Array.from({ length: blankCount }).some((_, i) => !isStdCycle(stdParts[i])))
@@ -286,22 +314,22 @@ export default function QuestionCard({
           <span style={{ flex: 1, minWidth: 0 }}>
             {isWordCloze ? (
               <>
-                <RichContent text={titleText.split('\n')[0]} />
+                <RichContent text={displayTitleText.split('\n')[0]} />
                 <div style={{ fontWeight: 700 }}>
-                  <RichContent text={titleText.split('\n').slice(1).join('\n')} />
+                  <RichContent text={displayTitleText.split('\n').slice(1).join('\n')} />
                 </div>
               </>
             ) : isPlainHint ? (
               <>
                 <div style={{ fontWeight: 400 }}>
-                  <RichContent text={titleText.split('\n')[0]} />
+                  <RichContent text={displayTitleText.split('\n')[0]} />
                 </div>
                 <div>
-                  <RichContent text={titleText.split('\n').slice(1).join('\n')} />
+                  <RichContent text={displayTitleText.split('\n').slice(1).join('\n')} />
                 </div>
               </>
             ) : (
-              <RichContent text={titleText || '(未命名题目)'} />
+              <RichContent text={displayTitleText || '(未命名题目)'} />
             )}
           </span>
         </span>
@@ -425,14 +453,37 @@ export default function QuestionCard({
                 disabled={locked}
               />
             ) : (
-              <Input
-                size="large"
-                ref={(el) => { fillInputRef.current = el?.input ?? el; }}
-                placeholder="请输入答案"
-                value={value?.type === 'text' ? value.text : ''}
-                onChange={(e) => handleTextChange(e.target.value)}
-                disabled={locked}
-              />
+              hasWordSlots ? (
+                <div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {Array.from({ length: wordBlankCount }).map((_, i) => (
+                      <Input
+                        key={i}
+                        size="large"
+                        style={{ width: 140, maxWidth: '100%' }}
+                        ref={(el) => { blankInputRefs.current[i] = el?.input ?? el; }}
+                        onFocus={() => { activeBlankRef.current = i; }}
+                        placeholder="_____"
+                        value={wordValues[i] || ''}
+                        onChange={(e) => handleWordChange(i, e.target.value)}
+                        disabled={locked}
+                      />
+                    ))}
+                  </div>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    答案共 {wordBlankCount} 个单词，每个空填一个单词
+                  </Text>
+                </div>
+              ) : (
+                <Input
+                  size="large"
+                  ref={(el) => { fillInputRef.current = el?.input ?? el; }}
+                  placeholder="请输入答案"
+                  value={value?.type === 'text' ? value.text : ''}
+                  onChange={(e) => handleTextChange(e.target.value)}
+                  disabled={locked}
+                />
+              )
             )
           ) : (
             <Input.TextArea

@@ -744,19 +744,31 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 						String zh = line.path("zh").asText();
 						List<String> answers = new ArrayList<>();
 						for (JsonNode answer : line.path("answers")) {
-							answers.add(answer.asText());
+							String value = answer.asText();
+							if (StringUtils.hasText(value)) {
+								answers.add(value.trim());
+							}
 						}
 						if (!answers.isEmpty()) {
-							String blanked = blankify(en, answers.size());
+							// 每个答案按单词拆成一个空位：多词短语（如 sit down）也逐词展示，
+							// 学员能直接看出答案由几个单词组成，判分时逐词命中。
+							List<String> blankWords = new ArrayList<>();
+							List<Integer> wordCounts = new ArrayList<>();
+							for (String answer : answers) {
+								String[] words = answer.split("\\s+");
+								wordCounts.add(words.length);
+								Collections.addAll(blankWords, words);
+							}
+							String blanked = expandBlankMarkers(blankify(en, answers.size()), wordCounts);
 							if (StringUtils.hasText(blanked)) {
 								Q q = new Q();
 								// 单空按单项填空展示，多空按多项填空展示；空位一律用「_____」，
 								// 答案有几个单词就出现几个空，不再使用 __①__ 编号标记。
-								q.type = answers.size() == 1 ? SurveySchema.QuestionType.FillBlank
+								q.type = blankWords.size() == 1 ? SurveySchema.QuestionType.FillBlank
 										: SurveySchema.QuestionType.MultipleBlank;
-								q.answers = answers;
-								if (answers.size() == 1) {
-									q.answer = answers.get(0);
+								q.answers = blankWords;
+								if (blankWords.size() == 1) {
+									q.answer = blankWords.get(0);
 								}
 								// 前文空位统一弱化为「……」，只有本轮作答行保留「_____」并用【作答】标出，
 								// 避免整段对话里出现多个下划线、学员找不到该填哪一处。
@@ -985,6 +997,13 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		if (SurveySchema.QuestionType.MultipleBlank.equals(q.type) && q.answers != null) {
 			schema.getAttribute().setBlankCount(q.answers.size());
 		}
+		else if (SurveySchema.QuestionType.FillBlank.equals(q.type) && StringUtils.hasText(q.answer)) {
+			// 句子填空（默写/连词成句等）按答案单词数下发空位数，练习端逐词给一个输入框。
+			int words = q.answer.trim().split("\\s+").length;
+			if (words > 1) {
+				schema.getAttribute().setBlankCount(words);
+			}
+		}
 		if (q.options != null) {
 			List<SurveySchema> children = new ArrayList<>(q.options.size());
 			for (int i = 0; i < q.options.size(); i++) {
@@ -1084,6 +1103,22 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 	/**
 	 * 把英文台词中的空位改写为「_____」，每个答案单词对应一个空，练习端据此识别空位数。
 	 */
+	private String expandBlankMarkers(String blanked, List<Integer> wordCounts) {
+		if (!StringUtils.hasText(blanked) || wordCounts == null || wordCounts.isEmpty()) {
+			return blanked;
+		}
+		String result = blanked;
+		for (Integer count : wordCounts) {
+			int words = count == null ? 0 : count;
+			if (words <= 0) {
+				continue;
+			}
+			String blanks = String.join(" ", Collections.nCopies(words, "_____"));
+			result = result.replaceFirst("_____", Matcher.quoteReplacement(blanks));
+		}
+		return result;
+	}
+
 	private String blankify(String en, int blankCount) {
 		if (!StringUtils.hasText(en) || blankCount <= 0) {
 			return null;

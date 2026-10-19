@@ -37,6 +37,12 @@ export default function QuestionPreview({ question }) {
   const isWordCloze = title.startsWith('选词填空：');
   // 连词成句/语法变形：首行提示语常规字重，题目行正常展示
   const isPlainHint = title.startsWith('连词成句，') || title.startsWith('选词填空，');
+  // 句子填空：按答案单词数把单个空位展开为逐词空位
+  const wordBlankCount = qtype === 'FillBlank' ? (Number(attr.blankCount) || 0) : 0;
+  const blankGroups = (title.match(/_{3,}/g) || []).length;
+  const displayTitle = wordBlankCount > 1 && blankGroups === 1
+    ? title.replace(/_{3,}/, Array(wordBlankCount).fill('_____').join(' '))
+    : title;
   const optionImage = attr.examOptionImage || '';
   // 需要展示选项的题型（与 QuestionCard 一致）
   const showOptions = ['Radio', 'Judge', 'Select', 'Checkbox'].includes(qtype);
@@ -50,22 +56,22 @@ export default function QuestionPreview({ question }) {
       <div className="q-preview-stem">
         {isWordCloze ? (
           <>
-            <RichContent text={title.split('\n')[0]} />
+            <RichContent text={displayTitle.split('\n')[0]} />
             <div style={{ fontWeight: 700 }}>
-              <RichContent text={title.split('\n').slice(1).join('\n')} />
+              <RichContent text={displayTitle.split('\n').slice(1).join('\n')} />
             </div>
           </>
         ) : isPlainHint ? (
           <>
             <div style={{ fontWeight: 400 }}>
-              <RichContent text={title.split('\n')[0]} />
+              <RichContent text={displayTitle.split('\n')[0]} />
             </div>
             <div>
-              <RichContent text={title.split('\n').slice(1).join('\n')} />
+              <RichContent text={displayTitle.split('\n').slice(1).join('\n')} />
             </div>
           </>
         ) : (
-          <RichContent text={title} />
+          <RichContent text={displayTitle} />
         )}
       </div>
 
