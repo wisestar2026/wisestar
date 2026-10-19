@@ -47,6 +47,36 @@
 - 方法:
   - `public void run(ApplicationArguments args)`
 
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishPackDataFixSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishPackDataFixSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(1), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  英语情景内容包数据修正初始化器。启动时读取 classpath:english/pack-fixes.json，按版本/年级/册别/单元定位内容包，逐行比对英文原文后补齐中文或挖空答案；随后按业务键收敛重复内容包，保留 `wordCount+patternCount` 最大的一条并删除其余。修正与去重均幂等，资源缺失或行不匹配时跳过。
+- 注入/字段: EnglishScenarioPackMapper packMapper, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishReadingSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishReadingSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(2), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  英语阅读理解内容初始化器。启动时读取 classpath:english/reading-articles.json（265 篇、53 个单元），按单元聚合并按 articleNo 排序，写入 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}`；内容包不存在时新建，已一致时跳过。
+- 注入/字段: EnglishScenarioPackMapper packMapper, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishReadAloudSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishReadAloudSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(3), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  英语课文跟读内容初始化器。启动时读取 classpath:english/read-aloud.json（142 篇、901 句），按「版本+年级+册别+单元+标题」增量写入 `t_english_read_aloud`；同一单元内按资源顺序写入 sort，已有篇章仅在 content 或 lineCount 变化时更新。
+- 注入/字段: EnglishReadAloudMapper readAloudMapper, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
 ### `rdbms/src/main/java/cn/wisestar/server/core/mybatis/MybatisPlugConfig.java`
 - 包: `cn.wisestar.server.core.mybatis`
 - 类型: `class MybatisPlugConfig`
@@ -313,6 +343,13 @@
 - **类说明**：
   英语单元句子同步练习内容包实体（对应数据库表 t_english_sentence_pack）。
   一条记录对应 版本+年级+册别+单元，content 保存多题型题目（连词成句/句子默写/句子选择）JSON 数组，管理端预生成固化、学员端只读。字段 version/grade/term/unit/content/count + 审计列。
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishReadAloud.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishReadAloud`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语课文跟读篇章实体（对应数据库表 t_english_read_aloud）。一条记录对应一篇课文/板块，content 保存逐句中英文 JSON `[{en,zh}]`，line_count 保存句数；与句子练习库解耦，避免跟读课文进入句子题池。字段 version/grade/term/unit/title/source/sort/content/lineCount + 审计列。
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishContentTag.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -930,7 +967,16 @@
 - 类型: `class EnglishReadingServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元阅读理解服务实现：读取该单元最多 40 个单词与 30 个重点句子，调用系统 AI 生成一篇短文、中文参考译文与 5 道选择题；结果按版本/年级/册别/单元缓存到 `t_english_scenario_pack.reading_content`，后续直接回读；缓存缺失时生成，题目不足 3 道抛 `ValidationException`。
+  英语单元阅读理解服务实现：优先解析 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}` 多篇结构并按 articleNo 返回；兼容旧的单篇对象。缓存缺失时读取该单元最多 40 个单词与 30 个重点句子，调用系统 AI 生成一篇短文、中文参考译文与 5 道选择题并落库；题目不足 3 道抛 `ValidationException`。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishReadAloudServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishReadAloudServiceImpl implements EnglishReadAloudService`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  英语课文跟读服务实现：按版本/年级/册别/单元读取 `t_english_read_aloud`，按 sort 升序解析 content 为 `lines[{en,zh}]`；无英文的行跳过，content 解析失败记 WARN 并返回空篇。
+- 方法:
+  - `public List<EnglishReadAloudView> getPassages(String version, String grade, String term, String unit)`
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioPackServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -1838,6 +1884,12 @@
 - **类说明**：
   EnglishSentence Mapper（MyBatis-Plus 基础 CRUD）。
 
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishReadAloudMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishReadAloudMapper extends BaseMapper<EnglishReadAloud>`
+- **类说明**：
+  英语课文跟读 Mapper（MyBatis-Plus 基础 CRUD）。
+
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishSentencePackMapper.java`
 - 包: `cn.wisestar.server.mapper`
 - 类型: `interface EnglishSentencePackMapper`
@@ -2134,4 +2186,4 @@
 
 ---
 
-> 种子脚本：`server/rdbms/src/main/resources/scripts/init-h2.sql` 与 `init-mysql.sql` 保持幂等同步，现各含 66 张表（含新增成长相关表 `t_detect_record`、`t_learning_growth`、`t_weak_point_event`）。
+> 种子脚本：`server/rdbms/src/main/resources/scripts/init-h2.sql` 与 `init-mysql.sql` 保持幂等同步，现各含 71 张表（含成长相关表 `t_detect_record`、`t_learning_growth`、`t_weak_point_event`，以及课文跟读表 `t_english_read_aloud`）。

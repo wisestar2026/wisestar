@@ -3593,6 +3593,28 @@ CREATE TABLE IF NOT EXISTS `t_user_campus` (
 --       已存在的索引（如 t_answer_detail 的内联索引）由 IF NOT EXISTS 跳过。
 -- ----------------------------
 CREATE INDEX IF NOT EXISTS idx_template_repo ON `t_template` (`repo_id`, `is_deleted`);
+
+-- 英语课文跟读篇章（一篇课文一条记录，逐句中英文以 JSON 保存）
+CREATE TABLE IF NOT EXISTS `t_english_read_aloud` (
+  `id` varchar(64) NOT NULL,
+  `version` varchar(32) DEFAULT NULL COMMENT '教材版本',
+  `grade` varchar(16) DEFAULT NULL COMMENT '年级',
+  `term` varchar(16) DEFAULT NULL COMMENT '学期（上册/下册）',
+  `unit` varchar(64) DEFAULT NULL COMMENT '单元',
+  `title` varchar(255) DEFAULT NULL COMMENT '课文标题/板块名',
+  `source` varchar(512) DEFAULT NULL COMMENT '教材版本与来源说明',
+  `sort` int DEFAULT '0' COMMENT '单元内排序',
+  `content` mediumtext COMMENT '逐句内容 JSON：[{en, zh}]',
+  `line_count` int DEFAULT '0' COMMENT '句子数量',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(64) DEFAULT NULL COMMENT '创建人',
+  `update_at` timestamp NULL DEFAULT NULL COMMENT '更新时间',
+  `update_by` varchar(64) DEFAULT NULL COMMENT '更新人',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_english_read_aloud` (`version`,`grade`,`term`,`unit`,`title`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='英语课文跟读篇章';
+CREATE INDEX IF NOT EXISTS idx_english_read_aloud_unit ON `t_english_read_aloud` (`version`,`grade`,`term`,`unit`,`sort`);
 CREATE INDEX IF NOT EXISTS idx_template_subject ON `t_template` (`subject`, `is_deleted`);
 CREATE INDEX IF NOT EXISTS idx_template_question_type ON `t_template` (`question_type`, `is_deleted`);
 CREATE INDEX IF NOT EXISTS idx_template_create_by ON `t_template` (`create_by`, `is_deleted`);

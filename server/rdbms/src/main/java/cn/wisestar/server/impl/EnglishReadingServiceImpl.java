@@ -66,7 +66,7 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 	}
 
 	@Override
-	public EnglishReadingView getReading(String version, String grade, String term, String unit) {
+	public List<EnglishReadingView> getReadings(String version, String grade, String term, String unit) {
 		requireText(version, "教材版本");
 		requireText(grade, "年级");
 		requireText(term, "册别");
@@ -78,16 +78,44 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 				.eq(EnglishScenarioPack::getUnit, unit)
 				.last("limit 1"));
 		if (pack != null && StringUtils.hasText(pack.getReadingContent())) {
-			try {
-				return objectMapper.readValue(pack.getReadingContent(), EnglishReadingView.class);
-			}
-			catch (Exception e) {
-				log.warn("english reading cache parse failed, regenerate: {}", e.getMessage());
+			List<EnglishReadingView> cached = parseCached(pack.getReadingContent());
+			if (!cached.isEmpty()) {
+				return cached;
 			}
 		}
 		EnglishReadingView view = generate(version, grade, term, unit);
+		view.setArticleNo(1);
 		saveCache(pack, version, grade, term, unit, view);
-		return view;
+		List<EnglishReadingView> result = new ArrayList<>();
+		result.add(view);
+		return result;
+	}
+
+	/** 解析已缓存的阅读内容，兼容单篇对象与 {@code {"articles":[...]}} 两种格式。 */
+	private List<EnglishReadingView> parseCached(String json) {
+		List<EnglishReadingView> result = new ArrayList<>();
+		try {
+			JsonNode root = objectMapper.readTree(json);
+			JsonNode articles = root.path("articles");
+			if (articles.isArray()) {
+				for (JsonNode node : articles) {
+					result.add(objectMapper.treeToValue(node, EnglishReadingView.class));
+				}
+			}
+			else if (root.isObject()) {
+				result.add(objectMapper.treeToValue(root, EnglishReadingView.class));
+			}
+			result.sort((left, right) -> {
+				int a = left.getArticleNo() == null ? Integer.MAX_VALUE : left.getArticleNo();
+				int b = right.getArticleNo() == null ? Integer.MAX_VALUE : right.getArticleNo();
+				return Integer.compare(a, b);
+			});
+		}
+		catch (Exception e) {
+			log.warn("english reading cache parse failed, regenerate: {}", e.getMessage());
+			result.clear();
+		}
+		return result;
 	}
 
 	private EnglishReadingView generate(String version, String grade, String term, String unit) {
@@ -269,7 +297,9 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 	private void saveCache(EnglishScenarioPack pack, String version, String grade, String term,
 			String unit, EnglishReadingView view) {
 		try {
-			String json = objectMapper.writeValueAsString(view);
+			Map<String, Object> wrapper = new HashMap<>();
+			wrapper.put("articles", java.util.Collections.singletonList(view));
+			String json = objectMapper.writeValueAsString(wrapper);
 			if (pack == null) {
 				pack = new EnglishScenarioPack();
 				pack.setVersion(version);

@@ -1936,10 +1936,18 @@
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishReadingView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishReadingView`
+- 注解: @Data, @JsonIgnoreProperties(ignoreUnknown = true)
+- **类说明**：
+  英语单元阅读理解视图：一篇文章的编号、标题、来源、短文、中文参考译文与选择题；内部类 `Question` 含题干、选项、正确项下标与解析。忽略未知字段以兼容库内已有的版本/年级/册别/单元等扩展属性。
+- 字段: articleNo / title / source / passage / passageZh / questions(`List<Question>`)
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishReadAloudView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishReadAloudView`
 - 注解: @Data
 - **类说明**：
-  英语单元阅读理解视图：短文、中文参考译文与选择题；内部类 `Question` 含题干、选项、正确项下标与解析。
-- 字段: title / passage / passageZh / questions(`List<Question>`)
+  英语课文跟读篇章视图：标题、来源与逐句中英对照；内部类 `Line` 含 `en`/`zh`。
+- 字段: id / title / source / sort / lines(`List<Line>`)
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioPackView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2757,14 +2765,23 @@
   - `List<EnglishPatternScenarioView> generateFromSentences(String grade, String unit, List<EnglishPatternSentence> sentences, int count, List<String> avoidTitles)`
     按一组重点句式生成 `count` 个情景练习，避开 `avoidTitles` 中已使用的情景标题；无可用句式时返回空列表。
 
+### `shared/src/main/java/cn/wisestar/server/service/EnglishReadAloudService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishReadAloudService`
+- **类说明**：
+  英语课文跟读服务：按版本/年级/册别/单元读取固化的跟读篇章，不触发 AI。
+- 方法:
+  - `List<EnglishReadAloudView> getPassages(String version, String grade, String term, String unit)`
+    按单元读取跟读篇章，按排序号升序返回。
+
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishReadingService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishReadingService`
 - **类说明**：
-  英语单元阅读理解服务：按版本/年级/册别/单元读取短文与选择题，首次访问由 AI 生成并缓存到情景内容包，后续直接回读。
+  英语单元阅读理解服务：按版本/年级/册别/单元读取多篇短文与选择题，优先回读情景内容包缓存，缓存缺失时由 AI 生成单篇并落库。
 - 方法:
-  - `EnglishReadingView getReading(String version, String grade, String term, String unit)`
-    取该单元阅读理解，无缓存时生成并落库。
+  - `List<EnglishReadingView> getReadings(String version, String grade, String term, String unit)`
+    取该单元阅读理解列表，无缓存时生成单篇并落库。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioPackService.java`
 - 包: `cn.wisestar.server.service`

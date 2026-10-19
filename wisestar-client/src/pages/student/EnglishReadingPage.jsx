@@ -48,7 +48,8 @@ export default function EnglishReadingPage() {
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
 
-  const [reading, setReading] = useState(null);
+  const [readings, setReadings] = useState([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState('');
   const [answers, setAnswers] = useState({});
@@ -97,7 +98,11 @@ export default function EnglishReadingPage() {
     setSubmitted(false);
     setShowZh(false);
     getEnglishReading({ version, grade, term, unit })
-      .then((res) => setReading(res?.data || null))
+      .then((res) => {
+        const list = Array.isArray(res?.data) ? res.data : (res?.data ? [res.data] : []);
+        setReadings(list);
+        setActiveIndex(0);
+      })
       .catch((e) => setFailed(e?.message || '阅读内容加载失败'))
       .finally(() => setLoading(false));
   }, [version, grade, term, unit]);
@@ -106,7 +111,15 @@ export default function EnglishReadingPage() {
     load();
   }, [load]);
 
+  const reading = readings[activeIndex] || null;
   const questions = reading?.questions || [];
+
+  const switchArticle = (index) => {
+    setActiveIndex(index);
+    setAnswers({});
+    setSubmitted(false);
+    setShowZh(false);
+  };
   const correctCount = questions.reduce(
     (sum, q, index) => sum + (answers[index] === q.answerIndex ? 1 : 0), 0,
   );
@@ -163,6 +176,21 @@ export default function EnglishReadingPage() {
           </div>
         )}
       </div>
+
+      {readings.length > 1 && (
+        <div className="eng-read-article-tabs">
+          {readings.map((item, index) => (
+            <button
+              type="button"
+              key={item.title || index}
+              className={`eng-read-article-tab ${index === activeIndex ? 'active' : ''}`}
+              onClick={() => switchArticle(index)}
+            >
+              {index + 1}. {item.title || `第 ${index + 1} 篇`}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="eng-read-main">
         <article className="eng-read-passage">

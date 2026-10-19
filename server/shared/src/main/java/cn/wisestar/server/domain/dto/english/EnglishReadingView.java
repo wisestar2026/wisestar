@@ -1,5 +1,6 @@
 package cn.wisestar.server.domain.dto.english;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -12,7 +13,14 @@ import java.util.List;
  * @date 2026/10/18
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class EnglishReadingView {
+
+	/** 文章序号（同一单元内从 1 开始） */
+	private Integer articleNo;
+
+	/** 内容来源说明 */
+	private String source;
 
 	/** 短文标题 */
 	private String title;

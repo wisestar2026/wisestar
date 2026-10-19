@@ -2482,6 +2482,28 @@ CREATE TABLE IF NOT EXISTS t_english_content_tag (
 );
 CREATE INDEX IF NOT EXISTS idx_english_content_tag_query ON t_english_content_tag (module, unit, difficulty_seed);
 
+-- 英语课文跟读篇章（一篇课文一条记录，逐句中英文以 JSON 保存）
+CREATE TABLE IF NOT EXISTS t_english_read_aloud (
+  id varchar(64) NOT NULL,
+  version varchar(32) COMMENT '教材版本',
+  grade varchar(16) COMMENT '年级',
+  term varchar(16) COMMENT '学期（上册/下册）',
+  unit varchar(64) COMMENT '单元',
+  title varchar(255) COMMENT '课文标题/板块名',
+  source varchar(512) COMMENT '教材版本与来源说明',
+  sort int DEFAULT 0 COMMENT '单元内排序',
+  content text COMMENT '逐句内容 JSON：[{en, zh}]',
+  line_count int DEFAULT 0 COMMENT '句子数量',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE (version, grade, term, unit, title)
+);
+CREATE INDEX IF NOT EXISTS idx_english_read_aloud_unit ON t_english_read_aloud (version, grade, term, unit, sort);
+
 -- 英语单元目录（词库/句库单元 + 自定义排序/占位单元）
 CREATE TABLE IF NOT EXISTS t_english_unit (
   id varchar(64) NOT NULL,

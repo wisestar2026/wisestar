@@ -2,7 +2,7 @@
  * EnglishReadAloudPage.jsx - 学员端英语「课本跟读」
  *
  * 功能:
- *   1. 按当前版本/年级/册别/单元加载课本重点句子
+ *   1. 按当前版本/年级/册别/单元加载课本跟读篇章（篇章 + 逐句中英文）
  *   2. 逐句播放原音（后端音频优先，缺失时浏览器语音合成）
  *   3. 麦克风录音跟读，录完可回放对比
  *   4. 本地标记已跟读句子，纯前端练习，不上传录音
@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishSentences } from '../../api/englishStudent';
+import { getEnglishReadAloud } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
 import './EnglishReadAloudPage.css';
 
@@ -27,7 +27,7 @@ export default function EnglishReadAloudPage() {
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
 
-  const [sentences, setSentences] = useState([]);
+  const [passages, setPassages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recordingId, setRecordingId] = useState(null);
   const [recordings, setRecordings] = useState({});
@@ -44,9 +44,9 @@ export default function EnglishReadAloudPage() {
     setLoading(true);
     setPracticed({});
     setRecordings({});
-    getEnglishSentences({ version, grade, term, unit })
-      .then((res) => setSentences(res?.data || []))
-      .catch(() => message.error('课本句子加载失败'))
+    getEnglishReadAloud({ version, grade, term, unit })
+      .then((res) => setPassages(res?.data || []))
+      .catch(() => message.error('课本跟读内容加载失败'))
       .finally(() => setLoading(false));
   }, [version, grade, term, unit]);
 
@@ -62,7 +62,7 @@ export default function EnglishReadAloudPage() {
     streamRef.current?.getTracks?.().forEach((track) => track.stop());
   }, []);
 
-  const startRecord = async (id) => {
+  const startRecord = async (key) => {
     if (!navigator.mediaDevices?.getUserMedia || typeof window.MediaRecorder === 'undefined') {
       message.warning('当前浏览器不支持录音，请使用 Chrome / Edge 最新版');
       return;
@@ -81,16 +81,16 @@ export default function EnglishReadAloudPage() {
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' });
         setRecordings((prev) => {
-          if (prev[id]) URL.revokeObjectURL(prev[id]);
-          return { ...prev, [id]: URL.createObjectURL(blob) };
+          if (prev[key]) URL.revokeObjectURL(prev[key]);
+          return { ...prev, [key]: URL.createObjectURL(blob) };
         });
-        setPracticed((prev) => ({ ...prev, [id]: true }));
+        setPracticed((prev) => ({ ...prev, [key]: true }));
         stream.getTracks().forEach((track) => track.stop());
         setRecordingId(null);
       };
       recorder.start();
       recorderRef.current = recorder;
-      setRecordingId(id);
+      setRecordingId(key);
     } catch {
       message.error('无法使用麦克风，请检查浏览器录音权限');
     }
@@ -106,18 +106,19 @@ export default function EnglishReadAloudPage() {
     return <div className="eng-ra-wrap"><div className="eng-ra-loading"><Spin size="large" /></div></div>;
   }
 
-  if (!unit || sentences.length === 0) {
+  if (!unit || passages.length === 0) {
     return (
       <div className="eng-ra-wrap">
         <div className="eng-ra-empty">
           <div className="eng-ra-empty-emoji">🎤</div>
-          <div className="eng-ra-empty-title">{!unit ? '未选择单元' : '本单元暂无跟读句子'}</div>
+          <div className="eng-ra-empty-title">{!unit ? '未选择单元' : '本单元暂无跟读内容'}</div>
           <button type="button" className="eng-ra-btn" onClick={() => navigate('/student/english')}>返回英语学习中心</button>
         </div>
       </div>
     );
   }
 
+  const totalLines = passages.reduce((sum, passage) => sum + (passage.lines?.length || 0), 0);
   const doneCount = Object.keys(practiced).length;
 
   return (
@@ -129,51 +130,62 @@ export default function EnglishReadAloudPage() {
           <div className="eng-ra-title">听一句，读一句</div>
         </div>
         <div className="eng-ra-progress">
-          <b>{doneCount}</b><span>/{sentences.length} 句已跟读</span>
+          <b>{doneCount}</b><span>/{totalLines} 句已跟读</span>
         </div>
       </div>
 
       <div className="eng-ra-list">
-        {sentences.map((sentence, index) => {
-          const isRecording = recordingId === sentence.id;
-          return (
-            <div className={`eng-ra-card ${practiced[sentence.id] ? 'done' : ''}`} key={sentence.id || index}>
-              <div className="eng-ra-index">{index + 1}</div>
-              <div className="eng-ra-body">
-                <div className="eng-ra-en">{sentence.en}</div>
-                {sentence.zh && <div className="eng-ra-zh">{sentence.zh}</div>}
-                {recordings[sentence.id] && (
-                  <audio className="eng-ra-audio" controls src={recordings[sentence.id]}>
-                    <track kind="captions" />
-                  </audio>
-                )}
-              </div>
-              <div className="eng-ra-actions">
-                <button
-                  type="button"
-                  className="eng-ra-play"
-                  onClick={() => speakEnglish(sentence.en, sentence.audioUrl)}
-                >
-                  🔊 听原音
-                </button>
-                {isRecording ? (
-                  <button type="button" className="eng-ra-record is-recording" onClick={stopRecord}>
-                    ⏹ 停止录音
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="eng-ra-record"
-                    disabled={Boolean(recordingId)}
-                    onClick={() => startRecord(sentence.id)}
-                  >
-                    🎤 跟读
-                  </button>
-                )}
-              </div>
+        {passages.map((passage, pi) => (
+          <section className="eng-ra-passage" key={passage.id || `${passage.title}-${pi}`}>
+            <div className="eng-ra-passage-head">
+              <div className="eng-ra-passage-title">{passage.title || `课文 ${pi + 1}`}</div>
+              <div className="eng-ra-passage-meta">{(passage.lines || []).length} 句</div>
             </div>
-          );
-        })}
+            <div className="eng-ra-lines">
+              {(passage.lines || []).map((line, li) => {
+                const key = `${pi}-${li}`;
+                const isRecording = recordingId === key;
+                return (
+                  <div className={`eng-ra-card ${practiced[key] ? 'done' : ''}`} key={key}>
+                    <div className="eng-ra-index">{li + 1}</div>
+                    <div className="eng-ra-body">
+                      <div className="eng-ra-en">{line.en}</div>
+                      {line.zh && <div className="eng-ra-zh">{line.zh}</div>}
+                      {recordings[key] && (
+                        <audio className="eng-ra-audio" controls src={recordings[key]}>
+                          <track kind="captions" />
+                        </audio>
+                      )}
+                    </div>
+                    <div className="eng-ra-actions">
+                      <button
+                        type="button"
+                        className="eng-ra-play"
+                        onClick={() => speakEnglish(line.en)}
+                      >
+                        🔊 听原音
+                      </button>
+                      {isRecording ? (
+                        <button type="button" className="eng-ra-record is-recording" onClick={stopRecord}>
+                          ⏹ 停止录音
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="eng-ra-record"
+                          disabled={Boolean(recordingId)}
+                          onClick={() => startRecord(key)}
+                        >
+                          🎤 跟读
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
 
       <div className="eng-ra-tip">

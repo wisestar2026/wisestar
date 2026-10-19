@@ -19,7 +19,12 @@
 .eng-ra-progress { margin-left: auto; color: #a06a4a; font-size: 13px; font-weight: 700; }
 .eng-ra-progress b { font-size: 28px; color: #e0663f; margin-right: 2px; }
 
-.eng-ra-list { display: flex; flex-direction: column; gap: 14px; }
+.eng-ra-list { display: flex; flex-direction: column; gap: 22px; }
+.eng-ra-passage { display: flex; flex-direction: column; gap: 10px; }
+.eng-ra-passage-head { display: flex; align-items: baseline; gap: 10px; padding: 0 4px; }
+.eng-ra-passage-title { font-size: 17px; font-weight: 900; color: #8a4a28; }
+.eng-ra-passage-meta { font-size: 12px; font-weight: 700; color: #b38a72; }
+.eng-ra-lines { display: flex; flex-direction: column; gap: 10px; }
 .eng-ra-card {
   display: flex; gap: 16px; align-items: center; padding: 18px 20px;
   border-radius: 20px; background: #fff; border: 2px solid #f7e6da;

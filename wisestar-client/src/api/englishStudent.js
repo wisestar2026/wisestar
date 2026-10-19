@@ -87,9 +87,14 @@ export function getEnglishPatternScenarios(params) {
   return request.get('/english/student/pattern-scenarios', { params });
 }
 
-/** 单元阅读理解（首次访问生成短文 + 5 道选择题并缓存，AI 生成耗时较长） */
+/** 单元阅读理解（多篇文章 + 每篇 4 道选择题；无固化内容时 AI 生成 1 篇兜底） */
 export function getEnglishReading(params) {
   return request.get('/english/student/reading', { params, timeout: 120000 });
+}
+
+/** 单元课文跟读（篇章 + 逐句中英文） */
+export function getEnglishReadAloud(params) {
+  return request.get('/english/student/read-aloud', { params });
 }
 
 /** 单元句子同步练习（多题型：连词成句/句子默写/句子选择，读取管理端已固化内容） */
