@@ -35,6 +35,8 @@ export default function QuestionPreview({ question }) {
   const title = schema.title || question.name || '(未命名题目)';
   // 选词填空：首行提示常规字重，英文句子行加粗（数据中不再写 ** 标记）
   const isWordCloze = title.startsWith('选词填空：');
+  // 连词成句/语法变形：首行提示语常规字重，题目行正常展示
+  const isPlainHint = title.startsWith('连词成句，') || title.startsWith('选词填空，');
   const optionImage = attr.examOptionImage || '';
   // 需要展示选项的题型（与 QuestionCard 一致）
   const showOptions = ['Radio', 'Judge', 'Select', 'Checkbox'].includes(qtype);
@@ -50,6 +52,15 @@ export default function QuestionPreview({ question }) {
           <>
             <RichContent text={title.split('\n')[0]} />
             <div style={{ fontWeight: 700 }}>
+              <RichContent text={title.split('\n').slice(1).join('\n')} />
+            </div>
+          </>
+        ) : isPlainHint ? (
+          <>
+            <div style={{ fontWeight: 400 }}>
+              <RichContent text={title.split('\n')[0]} />
+            </div>
+            <div>
               <RichContent text={title.split('\n').slice(1).join('\n')} />
             </div>
           </>

@@ -150,6 +150,8 @@ export default function QuestionCard({
   const titleText = String(schema.title || question?.name || '');
   // 选词填空：首行提示保持常规字重，英文句子行统一加粗（不依赖题干中的星号标记）
   const isWordCloze = titleText.startsWith('选词填空：');
+  // 连词成句/语法变形：首行提示语保持常规字重，题目行沿用标题字重
+  const isPlainHint = titleText.startsWith('连词成句，') || titleText.startsWith('选词填空，');
   const titleBlankCount = (titleText.match(/__[^_]+__/g) || []).length
     || (titleText.match(/_{3,}/g) || []).length;
   const attrBlankCount = Number(attr.blankCount) || 0;
@@ -286,6 +288,15 @@ export default function QuestionCard({
               <>
                 <RichContent text={titleText.split('\n')[0]} />
                 <div style={{ fontWeight: 700 }}>
+                  <RichContent text={titleText.split('\n').slice(1).join('\n')} />
+                </div>
+              </>
+            ) : isPlainHint ? (
+              <>
+                <div style={{ fontWeight: 400 }}>
+                  <RichContent text={titleText.split('\n')[0]} />
+                </div>
+                <div>
                   <RichContent text={titleText.split('\n').slice(1).join('\n')} />
                 </div>
               </>
