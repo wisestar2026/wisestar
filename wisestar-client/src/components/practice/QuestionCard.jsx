@@ -148,6 +148,8 @@ export default function QuestionCard({
   const stdAnswerRaw = String(attr.examCorrectAnswer || '');
   const stdParts = stdAnswerRaw ? stdAnswerRaw.split('|') : [];
   const titleText = String(schema.title || '');
+  // 选词填空：提示行保持常规字重，仅英文句子行通过 ** 加粗
+  const isWordCloze = titleText.startsWith('选词填空：');
   const titleBlankCount = (titleText.match(/__[^_]+__/g) || []).length
     || (titleText.match(/_{3,}/g) || []).length;
   const attrBlankCount = Number(attr.blankCount) || 0;
@@ -276,7 +278,7 @@ export default function QuestionCard({
       </Space>
 
       {/* ---- 题干 ---- */}
-      <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6, fontSize: 20 }}>
+      <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6, fontSize: 20, fontWeight: isWordCloze ? 400 : undefined }}>
         <span style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
           <span style={{ flex: 'none' }}>{index}.</span>
           <span style={{ flex: 1, minWidth: 0 }}>
