@@ -44,6 +44,7 @@ export default function KnowledgeDetectPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const presetUnit = searchParams.get('unit') || '';
+  const presetUnitIdsParam = searchParams.get('unitIds') || '';
   const activeSubject = useStudentStore((s) => s.activeSubject);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
@@ -80,15 +81,19 @@ export default function KnowledgeDetectPage() {
       .then((res) => {
         const list = res?.data || [];
         setUnits(list);
-        // 入口携带 ?unit= 时预选同名单元（英语学习中心「单元练习」跳转）
-        if (presetUnit) {
+        // 首页学习检测可携带 ?unitIds= 多选单元；旧入口 ?unit= 仍按名称预选单个
+        const presetIds = presetUnitIdsParam.split(',').filter(Boolean);
+        if (presetIds.length > 0) {
+          const matched = list.filter((u) => presetIds.includes(u.id));
+          if (matched.length > 0) setSelectedUnits(matched.map((u) => u.id));
+        } else if (presetUnit) {
           const matched = list.find((u) => u.name === presetUnit);
           if (matched) setSelectedUnits([matched.id]);
         }
       })
       .catch(() => message.error('单元加载失败'))
       .finally(() => setUnitsLoading(false));
-  }, [activeSubject, grade, term, presetUnit]);
+  }, [activeSubject, grade, term, presetUnit, presetUnitIdsParam]);
 
   useEffect(() => {
     loadUnits();

@@ -27,7 +27,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Drawer, Modal, Select, Spin, message } from 'antd';
+import { Button, Checkbox, Drawer, Modal, Spin, message } from 'antd';
 import useStudentStore, { SUBJECTS } from '../../stores/useStudentStore';
 import { getStudentStats, getMyToday, getCheckin, doCheckin } from '../../api/student';
 import { getDetectUnits } from '../../api/detect';
@@ -99,7 +99,7 @@ export default function StudentHomePage() {
   // 学习检测统一入口：选单元后二选一（知识点检测 / 学习诊断）
   const [assessOpen, setAssessOpen] = useState(false);
   const [assessUnits, setAssessUnits] = useState([]);
-  const [assessUnit, setAssessUnit] = useState('');
+  const [assessUnitIds, setAssessUnitIds] = useState([]);
   const [assessLoading, setAssessLoading] = useState(false);
   useEffect(() => {
     if (!assessOpen) return;
@@ -109,14 +109,17 @@ export default function StudentHomePage() {
       .then((res) => {
         const list = res?.data || [];
         setAssessUnits(list);
-        setAssessUnit((prev) => (list.some((u) => u.name === prev) ? prev : (list[0]?.name || '')));
+        setAssessUnitIds((prev) => {
+          const valid = prev.filter((id) => list.some((u) => u.id === id));
+          return valid.length > 0 ? valid : (list[0] ? [list[0].id] : []);
+        });
       })
       .catch(() => setAssessUnits([]))
       .finally(() => setAssessLoading(false));
   }, [assessOpen, activeSubject]);
   const startAssess = (mode) => {
-    if (!assessUnit) {
-      message.warning('请先选择单元');
+    if (assessUnitIds.length === 0) {
+      message.warning('请至少选择一个单元');
       return;
     }
     setAssessOpen(false);
@@ -124,7 +127,7 @@ export default function StudentHomePage() {
       navigate('/student/diagnose');
       return;
     }
-    navigate(`/student/detect?unit=${encodeURIComponent(assessUnit)}`);
+    navigate(`/student/detect?unitIds=${encodeURIComponent(assessUnitIds.join(','))}`);
   };
   const [completingTaskId, setCompletingTaskId] = useState(null);
   const pendingTaskCount = tasks.filter((t) => t.status !== 'completed').length;
@@ -346,21 +349,35 @@ export default function StudentHomePage() {
           ) : assessUnits.length === 0 ? (
             <div className="slh-assess-empty">当前学科暂无可检测单元，请先在顶部切换学科或册别</div>
           ) : (
-            <Select
-              style={{ width: '100%' }}
-              value={assessUnit || undefined}
-              onChange={setAssessUnit}
-              placeholder="请选择单元"
-              options={assessUnits.map((u) => ({ value: u.name, label: `${u.name}（${u.questionCount} 题）` }))}
-            />
+            <div className="slh-assess-units">
+              <div className="slh-assess-units-head">
+                <span>已选 {assessUnitIds.length} / {assessUnits.length} 个单元</span>
+                <span className="slh-assess-units-actions">
+                  <Button type="link" size="small" onClick={() => setAssessUnitIds(assessUnits.map((u) => u.id))}>全选</Button>
+                  <Button type="link" size="small" onClick={() => setAssessUnitIds([])}>清空</Button>
+                </span>
+              </div>
+              <Checkbox.Group
+                value={assessUnitIds}
+                onChange={(vals) => setAssessUnitIds(vals)}
+                className="slh-assess-unit-grid"
+              >
+                {assessUnits.map((u) => (
+                  <Checkbox key={u.id} value={u.id} className="slh-assess-unit-item">
+                    <span className="slh-assess-unit-name">{u.name}</span>
+                    <span className="slh-assess-unit-count">{u.questionCount} 题</span>
+                  </Checkbox>
+                ))}
+              </Checkbox.Group>
+            </div>
           )}
           <div className="slh-assess-modes">
-            <button type="button" className="slh-assess-mode" disabled={!assessUnit} onClick={() => startAssess('detect')}>
+            <button type="button" className="slh-assess-mode" disabled={assessUnitIds.length === 0} onClick={() => startAssess('detect')}>
               <span className="slh-assess-emoji">🎯</span>
               <span className="slh-assess-title">知识点检测</span>
               <span className="slh-assess-desc">自选题量与难度，快速定位薄弱知识点</span>
             </button>
-            <button type="button" className="slh-assess-mode diagnose" disabled={!assessUnit} onClick={() => startAssess('diagnose')}>
+            <button type="button" className="slh-assess-mode diagnose" disabled={assessUnitIds.length === 0} onClick={() => startAssess('diagnose')}>
               <span className="slh-assess-emoji">🩺</span>
               <span className="slh-assess-title">学习诊断</span>
               <span className="slh-assess-desc">按系统设置出 24 题，生成可打印家长报告</span>
