@@ -330,6 +330,28 @@
 
 /* ---------- 组句 ---------- */
 .eng-sentence-hint { font-size: 20px; color: #d9603a; font-weight: 700; margin-bottom: 16px; }
+.eng-difficulty-tag {
+  display: inline-block;
+  margin-right: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+.eng-difficulty-tag.level-1 { background: #e6f6ec; color: #2f8f55; }
+.eng-difficulty-tag.level-2 { background: #fff2dd; color: #c17816; }
+.eng-difficulty-tag.level-3 { background: #fde6e3; color: #c0392b; }
+.eng-fill-stem {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2f4b5a;
+  background: #f6fbfe;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  line-height: 1.7;
+}
 .eng-dictation-skeleton { font-size: 14px; letter-spacing: 1px; color: #7aa0b2; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
 .eng-answer-slot {
   min-height: 60px;
@@ -799,6 +821,7 @@
 .eng-stage .eng-progress-text { font-size: 15px; }
 .eng-stage .eng-card { padding: 34px 30px; }
 .eng-stage .eng-sentence-hint { font-size: 24px; }
+.eng-stage .eng-fill-stem { font-size: 24px; }
 .eng-stage .eng-answer-slot { min-height: 74px; padding: 14px; }
 .eng-stage .eng-token { font-size: 18px; padding: 11px 18px; }
 .eng-stage .eng-feedback { font-size: 18px; }

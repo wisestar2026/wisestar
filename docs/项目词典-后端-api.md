@@ -359,8 +359,8 @@
     情景对话练习：读取管理端固化的单词情景对话（按分组顺序展平，未固化返回空列表，不触发 AI）。
   - `public List<EnglishPatternScenarioView> patternScenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
     重点句式情景练习：读取管理端固化的句式情景（未固化返回空列表，不触发 AI）。
-  - `public List<EnglishSentenceExercise> sentenceExercises(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
-    单元句子同步练习：读取管理端固化的多题型句子练习（连词成句/句子默写/句子选择，未固化返回空列表，不触发 AI）。
+  - `public List<EnglishSentenceExercise> sentenceExercises(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit, @RequestParam(defaultValue = "practice") String stage)`
+    单元句子题：按 `stage=practice|learn` 读取管理端固化的多题型练习或学习题（连词成句/句子默写/句子选择/单词填空，未固化返回空列表，不触发 AI）。
   - `public StudentPreviewCompleteView session(@RequestBody Map<String, Object> request)`
     记录学习会话（{type, durationSeconds, correctCount}），返回学习币/积分奖励结算结果。
   - `public void recordScenario(@RequestBody Map<String, Object> request)`

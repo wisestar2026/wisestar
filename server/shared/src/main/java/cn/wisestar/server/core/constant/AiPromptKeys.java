@@ -163,27 +163,35 @@ public final class AiPromptKeys {
 					+ "4) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
 
 	private static final String EN_SENTENCE_DEFAULT =
-			"你是一名资深小学英语教研员，擅长围绕单元重点句子设计多样化的句子练习。"
-					+ "用户会给你：年级、单元，以及本单元的重点句子（英文 + 中文）。请据此编写句子同步练习题，"
-					+ "直接输出一个 JSON 对象，不要输出任何解释、前后缀或代码块之外的文字。\n"
+			"你是一名资深小学英语教研员，擅长围绕单元重点句式与核心词汇设计分层句子练习。"
+					+ "用户会给你：年级、单元、本单元重点句子（带编号、英文与中文）以及核心词汇。"
+					+ "请编写 20-30 道句子练习，直接输出一个 JSON 对象，不要输出任何解释、前后缀或代码块之外的文字。\n"
 					+ "JSON 结构必须严格如下：\n"
 					+ "{\n"
 					+ "  \"exercises\": [\n"
-					+ "    {\"kind\": \"build\", \"zh\": \"句子中文意思\", \"en\": \"英文原句\", \"explanation\": \"可选简短中文提示\"},\n"
-					+ "    {\"kind\": \"dictation\", \"zh\": \"句子中文意思\", \"en\": \"英文原句\", \"hint\": \"可选首字母或关键词提示\"},\n"
-					+ "    {\"kind\": \"choice\", \"zh\": \"中文题干(如：哪句英文是“你的爱好是什么？”)\", \"en\": \"正确英文句\", "
-					+ "\"answer\": \"正确英文句\", \"options\": [\"正确英文句\", \"干扰句1\", \"干扰句2\", \"干扰句3\"], "
-					+ "\"explanation\": \"简短中文解析\"}\n"
+					+ "    {\"kind\": \"choice\", \"difficulty\": 1, \"theme\": \"校园生活\", \"source\": 1, "
+					+ "\"zh\": \"哪句英文是……？\", \"en\": \"正确英文句\", \"answer\": \"正确英文句\", "
+					+ "\"options\": [\"正确英文句\", \"干扰句1\", \"干扰句2\", \"干扰句3\"], \"explanation\": \"简短中文解析\"},\n"
+					+ "    {\"kind\": \"fill\", \"difficulty\": 1, \"theme\": \"家庭生活\", \"source\": 2, \"zh\": \"我有一位新朋友。\", "
+					+ "\"stem\": \"I have a new ___.\", \"en\": \"I have a new friend.\", \"answer\": \"friend\", \"hint\": \"f\"},\n"
+					+ "    {\"kind\": \"build\", \"difficulty\": 2, \"theme\": \"周末计划\", \"source\": 3, "
+					+ "\"zh\": \"我们打算去公园。\", \"en\": \"We are going to the park.\"},\n"
+					+ "    {\"kind\": \"dictation\", \"difficulty\": 3, \"theme\": \"旅行经历\", \"source\": 4, "
+					+ "\"zh\": \"去年我去了北京。\", \"en\": \"I went to Beijing last year.\", \"hint\": \"I went...\"}\n"
 					+ "  ]\n"
 					+ "}\n"
 					+ "要求：\n"
-					+ "1) 逐句出题：为每句生成 1-2 道题，同一句最多 2 道，禁止对同一句反复出题；\n"
-					+ "2) 全部基于给定单元句子，三种 kind 混用、尽量均衡（build/dictation/choice 都用上）；\n"
-					+ "3) kind=build 为连词成句：只给 zh 与正确 en；kind=dictation 为句子默写：给 zh 让学员写出英文；\n"
-					+ "4) kind=choice 为句子选择：给 zh 题干与恰好 4 个 options，其中恰好 1 个等于 en/answer，"
-					+ "干扰项须为合法英文句子且明显不符；\n"
-					+ "5) en 与 answer 必须与给定单元句子一致（大小写与标点保持原样）；\n"
-					+ "6) 所有字符串中的双引号必须转义，输出必须是合法 JSON。";
+					+ "1) 题量 20-30 道；四种 kind 混用且每种至少出现 3 道：choice 句子选择、fill 词汇填空、build 连词成句、dictation 句子默写；\n"
+					+ "2) 覆盖用户给出的每一个重点句式，每个句式至少 1 道；同一句式衍生题不超过 4 道；\n"
+					+ "3) 必须结合本单元核心词汇，每道题的英文句至少包含 1 个单元新词；\n"
+					+ "4) 同一场景或主题（theme 相同）最多 2 道题，请主动变换场景；theme 用 2-6 个中文字概括；\n"
+					+ "5) 难度递进：difficulty=1 基础巩固（choice/fill，句子短）、2 提高（build，需重组句子）、3 挑战（dictation 或灵活改写）；\n"
+					+ "6) source 为题目所练习的重点句式编号；可沿用原句，也可围绕该句式改写，改写须语法正确、符合小学年级水平；\n"
+					+ "7) choice 的 options 恰好 4 个，含 1 个正确项（等于 answer/en），干扰项为合法英文且不符题意；\n"
+					+ "8) fill 的 stem 用 ___ 表示空位，answer 为目标单词且必须出现在 en 中；\n"
+					+ "9) 所有字符串中的双引号必须转义，输出必须是合法 JSON；\n"
+					+ "10) en 只能是英文单词、空格与英文标点，禁止出现中文、下划线占位符或 ___；zh 必须完整翻译 en 的主语、谓语和宾语，禁止省略成残句；\n"
+					+ "11) build/dictation 的 zh 用陈述句；choice 的 zh 必须与正确项句意一致，不得用通用问句套所有选项。";
 
 
 	private static final String EN_READING_DEFAULT =
@@ -216,7 +224,7 @@ public final class AiPromptKeys {
 			new PromptMeta(EN_PATTERN, "英语·重点句式情景", "把单元重点句式编入情景选择练习，输出严格 JSON。",
 					EN_PATTERN_DEFAULT),
 			new PromptMeta(EN_PACK, "英语·单元内容生成", "为单元同步生成词汇/语法学习内容包，输出严格 JSON。", EN_PACK_DEFAULT),
-			new PromptMeta(EN_SENTENCE, "英语·单元句子同步练习", "围绕单元重点句子生成多题型练习（连词成句/句子默写/句子选择），输出严格 JSON。",
+			new PromptMeta(EN_SENTENCE, "英语·单元句子同步练习", "围绕单元重点句式与核心词汇生成 20-30 道分层练习（选择/填空/连词成句/默写），输出严格 JSON。",
 					EN_SENTENCE_DEFAULT),
 			new PromptMeta(EN_READING, "英语·单元阅读理解", "为单元生成短文与 5 道阅读理解选择题，输出严格 JSON。",
 					EN_READING_DEFAULT));

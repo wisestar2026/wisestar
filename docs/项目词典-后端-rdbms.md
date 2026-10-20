@@ -998,8 +998,8 @@
 - 类型: `class EnglishSentencePackServiceImpl implements EnglishSentencePackService`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元句子同步练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取该单元重点句子（按 sort 升序），每 `SENTENCE_GROUP_SIZE=6` 句一组调用系统 AI 生成多题型练习（kind=build 连词成句 / dictation 句子默写 / choice 句子选择），归组返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计题数；`listPacks` 不下发正文；学员端 `getExercises` 按业务键取最新一条并反序列化为题目列表（无内容返回空列表，不触发 AI）。
-  生成结果解析容错 ```json 包裹与前后噪声；`normalizeExercises` 归一题型、choice 补全 answer 且选项<2 时退化为 dictation、按忽略大小写与结尾标点匹配回填来源句子 ID，最后经 `capPerSource` 限制**同一来源句子最多 2 题**（已匹配来源按 sentenceId、未匹配按归一化英文），避免对同一句反复出题。
+  英语单元句子题内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取重点句子，生成练习 20-30 题（`choice/fill/build/dictation` 各不少于 3）与学习 10-15 题（课本句式 `build`）；练习不足时用课本句式与学习题补足，同一 `theme` 最多 2 题。`fill` 锚定课本原句并重算 `stem`/首字母提示/中文；`savePack` 按业务键覆盖保存，学员端 `getExercises(...,stage)` 按阶段读取，无内容返回空列表，不触发 AI。
+  质检拒绝非 ASCII 英文、`___` 英文、多句残句与中文占位符；非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。
 - 常量: `SENTENCE_GROUP_SIZE=6`、`DEFAULT_MODEL=deepseek-chat`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`

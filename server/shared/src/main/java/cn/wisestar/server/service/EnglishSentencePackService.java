@@ -51,6 +51,7 @@ public interface EnglishSentencePackService {
 	/**
 	 * 学员端读取：该单元已固化的句子练习题（无内容时返回空列表）。
 	 */
-	List<EnglishSentenceExercise> getExercises(String version, String grade, String term, String unit);
+	List<EnglishSentenceExercise> getExercises(String version, String grade, String term, String unit,
+			String stage);
 
 }

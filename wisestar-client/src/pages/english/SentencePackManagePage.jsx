@@ -32,7 +32,9 @@ const FALLBACK_UNITS = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 
 
 const { Text } = Typography;
 
-const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择' };
+const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择', fill: '词汇填空' };
+const STAGE_LABELS = { learn: '句子学习', practice: '句子练习' };
+const DIFFICULTY_LABELS = { 1: '基础', 2: '提高', 3: '挑战' };
 
 /** 后端返回 { code, data }，统一取 data */
 const dataOf = (res) => res?.data;
@@ -59,13 +61,19 @@ function PackPreview({ view }) {
       <Space style={{ marginBottom: 8 }}>
         <Text strong>句子同步练习</Text>
         <Tag color="blue">共 {exercises.length} 题</Tag>
+        <Tag color="cyan">句子学习 {exercises.filter((e) => e.stage === 'learn').length}</Tag>
+        <Tag color="geekblue">句子练习 {exercises.filter((e) => e.stage !== 'learn').length}</Tag>
         <Tag color="green">连词成句 {exercises.filter((e) => e.kind === 'build').length}</Tag>
         <Tag color="orange">句子默写 {exercises.filter((e) => e.kind === 'dictation').length}</Tag>
         <Tag color="purple">句子选择 {exercises.filter((e) => e.kind === 'choice').length}</Tag>
+        <Tag color="gold">词汇填空 {exercises.filter((e) => e.kind === 'fill').length}</Tag>
       </Space>
       {exercises.map((ex, i) => (
         <Card key={i} size="small" style={{ marginBottom: 8 }} title={`第 ${i + 1} 题`}>
           <Tag color="blue" bordered={false}>{KIND_LABELS[ex.kind] || ex.kind || '题目'}</Tag>
+          <Tag color="cyan" bordered={false}>{STAGE_LABELS[ex.stage] || '句子练习'}</Tag>
+          <Tag color="gold" bordered={false}>{DIFFICULTY_LABELS[ex.difficulty || 1]}</Tag>
+          {ex.theme && <Tag bordered={false}>{ex.theme}</Tag>}
           <div style={{ margin: '6px 0' }}>
             <Text strong>题干：</Text>{ex.zh || '（无中文题干）'}
           </div>
@@ -78,6 +86,12 @@ function PackPreview({ view }) {
                   </Text>
                 </div>
               ))}
+            </div>
+          )}
+          {ex.kind === 'fill' && (
+            <div style={{ marginLeft: 8 }}>
+              {ex.stem && <div><Text strong>填空：</Text>{ex.stem}</div>}
+              <Text type="success">答案：{ex.answer || ex.en}</Text>
             </div>
           )}
           {(ex.kind === 'build' || ex.kind === 'dictation') && (
@@ -376,7 +390,7 @@ export default function SentencePackManagePage() {
         <Alert
           type="info"
           showIcon
-          title="系统会把该单元重点句子每 6 句一组自动分组，逐组调用 AI 生成多题型练习（连词成句/句子默写/句子选择）。生成内容先预览确认，再保存固化；学员端将只读取已固化内容，不再实时生成。"
+          title="系统会一次性读取本单元全部重点句式与核心词汇，调用 AI 生成 10-15 道「句子学习」（课本句式连词成句）和 20-30 道「句子练习」（选择/填空/连词成句/默写，按基础→提高→挑战排序，同一主题最多 2 题）。生成内容先预览确认，再保存固化；学员端只读取已固化内容。"
         />
 
         {/* 批量进度 */}

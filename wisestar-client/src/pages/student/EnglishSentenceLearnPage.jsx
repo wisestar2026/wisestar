@@ -20,7 +20,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishUnits, getEnglishSentences, recordEnglishSentence, recordEnglishSession } from '../../api/englishStudent';
+import { getEnglishUnits, getEnglishSentences, getEnglishSentenceExercises, recordEnglishSentence, recordEnglishSession } from '../../api/englishStudent';
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
 import EnglishUnitAside from './EnglishUnitAside';
 import EnglishSentenceExercise from './EnglishSentenceExercise';
@@ -28,6 +28,7 @@ import './EnglishCenterPage.css';
 
 /** 后端以 familiarity>=1 视为「已学」，完成度按此口径统计。 */
 const FINISHED_FAMILIARITY = 1;
+const DIFFICULTY_LABELS = { 1: '基础', 2: '提高', 3: '挑战' };
 
 function percent(finished, total) {
   if (!total) return 0;
@@ -65,6 +66,7 @@ export default function EnglishSentenceLearnPage() {
   const [units, setUnits] = useState([]);
   const [mode, setMode] = useState('hub'); // hub | learn | exercise
   const [sentences, setSentences] = useState([]);
+  const [learnItems, setLearnItems] = useState([]);
   const [sectionLabels, setSectionLabels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [index, setIndex] = useState(0);
@@ -112,6 +114,20 @@ export default function EnglishSentenceLearnPage() {
     loadSentences();
   }, [loadSentences]);
 
+  // 句子学习优先读取固化内容（10-15 道课本句式复习），旧内容包回退到句子表
+  useEffect(() => {
+    if (!unit) {
+      setLearnItems([]);
+      return undefined;
+    }
+    let cancelled = false;
+    setLearnItems([]);
+    getEnglishSentenceExercises({ version, grade, term, unit, stage: 'learn' })
+      .then((res) => { if (!cancelled) setLearnItems(res?.data || []); })
+      .catch(() => { if (!cancelled) setLearnItems([]); });
+    return () => { cancelled = true; };
+  }, [version, grade, term, unit]);
+
   const activeUnit = units.find((u) => u.unit === unit);
   const finishedCount = sentences.filter((s) => (s.familiarity || 0) >= FINISHED_FAMILIARITY).length;
 
@@ -127,7 +143,8 @@ export default function EnglishSentenceLearnPage() {
     setMode('learn');
   };
 
-  const current = sentences[index];
+  const learnList = learnItems.length ? learnItems : sentences;
+  const current = learnList[index];
 
   // 切题时重置词块池与作答状态
   useEffect(() => {
@@ -152,20 +169,20 @@ export default function EnglishSentenceLearnPage() {
     if (normalizeAnswer(answer) === normalizeAnswer(current.en)) {
       setFeedback('ok');
       setCorrectCount((n) => n + 1);
-      recordEnglishSentence({ sentenceId: current.id, correct: true }).catch(() => {});
+      recordEnglishSentence({ sentenceId: current.sentenceId || current.id, correct: true }).catch(() => {});
       timerRef.current = setTimeout(goNext, 900);
     } else {
       const tries = wrongTries + 1;
       setFeedback('no');
       setWrongTries(tries);
-      recordEnglishSentence({ sentenceId: current.id, correct: false }).catch(() => {});
+      recordEnglishSentence({ sentenceId: current.sentenceId || current.id, correct: false }).catch(() => {});
       if (tries >= 3) {
         timerRef.current = setTimeout(goNext, 1600);
       }
     }
   };
 
-  const finished = mode === 'learn' && !loading && index >= sentences.length;
+  const finished = mode === 'learn' && !loading && index >= learnList.length;
 
   useEffect(() => {
     if (finished) {
@@ -214,7 +231,7 @@ export default function EnglishSentenceLearnPage() {
                 )}
               </div>
               <div className="eng-detail-tip">
-                本单元共 {sentences.length} 个重点句子，先连词成句，再去情景里用一用吧
+                本单元共 {sentences.length} 个重点句式，句子学习用 10~15 道连词成句做课本复习，句子练习再用 20~30 道分层题灵活运用
               </div>
 
               <div className="eng-progress-grid">
@@ -296,7 +313,7 @@ export default function EnglishSentenceLearnPage() {
           <div className="eng-empty-title">本单元句子已学完</div>
           <div className="eng-done-stats">
             <div className="eng-done-stat"><b>{correctCount}</b><span>答对</span></div>
-            <div className="eng-done-stat"><b>{sentences.length}</b><span>句子总数</span></div>
+            <div className="eng-done-stat"><b>{learnList.length}</b><span>题目总数</span></div>
           </div>
           <div className="eng-actions">
             <button type="button" className="eng-btn eng-btn-ghost" onClick={() => setMode('hub')}>返回句式通关</button>
@@ -307,7 +324,7 @@ export default function EnglishSentenceLearnPage() {
     );
   }
 
-  const progress = Math.round((index / sentences.length) * 100);
+  const progress = Math.round((index / learnList.length) * 100);
 
   return (
     <div className="eng-learn-wrap eng-stage">
@@ -315,11 +332,16 @@ export default function EnglishSentenceLearnPage() {
       {sectionLabels[index] && <div className="eng-section-title">{sectionLabels[index]}</div>}
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
-        <div className="eng-progress-text">{index + 1} / {sentences.length}</div>
+        <div className="eng-progress-text">{index + 1} / {learnList.length}</div>
       </div>
 
       <div className="eng-card">
-        <div className="eng-sentence-hint">连词成句：{current?.zh || '（无中文提示）'}</div>
+        <div className="eng-sentence-hint">
+          <span className={`eng-difficulty-tag level-${current?.difficulty || 1}`}>
+            {DIFFICULTY_LABELS[current?.difficulty || 1] || '基础'}
+          </span>
+          连词成句：{current?.zh || '（无中文提示）'}
+        </div>
 
         <div className="eng-answer-slot">
           {selected.length === 0 && <span style={{ color: '#a9c3d1' }}>点击下方词块，按顺序拼出句子</span>}

@@ -270,7 +270,7 @@
 - 注解: 无（final 工具类 + 私有构造）
 - **类说明**：
   AI 分场景系统提示词目录。系统 AI 配置 `t_sys_info.ai_setting.prompts` 以本类 key 为键；某场景留空/未配置时回退内置默认，历史通用字段 `aiSetting.prompt` 仅作为「AI 问答」「学习轨迹·每日叙述」兜底。
-  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习，逐句出题、同一句最多 2 道）。
+  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-30 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式）。
 - 内部类型 `PromptMeta`（key/label/description/defaultPrompt，getter 访问，Jackson 可序列化）
 - 方法:
   - `public static List<PromptMeta> catalog()`
@@ -1875,7 +1875,7 @@
 - 类型: `class EnglishSentenceExercise`
 - 注解: @Data
 - **类说明**：
-  英语单元句子同步练习题目 DTO（多题型）。kind=build 连词成句 / dictation 句子默写 / choice 句子选择；字段 kind/zh/en/options/answer/hint/explanation/sentenceId。由管理端「句子练习固化」预生成并落库，学员端 `/english/student/sentence-exercises` 只读。
+  英语单元句子同步练习题目 DTO（多题型）。`stage=learn|practice`；kind=build 连词成句 / dictation 句子默写 / choice 句子选择 / fill 单词填空；字段 stage/kind/difficulty/theme/zh/en/stem/options/answer/hint/explanation/sentenceId。由管理端「句子练习固化」预生成并落库，学员端 `/english/student/sentence-exercises?stage=` 只读。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSentencePackView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2827,8 +2827,8 @@
   - `EnglishSentencePackView getPack(String id)`
   - `void deletePack(String id)`
   - `List<String> listUnits(String version, String grade, String term)`
-  - `List<EnglishSentenceExercise> getExercises(String version, String grade, String term, String unit)`
-    学员端读取：该单元已固化的句子练习题（无内容时返回空列表）。
+  - `List<EnglishSentenceExercise> getExercises(String version, String grade, String term, String unit, String stage)`
+    学员端读取：该单元已固化的句子题，`stage=learn` 取学习题、`practice` 取练习题（无内容时返回空列表）。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishSentenceService.java`
 - 包: `cn.wisestar.server.service`

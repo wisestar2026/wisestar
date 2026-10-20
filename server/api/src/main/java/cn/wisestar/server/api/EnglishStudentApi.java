@@ -183,15 +183,18 @@ public class EnglishStudentApi {
 	}
 
 	/**
-	 * 单元句子同步练习：读取该单元已固化的多题型练习（连词成句/句子默写/句子选择，不触发实时 AI）。
+	 * 单元句子练习：读取该单元已固化的多题型练习（连词成句/词汇填空/句子默写/句子选择，不触发实时 AI）。
+	 *
+	 * @param stage learn=句子学习（课本句式复习），practice=句子练习（默认）
 	 */
 	@GetMapping("/sentence-exercises")
 	@PreAuthorize("isAuthenticated()")
 	public List<EnglishSentenceExercise> sentenceExercises(@RequestParam(required = false) String version,
 			@RequestParam(required = false) String grade,
 			@RequestParam(required = false) String term,
-			@RequestParam(required = false) String unit) {
-		return sentencePackService.getExercises(version, grade, term, unit);
+			@RequestParam(required = false) String unit,
+			@RequestParam(required = false, defaultValue = "practice") String stage) {
+		return sentencePackService.getExercises(version, grade, term, unit, stage);
 	}
 
 	/**

@@ -23,7 +23,8 @@ import {
 } from '../../api/englishStudent';
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
 
-const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择' };
+const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择', fill: '词汇填空' };
+const DIFFICULTY_LABELS = { 1: '基础', 2: '提高', 3: '挑战' };
 
 /** 默写提示：按原句词数生成下划线骨架（标点保留），帮助学员对齐词数 */
 function buildDictationSkeleton(sentence) {
@@ -101,9 +102,10 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
 
   const goNext = useCallback(() => setIndex((i) => i + 1), []);
 
-  const submit = useCallback((studentText) => {
+  const submit = useCallback((studentText, expected) => {
     if (!current) return;
-    const ok = normalizeAnswer(studentText) === normalizeAnswer(current.en);
+    const target = expected || current.en;
+    const ok = normalizeAnswer(studentText) === normalizeAnswer(target);
     setFeedback(ok ? 'ok' : 'no');
     if (ok) setCorrectCount((n) => n + 1);
     record(ok);
@@ -115,10 +117,12 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   };
 
   const handleDictationCheck = () => submit(typed);
+  const handleFillCheck = () => submit(typed, current?.answer);
 
+  const showDictationSkeleton = current?.kind === 'dictation' && (current.difficulty || 1) < 3;
   const dictationSkeleton = useMemo(
-    () => (current?.kind === 'dictation' ? buildDictationSkeleton(current.en) : ''),
-    [current],
+    () => (showDictationSkeleton ? buildDictationSkeleton(current.en) : ''),
+    [current, showDictationSkeleton],
   );
 
   const optionList = useMemo(() => {
@@ -161,6 +165,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
 
   const progress = Math.round((index / exercises.length) * 100);
   const kindLabel = KIND_LABELS[current?.kind] || '句子练习';
+  const difficultyLabel = DIFFICULTY_LABELS[current?.difficulty || 1] || '基础';
 
   return (
     <div className="eng-learn-wrap">
@@ -171,7 +176,10 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
       </div>
 
       <div className="eng-card">
-        <div className="eng-sentence-hint">{kindLabel}：{current?.zh || '（无中文提示）'}</div>
+        <div className="eng-sentence-hint">
+          <span className={`eng-difficulty-tag level-${current?.difficulty || 1}`}>{difficultyLabel}</span>
+          {kindLabel}：{current?.zh || '（无中文提示）'}
+        </div>
 
         {/* 连词成句 */}
         {current?.kind === 'build' && (
@@ -227,6 +235,22 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
           </div>
         )}
 
+        {/* 词汇填空 */}
+        {current?.kind === 'fill' && (
+          <div style={{ margin: '4px 0 8px' }}>
+            {current?.stem && <div className="eng-fill-stem">{current.stem}</div>}
+            <Input
+              size="large"
+              placeholder={current?.hint ? `提示：${current.hint}...` : '请填写缺失的单词'}
+              value={typed}
+              disabled={feedback === 'ok'}
+              onChange={(e) => setTyped(e.target.value)}
+              onPressEnter={handleFillCheck}
+            />
+            {current?.hint && <div className="eng-mod-sub" style={{ marginTop: 6 }}>首字母提示：{current.hint}</div>}
+          </div>
+        )}
+
         {/* 句子选择 */}
         {current?.kind === 'choice' && (
           <div className="eng-quiz-options" style={{ marginTop: 8 }}>
@@ -240,7 +264,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
                   type="button"
                   className={cls.join(' ')}
                   disabled={Boolean(feedback)}
-                  onClick={() => submit(opt)}
+                  onClick={() => submit(opt, current.answer || current.en)}
                 >
                   {String.fromCharCode(65 + oi)}. {opt}
                 </button>
@@ -282,6 +306,16 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
               type="button"
               className="eng-btn eng-btn-primary"
               onClick={handleDictationCheck}
+              disabled={!typed.trim() || feedback === 'ok'}
+            >
+              检查
+            </button>
+          )}
+          {current?.kind === 'fill' && (
+            <button
+              type="button"
+              className="eng-btn eng-btn-primary"
+              onClick={handleFillCheck}
               disabled={!typed.trim() || feedback === 'ok'}
             >
               检查
