@@ -24,6 +24,11 @@ public interface EnglishSentencePackService {
 	EnglishSentencePackView generate(String version, String grade, String term, String unit);
 
 	/**
+	 * 按题型形式与内容复杂度重算全部内容包难度。
+	 */
+	int recalibrateAll();
+
+	/**
 	 * 保存句子练习内容包（同 版本+年级+册别+单元 覆盖更新）。
 	 */
 	EnglishSentencePackView savePack(EnglishSentencePackView pack);

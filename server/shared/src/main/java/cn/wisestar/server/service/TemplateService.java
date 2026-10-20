@@ -105,6 +105,13 @@ public interface TemplateService {
 	Set<String> listTemplateTags();
 
 	/**
+	 * 按题型形式与内容复杂度重算英语题目难度。
+	 *
+	 * @return 实际更新的题目数量
+	 */
+	int recalibrateEnglishDifficulty();
+
+	/**
 	 * 获取模板详情。
 	 *
 	 * @param query 查询条件（含模板 id，见 {@link TemplateQuery}）

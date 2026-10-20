@@ -159,6 +159,23 @@ public class TemplateApi {
 	}
 
 	/**
+	 * 按题型形式与内容复杂度重算英语题目难度。
+	 *
+	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/template/recalibrate-english-difficulty。</p>
+	 *
+	 * <p><b>返回值结构</b>：实际更新的题目数量（int）。</p>
+	 *
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('template:update')")。</p>
+	 *
+	 * @return 更新的题目数量
+	 */
+	@PostMapping("/recalibrate-english-difficulty")
+	@PreAuthorize("hasAuthority('template:update')")
+	public int recalibrateEnglishDifficulty() {
+		return templateService.recalibrateEnglishDifficulty();
+	}
+
+	/**
 	 * 删除模板。
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/template/delete（如 /api/template/delete）。</p>

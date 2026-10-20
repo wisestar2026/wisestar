@@ -39,6 +39,15 @@ public class EnglishSentencePackApi {
 	}
 
 	/**
+	 * 按题型形式与内容复杂度重算全部内容包难度。
+	 */
+	@PostMapping("/recalibrate")
+	@PreAuthorize("hasAuthority('english:word:ai')")
+	public int recalibrate() {
+		return sentencePackService.recalibrateAll();
+	}
+
+	/**
 	 * 保存句子练习内容包（同 版本+年级+册别+单元 覆盖更新）。
 	 */
 	@PostMapping("/save")

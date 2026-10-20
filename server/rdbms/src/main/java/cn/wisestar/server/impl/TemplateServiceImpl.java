@@ -296,6 +296,97 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
         return tags;
     }
 
+    @Override
+    public int recalibrateEnglishDifficulty() {
+        List<Template> templates = list(Wrappers.<Template>lambdaQuery().eq(Template::getSubject, "英语"));
+        int updated = 0;
+        for (Template template : templates) {
+            String level = englishDifficulty(template);
+            boolean changed = !level.equals(template.getDifficulty());
+            SurveySchema schema = template.getTemplate();
+            if (schema != null && schema.getAttribute() != null && !level.equals(schema.getAttribute().getDifficulty())) {
+                schema.getAttribute().setDifficulty(level);
+                template.setTemplate(schema);
+                changed = true;
+            }
+            if (changed) {
+                template.setDifficulty(level);
+                updateById(template);
+                updated++;
+            }
+        }
+        return updated;
+    }
+
+    /**
+     * 英语题目难度：题型决定下限（填空类需主动产出，至少中等），
+     * 内容再按英文词数、句数、转折因果和时态复杂度叠加，取较高值。
+     */
+    private String englishDifficulty(Template template) {
+        SurveySchema schema = template.getTemplate();
+        SurveySchema.QuestionType type = schema == null ? null : schema.getType();
+        boolean productive = type == SurveySchema.QuestionType.FillBlank
+                || type == SurveySchema.QuestionType.MultipleBlank
+                || type == SurveySchema.QuestionType.Textarea;
+        int content = 1;
+        StringBuilder text = new StringBuilder(template.getName() == null ? "" : template.getName());
+        if (schema != null && schema.getAttribute() != null) {
+            String answer = schema.getAttribute().getExamCorrectAnswer();
+            Set<String> correct = new HashSet<>();
+            if (answer != null) {
+                for (String part : answer.split("[^A-Za-z]+")) {
+                    if (part.length() > 0) {
+                        correct.add(part.toLowerCase(Locale.ROOT));
+                    }
+                }
+                if (productive) {
+                    text.append(' ').append(answer);
+                }
+            }
+            if (schema.getChildren() != null) {
+                for (SurveySchema child : schema.getChildren()) {
+                    if (child.getId() != null && correct.contains(child.getId().toLowerCase(Locale.ROOT))) {
+                        text.append(' ').append(child.getTitle() == null ? "" : child.getTitle());
+                    }
+                }
+            }
+        }
+        String contentText = text.toString();
+        String lower = contentText.toLowerCase(Locale.ROOT);
+        int words = 0;
+        for (String word : contentText.replaceAll("[^A-Za-z']+", " ").trim().split("\\s+")) {
+            if (word.length() > 0) {
+                words++;
+            }
+        }
+        if (words >= 14) {
+            content = 3;
+        } else if (words >= 8) {
+            content = 2;
+        }
+        int clauses = 0;
+        for (int i = 0; i < contentText.length(); i++) {
+            char c = contentText.charAt(i);
+            if (c == '.' || c == '?' || c == '!') {
+                clauses++;
+            }
+        }
+        if (clauses > 1 && words >= 10) {
+            content++;
+        }
+        if (lower.matches(".*\\b(because|although|but|so|or)\\b.*")) {
+            content++;
+        }
+        if (lower.matches(".*\\b(was|were|went|bought|saw|had|did|made|took|gave|came|ate|drank|wrote|rode|flew|swam|ran|sang|taught|thought|caught)\\b.*")
+                || lower.contains("going to") || lower.contains("will ") || lower.contains("more ")
+                || lower.contains("most ")) {
+            content++;
+        }
+        content = Math.min(3, content);
+        int level = Math.max(productive ? 2 : 1, content);
+        return level == 3 ? "hard" : level == 2 ? "medium" : "easy";
+    }
+
     /**
      * 查询单个题目模板详情（含当前用户的错题本信息回填）。
      *

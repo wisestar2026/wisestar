@@ -143,16 +143,19 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		if (learn.size() < LEARN_MIN) {
 			learn = fillLearnFromPractice(learn, practice);
 		}
+		recalibrateDifficulty(learn);
 		learn = sortLearn(learn);
 		practice = supplementFromLearn(practice, learn);
 		practice = sanitizeExercises(practice);
 		practice = dedupeExercises(practice);
 		practice = ensurePracticeKinds(practice, learn, sentences);
+		recalibrateDifficulty(practice);
 		practice = sortPractice(practice);
 		if (practice.size() > PRACTICE_MAX) {
 			practice = new ArrayList<>(practice.subList(0, PRACTICE_MAX));
 		}
 		practice = ensurePracticeKinds(practice, learn, sentences);
+		recalibrateDifficulty(practice);
 		practice = sortPractice(practice);
 
 		List<EnglishSentenceExercise> all = new ArrayList<>(learn);
@@ -352,14 +355,13 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		}
 		for (JsonNode raw : rawExercises) {
 			String en = text(raw, "en", "sentence", "answer");
-			if (!isUsableSentence(en)) {
+			if (!isUsableSentence(en) || isAiExampleSentence(en)) {
 				continue;
 			}
 			EnglishSentenceExercise ex = new EnglishSentenceExercise();
 			ex.setStage("learn");
 			ex.setKind("build");
-			int difficulty = readInt(raw, "difficulty", difficultyOf(en));
-			ex.setDifficulty(Math.max(1, Math.min(3, difficulty)));
+			ex.setDifficulty(difficultyOf("build", en));
 			int source = readInt(raw, "source", 0);
 			EnglishSentence matched = source >= 1 && source <= sentences.size() ? sentences.get(source - 1) : null;
 			if (matched == null) {
@@ -410,7 +412,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			ex.setTheme("课本句式");
 			ex.setEn(s.getEn().trim());
 			ex.setZh(s.getZh());
-			ex.setDifficulty(difficultyOf(s.getEn()));
+			ex.setDifficulty(difficultyOf("build", s.getEn()));
 			ex.setSentenceId(s.getId());
 			result.add(insertAt++, ex);
 			exactSentences.put(normalizeKey(s.getEn()), Boolean.TRUE);
@@ -596,7 +598,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			String en = text(raw, "en", "sentence", "answer");
 			String zh = text(raw, "zh", "cn", "prompt", "stem", "title");
 			en = repairConjunction(en, zh);
-			if (isBlank(en)) {
+			if (isBlank(en) || isAiExampleSentence(en)) {
 				continue;
 			}
 			EnglishSentenceExercise ex = new EnglishSentenceExercise();
@@ -605,8 +607,6 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			ex.setZh(zh);
 			ex.setHint(text(raw, "hint"));
 			ex.setExplanation(text(raw, "explanation", "analysis"));
-			int difficulty = readInt(raw, "difficulty", difficultyOf(en));
-			ex.setDifficulty(Math.max(1, Math.min(3, difficulty)));
 			int source = readInt(raw, "source", 0);
 			String sourceId = source >= 1 && source <= sentences.size() ? sentences.get(source - 1).getId() : null;
 			ex.setSentenceId(sourceId != null ? sourceId : matchSentenceId(sentences, en));
@@ -691,6 +691,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 				}
 			}
 			ex.setKind(kind);
+			ex.setDifficulty(difficultyOf(kind, ex.getEn()));
 			if (!"fill".equals(kind)) {
 				ex.setAnswer(null);
 				ex.setStem(null);
@@ -762,6 +763,16 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			}
 		}
 		return null;
+	}
+
+	private static final java.util.Set<String> AI_EXAMPLE_SENTENCES = new java.util.HashSet<>(
+			java.util.Arrays.asList("i have a new friend", "we are going to the park", "i went to beijing last year"));
+
+	/**
+	 * 过滤提示词示例句，避免模型照抄示例造成跨单元污染。
+	 */
+	private boolean isAiExampleSentence(String en) {
+		return en != null && AI_EXAMPLE_SENTENCES.contains(normalizeKey(en));
 	}
 
 	private boolean isUsableSentence(String en) {
@@ -967,7 +978,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 				EnglishSentenceExercise ex = new EnglishSentenceExercise();
 				ex.setStage("learn");
 				ex.setKind("build");
-				ex.setDifficulty(difficultyOf(en));
+				ex.setDifficulty(difficultyOf("build", en));
 				ex.setTheme("课本句式");
 				ex.setEn(en);
 				ex.setZh(zh);
@@ -998,7 +1009,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			ex.setTheme("练习巩固");
 			ex.setEn(p.getEn());
 			ex.setZh(p.getZh());
-			ex.setDifficulty(difficultyOf(p.getEn()));
+			ex.setDifficulty(difficultyOf("build", p.getEn()));
 			ex.setSentenceId(p.getSentenceId());
 			keys.put(normalizeKey(p.getEn()), Boolean.TRUE);
 			result.add(ex);
@@ -1263,6 +1274,9 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	private List<EnglishSentenceExercise> sanitizeExercises(List<EnglishSentenceExercise> list) {
 		List<EnglishSentenceExercise> result = new ArrayList<>();
 		for (EnglishSentenceExercise ex : list) {
+			if (isAiExampleSentence(ex.getEn())) {
+				continue;
+			}
 			String zh = ex.getZh();
 			if (isBlank(zh) || !zh.contains("_")) {
 				result.add(ex);
@@ -1476,7 +1490,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			ex.setTheme("课本句式");
 			ex.setEn(en.toString());
 			ex.setZh(zh.toString());
-			ex.setDifficulty(difficultyOf(en.toString()));
+			ex.setDifficulty(difficultyOf("build", en.toString()));
 			ex.setSentenceId(group.get(0).getId());
 			result.add(ex);
 		}
@@ -1510,7 +1524,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			ex.setTheme(p.getTheme());
 			ex.setEn(p.getEn());
 			ex.setZh(p.getZh());
-			ex.setDifficulty(difficultyOf(p.getEn()));
+			ex.setDifficulty(difficultyOf("build", p.getEn()));
 			ex.setSentenceId(p.getSentenceId());
 			ex.setHint(p.getHint());
 			seen.put(normalizeKey(ex.getEn()), Boolean.TRUE);
@@ -1527,12 +1541,15 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		if (list.isEmpty()) {
 			return;
 		}
-		list.sort((a, b) -> Integer.compare(wordCount(a.getEn()), wordCount(b.getEn())));
-		int n = list.size();
-		for (int i = 0; i < n; i++) {
-			int level = n == 1 ? 1 : 1 + (i * 3 / n);
-			list.get(i).setDifficulty(Math.min(3, level));
-		}
+		recalibrateDifficulty(list);
+		list.sort((a, b) -> {
+			int da = a.getDifficulty() == null ? 1 : a.getDifficulty();
+			int db = b.getDifficulty() == null ? 1 : b.getDifficulty();
+			if (da != db) {
+				return Integer.compare(da, db);
+			}
+			return Integer.compare(wordCount(a.getEn()), wordCount(b.getEn()));
+		});
 	}
 
 	private int groupWords(List<EnglishSentence> group) {
@@ -1588,15 +1605,46 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		return isBlank(s) ? 0 : s.trim().split("\\s+").length;
 	}
 
-	private int difficultyOf(String en) {
+	/**
+	 * 题型本身决定难度下限：选择题以识别为主，填空/连词成句/默写都要求主动产出。
+	 * 内容难度再叠加句子长度、句数、转折因果和时态复杂度，最终取两者较高值。
+	 */
+	private int difficultyOf(String kind, String en) {
+		int formLevel = "choice".equals(kind) ? 1 : 2;
+		int contentLevel = 1;
 		int words = wordCount(en);
-		if (words <= 7) {
-			return 1;
+		if (words >= 14) {
+			contentLevel = 3;
+		} else if (words >= 8) {
+			contentLevel = 2;
 		}
-		if (words <= 14) {
-			return 2;
+		String lower = en == null ? "" : en.toLowerCase(Locale.ROOT);
+		int clauses = 0;
+		for (int i = 0; i < lower.length(); i++) {
+			char c = lower.charAt(i);
+			if (c == '.' || c == '?' || c == '!') {
+				clauses++;
+			}
 		}
-		return 3;
+		if (clauses > 1 && words >= 10) {
+			contentLevel++;
+		}
+		if (lower.matches(".*\\b(because|although|but|so|or)\\b.*")) {
+			contentLevel++;
+		}
+		if (lower.matches(".*\\b(was|were|went|bought|saw|had|did|made|took|gave|came|ate|drank|wrote|rode|flew|swam|ran|sang|taught|thought|caught)\\b.*")
+				|| lower.contains("going to") || lower.contains("will ") || lower.contains("more ")
+				|| lower.contains("most ")) {
+			contentLevel++;
+		}
+		contentLevel = Math.min(3, contentLevel);
+		return Math.max(formLevel, contentLevel);
+	}
+
+	private void recalibrateDifficulty(List<EnglishSentenceExercise> list) {
+		for (EnglishSentenceExercise ex : list) {
+			ex.setDifficulty(difficultyOf(ex.getKind(), ex.getEn()));
+		}
 	}
 
 	private int readInt(JsonNode node, String key, int fallback) {
@@ -1643,6 +1691,35 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	}
 
 	// ------------------------------------------------------------------ 保存 / 查询
+
+	@Override
+	public int recalibrateAll() {
+		List<EnglishSentencePack> packs = packMapper.selectList(null);
+		int updated = 0;
+		for (EnglishSentencePack pack : packs) {
+			if (isBlank(pack.getContent())) {
+				continue;
+			}
+			try {
+				JsonNode arr = objectMapper.readTree(pack.getContent());
+				if (!arr.isArray()) {
+					continue;
+				}
+				List<EnglishSentenceExercise> exercises = new ArrayList<>();
+				for (JsonNode node : arr) {
+					exercises.add(objectMapper.treeToValue(node, EnglishSentenceExercise.class));
+				}
+				recalibrateDifficulty(exercises);
+				pack.setContent(writeExercises(exercises));
+				pack.setCount(exercises.size());
+				packMapper.updateById(pack);
+				updated++;
+			} catch (Exception e) {
+				log.error("句子内容包难度重算失败：{} {}", pack.getId(), e.getMessage());
+			}
+		}
+		return updated;
+	}
 
 	@Override
 	public EnglishSentencePackView savePack(EnglishSentencePackView pack) {

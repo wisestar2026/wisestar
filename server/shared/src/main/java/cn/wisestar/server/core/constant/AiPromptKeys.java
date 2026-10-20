@@ -191,7 +191,8 @@ public final class AiPromptKeys {
 					+ "8) fill 的 stem 用 ___ 表示空位，answer 为目标单词且必须出现在 en 中；\n"
 					+ "9) 所有字符串中的双引号必须转义，输出必须是合法 JSON；\n"
 					+ "10) en 只能是英文单词、空格与英文标点，禁止出现中文、下划线占位符或 ___；zh 必须完整翻译 en 的主语、谓语和宾语，禁止省略成残句；\n"
-					+ "11) build/dictation 的 zh 用陈述句；choice 的 zh 必须与正确项句意一致，不得用通用问句套所有选项。";
+					+ "11) build/dictation 的 zh 用陈述句；choice 的 zh 必须与正确项句意一致，不得用通用问句套所有选项；\n"
+					+ "12) 上面的 JSON 示例只说明字段格式，示例句（I have a new friend. / We are going to the park. / I went to Beijing last year.）绝对不能出现在结果中，必须全部替换为本单元真实句式与词汇。";
 
 
 	private static final String EN_READING_DEFAULT =

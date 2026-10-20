@@ -999,7 +999,7 @@
 - 注解: @Slf4j, @Service
 - **类说明**：
   英语单元句子题内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取重点句子，生成练习 20-25 题（`choice/fill/build/dictation` 各不少于 3）与学习 10-15 题（课本句式 `build`）；练习不足时用课本句式与学习题补足，同一 `theme` 最多 2 题。练习排序截断后再次校验题型配额，超配题型可替换为缺项；学习不足 10 题时先拆课本原句分句，再从练习补足。`fill` 锚定课本原句并重算 `stem`/首字母提示/中文；`savePack` 按业务键覆盖保存，学员端 `getExercises(...,stage)` 按阶段读取，无内容返回空列表，不触发 AI。
-  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。
+  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一按「题型形式下限 + 内容复杂度」重算：`choice` 下限 D1，`fill/build/dictation` 下限 D2，内容按英文词数、句数、转折因果与时态叠加取较高值；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 可对全部内容包幂等重算难度。
 - 常量: `SENTENCE_GROUP_SIZE=6`、`DEFAULT_MODEL=deepseek-chat`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`
@@ -1114,7 +1114,7 @@
 - 类型: `class EnglishFusionQuestionFactory`
 - 注解: @Component, @RequiredArgsConstructor
 - **类说明**：
-  英语单元融合题派生器。不调用 AI、不依赖管理端重新生成内容包，直接读取本单元 `t_english_sentence` / `t_english_word` / `t_english_grammar`：单词模块从原句挖核心词并生成四词词库的选词填空（排除缩写与功能词），题干首行为「选词填空：选择合适的单词补全句子。（词1 / 词2 / 词3 / 词4）」，次行为加粗的英文句子与中文提示；句式模块生成原句短语挖空、换人称改写与情景选原句；语法模块从语法点 `examples` 挖 be/do/情态/冠词/介词/代词/动词形式生成单选。题目标识 `contentKey=fusion:{type}:{version}:{grade}:{term}:{unit}:{sourceId}:{hash}`，只依赖稳定 ID 与源内容，保证组卷与交卷可重复对齐。
+  英语单元融合题派生器。不调用 AI、不依赖管理端重新生成内容包，直接读取本单元 `t_english_sentence` / `t_english_word` / `t_english_grammar`：单词模块从原句挖核心词并生成四词词库的选词填空（排除缩写与功能词），题干首行为「选词填空：选择合适的单词补全句子。（词1 / 词2 / 词3 / 词4）」，次行为加粗的英文句子与中文提示；句式模块生成原句短语挖空、换人称改写与情景选原句；语法模块从语法点 `examples` 挖 be/do/情态/冠词/介词/代词/动词形式生成单选。词汇/语用类 `FillBlank` 难度至少 D2；句子内容难度按词数阈值 ≤7→D1、≤13→D2、其余 D3。题目标识 `contentKey=fusion:{type}:{version}:{grade}:{term}:{unit}:{sourceId}:{hash}`，只依赖稳定 ID 与源内容，保证组卷与交卷可重复对齐。
 - 方法:
   - `public List<DerivedQuestion> build(String version, String grade, String term, String unit)`
     返回该单元可派生的单词/句式/语法题；无句子数据或源内容不足时返回空列表。
@@ -1751,6 +1751,8 @@
     查询题目模板的全部标签（题目管理页「按标签筛选」下拉选项）。
   - `public TemplateView getTemplate(TemplateQuery query)`
     查询单个题目模板详情（含当前用户的错题本信息回填）。
+  - `public int recalibrateEnglishDifficulty()`
+    按「题型形式下限 + 内容复杂度」重算全部英语题目难度，同步 `t_template.difficulty` 与 `template.attribute.difficulty`；填空/多空/简答至少中等，内容按英文词数、句数、转折因果与时态叠加取较高值。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/UserBookServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

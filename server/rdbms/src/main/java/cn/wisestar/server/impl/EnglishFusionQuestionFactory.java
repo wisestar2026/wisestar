@@ -203,7 +203,7 @@ public class EnglishFusionQuestionFactory {
 				String title = "选词填空：选择合适的单词补全句子。（" + String.join(" / ", bank) + "）\n"
 						+ blanked + " （" + zh + "）";
 				result.add(new DerivedQuestion(key, "单词", unit + "·单词", "选词填空",
-						"词汇", "理解", difficulty(part), title, SurveySchema.QuestionType.FillBlank,
+						"词汇", "理解", difficultyAtLeast(part, "D2"), title, SurveySchema.QuestionType.FillBlank,
 						target, null, null, "根据句意和词库选择正确的单词。"));
 				index++;
 				// 每个句子最多派生两道单词题，避免同一句反复挖空。
@@ -217,7 +217,7 @@ public class EnglishFusionQuestionFactory {
 							String secondTitle = "选词填空：选择合适的单词补全句子。（" + String.join(" / ", secondBank) + "）\n"
 									+ secondBlanked + " （" + zh + "）";
 							result.add(new DerivedQuestion(secondKey, "单词", unit + "·单词", "选词填空",
-									"词汇", "理解", difficulty(part), secondTitle,
+									"词汇", "理解", difficultyAtLeast(part, "D2"), secondTitle,
 									SurveySchema.QuestionType.FillBlank, second, null, null,
 									"根据句意和词库选择正确的单词。"));
 						}
@@ -382,7 +382,7 @@ public class EnglishFusionQuestionFactory {
 		String cue = StringUtils.hasText(zh) ? zh.trim() : "补全句子";
 		String title = "原句挖空：根据中文提示补全句子。\n" + blanked + "\n（" + cue + "）";
 		return new DerivedQuestion(key, "句式", unit + "·句式", "原句挖空",
-				"语用", "理解", difficulty(sentence), title, SurveySchema.QuestionType.FillBlank,
+				"语用", "理解", difficultyAtLeast(sentence, "D2"), title, SurveySchema.QuestionType.FillBlank,
 				phrase, null, null, "回看单元原句，注意固定搭配和语序。");
 	}
 
@@ -813,12 +813,17 @@ public class EnglishFusionQuestionFactory {
 		return lower + "ed";
 	}
 
+	private String difficultyAtLeast(String sentence, String floor) {
+		String level = difficulty(sentence);
+		return level.compareTo(floor) < 0 ? floor : level;
+	}
+
 	private String difficulty(String sentence) {
 		int words = sentence == null ? 0 : sentence.trim().split("\\s+").length;
-		if (words <= 5) {
+		if (words <= 7) {
 			return "D1";
 		}
-		if (words <= 9) {
+		if (words <= 13) {
 			return "D2";
 		}
 		return "D3";
