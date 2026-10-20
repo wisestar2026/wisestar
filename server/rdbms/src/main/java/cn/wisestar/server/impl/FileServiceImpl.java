@@ -58,6 +58,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
 
     private final AtomicLong seq = new AtomicLong(System.currentTimeMillis());
 
+    /** 文件访问地址前缀（GET /api/file/** 在 WebSecurityConfig 中放行，可免登录预览） */
+    private static final String FILE_PREVIEW_PREFIX = "/api/file?id=";
+
     @Override
     public void deleteFile(String id) {
         removeById(id);
@@ -88,11 +91,25 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
 
         save(file);
         FileView fileView = fileViewMapper.toView(file);
+        fillPreviewUrl(fileView);
 
         if (AppConsts.FileType.BARCODE == request.getFileType()) {
             fileView.setContent(BarcodeReader.readBarcode(uploadFile.getInputStream()));
         }
         return fileView;
+    }
+
+    /**
+     * 回填文件预览地址。
+     *
+     * <p>File 实体没有 previewUrl 字段，MapStruct 转换后该属性为空；
+     * 前端（商品图片、题目配图、知识点配图）都依赖 previewUrl 直接作为图片地址，
+     * 因此统一在此按文件 id 生成 GET /api/file?id=xxx&amp;dispositionType=inline。</p>
+     */
+    private void fillPreviewUrl(FileView fileView) {
+        if (fileView != null && StringUtils.isNotBlank(fileView.getId())) {
+            fileView.setPreviewUrl(FILE_PREVIEW_PREFIX + fileView.getId() + "&dispositionType=inline");
+        }
     }
 
     /**
@@ -141,13 +158,15 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File> implements Fi
 
     @Override
     public List<FileView> listFiles(FileQuery query) {
-        return fileViewMapper.toView(
+        List<FileView> fileViews = fileViewMapper.toView(
                 list(Wrappers.<File>lambdaQuery().eq(query.getType() != null, File::getStorageType, query.getType())
                         // 默认只能查询自己的
                         .eq(CollectionUtils.isEmpty(query.getIds()), File::getCreateBy,
                                 SecurityContextUtils.getUserId())
                         // 可以根据 ids 查询已知文件
                         .in(!CollectionUtils.isEmpty(query.getIds()), File::getId, query.getIds())));
+        fileViews.forEach(this::fillPreviewUrl);
+        return fileViews;
     }
 
     @Override

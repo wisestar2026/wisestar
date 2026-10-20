@@ -1166,7 +1166,9 @@
 - 方法:
   - `public void deleteFile(String id)`
   - `public FileView upload(UploadFileRequest request)`
+    文件落盘并写入 `t_file` 后，统一回填 `previewUrl=/api/file?id=<id>&dispositionType=inline`，供前端直接预览。
   - `public List<FileView> listFiles(FileQuery query)`
+    列表返回前逐条回填 `previewUrl`，避免 `File` 实体无该字段导致 MapStruct 转换后为 null。
   - `public ResponseEntity<Resource> loadFile(FileQuery query)`
   - `public ResponseEntity<Resource> downloadTemplate(String name)`
 

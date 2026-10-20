@@ -20,6 +20,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { message } from 'antd';
+import {
+  BookOutlined,
+  MessageOutlined,
+  CompassOutlined,
+  ReadOutlined,
+  CustomerServiceOutlined,
+  FlagOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
 import StarRating from '../../components/common/StarRating';
@@ -127,6 +136,7 @@ export default function EnglishCenterPage() {
     <div className="eng-page">
       <div className="eng-hero">
         <div>
+          <div className="eng-hero-eyebrow">海洋智学 · 英语学习航线</div>
           <div className="eng-hero-title">英语学习中心</div>
           <div className="eng-hero-sub">
             {version} · {grade} · 单词 + 句子 + 语法，学练一体，智能复习帮你记得更牢
@@ -146,6 +156,7 @@ export default function EnglishCenterPage() {
             ))}
           </div>
           <button type="button" className="eng-review-btn" onClick={() => navigate('/student/english/review')}>
+            <SyncOutlined />
             智能复习{reviewCount > 0 ? ` · ${reviewCount}` : ''}
           </button>
         </div>
@@ -224,16 +235,20 @@ export default function EnglishCenterPage() {
                   className="eng-mod-card eng-mod-word"
                   onClick={() => go('/student/english/word', active.unit)}
                 >
+                  <span className="eng-mod-icon"><BookOutlined /></span>
                   <span className="eng-mod-title">单词通关<em>{percent(active.wordFinished, active.wordCount)}%</em></span>
                   <span className="eng-mod-sub">拼写 · 音标 · 释义</span>
+                  <span className="eng-mod-track"><i style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} /></span>
                 </button>
                 <button
                   type="button"
                   className="eng-mod-card eng-mod-sentence"
                   onClick={() => go('/student/english/sentence', active.unit)}
                 >
+                  <span className="eng-mod-icon"><MessageOutlined /></span>
                   <span className="eng-mod-title">句式通关<em>{percent(active.sentenceFinished, active.sentenceCount)}%</em></span>
                   <span className="eng-mod-sub">连词成句 · 情景</span>
+                  <span className="eng-mod-track"><i style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} /></span>
                 </button>
                 <button
                   type="button"
@@ -241,14 +256,17 @@ export default function EnglishCenterPage() {
                   disabled={!active.grammarCount}
                   onClick={() => go('/student/english/grammar', active.unit)}
                 >
+                  <span className="eng-mod-icon"><CompassOutlined /></span>
                   <span className="eng-mod-title">语法通关<em>{percent(active.grammarFinished, active.grammarCount)}%</em></span>
                   <span className="eng-mod-sub">规则 · 例句</span>
+                  <span className="eng-mod-track"><i style={{ width: `${percent(active.grammarFinished, active.grammarCount)}%` }} /></span>
                 </button>
                 <button
                   type="button"
                   className="eng-mod-card eng-mod-reading"
                   onClick={() => go('/student/english/reading', active.unit)}
                 >
+                  <span className="eng-mod-icon"><ReadOutlined /></span>
                   <span className="eng-mod-title">阅读理解</span>
                   <span className="eng-mod-sub">短文 · 选择题</span>
                 </button>
@@ -257,6 +275,7 @@ export default function EnglishCenterPage() {
                   className="eng-mod-card eng-mod-readaloud"
                   onClick={() => go('/student/english/read-aloud', active.unit)}
                 >
+                  <span className="eng-mod-icon"><CustomerServiceOutlined /></span>
                   <span className="eng-mod-title">课本跟读</span>
                   <span className="eng-mod-sub">听原音 · 录音跟读</span>
                 </button>
@@ -265,6 +284,7 @@ export default function EnglishCenterPage() {
                   className="eng-mod-card eng-mod-unit"
                   onClick={() => go('/student/english/unit-practice', active.unit)}
                 >
+                  <span className="eng-mod-icon"><FlagOutlined /></span>
                   <span className="eng-mod-title">单元练习</span>
                   <span className="eng-mod-sub">本单元综合题</span>
                 </button>

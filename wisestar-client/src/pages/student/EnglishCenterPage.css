@@ -921,3 +921,382 @@ input.eng-dictation-field:focus {
 }
 .eng-quiz-sound:hover { background: #ddf4fe; transform: translateY(-1px); }
 .eng-quiz-sound:active { transform: scale(0.98); }
+
+/* ============================================================
+ * 2026-10 英语入口视觉升级
+ * 主题：深海框架 + 浅色玻璃导航 + 白色学习纸面
+ * 范围：英语学习中心、单词/句式/语法通关首页
+ * 原则：作答区保持白底、稳定行高与原有判题配色，装饰只停留在入口层
+ * ============================================================ */
+
+/* ---------- 顶部深海航线 ---------- */
+.eng-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background:
+    radial-gradient(circle at 12% 20%, rgba(126, 208, 242, 0.42), transparent 42%),
+    linear-gradient(135deg, #0b4f7a 0%, #126b9b 48%, #2fa8d5 100%);
+  box-shadow: 0 18px 38px rgba(11, 79, 122, 0.28);
+}
+.eng-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.20) 0 7px, transparent 8px),
+    radial-gradient(circle at 90% 64%, rgba(255, 255, 255, 0.13) 0 13px, transparent 14px),
+    radial-gradient(circle at 68% 84%, rgba(255, 255, 255, 0.10) 0 22px, transparent 23px);
+}
+.eng-hero > * { position: relative; z-index: 1; }
+.eng-hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+.eng-hero-title { text-shadow: 0 2px 10px rgba(4, 45, 72, 0.22); }
+.eng-hero-sub { opacity: 0.86; }
+
+/* 册别展示：玻璃胶囊 */
+.eng-term {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+}
+.eng-term button.active {
+  color: #c85a3a;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 4px 10px rgba(4, 45, 72, 0.16);
+}
+
+/* 唯一强行动点：暖橙智能复习 */
+.eng-review-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: linear-gradient(135deg, #ff9a76, #ff7a59);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(232, 96, 62, 0.34);
+}
+.eng-review-btn:hover {
+  background: linear-gradient(135deg, #ffa886, #ff8566);
+  box-shadow: 0 14px 26px rgba(232, 96, 62, 0.4);
+}
+.eng-review-btn .anticon { font-size: 15px; }
+
+/* ---------- 左侧单元导航：浅色玻璃、海洋高亮 ---------- */
+.eng-aside {
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.76) 0%, rgba(235, 248, 255, 0.62) 100%);
+  box-shadow: 0 16px 34px rgba(23, 107, 158, 0.14);
+  backdrop-filter: blur(14px);
+}
+.eng-aside-title {
+  color: #1d6d99;
+  letter-spacing: 2.5px;
+}
+.eng-aside-item {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.62);
+  color: #23688d;
+  box-shadow: 0 6px 14px rgba(23, 107, 158, 0.08);
+}
+.eng-aside-item:hover {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(126, 208, 242, 0.85);
+  box-shadow: 0 10px 20px rgba(23, 107, 158, 0.14);
+}
+.eng-aside-item.active {
+  border-color: rgba(255, 255, 255, 0.72);
+  background: linear-gradient(135deg, #3aa9da, #1f7fae);
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(31, 127, 174, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- 右侧学习纸面 ---------- */
+.eng-detail-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcff 100%);
+  box-shadow: 0 18px 40px rgba(23, 107, 158, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.eng-detail-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  pointer-events: none;
+  background: linear-gradient(90deg, #4bb7e8 0%, #7ed0f2 46%, #ffb36b 100%);
+  opacity: 0.9;
+}
+.eng-detail-card > * { position: relative; z-index: 1; }
+.eng-detail-title { color: #14506e; }
+.eng-detail-tip { color: #6a93a8; }
+.eng-mastery-label { color: #5b7f92; }
+.eng-mastery-val { color: #c78b16; }
+
+/* 进度条统一成细长胶囊，填充末端带一点光 */
+.eng-stat-bar,
+.eng-progress-item .eng-stat-bar {
+  background: #e8f2f8;
+  box-shadow: inset 0 1px 2px rgba(20, 80, 110, 0.06);
+}
+.eng-stat-bar > span { box-shadow: 0 0 10px rgba(75, 183, 232, 0.26); }
+.eng-stat-bar.sentence > span { box-shadow: 0 0 10px rgba(255, 138, 92, 0.24); }
+.eng-stat-bar.grammar > span { box-shadow: 0 0 10px rgba(169, 139, 240, 0.24); }
+
+/* ---------- 六个模块入口卡：图标 + 百分比 + 细进度 ---------- */
+.eng-mod-grid { gap: 16px; }
+.eng-mod-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 154px;
+  padding: 20px 20px 18px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  border-radius: 22px;
+  box-shadow: 0 10px 24px rgba(23, 107, 158, 0.10);
+}
+.eng-mod-card::before {
+  content: '';
+  position: absolute;
+  top: -48px;
+  right: -42px;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.eng-mod-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 30px rgba(23, 107, 158, 0.18);
+}
+.eng-mod-card:active { transform: translateY(-1px) scale(0.995); }
+.eng-mod-card:disabled { box-shadow: none; }
+.eng-mod-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  color: currentColor;
+  font-size: 21px;
+  box-shadow: 0 6px 14px rgba(23, 107, 158, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.eng-mod-title {
+  position: static;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-right: 62px;
+  font-size: 19px;
+  line-height: 1.35;
+}
+.eng-mod-card em {
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+.eng-mod-sub {
+  color: #5b7f92;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+.eng-mod-track {
+  width: 100%;
+  height: 4px;
+  margin-top: auto;
+  border-radius: 999px;
+  background: rgba(20, 80, 110, 0.10);
+  overflow: hidden;
+}
+.eng-mod-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.82;
+}
+.eng-mod-word { background: linear-gradient(150deg, #f5f9ff 0%, #e3edfc 100%); }
+.eng-mod-sentence { background: linear-gradient(150deg, #fff9f5 0%, #fce5d8 100%); }
+.eng-mod-grammar { background: linear-gradient(150deg, #fffdf5 0%, #fcf0cd 100%); }
+.eng-mod-unit { background: linear-gradient(150deg, #f5fcf7 0%, #dcf2e2 100%); }
+.eng-mod-reading { background: linear-gradient(150deg, #f4fbff 0%, #dceefb 100%); }
+.eng-mod-readaloud { background: linear-gradient(150deg, #fff9f6 0%, #ffe7da 100%); }
+
+/* ---------- 通关首页：句式入口与单词分组 ---------- */
+.eng-hub-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 30px rgba(23, 107, 158, 0.12);
+}
+.eng-hub-card::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -48px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.07;
+  pointer-events: none;
+}
+.eng-hub-card::after {
+  content: '→';
+  position: absolute;
+  right: 22px;
+  bottom: 16px;
+  color: currentColor;
+  font-size: 24px;
+  font-weight: 800;
+  opacity: 0.45;
+  pointer-events: none;
+}
+.eng-hub-card > * { position: relative; z-index: 1; }
+.eng-hub-card:hover { transform: translateY(-3px); box-shadow: 0 20px 36px rgba(23, 107, 158, 0.18); }
+.eng-hub-learn { background: linear-gradient(150deg, #f5fcf7 0%, #dcf2e2 100%); }
+.eng-hub-scenario { background: linear-gradient(150deg, #fff9f5 0%, #fce5d8 100%); }
+.eng-hub-practice { background: linear-gradient(150deg, #f5f9ff 0%, #e3edfc 100%); }
+
+.eng-model-group {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(238, 248, 255, 0.72));
+  box-shadow: 0 10px 24px rgba(23, 107, 158, 0.08);
+}
+.eng-model-actions button {
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 6px 14px rgba(23, 107, 158, 0.08);
+}
+.eng-model-actions button:hover:not(:disabled) {
+  background: #fff;
+  box-shadow: 0 10px 20px rgba(23, 107, 158, 0.14);
+}
+
+/* 语法卡片只调整外壳，正文仍是白底高对比 */
+.eng-grammar-card {
+  border: 1px solid rgba(214, 232, 244, 0.9);
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: 0 10px 24px rgba(23, 107, 158, 0.09);
+}
+.eng-grammar-index {
+  background: linear-gradient(135deg, #dff2fc, #cbe9fa);
+  color: #1f7fae;
+}
+.eng-grammar-examples li { background: #f5fbff; }
+.eng-grammar-sound {
+  border: 1px solid rgba(194, 229, 245, 0.9);
+  background: rgba(255, 255, 255, 0.8);
+}
+.eng-grammar-sound:hover { background: #e9f7ff; }
+
+/* ---------- 通用胶囊与按钮 ---------- */
+.eng-section-title {
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(90deg, rgba(232, 246, 253, 0.92), rgba(253, 238, 231, 0.82));
+  box-shadow: 0 8px 18px rgba(23, 107, 158, 0.10);
+}
+.eng-review-pill {
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, #ff9a76, #ff7a59);
+  box-shadow: 0 8px 18px rgba(232, 96, 62, 0.28);
+}
+.eng-review-pill:hover { background: linear-gradient(135deg, #ffa886, #ff8566); }
+
+.eng-btn { border-radius: 14px; }
+.eng-btn-primary {
+  background: linear-gradient(135deg, #ff9a76, #ff7a59);
+  box-shadow: 0 8px 18px rgba(232, 96, 62, 0.24);
+}
+.eng-btn-primary:hover { box-shadow: 0 12px 24px rgba(232, 96, 62, 0.3); }
+.eng-btn-sound {
+  border: 1px solid rgba(194, 229, 245, 0.9);
+  background: rgba(255, 255, 255, 0.82);
+}
+.eng-btn-ghost {
+  border: 1px solid rgba(205, 226, 238, 0.9);
+  background: rgba(255, 255, 255, 0.72);
+}
+.eng-learn-back {
+  border: 1px solid rgba(191, 226, 243, 0.9);
+  background: rgba(255, 255, 255, 0.78);
+  color: #2b6f92;
+  box-shadow: 0 6px 14px rgba(23, 107, 158, 0.08);
+  backdrop-filter: blur(8px);
+}
+.eng-learn-back:hover { background: #fff; }
+
+.eng-empty {
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(242, 251, 255, 0.88));
+  box-shadow: 0 18px 38px rgba(23, 107, 158, 0.14);
+}
+
+/* 键盘可达性 */
+.eng-review-btn:focus-visible,
+.eng-aside-item:focus-visible,
+.eng-mod-card:focus-visible,
+.eng-hub-card:focus-visible,
+.eng-btn:focus-visible,
+.eng-learn-back:focus-visible,
+.eng-review-pill:focus-visible {
+  outline: 3px solid rgba(47, 159, 212, 0.55);
+  outline-offset: 2px;
+}
+
+/* 尊重系统减少动效设置 */
+@media (prefers-reduced-motion: reduce) {
+  .eng-mod-card,
+  .eng-hub-card,
+  .eng-aside-item,
+  .eng-review-btn,
+  .eng-btn,
+  .eng-learn-back {
+    transition: none;
+  }
+  .eng-mod-card:hover,
+  .eng-hub-card:hover,
+  .eng-aside-item:hover,
+  .eng-review-btn:hover,
+  .eng-btn:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .eng-hero { padding: 18px 18px; border-radius: 22px; }
+  .eng-hero-title { font-size: 23px; }
+  .eng-hero-eyebrow { font-size: 11px; letter-spacing: 1px; }
+  .eng-mod-grid { grid-template-columns: 1fr; }
+  .eng-mod-card { min-height: 138px; padding: 18px 18px 16px; }
+  .eng-detail-card { padding: 24px 20px 26px; }
+  .eng-hub-card { padding: 44px 18px; }
+}
