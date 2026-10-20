@@ -7,6 +7,7 @@ import cn.wisestar.server.service.FileService;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -120,6 +121,7 @@ public class FileApi {
 	 * @return 上传成功后文件的元数据视图（含文件 id）
 	 */
 	@PostMapping("/create")
+	@PreAuthorize("isAuthenticated()")
 	public FileView upload(UploadFileRequest request) {
 		return fileService.upload(request);
 	}
@@ -142,6 +144,7 @@ public class FileApi {
 	 * @param request 删除请求（JSON，含文件 id）
 	 */
 	@PostMapping("/delete")
+	@PreAuthorize("isAuthenticated()")
 	public void deleteImage(@RequestBody UploadFileRequest request) {
 		fileService.deleteFile(request.getId());
 	}

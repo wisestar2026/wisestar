@@ -345,6 +345,7 @@ public class UserApi {
 	 * @return 历史任务分页结果
 	 */
 	@GetMapping("/listHistoryTask")
+	@PreAuthorize("isAuthenticated()")
 	public PaginationResponse<MyTaskView> myHistoryTask(MyTaskQuery query) {
 		return userService.queryHistoryTask(query);
 	}

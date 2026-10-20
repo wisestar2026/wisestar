@@ -42,6 +42,7 @@ import { listTemplate, updateTemplate } from '../../api/template';
 import { listRepo, unbindTemplate, importTemplate, listRepoLocations } from '../../api/repo';
 import { extractCorrectAnswers } from '../../utils/practiceHelpers';
 import SelectTemplateModal from '../../components/repo/SelectTemplateModal';
+import { usePermission } from '../../utils/usePermission';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -177,6 +178,7 @@ function ScoreCell({ record, onSaveAttr }) {
 }
 
 export default function RepoDetailPage() {
+  const { can } = usePermission();
   const { id: repoId } = useParams();
   const navigate = useNavigate();
 
@@ -387,7 +389,7 @@ export default function RepoDetailPage() {
     },
     {
       title: '操作', width: 90,
-      render: (_, record) => (
+      render: (_, record) => can('repo:update') && (
         <Popconfirm
           title="确定从练习移除该题？"
           description="题目仍保留在「题目管理」中，可从练习重新选择加入"
@@ -427,14 +429,16 @@ export default function RepoDetailPage() {
             <BookOutlined style={{ marginRight: 8 }} />{repo?.name || '练习详情'}
           </Title>
         </Space>
-        <Upload
-          beforeUpload={handleImport}
-          showUploadList={false}
-          accept=".xlsx,.xls"
-          disabled={importing}
-        >
-          <Button type="primary" icon={<ImportOutlined />} loading={importing}>导入题目</Button>
-        </Upload>
+        {can('repo:create') && (
+          <Upload
+            beforeUpload={handleImport}
+            showUploadList={false}
+            accept=".xlsx,.xls"
+            disabled={importing}
+          >
+            <Button type="primary" icon={<ImportOutlined />} loading={importing}>导入题目</Button>
+          </Upload>
+        )}
       </div>
 
       {/* ---- 练习信息 ---- */}
@@ -496,7 +500,7 @@ export default function RepoDetailPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
         <Text strong style={{ fontSize: 15 }}>题目列表（{total}）</Text>
         <Space>
-          {selectedRowKeys.length > 0 && (
+          {selectedRowKeys.length > 0 && can('repo:update') && (
             <Button
               danger size="small" icon={<DeleteOutlined />} loading={removing}
               onClick={handleBatchRemove}
@@ -504,9 +508,11 @@ export default function RepoDetailPage() {
               批量移除（{selectedRowKeys.length}）
             </Button>
           )}
-          <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setSelectOpen(true)}>
-            批量选择题目
-          </Button>
+          {can('repo:create') && (
+            <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => setSelectOpen(true)}>
+              批量选择题目
+            </Button>
+          )}
         </Space>
       </div>
 

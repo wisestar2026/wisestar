@@ -200,7 +200,7 @@ export default function App() {
             <Route
               path="/repos"
               element={
-                <AuthGuard required={['repo:list', 'repo:detail', 'repo:create', 'repo:update', 'repo:delete']}>
+                <AuthGuard required={['repo:list']}>
                   <RepoListPage />
                 </AuthGuard>
               }
@@ -218,7 +218,7 @@ export default function App() {
             <Route
               path="/questions"
               element={
-                <AuthGuard required={['template:list', 'template:create', 'template:update', 'template:delete']}>
+                <AuthGuard required={['template:list']}>
                   <QuestionListPage lockedSubject="数学" />
                 </AuthGuard>
               }
@@ -228,7 +228,7 @@ export default function App() {
             <Route
               path="/exercise/list"
               element={
-                <AuthGuard required={['repo:list', 'template:list']}>
+                <AuthGuard required={['repo:list']}>
                   <TeachingResearchPlatformPage />
                 </AuthGuard>
               }
@@ -283,7 +283,7 @@ export default function App() {
             <Route
               path="/students"
               element={
-                <AuthGuard required={['student:list', 'student:create', 'student:update', 'student:delete']}>
+                <AuthGuard required={['student:list']}>
                   <StudentManagePage />
                 </AuthGuard>
               }
@@ -326,7 +326,7 @@ export default function App() {
             <Route
               path="/mall/goods"
               element={
-                <AuthGuard required={['mall:list', 'mall:create', 'mall:update', 'mall:delete']}>
+                <AuthGuard required={['mall:list']}>
                   <MallGoodsManagePage />
                 </AuthGuard>
               }
@@ -334,7 +334,7 @@ export default function App() {
             <Route
               path="/orders"
               element={
-                <AuthGuard required={['order:list', 'order:create', 'order:update', 'order:delete']}>
+                <AuthGuard required={['order:list']}>
                   <OrderManagePage />
                 </AuthGuard>
               }
@@ -344,7 +344,7 @@ export default function App() {
             <Route
               path="/admin/roles"
               element={
-                <AuthGuard required={['system:role:list', 'system:role:create', 'system:role:update', 'system:role:delete']}>
+                <AuthGuard required={['system:role:list']}>
                   <RoleManagePage />
                 </AuthGuard>
               }
@@ -356,7 +356,7 @@ export default function App() {
             <Route
               path="/system/users"
               element={
-                <AuthGuard required={['system:user:list', 'system:user:create', 'system:user:update', 'system:user:delete']}>
+                <AuthGuard required={['system:user:list']}>
                   <UserManagePage />
                 </AuthGuard>
               }
@@ -364,7 +364,7 @@ export default function App() {
             <Route
               path="/system/depts"
               element={
-                <AuthGuard required={['system:dept:list', 'system:dept:create', 'system:dept:update', 'system:dept:delete']}>
+                <AuthGuard required={['system:dept:list']}>
                   <DeptManagePage />
                 </AuthGuard>
               }
@@ -372,7 +372,7 @@ export default function App() {
             <Route
               path="/system/positions"
               element={
-                <AuthGuard required={['system:position:list', 'system:position:create', 'system:position:update', 'system:position:delete']}>
+                <AuthGuard required={['system:position:list']}>
                   <PositionManagePage />
                 </AuthGuard>
               }
@@ -380,7 +380,7 @@ export default function App() {
             <Route
               path="/system/dicts"
               element={
-                <AuthGuard required={['system:dict:list', 'system:dict:create', 'system:dict:update', 'system:dict:delete']}>
+                <AuthGuard required={['system:dict:list']}>
                   <DictManagePage />
                 </AuthGuard>
               }
@@ -388,7 +388,7 @@ export default function App() {
             <Route
               path="/system/dict-items"
               element={
-                <AuthGuard required={['system:dictItem:list', 'system:dictItem:create', 'system:dictItem:update', 'system:dictItem:delete', 'system:dictItem:import']}>
+                <AuthGuard required={['system:dictItem:list']}>
                   <DictItemManagePage />
                 </AuthGuard>
               }
@@ -396,7 +396,7 @@ export default function App() {
             <Route
               path="/system/ai"
               element={
-                <AuthGuard required={['system:role:list']}>
+                <AuthGuard required={['system:ai']}>
                   <AiSettingPage />
                 </AuthGuard>
               }
@@ -497,7 +497,7 @@ export default function App() {
             <Route
               path="/mall/verify"
               element={
-                <AuthGuard>
+                <AuthGuard required={['mall:list']}>
                   <VerifyPage />
                 </AuthGuard>
               }
@@ -507,7 +507,7 @@ export default function App() {
             <Route
               path="/admin/campus"
               element={
-                <AuthGuard>
+                <AuthGuard required={['campus:list']}>
                   <CampusManagePage />
                 </AuthGuard>
               }

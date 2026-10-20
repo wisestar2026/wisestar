@@ -22,6 +22,7 @@ import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Typo
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, SoundOutlined,
 } from '@ant-design/icons';
+import { usePermission } from '../../utils/usePermission';
 import { speakEnglish } from '../../utils/english';
 import { getSections } from '../../api/englishAdmin';
 
@@ -33,6 +34,7 @@ const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五�
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 export default function SentenceManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -221,8 +223,12 @@ export default function SentenceManagePage() {
       width: 150,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
-          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          {can('english:sentence:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
+          )}
+          {can('english:sentence:delete') && (
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          )}
         </Space>
       ),
     },
@@ -233,10 +239,14 @@ export default function SentenceManagePage() {
       <Title level={4}>句库管理</Title>
 
       <Space style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增句子</Button>
-        <Upload showUploadList={false} accept=".xlsx,.xls,.csv" beforeUpload={handleImport} disabled={importing}>
-          <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
-        </Upload>
+        {can('english:sentence:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增句子</Button>
+        )}
+        {can('english:sentence:import') && (
+          <Upload showUploadList={false} accept=".xlsx,.xls,.csv" beforeUpload={handleImport} disabled={importing}>
+            <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
+          </Upload>
+        )}
         <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>下载模板</Button>
       </Space>
 

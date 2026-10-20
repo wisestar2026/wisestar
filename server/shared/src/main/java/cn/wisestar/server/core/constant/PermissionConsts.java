@@ -30,6 +30,9 @@ public final class PermissionConsts {
 	/** 仪表盘 */
 	public static final String HOME = "home";
 
+	/** 个人中心（个人资料修改） */
+	public static final String USER_UPDATE = "user:update";
+
 	/** 在线练习 */
 	public static final String EXERCISE_LIST = "exercise:list";
 
@@ -123,11 +126,49 @@ public final class PermissionConsts {
 	public static final String SYSTEM_DICT_ITEM_DELETE = "system:dictItem:delete";
 	public static final String SYSTEM_DICT_ITEM_IMPORT = "system:dictItem:import";
 
+	/** 系统管理-AI 服务设置 */
+	public static final String SYSTEM_AI = "system:ai";
+
 	/** 行政管理-校区管理 */
 	public static final String CAMPUS_LIST = "campus:list";
 	public static final String CAMPUS_CREATE = "campus:create";
 	public static final String CAMPUS_UPDATE = "campus:update";
 	public static final String CAMPUS_DELETE = "campus:delete";
+
+	/** 英语板块-单元管理 */
+	public static final String ENGLISH_UNIT_LIST = "english:unit:list";
+	public static final String ENGLISH_UNIT_CREATE = "english:unit:create";
+	public static final String ENGLISH_UNIT_UPDATE = "english:unit:update";
+	public static final String ENGLISH_UNIT_DELETE = "english:unit:delete";
+
+	/** 英语板块-小节管理 */
+	public static final String ENGLISH_SECTION_LIST = "english:section:list";
+	public static final String ENGLISH_SECTION_CREATE = "english:section:create";
+	public static final String ENGLISH_SECTION_UPDATE = "english:section:update";
+	public static final String ENGLISH_SECTION_DELETE = "english:section:delete";
+
+	/** 英语板块-单词管理 */
+	public static final String ENGLISH_WORD_LIST = "english:word:list";
+	public static final String ENGLISH_WORD_CREATE = "english:word:create";
+	public static final String ENGLISH_WORD_UPDATE = "english:word:update";
+	public static final String ENGLISH_WORD_DELETE = "english:word:delete";
+	public static final String ENGLISH_WORD_IMPORT = "english:word:import";
+
+	/** 英语板块-句库管理 */
+	public static final String ENGLISH_SENTENCE_LIST = "english:sentence:list";
+	public static final String ENGLISH_SENTENCE_CREATE = "english:sentence:create";
+	public static final String ENGLISH_SENTENCE_UPDATE = "english:sentence:update";
+	public static final String ENGLISH_SENTENCE_DELETE = "english:sentence:delete";
+	public static final String ENGLISH_SENTENCE_IMPORT = "english:sentence:import";
+
+	/** 英语板块-语法管理 */
+	public static final String ENGLISH_GRAMMAR_LIST = "english:grammar:list";
+	public static final String ENGLISH_GRAMMAR_CREATE = "english:grammar:create";
+	public static final String ENGLISH_GRAMMAR_UPDATE = "english:grammar:update";
+	public static final String ENGLISH_GRAMMAR_DELETE = "english:grammar:delete";
+
+	/** 英语板块-生成与固化 */
+	public static final String ENGLISH_WORD_AI = "english:word:ai";
 
 	// ---------------------------------------------------------------
 	// 权限树结构
@@ -250,6 +291,7 @@ public final class PermissionConsts {
 	private static List<Node> buildTree() {
 		List<Node> tree = new ArrayList<>();
 		tree.add(node("dashboard", "仪表盘", ops(HOME, "查看")));
+		tree.add(node("profile", "个人中心", ops(USER_UPDATE, "修改资料")));
 		tree.add(node("exercise", "在线练习", ops(EXERCISE_LIST, "查看")));
 		tree.add(node("repo", "题库管理",
 				ops(REPO_LIST, "查看", REPO_DETAIL, "详情", REPO_CREATE, "新增", REPO_UPDATE, "修改", REPO_DELETE, "删除",
@@ -289,7 +331,27 @@ public final class PermissionConsts {
 		system.getChildren().add(node("system-dictItem", "字典条目管理",
 				ops(SYSTEM_DICT_ITEM_LIST, "查看", SYSTEM_DICT_ITEM_CREATE, "新增", SYSTEM_DICT_ITEM_UPDATE, "修改",
 						SYSTEM_DICT_ITEM_DELETE, "删除", SYSTEM_DICT_ITEM_IMPORT, "导入")));
+		system.getChildren().add(node("system-ai", "AI 服务设置", ops(SYSTEM_AI, "配置")));
 		tree.add(system);
+		// 英语板块：内容维护（单元/小节/单词/句库/语法）+ 生成与固化
+		Node english = node("english", "英语板块", new ArrayList<>());
+		english.getChildren().add(node("english-unit", "单元管理",
+				ops(ENGLISH_UNIT_LIST, "查看", ENGLISH_UNIT_CREATE, "新增", ENGLISH_UNIT_UPDATE, "修改",
+						ENGLISH_UNIT_DELETE, "删除")));
+		english.getChildren().add(node("english-section", "小节管理",
+				ops(ENGLISH_SECTION_LIST, "查看", ENGLISH_SECTION_CREATE, "新增", ENGLISH_SECTION_UPDATE, "修改",
+						ENGLISH_SECTION_DELETE, "删除")));
+		english.getChildren().add(node("english-word", "单词管理",
+				ops(ENGLISH_WORD_LIST, "查看", ENGLISH_WORD_CREATE, "新增", ENGLISH_WORD_UPDATE, "修改",
+						ENGLISH_WORD_DELETE, "删除", ENGLISH_WORD_IMPORT, "导入")));
+		english.getChildren().add(node("english-sentence", "句库管理",
+				ops(ENGLISH_SENTENCE_LIST, "查看", ENGLISH_SENTENCE_CREATE, "新增", ENGLISH_SENTENCE_UPDATE, "修改",
+						ENGLISH_SENTENCE_DELETE, "删除", ENGLISH_SENTENCE_IMPORT, "导入")));
+		english.getChildren().add(node("english-grammar", "语法管理",
+				ops(ENGLISH_GRAMMAR_LIST, "查看", ENGLISH_GRAMMAR_CREATE, "新增", ENGLISH_GRAMMAR_UPDATE, "修改",
+						ENGLISH_GRAMMAR_DELETE, "删除")));
+		english.getChildren().add(node("english-generate", "生成与固化", ops(ENGLISH_WORD_AI, "AI 生成与固化")));
+		tree.add(english);
 		// 行政管理：二级子组（角色权限/校区管理）
 		Node campus = node("campus", "行政管理", new ArrayList<>());
 		campus.getChildren().add(node("campus-manage", "校区管理",
@@ -326,6 +388,7 @@ public final class PermissionConsts {
 			+ "system:position:list,system:position:create,system:position:update,system:position:delete,"
 			+ "system:dict:list,system:dict:create,system:dict:update,system:dict:delete,"
 			+ "system:dictItem:list,system:dictItem:create,system:dictItem:update,system:dictItem:delete,system:dictItem:import,"
+			+ "system:ai,"
 			+ "user:update,"
 			+ "english:word:list,english:word:create,english:word:update,english:word:delete,english:word:import,english:word:ai,"
 			+ "english:unit:list,english:unit:create,english:unit:update,english:unit:delete,"

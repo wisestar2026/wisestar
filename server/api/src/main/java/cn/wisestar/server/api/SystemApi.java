@@ -118,14 +118,14 @@ public class SystemApi {
 	 *
 	 * <p><b>返回值结构</b>：{@code SystemInfo.AiSetting}（enabled、models、prompt、baseUrl；token 恒为 null）。</p>
 	 *
-	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('system:ai')")——需要 AI 服务设置权限点。</p>
 	 *
 	 * <p><b>调用的下层 Service</b>：{@link SystemService#getSystemAiSetting()}。</p>
 	 *
 	 * @return AI 设置（Token 已被脱敏为 null）
 	 */
 	@GetMapping("/aiSetting")
-	@PreAuthorize("hasRole('admin')")
+	@PreAuthorize("hasAuthority('system:ai')")
 	public SystemInfo.AiSetting getSystemAiSetting() {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		if (aiSetting == null) {
@@ -151,12 +151,12 @@ public class SystemApi {
 	 *
 	 * <p><b>返回值结构</b>：{@code List<AiPromptKeys.PromptMeta>}。</p>
 	 *
-	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('system:ai')")——需要 AI 服务设置权限点。</p>
 	 *
 	 * @return 场景提示词目录
 	 */
 	@GetMapping("/aiPromptDefaults")
-	@PreAuthorize("hasRole('admin')")
+	@PreAuthorize("hasAuthority('system:ai')")
 	public List<AiPromptKeys.PromptMeta> getAiPromptDefaults() {
 		return AiPromptKeys.catalog();
 	}
@@ -171,14 +171,14 @@ public class SystemApi {
 	 *
 	 * <p><b>返回值结构</b>：{@code AiStatusView}。</p>
 	 *
-	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 * <p><b>权限</b>：@PreAuthorize("isAuthenticated()")——登录用户可查看配置状态（不含 Token）。</p>
 	 *
 	 * <p><b>调用的下层 Service</b>：{@link SystemService#getSystemAiSetting()}。</p>
 	 *
 	 * @return AI 配置状态（configured = enabled && token 非空）
 	 */
 	@GetMapping("/aiStatus")
-	@PreAuthorize("hasRole('admin')")
+	@PreAuthorize("isAuthenticated()")
 	public AiStatusView getAiStatus() {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		AiStatusView status = new AiStatusView();
@@ -244,14 +244,14 @@ public class SystemApi {
 	 *
 	 * <p><b>返回值结构</b>：无返回值（HTTP 200 空响应体）。</p>
 	 *
-	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可操作。</p>
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('system:ai')")——需要 AI 服务设置权限点。</p>
 	 *
 	 * <p><b>调用的下层 Service</b>：{@link SystemService#updateSystemInfo(SystemInfoRequest)}。</p>
 	 *
 	 * @param request 系统信息更新请求体
 	 */
 	@PostMapping("/update")
-	@PreAuthorize("hasRole('admin')")
+	@PreAuthorize("hasAuthority('system:ai')")
 	public void updateSystemInfo(@RequestBody SystemInfoRequest request) {
 		systemService.updateSystemInfo(request);
 	}
@@ -294,12 +294,12 @@ public class SystemApi {
 	 *
 	 * <p><b>返回值结构</b>：{@link List}&lt;{@link PermissionConsts.Node}&gt;（模块分组树）。</p>
 	 *
-	 * <p><b>权限</b>：@PreAuthorize("hasRole('admin')")——仅管理员可查。</p>
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('system:role:list')")——需要角色查看权限点。</p>
 	 *
 	 * @return 权限树（模块 → 操作点）
 	 */
 	@GetMapping("/permissionTree")
-	@PreAuthorize("hasRole('admin')")
+	@PreAuthorize("hasAuthority('system:role:list')")
 	public List<PermissionConsts.Node> permissionTree() {
 		return PermissionConsts.tree();
 	}
@@ -414,6 +414,7 @@ public class SystemApi {
 	 * @return 权限列表
 	 */
 	@RequestMapping("/permission/list")
+	@PreAuthorize("hasAuthority('system:role:list')")
 	public List<PermissionView> permissions() {
 		return systemService.getPermissions();
 	}
@@ -609,6 +610,7 @@ public class SystemApi {
 	 * @return 用户名是否已存在（true=存在）
 	 */
 	@GetMapping("/checkUsernameExist")
+	@PreAuthorize("hasAuthority('system:user:create')")
 	public boolean checkUsernameExist(String username) {
 		return userService.checkUsernameExist(username);
 	}

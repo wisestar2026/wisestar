@@ -53,6 +53,18 @@ import useUserStore from '../../stores/useUserStore';
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
 
+// 找到当前路由所在的菜单祖先链，用于首次进入时自动展开对应分组。
+function findOpenKeys(items, path) {
+  for (const item of items) {
+    if (item.key === path) return [];
+    if (item.children) {
+      const childKeys = findOpenKeys(item.children, path);
+      if (childKeys) return [item.key, ...childKeys];
+    }
+  }
+  return null;
+}
+
 export default function MainLayout() {
   const { user, logout } = useUserStore();
   const navigate = useNavigate();
@@ -79,7 +91,7 @@ export default function MainLayout() {
     {
       key: 'student-mgmt-group', icon: <TeamOutlined />, label: '学员管理',
       children: [
-        { key: '/students', label: '学员列表' },
+        { key: '/students', label: '学员列表', required: ['student:list'] },
         { key: '/orders',   label: '订单管理', required: ['order:list'] },
         { key: '/student/supervision', label: '学员督学', required: ['student:supervision'] },
         { key: '/student/task-assignment', label: '任务发布', required: ['task:list'] },
@@ -101,28 +113,43 @@ export default function MainLayout() {
     {
       key: 'knowledge-group', icon: <ReadOutlined />, label: '知识管理',
       children: [
-        { key: '/knowledge/chapters', icon: <ProfileOutlined />, label: '章节管理' },
-        { key: '/knowledge/sections', icon: <PartitionOutlined />, label: '小节管理' },
-        { key: '/knowledge/points',   icon: <BulbOutlined />,    label: '知识点管理' },
+        { key: '/knowledge/chapters', icon: <ProfileOutlined />, label: '章节管理', required: ['knowledge:list'] },
+        { key: '/knowledge/sections', icon: <PartitionOutlined />, label: '小节管理', required: ['knowledge:list'] },
+        { key: '/knowledge/points',   icon: <BulbOutlined />,    label: '知识点管理', required: ['knowledge:list'] },
         { key: '/knowledge/strategy', icon: <SettingOutlined />, label: '出题策略', required: ['knowledge:strategy'] },
       ],
     },
     
-    // 英语板块
+    // 英语板块（按「内容维护 → 题目试卷 → 生成固化」二次分组，避免子菜单过平）
     {
       key: 'english-group', icon: <BookOutlined />, label: '英语板块',
       children: [
-        { key: '/english/unit', label: '单元管理', required: ['english:unit:list'] },
-        { key: '/english/section', label: '小节管理', required: ['english:section:list'] },
-        { key: '/english/word', label: '单词管理', required: ['english:word:list'] },
-        { key: '/english/word-image', label: '单词配图', required: ['english:word:update'] },
-        { key: '/english/sentence', label: '句库管理', required: ['english:sentence:list'] },
-        { key: '/english/grammar', label: '语法管理', required: ['english:grammar:list'] },
-        { key: '/english/questions', label: '英语题目', required: ['template:list'] },
-        { key: '/english/word-ai', label: 'AI 内容生成', required: ['english:word:ai'] },
-        { key: '/english/scenario-pack', label: '情景练习固化', required: ['english:word:ai'] },
-        { key: '/english/unit-paper', label: '单元练习卷', required: ['template:list'] },
-        { key: '/english/sentence-pack', label: '句子练习固化', required: ['english:word:ai'] },
+        {
+          key: 'english-content-group', label: '内容维护',
+          children: [
+            { key: '/english/unit', label: '单元管理', required: ['english:unit:list'] },
+            { key: '/english/section', label: '小节管理', required: ['english:section:list'] },
+            { key: '/english/word', label: '单词管理', required: ['english:word:list'] },
+            { key: '/english/sentence', label: '句库管理', required: ['english:sentence:list'] },
+            { key: '/english/grammar', label: '语法管理', required: ['english:grammar:list'] },
+          ],
+        },
+        {
+          key: 'english-paper-group', label: '题目与试卷',
+          children: [
+            { key: '/english/questions', label: '英语题目', required: ['template:list'] },
+            { key: '/english/unit-paper', label: '单元练习卷', required: ['template:list'] },
+          ],
+        },
+        {
+          key: 'english-generate-group', label: '生成与固化',
+          children: [
+            { key: '/english/word-ai', label: 'AI 内容生成', required: ['english:word:ai'] },
+            { key: '/english/word-image', label: '单词配图', required: ['english:word:update'] },
+            { key: '/english/scenario-pack', label: '情景练习固化', required: ['english:word:ai'] },
+            { key: '/english/sentence-pack', label: '句子练习固化', required: ['english:word:ai'] },
+          ],
+        },
       ],
     },
     
@@ -131,7 +158,7 @@ export default function MainLayout() {
       key: 'mall-group', icon: <ShoppingOutlined />, label: '积分管理',
       children: [
         { key: '/mall/goods', label: '商品管理', required: ['mall:list'] },
-        { key: '/mall/verify', label: '商品核销' },
+        { key: '/mall/verify', label: '商品核销', required: ['mall:list'] },
       ],
     },
     
@@ -153,7 +180,7 @@ export default function MainLayout() {
         { key: '/system/positions', label: '岗位管理', required: ['system:position:list'] },
         { key: '/system/dicts', label: '字典管理', required: ['system:dict:list'] },
         { key: '/system/dict-items', label: '字典条目管理', required: ['system:dictItem:list'] },
-        { key: '/system/ai', label: 'AI 服务设置', required: ['system:role:list'] },
+        { key: '/system/ai', label: 'AI 服务设置', required: ['system:ai'] },
       ],
     },
   ];
@@ -219,8 +246,8 @@ export default function MainLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[selectedKey]}
-          // 左侧菜单分组默认全部收起（用户手动展开；当前激活菜单项所在分组由 Menu 自动高亮，不自动展开）
-          defaultOpenKeys={[]}
+          // 首次进入时展开当前页面所在分组；其余分组保持收起，由用户按需展开
+          defaultOpenKeys={findOpenKeys(visibleMenu, selectedKey) || []}
           items={visibleMenu}
           onClick={({ key }) => navigate(key)}
         />

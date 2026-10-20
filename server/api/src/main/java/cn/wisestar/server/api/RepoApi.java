@@ -218,13 +218,14 @@ public class RepoApi {
 	 *
 	 * <p><b>返回值结构</b>：无返回值（HTTP 200 空响应体）。</p>
 	 *
-	 * <p><b>权限</b>：无 @PreAuthorize 注解（是否要求登录由全局安全规则控制）。</p>
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('repo:update')")。</p>
 	 *
 	 * <p><b>调用的下层 Service</b>：{@link RepoService#batchUnBindTemplate(RepoTemplateRequest)}。</p>
 	 *
 	 * @param request 解绑请求
 	 */
 	@PostMapping("/unbind")
+	@PreAuthorize("hasAuthority('repo:update')")
 	public void batchUnBindTemplate(@RequestBody RepoTemplateRequest request) {
 		repoService.batchUnBindTemplate(request);
 	}
@@ -248,6 +249,7 @@ public class RepoApi {
 	 * @return 挑选出的题目 schema 列表
 	 */
 	@PostMapping("/pick")
+	@PreAuthorize("isAuthenticated()")
 	public List<SurveySchema> pickQuestionFromRepo(@RequestBody List<ProjectSetting.RandomSurveyCondition> repos) {
 		return repoService.pickQuestionFromRepo(repos);
 	}
@@ -263,13 +265,14 @@ public class RepoApi {
 	 *
 	 * <p><b>返回值结构</b>：无返回值（HTTP 200 空响应体）。</p>
 	 *
-	 * <p><b>权限</b>：无 @PreAuthorize 注解。</p>
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('repo:create')")。</p>
 	 *
 	 * <p><b>调用的下层 Service</b>：{@link RepoService#importFromTemplate(RepoTemplateRequest)}。</p>
 	 *
 	 * @param request 导入请求
 	 */
 	@PostMapping("/import")
+	@PreAuthorize("hasAuthority('repo:create')")
 	public void importFromTemplate(RepoTemplateRequest request) {
 		repoService.importFromTemplate(request);
 	}
@@ -406,11 +409,12 @@ public class RepoApi {
 	 *
 	 * <p><b>返回值结构</b>：无方法返回值；服务层直接把 Excel 写入 HTTP 响应流。</p>
 	 *
-	 * <p><b>权限</b>：与导入接口一致，不设 @PreAuthorize（题目管理页导入入口已有页面权限）。
+	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('repo:create')")（与导入接口一致）。
 	 *
 	 * <p><b>调用的下层 Service</b>：{@link RepoService#downloadImportTemplate()}。</p>
 	 */
 	@GetMapping("/import/template")
+	@PreAuthorize("hasAuthority('repo:create')")
 	public void downloadImportTemplate() {
 		repoService.downloadImportTemplate();
 	}

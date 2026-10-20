@@ -189,6 +189,8 @@
 
     **返回值结构**：`List`（看板统计视图列表）。
 
+    **权限**：@PreAuthorize("hasAuthority('home')")。
+
     **调用的下层 Service**：DashboardService#listDashboard(DashboardQuery)。
 
 ### `api/src/main/java/cn/wisestar/server/api/DetectionApi.java`
@@ -929,7 +931,7 @@
 
     **返回值结构**：无返回值（HTTP 200 空响应体）。
 
-    **权限**：无 @PreAuthorize 注解（是否要求登录由全局安全规则控制）。
+    **权限**：@PreAuthorize("hasAuthority('repo:update')")。
 
     **调用的下层 Service**：RepoService#batchUnBindTemplate(RepoTemplateRequest)。
   - `public List<SurveySchema> pickQuestionFromRepo(@RequestBody List<ProjectSetting.RandomSurveyCondition> repos)`
@@ -953,7 +955,7 @@
 
     **返回值结构**：无返回值（HTTP 200 空响应体）。
 
-    **权限**：无 @PreAuthorize 注解。
+    **权限**：@PreAuthorize("hasAuthority('repo:create')")。
 
     **调用的下层 Service**：RepoService#importFromTemplate(RepoTemplateRequest)。
   - `public PaginationResponse<UserBookView> listUserBook(UserBookQuery query)`
@@ -1027,7 +1029,8 @@
 
     **返回值结构**：无方法返回值；服务层直接把 Excel 写入 HTTP 响应流。
 
-    **权限**：与导入接口一致，不设 @PreAuthorize（题目管理页导入入口已有页面权限）。
+    **权限**：@PreAuthorize("hasAuthority('repo:create')")。
+
     **调用的下层 Service**：RepoService#downloadImportTemplate()。
   - `public List<RepoView> myRepos()`
     学员端「我的题库」。
@@ -1459,7 +1462,7 @@
 
     **返回值结构**：`SystemInfo.AiSetting`（enabled、models、prompt、baseUrl；token 恒为 null）。
 
-    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
+    **权限**：@PreAuthorize("hasAuthority('system:ai')")——需要 AI 服务设置权限点。
 
     **调用的下层 Service**：SystemService#getSystemAiSetting()。
   - `public List<AiPromptKeys.PromptMeta> getAiPromptDefaults()`
@@ -1472,7 +1475,7 @@
 
     **返回值结构**：`List<AiPromptKeys.PromptMeta>`。
 
-    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
+    **权限**：@PreAuthorize("hasAuthority('system:ai')")——需要 AI 服务设置权限点。
 
     **调用的下层 Service**：AiPromptKeys#catalog()（无 DB 访问）。
   - `public AiStatusView getAiStatus()`
@@ -1485,7 +1488,7 @@
 
     **返回值结构**：`AiStatusView`。
 
-    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
+    **权限**：@PreAuthorize("isAuthenticated()")——登录用户可查看配置状态（不含 Token）。
 
     **调用的下层 Service**：SystemService#getSystemAiSetting()。
   - `public SystemInfo.PracticeStrategy getPracticeStrategy()`
@@ -1524,7 +1527,7 @@
 
     **返回值结构**：无返回值（HTTP 200 空响应体）。
 
-    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可操作。
+    **权限**：@PreAuthorize("hasAuthority('system:ai')")——需要 AI 服务设置权限点。
 
     **调用的下层 Service**：SystemService#updateSystemInfo(SystemInfoRequest)。
   - `public PaginationResponse<RoleView> roles(RoleQuery query)`
@@ -1548,7 +1551,7 @@
 
     **返回值结构**：List（模块分组树）。
 
-    **权限**：@PreAuthorize("hasRole('admin')")——仅管理员可查。
+    **权限**：@PreAuthorize("hasAuthority('system:role:list')")——需要角色查看权限点。
   - `public void createRole(@RequestBody RoleRequest request)`
     添加系统角色。
     **HTTP 方法 + 完整路径**：POST ${api.prefix}/system/role/create （如 /api/system/role/create）。
@@ -1603,7 +1606,7 @@
 
     **返回值结构**：`List`（权限视图列表，含层级父子关系）。
 
-    **权限**：无 @PreAuthorize 注解（由全局安全规则控制）。
+    **权限**：@PreAuthorize("hasAuthority('system:role:list')")。
 
     **调用的下层 Service**：SystemService#getPermissions()。
   - `public void extractCodeDiffDbPermissions()`
@@ -1700,6 +1703,8 @@
     **请求参数**：username（GET 查询参数，登录用户名）。
 
     **返回值结构**：boolean——true 表示用户名已存在。
+
+    **权限**：@PreAuthorize("hasAuthority('system:user:create')")。
 
     **调用的下层 Service**：UserService#checkUsernameExist(String)。
   - `public PaginationResponse<PositionView> listPosition(PositionQuery query)`

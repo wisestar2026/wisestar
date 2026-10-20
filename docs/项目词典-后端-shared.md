@@ -270,7 +270,7 @@
 - 注解: 无（final 工具类 + 私有构造）
 - **类说明**：
   AI 分场景系统提示词目录。系统 AI 配置 `t_sys_info.ai_setting.prompts` 以本类 key 为键；某场景留空/未配置时回退内置默认，历史通用字段 `aiSetting.prompt` 仅作为「AI 问答」「学习轨迹·每日叙述」兜底。
-  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-25 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式）。
+  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-25 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式；示例句仅说明字段格式，禁止出现在生成结果中）。
 - 内部类型 `PromptMeta`（key/label/description/defaultPrompt，getter 访问，Jackson 可序列化）
 - 方法:
   - `public static List<PromptMeta> catalog()`
@@ -404,7 +404,7 @@
   后台系统权限点清单（权限树数据源）。
   角色权限管理（人事管理）模块使用：角色编辑页的权限树按功能模块分组展示 权限点，勾选结果以权限编码列表保存到 `t_role.authority`（逗号分隔）， 后端接口通过 `@PreAuthorize("hasAuthority('module:action')")` 拦截。
 
-  本类集中定义后台全部功能模块的权限点，是权限树、内置角色默认权限、 管理员全量权限的唯一权威清单。学员管理新增「学员档案」权限点：`student:archive`（查看/打印，归 admin/principal/teacher/consultant/academic）、`student:archive:edit`（编辑定稿，归 admin/teacher/consultant）。知识管理新增「出题策略」权限点：`knowledge:strategy`（归 admin/teacher/academic）。
+  本类集中定义后台全部功能模块的权限点，是权限树、内置角色默认权限、 管理员全量权限的唯一权威清单。学员管理新增「学员档案」权限点：`student:archive`（查看/打印，归 admin/principal/teacher/consultant/academic）、`student:archive:edit`（编辑定稿，归 admin/teacher/consultant）。知识管理新增「出题策略」权限点：`knowledge:strategy`（归 admin/teacher/academic）。权限树现为 13 个一级分组、92 个叶子权限点：新增「个人中心」(`user:update`)、「英语板块」(`english:unit|section|word|sentence|grammar:*` 与 `english:word:ai`)、系统管理「AI 服务设置」(`system:ai`)。`tree()` 与 `@PreAuthorize` 声明的权限点保持 1:1，无悬空权限点；内置角色默认权限仍由种子脚本 `t_role.authority` 收敛。
 - 方法:
   - `public Node()`
   - `public Node(String key, String name)`

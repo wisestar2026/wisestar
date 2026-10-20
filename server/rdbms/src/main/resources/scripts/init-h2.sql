@@ -1496,6 +1496,8 @@ UPDATE t_role SET authority = authority || ',campus:list' WHERE code IN ('admin'
 UPDATE t_role SET authority = authority || ',campus:create' WHERE code = 'admin' AND authority NOT LIKE '%campus:create%';
 UPDATE t_role SET authority = authority || ',campus:update' WHERE code = 'admin' AND authority NOT LIKE '%campus:update%';
 UPDATE t_role SET authority = authority || ',campus:delete' WHERE code = 'admin' AND authority NOT LIKE '%campus:delete%';
+-- AI 服务设置权限点收敛（幂等，避免旧库管理员缺 system:ai 权限点）
+UPDATE t_role SET authority = authority || ',system:ai' WHERE code = 'admin' AND authority NOT LIKE '%system:ai%';
 -- 学员档案权限点收敛（幂等，避免旧库角色缺 student:archive* 权限点）
 UPDATE t_role SET authority = authority || ',student:archive' WHERE code IN ('admin','principal','teacher','consultant','academic') AND authority NOT LIKE '%student:archive%';
 UPDATE t_role SET authority = authority || ',student:archive:edit' WHERE code IN ('admin','teacher','consultant') AND authority NOT LIKE '%student:archive:edit%';

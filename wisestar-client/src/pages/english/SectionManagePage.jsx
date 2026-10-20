@@ -20,6 +20,7 @@
 import { useEffect, useState } from 'react';
 import { Table, Space, Button, Input, Select, Modal, Form, message, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { usePermission } from '../../utils/usePermission';
 import { getSections, saveSection, deleteSection } from '../../api/englishAdmin';
 
 const { Title } = Typography;
@@ -29,6 +30,7 @@ const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五�
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 export default function SectionManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -130,8 +132,12 @@ export default function SectionManagePage() {
       width: 150,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
-          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          {can('english:section:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
+          )}
+          {can('english:section:delete') && (
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          )}
         </Space>
       ),
     },
@@ -142,7 +148,9 @@ export default function SectionManagePage() {
       <Title level={4}>小节管理</Title>
 
       <Space style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>
+        {can('english:section:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增小节</Button>
+        )}
       </Space>
 
       <Space wrap style={{ marginBottom: 16 }}>

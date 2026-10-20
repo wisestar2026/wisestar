@@ -33,7 +33,7 @@ public class StudentTaskApi {
      * @return 是否成功
      */
     @PostMapping("/assign")
-    @PreAuthorize("hasAuthority('student:task:assign')")
+    @PreAuthorize("hasAuthority('task:create')")
     public boolean assignTasks(@RequestBody StudentTaskDTO request) {
         String schoolId = ""; // TODO: 从登录用户获取学校 ID
         return taskService.assignTasks(schoolId, request);

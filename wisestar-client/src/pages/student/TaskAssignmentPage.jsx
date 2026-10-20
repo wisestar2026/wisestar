@@ -13,6 +13,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Form, Input, Select, Button, message, Card, Space, Table, Popconfirm, Tag } from 'antd';
 import { listStudents } from '../../api/student';
+import { usePermission } from '../../utils/usePermission';
 import {
   publishStudentTask,
   pageStudentTasks,
@@ -25,6 +26,7 @@ const STATUS_MAP = {
 };
 
 export default function TaskAssignmentPage() {
+  const { can } = usePermission();
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
 
@@ -133,9 +135,11 @@ export default function TaskAssignmentPage() {
       width: 100,
       render: (_, record) => (
         <Popconfirm title="确认撤回该任务？" onConfirm={() => handleDelete(record.id)}>
-          <Button type="link" danger size="small">
-            撤回
-          </Button>
+          {can('task:delete') && (
+            <Button type="link" danger size="small">
+              撤回
+            </Button>
+          )}
         </Popconfirm>
       ),
     },
@@ -205,9 +209,11 @@ export default function TaskAssignmentPage() {
           </Form.List>
 
           <Form.Item style={{ marginBottom: 0 }}>
-            <Button type="primary" loading={submitting} onClick={handlePublish}>
-              发布任务
-            </Button>
+            {can('task:create') && (
+              <Button type="primary" loading={submitting} onClick={handlePublish}>
+                发布任务
+              </Button>
+            )}
           </Form.Item>
         </Form>
       </Card>

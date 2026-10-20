@@ -20,11 +20,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, AutoComplete, Checkbox, Image, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, ReadOutlined } from '@ant-design/icons';
+import { usePermission } from '../../utils/usePermission';
 import { getSections, fillDictionary } from '../../api/englishAdmin';
 
 const API_BASE = '/api/english/word-manager';
 
 export default function WordManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -266,8 +268,12 @@ export default function WordManagePage() {
       width: 150,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
-          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          {can('english:word:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
+          )}
+          {can('english:word:delete') && (
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          )}
         </Space>
       ),
     },
@@ -277,25 +283,31 @@ export default function WordManagePage() {
     <div style={{ maxWidth: 1400, margin: '0 auto', padding: 20 }}>
       {/* 顶部工具栏 */}
       <Space style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增单词</Button>
-        <Upload
-          ref={uploadRef}
-          showUploadList={false}
-          accept=".xlsx,.xls,.csv"
-          beforeUpload={handleImport}
-          disabled={importing}
-        >
-          <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
-        </Upload>
+        {can('english:word:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增单词</Button>
+        )}
+        {can('english:word:import') && (
+          <Upload
+            ref={uploadRef}
+            showUploadList={false}
+            accept=".xlsx,.xls,.csv"
+            beforeUpload={handleImport}
+            disabled={importing}
+          >
+            <Button icon={<ImportOutlined />} loading={importing}>Excel 导入</Button>
+          </Upload>
+        )}
         <Button icon={<DownloadOutlined />} onClick={downloadTemplate}>下载模板</Button>
-        <Button
-          icon={<ReadOutlined />}
-          onClick={handleFillDictionary}
-          loading={filling}
-          disabled={!selectedRowKeys.length}
-        >
-          词典补全{selectedRowKeys.length ? `（${selectedRowKeys.length}）` : ''}
-        </Button>
+        {can('english:word:update') && (
+          <Button
+            icon={<ReadOutlined />}
+            onClick={handleFillDictionary}
+            loading={filling}
+            disabled={!selectedRowKeys.length}
+          >
+            词典补全{selectedRowKeys.length ? `（${selectedRowKeys.length}）` : ''}
+          </Button>
+        )}
       </Space>
 
       {/* 导入结果提示 */}

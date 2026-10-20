@@ -19,6 +19,7 @@
 import { useEffect, useState } from 'react';
 import { Table, Space, Button, Input, Select, Modal, Form, message, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { usePermission } from '../../utils/usePermission';
 import { getGrammars, saveGrammar, deleteGrammar } from '../../api/englishAdmin';
 
 const { Title } = Typography;
@@ -28,6 +29,7 @@ const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五�
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 export default function GrammarManagePage() {
+  const { can } = usePermission();
   const [list, setList] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -140,8 +142,12 @@ export default function GrammarManagePage() {
       width: 150,
       render: (_, record) => (
         <Space>
-          <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
-          <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          {can('english:grammar:update') && (
+            <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
+          )}
+          {can('english:grammar:delete') && (
+            <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)}>删除</Button>
+          )}
         </Space>
       ),
     },
@@ -152,7 +158,9 @@ export default function GrammarManagePage() {
       <Title level={4}>语法管理</Title>
 
       <Space style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增语法</Button>
+        {can('english:grammar:create') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>新增语法</Button>
+        )}
       </Space>
 
       <Space wrap style={{ marginBottom: 16 }}>
