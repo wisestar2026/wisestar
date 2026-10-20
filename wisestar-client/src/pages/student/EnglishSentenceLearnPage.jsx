@@ -231,7 +231,7 @@ export default function EnglishSentenceLearnPage() {
                 )}
               </div>
               <div className="eng-detail-tip">
-                本单元共 {sentences.length} 个重点句式，句子学习用 10~15 道连词成句做课本复习，句子练习再用 20~30 道分层题灵活运用
+                本单元共 {sentences.length} 个重点句式，句子学习用 10~15 道连词成句做课本复习，句子练习再用 20~25 道分层题灵活运用
               </div>
 
               <div className="eng-progress-grid">

@@ -131,15 +131,29 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			mergeExercises(learn, aiLearn);
 			learn = ensureLearnCoverage(learn, sentences);
 			if (learn.size() < LEARN_MIN) {
+				learn = expandLearnClauses(learn, sentences);
+			}
+			if (learn.size() < LEARN_MIN) {
 				learn = fillLearnFromPractice(learn, practice);
 			}
 			learn = sortLearn(learn);
 		}
+		learn = sanitizeExercises(learn);
+		learn = dedupeExercises(learn);
+		if (learn.size() < LEARN_MIN) {
+			learn = fillLearnFromPractice(learn, practice);
+		}
+		learn = sortLearn(learn);
 		practice = supplementFromLearn(practice, learn);
+		practice = sanitizeExercises(practice);
+		practice = dedupeExercises(practice);
+		practice = ensurePracticeKinds(practice, learn, sentences);
 		practice = sortPractice(practice);
 		if (practice.size() > PRACTICE_MAX) {
 			practice = new ArrayList<>(practice.subList(0, PRACTICE_MAX));
 		}
+		practice = ensurePracticeKinds(practice, learn, sentences);
+		practice = sortPractice(practice);
 
 		List<EnglishSentenceExercise> all = new ArrayList<>(learn);
 		all.addAll(practice);
@@ -321,6 +335,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		sb.append("\n要求：\n");
 		sb.append("1) 生成 10-15 道，覆盖 S1-S").append(sentences.size()).append(" 全部句式；\n");
 		sb.append("2) 以课本句式为骨架做替换练习：替换人物、物品、时间、地点，保持语法正确、符合小学").append(grade).append("水平；\n");
+		sb.append("2.1) 禁止直接照抄课本原句，每道英文必须与原句不同；\n");
 		sb.append("3) 每道题英文句至少使用 1 个单元核心词，句子长度由短到长，difficulty 1/2/3 递进；\n");
 		sb.append("4) zh 为完整中文句意，en 为正确英文句子，source 填对应句式编号；\n");
 		sb.append("5) en 只能包含英文、空格与英文标点，禁止中文、___ 或下划线占位；zh 必须完整翻译 en，不得省略主语或宾语；\n");
@@ -807,8 +822,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		List<EnglishSentenceExercise> result = new ArrayList<>();
 		for (EnglishSentenceExercise ex : list) {
 			String key = (ex.getStage() == null ? "" : ex.getStage()) + "|" + ex.getKind() + "|"
-					+ normalizeKey(ex.getEn() == null ? "" : ex.getEn()) + "|"
-					+ normalizeKey(ex.getAnswer() == null ? "" : ex.getAnswer());
+					+ normalizeKey(ex.getEn() == null ? "" : ex.getEn());
 			if (seen.containsKey(key)) {
 				continue;
 			}
@@ -911,6 +925,55 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 				dictation.setEn(s.getEn().trim());
 				dictation.setSentenceId(s.getId());
 				addIfAbsent(result, keys, dictation);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 学习题不足 10 道时，把含并列分句或双句的课本原句拆成分句练习，
+	 * 保证每个分句仍来自课本原句，避免为凑题量引入不可靠变式。
+	 */
+	private List<EnglishSentenceExercise> expandLearnClauses(List<EnglishSentenceExercise> learn,
+			List<EnglishSentence> sentences) {
+		List<EnglishSentenceExercise> result = new ArrayList<>(learn);
+		Map<String, Boolean> keys = new HashMap<>();
+		for (EnglishSentenceExercise ex : result) {
+			if (!isBlank(ex.getEn())) {
+				keys.put(normalizeKey(ex.getEn()), Boolean.TRUE);
+			}
+		}
+		for (EnglishSentence s : sentences) {
+			if (result.size() >= LEARN_MIN || isBlank(s.getEn()) || isBlank(s.getZh())) {
+				continue;
+			}
+			String[] enParts = s.getEn().trim().split("(?<=[.!?])\\s+|\\s*,\\s*(?=(?i:but|so|because)\\b)");
+			String[] zhParts = s.getZh().trim().split("(?<=[。！？])|(?=但是|所以|因为)");
+			if (enParts.length < 2 || enParts.length != zhParts.length) {
+				continue;
+			}
+			for (int i = 0; i < enParts.length && result.size() < LEARN_MIN; i++) {
+				String en = enParts[i].trim();
+				String zh = zhParts[i].trim();
+				if (en.isEmpty() || zh.isEmpty()) {
+					continue;
+				}
+				if (i > 0 && en.matches("^(but|so|because)\\b.*")) {
+					en = Character.toUpperCase(en.charAt(0)) + en.substring(1);
+				}
+				if (!isUsableSentence(en) || hasMultipleSentences(en) || keys.containsKey(normalizeKey(en))) {
+					continue;
+				}
+				EnglishSentenceExercise ex = new EnglishSentenceExercise();
+				ex.setStage("learn");
+				ex.setKind("build");
+				ex.setDifficulty(difficultyOf(en));
+				ex.setTheme("课本句式");
+				ex.setEn(en);
+				ex.setZh(zh);
+				ex.setSentenceId(s.getId());
+				keys.put(normalizeKey(en), Boolean.TRUE);
+				result.add(ex);
 			}
 		}
 		return result;
@@ -1192,6 +1255,158 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			}
 		}
 		return count;
+	}
+
+	/**
+	 * 填空题中文占位符用答案回填；其他题型中文含占位符无法还原，直接丢弃。
+	 */
+	private List<EnglishSentenceExercise> sanitizeExercises(List<EnglishSentenceExercise> list) {
+		List<EnglishSentenceExercise> result = new ArrayList<>();
+		for (EnglishSentenceExercise ex : list) {
+			String zh = ex.getZh();
+			if (isBlank(zh) || !zh.contains("_")) {
+				result.add(ex);
+				continue;
+			}
+			if ("fill".equals(ex.getKind()) && !isBlank(ex.getAnswer())
+					&& ex.getAnswer().trim().split("\\s+").length <= 3) {
+				ex.setZh(zh.replaceAll("_{2,}", java.util.regex.Matcher.quoteReplacement(ex.getAnswer().trim())));
+				result.add(ex);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 练习必须覆盖四种题型且各不少于 3 道；题量已达上限时用超配题型替换，避免突破 25 题。
+	 */
+	private List<EnglishSentenceExercise> ensurePracticeKinds(List<EnglishSentenceExercise> list,
+			List<EnglishSentenceExercise> learn, List<EnglishSentence> sentences) {
+		List<EnglishSentenceExercise> result = new ArrayList<>(list);
+		String[] kinds = {"choice", "fill", "build", "dictation"};
+		for (String kind : kinds) {
+			int guard = 0;
+			while (countKind(result, kind) < 3 && guard++ < 20) {
+				EnglishSentenceExercise added = buildKindExercise(kind, result, learn, sentences);
+				if (added == null) {
+					break;
+				}
+				if (result.size() < PRACTICE_MAX) {
+					result.add(added);
+					continue;
+				}
+				int replaceAt = findReplaceIndex(result);
+				if (replaceAt < 0) {
+					break;
+				}
+				result.remove(replaceAt);
+				result.add(added);
+			}
+		}
+		return result;
+	}
+
+	private EnglishSentenceExercise buildKindExercise(String kind, List<EnglishSentenceExercise> current,
+			List<EnglishSentenceExercise> learn, List<EnglishSentence> sentences) {
+		List<EnglishSentenceExercise> candidates = new ArrayList<>(learn);
+		for (EnglishSentence s : sentences) {
+			EnglishSentenceExercise ex = new EnglishSentenceExercise();
+			ex.setEn(s.getEn());
+			ex.setZh(s.getZh());
+			ex.setSentenceId(s.getId());
+			candidates.add(ex);
+		}
+		for (EnglishSentenceExercise source : candidates) {
+			if (!isUsableSentence(source.getEn()) || isBlank(source.getZh())
+					|| hasKindEn(current, kind, source.getEn())) {
+				continue;
+			}
+			int index = countKind(current, kind) + 1;
+			EnglishSentenceExercise ex = new EnglishSentenceExercise();
+			ex.setStage("practice");
+			ex.setKind(kind);
+			ex.setZh(source.getZh().trim());
+			ex.setEn(source.getEn().trim());
+			ex.setSentenceId(source.getSentenceId());
+			ex.setTheme("补充" + kindName(kind) + index);
+			if ("fill".equals(kind)) {
+				String word = pickFillWord(ex.getEn());
+				if (word == null) {
+					continue;
+				}
+				ex.setDifficulty(1);
+				ex.setAnswer(word);
+				ex.setStem(ex.getEn().replaceFirst("(?i)(?<![A-Za-z])"
+						+ java.util.regex.Pattern.quote(word) + "(?![A-Za-z])", "___"));
+				ex.setHint(word.substring(0, 1));
+				if (!ex.getStem().contains("___")) {
+					continue;
+				}
+			} else if ("choice".equals(kind)) {
+				List<String> options = new ArrayList<>();
+				options.add(ex.getEn());
+				addOption(options, current);
+				addOption(options, learn);
+				addOption(options, candidates);
+				if (options.size() < 4) {
+					continue;
+				}
+				ex.setDifficulty(1);
+				ex.setZh("哪句英文是“" + ex.getZh() + "”？");
+				ex.setAnswer(ex.getEn());
+				ex.setOptions(options);
+			} else if ("build".equals(kind)) {
+				ex.setDifficulty(2);
+			} else {
+				ex.setDifficulty(3);
+			}
+			return ex;
+		}
+		return null;
+	}
+
+	private void addOption(List<String> options, List<EnglishSentenceExercise> source) {
+		for (EnglishSentenceExercise ex : source) {
+			if (options.size() >= 4) {
+				return;
+			}
+			String en = ex.getEn();
+			if (isUsableSentence(en) && !options.contains(en.trim())) {
+				options.add(en.trim());
+			}
+		}
+	}
+
+	private boolean hasKindEn(List<EnglishSentenceExercise> list, String kind, String en) {
+		String key = kind + "|" + normalizeKey(en);
+		for (EnglishSentenceExercise ex : list) {
+			if (key.equals((ex.getKind() == null ? "" : ex.getKind()) + "|" + normalizeKey(ex.getEn()))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private int findReplaceIndex(List<EnglishSentenceExercise> list) {
+		for (int i = list.size() - 1; i >= 0; i--) {
+			if (countKind(list, list.get(i).getKind()) > 3) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	private String kindName(String kind) {
+		if ("choice".equals(kind)) {
+			return "选择";
+		}
+		if ("fill".equals(kind)) {
+			return "填空";
+		}
+		if ("build".equals(kind)) {
+			return "句式";
+		}
+		return "听写";
 	}
 
 	private void addIfAbsent(List<EnglishSentenceExercise> list, Map<String, Boolean> keys, EnglishSentenceExercise ex) {
