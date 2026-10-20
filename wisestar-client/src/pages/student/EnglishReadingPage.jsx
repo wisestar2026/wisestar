@@ -21,23 +21,142 @@ function percent(correct, total) {
   return total ? Math.round((correct / total) * 100) : 0;
 }
 
-// 短文按句换行返回；把连续句子合并成 2~4 个自然段，避免每句一段过于零碎
+// 句末标点必须位于引号之外才断句，避免把一段直接引语拆成两个残句
+function splitSentences(input) {
+  const value = String(input || '').replace(/\s+/g, ' ').trim();
+  const result = [];
+  if (!value) return result;
+  const isEnd = /[.!?]/;
+  const isStarter = /[A-Z0-9"“]/;
+  let start = 0;
+  let inQuote = false;
+  let pendingEnd = false;
+  for (let i = 0; i < value.length; i += 1) {
+    const ch = value[i];
+    if (ch === '“') {
+      inQuote = true;
+      continue;
+    }
+    if (ch === '”') inQuote = false;
+    else if (ch === '"') inQuote = !inQuote;
+    if (!inQuote && pendingEnd) {
+      let next = i + 1;
+      while (next < value.length && /\s/.test(value[next])) next += 1;
+      if (next >= value.length || isStarter.test(value[next])) {
+        result.push(value.slice(start, i + 1).trim());
+        start = next;
+        i = next - 1;
+      }
+      pendingEnd = false;
+      continue;
+    }
+    if (inQuote) {
+      if (isEnd.test(ch)) pendingEnd = true;
+      continue;
+    }
+    if (isEnd.test(ch)) {
+      let end = i;
+      while (end + 1 < value.length && /[.!?”")\]]/.test(value[end + 1])) end += 1;
+      let next = end + 1;
+      while (next < value.length && /\s/.test(value[next])) next += 1;
+      if (next >= value.length || isStarter.test(value[next])) {
+        result.push(value.slice(start, end + 1).trim());
+        start = next;
+        i = end;
+      } else {
+        i = end;
+      }
+    }
+  }
+  const tail = value.slice(start).trim();
+  if (tail) result.push(tail);
+  return result;
+}
+
+// 语义分段信号：转折、时间推进、场景切换优先成为新段开头
+const PARAGRAPH_STRONG_CUES = [
+  /^(But|However|Yet|Still|Instead|So|Therefore|As a result)\b/i,
+  /^(Then|Next|After that|Afterwards|Later|Finally|At last|In the end|From then on|From now on)\b/i,
+  /^(One (day|morning|afternoon|evening|night)|The next (day|morning|afternoon|evening)|That (day|morning|afternoon|evening))\b/i,
+  /^(Today|Now|Yesterday|Tomorrow|Last (week|weekend|month|year|summer|winter|spring|autumn))\b/i,
+  /^(Suddenly|Luckily|Unfortunately|To (his|her|their) surprise)\b/i,
+  /^(At|In|On) (the |his |her |their )?(school|classroom|home|park|zoo|shop|library|kitchen|garden|farm|hospital|street|playground|morning|afternoon|evening)\b/i,
+];
+const PARAGRAPH_SOFT_CUES = [/^(After|Before|When|As soon as|While)\b/i];
+const PARAGRAPH_STOP_WORDS = new Set(
+  'the a an and or but so to of in on at for with from by as is are was were be been being it its he she they them their his her our we you i my me us this that these those there here not no do does did can could will would should may might must have has had'
+    .split(' '),
+);
+
+function contentWords(sentence) {
+  const words = String(sentence || '').toLowerCase().match(/[a-z']+/g) || [];
+  return new Set(words.filter((word) => word.length > 2 && !PARAGRAPH_STOP_WORDS.has(word)));
+}
+
+function boundaryScore(sentences, index) {
+  const current = sentences[index];
+  let score = 0;
+  if (PARAGRAPH_STRONG_CUES.some((cue) => cue.test(current))) score += 3;
+  if (PARAGRAPH_SOFT_CUES.some((cue) => cue.test(current))) score += 1.2;
+  const previousWords = contentWords(sentences[index - 1]);
+  const currentWords = contentWords(current);
+  let shared = 0;
+  previousWords.forEach((word) => {
+    if (currentWords.has(word)) shared += 1;
+  });
+  const total = previousWords.size + currentWords.size - shared;
+  const overlap = total ? shared / total : 0;
+  if (overlap < 0.05) score += 0.8;
+  else if (overlap > 0.2) score -= 0.4;
+  if (/^(He|She|It|They|I|We|You|His|Her|Their|My|Our|This|That|These|Those)\b/i.test(current)) {
+    score -= 0.8;
+  }
+  if (/^["“]/.test(current)) score += 0.4;
+  return score;
+}
+
+// 以语义边界得分分段，每段 2~4 句，避免按固定句数机械切分
+function groupSentences(sentences) {
+  const total = sentences.length;
+  if (total <= 4) return [sentences.join(' ')];
+  const scores = new Array(total + 1).fill(-Infinity);
+  const previous = new Array(total + 1).fill(0);
+  scores[0] = 0;
+  for (let start = 0; start < total; start += 1) {
+    if (!Number.isFinite(scores[start])) continue;
+    for (let length = 2; length <= 4; length += 1) {
+      const end = start + length;
+      if (end > total || total - end === 1) continue;
+      let score = scores[start] - Math.abs(length - 3) * 0.35;
+      if (end < total) score += boundaryScore(sentences, end);
+      if (score > scores[end]) {
+        scores[end] = score;
+        previous[end] = start;
+      }
+    }
+  }
+  if (!Number.isFinite(scores[total])) return [sentences.join(' ')];
+  const ranges = [];
+  let cursor = total;
+  while (cursor > 0) {
+    ranges.push([previous[cursor], cursor]);
+    cursor = previous[cursor];
+  }
+  return ranges.reverse().map(([start, end]) => sentences.slice(start, end).join(' '));
+}
+
 function buildParagraphs(passage) {
-  const blocks = String(passage || '')
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
+  const raw = String(passage || '').replace(/\r\n?/g, '\n').trim();
+  if (!raw) return [];
+  const blocks = raw
+    .split(/\n\s*\n/)
+    .map((block) => block.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
-  if (blocks.length > 1) {
-    return blocks.map((block) => block.replace(/\n+/g, ' '));
-  }
-  const lines = (blocks[0] || '').split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  if (lines.length <= 3) return lines.length ? [lines.join(' ')] : [];
-  const perParagraph = Math.max(2, Math.ceil(lines.length / 4));
-  const paragraphs = [];
-  for (let i = 0; i < lines.length; i += perParagraph) {
-    paragraphs.push(lines.slice(i, i + perParagraph).join(' '));
-  }
-  return paragraphs;
+  if (blocks.length > 1) return blocks;
+  // 原文自带换行时保留作者段落；单行文本再按语义自动分段
+  const lines = raw.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length > 1) return lines;
+  return groupSentences(splitSentences(lines[0]));
 }
 
 export default function EnglishReadingPage() {

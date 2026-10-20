@@ -86,7 +86,7 @@
 .eng-read-zh-toggle:hover { background: #e9f4fc; }
 .eng-read-paragraph {
   margin: 0 0 18px; color: #2f343a; font-size: 17.5px; font-weight: 400;
-  line-height: 2.05; letter-spacing: 0.15px; word-spacing: 0.8px;
+  line-height: 2.05; letter-spacing: 0.15px; word-spacing: 0.8px; text-indent: 2em;
 }
 .eng-read-paragraph:last-of-type { margin-bottom: 0; }
 .eng-read-translation {
