@@ -3,7 +3,7 @@
  *
  * 题型:
  *   build     连词成句（给中文与正确英文，点词块拼句）
- *   dictation 句子默写（给中文，输入英文）
+ *   dictation 句子默写（给中文，按词数逐词填空）
  *   choice    句子选择（给中文题干，选正确英文句）
  *
  * 数据流:
@@ -26,14 +26,21 @@ import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../
 const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择', fill: '词汇填空' };
 const DIFFICULTY_LABELS = { 1: '基础', 2: '提高', 3: '挑战' };
 
-/** 默写提示：按原句词数生成下划线骨架（标点保留），帮助学员对齐词数 */
-function buildDictationSkeleton(sentence) {
+/** 默写分组：每个单词一个输入框，标点跟随前一个单词展示 */
+function buildDictationGroups(sentence) {
   const tokens = String(sentence || '').match(/[A-Za-z0-9][A-Za-z0-9'’-]*|[^A-Za-z0-9\s]/g) || [];
-  if (!tokens.length) return '';
-  return tokens
-    .map((token) => (/^[A-Za-z0-9]/.test(token) ? '_____' : token))
-    .join(' ')
-    .replace(/\s+([,.!?;:])/g, '$1');
+  const groups = [];
+  tokens.forEach((token) => {
+    if (/^[A-Za-z0-9]/.test(token)) {
+      groups.push({ word: token, prefix: '', suffix: '' });
+      return;
+    }
+    if (!groups.length) {
+      return;
+    }
+    groups[groups.length - 1].suffix += token;
+  });
+  return groups;
 }
 
 export default function EnglishSentenceExercise({ unit, version, grade, term, onBack }) {
@@ -48,8 +55,10 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   // 连词成句：词块池与已选
   const [pool, setPool] = useState([]);
   const [selected, setSelected] = useState([]);
-  // 句子默写：输入
+  // 句子默写：逐词输入；词汇填空：单框输入
   const [typed, setTyped] = useState('');
+  const [dictationWords, setDictationWords] = useState([]);
+  const dictationRefs = useRef([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +79,10 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   }, [unit, version, grade, term]);
 
   const current = exercises[index];
+  const dictationGroups = useMemo(
+    () => (current?.kind === 'dictation' ? buildDictationGroups(current.en) : []),
+    [current],
+  );
 
   // 切题时重置作答状态
   useEffect(() => {
@@ -77,12 +90,13 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     setFeedback(null);
     setSelected([]);
     setTyped('');
+    setDictationWords(dictationGroups.map(() => ''));
     if (current.kind === 'build') {
       setPool(shuffle(tokenizeSentence(current.en || '')));
     } else {
       setPool([]);
     }
-  }, [index, current]);
+  }, [index, current, dictationGroups]);
 
   const finished = !loading && exercises.length > 0 && index >= exercises.length;
 
@@ -116,14 +130,18 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     submit(answer);
   };
 
-  const handleDictationCheck = () => submit(typed);
+  const dictationComplete = dictationWords.length > 0
+    && dictationWords.every((word) => String(word || '').trim());
+  const handleDictationCheck = () => {
+    if (!dictationComplete) return;
+    const expected = dictationGroups.map((group) => group.word).filter(Boolean).join(' ');
+    const answer = dictationWords
+      .map((word) => String(word || '').replace(/[^A-Za-z0-9'’-]/g, ''))
+      .filter(Boolean)
+      .join(' ');
+    submit(answer, expected);
+  };
   const handleFillCheck = () => submit(typed, current?.answer);
-
-  const showDictationSkeleton = current?.kind === 'dictation' && (current.difficulty || 1) < 3;
-  const dictationSkeleton = useMemo(
-    () => (showDictationSkeleton ? buildDictationSkeleton(current.en) : ''),
-    [current, showDictationSkeleton],
-  );
 
   const optionList = useMemo(() => {
     if (current?.kind !== 'choice') return [];
@@ -217,20 +235,44 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
           </>
         )}
 
-        {/* 句子默写 */}
+        {/* 句子默写：一个单词一个透明下划线输入框 */}
         {current?.kind === 'dictation' && (
           <div style={{ margin: '4px 0 8px' }}>
-            {dictationSkeleton && (
-              <div className="eng-dictation-skeleton">按词数提示：{dictationSkeleton}</div>
-            )}
-            <Input
-              size="large"
-              placeholder={dictationSkeleton || '请写出英文句子'}
-              value={typed}
-              disabled={feedback === 'ok'}
-              onChange={(e) => setTyped(e.target.value)}
-              onPressEnter={handleDictationCheck}
-            />
+            <div className="eng-dictation-fields">
+              {dictationGroups.map((group, gi) => (
+                <span className="eng-dictation-item" key={`${group.word}-${gi}`}>
+                  {group.prefix && <span className="eng-dictation-punct">{group.prefix}</span>}
+                  {group.word && (
+                    <Input
+                      ref={(node) => { dictationRefs.current[gi] = node; }}
+                      className="eng-dictation-field"
+                      variant="underlined"
+                      value={dictationWords[gi] || ''}
+                      disabled={feedback === 'ok'}
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-label={`第 ${gi + 1} 个单词`}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^A-Za-z0-9'’-]/g, '');
+                        setDictationWords((prev) => {
+                          const next = [...prev];
+                          next[gi] = value;
+                          return next;
+                        });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === ' ' && dictationRefs.current[gi + 1]) {
+                          e.preventDefault();
+                          dictationRefs.current[gi + 1].focus();
+                        }
+                      }}
+                      onPressEnter={handleDictationCheck}
+                    />
+                  )}
+                  {group.suffix && <span className="eng-dictation-punct">{group.suffix}</span>}
+                </span>
+              ))}
+            </div>
             {current?.hint && <div className="eng-mod-sub" style={{ marginTop: 6 }}>提示：{current.hint}</div>}
           </div>
         )}
@@ -306,7 +348,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
               type="button"
               className="eng-btn eng-btn-primary"
               onClick={handleDictationCheck}
-              disabled={!typed.trim() || feedback === 'ok'}
+              disabled={!dictationComplete || feedback === 'ok'}
             >
               检查
             </button>

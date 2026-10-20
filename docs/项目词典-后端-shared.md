@@ -270,7 +270,7 @@
 - 注解: 无（final 工具类 + 私有构造）
 - **类说明**：
   AI 分场景系统提示词目录。系统 AI 配置 `t_sys_info.ai_setting.prompts` 以本类 key 为键；某场景留空/未配置时回退内置默认，历史通用字段 `aiSetting.prompt` 仅作为「AI 问答」「学习轨迹·每日叙述」兜底。
-  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-30 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式）。
+  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-25 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式）。
 - 内部类型 `PromptMeta`（key/label/description/defaultPrompt，getter 访问，Jackson 可序列化）
 - 方法:
   - `public static List<PromptMeta> catalog()`

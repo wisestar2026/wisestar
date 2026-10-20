@@ -352,7 +352,40 @@
   margin-bottom: 10px;
   line-height: 1.7;
 }
-.eng-dictation-skeleton { font-size: 14px; letter-spacing: 1px; color: #7aa0b2; font-weight: 600; margin-bottom: 6px; word-break: break-word; }
+.eng-dictation-fields {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 12px 8px;
+  margin: 18px 0 10px;
+}
+.eng-dictation-item { display: inline-flex; align-items: flex-end; gap: 1px; }
+.eng-dictation-field.ant-input,
+input.eng-dictation-field {
+  width: 92px;
+  padding: 4px 6px 7px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2f4b5a;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid #9fc7db !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.eng-dictation-field.ant-input:focus,
+input.eng-dictation-field:focus {
+  border-bottom-color: #2f9fd4 !important;
+  box-shadow: none !important;
+}
+.eng-dictation-punct {
+  padding-bottom: 6px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2f4b5a;
+}
 .eng-answer-slot {
   min-height: 60px;
   border: 2px dashed #b8dcee;
@@ -512,6 +545,9 @@
   .eng-quiz-image { max-width: 100%; max-height: 220px; }
   .eng-quiz-prompt-meaning { font-size: 24px; }
   .eng-hero { padding: 16px; }
+  .eng-dictation-field.ant-input,
+  input.eng-dictation-field { width: 68px; font-size: 16px; }
+  .eng-dictation-punct { font-size: 16px; }
 }
 @media (max-height: 820px) {
   .eng-card-word { min-height: 440px; }
@@ -823,6 +859,14 @@
 .eng-stage .eng-sentence-hint { font-size: 24px; }
 .eng-stage .eng-fill-stem { font-size: 24px; }
 .eng-stage .eng-answer-slot { min-height: 74px; padding: 14px; }
+.eng-stage .eng-dictation-field.ant-input,
+.eng-stage input.eng-dictation-field { width: 108px; font-size: 21px; border-bottom-width: 3px !important; }
+.eng-stage .eng-dictation-punct { font-size: 21px; }
+@media (max-width: 600px) {
+  .eng-stage .eng-dictation-field.ant-input,
+  .eng-stage input.eng-dictation-field { width: 76px; font-size: 18px; }
+  .eng-stage .eng-dictation-punct { font-size: 18px; }
+}
 .eng-stage .eng-token { font-size: 18px; padding: 11px 18px; }
 .eng-stage .eng-feedback { font-size: 18px; }
 .eng-stage .eng-learn-back { font-size: 16px; padding: 9px 18px; }

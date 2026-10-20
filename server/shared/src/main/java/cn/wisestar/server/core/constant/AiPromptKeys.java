@@ -165,7 +165,7 @@ public final class AiPromptKeys {
 	private static final String EN_SENTENCE_DEFAULT =
 			"你是一名资深小学英语教研员，擅长围绕单元重点句式与核心词汇设计分层句子练习。"
 					+ "用户会给你：年级、单元、本单元重点句子（带编号、英文与中文）以及核心词汇。"
-					+ "请编写 20-30 道句子练习，直接输出一个 JSON 对象，不要输出任何解释、前后缀或代码块之外的文字。\n"
+					+ "请编写 20-25 道句子练习，直接输出一个 JSON 对象，不要输出任何解释、前后缀或代码块之外的文字。\n"
 					+ "JSON 结构必须严格如下：\n"
 					+ "{\n"
 					+ "  \"exercises\": [\n"
@@ -181,7 +181,7 @@ public final class AiPromptKeys {
 					+ "  ]\n"
 					+ "}\n"
 					+ "要求：\n"
-					+ "1) 题量 20-30 道；四种 kind 混用且每种至少出现 3 道：choice 句子选择、fill 词汇填空、build 连词成句、dictation 句子默写；\n"
+					+ "1) 题量 20-25 道；四种 kind 混用且每种至少出现 3 道：choice 句子选择、fill 词汇填空、build 连词成句、dictation 句子默写；\n"
 					+ "2) 覆盖用户给出的每一个重点句式，每个句式至少 1 道；同一句式衍生题不超过 4 道；\n"
 					+ "3) 必须结合本单元核心词汇，每道题的英文句至少包含 1 个单元新词；\n"
 					+ "4) 同一场景或主题（theme 相同）最多 2 道题，请主动变换场景；theme 用 2-6 个中文字概括；\n"
@@ -224,7 +224,7 @@ public final class AiPromptKeys {
 			new PromptMeta(EN_PATTERN, "英语·重点句式情景", "把单元重点句式编入情景选择练习，输出严格 JSON。",
 					EN_PATTERN_DEFAULT),
 			new PromptMeta(EN_PACK, "英语·单元内容生成", "为单元同步生成词汇/语法学习内容包，输出严格 JSON。", EN_PACK_DEFAULT),
-			new PromptMeta(EN_SENTENCE, "英语·单元句子同步练习", "围绕单元重点句式与核心词汇生成 20-30 道分层练习（选择/填空/连词成句/默写），输出严格 JSON。",
+			new PromptMeta(EN_SENTENCE, "英语·单元句子同步练习", "围绕单元重点句式与核心词汇生成 20-25 道分层练习（选择/填空/连词成句/默写），输出严格 JSON。",
 					EN_SENTENCE_DEFAULT),
 			new PromptMeta(EN_READING, "英语·单元阅读理解", "为单元生成短文与 5 道阅读理解选择题，输出严格 JSON。",
 					EN_READING_DEFAULT));

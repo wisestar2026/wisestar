@@ -56,7 +56,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	private static final int PRACTICE_MIN = 20;
 
 	/** 句子练习最多题量 */
-	private static final int PRACTICE_MAX = 30;
+	private static final int PRACTICE_MAX = 25;
 
 	/** 补题目标题量 */
 	private static final int PRACTICE_TARGET = 24;
@@ -220,7 +220,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 			sb.append("\n");
 		}
 		sb.append("\n硬性要求：\n");
-		sb.append("1) 生成 20-30 道题，覆盖全部 S1-S").append(sentences.size()).append(" 句式，每个句式至少 1 道；\n");
+		sb.append("1) 生成 20-25 道题，覆盖全部 S1-S").append(sentences.size()).append(" 句式，每个句式至少 1 道；\n");
 		sb.append("2) kind 混用：choice/fill/build/dictation 四种都至少 3 道；\n");
 		sb.append("3) 每道题的英文句至少包含 1 个本单元核心词汇；\n");
 		sb.append("4) 同一 theme 最多 2 道题，请变换生活场景；\n");
