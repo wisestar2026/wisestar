@@ -3,6 +3,7 @@ package cn.wisestar.server.impl;
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
+import cn.wisestar.server.core.uitls.EnglishDifficultyUtil;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceExercise;
 import cn.wisestar.server.domain.dto.english.EnglishSentencePackQuery;
@@ -143,19 +144,19 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		if (learn.size() < LEARN_MIN) {
 			learn = fillLearnFromPractice(learn, practice);
 		}
-		recalibrateDifficulty(learn);
+		recalibrateDifficulty(learn, grade);
 		learn = sortLearn(learn);
 		practice = supplementFromLearn(practice, learn);
 		practice = sanitizeExercises(practice);
 		practice = dedupeExercises(practice);
 		practice = ensurePracticeKinds(practice, learn, sentences);
-		recalibrateDifficulty(practice);
+		recalibrateDifficulty(practice, grade);
 		practice = sortPractice(practice);
 		if (practice.size() > PRACTICE_MAX) {
 			practice = new ArrayList<>(practice.subList(0, PRACTICE_MAX));
 		}
 		practice = ensurePracticeKinds(practice, learn, sentences);
-		recalibrateDifficulty(practice);
+		recalibrateDifficulty(practice, grade);
 		practice = sortPractice(practice);
 
 		List<EnglishSentenceExercise> all = new ArrayList<>(learn);
@@ -1606,44 +1607,38 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	}
 
 	/**
-	 * 题型本身决定难度下限：选择题以识别为主，填空/连词成句/默写都要求主动产出。
-	 * 内容难度再叠加句子长度、句数、转折因果和时态复杂度，最终取两者较高值。
+	 * 题型本身决定作答方式：选择为识别，填空为有提示产出，连词成句/默写为完整产出。
+	 * 具体得分统一委托 {@link EnglishDifficultyUtil}。
 	 */
 	private int difficultyOf(String kind, String en) {
-		int formLevel = "choice".equals(kind) ? 1 : 2;
-		int contentLevel = 1;
-		int words = wordCount(en);
-		if (words >= 14) {
-			contentLevel = 3;
-		} else if (words >= 8) {
-			contentLevel = 2;
-		}
-		String lower = en == null ? "" : en.toLowerCase(Locale.ROOT);
-		int clauses = 0;
-		for (int i = 0; i < lower.length(); i++) {
-			char c = lower.charAt(i);
-			if (c == '.' || c == '?' || c == '!') {
-				clauses++;
-			}
-		}
-		if (clauses > 1 && words >= 10) {
-			contentLevel++;
-		}
-		if (lower.matches(".*\\b(because|although|but|so|or)\\b.*")) {
-			contentLevel++;
-		}
-		if (lower.matches(".*\\b(was|were|went|bought|saw|had|did|made|took|gave|came|ate|drank|wrote|rode|flew|swam|ran|sang|taught|thought|caught)\\b.*")
-				|| lower.contains("going to") || lower.contains("will ") || lower.contains("more ")
-				|| lower.contains("most ")) {
-			contentLevel++;
-		}
-		contentLevel = Math.min(3, contentLevel);
-		return Math.max(formLevel, contentLevel);
+		return difficultyOf(kind, en, null, null, null);
+	}
+
+	private int difficultyOf(EnglishSentenceExercise ex, String grade) {
+		int blanks = "fill".equals(ex.getKind()) ? EnglishDifficultyUtil.countBlanks(ex.getStem()) : 0;
+		return difficultyOf(ex.getKind(), ex.getEn(), ex.getAnswer(), ex.getOptions(), grade, blanks);
+	}
+
+	private int difficultyOf(String kind, String en, String answer, List<String> options, String grade) {
+		return difficultyOf(kind, en, answer, options, grade, EnglishDifficultyUtil.countBlanks(en));
+	}
+
+	private int difficultyOf(String kind, String en, String answer, List<String> options, String grade,
+			int blanks) {
+		EnglishDifficultyUtil.Demand demand = "choice".equals(kind) ? EnglishDifficultyUtil.Demand.RECOGNITION
+				: "fill".equals(kind) ? EnglishDifficultyUtil.Demand.CUED
+						: EnglishDifficultyUtil.Demand.FULL;
+		return EnglishDifficultyUtil.evaluate(en, answer, grade, demand, blanks, options,
+				"choice".equals(kind) ? answer : null).getLevel();
 	}
 
 	private void recalibrateDifficulty(List<EnglishSentenceExercise> list) {
+		recalibrateDifficulty(list, null);
+	}
+
+	private void recalibrateDifficulty(List<EnglishSentenceExercise> list, String grade) {
 		for (EnglishSentenceExercise ex : list) {
-			ex.setDifficulty(difficultyOf(ex.getKind(), ex.getEn()));
+			ex.setDifficulty(difficultyOf(ex, grade));
 		}
 	}
 
@@ -1709,7 +1704,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 				for (JsonNode node : arr) {
 					exercises.add(objectMapper.treeToValue(node, EnglishSentenceExercise.class));
 				}
-				recalibrateDifficulty(exercises);
+				recalibrateDifficulty(exercises, pack.getGrade());
 				pack.setContent(writeExercises(exercises));
 				pack.setCount(exercises.size());
 				packMapper.updateById(pack);

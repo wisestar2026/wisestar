@@ -46,7 +46,7 @@ import {
   ExportOutlined, SearchOutlined, PictureOutlined, CheckCircleOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { listTemplate, createTemplate, updateTemplate, deleteTemplate, listTemplateTag } from '../../api/template';
+import { listTemplate, getTemplate, createTemplate, updateTemplate, deleteTemplate, listTemplateTag } from '../../api/template';
 import { listRepo, exportTemplate } from '../../api/repo';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
 import ImportModal from '../../components/question/ImportModal';
@@ -121,8 +121,23 @@ export default function QuestionListPage({ lockedSubject }) {
   const fetchData = useCallback(async (p = page) => {
     setLoading(true);
     try {
+      // 题目 ID 精确搜索：题目管理原先只按名称模糊查，无法用 ID 定位
+      const kw = keyword.trim();
+      if (/^\d{15,20}$/.test(kw)) {
+        try {
+          const res = await getTemplate({ id: kw });
+          const record = res.data;
+          setData(record ? [record] : []);
+          setTotal(record ? 1 : 0);
+        } catch {
+          setData([]);
+          setTotal(0);
+          message.warning('未找到该题目 ID');
+        }
+        return;
+      }
       const params = { current: p, pageSize };
-      if (keyword.trim()) params.name = keyword.trim();                    // 名称模糊搜索
+      if (kw) params.name = kw;                                            // 名称模糊搜索
       if (filterType) params.questionType = filterType;                    // 题型过滤
       if (filterRepoId) params.repoId = filterRepoId;                      // 练习过滤
       params.subject = (lockedSubject || filterSubject.trim()) || undefined; // 学科过滤（锁定学科优先）
@@ -385,10 +400,10 @@ export default function QuestionListPage({ lockedSubject }) {
       {/* 各筛选条件 + 重置 + 批量删除；所有 Input/Select onChange 都同时 setPage(1)，
           保证筛选生效后回到第 1 页（避免停在无数据的深页码） */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-        {/* 名称搜索 */}
+        {/* 名称 / 题目ID 搜索 */}
         <Input
           prefix={<SearchOutlined />}
-          placeholder="搜索题目名称"
+          placeholder="搜索题目名称或题目ID"
           value={keyword}
           onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
           style={{ width: 240 }}

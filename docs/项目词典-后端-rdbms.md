@@ -999,7 +999,7 @@
 - 注解: @Slf4j, @Service
 - **类说明**：
   英语单元句子题内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取重点句子，生成练习 20-25 题（`choice/fill/build/dictation` 各不少于 3）与学习 10-15 题（课本句式 `build`）；练习不足时用课本句式与学习题补足，同一 `theme` 最多 2 题。练习排序截断后再次校验题型配额，超配题型可替换为缺项；学习不足 10 题时先拆课本原句分句，再从练习补足。`fill` 锚定课本原句并重算 `stem`/首字母提示/中文；`savePack` 按业务键覆盖保存，学员端 `getExercises(...,stage)` 按阶段读取，无内容返回空列表，不触发 AI。
-  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一按「题型形式下限 + 内容复杂度」重算：`choice` 下限 D1，`fill/build/dictation` 下限 D2，内容按英文词数、句数、转折因果与时态叠加取较高值；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 可对全部内容包幂等重算难度。
+  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一委托 `EnglishDifficultyUtil` 重算：`choice` 按识别类、`fill` 按有提示产出、`build/dictation` 按完整产出，再叠加英文长度、从句/转折/情态/被动/比较级、答案词数、空位数与选项干扰；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 按内容包年级对全部内容包幂等重算难度。
 - 常量: `SENTENCE_GROUP_SIZE=6`、`DEFAULT_MODEL=deepseek-chat`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`
@@ -1114,7 +1114,7 @@
 - 类型: `class EnglishFusionQuestionFactory`
 - 注解: @Component, @RequiredArgsConstructor
 - **类说明**：
-  英语单元融合题派生器。不调用 AI、不依赖管理端重新生成内容包，直接读取本单元 `t_english_sentence` / `t_english_word` / `t_english_grammar`：单词模块从原句挖核心词并生成四词词库的选词填空（排除缩写与功能词），题干首行为「选词填空：选择合适的单词补全句子。（词1 / 词2 / 词3 / 词4）」，次行为加粗的英文句子与中文提示；句式模块生成原句短语挖空、换人称改写与情景选原句；语法模块从语法点 `examples` 挖 be/do/情态/冠词/介词/代词/动词形式生成单选。词汇/语用类 `FillBlank` 难度至少 D2；句子内容难度按词数阈值 ≤7→D1、≤13→D2、其余 D3。题目标识 `contentKey=fusion:{type}:{version}:{grade}:{term}:{unit}:{sourceId}:{hash}`，只依赖稳定 ID 与源内容，保证组卷与交卷可重复对齐。
+  英语单元融合题派生器。不调用 AI、不依赖管理端重新生成内容包，直接读取本单元 `t_english_sentence` / `t_english_word` / `t_english_grammar`：单词模块从原句挖核心词并生成四词词库的选词填空（排除缩写与功能词），题干首行为「选词填空：选择合适的单词补全句子。（词1 / 词2 / 词3 / 词4）」，次行为加粗的英文句子与中文提示；句式模块生成原句短语挖空、换人称改写与情景选原句；语法模块从语法点 `examples` 挖 be/do/情态/冠词/介词/代词/动词形式生成单选。词汇/语用类 `FillBlank`、语法变形按产出类评分；难度统一委托 `EnglishDifficultyUtil`，按年级长度阈值、句子复杂度、答案形式与选项干扰综合计算，不再只按词数切档。题目标识 `contentKey=fusion:{type}:{version}:{grade}:{term}:{unit}:{sourceId}:{hash}`，只依赖稳定 ID 与源内容，保证组卷与交卷可重复对齐。
 - 方法:
   - `public List<DerivedQuestion> build(String version, String grade, String term, String unit)`
     返回该单元可派生的单词/句式/语法题；无句子数据或源内容不足时返回空列表。
@@ -1723,6 +1723,17 @@
   - `public void deleteTask(TaskRequest request)`
   - `public List<StudentTaskView> studentTasks(String taskDate)`
 
+### `rdbms/src/main/java/cn/wisestar/server/core/uitls/EnglishDifficultyUtil.java`
+- 包: `cn.wisestar.server.core.uitls`
+- 类型: `final class EnglishDifficultyUtil`
+- **类说明**：
+  英语题目难度统一评分器，供题目模板、句子内容包、融合题共用。`Demand` 区分识别（选择/判断）、有提示产出（填空）、应用（语法变形/人称改写）、完整产出（连词成句/默写）四类基础分；长度按一~四年级与高年级分档，叠加从句、转折因果、情态、被动、比较级、多句、超长文本与长词加分，产出类再叠加答案词数与空位数，识别类叠加选项数量与近义干扰项。中文译文及全角括号注释在分析前剔除，避免译文数字与英文被重复计数。得分映射 5 档（D1~D5），对外输出三档：D1 简单、D2~D3 中等、D4~D5 困难。
+- 方法:
+  - `public static Result evaluate(String title, String answer, String grade, Demand demand, int blankCount, List<String> options, String correctOptionText)`
+    返回 `Result`，含 `getScore()`、`getRank()`、`getLevel()`、`getDLevel()`、`getLabel()`。
+  - `public static List<String> words(String text)`
+    提取英文/数字词，中文与标点不计数。
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/TemplateServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class TemplateServiceImpl`
@@ -1754,7 +1765,7 @@
   - `public TemplateView getTemplate(TemplateQuery query)`
     查询单个题目模板详情（含当前用户的错题本信息回填）。
   - `public int recalibrateEnglishDifficulty()`
-    按「题型形式下限 + 内容复杂度」重算全部英语题目难度，同步 `t_template.difficulty` 与 `template.attribute.difficulty`；填空/多空/简答至少中等，内容按英文词数、句数、转折因果与时态叠加取较高值。
+    重算全部英语题目难度，同步 `t_template.difficulty` 与 `template.attribute.difficulty`；统一委托 `EnglishDifficultyUtil`，按题型作答方式、年级长度阈值、句子复杂度、答案词数/空位数与选项干扰综合评分，输出 easy/medium/hard。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/UserBookServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

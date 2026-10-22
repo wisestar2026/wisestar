@@ -1,5 +1,6 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.core.uitls.EnglishDifficultyUtil;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import cn.wisestar.server.domain.model.EnglishGrammar;
 import cn.wisestar.server.domain.model.EnglishSentence;
@@ -203,7 +204,7 @@ public class EnglishFusionQuestionFactory {
 				String title = "选词填空：选择合适的单词补全句子。（" + String.join(" / ", bank) + "）\n"
 						+ blanked + " （" + zh + "）";
 				result.add(new DerivedQuestion(key, "单词", unit + "·单词", "选词填空",
-						"词汇", "理解", difficultyAtLeast(part, "D2"), title, SurveySchema.QuestionType.FillBlank,
+						"词汇", "理解", difficulty(part, grade, EnglishDifficultyUtil.Demand.CUED, bank, target), title, SurveySchema.QuestionType.FillBlank,
 						target, null, null, "根据句意和词库选择正确的单词。"));
 				index++;
 				// 每个句子最多派生两道单词题，避免同一句反复挖空。
@@ -217,7 +218,7 @@ public class EnglishFusionQuestionFactory {
 							String secondTitle = "选词填空：选择合适的单词补全句子。（" + String.join(" / ", secondBank) + "）\n"
 									+ secondBlanked + " （" + zh + "）";
 							result.add(new DerivedQuestion(secondKey, "单词", unit + "·单词", "选词填空",
-									"词汇", "理解", difficultyAtLeast(part, "D2"), secondTitle,
+									"词汇", "理解", difficulty(part, grade, EnglishDifficultyUtil.Demand.CUED, secondBank, second), secondTitle,
 									SurveySchema.QuestionType.FillBlank, second, null, null,
 									"根据句意和词库选择正确的单词。"));
 						}
@@ -335,7 +336,7 @@ public class EnglishFusionQuestionFactory {
 			for (String part : splitSentences(sentence.getEn())) {
 				String key = contentKey("pattern-cloze", version, grade, term, unit, sentence.getId(), part);
 				if (keys.add(key)) {
-					DerivedQuestion cloze = phraseCloze(key, unit, part, sentence.getZh());
+					DerivedQuestion cloze = phraseCloze(key, grade, unit, part, sentence.getZh());
 					if (cloze != null) {
 						result.add(cloze);
 					}
@@ -343,7 +344,7 @@ public class EnglishFusionQuestionFactory {
 				String personKey = contentKey("pattern-person", version, grade, term, unit,
 						sentence.getId(), part);
 				if (keys.add(personKey)) {
-					DerivedQuestion person = personQuestion(personKey, unit, part, unitWords);
+					DerivedQuestion person = personQuestion(personKey, grade, unit, part, unitWords);
 					if (person != null) {
 						result.add(person);
 					}
@@ -360,7 +361,7 @@ public class EnglishFusionQuestionFactory {
 				if (!keys.add(key)) {
 					continue;
 				}
-				DerivedQuestion choose = sceneChoice(key, unit, part, sentence.getZh(), originals);
+				DerivedQuestion choose = sceneChoice(key, grade, unit, part, sentence.getZh(), originals);
 				if (choose != null) {
 					result.add(choose);
 					choiceCount++;
@@ -370,7 +371,7 @@ public class EnglishFusionQuestionFactory {
 		return result;
 	}
 
-	private DerivedQuestion phraseCloze(String key, String unit, String sentence, String zh) {
+	private DerivedQuestion phraseCloze(String key, String grade, String unit, String sentence, String zh) {
 		String phrase = phraseToBlank(sentence);
 		if (!StringUtils.hasText(phrase)) {
 			return null;
@@ -382,7 +383,7 @@ public class EnglishFusionQuestionFactory {
 		String cue = StringUtils.hasText(zh) ? zh.trim() : "补全句子";
 		String title = "原句挖空：根据中文提示补全句子。\n" + blanked + "\n（" + cue + "）";
 		return new DerivedQuestion(key, "句式", unit + "·句式", "原句挖空",
-				"语用", "理解", difficultyAtLeast(sentence, "D2"), title, SurveySchema.QuestionType.FillBlank,
+				"语用", "理解", difficulty(sentence, grade, EnglishDifficultyUtil.Demand.CUED, null, phrase), title, SurveySchema.QuestionType.FillBlank,
 				phrase, null, null, "回看单元原句，注意固定搭配和语序。");
 	}
 
@@ -405,7 +406,7 @@ public class EnglishFusionQuestionFactory {
 		return null;
 	}
 
-	private DerivedQuestion personQuestion(String key, String unit, String sentence,
+	private DerivedQuestion personQuestion(String key, String grade, String unit, String sentence,
 			Map<String, EnglishWord> unitWords) {
 		if (sentence.length() < 6 || sentence.endsWith("?") || sentence.endsWith("？")) {
 			return null;
@@ -461,11 +462,11 @@ public class EnglishFusionQuestionFactory {
 		String title = "换人称改写：把原句中的 " + subject + " 换成 " + targetSubject
 				+ "，填写正确的动词形式。\n原句：" + sentence.trim() + "\n改写：" + blanked;
 		return new DerivedQuestion(key, "句式", unit + "·句式", "换人称改写",
-				"语法", "应用", "D2", title, SurveySchema.QuestionType.FillBlank,
+				"语法", "应用", difficulty(sentence, grade, EnglishDifficultyUtil.Demand.APPLICATION, null, answer), title, SurveySchema.QuestionType.FillBlank,
 				answer, null, null, hint);
 	}
 
-	private DerivedQuestion sceneChoice(String key, String unit, String sentence, String zh,
+	private DerivedQuestion sceneChoice(String key, String grade, String unit, String sentence, String zh,
 			List<String> originals) {
 		List<String> options = new ArrayList<>();
 		options.add(sentence);
@@ -484,7 +485,7 @@ public class EnglishFusionQuestionFactory {
 		String cue = StringUtils.hasText(zh) ? zh.trim() : "选出符合情景的句子";
 		String title = "情景选原句：想表达“" + cue + "”时，应该用哪句英文？";
 		return new DerivedQuestion(key, "句式", unit + "·句式", "情景选原句",
-				"语用", "应用", "D1", title, SurveySchema.QuestionType.Radio,
+				"语用", "应用", difficulty(sentence, grade, EnglishDifficultyUtil.Demand.RECOGNITION, options, sentence), title, SurveySchema.QuestionType.Radio,
 				sentence, null, options, "回到单元原句，找到与中文意思对应的表达。");
 	}
 
@@ -506,7 +507,7 @@ public class EnglishFusionQuestionFactory {
 					}
 					String keyBase = contentKey("grammar", version, grade, term, unit,
 							grammar.getId(), String.valueOf(index++));
-					for (DerivedQuestion question : grammarCloze(keyBase, unit, grammar.getTitle(), sentence)) {
+					for (DerivedQuestion question : grammarCloze(keyBase, grade, unit, grammar.getTitle(), sentence)) {
 						if (keys.add(question.key())) {
 							result.add(question);
 						}
@@ -520,7 +521,8 @@ public class EnglishFusionQuestionFactory {
 	/**
 	 * 一句语法例句可安全挖多个语法点，最多派生 3 题，避免「语法」模块只有例句条数那么多题。
 	 */
-	private List<DerivedQuestion> grammarCloze(String keyBase, String unit, String grammarTitle, String sentence) {
+	private List<DerivedQuestion> grammarCloze(String keyBase, String grade, String unit, String grammarTitle,
+			String sentence) {
 		List<DerivedQuestion> result = new ArrayList<>();
 		if (!StringUtils.hasText(grammarTitle)) {
 			return result;
@@ -594,7 +596,7 @@ public class EnglishFusionQuestionFactory {
 			// 题干隐藏语法点，避免直接提示答案；语法点只在交卷后的答案解析中展示
 			String questionTitle = "选词填空，选出合适的单词填入空中。\n" + blanked;
 			result.add(new DerivedQuestion(key, "语法", unit + "·语法", "语法变形",
-					"语法", "应用", "D2", questionTitle, SurveySchema.QuestionType.Radio,
+					"语法", "应用", difficulty(blanked, grade, EnglishDifficultyUtil.Demand.APPLICATION, options, token), questionTitle, SurveySchema.QuestionType.Radio,
 					token, null, options, "语法点：" + title + "。结合该语法点判断正确形式。"));
 		}
 		return result;
@@ -813,20 +815,10 @@ public class EnglishFusionQuestionFactory {
 		return lower + "ed";
 	}
 
-	private String difficultyAtLeast(String sentence, String floor) {
-		String level = difficulty(sentence);
-		return level.compareTo(floor) < 0 ? floor : level;
-	}
-
-	private String difficulty(String sentence) {
-		int words = sentence == null ? 0 : sentence.trim().split("\\s+").length;
-		if (words <= 7) {
-			return "D1";
-		}
-		if (words <= 13) {
-			return "D2";
-		}
-		return "D3";
+	private String difficulty(String sentence, String grade, EnglishDifficultyUtil.Demand demand,
+			List<String> options, String answer) {
+		return EnglishDifficultyUtil.evaluate(sentence, answer, grade, demand,
+				EnglishDifficultyUtil.countBlanks(sentence), options, null).getDLevel();
 	}
 
 	private String contentKey(String type, String version, String grade, String term, String unit,
