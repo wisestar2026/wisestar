@@ -634,7 +634,7 @@ input.eng-dictation-field:focus {
   border: none;
   background: #ffffff;
   border-radius: 18px;
-  padding: 20px 10px;
+  padding: 14px 10px 12px;
   font-size: 18px;
   font-weight: 800;
   color: #2b6c8f;
@@ -649,6 +649,34 @@ input.eng-dictation-field:focus {
   box-shadow: 0 8px 18px rgba(75, 183, 232, 0.35);
 }
 .eng-aside-name { display: block; line-height: 1.3; word-break: break-word; }
+/* 单元达成进度（星级 + 百分比 + 细进度条，口径同数学章节学习完成度） */
+.eng-aside-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 6px;
+  line-height: 1;
+}
+.eng-aside-pct { font-size: 11px; font-weight: 700; color: #3d7fa0; white-space: nowrap; }
+.eng-aside-track {
+  display: block;
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: rgba(61, 127, 160, 0.16);
+  overflow: hidden;
+}
+.eng-aside-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4bb7e8, #2f9fd4);
+  transition: width 0.3s ease;
+}
+.eng-aside-item.active .eng-aside-pct { color: #f0fbff; }
+.eng-aside-item.active .eng-aside-track { background: rgba(255, 255, 255, 0.34); }
+.eng-aside-item.active .eng-aside-fill { background: #ffffff; }
 .eng-aside-badge {
   position: absolute;
   top: -7px;
