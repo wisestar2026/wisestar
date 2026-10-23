@@ -2,7 +2,9 @@
  * HandRaiseButton.jsx - 学员题目页「举手」悬浮按钮
  *
  * 功能:
- *   1. 仅在题目页（KnowledgePage 逐题答题态）渲染，固定于右下角
+ *   1. 仅在题目页（KnowledgePage/英语练习页逐题答题态）渲染，固定于右下角
+ *      右下角悬浮层从下往上依次是：问小鲸（bottom 26，92 高）、
+ *      虚拟键盘开关（bottom 132，48 高）、举手（bottom 190，64 高），三者互不遮挡
  *   2. 点击弹出三个选项：寻求老师讲解 / 此题题干有误 / 此题答案有误
  *   3. 可填写补充说明，提交时把题目快照（题干、题型、知识点四维、选项、当前作答）一并上传
  *      → POST /api/hand-raise/create
@@ -168,7 +170,8 @@ export default function HandRaiseButton({
         style={{
           position: 'fixed',
           right: 28,
-          bottom: 96,
+          // 从下往上：问小鲸 26/92、虚拟键盘开关 132/48，举手放最上层，保证三者不重叠
+          bottom: 190,
           zIndex: 1200,
           width: 64,
           height: 64,
