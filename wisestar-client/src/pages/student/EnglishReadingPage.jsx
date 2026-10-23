@@ -4,7 +4,7 @@
  * 功能:
  *   1. 按当前版本/年级/册别/单元加载阅读理解（后端首次生成并缓存）
  *   2. 蓝色背景短文卡片，支持展开中文参考译文
- *   3. 5 道选择题逐题作答，提交后即时判分并展示解析
+ *   3. 5 道选择题逐题作答，提交后即时判分并展示解析；结果上报练习记录（最高分/上次/错题本）
  *
  * URL: /student/english/reading?unit=xxx
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心模块卡
@@ -14,8 +14,44 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishReading } from '../../api/englishStudent';
+import {
+  getEnglishPracticeLast,
+  getEnglishReading,
+  recordEnglishPractice,
+} from '../../api/englishStudent';
+import { PracticeRecordModal } from '../../components/student/EnglishPracticeResult';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import './EnglishReadingPage.css';
+import './KnowledgeDetectPage.css';
+
+/** 题目内容键：同一单元内按「篇号-题号」稳定生成 */
+function readingKey(unit, articleNo, index) {
+  return `reading:${unit}:${articleNo}:${index + 1}`;
+}
+
+/** 选项字母 */
+function letter(index) {
+  return String.fromCharCode(65 + index);
+}
+
+/** 阅读题转成举手/错题本可用的题目视图（单选 + 选项） */
+function toQuestionView(unit, articleNo, index, q) {
+  const key = readingKey(unit, articleNo, index);
+  const options = q.options || [];
+  return {
+    id: key,
+    name: q.stem || '',
+    questionType: 'Radio',
+    tag: ['阅读理解', unit],
+    schema: {
+      id: key,
+      title: q.stem || '',
+      type: 'Radio',
+      attribute: options[q.answerIndex] ? { examCorrectAnswer: options[q.answerIndex] } : {},
+      children: options.map((title, i) => ({ id: `${key}#${i}`, title, type: 'Option' })),
+    },
+  };
+}
 
 function percent(correct, total) {
   return total ? Math.round((correct / total) * 100) : 0;
@@ -174,6 +210,12 @@ export default function EnglishReadingPage() {
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [showZh, setShowZh] = useState(false);
+  const [lastAnswered, setLastAnswered] = useState(0);
+  const [summary, setSummary] = useState(null);
+  const [lastOpen, setLastOpen] = useState(false);
+  const [lastLoading, setLastLoading] = useState(false);
+  const [lastRecord, setLastRecord] = useState(null);
+  const startedAtRef = useRef(Date.now());
   const wrapRef = useRef(null);
 
   // 用实际可用高度约束整页：顶部通栏和底部导航留白之外全部给两栏容器，
@@ -216,6 +258,10 @@ export default function EnglishReadingPage() {
     setAnswers({});
     setSubmitted(false);
     setShowZh(false);
+    setSummary(null);
+    setLastAnswered(0);
+    setLastRecord(null);
+    startedAtRef.current = Date.now();
     getEnglishReading({ version, grade, term, unit })
       .then((res) => {
         const list = Array.isArray(res?.data) ? res.data : (res?.data ? [res.data] : []);
@@ -238,10 +284,46 @@ export default function EnglishReadingPage() {
     setAnswers({});
     setSubmitted(false);
     setShowZh(false);
+    setSummary(null);
+    setLastAnswered(0);
+    setLastRecord(null);
+    startedAtRef.current = Date.now();
   };
   const correctCount = questions.reduce(
     (sum, q, index) => sum + (answers[index] === q.answerIndex ? 1 : 0), 0,
   );
+
+  // 前端口头判分后上报：后端只保存得分与错题，不再生成诊断报告
+  const reportPractice = (articleNo) => {
+    const items = questions.map((q, qi) => {
+      const key = readingKey(unit, articleNo, qi);
+      const options = q.options || [];
+      const picked = answers[qi];
+      const correct = picked === q.answerIndex ? 1 : 0;
+      return {
+        questionId: key,
+        questionType: 'Radio',
+        chapter: unit,
+        knowledgePoint: '阅读理解',
+        studentAnswer: picked != null && options[picked] ? `${letter(picked)}. ${options[picked]}` : '',
+        correctAnswer: options[q.answerIndex] ? `${letter(q.answerIndex)}. ${options[q.answerIndex]}` : '',
+        analysis: q.explanation || '',
+        correct,
+        question: toQuestionView(unit, articleNo, qi, q),
+      };
+    });
+    recordEnglishPractice({
+      module: 'reading',
+      version,
+      grade,
+      term,
+      unit,
+      durationSeconds: Math.round((Date.now() - startedAtRef.current) / 1000),
+      items,
+    })
+      .then((res) => setSummary(res?.data || null))
+      .catch(() => setSummary(null));
+  };
 
   const submit = () => {
     if (Object.keys(answers).length < questions.length) {
@@ -250,6 +332,23 @@ export default function EnglishReadingPage() {
     }
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    reportPractice(reading.articleNo || activeIndex + 1);
+  };
+
+  const openLast = async () => {
+    setLastOpen(true);
+    if (lastRecord) return;
+    setLastLoading(true);
+    try {
+      const res = await getEnglishPracticeLast({
+        module: 'reading', unit, excludeId: summary?.recordId || undefined,
+      });
+      setLastRecord(res?.data || null);
+    } catch (e) {
+      message.error(e?.message || '加载上次作答失败');
+    } finally {
+      setLastLoading(false);
+    }
   };
 
   if (loading) {
@@ -292,6 +391,13 @@ export default function EnglishReadingPage() {
           <div className="eng-read-score">
             {correctCount}<small>/{questions.length} 题</small>
             <span>{percent(correctCount, questions.length)} 分</span>
+            {summary && (
+              <span className="eng-read-score-history">
+                最高 {summary.bestScore ?? percent(correctCount, questions.length)}
+                {summary.previousScore != null ? ` · 上次 ${summary.previousScore}` : ' · 首次'}
+                {` · 错题 ${summary.wrongCount ?? 0}`}
+              </span>
+            )}
           </div>
         )}
       </div>
@@ -349,7 +455,10 @@ export default function EnglishReadingPage() {
                       type="button"
                       className={cls}
                       disabled={submitted}
-                      onClick={() => setAnswers((prev) => ({ ...prev, [qi]: oi }))}
+                      onClick={() => {
+                        setLastAnswered(qi);
+                        setAnswers((prev) => ({ ...prev, [qi]: oi }));
+                      }}
                     >
                       <span className="eng-read-option-label">{String.fromCharCode(65 + oi)}</span>
                       <span>{option}</span>
@@ -372,12 +481,51 @@ export default function EnglishReadingPage() {
         {!submitted ? (
           <button type="button" className="eng-read-btn" onClick={submit}>提交答案</button>
         ) : (
-          <button type="button" className="eng-read-btn" onClick={() => { setAnswers({}); setSubmitted(false); setShowZh(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
-            再做一次
-          </button>
+          <>
+            <button
+              type="button"
+              className="eng-read-btn"
+              onClick={() => {
+                setAnswers({});
+                setSubmitted(false);
+                setShowZh(false);
+                setLastRecord(null);
+                startedAtRef.current = Date.now();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              再做一次
+            </button>
+            <button type="button" className="eng-read-btn ghost" onClick={openLast}>查看上次作答</button>
+            <button type="button" className="eng-read-btn ghost" onClick={() => navigate('/student/english/review')}>去错题本</button>
+          </>
         )}
         <button type="button" className="eng-read-btn ghost" onClick={() => navigate('/student/english')}>返回学习中心</button>
       </div>
+
+      {!submitted && questions.length > 0 && (
+        <HandRaiseButton
+          question={toQuestionView(unit, reading.articleNo || activeIndex + 1, lastAnswered, questions[lastAnswered])}
+          answer={answers[lastAnswered] != null
+            ? {
+              type: 'option',
+              optionId: `${readingKey(unit, reading.articleNo || activeIndex + 1, lastAnswered)}#${answers[lastAnswered]}`,
+            }
+            : null}
+          page="英语阅读理解"
+          knowledgePointName="阅读理解"
+          analysis={questions[lastAnswered]?.explanation || undefined}
+          subject="英语"
+          chapter={unit}
+        />
+      )}
+
+      <PracticeRecordModal
+        open={lastOpen}
+        onCancel={() => setLastOpen(false)}
+        record={lastRecord}
+        loading={lastLoading}
+      />
     </div>
   );
 }

@@ -171,3 +171,23 @@ export function getEnglishDiagnosePaper(data) {
 export function submitEnglishDiagnose(data) {
   return request.post('/english/student/diagnose-submit', data);
 }
+
+/**
+ * 英语练习交卷上报（阅读理解等前端判分页面）
+ * 入参 { module, version, grade, term, unit, durationSeconds, items:[{questionId,questionType,chapter,
+ * knowledgePoint,studentAnswer,correctAnswer,analysis,correct,question}] }
+ * 返回 { recordId, score, bestScore, lastScore, previousScore, attempts, wrongCount, lastTime }
+ */
+export function recordEnglishPractice(data) {
+  return request.post('/english/student/practice/record', data);
+}
+
+/** 英语练习成绩概览（最高分 / 上次 / 错题数） */
+export function getEnglishPracticeSummary(params) {
+  return request.get('/english/student/practice/summary', { params });
+}
+
+/** 上一次练习作答（excludeId 用于排除刚交的这次） */
+export function getEnglishPracticeLast(params) {
+  return request.get('/english/student/practice/last', { params });
+}

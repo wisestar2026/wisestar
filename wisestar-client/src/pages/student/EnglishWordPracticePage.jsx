@@ -23,6 +23,7 @@ import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishWordBook, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
 import { buildQuiz, buildQuestionForWord, availableTypes, WORD_PLACEHOLDER } from '../../utils/englishQuiz';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import './EnglishCenterPage.css';
 
 /** 同一单词本轮答错后最多重出的次数（防止一直答错无法结束） */
@@ -246,6 +247,35 @@ export default function EnglishWordPracticePage() {
 
   const progress = Math.round((index / questions.length) * 100);
 
+  // 举手用题目视图：单词练习是选择题，按当前题拼出单选结构，便于老师看懂题意与选项
+  const raiseId = current ? `word:${current.key}` : '';
+  const raiseTitle = current
+    ? `${current.typeLabel}：${current.promptType === 'image' ? (current.word?.meaning || '看图选单词') : current.prompt}`
+    : '';
+  const raiseQuestion = current ? {
+    id: raiseId,
+    name: raiseTitle,
+    questionType: 'Radio',
+    tag: ['单词', unit],
+    schema: {
+      id: raiseId,
+      title: raiseTitle,
+      type: 'Radio',
+      attribute: { examCorrectAnswer: current.answerText },
+      children: current.options.map((option, oi) => ({
+        id: `${raiseId}#${oi}`,
+        title: option.label,
+        type: 'Option',
+      })),
+    },
+  } : null;
+  const raiseOptionIndex = current
+    ? current.options.findIndex((option) => option.key === selectedKey)
+    : -1;
+  const raiseAnswer = raiseOptionIndex >= 0
+    ? { type: 'option', optionId: `${raiseId}#${raiseOptionIndex}` }
+    : null;
+
   return (
     <div className="eng-learn-wrap eng-learn-wide">
       <div className="eng-progress-row">
@@ -357,6 +387,17 @@ export default function EnglishWordPracticePage() {
             {index + 1 >= questions.length ? '查看结果' : '下一题'}
           </button>
         </div>
+
+        {raiseQuestion && (
+          <HandRaiseButton
+            question={raiseQuestion}
+            answer={raiseAnswer}
+            page="英语单词练习"
+            knowledgePointName="单词"
+            subject="英语"
+            chapter={unit}
+          />
+        )}
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishScenarios, recordEnglishScenarioPractice, recordEnglishSession } from '../../api/englishStudent';
 import { blankMatches, normalizeBlankText } from '../../utils/practiceHelpers';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import './EnglishCenterPage.css';
 import './EnglishScenarioPracticePage.css';
 
@@ -245,6 +246,33 @@ export default function EnglishScenarioPracticePage() {
   const sceneFinished = currentStats.done;
   const progress = totalBlanks ? Math.round((answeredTotal / totalBlanks) * 100) : 0;
 
+  // 举手用题目视图：定位当前正在作答的空，带上已输入/已判定的答案
+  let raiseQuestion = null;
+  let raiseAnswer = null;
+  if (currentScene && activeKey) {
+    const [sceneIdx, lineIdx, blankIdx] = activeKey.split('-').map((v) => Number(v));
+    const line = currentScene.lines?.[lineIdx];
+    const expected = line?.answers?.[blankIdx] ?? '';
+    const { parts } = splitLine(line?.en);
+    const judge = answers[activeKey];
+    const raiseId = `scenario:${unit}:${Number.isNaN(sceneIdx) ? page + 1 : sceneIdx + 1}:${lineIdx}:${blankIdx}`;
+    const raiseTitle = `${currentScene.title || `情景对话 ${page + 1}`}：${(parts || []).join(' ____ ')}`;
+    raiseQuestion = {
+      id: raiseId,
+      name: raiseTitle,
+      questionType: 'FillBlank',
+      tag: ['场景对话', unit],
+      schema: {
+        id: raiseId,
+        title: raiseTitle,
+        type: 'FillBlank',
+        attribute: { examCorrectAnswer: expected },
+      },
+    };
+    const typed = judge?.value ?? draft;
+    raiseAnswer = typed ? { type: 'text', text: typed } : null;
+  }
+
   return (
     <div className="eng-learn-wrap sc-wrap eng-stage">
       <div className="sc-hero">
@@ -419,6 +447,17 @@ export default function EnglishScenarioPracticePage() {
             下一段
           </button>
         </div>
+      )}
+
+      {raiseQuestion && (
+        <HandRaiseButton
+          question={raiseQuestion}
+          answer={raiseAnswer}
+          page="英语情景对话"
+          knowledgePointName="场景对话"
+          subject="英语"
+          chapter={unit}
+        />
       )}
 
       <div className="eng-actions">

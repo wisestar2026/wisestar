@@ -24,6 +24,7 @@ import cn.wisestar.server.domain.model.EnglishSentenceBook;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.domain.model.EnglishWordBook;
 import cn.wisestar.server.domain.model.EnglishWrongRedo;
+import cn.wisestar.server.domain.model.EnglishWrongQuestion;
 import cn.wisestar.server.domain.model.Subject;
 import cn.wisestar.server.domain.model.Template;
 import cn.wisestar.server.mapper.EnglishGrammarBookMapper;
@@ -34,6 +35,7 @@ import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.mapper.EnglishWrongRedoMapper;
+import cn.wisestar.server.mapper.EnglishWrongQuestionMapper;
 import cn.wisestar.server.mapper.DetectRecordMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
@@ -82,6 +84,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final EnglishGrammarBookMapper englishGrammarBookMapper;
 	private final DetectRecordMapper detectRecordMapper;
 	private final EnglishWrongRedoMapper englishWrongRedoMapper;
+	private final EnglishWrongQuestionMapper englishWrongQuestionMapper;
 	private final TemplateMapper templateMapper;
 	private final EnglishUnitService englishUnitService;
 	private final SubjectMapper subjectMapper;
@@ -453,21 +456,19 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		if (userId == null) {
 			return new ArrayList<>();
 		}
+		Map<String, EnglishWrongQuestionView> byQuestion = new LinkedHashMap<>();
 		String subjectId = englishSubjectId();
-		if (subjectId == null) {
-			return new ArrayList<>();
-		}
 		// 已被消灭的题目（学员在复习页重做正确后落库），聚合错题时剔除
 		Set<String> eliminated = englishWrongRedoMapper.selectList(Wrappers.<EnglishWrongRedo>lambdaQuery()
 						.eq(EnglishWrongRedo::getStudentId, userId))
 				.stream().map(EnglishWrongRedo::getQuestionId).filter(StringUtils::hasText)
 				.collect(Collectors.toSet());
 		// 该学员在英语学科下的全部检测记录（最近在前，取最近一次题目快照与做错时间）
-		List<DetectRecord> records = detectRecordMapper.selectList(Wrappers.<DetectRecord>lambdaQuery()
-				.eq(DetectRecord::getStudentId, userId)
-				.eq(DetectRecord::getSubjectId, subjectId)
-				.orderByDesc(DetectRecord::getCreateAt));
-		Map<String, EnglishWrongQuestionView> byQuestion = new LinkedHashMap<>();
+		List<DetectRecord> records = subjectId == null ? new ArrayList<>()
+				: detectRecordMapper.selectList(Wrappers.<DetectRecord>lambdaQuery()
+						.eq(DetectRecord::getStudentId, userId)
+						.eq(DetectRecord::getSubjectId, subjectId)
+						.orderByDesc(DetectRecord::getCreateAt));
 		for (DetectRecord record : records) {
 			List<DetectReportView.Detail> details = fromJson(record.getDetails(),
 					new TypeReference<List<DetectReportView.Detail>>() {
@@ -500,6 +501,28 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				view.setWrongCount(view.getWrongCount() + 1);
 			}
 		}
+		// 练习错题本（阅读/单元/语法练习交卷时单独落库），与检测记录聚合结果合并
+		List<EnglishWrongQuestion> stored = englishWrongQuestionMapper.selectList(
+				Wrappers.<EnglishWrongQuestion>lambdaQuery()
+						.eq(EnglishWrongQuestion::getUserId, userId)
+						.eq(EnglishWrongQuestion::getEliminated, 0)
+						.orderByDesc(EnglishWrongQuestion::getLastWrongTime));
+		for (EnglishWrongQuestion wrong : stored) {
+			if (!StringUtils.hasText(wrong.getQuestionId()) || byQuestion.containsKey(wrong.getQuestionId())) {
+				continue;
+			}
+			EnglishWrongQuestionView view = new EnglishWrongQuestionView();
+			view.setQuestionId(wrong.getQuestionId());
+			view.setQuestionType(wrong.getQuestionType());
+			view.setChapter(StringUtils.hasText(wrong.getChapter()) ? wrong.getChapter() : wrong.getUnit());
+			view.setKnowledgePoint(wrong.getKnowledgePoint());
+			view.setQuestion(stripAnswer(fromJson(wrong.getQuestionJson(),
+					new TypeReference<StudentQuestionView>() {
+					})));
+			view.setWrongCount(wrong.getWrongCount() == null ? 1 : wrong.getWrongCount());
+			view.setLastWrongTime(wrong.getLastWrongTime());
+			byQuestion.put(wrong.getQuestionId(), view);
+		}
 		List<EnglishWrongQuestionView> list = new ArrayList<>(byQuestion.values());
 		if (limit != null && limit > 0 && list.size() > limit) {
 			return new ArrayList<>(list.subList(0, limit));
@@ -511,6 +534,12 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	public StudentQuestionView wrongQuestion(String userId, String questionId) {
 		if (userId == null || !StringUtils.hasText(questionId)) {
 			return null;
+		}
+		EnglishWrongQuestion stored = findStoredWrong(userId, questionId);
+		if (stored != null) {
+			// 内容包题目（阅读/单元练习）没有 t_template 记录，直接回放交卷时的题目快照
+			return fromJson(stored.getQuestionJson(), new TypeReference<StudentQuestionView>() {
+			});
 		}
 		// 仅允许取本人英语错题，防越权取题
 		boolean isWrong = wrongQuestions(userId, null).stream()
@@ -538,6 +567,10 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			throw new ValidationException("题目ID不能为空");
 		}
 		String questionId = request.getQuestionId();
+		EnglishWrongQuestion stored = findStoredWrong(userId, questionId);
+		if (stored != null) {
+			return redoStoredWrong(userId, stored, request);
+		}
 		// 仅允许重做本人英语错题，防越权
 		boolean isWrong = wrongQuestions(userId, null).stream()
 				.anyMatch(view -> questionId.equals(view.getQuestionId()));
@@ -572,6 +605,68 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		}
 		view.setRemoved(true);
 		return view;
+	}
+
+	/**
+	 * 查询练习错题本中的未消灭错题（没有则返回 null）。
+	 */
+	private EnglishWrongQuestion findStoredWrong(String userId, String questionId) {
+		EnglishWrongQuestion wrong = englishWrongQuestionMapper.selectOne(Wrappers.<EnglishWrongQuestion>lambdaQuery()
+				.eq(EnglishWrongQuestion::getUserId, userId)
+				.eq(EnglishWrongQuestion::getQuestionId, questionId)
+				.eq(EnglishWrongQuestion::getEliminated, 0)
+				.last("LIMIT 1"));
+		return wrong;
+	}
+
+	/**
+	 * 重做练习错题：按快照判分，答对后标记消灭。
+	 */
+	private StudentWrongRedoView redoStoredWrong(String userId, EnglishWrongQuestion stored,
+			StudentWrongRedoRequest request) {
+		StudentQuestionView question = fromJson(stored.getQuestionJson(),
+				new TypeReference<StudentQuestionView>() {
+				});
+		if (question == null || question.getSchema() == null) {
+			throw new ValidationException("题目不存在");
+		}
+		StudentWrongRedoView view = new StudentWrongRedoView();
+		view.setOk(true);
+		Integer correct;
+		try {
+			correct = AnswerJudgeUtil.evaluate(question.getSchema(), request.getAnswer());
+		}
+		catch (Exception e) {
+			throw new ValidationException("作答内容无法判分");
+		}
+		if (!Integer.valueOf(1).equals(correct)) {
+			return view;
+		}
+		stored.setEliminated(1);
+		englishWrongQuestionMapper.updateById(stored);
+		// 同题可能也出现在检测记录聚合结果里，同步写一条「已消灭」保证两处口径一致
+		Long exists = englishWrongRedoMapper.selectCount(Wrappers.<EnglishWrongRedo>lambdaQuery()
+				.eq(EnglishWrongRedo::getStudentId, userId)
+				.eq(EnglishWrongRedo::getQuestionId, stored.getQuestionId()));
+		if (exists == null || exists == 0) {
+			EnglishWrongRedo redo = new EnglishWrongRedo();
+			redo.setStudentId(userId);
+			redo.setQuestionId(stored.getQuestionId());
+			englishWrongRedoMapper.insert(redo);
+		}
+		view.setRemoved(true);
+		return view;
+	}
+
+	/**
+	 * 错题列表展示时剥离标准答案，避免直接看答案。
+	 */
+	private StudentQuestionView stripAnswer(StudentQuestionView question) {
+		if (question == null || question.getSchema() == null || question.getSchema().getAttribute() == null) {
+			return question;
+		}
+		question.getSchema().getAttribute().setExamCorrectAnswer(null);
+		return question;
 	}
 
 	/**

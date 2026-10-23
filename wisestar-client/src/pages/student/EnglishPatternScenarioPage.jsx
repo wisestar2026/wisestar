@@ -20,6 +20,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishPatternScenarios, recordEnglishScenarioPractice, recordEnglishSession } from '../../api/englishStudent';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import './EnglishCenterPage.css';
 import './EnglishScenarioPracticePage.css';
 import './EnglishPatternScenarioPage.css';
@@ -145,6 +146,31 @@ export default function EnglishPatternScenarioPage() {
 
   const accuracy = totalCount ? Math.round((countCorrect(picked) / totalCount) * 100) : 0;
 
+  // 举手用题目视图：取当前情景第一个待选轮次，带上已选项
+  const raiseScene = scenarios[page];
+  const raiseTurnIndex = (raiseScene?.turns || []).findIndex(isRespondTurn);
+  const raiseTurn = raiseTurnIndex >= 0 ? raiseScene.turns[raiseTurnIndex] : null;
+  const raiseId = raiseScene ? `pattern:${unit}:${page + 1}` : '';
+  const raiseTitle = raiseScene ? `${raiseScene.title || `情景 ${page + 1}`}：${raiseTurn?.cue || '选出符合情景的句子'}` : '';
+  const raiseOptions = raiseTurn?.options || [];
+  const raiseQuestion = raiseTurn ? {
+    id: raiseId,
+    name: raiseTitle,
+    questionType: 'Radio',
+    tag: ['句式情景', unit],
+    schema: {
+      id: raiseId,
+      title: raiseTitle,
+      type: 'Radio',
+      attribute: raiseOptions[raiseTurn.answerIndex] ? { examCorrectAnswer: raiseOptions[raiseTurn.answerIndex] } : {},
+      children: raiseOptions.map((title, oi) => ({ id: `${raiseId}#${oi}`, title, type: 'Option' })),
+    },
+  } : null;
+  const raisePicked = raiseTurn ? picked[`${page}-${raiseTurnIndex}`] : undefined;
+  const raiseAnswer = raisePicked != null
+    ? { type: 'option', optionId: `${raiseId}#${raisePicked}` }
+    : null;
+
   return (
     <div className="eng-learn-wrap sc-wrap eng-stage">
       <div className="sc-hero">
@@ -256,6 +282,17 @@ export default function EnglishPatternScenarioPage() {
             下一页
           </button>
         </div>
+      )}
+
+      {raiseQuestion && (
+        <HandRaiseButton
+          question={raiseQuestion}
+          answer={raiseAnswer}
+          page="英语句式情景"
+          knowledgePointName="句式"
+          subject="英语"
+          chapter={unit}
+        />
       )}
 
       <div className="eng-actions">

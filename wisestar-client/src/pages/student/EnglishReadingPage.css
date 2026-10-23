@@ -36,6 +36,7 @@
 }
 .eng-read-score small { font-size: 13px; color: #77a0b8; font-weight: 700; }
 .eng-read-score span { font-size: 13px; color: #4c8caf; }
+.eng-read-score-history { margin-top: 4px; font-size: 12px; font-weight: 700; color: #6d93aa; }
 
 /* 同单元多篇文章切换 */
 .eng-read-article-tabs {

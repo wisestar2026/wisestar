@@ -1963,6 +1963,38 @@
 - **类说明**：
   英语单元情景练习内容包查询 DTO（version/grade/term/unit），继承 `PageQuery`。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPracticeItemView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPracticeItemView`
+- 注解: @Data
+- **类说明**：
+  英语练习逐题作答快照，既用于前端交卷上报（`question` 可空），也用于落库回放「上一次答题情况」与错题重做。
+- 字段: questionId / questionType / chapter / knowledgePoint / studentAnswer / correctAnswer / analysis / correct（1 对 / 0 错 / null 未判分）/ question(`StudentQuestionView`，错题快照含标准答案)
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPracticeRecordRequest.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPracticeRecordRequest`
+- 注解: @Data
+- **类说明**：
+  英语练习交卷上报请求（阅读理解等前端判分页面）。
+- 字段: module（reading/unit/grammar/sentence/word）/ version / grade / term / unit / durationSeconds / items(`List<EnglishPracticeItemView>`)
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPracticeSummaryView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPracticeSummaryView`
+- 注解: @Data
+- **类说明**：
+  英语练习成绩概览：本次得分、历史最高分、最近一次、上一次得分、累计次数与未消灭错题数。
+- 字段: module / unit / recordId / score / bestScore / lastScore / previousScore / attempts / wrongCount / lastTime
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPracticeRecordView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPracticeRecordView`
+- 注解: @Data
+- **类说明**：
+  英语练习作答记录视图（用于「查看上次作答」回放），含逐题快照。
+- 字段: id / module / unit / score / correct / total / accuracy / durationSeconds / createAt / items
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitProgressView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishUnitProgressView`
@@ -2008,6 +2040,7 @@
 - **类说明**：
   英语复习错题视图（来自学员检测记录 t_detect_record 聚合）；题目快照已剥离标准答案与解析，仅用于「英语智能复习」错题只读回显。
 - 字段: questionId / questionType / chapter / knowledgePoint / wrongCount / lastWrongTime / question(`StudentQuestionView`)
+- 来源: 检测记录（`t_detect_record`）聚合 + 练习错题本（`t_english_wrong_question`），同题以检测记录为准；列表统一剥离标准答案。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/ImportResult.java`
 - 包: `cn.wisestar.server.domain.dto.english`

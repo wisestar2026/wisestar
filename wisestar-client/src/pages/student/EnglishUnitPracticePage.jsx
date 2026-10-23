@@ -3,7 +3,7 @@
  *
  * 功能:
  *   1. 进入某单元的单元练习：只组本单元题目（不提供单元选择，杜绝跨单元串题）
- *   2. 逐题作答（套卷模式），交卷后生成得分与逐题解析
+ *   2. 逐题作答（套卷模式），交卷后只展示得分与逐题解析（诊断报告仅在「学习诊断」页产出）
  *
  * URL: /student/english/unit-practice?unit=xxx
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片「单元练习」
@@ -17,13 +17,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Empty, Progress, Spin, message } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import { getDetectUnits } from '../../api/detect';
-import { getEnglishUnitPaper, submitEnglishUnitPaper } from '../../api/englishStudent';
+import {
+  getEnglishPracticeLast,
+  getEnglishPracticeSummary,
+  getEnglishUnitPaper,
+  submitEnglishUnitPaper,
+} from '../../api/englishStudent';
 import QuestionCard from '../../components/practice/QuestionCard';
-import QuestionPreview from '../../components/practice/QuestionPreview';
-import RichContent from '../../components/common/RichContent';
+import EnglishPracticeResult from '../../components/student/EnglishPracticeResult';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
 import './EnglishCenterPage.css';
@@ -46,6 +50,7 @@ export default function EnglishUnitPracticePage() {
   const [current, setCurrent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [report, setReport] = useState(null);
+  const [summary, setSummary] = useState(null);
   const [chapterId, setChapterId] = useState('');
 
   // 组卷：找到同名单元 → 仅该单元生成题目
@@ -81,6 +86,7 @@ export default function EnglishUnitPracticePage() {
       setChanges({});
       setCurrent(0);
       setReport(null);
+      setSummary(null);
       setStep('answer');
     } catch (e) {
       message.error(e?.message || '组卷失败，请稍后重试');
@@ -122,10 +128,14 @@ export default function EnglishUnitPracticePage() {
     try {
       // 带上学科/年级/册别，便于检测记录归属英语学科（复习错题据此聚合）
       const res = await submitEnglishUnitPaper({
-        version, grade, term, unit, chapterId: chapterId || undefined, items,
+        version, grade, term, unit, chapterId: chapterId || undefined, module: 'unit', items,
       });
       setReport(res?.data || null);
       setStep('report');
+      // 成绩概览单独取：最高分、上次得分、错题数与诊断报告分开维护
+      getEnglishPracticeSummary({ module: 'unit', unit })
+        .then((info) => setSummary(info?.data || null))
+        .catch(() => setSummary(null));
       message.success('单元练习完成');
     } catch (e) {
       message.error(e?.message || '交卷失败，请稍后重试');
@@ -221,111 +231,49 @@ export default function EnglishUnitPracticePage() {
         <div className="kd-answer-foot">
           <Button type="link" onClick={handleSubmit} loading={submitting}>提前交卷</Button>
         </div>
+        <HandRaiseButton
+          question={q}
+          answer={answers[q.id]}
+          page="英语单元练习"
+          sectionId={chapterId || undefined}
+          knowledgePointName={q?.tag?.[0]}
+          subject="英语"
+          chapter={unit}
+        />
       </div>
     );
   }
 
-  // ============================ 报告 ============================
+  // ============================ 结果（只展示题目与解析） ============================
   const rep = report || { total: 0, correct: 0, accuracy: 0, details: [] };
+  const items = (rep.details || []).map((d) => ({
+    questionId: d.questionId,
+    knowledgePoint: d.knowledgePoint,
+    studentAnswer: d.studentAnswer,
+    correctAnswer: formatCorrectAnswers(d.questionType, d.correctAnswers),
+    correct: d.correct,
+    analysis: d.analysis,
+    question: d.question,
+  }));
+  const resultSummary = summary || {
+    score: rep.accuracy,
+    bestScore: rep.accuracy,
+    previousScore: null,
+    attempts: 1,
+    wrongCount: items.filter((item) => item.correct === 0).length,
+  };
+
   return (
-    <div className="kd-wrap sll-page-enter eng-stage">
-      <div className="kd-report-hero">
-        <Progress
-          type="circle"
-          percent={rep.accuracy}
-          width={120}
-          strokeColor={rep.accuracy >= 80 ? '#34c759' : rep.accuracy >= 60 ? '#2196f3' : '#ff7043'}
-          format={(p) => <span className="kd-report-percent">{p}<small>%</small></span>}
-        />
-        <div className="kd-report-summary">
-          <div className="kd-report-title">单元练习完成 · {unit}</div>
-          <div className="kd-report-line">答对 <b>{rep.correct}</b> / {rep.total} 题</div>
-          <div className="kd-report-line">
-            掌握 <b>{rep.mastered ?? 0}</b> · 不稳定 <b>{rep.unstable ?? 0}</b> · 漏洞 <b>{rep.flawed ?? 0}</b>
-            <span className="kd-report-hint">（加权得分 {rep.masteryScore ?? rep.accuracy}）</span>
-          </div>
-          <div className="kd-report-line kd-report-hint">
-            {rep.accuracy >= 60 ? '不错，继续保持' : '把错题对应的小节再练一遍吧'}
-          </div>
-        </div>
-      </div>
-
-      <div className="kd-card">
-        <div className="kd-card-head">
-          <span className="kd-card-title">能力分析</span>
-          <span className="kd-dim-tip">按语言技能、认知层级、题型与难度聚合本次作答</span>
-        </div>
-        <div className="kd-dim-grid">
-          {[
-            { title: '语言技能', list: rep.skillStats },
-            { title: '认知层级', list: rep.cognitiveStats },
-            { title: '题型', list: rep.typeStats },
-            { title: '难度', list: rep.difficultyStats },
-          ].map((group) => (
-            <div className="kd-dim-block" key={group.title}>
-              <div className="kd-dim-title">{group.title}</div>
-              {!group.list?.length && <div className="kd-dim-empty">暂无数据</div>}
-              {group.list?.map((item) => (
-                <div className="kd-dim-row" key={item.name}>
-                  <span className="kd-dim-name">{item.name}</span>
-                  <span className="kd-dim-bar"><span style={{ width: `${item.masteryScore}%` }} /></span>
-                  <span className="kd-dim-value">{item.masteryScore}</span>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="kd-card">
-        <div className="kd-card-head">
-          <span className="kd-card-title">逐题解析</span>
-        </div>
-        <div className="kd-detail-list">
-          {rep.details?.map((d, idx) => (
-            <div key={d.questionId} className={`kd-detail-item ${d.correct === 1 ? 'is-right' : 'is-wrong'}`}>
-              <div className="kd-detail-head">
-                <span className="kd-detail-index">{idx + 1}</span>
-                <span className={`kd-detail-flag ${d.mastery === '掌握' ? 'ok' : d.mastery === '不稳定' ? 'warn' : d.mastery === '漏洞' ? 'bad' : d.correct === 1 ? 'ok' : 'bad'}`}>
-                  {d.mastery || (d.correct === 1 ? '答对' : d.correct === 0 ? '答错' : '未判分')}
-                </span>
-                <span className="kd-detail-kp">{d.knowledgePoint}</span>
-              </div>
-              <div className="kd-detail-body">
-                {d.question && (
-                  <div className="kd-detail-question">
-                    <div className="kd-detail-question-label">原题</div>
-                    <QuestionPreview question={d.question} />
-                  </div>
-                )}
-                <div className="kd-detail-line">
-                  <span className="kd-detail-label">正确答案：</span>
-                  <span className="kd-detail-correct">
-                    {formatCorrectAnswers(d.questionType, d.correctAnswers) || '（无）'}
-                  </span>
-                </div>
-                <div className="kd-detail-line">
-                  <span className="kd-detail-label">你的答案：</span>
-                  <span className={d.correct === 1 ? 'kd-detail-correct' : 'kd-detail-wrong'}>
-                    {d.studentAnswer || '（未作答）'}
-                  </span>
-                </div>
-                {d.analysis && (
-                  <div className="kd-detail-analysis">
-                    <b>解析：</b><RichContent text={d.analysis} />
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="kd-actions">
-        <Button size="large" icon={<ReloadOutlined />} onClick={loadPaper}>再练一次</Button>
-        <Button size="large" onClick={() => navigate('/student/english/review')}>返回复习</Button>
-        <Button type="primary" size="large" onClick={() => navigate('/student/english')}>返回学习中心</Button>
-      </div>
-    </div>
+    <EnglishPracticeResult
+      title={`单元练习完成 · ${unit}`}
+      summary={resultSummary}
+      items={items}
+      onRetry={loadPaper}
+      onWrongBook={() => navigate('/student/english/review')}
+      onBack={() => navigate('/student/english')}
+      loadLast={() => getEnglishPracticeLast({
+        module: 'unit', unit, excludeId: resultSummary.recordId || undefined,
+      })}
+    />
   );
 }

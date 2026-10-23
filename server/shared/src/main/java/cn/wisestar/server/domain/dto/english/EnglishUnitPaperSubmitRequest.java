@@ -33,6 +33,9 @@ public class EnglishUnitPaperSubmitRequest {
 	/** 章节 ID */
 	private String chapterId;
 
+	/** 练习模块：unit 单元练习 / grammar 语法练习（用于练习记录与错题本归类） */
+	private String module;
+
 	/** 作答列表 */
 	private List<Item> items = new ArrayList<>();
 

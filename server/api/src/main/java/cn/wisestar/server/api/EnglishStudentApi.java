@@ -7,6 +7,9 @@ import cn.wisestar.server.domain.dto.english.EnglishDiagnoseRequest;
 import cn.wisestar.server.domain.dto.english.EnglishDiagnoseSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordRequest;
+import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordView;
+import cn.wisestar.server.domain.dto.english.EnglishPracticeSummaryView;
 import cn.wisestar.server.domain.dto.english.EnglishReadAloudView;
 import cn.wisestar.server.domain.dto.english.EnglishReadingView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
@@ -21,6 +24,7 @@ import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
+import cn.wisestar.server.service.EnglishPracticeRecordService;
 import cn.wisestar.server.service.EnglishReadAloudService;
 import cn.wisestar.server.service.EnglishReadingService;
 import cn.wisestar.server.service.EnglishScenarioPackService;
@@ -46,6 +50,8 @@ import java.util.Map;
 public class EnglishStudentApi {
 
 	private final EnglishStudentService englishStudentService;
+
+	private final EnglishPracticeRecordService englishPracticeRecordService;
 
 	private final EnglishScenarioPackService scenarioPackService;
 
@@ -256,6 +262,36 @@ public class EnglishStudentApi {
 	@PreAuthorize("isAuthenticated()")
 	public DetectReportView submitUnitPaper(@RequestBody EnglishUnitPaperSubmitRequest request) {
 		return unitPaperService.submit(request);
+	}
+
+	/**
+	 * 英语练习交卷上报（阅读理解等前端判分页面）：保存得分、保留最高分并把错题写入错题本。
+	 */
+	@PostMapping("/practice/record")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishPracticeSummaryView recordPractice(@RequestBody EnglishPracticeRecordRequest request) {
+		return englishPracticeRecordService.record(SecurityContextUtils.getUserId(), request);
+	}
+
+	/**
+	 * 英语练习成绩概览（最高分 / 上次得分 / 错题数）。
+	 */
+	@GetMapping("/practice/summary")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishPracticeSummaryView practiceSummary(@RequestParam String module,
+			@RequestParam(required = false) String unit) {
+		return englishPracticeRecordService.summary(SecurityContextUtils.getUserId(), module, unit);
+	}
+
+	/**
+	 * 上一次练习答题情况（可按 excludeId 排除刚交的这一份）。
+	 */
+	@GetMapping("/practice/last")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishPracticeRecordView lastPractice(@RequestParam String module,
+			@RequestParam(required = false) String unit,
+			@RequestParam(required = false) String excludeId) {
+		return englishPracticeRecordService.last(SecurityContextUtils.getUserId(), module, unit, excludeId);
 	}
 
 	/**

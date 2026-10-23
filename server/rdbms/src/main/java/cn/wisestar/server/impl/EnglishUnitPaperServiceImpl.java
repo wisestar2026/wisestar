@@ -28,6 +28,7 @@ import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.EnglishUnitPaperService;
+import cn.wisestar.server.service.EnglishPracticeRecordService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -112,6 +113,8 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 
 	private final EnglishFusionQuestionFactory fusionQuestionFactory;
 
+	private final EnglishPracticeRecordService practiceRecordService;
+
 	@Override
 	public List<StudentQuestionView> generate(EnglishUnitPaperRequest request) {
 		if (request == null || !StringUtils.hasText(request.getUnit())) {
@@ -176,8 +179,21 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		}
 		Map<String, Q> questions = loadQuestions(request.getVersion(), request.getGrade(), request.getTerm(),
 				request.getUnit()).stream().collect(Collectors.toMap(q -> q.tag.getContentKey(), q -> q, (a, b) -> a));
-		return buildReport(request.getVersion(), request.getGrade(), request.getTerm(), questions,
+		DetectReportView report = buildReport(request.getVersion(), request.getGrade(), request.getTerm(), questions,
 				request.getItems(), Collections.emptyMap(), request.getUnit(), true);
+		// 练习结果另存一份：保留最高分、上次答题与错题本；诊断报告仍由学习诊断单独产出
+		String userId = SecurityContextUtils.getUserId();
+		if (StringUtils.hasText(userId)) {
+			String module = StringUtils.hasText(request.getModule()) ? request.getModule().trim().toLowerCase() : "unit";
+			try {
+				practiceRecordService.recordFromReport(userId, module, request.getVersion(), request.getGrade(),
+						request.getTerm(), request.getUnit(), report);
+			}
+			catch (Exception e) {
+				log.warn("英语练习记录保存失败: {}", e.getMessage());
+			}
+		}
+		return report;
 	}
 
 	@Override

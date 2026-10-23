@@ -24,6 +24,7 @@ import { getEnglishUnits, getEnglishSentences, getEnglishSentenceExercises, reco
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
 import EnglishUnitAside from './EnglishUnitAside';
 import EnglishSentenceExercise from './EnglishSentenceExercise';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import './EnglishCenterPage.css';
 
 /** 后端以 familiarity>=1 视为「已学」，完成度按此口径统计。 */
@@ -326,6 +327,25 @@ export default function EnglishSentenceLearnPage() {
 
   const progress = Math.round((index / learnList.length) * 100);
 
+  // 举手用题目视图：连词成句按填空题上报，带上当前拼接的答案
+  const raiseId = current ? `sentence:${current.id}:build` : '';
+  const raiseTitle = current ? `连词成句：${current.zh || '（无中文提示）'}` : '';
+  const raiseQuestion = current ? {
+    id: raiseId,
+    name: raiseTitle,
+    questionType: 'FillBlank',
+    tag: ['句式', unit],
+    schema: {
+      id: raiseId,
+      title: raiseTitle,
+      type: 'FillBlank',
+      attribute: { examCorrectAnswer: current.en },
+    },
+  } : null;
+  const raiseAnswer = selected.length
+    ? { type: 'text', text: selected.map((i) => pool[i]).join(' ') }
+    : null;
+
   return (
     <div className="eng-learn-wrap eng-stage">
       <button type="button" className="eng-learn-back" onClick={() => setMode('hub')}>← 返回句式通关</button>
@@ -404,6 +424,17 @@ export default function EnglishSentenceLearnPage() {
           结束学习
         </button>
       </div>
+
+      {raiseQuestion && (
+        <HandRaiseButton
+          question={raiseQuestion}
+          answer={raiseAnswer}
+          page="英语句式练习"
+          knowledgePointName="句式"
+          subject="英语"
+          chapter={unit}
+        />
+      )}
     </div>
   );
 }

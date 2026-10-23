@@ -1173,7 +1173,7 @@ COMMIT;
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS t_dashboard (
   id varchar(64) NOT NULL COMMENT 'ID',
-  key varchar(256) NOT NULL COMMENT '仪表盘组件key',
+  "key" varchar(256) NOT NULL COMMENT '仪表盘组件key',
   type int DEFAULT NULL COMMENT '仪表盘分类',
   project_id varchar(64) DEFAULT NULL COMMENT '项目ID',
   setting varchar(1024) DEFAULT NULL COMMENT '仪表盘设置',
@@ -8289,3 +8289,61 @@ CREATE INDEX IF NOT EXISTS idx_hand_raise_type ON t_hand_raise (raise_type);
 -- 举手提醒权限点收敛（幂等，避免旧库角色缺 handraise:* 权限点）
 UPDATE t_role SET authority = authority || ',handraise:list' WHERE code IN ('admin','principal','teacher','consultant','academic') AND authority NOT LIKE '%handraise:list%';
 UPDATE t_role SET authority = authority || ',handraise:handle' WHERE code IN ('admin','teacher','consultant','academic') AND authority NOT LIKE '%handraise:handle%';
+
+-- ============================================================
+-- 英语练习记录与错题（阅读理解/单元练习/语法练习的得分、最高分与错题本）
+-- ============================================================
+ALTER TABLE t_hand_raise ALTER COLUMN question_id varchar(255);
+COMMENT ON COLUMN t_hand_raise.question_id IS '题目ID（通用题 t_template.id；英语练习题为内容键）';
+
+CREATE TABLE IF NOT EXISTS t_english_practice_record (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员账号ID',
+  module varchar(32) NOT NULL COMMENT '练习模块 reading/unit/grammar/sentence/word',
+  version varchar(32) DEFAULT NULL COMMENT '教材版本',
+  grade varchar(16) DEFAULT NULL COMMENT '年级',
+  term varchar(32) DEFAULT NULL COMMENT '册别',
+  unit varchar(64) DEFAULT NULL COMMENT '单元',
+  score int DEFAULT 0 COMMENT '本次百分制得分',
+  correct_count int DEFAULT 0 COMMENT '答对题数',
+  total_count int DEFAULT 0 COMMENT '总题数',
+  accuracy int DEFAULT 0 COMMENT '正确率(0-100)',
+  duration_seconds int DEFAULT 0 COMMENT '用时(秒)',
+  details text COMMENT '逐题作答快照JSON',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp DEFAULT NULL,
+  update_by varchar(256) DEFAULT NULL,
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_eng_practice_user ON t_english_practice_record (user_id, module, unit);
+CREATE INDEX IF NOT EXISTS idx_eng_practice_time ON t_english_practice_record (create_at);
+
+CREATE TABLE IF NOT EXISTS t_english_wrong_question (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL COMMENT '学员账号ID',
+  module varchar(32) DEFAULT NULL COMMENT '来源练习模块',
+  question_id varchar(191) NOT NULL COMMENT '题目内容键',
+  version varchar(32) DEFAULT NULL,
+  grade varchar(16) DEFAULT NULL,
+  term varchar(32) DEFAULT NULL,
+  unit varchar(64) DEFAULT NULL,
+  chapter varchar(128) DEFAULT NULL COMMENT '章节',
+  knowledge_point varchar(191) DEFAULT NULL COMMENT '知识点',
+  question_type varchar(32) DEFAULT NULL COMMENT '题型',
+  question_json text COMMENT '题目快照JSON（含标准答案，用于错题重做）',
+  correct_answer varchar(512) DEFAULT NULL COMMENT '标准答案展示文本',
+  answer_analysis text COMMENT '解析快照',
+  wrong_count int DEFAULT 1 COMMENT '累计做错次数',
+  last_wrong_time timestamp DEFAULT NULL COMMENT '最近做错时间',
+  eliminated tinyint DEFAULT 0 COMMENT '是否已被重做消灭',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256) DEFAULT NULL,
+  update_at timestamp DEFAULT NULL,
+  update_by varchar(256) DEFAULT NULL,
+  is_deleted tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_eng_wrong_user_question (user_id, question_id)
+);
+CREATE INDEX IF NOT EXISTS idx_eng_wrong_user ON t_english_wrong_question (user_id, eliminated);

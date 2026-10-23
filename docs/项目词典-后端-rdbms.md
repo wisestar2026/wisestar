@@ -1134,6 +1134,19 @@
   - `public List<DerivedQuestion> build(String version, String grade, String term, String unit)`
     返回该单元可派生的单词/句式/语法题；无句子数据或源内容不足时返回空列表。
 
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishPracticeRecordServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishPracticeRecordServiceImpl implements EnglishPracticeRecordService`
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语练习作答记录与错题本实现。只保存「练完之后的结果」：每次交卷的得分/逐题快照、未消灭错题；最高分取最近 100 条记录内最大值，「上一次」取时间上紧邻的前一条。诊断报告仍由 `EnglishUnitPaperServiceImpl` 生成，本服务不计算掌握度，避免与学习诊断口径重复。写入错题快照前先深拷贝题目再补 `examCorrectAnswer`，不把答案回写给本次交卷响应。
+- 方法:
+  - `public EnglishPracticeSummaryView record(String userId, EnglishPracticeRecordRequest request)`
+  - `public EnglishPracticeSummaryView recordFromReport(String userId, String module, String version, String grade, String term, String unit, DetectReportView report)`
+    单元/语法练习交卷后把报告明细落成一条练习记录并写入错题。
+  - `public EnglishPracticeSummaryView summary(String userId, String module, String unit)`
+  - `public EnglishPracticeRecordView last(String userId, String module, String unit, String excludeId)`
+
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishUnitPaperServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
 - 类型: `class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService`
@@ -1144,6 +1157,7 @@
   - `public List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
     支持 `module` 单模块过滤；融合题与内容包题共用同一套 `contentKey`。
   - `public DetectReportView submit(EnglishUnitPaperSubmitRequest request)`
+    交卷后用请求里的 `module`（unit/grammar）调用 `EnglishPracticeRecordService.recordFromReport` 落练习记录与错题；失败只记日志，不影响判分返回。
   - `public EnglishDiagnosePaperView diagnosePaper(EnglishDiagnoseRequest request)`
   - `public DetectReportView diagnoseSubmit(EnglishDiagnoseSubmitRequest request)`
 

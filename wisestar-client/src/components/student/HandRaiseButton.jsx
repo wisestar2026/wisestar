@@ -89,7 +89,32 @@ function resolveKnowledgePoint(question, knowledgePointName) {
   return knowledgePointName || question?.knowledgePointName || '';
 }
 
-export default function HandRaiseButton({ question, answer, page, sectionId, knowledgePointName }) {
+/**
+ * 标准答案展示文本：优先用调用方传入的答案，其次从题目 schema 的整题答案推导（选项转「A. 文本」）
+ */
+function resolveCorrectAnswer(question, correctAnswer) {
+  if (correctAnswer) return correctAnswer;
+  const raw = question?.schema?.attribute?.examCorrectAnswer;
+  if (!raw) return '';
+  const options = question?.schema?.children || [];
+  return String(raw).split('\n').map((item) => {
+    const text = String(item || '').trim();
+    const index = options.findIndex((opt) => String(opt.title || '').trim() === text);
+    return index >= 0 ? `${letterOf(index)}. ${options[index].title}` : text;
+  }).join('；');
+}
+
+export default function HandRaiseButton({
+  question,
+  answer,
+  page,
+  sectionId,
+  knowledgePointName,
+  correctAnswer,
+  analysis,
+  subject,
+  chapter,
+}) {
   const [open, setOpen] = useState(false);
   const [raiseType, setRaiseType] = useState('explain');
   const [remark, setRemark] = useState('');
@@ -113,6 +138,11 @@ export default function HandRaiseButton({ question, answer, page, sectionId, kno
       optionsJson: JSON.stringify(options),
       studentAnswer: text,
       studentOptionIds: optionIds.join(','),
+      // 英语练习题为内容键、题库里没有同 ID 记录，答案与解析随提交一并带上
+      correctAnswer: resolveCorrectAnswer(question, correctAnswer) || undefined,
+      answerAnalysis: analysis || undefined,
+      subject: subject || undefined,
+      chapter: chapter || undefined,
       page,
       sectionId: sectionId || undefined,
       remark: remark.trim() || undefined,

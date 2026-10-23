@@ -18,20 +18,22 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Empty, Progress, Spin, Tag, message } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
+import { Button, Empty, Progress, Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishGrammars, recordEnglishGrammar, getEnglishUnitPaper, submitEnglishUnitPaper } from '../../api/englishStudent';
+import {
+  getEnglishGrammars,
+  getEnglishPracticeLast,
+  getEnglishPracticeSummary,
+  getEnglishUnitPaper,
+  recordEnglishGrammar,
+  submitEnglishUnitPaper,
+} from '../../api/englishStudent';
 import QuestionCard from '../../components/practice/QuestionCard';
-import QuestionPreview from '../../components/practice/QuestionPreview';
-import RichContent from '../../components/common/RichContent';
+import EnglishPracticeResult from '../../components/student/EnglishPracticeResult';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
 import './EnglishCenterPage.css';
-
-/** 语法熟练度标签 */
-const FAMILIARITY_LABELS = ['未学习', '生疏', '熟悉', '熟练', '精通'];
-const FAMILIARITY_COLORS = ['default', 'orange', 'blue', 'cyan', 'green'];
 
 export default function EnglishGrammarPracticePage() {
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ export default function EnglishGrammarPracticePage() {
   const [current, setCurrent] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [report, setReport] = useState(null);
-  const [grammars, setGrammars] = useState([]);
+  const [summary, setSummary] = useState(null);
 
   // 组卷：找到同名单元 → 生成题目
   const loadPaper = useCallback(async () => {
@@ -75,6 +77,7 @@ export default function EnglishGrammarPracticePage() {
       setAnswers({});
       setCurrent(0);
       setReport(null);
+      setSummary(null);
       setStep('answer');
     } catch (e) {
       message.error(e?.message || '组卷失败，请稍后重试');
@@ -100,21 +103,22 @@ export default function EnglishGrammarPracticePage() {
     const items = questions.map((q) => ({ contentKey: q.id, answer: answers[q.id] || {} }));
     setSubmitting(true);
     try {
-      const res = await submitEnglishUnitPaper({ version, grade, term, unit, items });
+      const res = await submitEnglishUnitPaper({ version, grade, term, unit, module: 'grammar', items });
       const rep = res?.data || null;
       setReport(rep);
       setStep('report');
+      getEnglishPracticeSummary({ module: 'grammar', unit })
+        .then((info) => setSummary(info?.data || null))
+        .catch(() => setSummary(null));
       // 按整体正确率回写单元语法点掌握度
       try {
         const gRes = await getEnglishGrammars({ version, grade, term, unit });
         const list = gRes?.data || [];
         const correct = (rep?.accuracy || 0) >= 60;
         await Promise.all(list.map((g) => recordEnglishGrammar({ grammarId: g.id, correct }).catch(() => {})));
-        // 回读更新后的掌握度用于展示
-        const after = await getEnglishGrammars({ version, grade, term, unit });
-        setGrammars(after?.data || list);
+        // 掌握度回写后由语法学习页展示，这里不再重复渲染报告
       } catch {
-        setGrammars([]);
+        // 掌握度回写失败不影响本次练习结果
       }
       message.success('语法练习完成');
     } catch (e) {
@@ -211,100 +215,48 @@ export default function EnglishGrammarPracticePage() {
         <div className="kd-answer-foot">
           <Button type="link" onClick={handleSubmit} loading={submitting}>提前交卷</Button>
         </div>
+        <HandRaiseButton
+          question={q}
+          answer={answers[q.id]}
+          page="英语语法练习"
+          knowledgePointName={q?.tag?.[0]}
+          subject="英语"
+          chapter={unit}
+        />
       </div>
     );
   }
 
-  // ============================ 报告 ============================
+  // ============================ 结果（只展示题目与解析） ============================
   const rep = report || { total: 0, correct: 0, accuracy: 0, details: [] };
+  const items = (rep.details || []).map((d) => ({
+    questionId: d.questionId,
+    knowledgePoint: d.knowledgePoint,
+    studentAnswer: d.studentAnswer,
+    correctAnswer: formatCorrectAnswers(d.questionType, d.correctAnswers),
+    correct: d.correct,
+    analysis: d.analysis,
+    question: d.question,
+  }));
+  const resultSummary = summary || {
+    score: rep.accuracy,
+    bestScore: rep.accuracy,
+    previousScore: null,
+    attempts: 1,
+    wrongCount: items.filter((item) => item.correct === 0).length,
+  };
+
   return (
-    <div className="kd-wrap sll-page-enter eng-stage">
-      <div className="kd-report-hero">
-        <Progress
-          type="circle"
-          percent={rep.accuracy}
-          width={120}
-          strokeColor={rep.accuracy >= 80 ? '#34c759' : rep.accuracy >= 60 ? '#2196f3' : '#ff7043'}
-          format={(p) => <span className="kd-report-percent">{p}<small>%</small></span>}
-        />
-        <div className="kd-report-summary">
-          <div className="kd-report-title">语法练习完成 · {unit}</div>
-          <div className="kd-report-line">答对 <b>{rep.correct}</b> / {rep.total} 题</div>
-          <div className="kd-report-line kd-report-hint">
-            {rep.accuracy >= 60 ? '不错，本单元语法点掌握度已更新' : '再多练几遍，掌握度会随正确率提升'}
-          </div>
-        </div>
-      </div>
-
-      {grammars.length > 0 && (
-        <div className="kd-card">
-          <div className="kd-card-head">
-            <span className="kd-card-title">本单元语法点掌握度</span>
-          </div>
-          <div className="kd-weak-list">
-            {grammars.map((g) => {
-              const lv = Math.min(Math.max(g.familiarity || 0, 0), 4);
-              return (
-                <div key={g.id} className="kd-weak-item">
-                  <Tag color={FAMILIARITY_COLORS[lv]}>{FAMILIARITY_LABELS[lv]}</Tag>
-                  <span className="kd-weak-name">{g.title}</span>
-                  <span className="kd-weak-chapter">对 {g.correctCount || 0} / 错 {g.wrongCount || 0}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <div className="kd-card">
-        <div className="kd-card-head">
-          <span className="kd-card-title">逐题解析</span>
-        </div>
-        <div className="kd-detail-list">
-          {rep.details?.map((d, idx) => (
-            <div key={d.questionId} className={`kd-detail-item ${d.correct === 1 ? 'is-right' : 'is-wrong'}`}>
-              <div className="kd-detail-head">
-                <span className="kd-detail-index">{idx + 1}</span>
-                <span className={`kd-detail-flag ${d.correct === 1 ? 'ok' : 'bad'}`}>
-                  {d.correct === 1 ? '答对' : d.correct === 0 ? '答错' : '未判分'}
-                </span>
-                <span className="kd-detail-kp">{d.knowledgePoint}</span>
-              </div>
-              <div className="kd-detail-body">
-                {d.question && (
-                  <div className="kd-detail-question">
-                    <div className="kd-detail-question-label">原题</div>
-                    <QuestionPreview question={d.question} />
-                  </div>
-                )}
-                <div className="kd-detail-line">
-                  <span className="kd-detail-label">正确答案：</span>
-                  <span className="kd-detail-correct">
-                    {formatCorrectAnswers(d.questionType, d.correctAnswers) || '（无）'}
-                  </span>
-                </div>
-                <div className="kd-detail-line">
-                  <span className="kd-detail-label">你的答案：</span>
-                  <span className={d.correct === 1 ? 'kd-detail-correct' : 'kd-detail-wrong'}>
-                    {d.studentAnswer || '（未作答）'}
-                  </span>
-                </div>
-                {d.analysis && (
-                  <div className="kd-detail-analysis">
-                    <b>解析：</b><RichContent text={d.analysis} />
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="kd-actions">
-        <Button size="large" icon={<ReloadOutlined />} onClick={loadPaper}>再练一次</Button>
-        <Button size="large" onClick={() => navigate('/student/english/review')}>返回复习</Button>
-        <Button type="primary" size="large" onClick={() => navigate('/student/english')}>返回学习中心</Button>
-      </div>
-    </div>
+    <EnglishPracticeResult
+      title={`语法练习完成 · ${unit}`}
+      summary={resultSummary}
+      items={items}
+      onRetry={loadPaper}
+      onWrongBook={() => navigate('/student/english/review')}
+      onBack={() => navigate('/student/english')}
+      loadLast={() => getEnglishPracticeLast({
+        module: 'grammar', unit, excludeId: resultSummary.recordId || undefined,
+      })}
+    />
   );
 }
