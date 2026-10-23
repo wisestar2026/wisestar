@@ -237,7 +237,11 @@ export default function EnglishCenterPage() {
                 >
                   <span className="eng-mod-icon"><BookOutlined /></span>
                   <span className="eng-mod-title">单词通关<em>{percent(active.wordFinished, active.wordCount)}%</em></span>
-                  <span className="eng-mod-sub">拼写 · 音标 · 释义</span>
+                  <span className="eng-mod-sub">
+                    {active.wordMastered != null
+                      ? `掌握 ${active.wordMastered}/${active.wordCount || 0}${active.wordPass ? ' · 已通关' : ''}`
+                      : '拼写 · 音标 · 释义'}
+                  </span>
                   <span className="eng-mod-track"><i style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} /></span>
                 </button>
                 <button

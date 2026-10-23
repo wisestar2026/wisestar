@@ -2277,6 +2277,9 @@ ALTER TABLE t_english_word_book ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFA
 -- 认识/不认识累计次数（用于「需加强」标记）
 ALTER TABLE t_english_word_book ADD COLUMN IF NOT EXISTS correct_count int DEFAULT 0;
 ALTER TABLE t_english_word_book ADD COLUMN IF NOT EXISTS wrong_count int DEFAULT 0;
+-- 练习首答统计（掌握度派生：仅统计练习/巩固的首答，学习环节不计入）
+ALTER TABLE t_english_word_book ADD COLUMN IF NOT EXISTS quiz_total int DEFAULT 0;
+ALTER TABLE t_english_word_book ADD COLUMN IF NOT EXISTS quiz_first_correct int DEFAULT 0;
 UPDATE t_english_word_book SET create_at = created_at WHERE create_at IS NULL AND created_at IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS t_english_grammar (

@@ -1094,8 +1094,23 @@
     最近答错（wrongCount>0）或复习到期且未熟悉的单词，按 update_at 倒序取 limit。
   - `public boolean hasDrillCompletedToday(String userId)`
     查 t_english_learning_log 中该账号当天是否存在 type=drill 记录（LocalDate.now() 起算）。
-  - `public void recordLearning(String userId, String wordId, boolean correct)`
-    更新单词熟练度与复习调度后，按 `单元·单词` 口径将该词作答纳入掌握度与薄弱点。
+  - `public void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt)`
+    更新单词熟练度与复习调度；`source=practice/drill` 且 `firstAttempt=true` 时累计 quiz_total / quiz_first_correct（掌握度依据），
+    随后按 `单元·单词` 口径将该词作答纳入掌握度与薄弱点。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishMastery.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `final class EnglishMastery`
+- **类说明**：
+  单词掌握度派生规则（不落库）。等级：0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握；
+  掌握要求首答正确率 >= 80% 且 familiarity >= 3，熟悉要求 >= 60% 且 familiarity >= 2；
+  仅有历史点击、无首答统计的数据按「待巩固」兼容。
+- 方法:
+  - `public static int level(EnglishWordBook book)`
+  - `public static String label(int level)`
+  - `public static int firstCorrectRate(EnglishWordBook book)`
+  - `public static int intValue(Integer value)`
+- 常量: LEVEL_NONE/LEVEL_WEAK/LEVEL_FAMILIAR/LEVEL_MASTERED、FAMILIAR_RATE(60)、MASTERED_RATE(80)、UNIT_PASS_RATE(80)、UNIT_WEAK_RATE(10)
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishPracticeEvaluator.java`
 - 包: `cn.wisestar.server.impl`

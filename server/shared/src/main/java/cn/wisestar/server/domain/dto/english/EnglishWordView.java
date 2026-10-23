@@ -61,6 +61,21 @@ public class EnglishWordView {
 	/** 是否需加强（多次不认识） */
 	private Boolean weak;
 
+	/** 练习首答总次数（仅练习/巩固的首答） */
+	private Integer quizTotal;
+
+	/** 练习首答答对次数 */
+	private Integer quizFirstCorrect;
+
+	/** 练习首答正确率（0~100） */
+	private Integer firstCorrectRate;
+
+	/** 掌握度等级：0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握 */
+	private Integer masteryLevel;
+
+	/** 掌握度标签：未掌握 / 待巩固 / 熟悉 / 掌握 */
+	private String masteryLabel;
+
 	/** 下次复习时间（为空表示尚未进入复习队列） */
 	private java.util.Date nextReviewTime;
 

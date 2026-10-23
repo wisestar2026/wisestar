@@ -453,6 +453,7 @@ input.eng-dictation-field:focus {
 .eng-done-stats { display: flex; justify-content: center; gap: 28px; margin: 20px 0; }
 .eng-done-stat b { font-size: 26px; color: #ff7a59; display: block; }
 .eng-done-stat span { font-size: 13px; color: #5b7f92; }
+.eng-tip { font-size: 13px; color: #6a93a8; line-height: 1.6; }
 
 /* 需加强标记与列表 */
 .eng-weak-tag {

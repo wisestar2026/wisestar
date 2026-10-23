@@ -134,6 +134,8 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			view.setGrammarCount(unit.getGrammarCount());
 
 			int wordFinished = 0;
+			int wordMastered = 0;
+			int wordWeak = 0;
 			int familiaritySum = 0;
 			int reviewDue = 0;
 			for (EnglishWordBook book : wordBooks) {
@@ -144,6 +146,13 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				familiaritySum += Math.min(Math.max(familiarity, 0), 4);
 				if (familiarity >= 1) {
 					wordFinished++;
+				}
+				int wordMastery = EnglishMastery.level(book);
+				if (wordMastery == EnglishMastery.LEVEL_MASTERED) {
+					wordMastered++;
+				}
+				else if (wordMastery == EnglishMastery.LEVEL_WEAK) {
+					wordWeak++;
 				}
 				if (isDue(book.getNextReviewTime(), now)) {
 					reviewDue++;
@@ -184,7 +193,16 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			int mastery = totalItems == 0 ? 0
 					: (int) Math.round(familiaritySum * 100.0 / (4.0 * totalItems));
 
+			int wordTotal = unit.getWordCount() == null ? 0 : unit.getWordCount();
+			// 单词通关：掌握 >= 80% 且待巩固 <= 10%（待巩固含历史遗留的「有记录无首答」单词）
+			boolean wordPass = wordTotal > 0
+					&& wordMastered * 100 >= wordTotal * EnglishMastery.UNIT_PASS_RATE
+					&& wordWeak * 100 <= wordTotal * EnglishMastery.UNIT_WEAK_RATE;
+
 			view.setWordFinished(wordFinished);
+			view.setWordMastered(wordMastered);
+			view.setWordWeak(wordWeak);
+			view.setWordPass(wordPass);
 			view.setSentenceFinished(sentenceFinished);
 			view.setGrammarFinished(grammarFinished);
 			view.setMastery(mastery);

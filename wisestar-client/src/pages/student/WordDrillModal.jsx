@@ -106,7 +106,7 @@ export default function WordDrillModal({ open, words, onFinish }) {
     st.appearances += 1;
     if (!st.recorded) {
       st.recorded = true;
-      recordEnglishWord({ wordId: id, correct }).catch(() => {});
+      recordEnglishWord({ wordId: id, correct, source: 'drill', firstAttempt: true }).catch(() => {});
     }
     if (correct) {
       st.cleared = true;

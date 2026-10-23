@@ -1969,7 +1969,8 @@
 - 注解: @Data
 - **类说明**：
   英语单元进度视图 DTO（学员端学习中心）。
-  含 wordFinished/sentenceFinished（熟练度 >= 1 的数量）、mastery（单词+句子 familiarity 均值归一化到 0~100 的综合熟练度）与 reviewDue（待复习数）。
+  含 wordFinished/sentenceFinished（熟练度 >= 1 的数量）、mastery（单词+句子 familiarity 均值归一化到 0~100 的综合熟练度）、reviewDue（待复习数），
+  以及 wordMastered（已掌握单词数）、wordWeak（待巩固单词数）、wordPass（单词通关：掌握 >= 80% 且待巩固 <= 10%）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitQuery.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -1998,7 +1999,7 @@
 - 注解: @Data
 - **类说明**：
   英语单词视图 DTO。
-- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）
+- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）/ quizTotal（练习首答次数）/ quizFirstCorrect（首答答对次数）/ firstCorrectRate（首答正确率 0~100）/ masteryLevel（0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握）/ masteryLabel（中文标签）
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishWrongQuestionView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2875,6 +2876,8 @@
     进入学习前需强制巩固的单词（最近答错 + 复习到期）。
   - `boolean hasDrillCompletedToday(String userId)`
     当天是否已完成强制巩固（按账号 + 自然日，跨设备生效）。
+  - `void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt)`
+    记录学习/练习结果并按首答统计（source：learn/practice/drill），旧三参重载等价于 `learn + 非首答`。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EvaluationService.java`
 - 包: `cn.wisestar.server.service`

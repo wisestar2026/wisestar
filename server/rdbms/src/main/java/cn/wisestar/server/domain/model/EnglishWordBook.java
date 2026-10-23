@@ -34,4 +34,10 @@ public class EnglishWordBook extends BaseModel {
 	/** 累计答错（不认识）次数 */
 	private Integer wrongCount;
 
+	/** 练习首答总次数（仅练习/巩固，不含学习环节的「认识/不认识」点击） */
+	private Integer quizTotal;
+
+	/** 练习首答答对次数（掌握度派生依据） */
+	private Integer quizFirstCorrect;
+
 }

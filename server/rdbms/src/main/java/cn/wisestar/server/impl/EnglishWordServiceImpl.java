@@ -47,6 +47,15 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	/** 巩固池上限：熟练度达到该值视为已熟悉，不再强制巩固。 */
 	private static final int DRILL_FAMILIARITY_CEILING = 3;
 
+	/** 上报来源：学习环节 */
+	private static final String SOURCE_LEARN = "learn";
+
+	/** 上报来源：单词练习 */
+	private static final String SOURCE_PRACTICE = "practice";
+
+	/** 上报来源：进入学习前的强制巩固 */
+	private static final String SOURCE_DRILL = "drill";
+
 	@Override
 	public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query) {
 		LambdaQueryWrapper<EnglishWord> wrapper = Wrappers.<EnglishWord>lambdaQuery()
@@ -121,6 +130,12 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			v.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());
 			v.setWeak(v.getWrongCount() >= WEAK_WRONG_TIMES);
 			v.setNextReviewTime(book == null ? null : book.getNextReviewTime());
+			v.setQuizTotal(EnglishMastery.intValue(book == null ? null : book.getQuizTotal()));
+			v.setQuizFirstCorrect(EnglishMastery.intValue(book == null ? null : book.getQuizFirstCorrect()));
+			v.setFirstCorrectRate(EnglishMastery.firstCorrectRate(book));
+			int masteryLevel = EnglishMastery.level(book);
+			v.setMasteryLevel(masteryLevel);
+			v.setMasteryLabel(EnglishMastery.label(masteryLevel));
 		});
 	}
 
@@ -204,6 +219,14 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 
 	@Override
 	public void recordLearning(String userId, String wordId, boolean correct) {
+		recordLearning(userId, wordId, correct, SOURCE_LEARN, false);
+	}
+
+	@Override
+	public void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt) {
+		// 「练习/巩固」的首次作答计入首答统计；学习环节的点击与重做不算
+		boolean quizFirst = firstAttempt
+				&& (SOURCE_PRACTICE.equals(source) || SOURCE_DRILL.equals(source));
 		EnglishWordBook book = englishWordBookMapper.selectOne(
 				Wrappers.<EnglishWordBook>lambdaQuery()
 						.eq(EnglishWordBook::getUserId, userId)
@@ -217,6 +240,8 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			book.setFamiliarity(correct ? 1 : 0);
 			book.setCorrectCount(correct ? 1 : 0);
 			book.setWrongCount(correct ? 0 : 1);
+			book.setQuizTotal(quizFirst ? 1 : 0);
+			book.setQuizFirstCorrect(quizFirst && correct ? 1 : 0);
 			book.setNextReviewTime(calculateNextReviewTime(correct ? 1 : 0));
 			englishWordBookMapper.insert(book);
 		} else {
@@ -230,6 +255,11 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			book.setFamiliarity(familiarity);
 			book.setCorrectCount((book.getCorrectCount() == null ? 0 : book.getCorrectCount()) + (correct ? 1 : 0));
 			book.setWrongCount((book.getWrongCount() == null ? 0 : book.getWrongCount()) + (correct ? 0 : 1));
+			if (quizFirst) {
+				book.setQuizTotal((book.getQuizTotal() == null ? 0 : book.getQuizTotal()) + 1);
+				book.setQuizFirstCorrect((book.getQuizFirstCorrect() == null ? 0 : book.getQuizFirstCorrect())
+						+ (correct ? 1 : 0));
+			}
 			book.setNextReviewTime(calculateNextReviewTime(familiarity));
 			englishWordBookMapper.updateById(book);
 		}

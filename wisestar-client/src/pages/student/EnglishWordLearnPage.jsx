@@ -191,7 +191,7 @@ export default function EnglishWordLearnPage() {
     else stat.unknown += 1;
     statsRef.current.set(wordId, stat);
 
-    recordEnglishWord({ wordId, correct }).catch(() => {});
+    recordEnglishWord({ wordId, correct, source: 'learn' }).catch(() => {});
 
     const required = Math.max(stat.unknown, 1);
     const graduated = correct && stat.known >= required;
@@ -359,6 +359,9 @@ export default function EnglishWordLearnPage() {
               ))}
             </div>
           )}
+          <div className="eng-tip" style={{ marginTop: 4 }}>
+            先做一遍单词练习，再去场景对话：首答正确率达到 80% 才算真正掌握这批词。
+          </div>
           <div className="eng-actions">
             {weakWords.length > 0 && (
               <button
@@ -374,7 +377,7 @@ export default function EnglishWordLearnPage() {
               className="eng-btn eng-btn-primary"
               onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`)}
             >
-              去单词练习
+              去单词练习（推荐下一步）
             </button>
             <button type="button" className="eng-btn eng-btn-ghost" onClick={backToHub}>返回单词通关</button>
             <button type="button" className="eng-btn eng-btn-ghost" onClick={backToCenter}>返回学习中心</button>

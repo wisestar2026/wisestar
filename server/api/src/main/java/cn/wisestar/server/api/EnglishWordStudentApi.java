@@ -65,9 +65,9 @@ public class EnglishWordStudentApi {
 	}
 
 	/**
-	 * 学生端：记录学习结果（熟练度 + 下次复习时间）。
+	 * 学生端：记录学习结果（熟练度 + 下次复习时间 + 练习首答统计）。
 	 *
-	 * @param request {wordId, correct}
+	 * @param request {wordId, correct, source, firstAttempt}
 	 */
 	@PostMapping("/record")
 	@PreAuthorize("isAuthenticated()")
@@ -75,7 +75,11 @@ public class EnglishWordStudentApi {
 		String userId = SecurityContextUtils.getUserId();
 		String wordId = String.valueOf(request.get("wordId"));
 		Boolean correct = Boolean.valueOf(String.valueOf(request.get("correct")));
-		englishWordService.recordLearning(userId, wordId, correct);
+		Object sourceValue = request.get("source");
+		String source = sourceValue == null ? "learn" : String.valueOf(sourceValue);
+		Object firstValue = request.get("firstAttempt");
+		boolean firstAttempt = firstValue != null && Boolean.parseBoolean(String.valueOf(firstValue));
+		englishWordService.recordLearning(userId, wordId, correct, source, firstAttempt);
 	}
 
 	/**

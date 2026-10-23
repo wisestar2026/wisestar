@@ -50,6 +50,9 @@ export default function EnglishWordPracticePage() {
   const sessionRecorded = useRef(false);
   // 本轮内每个单词已答错次数（答错后重出，直到答对，最多 MAX_RETRY 次）
   const wrongAttempts = useRef(new Map());
+  // 本轮首答统计（同一单词只计首次作答，重做不计入；掌握度判定以此为准）
+  const firstAttempts = useRef(new Set());
+  const firstTryCorrect = useRef(0);
 
   const load = useCallback(() => {
     if (!unit) {
@@ -71,6 +74,8 @@ export default function EnglishWordPracticePage() {
         setCorrectCount(0);
         setWrongIds([]);
         wrongAttempts.current = new Map();
+        firstAttempts.current = new Set();
+        firstTryCorrect.current = 0;
         sessionRecorded.current = false;
         startAt.current = Date.now();
       })
@@ -106,7 +111,19 @@ export default function EnglishWordPracticePage() {
     if (option.correct) {
       setCorrectCount((n) => n + 1);
     }
-    recordEnglishWord({ wordId: current.wordId, correct: option.correct }).catch(() => {});
+    const isFirstAttempt = !firstAttempts.current.has(current.wordId);
+    if (isFirstAttempt) {
+      firstAttempts.current.add(current.wordId);
+      if (option.correct) {
+        firstTryCorrect.current += 1;
+      }
+    }
+    recordEnglishWord({
+      wordId: current.wordId,
+      correct: option.correct,
+      source: 'practice',
+      firstAttempt: isFirstAttempt,
+    }).catch(() => {});
     // 答错：本轮末尾重出，直到答对（每词最多重出 MAX_RETRY 次，防卡死）
     if (!option.correct) {
       setWrongIds((prev) => (prev.includes(current.wordId) ? prev : [...prev, current.wordId]));
@@ -183,6 +200,9 @@ export default function EnglishWordPracticePage() {
   }
 
   if (finished) {
+    const firstTryTotal = firstAttempts.current.size;
+    const firstTryRate = firstTryTotal ? Math.round((firstTryCorrect.current / firstTryTotal) * 100) : 0;
+    const canGoScenario = firstTryRate >= 80 && words.length >= 4;
     return (
       <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
@@ -191,15 +211,30 @@ export default function EnglishWordPracticePage() {
           <div className="eng-done-stats">
             <div className="eng-done-stat"><b>{correctCount}</b><span>答对</span></div>
             <div className="eng-done-stat"><b>{questions.length}</b><span>总题数</span></div>
+            <div className="eng-done-stat"><b>{firstTryRate}%</b><span>首答正确率</span></div>
+          </div>
+          <div className="eng-tip" style={{ marginTop: 4 }}>
+            {canGoScenario
+              ? '这批词已经练稳了，去场景对话把它们用起来。'
+              : '首答正确率到 80% 再去做场景对话，掌握度判定才准。'}
           </div>
           <div className="eng-actions">
             {wrongIds.length > 0 && (
               <button
                 type="button"
-                className="eng-btn eng-btn-again"
+                className={canGoScenario ? 'eng-btn eng-btn-again' : 'eng-btn eng-btn-primary'}
                 onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(wrongIds.join(','))}`)}
               >
                 复习错词 · {wrongIds.length}
+              </button>
+            )}
+            {canGoScenario && (
+              <button
+                type="button"
+                className="eng-btn eng-btn-primary"
+                onClick={() => navigate(`/student/english/scenario?unit=${encodeURIComponent(unit)}`)}
+              >
+                去做场景对话
               </button>
             )}
             {backButton}

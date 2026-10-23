@@ -425,6 +425,15 @@ export default function EnglishScenarioPracticePage() {
         <button type="button" className="eng-btn eng-btn-ghost" onClick={resetAll} disabled={answeredTotal === 0}>
           重做全部
         </button>
+        {unit && (
+          <button
+            type="button"
+            className="eng-btn eng-btn-again"
+            onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`)}
+          >
+            回单词练习巩固
+          </button>
+        )}
         <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
           返回学习中心
         </button>

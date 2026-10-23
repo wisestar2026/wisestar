@@ -35,6 +35,15 @@ public class EnglishUnitProgressView {
 	/** 已学习语法点数（熟练度 >= 1） */
 	private Integer grammarFinished;
 
+	/** 已掌握单词数（首答正确率 >= 80% 且熟练度 >= 3） */
+	private Integer wordMastered;
+
+	/** 待巩固单词数（有练习记录但未达熟悉门槛） */
+	private Integer wordWeak;
+
+	/** 本单元单词是否通关（掌握 >= 80% 且待巩固 <= 10%） */
+	private Boolean wordPass;
+
 	/** 单元综合熟练度（单词 + 句子 + 语法 familiarity 均值，0~100） */
 	private Integer mastery;
 

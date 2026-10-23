@@ -62,6 +62,19 @@ public interface EnglishWordService {
 	 * @param wordId 单词 ID
 	 * @param correct 是否正确
 	 */
-	void recordLearning(String userId, String wordId, boolean correct);
+	default void recordLearning(String userId, String wordId, boolean correct) {
+		recordLearning(userId, wordId, correct, "learn", false);
+	}
+
+	/**
+	 * 记录学习/练习结果，并统计练习首答（掌握度派生依据）。
+	 *
+	 * @param userId 用户 ID
+	 * @param wordId 单词 ID
+	 * @param correct 是否正确
+	 * @param source 来源：learn 学习 / practice 练习 / drill 巩固
+	 * @param firstAttempt 是否该词本轮练习的首次作答（重做不计入首答）
+	 */
+	void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt);
 
 }
