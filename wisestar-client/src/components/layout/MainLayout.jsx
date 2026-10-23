@@ -31,7 +31,8 @@
  *   对应 App.jsx 的 /system/users|depts|positions|dicts|dict-items 五个页面）
  */
 
-import { Layout, Menu, Avatar, Dropdown, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import { Layout, Menu, Avatar, Dropdown, Typography, Badge } from 'antd';
 import {
   ShoppingOutlined,  DashboardOutlined,
   SettingOutlined,
@@ -49,6 +50,7 @@ import {
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import useUserStore from '../../stores/useUserStore';
+import { getHandRaisePendingCount } from '../../api/handRaise';
 
 const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
@@ -76,6 +78,22 @@ export default function MainLayout() {
   // 判断是否拥有任一权限点；未配置 required 的菜单项对所有登录用户可见
   const hasAny = (perms) => !perms || perms.length === 0 || perms.some((p) => authorityList.includes(p));
 
+  // 举手提醒待处理角标（30 秒轮询；无 handraise:list 权限不请求）
+  const [handRaiseCount, setHandRaiseCount] = useState(0);
+  useEffect(() => {
+    if (!authorityList.includes('handraise:list')) return undefined;
+    let alive = true;
+    const load = () => {
+      getHandRaisePendingCount()
+        .then((res) => { if (alive) setHandRaiseCount(res?.data?.total || 0); })
+        .catch(() => {});
+    };
+    load();
+    const timer = setInterval(load, 30000);
+    return () => { alive = false; clearInterval(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
   // ============================================================
   // 侧边栏菜单配置
   // ============================================================
@@ -94,6 +112,13 @@ export default function MainLayout() {
         { key: '/students', label: '学员列表', required: ['student:list'] },
         { key: '/orders',   label: '订单管理', required: ['order:list'] },
         { key: '/student/supervision', label: '学员督学', required: ['student:supervision'] },
+        {
+          key: '/student/hand-raise',
+          label: handRaiseCount > 0
+            ? <span>举手提醒 <Badge count={handRaiseCount} size="small" /></span>
+            : '举手提醒',
+          required: ['handraise:list'],
+        },
         { key: '/student/task-assignment', label: '任务发布', required: ['task:list'] },
       ],
     },
@@ -224,7 +249,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /knowledge/chapters）。
   // 一级入口教研平台 key=/exercise/list，同样需要精确匹配到第一段路径规则之外
-  const SUB_PATH_KEYS = ['/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/knowledge/strategy', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/word-image', '/english/sentence', '/english/grammar', '/english/questions', '/english/word-ai', '/english/scenario-pack', '/english/unit-paper', '/english/sentence-pack'];
+  const SUB_PATH_KEYS = ['/student/hand-raise', '/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/knowledge/strategy', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/word-image', '/english/sentence', '/english/grammar', '/english/questions', '/english/word-ai', '/english/scenario-pack', '/english/unit-paper', '/english/sentence-pack'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)

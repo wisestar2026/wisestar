@@ -21,6 +21,7 @@ import { submitPractice, saveWrongReason } from '../../api/practice';
 import { extractCorrectAnswers, blankMatches } from '../../utils/practiceHelpers';
 import ImportanceTag from '../../utils/importance';
 import WrongBookPanel from '../../components/student/WrongBookPanel';
+import HandRaiseButton from '../../components/student/HandRaiseButton';
 import RichContent from '../../components/common/RichContent';
 import IconTile from '../../components/common/IconTile';
 import './KnowledgePage.css';
@@ -794,6 +795,9 @@ export default function KnowledgePage() {
                     const showResult = judgeState[question.id] === true;
                     const correct = judge ? judge.correct : null;
                     const analysis = schema.attribute?.examAnalysis;
+                    // 当前知识点名称（举手时随反馈上报，便于老师定位）
+                    const kpIdx = (realPoints || []).findIndex((p) => p.id === question.knowledgePointId);
+                    const currentKpName = kpIdx >= 0 ? (realPoints[kpIdx].name || '') : '';
                     return (
                       <div className="knowledge-question-card">
                         <div className="knowledge-q-head">
@@ -917,6 +921,14 @@ export default function KnowledgePage() {
                             </Button>
                           </div>
                         )}
+                        {/* 举手：仅在此逐题作答界面出现，携带当前题目与作答快照提交 */}
+                        <HandRaiseButton
+                          question={question}
+                          answer={picked}
+                          page={typeof window !== 'undefined' ? window.location.pathname + window.location.search : ''}
+                          sectionId={sectionId}
+                          knowledgePointName={currentKpName}
+                        />
                         {/* 导航 */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
                           <button className="knowledge-back" disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)}>上一题</button>

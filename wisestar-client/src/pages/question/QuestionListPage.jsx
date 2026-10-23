@@ -37,6 +37,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Table, Space, Button, Input, Select, Typography, Tag, Popconfirm,
   message, Image, Tooltip,
@@ -90,6 +91,27 @@ export default function QuestionListPage({ lockedSubject }) {
   // ---- 弹窗状态 ----
   const [editOpen, setEditOpen] = useState(false);   // 新建/编辑弹窗
   const [editRecord, setEditRecord] = useState(null); // 编辑时传入的题目记录（null=新建）
+
+  // 深链：/questions?questionId=xxx 直接打开该题编辑弹窗（举手提醒「去题目管理修改」入口）
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const questionId = searchParams.get('questionId');
+    if (!questionId) return;
+    getTemplate({ id: questionId })
+      .then((res) => {
+        if (res?.data) {
+          setEditRecord(res.data);
+          setEditOpen(true);
+        }
+      })
+      .catch(() => message.error('题目加载失败'))
+      .finally(() => {
+        const next = new URLSearchParams(searchParams);
+        next.delete('questionId');
+        setSearchParams(next, { replace: true });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [importOpen, setImportOpen] = useState(false); // Excel 导入弹窗
 
   // ---- 加载练习列表（全量，供筛选下拉 + 编辑弹窗练习选择） ----

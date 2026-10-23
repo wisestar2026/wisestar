@@ -92,6 +92,7 @@ import ScenarioPackManagePage from './pages/english/ScenarioPackManagePage';
 import UnitPaperManagePage from './pages/english/UnitPaperManagePage';
 import SentencePackManagePage from './pages/english/SentencePackManagePage';
 import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
+import HandRaisePage from './pages/student/HandRaisePage';
 import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
 import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
 import SentenceManagePage from './pages/english/SentenceManagePage';
@@ -311,6 +312,15 @@ export default function App() {
               element={
                 <AuthGuard required={['student:supervision']}>
                   <StudentSupervisionPage />
+                </AuthGuard>
+              }
+            />
+            {/* 举手提醒：学员做题举手（求助讲解/题干有误/答案有误），学管师与教研在此处理 */}
+            <Route
+              path="/student/hand-raise"
+              element={
+                <AuthGuard required={['handraise:list']}>
+                  <HandRaisePage />
                 </AuthGuard>
               }
             />

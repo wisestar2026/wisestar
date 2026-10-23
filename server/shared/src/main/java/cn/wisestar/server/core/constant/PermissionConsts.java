@@ -88,6 +88,10 @@ public final class PermissionConsts {
 	public static final String TASK_UPDATE = "task:update";
 	public static final String TASK_DELETE = "task:delete";
 
+	/** 学员举手反馈（求助讲解 / 题目报错） */
+	public static final String HAND_RAISE_LIST = "handraise:list";
+	public static final String HAND_RAISE_HANDLE = "handraise:handle";
+
 	/** 系统管理-用户 */
 	public static final String SYSTEM_USER_LIST = "system:user:list";
 	public static final String SYSTEM_USER_CREATE = "system:user:create";
@@ -310,6 +314,8 @@ public final class PermissionConsts {
 				ops(MALL_LIST, "查看", MALL_CREATE, "新增", MALL_UPDATE, "修改", MALL_DELETE, "删除")));
 		tree.add(node("task", "今日任务",
 				ops(TASK_LIST, "查看", TASK_CREATE, "新增", TASK_UPDATE, "修改", TASK_DELETE, "删除")));
+		tree.add(node("handraise", "举手提醒",
+				ops(HAND_RAISE_LIST, "查看", HAND_RAISE_HANDLE, "处理")));
 
 		// 系统管理：二级子组（用户/角色/部门/岗位/字典/字典条目）
 		Node system = node("system", "系统管理", new ArrayList<>());
@@ -382,6 +388,7 @@ public final class PermissionConsts {
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"
+			+ "handraise:list,handraise:handle,"
 			+ "system:user:list,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,"
 			+ "system:role:list,system:role:create,system:role:update,system:role:delete,"
 			+ "system:dept:list,system:dept:create,system:dept:update,system:dept:delete,"
@@ -400,6 +407,7 @@ public final class PermissionConsts {
 	/** 校长：决策层，查看全局 + 学员/订单运营管理 */
 	public static final String PRINCIPAL_AUTHORITY = "home,exercise:list,"
 			+ "repo:list,repo:detail,template:list,knowledge:list,"
+			+ "handraise:list,"
 			+ "student:list,student:create,student:update,student:delete,student:archive,"
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "system:user:list,system:role:list,system:dept:list,system:position:list,system:dict:list,system:dictItem:list,"
@@ -412,7 +420,8 @@ public final class PermissionConsts {
 			+ "knowledge:list,knowledge:create,knowledge:update,knowledge:delete,knowledge:strategy,"
 			+ "student:list,student:supervision,student:archive,student:archive:edit,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
-			+ "task:list,task:create,task:update,task:delete";
+			+ "task:list,task:create,task:update,task:delete,"
+			+ "handraise:list,handraise:handle";
 
 	/** 学管师：学员运营，学员/订单全操作 + 知识查看，含学员督学 */
 	public static final String CONSULTANT_AUTHORITY = "home,exercise:list,"
@@ -420,6 +429,7 @@ public final class PermissionConsts {
 			+ "order:list,order:create,order:update,order:delete,"
 			+ "mall:list,"
 			+ "task:list,task:create,task:update,task:delete,"
+			+ "handraise:list,handraise:handle,"
 			+ "knowledge:list,repo:list,repo:detail,"
 			+ "campus:list";
 
@@ -431,6 +441,7 @@ public final class PermissionConsts {
 			+ "student:list,student:archive,order:list,"
 			+ "mall:list,mall:create,mall:update,mall:delete,"
 			+ "task:list,task:create,task:update,task:delete,"
+			+ "handraise:list,handraise:handle,"
 			+ "system:dict:list,system:dictItem:list,"
 			+ "campus:list";
 

@@ -8227,3 +8227,46 @@ INSERT INTO t_english_sentence (id, en, zh, version, grade, term, unit, section,
 
 -- 修正 bar 释义语境：本词在外研版五上 Unit 1 食物主题中表示“块/条/棒”，搭配 a bar of chocolate。
 UPDATE t_english_word SET `meaning`='n. 块，条，棒，根（a bar of chocolate 一块巧克力）' WHERE id='ewwy0742' AND spell='bar';
+
+-- ----------------------------
+-- 学员举手反馈（学员题目页举手：求助讲解 / 题干有误 / 答案有误）
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `t_hand_raise` (
+  `id` varchar(64) NOT NULL,
+  `student_id` varchar(64) DEFAULT NULL COMMENT '学员ID(t_student.id)',
+  `raise_type` varchar(20) DEFAULT 'explain' COMMENT 'explain求助讲解/question_error题干有误/answer_error答案有误',
+  `status` tinyint DEFAULT 0 COMMENT '0待处理 2已处理 3已忽略',
+  `question_id` varchar(64) DEFAULT NULL COMMENT '题目ID(t_template.id)',
+  `question_type` varchar(32) DEFAULT NULL COMMENT '题型',
+  `subject` varchar(32) DEFAULT NULL COMMENT '学科',
+  `chapter` varchar(128) DEFAULT NULL COMMENT '章节',
+  `knowledge_point` varchar(512) DEFAULT NULL COMMENT '知识点(顿号连接)',
+  `difficulty` varchar(32) DEFAULT NULL COMMENT '难度',
+  `question_content` text COMMENT '题干快照',
+  `options_json` text COMMENT '选项快照JSON',
+  `student_answer` text COMMENT '学员作答展示文本',
+  `student_option_ids` varchar(512) DEFAULT NULL COMMENT '学员选中选项ID(逗号分隔)',
+  `correct_answer` text COMMENT '标准答案展示文本',
+  `correct_option_ids` varchar(512) DEFAULT NULL COMMENT '正确选项ID(逗号分隔)',
+  `answer_analysis` text COMMENT '解析快照',
+  `page` varchar(255) DEFAULT NULL COMMENT '提交时页面标识',
+  `section_id` varchar(64) DEFAULT NULL COMMENT '小节ID',
+  `remark` varchar(500) DEFAULT NULL COMMENT '学员补充说明',
+  `handler_id` varchar(64) DEFAULT NULL COMMENT '处理人ID',
+  `handler_name` varchar(64) DEFAULT NULL COMMENT '处理人姓名',
+  `handle_at` timestamp NULL DEFAULT NULL COMMENT '处理时间',
+  `handle_note` varchar(500) DEFAULT NULL COMMENT '处理备注',
+  `create_at` timestamp DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(256) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_hand_raise_status` (`status`) USING BTREE,
+  KEY `idx_hand_raise_student` (`student_id`) USING BTREE,
+  KEY `idx_hand_raise_type` (`raise_type`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='学员举手反馈';
+
+-- 举手提醒权限点收敛（幂等，避免旧库角色缺 handraise:* 权限点）
+UPDATE `t_role` SET `authority` = CONCAT(`authority`, ',handraise:list') WHERE `code` IN ('admin','principal','teacher','consultant','academic') AND `authority` NOT LIKE '%handraise:list%';
+UPDATE `t_role` SET `authority` = CONCAT(`authority`, ',handraise:handle') WHERE `code` IN ('admin','teacher','consultant','academic') AND `authority` NOT LIKE '%handraise:handle%';
