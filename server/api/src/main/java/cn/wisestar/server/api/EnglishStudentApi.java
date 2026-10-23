@@ -7,6 +7,7 @@ import cn.wisestar.server.domain.dto.english.EnglishDiagnoseRequest;
 import cn.wisestar.server.domain.dto.english.EnglishDiagnoseSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
+import cn.wisestar.server.domain.dto.english.EnglishPracticeHistoryView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordRequest;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeSummaryView;
@@ -281,6 +282,26 @@ public class EnglishStudentApi {
 	public EnglishPracticeSummaryView practiceSummary(@RequestParam String module,
 			@RequestParam(required = false) String unit) {
 		return englishPracticeRecordService.summary(SecurityContextUtils.getUserId(), module, unit);
+	}
+
+	/**
+	 * 历史练习记录列表（学习中心卡片「查看过往记录」）。
+	 */
+	@GetMapping("/practice/history")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishPracticeHistoryView> practiceHistory(@RequestParam String module,
+			@RequestParam(required = false) String unit,
+			@RequestParam(required = false) Integer limit) {
+		return englishPracticeRecordService.history(SecurityContextUtils.getUserId(), module, unit, limit);
+	}
+
+	/**
+	 * 按记录 ID 读取一次作答的逐题明细（仅限本人记录）。
+	 */
+	@GetMapping("/practice/detail")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishPracticeRecordView practiceDetail(@RequestParam String id) {
+		return englishPracticeRecordService.detail(SecurityContextUtils.getUserId(), id);
 	}
 
 	/**

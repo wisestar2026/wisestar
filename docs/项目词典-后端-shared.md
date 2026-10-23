@@ -1985,7 +1985,15 @@
 - 注解: @Data
 - **类说明**：
   英语练习成绩概览：本次得分、历史最高分、最近一次、上一次得分、累计次数与未消灭错题数。
-- 字段: module / unit / recordId / score / bestScore / lastScore / previousScore / attempts / wrongCount / lastTime
+- 字段: module / unit / recordId / score / bestScore / lastScore / previousScore / attempts / wrongCount / lastTime / bestTime
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPracticeHistoryView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishPracticeHistoryView`
+- 注解: @Data
+- **类说明**：
+  英语练习历史条目（学习中心「查看过往记录」列表），只含汇总字段，逐题明细按 id 走 `/practice/detail` 单独获取。
+- 字段: id / module / unit / score / correct / total / accuracy / durationSeconds / createAt
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishPracticeRecordView.java`
 - 包: `cn.wisestar.server.domain.dto.english`

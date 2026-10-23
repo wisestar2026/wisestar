@@ -1301,3 +1301,65 @@ input.eng-dictation-field:focus {
   .eng-detail-card { padding: 24px 20px 26px; }
   .eng-hub-card { padding: 44px 18px; }
 }
+
+/* ---------- 阅读理解 / 单元练习：历史最高分与「查看过往记录」 ---------- */
+.eng-mod-history {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: currentColor;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.86;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+.eng-mod-history:hover { opacity: 1; }
+
+/* 过往记录弹窗 */
+.eng-hist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.eng-hist-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e1eef6;
+  border-radius: 14px;
+  background: #f8fcff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+.eng-hist-row:hover {
+  border-color: #9ed3ef;
+  background: #eef8ff;
+  transform: translateY(-1px);
+}
+.eng-hist-score {
+  min-width: 64px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #1976d2;
+}
+.eng-hist-score small { margin-left: 2px; font-size: 12px; font-weight: 700; }
+.eng-hist-main { display: flex; flex: 1; flex-direction: column; gap: 2px; }
+.eng-hist-date { font-size: 14px; font-weight: 700; color: #23495c; }
+.eng-hist-sub { font-size: 12px; color: #6b8a9c; }
+.eng-hist-arrow { color: #9db9c9; }
+.eng-hist-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.eng-hist-detail-meta { font-size: 13px; color: #607d8b; }

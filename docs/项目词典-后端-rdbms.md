@@ -1145,7 +1145,12 @@
   - `public EnglishPracticeSummaryView recordFromReport(String userId, String module, String version, String grade, String term, String unit, DetectReportView report)`
     单元/语法练习交卷后把报告明细落成一条练习记录并写入错题。
   - `public EnglishPracticeSummaryView summary(String userId, String module, String unit)`
+    概览里的 `bestTime` 取最高分那条记录的创建时间。
   - `public EnglishPracticeRecordView last(String userId, String module, String unit, String excludeId)`
+  - `public List<EnglishPracticeHistoryView> history(String userId, String module, String unit, Integer limit)`
+    学习中心「查看过往记录」：按时间倒序取最近 N 条（默认 20、上限 100），只返回汇总字段。`unit` 为空时按模块取该学员全部单元记录。
+  - `public EnglishPracticeRecordView detail(String userId, String recordId)`
+    取某一次作答的逐题明细，查询条件带 `user_id`，非本人记录返回 null。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishUnitPaperServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

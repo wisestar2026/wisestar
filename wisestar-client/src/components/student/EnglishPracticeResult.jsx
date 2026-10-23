@@ -15,8 +15,8 @@ import { ReloadOutlined } from '@ant-design/icons';
 import QuestionPreview from '../practice/QuestionPreview';
 import RichContent from '../common/RichContent';
 
-/** 单题解析行（本次结果与上次回放共用） */
-function ResultItem({ item, index }) {
+/** 单题解析行（本次结果、上次回放、历史记录详情共用） */
+export function ResultItem({ item, index }) {
   const state = item.correct === 1 ? 'is-right' : item.correct === 0 ? 'is-wrong' : '';
   const flag = item.correct === 1 ? '答对' : item.correct === 0 ? '答错' : '未判分';
   return (

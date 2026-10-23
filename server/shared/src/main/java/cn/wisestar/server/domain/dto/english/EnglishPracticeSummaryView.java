@@ -28,6 +28,9 @@ public class EnglishPracticeSummaryView {
 	/** 历史最高分（0-100） */
 	private Integer bestScore;
 
+	/** 最高分取得时间 */
+	private Date bestTime;
+
 	/** 最近一次得分（含本次） */
 	private Integer lastScore;
 

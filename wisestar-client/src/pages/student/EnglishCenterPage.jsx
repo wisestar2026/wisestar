@@ -32,8 +32,15 @@ import {
 import useStudentStore from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
 import StarRating from '../../components/common/StarRating';
-import { getEnglishUnits, getEnglishReview, getEnglishDrillWords, getEnglishDrillCompleted } from '../../api/englishStudent';
+import {
+  getEnglishUnits,
+  getEnglishReview,
+  getEnglishDrillWords,
+  getEnglishDrillCompleted,
+  getEnglishPracticeSummary,
+} from '../../api/englishStudent';
 import WordDrillModal from './WordDrillModal';
+import EnglishPracticeHistoryModal from '../../components/student/EnglishPracticeHistoryModal';
 import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 
@@ -60,6 +67,10 @@ export default function EnglishCenterPage() {
   const [reviewCount, setReviewCount] = useState(0);
   const [drillWords, setDrillWords] = useState([]);
   const [drillOpen, setDrillOpen] = useState(false);
+  // 阅读理解 / 单元练习的历史最好成绩（按当前单元）
+  const [readingSummary, setReadingSummary] = useState(null);
+  const [unitSummary, setUnitSummary] = useState(null);
+  const [historyModal, setHistoryModal] = useState({ open: false, module: 'unit', title: '' });
 
   const loadUnits = useCallback(() => {
     setLoading(true);
@@ -119,6 +130,34 @@ export default function EnglishCenterPage() {
     };
   }, [userId]);
 
+  // 切换单元后刷新阅读理解 / 单元练习的最高分与练习次数
+  useEffect(() => {
+    if (!activeUnit) {
+      return undefined;
+    }
+    let cancelled = false;
+    // 切换单元瞬间先清空，避免短暂显示上一个单元的成绩
+    setReadingSummary(null);
+    setUnitSummary(null);
+    getEnglishPracticeSummary({ module: 'reading', unit: activeUnit })
+      .then((res) => {
+        if (!cancelled) setReadingSummary(res?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setReadingSummary(null);
+      });
+    getEnglishPracticeSummary({ module: 'unit', unit: activeUnit })
+      .then((res) => {
+        if (!cancelled) setUnitSummary(res?.data || null);
+      })
+      .catch(() => {
+        if (!cancelled) setUnitSummary(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUnit, version, grade, term]);
+
   const finishDrill = () => {
     setDrillOpen(false);
     getEnglishReview({ limit: 50 })
@@ -131,6 +170,12 @@ export default function EnglishCenterPage() {
   const selectUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`, { replace: true });
 
   const active = units.find((u) => u.unit === activeUnit) || units[0];
+
+  // 「查看过往记录」：阻止冒泡，避免同时触发卡片进入练习
+  const openHistory = (event, module, title) => {
+    event.stopPropagation();
+    setHistoryModal({ open: true, module, title });
+  };
 
   return (
     <div className="eng-page">
@@ -272,7 +317,29 @@ export default function EnglishCenterPage() {
                 >
                   <span className="eng-mod-icon"><ReadOutlined /></span>
                   <span className="eng-mod-title">阅读理解</span>
-                  <span className="eng-mod-sub">短文 · 选择题</span>
+                  {readingSummary?.attempts > 0 ? (
+                    <>
+                      <span className="eng-mod-sub">
+                        最高 {readingSummary.bestScore} 分 · 已练 {readingSummary.attempts} 次
+                      </span>
+                      <span
+                        className="eng-mod-history"
+                        role="link"
+                        tabIndex={0}
+                        onClick={(event) => openHistory(event, 'reading', '阅读理解')}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openHistory(event, 'reading', '阅读理解');
+                          }
+                        }}
+                      >
+                        查看过往记录 ›
+                      </span>
+                    </>
+                  ) : (
+                    <span className="eng-mod-sub">短文 · 选择题 · 点击开始</span>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -290,7 +357,29 @@ export default function EnglishCenterPage() {
                 >
                   <span className="eng-mod-icon"><FlagOutlined /></span>
                   <span className="eng-mod-title">单元练习</span>
-                  <span className="eng-mod-sub">本单元综合题</span>
+                  {unitSummary?.attempts > 0 ? (
+                    <>
+                      <span className="eng-mod-sub">
+                        最高 {unitSummary.bestScore} 分 · 已练 {unitSummary.attempts} 次
+                      </span>
+                      <span
+                        className="eng-mod-history"
+                        role="link"
+                        tabIndex={0}
+                        onClick={(event) => openHistory(event, 'unit', '单元练习')}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            openHistory(event, 'unit', '单元练习');
+                          }
+                        }}
+                      >
+                        查看过往记录 ›
+                      </span>
+                    </>
+                  ) : (
+                    <span className="eng-mod-sub">本单元综合题 · 点击开始</span>
+                  )}
                 </button>
               </div>
             </div>
@@ -299,6 +388,14 @@ export default function EnglishCenterPage() {
       )}
 
       <WordDrillModal open={drillOpen} words={drillWords} onFinish={finishDrill} />
+
+      <EnglishPracticeHistoryModal
+        open={historyModal.open}
+        module={historyModal.module}
+        unit={active?.unit || activeUnit}
+        title={historyModal.title}
+        onCancel={() => setHistoryModal((prev) => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

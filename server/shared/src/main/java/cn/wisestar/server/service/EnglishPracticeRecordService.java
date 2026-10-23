@@ -1,9 +1,12 @@
 package cn.wisestar.server.service;
 
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
+import cn.wisestar.server.domain.dto.english.EnglishPracticeHistoryView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordRequest;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeSummaryView;
+
+import java.util.List;
 
 /**
  * 英语练习作答记录与错题本服务。
@@ -49,6 +52,26 @@ public interface EnglishPracticeRecordService {
 	 * @return 概览
 	 */
 	EnglishPracticeSummaryView summary(String userId, String module, String unit);
+
+	/**
+	 * 历史作答记录列表（按时间倒序，不含逐题明细）。
+	 *
+	 * @param userId 学员账号 ID
+	 * @param module 模块
+	 * @param unit   单元（可空）
+	 * @param limit  条数上限（默认 20，最大 100）
+	 * @return 记录列表
+	 */
+	List<EnglishPracticeHistoryView> history(String userId, String module, String unit, Integer limit);
+
+	/**
+	 * 按记录 ID 读取一次作答的逐题明细（仅限本人记录）。
+	 *
+	 * @param userId   学员账号 ID
+	 * @param recordId 记录 ID
+	 * @return 作答明细；不存在或不属于本人返回 null
+	 */
+	EnglishPracticeRecordView detail(String userId, String recordId);
 
 	/**
 	 * 上一次作答记录（可按 ID 排除当前这次）。

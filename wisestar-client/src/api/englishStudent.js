@@ -191,3 +191,13 @@ export function getEnglishPracticeSummary(params) {
 export function getEnglishPracticeLast(params) {
   return request.get('/english/student/practice/last', { params });
 }
+
+/** 历史练习记录列表（学习中心「查看过往记录」，不含逐题明细） */
+export function getEnglishPracticeHistory(params) {
+  return request.get('/english/student/practice/history', { params });
+}
+
+/** 按记录 ID 读取一次作答的逐题明细（仅限本人记录） */
+export function getEnglishPracticeDetail(id) {
+  return request.get('/english/student/practice/detail', { params: { id } });
+}

@@ -1,6 +1,7 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.domain.dto.detect.DetectReportView;
+import cn.wisestar.server.domain.dto.english.EnglishPracticeHistoryView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeItemView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordRequest;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordView;
@@ -45,6 +46,9 @@ public class EnglishPracticeRecordServiceImpl implements EnglishPracticeRecordSe
 
 	/** 历史成绩最多回看条数（最高分取该范围内的最大值） */
 	private static final int HISTORY_LIMIT = 100;
+
+	/** 「查看过往记录」默认返回条数 */
+	private static final int DEFAULT_HISTORY_PAGE = 20;
 
 	@Override
 	public EnglishPracticeSummaryView record(String userId, EnglishPracticeRecordRequest request) {
@@ -154,16 +158,25 @@ public class EnglishPracticeRecordServiceImpl implements EnglishPracticeRecordSe
 		summary.setUnit(unit);
 		summary.setAttempts(records.size());
 		int best = 0;
+		Date bestTime = null;
 		for (EnglishPracticeRecord record : records) {
-			best = Math.max(best, record.getScore() == null ? 0 : record.getScore());
+			int score = record.getScore() == null ? 0 : record.getScore();
+			if (score > best) {
+				best = score;
+				bestTime = record.getCreateAt();
+			}
 		}
 		Integer last = records.isEmpty() ? null : records.get(0).getScore();
 		Integer previous = records.size() > 1 ? records.get(1).getScore() : null;
 		if (currentScore != null) {
 			last = currentScore;
-			best = Math.max(best, currentScore);
+			if (currentScore > best) {
+				best = currentScore;
+				bestTime = new Date();
+			}
 		}
 		summary.setBestScore(best);
+		summary.setBestTime(bestTime);
 		summary.setLastScore(last);
 		summary.setPreviousScore(previous);
 		summary.setLastTime(records.isEmpty() ? null : records.get(0).getCreateAt());
@@ -225,6 +238,51 @@ public class EnglishPracticeRecordServiceImpl implements EnglishPracticeRecordSe
 				wrongQuestionMapper.updateById(wrong);
 			}
 		}
+	}
+
+	@Override
+	public List<EnglishPracticeHistoryView> history(String userId, String module, String unit, Integer limit) {
+		if (!StringUtils.hasText(userId)) {
+			return Collections.emptyList();
+		}
+		int size = limit == null || limit <= 0 ? DEFAULT_HISTORY_PAGE : Math.min(limit, HISTORY_LIMIT);
+		List<EnglishPracticeRecord> records = recordMapper.selectList(Wrappers.<EnglishPracticeRecord>lambdaQuery()
+				.eq(EnglishPracticeRecord::getUserId, userId)
+				.eq(EnglishPracticeRecord::getModule, normalizeModule(module))
+				.eq(StringUtils.hasText(unit), EnglishPracticeRecord::getUnit, unit)
+				.orderByDesc(EnglishPracticeRecord::getCreateAt)
+				.last("LIMIT " + size));
+		if (records == null || records.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<EnglishPracticeHistoryView> list = new ArrayList<>(records.size());
+		for (EnglishPracticeRecord record : records) {
+			EnglishPracticeHistoryView view = new EnglishPracticeHistoryView();
+			view.setId(record.getId());
+			view.setModule(record.getModule());
+			view.setUnit(record.getUnit());
+			view.setScore(record.getScore());
+			view.setCorrect(record.getCorrectCount());
+			view.setTotal(record.getTotalCount());
+			view.setAccuracy(record.getAccuracy());
+			view.setDurationSeconds(record.getDurationSeconds());
+			view.setCreateAt(record.getCreateAt());
+			list.add(view);
+		}
+		return list;
+	}
+
+	@Override
+	public EnglishPracticeRecordView detail(String userId, String recordId) {
+		if (!StringUtils.hasText(userId) || !StringUtils.hasText(recordId)) {
+			return null;
+		}
+		// 只允许读取本人记录，避免用记录 ID 越权查看他人作答
+		EnglishPracticeRecord record = recordMapper.selectOne(Wrappers.<EnglishPracticeRecord>lambdaQuery()
+				.eq(EnglishPracticeRecord::getId, recordId)
+				.eq(EnglishPracticeRecord::getUserId, userId)
+				.last("LIMIT 1"));
+		return record == null ? null : toView(record);
 	}
 
 	/**
