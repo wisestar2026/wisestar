@@ -80,7 +80,7 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 		if (pack != null && StringUtils.hasText(pack.getReadingContent())) {
 			List<EnglishReadingView> cached = parseCached(pack.getReadingContent());
 			if (!cached.isEmpty()) {
-				return cached;
+				return shuffleQuestionOptions(cached);
 			}
 		}
 		EnglishReadingView view = generate(version, grade, term, unit);
@@ -88,7 +88,22 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 		saveCache(pack, version, grade, term, unit, view);
 		List<EnglishReadingView> result = new ArrayList<>();
 		result.add(view);
-		return result;
+		return shuffleQuestionOptions(result);
+	}
+
+	/**
+	 * 打乱每道阅读题的选项顺序；AI 与内置素材都把正确项固定放在首位，这里按题目内容稳定乱序。
+	 */
+	private List<EnglishReadingView> shuffleQuestionOptions(List<EnglishReadingView> articles) {
+		for (EnglishReadingView article : articles) {
+			for (EnglishReadingView.Question question : article.getQuestions()) {
+				String key = "reading:" + article.getTitle() + ":" + question.getStem() + ":"
+						+ String.join("|", question.getOptions());
+				question.setAnswerIndex(EnglishOptionShuffler.shuffle(question.getOptions(),
+						question.getAnswerIndex(), key));
+			}
+		}
+		return articles;
 	}
 
 	/** 解析已缓存的阅读内容，兼容单篇对象与 {@code {"articles":[...]}} 两种格式。 */
@@ -207,7 +222,34 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 			}
 		}
 		sb.append("\n短文要自然复现这些单词和句式，题目全部基于短文，答案必须有唯一依据。");
+		sb.append("\n篇幅要求：全文约 ").append(passageWordTarget(grade))
+				.append(" 个英文单词（允许浮动 15 词以内），不少于 5 句，词汇与语法符合该年级水平。");
 		return sb.toString();
+	}
+
+	/**
+	 * 短文目标词数：小学（一~六年级）约 120 词，中学（七~九年级）约 160 词。
+	 *
+	 * @param grade 年级（如「三年级」「七年级」，兼容「3」「Grade 7」等写法）
+	 * @return 目标词数
+	 */
+	private int passageWordTarget(String grade) {
+		String value = grade == null ? "" : grade.trim();
+		if (value.isEmpty()) {
+			return 120;
+		}
+		if (value.contains("初") || value.contains("七") || value.contains("八") || value.contains("九")
+				|| value.contains("高")) {
+			return 160;
+		}
+		int number = 0;
+		for (int i = 0; i < value.length(); i += 1) {
+			char ch = value.charAt(i);
+			if (ch >= '0' && ch <= '9') {
+				number = number * 10 + (ch - '0');
+			}
+		}
+		return number >= 7 ? 160 : 120;
 	}
 
 	private EnglishReadingView normalize(String raw) throws Exception {

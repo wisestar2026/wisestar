@@ -3,6 +3,8 @@ package cn.wisestar.server.domain.dto.student;
 import cn.wisestar.server.domain.dto.SurveySchema;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 学员端题目视图（剥离标准答案，防作弊）。
  *
@@ -30,6 +32,12 @@ public class StudentQuestionView {
 	 * 所属知识点ID（专项练习按知识点分组时返回，用于学员端展示「当前知识点」单元）
 	 */
 	private String knowledgePointId;
+
+	/** 知识点名称（解析中展示「本题知识点」用，无知识点时为空） */
+	private String knowledgePointName;
+
+	/** 知识点要点列表（取自知识点内容配置的 points，最多下发前若干条） */
+	private List<String> knowledgePointPoints;
 
 	/** 题目内容（选项等；已剥离 attribute.examCorrectAnswer 与选项级答案标记） */
 	private SurveySchema schema;

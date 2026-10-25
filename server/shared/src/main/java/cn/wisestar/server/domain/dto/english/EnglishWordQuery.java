@@ -40,4 +40,9 @@ public class EnglishWordQuery extends PageQuery {
 	 */
 	private Boolean hasImage;
 
+	/**
+	 * 播放语速：仅用于按学员端实际语速预热发音缓存，不参与查询条件。
+	 */
+	private String speed;
+
 }

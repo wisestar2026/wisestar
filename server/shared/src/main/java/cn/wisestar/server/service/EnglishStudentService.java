@@ -92,6 +92,32 @@ public interface EnglishStudentService {
 	List<ReviewSessionView> reviewSession(String userId, int limit);
 
 	/**
+	 * 单词复习队列：跨单元取该年级「已到复习时间」的单词，按下次复习时间升序（越久没复习越靠前）。
+	 *
+	 * <p>按复习调度模型没有到期单词时返回空列表（前端显示 0 词）；单次最多 20 词，
+	 * 到期未复习完的留到下一轮。</p>
+	 *
+	 * @param userId 用户 ID
+	 * @param version 教材版本（空则不限制）
+	 * @param grade 年级（空则取该用户最近学习的年级）
+	 * @param limit 数量上限，0 或空按年级规则
+	 * @return 单词复习队列（仅 type=word）
+	 */
+	List<cn.wisestar.server.domain.dto.english.EnglishWordView> wordReviewSession(String userId, String version,
+			String grade, Integer limit);
+
+	/**
+	 * 单词复习概览：应复习词数（已到复习时间、按拼写去重）、按熟练度分布（陌生 / 一般 / 熟练）、涉及单元。
+	 *
+	 * @param userId 用户 ID
+	 * @param version 教材版本（空则不限制）
+	 * @param grade 年级（空则取该用户最近学习的年级）
+	 * @return 复习概览；没有到期单词时各计数为 0
+	 */
+	cn.wisestar.server.domain.dto.english.EnglishWordReviewSummaryView wordReviewSummary(String userId, String version,
+			String grade);
+
+	/**
 	 * 记录一次情景练习结果（单词情景 / 句式情景），纳入「单元·模块」掌握度。
 	 *
 	 * @param userId 用户 ID

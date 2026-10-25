@@ -4,6 +4,7 @@ import cn.wisestar.server.domain.dto.english.EnglishReadAloudView;
 import cn.wisestar.server.domain.model.EnglishReadAloud;
 import cn.wisestar.server.mapper.EnglishReadAloudMapper;
 import cn.wisestar.server.service.EnglishReadAloudService;
+import cn.wisestar.server.service.EnglishTtsService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,10 +27,13 @@ public class EnglishReadAloudServiceImpl implements EnglishReadAloudService {
 
 	private final EnglishReadAloudMapper readAloudMapper;
 
+	private final EnglishTtsService ttsService;
+
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	public EnglishReadAloudServiceImpl(EnglishReadAloudMapper readAloudMapper) {
+	public EnglishReadAloudServiceImpl(EnglishReadAloudMapper readAloudMapper, EnglishTtsService ttsService) {
 		this.readAloudMapper = readAloudMapper;
+		this.ttsService = ttsService;
 	}
 
 	@Override
@@ -56,7 +60,25 @@ public class EnglishReadAloudServiceImpl implements EnglishReadAloudService {
 				result.add(view);
 			}
 		}
+		warmUpAudio(result);
 		return result;
+	}
+
+	/**
+	 * 后台预热整篇课文的朗读音频：Piper 首次合成要加载模型（2~4 秒），预热后学员点「听原音」基本命中缓存。
+	 */
+	private void warmUpAudio(List<EnglishReadAloudView> passages) {
+		List<String> lines = new ArrayList<>();
+		for (EnglishReadAloudView passage : passages) {
+			for (EnglishReadAloudView.Line line : passage.getLines()) {
+				if (StringUtils.hasText(line.getEn())) {
+					lines.add(line.getEn());
+				}
+			}
+		}
+		if (!lines.isEmpty()) {
+			ttsService.warmUp(lines);
+		}
 	}
 
 	private List<EnglishReadAloudView.Line> parseLines(EnglishReadAloud passage) {

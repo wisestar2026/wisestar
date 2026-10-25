@@ -107,6 +107,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1277,13 +1278,64 @@ public class StudentServiceImpl extends BaseService<StudentMapper, Student> impl
 		final Boolean effectiveRandom = countInjected ? Boolean.TRUE : random;
 		List<Template> picked = pickByCoverage(candidates, questionsByKp, limit, perKp, group, effectiveRandom,
 				assignedKp, weakKpIds);
-		return picked.stream().map(t -> {
+		List<StudentQuestionView> result = picked.stream().map(t -> {
 			StudentQuestionView view = expose ? toStudentQuestionViewWithAnswer(t) : toStudentQuestionView(t);
 			if (assignedKp.containsKey(t.getId())) {
 				view.setKnowledgePointId(assignedKp.get(t.getId()));
 			}
 			return view;
 		}).collect(Collectors.toList());
+		fillKnowledgePointDetail(result);
+		return result;
+	}
+
+	/** 批量回填知识点的名称与要点，供学员端在解析里展示「本题知识点」。 */
+	private void fillKnowledgePointDetail(List<StudentQuestionView> views) {
+		if (views == null || views.isEmpty()) {
+			return;
+		}
+		Set<String> kpIds = views.stream().map(StudentQuestionView::getKnowledgePointId)
+				.filter(StringUtils::hasText).collect(Collectors.toSet());
+		if (kpIds.isEmpty()) {
+			return;
+		}
+		Map<String, KnowledgePoint> byId = new HashMap<>();
+		for (KnowledgePoint kp : knowledgePointMapper.selectBatchIds(kpIds)) {
+			byId.put(kp.getId(), kp);
+		}
+		for (StudentQuestionView view : views) {
+			KnowledgePoint kp = byId.get(view.getKnowledgePointId());
+			if (kp == null) {
+				continue;
+			}
+			view.setKnowledgePointName(kp.getName());
+			view.setKnowledgePointPoints(parseKnowledgePoints(kp.getContent()));
+		}
+	}
+
+	/** 解析知识点 content（形如 {"points":["..."]}），异常或缺失时返回空列表。 */
+	private List<String> parseKnowledgePoints(String content) {
+		if (!StringUtils.hasText(content)) {
+			return Collections.emptyList();
+		}
+		try {
+			JsonNode points = objectMapper.readTree(content).path("points");
+			if (!points.isArray()) {
+				return Collections.emptyList();
+			}
+			List<String> list = new ArrayList<>();
+			for (JsonNode node : points) {
+				String text = node.asText("");
+				if (StringUtils.hasText(text)) {
+					list.add(text.trim());
+				}
+			}
+			return list;
+		}
+		catch (Exception e) {
+			log.warn("知识点内容解析失败: {}", content, e);
+			return Collections.emptyList();
+		}
 	}
 
 	/**

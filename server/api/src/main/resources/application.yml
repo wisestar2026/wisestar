@@ -84,6 +84,26 @@ wisestar:
         - display-name: "Llama-3.1-70B-Instruct"
           value: "meta-llama/Meta-Llama-3.1-70B-Instruct"
           description: "Llama 3.1 70B 指令模型"
+# 英语朗读音频（服务端合成）：学员设备常见缺少英文语音包，由服务端合成并缓存
+english:
+  tts:
+    engine: piper  # piper=本地神经语音（推荐）/ espeak=本地 espeak-ng / none=关闭（前端退回浏览器语音合成）
+    fallback-engine: espeak  # 主引擎不可用或单句失败时的回退，空表示不回退
+    piper-bin: ${ENGLISH_TTS_PIPER_BIN:/opt/wisestar-tts/venv/bin/piper}
+    piper-voice: ${ENGLISH_TTS_PIPER_VOICE:/opt/wisestar-tts/voices/en_GB-jenny_dioco-medium.onnx}  # 英式女声（小学课堂带读口径）
+    espeak-bin: espeak-ng
+    lame-bin: lame  # 缺失时直接返回 wav
+    voice: en-gb  # espeak-ng 回退音色，与 Piper 音色保持同一口音
+    speed: 109  # espeak 词/分口径；109 ≈ 常速的 0.75 倍（小学课件慢速朗读），调大更快
+    max-chars: 240
+    cache-dir: ${ENGLISH_TTS_CACHE_DIR:}
+    timeout-seconds: 30
+    warmup-threads: 2
+    daemon: true  # 常驻 Piper 进程：模型只加载一次，单句约 60ms；关闭后每句冷合成约 1.7s
+    daemon-max: 1  # 常驻进程上限（每个约 170MB 内存）；内存宽裕可调到 2 让课文语速也常驻
+    daemon-idle-seconds: 600  # 闲置多久回收常驻进程
+    preload-speeds: 125  # 启动时预热的语速：单词练习 125（课文 109 走整篇批量预热，不占常驻进程）
+
 # AI 服务配置
 ai:
   tts:

@@ -20,6 +20,8 @@ import cn.wisestar.server.domain.dto.english.EnglishUnitPaperRequest;
 import cn.wisestar.server.domain.dto.english.EnglishUnitPaperSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
+import cn.wisestar.server.domain.dto.english.EnglishWordReviewSummaryView;
+import cn.wisestar.server.domain.dto.english.EnglishWordView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
@@ -31,8 +33,15 @@ import cn.wisestar.server.service.EnglishReadingService;
 import cn.wisestar.server.service.EnglishScenarioPackService;
 import cn.wisestar.server.service.EnglishSentencePackService;
 import cn.wisestar.server.service.EnglishStudentService;
+import cn.wisestar.server.service.EnglishTtsService;
 import cn.wisestar.server.service.EnglishUnitPaperService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,6 +72,8 @@ public class EnglishStudentApi {
 	private final EnglishReadAloudService readAloudService;
 
 	private final EnglishUnitPaperService unitPaperService;
+
+	private final EnglishTtsService ttsService;
 
 	/**
 	 * 单元列表 + 学习进度。
@@ -142,6 +153,28 @@ public class EnglishStudentApi {
 	}
 
 	/**
+	 * 单词复习队列：跨单元取该年级已到复习时间的单词，按下次复习时间升序；
+	 * 没有到期单词时返回空列表，单次最多 20 词。
+	 */
+	@GetMapping("/review/words")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishWordView> reviewWords(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) Integer limit) {
+		return englishStudentService.wordReviewSession(SecurityContextUtils.getUserId(), version, grade, limit);
+	}
+
+	/**
+	 * 单词复习概览：应复习词数、按熟练度分布（陌生 / 一般 / 熟练）、涉及单元，供复习页卡片展示。
+	 */
+	@GetMapping("/review/word-summary")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishWordReviewSummaryView wordReviewSummary(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade) {
+		return englishStudentService.wordReviewSummary(SecurityContextUtils.getUserId(), version, grade);
+	}
+
+	/**
 	 * 情景对话练习：读取该单元已固化的情景内容（按组合并展示，不触发实时 AI）。
 	 */
 	@GetMapping("/scenarios")
@@ -187,6 +220,27 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String term,
 			@RequestParam(required = false) String unit) {
 		return readAloudService.getPassages(version, grade, term, unit);
+	}
+
+	/**
+	 * 英文短句朗读音频（服务端合成）。
+	 *
+	 * <p>学员设备没有英文语音包时浏览器语音合成会静默失败，这里返回服务端合成的 mp3/wav，
+	 * 前端优先播放；合成引擎未启用时返回 503，前端退回浏览器语音合成。</p>
+	 */
+	@GetMapping("/tts")
+	@PreAuthorize("isAuthenticated()")
+	public ResponseEntity<Resource> tts(@RequestParam String text,
+			@RequestParam(required = false) String speed) {
+		byte[] audio = ttsService.synthesize(text, speed);
+		if (audio == null || audio.length == 0) {
+			return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+		}
+		// 返回 Resource 而非 byte[]：统一响应包装器会跳过 Resource，音频才能按原始字节输出
+		return ResponseEntity.ok().contentType(MediaType.parseMediaType(ttsService.contentType()))
+				.header(HttpHeaders.CACHE_CONTROL, "public, max-age=604800")
+				.contentLength(audio.length)
+				.body(new ByteArrayResource(audio));
 	}
 
 	/**

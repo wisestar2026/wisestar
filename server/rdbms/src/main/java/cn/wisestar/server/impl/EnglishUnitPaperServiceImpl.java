@@ -40,6 +40,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Deque;
@@ -115,6 +116,8 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 
 	private final EnglishPracticeRecordService practiceRecordService;
 
+	private final EnglishVocabScope vocabScope;
+
 	@Override
 	public List<StudentQuestionView> generate(EnglishUnitPaperRequest request) {
 		if (request == null || !StringUtils.hasText(request.getUnit())) {
@@ -168,7 +171,60 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				break;
 			}
 		}
-		return paper.stream().map(this::toView).collect(Collectors.toList());
+		Map<String, List<String>> kpPoints = loadKpPoints(paper);
+		return paper.stream().map(q -> toViewWithKp(q, kpPoints)).collect(Collectors.toList());
+	}
+
+	/** 批量加载题目涉及知识点的要点（按名称匹配，缺失时为空 Map）。 */
+	private Map<String, List<String>> loadKpPoints(Collection<Q> questions) {
+		Set<String> names = questions.stream().map(q -> q.tag.getKnowledgePoint())
+				.filter(StringUtils::hasText).map(String::trim).collect(Collectors.toSet());
+		if (names.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		Map<String, List<String>> map = new HashMap<>();
+		for (KnowledgePoint kp : knowledgePointMapper.selectList(Wrappers.<KnowledgePoint>lambdaQuery()
+				.in(KnowledgePoint::getName, names))) {
+			map.putIfAbsent(kp.getName(), parseKpPoints(kp.getContent()));
+		}
+		return map;
+	}
+
+	/** 解析知识点 content（{"points":[...]}），异常时返回空列表。 */
+	private List<String> parseKpPoints(String content) {
+		if (!StringUtils.hasText(content)) {
+			return Collections.emptyList();
+		}
+		try {
+			JsonNode points = objectMapper.readTree(content).path("points");
+			if (!points.isArray()) {
+				return Collections.emptyList();
+			}
+			List<String> list = new ArrayList<>();
+			for (JsonNode node : points) {
+				String text = node.asText("");
+				if (StringUtils.hasText(text)) {
+					list.add(text.trim());
+				}
+			}
+			return list;
+		}
+		catch (Exception e) {
+			log.warn("知识点内容解析失败: {}", content, e);
+			return Collections.emptyList();
+		}
+	}
+
+	/** 题目视图 + 知识点名称与要点（供解析展示）。 */
+	private StudentQuestionView toViewWithKp(Q q, Map<String, List<String>> kpPoints) {
+		StudentQuestionView view = toView(q);
+		String name = q.tag.getKnowledgePoint();
+		if (StringUtils.hasText(name)) {
+			String key = name.trim();
+			view.setKnowledgePointName(key);
+			view.setKnowledgePointPoints(kpPoints.getOrDefault(key, Collections.emptyList()));
+		}
+		return view;
 	}
 
 	@Override
@@ -339,6 +395,7 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		Map<String, int[]> cognitiveAgg = new LinkedHashMap<>();
 		Map<String, int[]> typeAgg = new LinkedHashMap<>();
 		Map<String, int[]> difficultyAgg = new LinkedHashMap<>();
+		Map<String, List<String>> kpPoints = loadKpPoints(questions.values());
 		for (EnglishUnitPaperSubmitRequest.Item item : items) {
 			Q q = questions.get(item.getContentKey());
 			if (q == null) {
@@ -358,7 +415,7 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 			detail.setMastery(mastery.getLabel());
 			detail.setScore(score);
 			detail.setCorrect(mastery == EnglishBehaviorJudge.Mastery.MASTERED ? 1 : 0);
-			detail.setQuestion(toView(q));
+			detail.setQuestion(toViewWithKp(q, kpPoints));
 			detail.setCorrectAnswers(q.correctAnswers());
 			detail.setStudentAnswer(formatStudentAnswer(q, item.getAnswer()));
 			detail.setAnalysis(q.analysis);
@@ -617,7 +674,8 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 	 * 按内容键回读句子包/情景包，组装成可组卷的题目。
 	 */
 	private List<Q> loadQuestions(String version, String grade, String term, String unit) {
-		Map<String, Q> sentence = loadSentenceQuestions(version, grade, term, unit);
+		Set<String> scope = vocabScope.allowed(version, grade, term, unit);
+		Map<String, Q> sentence = loadSentenceQuestions(version, grade, term, unit, scope);
 		Map<String, Q> all = new HashMap<>(sentence);
 		List<EnglishContentTag> tags = tagMapper.selectList(Wrappers.<EnglishContentTag>lambdaQuery()
 				.eq(StringUtils.hasText(version), EnglishContentTag::getVersion, version)
@@ -682,7 +740,8 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		return q;
 	}
 
-	private Map<String, Q> loadSentenceQuestions(String version, String grade, String term, String unit) {
+	private Map<String, Q> loadSentenceQuestions(String version, String grade, String term, String unit,
+			Set<String> scope) {
 		EnglishSentencePack pack = sentencePackMapper.selectOne(Wrappers.<EnglishSentencePack>lambdaQuery()
 				.eq(StringUtils.hasText(version), EnglishSentencePack::getVersion, version)
 				.eq(StringUtils.hasText(grade), EnglishSentencePack::getGrade, grade)
@@ -701,6 +760,13 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				if (item == null || !StringUtils.hasText(item.getKind()) || !StringUtils.hasText(item.getEn())) {
 					continue;
 				}
+				// 内容包里的改写句可能引入超纲词，答案不在「本单元及之前所学」范围内则不入卷
+				String answerText = StringUtils.hasText(item.getAnswer()) ? item.getAnswer() : item.getEn();
+				if (!vocabScope.inScope(answerText, scope)) {
+					log.info("english unit paper: 跳过超纲句子题 unit={} kind={} answer={}", unit, item.getKind(),
+							answerText);
+					continue;
+				}
 				String key = sentenceKey(version, grade, term, unit, item);
 				Q q = new Q();
 				q.kind = item.getKind();
@@ -708,11 +774,18 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				q.analysis = StringUtils.hasText(item.getExplanation()) ? item.getExplanation() : item.getZh();
 				if ("choice".equals(item.getKind())) {
 					List<String> options = item.getOptions() == null || item.getOptions().isEmpty()
-							? List.of(item.getEn()) : item.getOptions();
+							? new ArrayList<>() : new ArrayList<>(item.getOptions());
+					if (options.isEmpty()) {
+						options.add(item.getEn());
+					}
 					q.type = SurveySchema.QuestionType.Radio;
 					q.title = item.getZh() + "（选择正确的英文表达）";
-					q.options = options;
 					q.answer = StringUtils.hasText(item.getAnswer()) ? item.getAnswer() : item.getEn();
+					// 内容包把正确项固定在首位，按题目内容稳定打乱后再入卷
+					int correct = options.indexOf(q.answer);
+					EnglishOptionShuffler.shuffle(options, correct, "sentence:" + version + ":" + grade + ":"
+							+ term + ":" + unit + ":" + item.getEn() + ":" + item.getZh());
+					q.options = options;
 				}
 				else if ("build".equals(item.getKind())) {
 					q.type = SurveySchema.QuestionType.FillBlank;

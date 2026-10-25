@@ -9,6 +9,7 @@ import cn.wisestar.server.domain.model.EnglishWordBook;
 import cn.wisestar.server.mapper.EnglishLearningLogMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
+import cn.wisestar.server.service.EnglishTtsService;
 import cn.wisestar.server.service.EnglishWordService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -40,9 +41,13 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	private final EnglishWordBookMapper englishWordBookMapper;
 	private final EnglishLearningLogMapper englishLearningLogMapper;
 	private final EnglishPracticeEvaluator englishPracticeEvaluator;
+	private final EnglishTtsService englishTtsService;
 
 	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
 	private static final int WEAK_WRONG_TIMES = 2;
+
+	/** 发音预热上限：返回词数超过该值（整册）时不做后台合成，避免拖慢双核机器。 */
+	private static final int WARMUP_MAX_WORDS = 60;
 
 	/** 巩固池上限：熟练度达到该值视为已熟悉，不再强制巩固。 */
 	private static final int DRILL_FAMILIARITY_CEILING = 3;
@@ -105,6 +110,13 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 				.map(this::toView)
 				.collect(Collectors.toList());
 		fillFamiliarity(userId, views);
+
+		// 学员端翻到哪页就按该页语速预热哪页的单词发音：Piper 单句首次合成要 1~2 秒，预热后点击即响。
+		// 整册（复习页取干扰项池，几百词）不预热，否则双核机器会被后台合成拖住。
+		if (userId != null && !views.isEmpty() && views.size() <= WARMUP_MAX_WORDS) {
+			englishTtsService.warmUp(views.stream().map(EnglishWordView::getSpell).collect(Collectors.toList()),
+					query.getSpeed());
+		}
 
 		return new PaginationResponse<>(result.getTotal(), views);
 	}

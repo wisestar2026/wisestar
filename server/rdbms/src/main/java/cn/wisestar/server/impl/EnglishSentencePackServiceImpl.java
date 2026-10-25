@@ -81,15 +81,17 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	private final EnglishSentenceMapper sentenceMapper;
 	private final EnglishWordMapper wordMapper;
 	private final SystemService systemService;
+	private final EnglishVocabScope vocabScope;
 	private final ObjectMapper objectMapper;
 	private final RestTemplate restTemplate;
 
 	public EnglishSentencePackServiceImpl(EnglishSentencePackMapper packMapper, EnglishSentenceMapper sentenceMapper,
-			EnglishWordMapper wordMapper, SystemService systemService) {
+			EnglishWordMapper wordMapper, SystemService systemService, EnglishVocabScope vocabScope) {
 		this.packMapper = packMapper;
 		this.sentenceMapper = sentenceMapper;
 		this.wordMapper = wordMapper;
 		this.systemService = systemService;
+		this.vocabScope = vocabScope;
 		this.objectMapper = new ObjectMapper();
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 		factory.setConnectTimeout(15_000);
@@ -124,8 +126,10 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		view.setTerm(term);
 		view.setUnit(unit);
 
-		List<EnglishSentenceExercise> practice = generatePractice(grade, unit, sentences, words);
+		Set<String> scope = vocabScope.allowed(version, grade, term, unit);
+		List<EnglishSentenceExercise> practice = generatePractice(version, grade, term, unit, sentences, words);
 		practice = supplementPractice(practice, sentences, words);
+		practice = dropOutOfScope(practice, scope);
 		List<EnglishSentenceExercise> learn = buildLearnItems(sentences, practice);
 		if (learn.size() < LEARN_MIN) {
 			List<EnglishSentenceExercise> aiLearn = generateAiLearn(grade, unit, sentences, words);
@@ -141,6 +145,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		}
 		learn = sanitizeExercises(learn);
 		learn = dedupeExercises(learn);
+		learn = dropOutOfScope(learn, scope);
 		if (learn.size() < LEARN_MIN) {
 			learn = fillLearnFromPractice(learn, practice);
 		}
@@ -149,6 +154,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		practice = supplementFromLearn(practice, learn);
 		practice = sanitizeExercises(practice);
 		practice = dedupeExercises(practice);
+		practice = dropOutOfScope(practice, scope);
 		practice = ensurePracticeKinds(practice, learn, sentences);
 		recalibrateDifficulty(practice, grade);
 		practice = sortPractice(practice);
@@ -171,7 +177,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	/**
 	 * 调用 AI 生成单元句子练习，最多尝试两次；两次结果合并后按主题限流。
 	 */
-	private List<EnglishSentenceExercise> generatePractice(String grade, String unit,
+	private List<EnglishSentenceExercise> generatePractice(String version, String grade, String term, String unit,
 			List<EnglishSentence> sentences, List<EnglishWord> words) {
 		List<EnglishSentenceExercise> merged = new ArrayList<>();
 		if (sentences.isEmpty()) {
@@ -180,7 +186,7 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		for (int attempt = 1; attempt <= AI_ATTEMPTS; attempt++) {
 			try {
 				String raw = callChat(AiPromptKeys.resolve(systemService.getSystemAiSetting(), AiPromptKeys.EN_SENTENCE, null),
-						buildUserPrompt(grade, unit, sentences, words, attempt));
+						buildUserPrompt(version, grade, term, unit, sentences, words, attempt));
 				List<EnglishSentenceExercise> part = normalizePractice(parseRawJson(raw), sentences, words);
 				mergeExercises(merged, part);
 				if (merged.size() >= PRACTICE_MIN) {
@@ -212,8 +218,8 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	/**
 	 * 构建请求 AI 生成句子练习的用户提示词。
 	 */
-	private String buildUserPrompt(String grade, String unit, List<EnglishSentence> sentences,
-			List<EnglishWord> words, int attempt) {
+	private String buildUserPrompt(String version, String grade, String term, String unit,
+			List<EnglishSentence> sentences, List<EnglishWord> words, int attempt) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("请为本单元编写句子练习（stage=practice）：\n");
 		sb.append("年级：").append(grade).append("\n");
@@ -240,12 +246,16 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		sb.append("\n硬性要求：\n");
 		sb.append("1) 生成 20-25 道题，覆盖全部 S1-S").append(sentences.size()).append(" 句式，每个句式至少 1 道；\n");
 		sb.append("2) kind 混用：choice/fill/build/dictation 四种都至少 3 道；\n");
-		sb.append("3) 每道题的英文句至少包含 1 个本单元核心词汇；\n");
+		sb.append("3) 每道题的英文句至少包含 1 个本单元核心词汇；所有用词限「本单元及之前已学词汇」，"
+				+ "严禁出现未学过的生词，人名只用课文人物（如 Sam、Amy、Daming、Lingling）；\n");
 		sb.append("4) 同一 theme 最多 2 道题，请变换生活场景；\n");
 		sb.append("5) 难度递进：1 基础（choice/fill）、2 提高（build）、3 挑战（dictation/灵活改写）；\n");
 		sb.append("6) 可沿用原句或围绕该句式改写，改写须语法正确、符合小学").append(grade).append("水平；\n");
 		sb.append("7) choice 的 options 恰好 4 个且含正确项；fill 的 stem 用 ___ 挖空，answer 必须在 en 中；\n");
-		sb.append("8) 输出严格 JSON，不要解释。");
+		sb.append("8) 输出严格 JSON，不要解释。\n");
+		sb.append("\n已学词汇（参考答案用词，可加 a/an/the/be/代词等常用功能词）：\n");
+		List<String> learned = vocabScope.learnedWords(version, grade, term, unit);
+		sb.append(String.join(", ", learned)).append("\n");
 		if (attempt > 1) {
 			sb.append("\n注意：上一次题量不足或主题重复，请补齐题量并更换场景。");
 		}
@@ -1625,6 +1635,11 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 
 	private int difficultyOf(String kind, String en, String answer, List<String> options, String grade,
 			int blanks) {
+		// 句子默写要求在没有词块提示的情况下完整写出整句，按设计恒为最高难度（挑战 3），
+		// 不参与自动评分，避免长句/短句被重算成基础或提高档。
+		if ("dictation".equals(kind)) {
+			return 3;
+		}
 		EnglishDifficultyUtil.Demand demand = "choice".equals(kind) ? EnglishDifficultyUtil.Demand.RECOGNITION
 				: "fill".equals(kind) ? EnglishDifficultyUtil.Demand.CUED
 						: EnglishDifficultyUtil.Demand.FULL;
@@ -1822,12 +1837,18 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 		String wanted = isBlank(stage) ? "practice" : stage.trim().toLowerCase(Locale.ROOT);
 		try {
 			JsonNode arr = objectMapper.readTree(pack.getContent());
+			Set<String> scope = vocabScope.allowed(version, grade, term, unit);
 			List<EnglishSentenceExercise> result = new ArrayList<>();
 			if (arr.isArray()) {
 				for (JsonNode node : arr) {
 					EnglishSentenceExercise ex = objectMapper.treeToValue(node, EnglishSentenceExercise.class);
 					String exStage = isBlank(ex.getStage()) ? "practice" : ex.getStage();
 					if (wanted.equalsIgnoreCase(exStage)) {
+						// 存量内容包可能残留超纲改写句，出参前按「本单元及之前所学」再拦一道
+						if (!inScope(ex, scope)) {
+							continue;
+						}
+						shuffleChoiceOptions(ex);
 						result.add(ex);
 					}
 				}
@@ -1840,6 +1861,71 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	}
 
 	// ------------------------------------------------------------------ 辅助
+
+	/**
+	 * 题目的答案文本：选择题正确项 / 连词成句与默写整句 / 填空单词。
+	 */
+	private String answerText(EnglishSentenceExercise ex) {
+		if (isBlank(ex.getAnswer())) {
+			return ex.getEn();
+		}
+		return ex.getAnswer();
+	}
+
+	/**
+	 * 答案是否全部由本单元及之前所学的单词组成。
+	 */
+	private boolean inScope(EnglishSentenceExercise ex, Set<String> scope) {
+		return vocabScope.inScope(answerText(ex), scope);
+	}
+
+	/**
+	 * 丢弃答案含超纲单词的题目，后续由课本句式补题逻辑回填。
+	 */
+	private List<EnglishSentenceExercise> dropOutOfScope(List<EnglishSentenceExercise> list, Set<String> scope) {
+		if (list == null || list.isEmpty()) {
+			return list;
+		}
+		List<EnglishSentenceExercise> result = new ArrayList<>(list.size());
+		int dropped = 0;
+		for (EnglishSentenceExercise ex : list) {
+			if (inScope(ex, scope)) {
+				result.add(ex);
+			}
+			else {
+				dropped++;
+				log.info("丢弃超纲句子题：{} -> {}", ex.getKind(), answerText(ex));
+			}
+		}
+		if (dropped > 0) {
+			log.info("句子题按已学词汇过滤：丢弃 {} 题，保留 {} 题", dropped, result.size());
+		}
+		return result;
+	}
+
+	/**
+	 * 打乱句子选择题的选项顺序：内容包固化时正确答案总是排在首位，按题目内容稳定乱序后再下发。
+	 */
+	private void shuffleChoiceOptions(EnglishSentenceExercise ex) {
+		if (ex == null) {
+			return;
+		}
+		List<String> options = ex.getOptions();
+		if (options == null || options.size() < 2) {
+			return;
+		}
+		String correct = isBlank(ex.getAnswer()) ? ex.getEn() : ex.getAnswer();
+		int index = -1;
+		for (int i = 0; i < options.size(); i++) {
+			if (options.get(i) != null && options.get(i).trim().equalsIgnoreCase(
+					correct == null ? "" : correct.trim())) {
+				index = i;
+				break;
+			}
+		}
+		EnglishOptionShuffler.shuffle(options, index, "sentence:" + ex.getStage() + ":" + ex.getEn()
+				+ ":" + ex.getZh() + ":" + String.join("|", options));
+	}
 
 	private EnglishSentencePack findLatest(String version, String grade, String term, String unit) {
 		if (isBlank(version) || isBlank(grade) || isBlank(unit)) {

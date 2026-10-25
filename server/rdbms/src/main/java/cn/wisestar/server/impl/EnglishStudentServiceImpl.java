@@ -7,6 +7,8 @@ import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishUnitView;
+import cn.wisestar.server.domain.dto.english.EnglishWordReviewSummaryView;
+import cn.wisestar.server.domain.dto.english.EnglishWordView;
 import cn.wisestar.server.domain.dto.english.EnglishWrongQuestionView;
 import cn.wisestar.server.domain.dto.english.ReviewSessionView;
 import cn.wisestar.server.domain.dto.growth.GrowthEventContext;
@@ -58,7 +60,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,6 +96,9 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final GrowthArchiveService growthArchiveService;
 	private final ObjectMapper objectMapper;
 	private final EnglishPracticeEvaluator englishPracticeEvaluator;
+
+	/** 单词复习单次上限：一次 20 词，未复习完的到期单词留到下一轮 */
+	private static final int MAX_WORD_REVIEW = 20;
 
 	@Override
 	public List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term) {
@@ -443,6 +450,154 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		all.sort(Comparator.comparing(ReviewSessionView::getNextReviewTime,
 				Comparator.nullsLast(Comparator.naturalOrder())));
 		return all.stream().limit(limit).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<EnglishWordView> wordReviewSession(String userId, String version, String grade, Integer limit) {
+		List<EnglishWordView> result = new ArrayList<>();
+		if (userId == null) {
+			return result;
+		}
+		// 一次复习最多 20 词：到期单词超过 20 个时，剩余的留到下一轮
+		int size = MAX_WORD_REVIEW;
+		if (limit != null && limit > 0) {
+			size = Math.min(limit, MAX_WORD_REVIEW);
+		}
+		for (DueWord due : dueWords(userId, version, grade, size)) {
+			EnglishWord word = due.getWord();
+			EnglishWordBook book = due.getBook();
+			EnglishWordView view = new EnglishWordView();
+			view.setId(word.getId());
+			view.setSpell(word.getSpell());
+			view.setPhonetic(word.getPhonetic());
+			view.setMeaning(word.getMeaning());
+			view.setImageUrl(word.getImageUrl());
+			view.setAudioUrl(word.getAudioUrl());
+			view.setExampleSentence(word.getExampleSentence());
+			view.setVersion(word.getVersion());
+			view.setGrade(word.getGrade());
+			view.setTerm(word.getTerm());
+			view.setUnit(word.getUnit());
+			view.setSection(word.getSection());
+			view.setLevel(word.getLevel());
+			view.setFamiliarity(book == null || book.getFamiliarity() == null ? 0 : book.getFamiliarity());
+			view.setCorrectCount(book == null || book.getCorrectCount() == null ? 0 : book.getCorrectCount());
+			view.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());
+			result.add(view);
+		}
+		log.debug("单词复习队列：去重后取 {} 个（上限 {}）", result.size(), size);
+		return result;
+	}
+
+	@Override
+	public EnglishWordReviewSummaryView wordReviewSummary(String userId, String version, String grade) {
+		EnglishWordReviewSummaryView view = new EnglishWordReviewSummaryView();
+		view.setUnits(new ArrayList<>());
+		view.setBatchSize(MAX_WORD_REVIEW);
+		if (userId == null) {
+			return view;
+		}
+		// 概览要给出「一共多少词待复习」，因此不限量；单次练习仍按 MAX_WORD_REVIEW 截断
+		List<DueWord> due = dueWords(userId, version, grade, 0);
+		Set<String> unitKeys = new LinkedHashSet<>();
+		for (DueWord item : due) {
+			Integer familiarity = item.getBook() == null ? null : item.getBook().getFamiliarity();
+			int level = familiarity == null ? 0 : familiarity;
+			if (level <= 1) {
+				view.setUnfamiliar(view.getUnfamiliar() + 1);
+			} else if (level == 2) {
+				view.setOrdinary(view.getOrdinary() + 1);
+			} else {
+				view.setFamiliar(view.getFamiliar() + 1);
+			}
+			if (StringUtils.hasText(item.getWord().getUnit())) {
+				unitKeys.add(item.getWord().getUnit());
+			}
+		}
+		view.setDue(due.size());
+		view.setUnitCount(unitKeys.size());
+		for (String unit : unitKeys) {
+			if (view.getUnits().size() >= 4) {
+				break;
+			}
+			view.getUnits().add(unit);
+		}
+		return view;
+	}
+
+	/**
+	 * 取该年级「已到复习时间」的单词：按拼写去重、按下次复习时间升序（越久没复习越靠前）。
+	 *
+	 * @param limit 上限，<=0 表示不限量
+	 */
+	private List<DueWord> dueWords(String userId, String version, String grade, int limit) {
+		List<DueWord> result = new ArrayList<>();
+		if (userId == null) {
+			return result;
+		}
+		List<EnglishWord> words = englishWordMapper.selectList(Wrappers.<EnglishWord>lambdaQuery()
+				.eq(StringUtils.hasText(version), EnglishWord::getVersion, version)
+				.eq(StringUtils.hasText(grade), EnglishWord::getGrade, grade)
+				.orderByAsc(EnglishWord::getGrade)
+				.orderByAsc(EnglishWord::getUnit)
+				.orderByAsc(EnglishWord::getSpell));
+		if (words.isEmpty()) {
+			return result;
+		}
+		Map<String, EnglishWord> wordById = new HashMap<>();
+		for (EnglishWord word : words) {
+			wordById.put(word.getId(), word);
+		}
+		// 只取「已到复习时间」的单词：按复习调度模型没有到期项就返回空列表，前端显示 0 词；
+		// 旧实现无条件凑满一批，会把刚学完、还很熟的生词也排进来。
+		List<EnglishWordBook> dueBooks = englishWordBookMapper.selectList(
+				Wrappers.<EnglishWordBook>lambdaQuery()
+						.eq(EnglishWordBook::getUserId, userId)
+						.le(EnglishWordBook::getNextReviewTime, new Date())
+						.orderByAsc(EnglishWordBook::getNextReviewTime)
+						.orderByAsc(EnglishWordBook::getFamiliarity));
+		// 同一拼写在多册重复出现时只保留一条，避免一轮里问两遍同一个词
+		Set<String> picked = new HashSet<>();
+		for (EnglishWordBook book : dueBooks) {
+			if (book.getWordId() == null) {
+				continue;
+			}
+			EnglishWord word = wordById.get(book.getWordId());
+			if (word == null || !StringUtils.hasText(word.getSpell())) {
+				continue;
+			}
+			String key = word.getSpell().trim().toLowerCase();
+			if (!picked.add(key)) {
+				continue;
+			}
+			result.add(new DueWord(word, book));
+			if (limit > 0 && result.size() >= limit) {
+				break;
+			}
+		}
+		log.debug("单词复习到期：到期记录 {} 条，去重后 {} 个（上限 {}）", dueBooks.size(), result.size(), limit);
+		return result;
+	}
+
+	/** 到期单词及其学习记录（学习记录可能为空，用于概览统计） */
+	private static final class DueWord {
+
+		private final EnglishWord word;
+
+		private final EnglishWordBook book;
+
+		private DueWord(EnglishWord word, EnglishWordBook book) {
+			this.word = word;
+			this.book = book;
+		}
+
+		private EnglishWord getWord() {
+			return word;
+		}
+
+		private EnglishWordBook getBook() {
+			return book;
+		}
 	}
 
 	@Override
