@@ -967,7 +967,16 @@
 - 类型: `class EnglishReadingServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元阅读理解服务实现：优先解析 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}` 多篇结构并按 articleNo 返回；兼容旧的单篇对象。缓存缺失时读取该单元最多 40 个单词与 30 个重点句子，调用系统 AI 生成一篇短文、中文参考译文与 5 道选择题并落库；题目不足 3 道抛 `ValidationException`。
+  英语单元阅读理解服务实现：优先解析 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}` 多篇结构并按 articleNo 返回；兼容旧的单篇对象。缓存缺失时读取该单元最多 40 个单词与 30 个重点句子，调用系统 AI 生成一篇短文、中文参考译文与 5 道选择题并落库；题目不足 3 道抛 `ValidationException`。出参前对每道题按「标题 + 题干 + 选项」种子稳定打乱选项并重算 `answerIndex`（AI 与内置素材都把正确项固定放在首位），缓存内容保持规范顺序、只在读取时乱序。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishOptionShuffler.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `final class EnglishOptionShuffler`
+- **类说明**：
+  英语练习选项打乱工具（包内可见，不注册为 Bean）。AI 生成与内容包固化普遍把正确答案放在首位，直接下发会让学员形成「选 A」的固定套路；这里以题目内容为随机种子做确定性 `Collections.shuffle`，同一道题每次请求顺序一致、不同题目之间正确项位置随机分布。
+- 方法:
+  - `static int shuffle(List<String> options, Integer answerIndex, String key)`
+    原地打乱选项并返回正确答案的新下标；选项少于 2 个或答案下标非法时原样返回（`answerIndex` 为 null 返回 -1）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishReadAloudServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -977,6 +986,19 @@
   英语课文跟读服务实现：按版本/年级/册别/单元读取 `t_english_read_aloud`，按 sort 升序解析 content 为 `lines[{en,zh}]`；无英文的行跳过，content 解析失败记 WARN 并返回空篇。
 - 方法:
   - `public List<EnglishReadAloudView> getPassages(String version, String grade, String term, String unit)`
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishTtsServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishTtsServiceImpl implements EnglishTtsService`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  英语朗读音频的服务端合成（无外部 API Key）。学员设备常见没有英文语音包，浏览器语音合成会静默失败，这里用本地 Piper 神经语音合成 wav、`lame` 转 64kbps 单声道 mp3（32kbps 齿音发闷且带压缩杂音；找不到 lame 时直接返回 wav），默认音色英式 `en_GB-jenny_dioco`（`voice: en-gb`，espeak 回退同口音），按「引擎+音色+语速+文本」SHA-1 落盘缓存（默认 `${java.io.tmpdir}/wisestar-tts`），并发写用临时文件 + 原子移动避免读到半截文件。Piper 不可用或单句失败时回退 `espeak-ng`。`warmUp(Collection, speed)` 用 `-d` 目录模式让一个 Piper 进程读 10 行文本（模型只加载一次），按文件修改时间映射回输入顺序后逐条转 mp3 落缓存，线程池 2 个守护线程 + 64 有界队列；缓存键含语速，预热必须传学员端实际语速（练习页 125、课文默认 109），否则预热等于白做。`ApplicationReadyEvent` 里预热一条短文本把 Piper 模型读进内存，避免服务刚起时首次点击等 10 秒以上。跟读接口取完课文、单词书取完当前页（≤60 词）都会触发预热，整册（复习页取干扰项池，几百词）跳过。
+- 配置: `english.tts.engine`（piper/espeak/none）、`fallback-engine`、`piper-bin`、`piper-voice`、`espeak-bin`、`lame-bin`、`voice`、`speed`（默认 109 ≈ 常速 0.75 倍，Piper 侧按固定基准 145 换算 length-scale）、`max-chars`、`cache-dir`、`timeout-seconds`、`warmup-threads`、`daemon`/`daemon-max`/`daemon-idle-seconds`/`preload-speeds`（常驻进程）
+- 方法:
+  - `public boolean available()`
+  - `public byte[] synthesize(String text, String speed)`：空白或超长文本归一化截断；失败返回 null
+  - `public void warmUp(Collection<String> texts, String speed)`：按语速跳过已缓存文本，10 条一批后台合成（`warmUp(texts)` 为默认语速重载）
+  - `public String contentType()`：`audio/mpeg` 或 `audio/wav`
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioPackServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -998,8 +1020,8 @@
 - 类型: `class EnglishSentencePackServiceImpl implements EnglishSentencePackService`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元句子题内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取重点句子，生成练习 20-25 题（`choice/fill/build/dictation` 各不少于 3）与学习 10-15 题（课本句式 `build`）；练习不足时用课本句式与学习题补足，同一 `theme` 最多 2 题。练习排序截断后再次校验题型配额，超配题型可替换为缺项；学习不足 10 题时先拆课本原句分句，再从练习补足。`fill` 锚定课本原句并重算 `stem`/首字母提示/中文；`savePack` 按业务键覆盖保存，学员端 `getExercises(...,stage)` 按阶段读取，无内容返回空列表，不触发 AI。
-  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一委托 `EnglishDifficultyUtil` 重算：`choice` 按识别类、`fill` 按有提示产出、`build/dictation` 按完整产出，再叠加英文长度、从句/转折/情态/被动/比较级、答案词数、空位数与选项干扰；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 按内容包年级对全部内容包幂等重算难度。
+  英语单元句子题内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取重点句子，生成练习 20-25 题（`choice/fill/build/dictation` 各不少于 3）与学习 10-15 题（课本句式 `build`）；练习不足时用课本句式与学习题补足，同一 `theme` 最多 2 题。练习排序截断后再次校验题型配额，超配题型可替换为缺项；学习不足 10 题时先拆课本原句分句，再从练习补足。`fill` 锚定课本原句并重算 `stem`/首字母提示/中文；`savePack` 按业务键覆盖保存，学员端 `getExercises(...,stage)` 按阶段读取，无内容返回空列表，不触发 AI；`choice` 题读出后按「阶段 + 英文 + 中文 + 选项」种子稳定打乱选项（正确句优先取 `answer`、为空取 `en`），避免正确项固定排首位。生成练习时把 `EnglishVocabScope.learnedWords` 的已学词表写进提示词，要求全部句子只用本单元及之前已学的词、人名只用课文人物；生成结果与存量内容包在出参前都按 `EnglishVocabScope` 过滤，答案含超纲词的题目直接丢弃（补题逻辑会用课本句式回填），记录「丢弃超纲句子题」日志。
+  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一委托 `EnglishDifficultyUtil` 重算：`choice` 按识别类、`fill` 按有提示产出、`build` 按完整产出，再叠加英文长度、从句/转折/情态/被动/比较级、答案词数、空位数与选项干扰；`dictation`（句子默写）不参与评分，恒为 3 档（挑战），与提示词「3 挑战（dictation）」的设计一致；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 按内容包年级对全部内容包幂等重算难度。
 - 常量: `SENTENCE_GROUP_SIZE=6`、`DEFAULT_MODEL=deepseek-chat`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`
@@ -1033,6 +1055,9 @@
   - `public void recordGrammar(String userId, String grammarId, boolean correct)`
     记录语法作答（熟练度 +1/-1 夹取 0~4、复习调度、学习日志 `type=grammar`）。
   - `public List<ReviewSessionView> reviewSession(String userId, int limit)`
+  - `public List<EnglishWordView> wordReviewSession(String userId, String version, String grade, Integer limit)`：跨单元单词复习队列，只取 `nextReviewTime <= now` 的到期词，按 `nextReviewTime` 升序 + 熟练度升序取词、同拼写去重，上限 `MAX_WORD_REVIEW = 20`
+  - `public EnglishWordReviewSummaryView wordReviewSummary(String userId, String version, String grade)`：复习概览，不限量统计到期词（按拼写去重）得到 `due`，按熟练度分 `unfamiliar`（0~1）/`ordinary`（2）/`familiar`（3~4），并给出涉及的单元数与单元名（最多 4 个）与 `batchSize`
+    两者复用私有 `dueWords(userId, version, grade, limit)`（`limit <= 0` 不限量，返回 `DueWord`（单词 + 学习记录）列表）
   - `public List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit)`
     取该学员英语学科（`t_subject.code='ENGLISH'`）全部检测记录（倒序）解析 `details` JSON，收集 `correct=0` 的题按 questionId 去重聚合、累计 wrongCount、保留最近做错时间与已剥离答案的题目快照。
   - `public StudentPreviewCompleteView recordSession(String userId, String type, int durationSeconds, int correctCount)`
@@ -1157,14 +1182,31 @@
 - 类型: `class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语单元练习组卷与学习诊断实现（内容包阶梯卷 + 融合派生题）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，并追加 `EnglishFusionQuestionFactory` 从原句/单词/语法例句派生的题目；模块统一为「单词 / 句式 / 语法」，请求可传 `module` 只组单模块，不传时按「单词→句式→语法」固定路径平均分题。题内连词成句题干固定两行（首行「连词成句，用所给单词连成句子」，次行中文提示加词库「 、 」分隔；句式通关页的交互式拼句不在此路径）；语法变形题干为「选词填空，选出合适的单词填入空中。」加挖空句；句子类 `FillBlank` 按答案单词数下发 `attribute.blankCount`，情景多词答案拆成逐词空位，标题中的单个 `_____` 按词数展开；按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位；同一知识点题量超过 3 道时继续按 D1→D3 顺序补足，避免单一知识点只出 3 题；题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先。交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数、加权得分、知识模块（`moduleStats`）与语言技能/认知层级/题型/难度聚合的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。诊断卷（`diagnosePaper`）跨当前册别全部单元按 D1/D2/D3 各取 8 题（共 24 题）、同档内优先覆盖不同单元；单词·情景题按「情景标题 + 本轮之前全部台词（中英对照）」生成题干，历史空位显示为「……」、作答行前缀「【作答】」并只保留本轮 `_____`（答案几个单词就几个空），单空按 `FillBlank`、多空按 `MultipleBlank`，并经 `attribute.blankCount` 下发空位数；诊断交卷（`diagnoseSubmit`）复用同一判分与聚合逻辑，额外落 `t_detect_record`（`detect_type=DIAG`，不计成长基线）并按最近 8 次重算 `trend` 学习趋势。
+  英语单元练习组卷与学习诊断实现（内容包阶梯卷 + 融合派生题）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，并追加 `EnglishFusionQuestionFactory` 从原句/单词/语法例句派生的题目；模块统一为「单词 / 句式 / 语法」，请求可传 `module` 只组单模块，不传时按「单词→句式→语法」固定路径平均分题。题内连词成句题干固定两行（首行「连词成句，用所给单词连成句子」，次行中文提示加词库「 、 」分隔；句式通关页的交互式拼句不在此路径）；语法变形题干为「选词填空，选出合适的单词填入空中。」加挖空句；句子类 `FillBlank` 按答案单词数下发 `attribute.blankCount`，情景多词答案拆成逐词空位，标题中的单个 `_____` 按词数展开；按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位；同一知识点题量超过 3 道时继续按 D1→D3 顺序补足，避免单一知识点只出 3 题；题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先。交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数、加权得分、知识模块（`moduleStats`）与语言技能/认知层级/题型/难度聚合的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。句子包 `choice` 题入卷前按内容种子打乱选项并重新定位正确项，情景题候选项按「标题 + 轮次 + 候选内容」稳定旋转，保证正确答案不固定落在 A 项。句子里装载入组卷前同样按 `EnglishVocabScope` 过滤：句子包答案含本单元及之前未学过的词时跳过该题并记日志，避免单元卷/诊断卷出现超纲填空；诊断卷（`diagnosePaper`）跨当前册别全部单元按 D1/D2/D3 各取 8 题（共 24 题）、同档内优先覆盖不同单元；单词·情景题按「情景标题 + 本轮之前全部台词（中英对照）」生成题干，历史空位显示为「……」、作答行前缀「【作答】」并只保留本轮 `_____`（答案几个单词就几个空），单空按 `FillBlank`、多空按 `MultipleBlank`，并经 `attribute.blankCount` 下发空位数；诊断交卷（`diagnoseSubmit`）复用同一判分与聚合逻辑，额外落 `t_detect_record`（`detect_type=DIAG`，不计成长基线）并按最近 8 次重算 `trend` 学习趋势。
 - 方法:
   - `public List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
-    支持 `module` 单模块过滤；融合题与内容包题共用同一套 `contentKey`。
+    支持 `module` 单模块过滤；融合题与内容包题共用同一套 `contentKey`。自 2026-10-25 起按题目 tag 的知识点名称批量回填 `knowledgePointName`/`knowledgePointPoints`（`loadKpPoints`，一次 `in` 查询 + 解析 content 的 `points`），交卷报告详情同样回填。
   - `public DetectReportView submit(EnglishUnitPaperSubmitRequest request)`
     交卷后用请求里的 `module`（unit/grammar）调用 `EnglishPracticeRecordService.recordFromReport` 落练习记录与错题；失败只记日志，不影响判分返回。
   - `public EnglishDiagnosePaperView diagnosePaper(EnglishDiagnoseRequest request)`
   - `public DetectReportView diagnoseSubmit(EnglishDiagnoseSubmitRequest request)`
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishVocabScope.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishVocabScope`
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语题目词汇范围（本单元及之前所学）判定。范围 = 当前册排序不晚于当前单元的单元词表单词与重点句子 + 更早册别（低年级各册、同年级前一册）的全部单词与重点句子 + 内置功能词表（冠词/代词/be 动词/情态动词/介词/疑问词/数词等）；学期顺序由 `GRADE_ORDER`（一~六年级）与 `TERM_ORDER`（上下册）算出；单元顺序取 `t_english_unit.sort` 与词表/句子里出现的单元名合并后再排（`Welcome` 无数字排最前、其余按 `Unit N` 数字升序），避免单元表只落了一部分行时取不到「之前的单元」。判定做简单词形还原（复数、第三人称单数、`-ing`/`-ed`、比较级），句中首字母大写且不在词表内的词按人名地名放过，避免误杀 `Sam`/`Amy`/`Daming`。用于句子练习题生成提示词、生成结果过滤与组卷入卷过滤，保证填空答案不超纲。
+- 常量: `GRADE_ORDER`、`TERM_ORDER`、`FUNCTION_WORDS`（约 120 个功能词）。
+- 方法:
+  - `public Set<String> allowed(String version, String grade, String term, String unit)`
+    返回允许出现的单词形式集合（含词形变化）；单元信息缺失时只保留功能词。
+  - `public List<String> learnedWords(String version, String grade, String term, String unit)`
+    返回已学词表里的单词拼写（去重、按字母排序），供 AI 生成提示词使用。
+  - `public List<String> outOfScope(String text, Set<String> allowed)`
+    返回文本中超出范围的单词（小写），供日志与排查。
+  - `public boolean inScope(String text, Set<String> allowed)`
+    文本用词是否全部在范围内。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishBehaviorJudge.java`
 - 包: `cn.wisestar.server.impl`
@@ -1584,7 +1626,7 @@
   - `public StudentStudyProgressView studyProgress(String subjectId, String versionId, String grade, String term)`
     学科学习进度：章节 → 知识点掌握度/评级/薄弱（真实评价值，不返回 mock）。
   - `public List<StudentQuestionView> studyQuestions(String sectionId, List<String> knowledgePointIds, String repoId, String questionId, Integer count, Integer perKp, Boolean groupByKp, List<String> types, String difficulty, Boolean random, Boolean exposeAnswer, String usage)`
-    按范围组卷抽题。当 sectionId 指向的小节 type=exam（章节测评，兼容历史名称含「章节测评」）时，出题范围扩展为整章全部知识点。 题量/每知识点上限/防重复窗口缺省时套用全局出题策略（小节 practice 配置可覆盖）； 组卷时已命中知识点的题目受 perKp 上限约束（兜底补足跳过已命中题，避免绕过上限）。
+    按范围组卷抽题。当 sectionId 指向的小节 type=exam（章节测评，兼容历史名称含「章节测评」）时，出题范围扩展为整章全部知识点。出口统一调用 `fillKnowledgePointDetail` 批量回填知识点的名称与 `points` 要点（未命中知识点的题保持为空），供学员端解析展示「本题知识点」。 题量/每知识点上限/防重复窗口缺省时套用全局出题策略（小节 practice 配置可覆盖）； 组卷时已命中知识点的题目受 perKp 上限约束（兜底补足跳过已命中题，避免绕过上限）。
   - `public SectionPracticeConfig sectionPracticeConfig(String sectionId)`
   - `public StudentStatsView stats()`
     学员学习统计（基于真实练习记录聚合：累计/今日/分科学币）。
