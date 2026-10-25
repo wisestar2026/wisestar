@@ -62,3 +62,6 @@ surveyking-client/.vite
 ### 内容导出产物（本地交付，不入库） ###
 /export/
 /application.properties
+
+### 设计图稿（仅本地参考，不入库；约 2MB） ###
+/design/
