@@ -97,6 +97,25 @@ export function getEnglishReadAloud(params) {
   return request.get('/english/student/read-aloud', { params });
 }
 
+/** 英文短句朗读音频（服务端合成 mp3/wav，返回 Blob；失败静默，由调用方回退浏览器语音） */
+/** 单词复习队列：跨单元按熟练度由低到高、复习间隔由长到短，词量按年级（三四年级 20 / 五六年级 30） */
+export function getEnglishWordReview(params) {
+  return request.get('/english/student/review/words', { params });
+}
+
+/** 单词复习概览：应复习词数、熟练度分布（陌生/一般/熟练）、涉及单元 */
+export function getEnglishWordReviewSummary(params) {
+  return request.get('/english/student/review/word-summary', { params });
+}
+
+export function getEnglishTts(text, speed) {
+  return request.get('/english/student/tts', {
+    params: { text, speed },
+    responseType: 'blob',
+    meta: { silent: true },
+  });
+}
+
 /** 单元句子同步练习（多题型：连词成句/句子默写/句子选择，读取管理端已固化内容） */
 export function getEnglishSentenceExercises(params) {
   return request.get('/english/student/sentence-exercises', { params });

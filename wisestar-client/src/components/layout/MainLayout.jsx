@@ -31,7 +31,7 @@
  *   对应 App.jsx 的 /system/users|depts|positions|dicts|dict-items 五个页面）
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { Layout, Menu, Avatar, Dropdown, Typography, Badge } from 'antd';
 import {
   ShoppingOutlined,  DashboardOutlined,
@@ -302,7 +302,9 @@ export default function MainLayout() {
 
         {/* 内容区：渲染子路由页面 */}
         <Content style={{ margin: 24, background: '#fff', borderRadius: 8, padding: 24, minHeight: 280 }}>
-          <Outlet />
+          <Suspense fallback={<div style={{ padding: 48, textAlign: 'center', color: '#8a94a6' }}>正在加载…</div>}>
+            <Outlet />
+          </Suspense>
         </Content>
       </Layout>
     </Layout>

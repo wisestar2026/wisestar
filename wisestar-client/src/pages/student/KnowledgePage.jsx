@@ -107,6 +107,9 @@ export default function KnowledgePage() {
 
   // 预习（含例题检测）为同一学习闭环
   const isPreviewFlow = tab === 'preview' || tab === 'preview_practice';
+  // 逐题作答模式：例题检测 / 预习检测 / 错题重做 / 已开始的专项练习与小节通关
+  const quizMode = tab === 'example' || tab === 'preview_practice' || tab === 'redo'
+    || (tab === 'practice' && drillStarted) || (tab === 'trial' && trialStarted);
   const sectionNameParam = searchParams.get('name');
   const previewTitle = sectionNameParam
     || (realPoints?.length === 1 ? realPoints[0].name : '知识点预习');
@@ -503,8 +506,8 @@ export default function KnowledgePage() {
   // ============================================================
   if (realMode) {
     return (
-      <div className={`sll-page-enter knowledge-page${tab === 'preview' || tab === 'wrong' ? ' knowledge-page-wide' : ''}`}>
-        <div className="sll-card" style={{ padding: 24, maxWidth: tab === 'preview' ? 960 : (tab === 'wrong' ? 1300 : 720), margin: '0 auto' }}>
+      <div className={`sll-page-enter knowledge-page${tab === 'preview' || tab === 'wrong' || quizMode ? ' knowledge-page-wide' : ''}`}>
+        <div className="sll-card" style={{ padding: 24, maxWidth: tab === 'preview' ? 960 : (tab === 'wrong' ? 1300 : (quizMode ? 1340 : 720)), margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               {tab !== 'preview' && (
@@ -513,7 +516,7 @@ export default function KnowledgePage() {
                 </h3>
               )}
               {kpDetail && tab !== 'preview' && (
-                <span style={{ marginLeft: 10, fontSize: 13 }}>
+                <span style={{ marginLeft: 10, fontSize: 20 }}>
                   <span className="sll-level" style={{ background: '#90a4ae', color: '#fff', padding: '1px 8px', borderRadius: 10 }}>
                     {kpDetail.level || '待攻克'}
                   </span>
@@ -543,19 +546,27 @@ export default function KnowledgePage() {
               return (
                 <div key={q.id} style={{ border: '1px solid #ffcdd2', borderRadius: 10, padding: 12, marginBottom: 10, background: '#fff8f8' }}>
                   <div style={{ fontWeight: 600, marginBottom: 6 }}><RichContent text={q.name || schema.title} /></div>
-                  <div style={{ fontSize: 13, marginBottom: 4 }}>
+                  <div style={{ fontSize: 20, marginBottom: 6 }}>
                     <b>你的答案：</b><span style={{ color: '#c62828' }}>{answerTextOf(q)}</span>
                   </div>
-                  <div style={{ fontSize: 13, marginBottom: 4 }}>
+                  <div style={{ fontSize: 20, marginBottom: 6 }}>
                     <b>正确答案：</b><span style={{ color: '#2e7d32' }}>{answerDisplayOf(judge)}</span>
                   </div>
                   {analysis && (
-                    <div style={{ fontSize: 13, marginBottom: 6, padding: 8, background: '#fffbe6', borderRadius: 6 }}>
+                    <div style={{ fontSize: 20, marginBottom: 8, padding: 12, background: '#fffbe6', borderRadius: 8 }}>
                       <b>📝 解析：</b><span style={{ whiteSpace: 'pre-wrap' }}><RichContent text={analysis} /></span>
                     </div>
                   )}
+                  {q.knowledgePointPoints?.length > 0 && (
+                    <div style={{ fontSize: 20, marginBottom: 8, padding: 12, background: '#f2f9ff', borderRadius: 8 }}>
+                      <b>📚 本题知识点：</b>{q.knowledgePointName}
+                      <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                        {q.knowledgePointPoints.map((kpText, i) => <li key={i}><RichContent text={kpText} /></li>)}
+                      </ul>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <b style={{ fontSize: 13 }}>错误归因：</b>
+                    <b style={{ fontSize: 20 }}>错误归因：</b>
                     <Select
                       style={{ width: 200 }} size="small" placeholder="选择错误原因"
                       value={wrongReasons[q.id]}
@@ -776,15 +787,14 @@ export default function KnowledgePage() {
             </div>
           )}
 
-          {/* 例题检测 / 错题重做 / 已开始的专项练习与小节通关：逐题模式（每题一页 + 答题指示器） */}
-          {(tab === 'example' || tab === 'preview_practice' || tab === 'redo'
-            || (tab === 'practice' && drillStarted) || (tab === 'trial' && trialStarted)) && (
+          {/* 例题检测 / 错题重做 / 已开始的专项练习与小节通关：逐题模式（每题一页 + 答题卡） */}
+          {quizMode && (
             realQuestions === null ? <div>加载中…</div> : realQuestions.length === 0 ? (
               <div className="knowledge-empty">暂无可练习题目，请联系管理员配置练习/题目</div>
             ) : (
-              <div style={{ display: 'flex', gap: 16 }}>
+              <div className="qz-shell">
                 {/* 左侧：当前题目 + 答题区 */}
-                <div style={{ flex: 1 }}>
+                <div className="qz-main">
                   {(() => {
                     const question = realQuestions[currentQ];
                     const schema = question.schema || {};
@@ -799,7 +809,7 @@ export default function KnowledgePage() {
                     const kpIdx = (realPoints || []).findIndex((p) => p.id === question.knowledgePointId);
                     const currentKpName = kpIdx >= 0 ? (realPoints[kpIdx].name || '') : '';
                     return (
-                      <div className="knowledge-question-card">
+                      <div className="knowledge-question-card quiz-stage">
                         <div className="knowledge-q-head">
                           <span className="knowledge-q-type">{QUESTION_TYPE_LABELS[question.questionType] || '题目'}</span>
                           <span className="knowledge-q-progress">第 {currentQ + 1} / {realQuestions.length} 题</span>
@@ -808,7 +818,7 @@ export default function KnowledgePage() {
                           const kpIndex = (realPoints || []).findIndex((p) => p.id === question.knowledgePointId);
                           const kpName = kpIndex >= 0 ? realPoints[kpIndex].name : '';
                           return (
-                            <div style={{ display: 'inline-block', marginBottom: 10, padding: '2px 10px', borderRadius: 10, background: '#e3f2fd', color: '#1565c0', fontSize: 13 }}>
+                            <div style={{ display: 'inline-block', marginBottom: 10, padding: '2px 10px', borderRadius: 10, background: '#e3f2fd', color: '#1565c0', fontSize: 20 }}>
                               {kpIndex >= 0 ? `知识点 ${kpIndex + 1}/${realPoints.length}` : '知识点'}：{kpName || '未命名'}
                             </div>
                           );
@@ -847,7 +857,7 @@ export default function KnowledgePage() {
                                       key={idx}
                                       placeholder={`空${idx + 1}`}
                                       disabled={showResult}
-                                      style={{ width: isMultiBlank ? 170 : 140, fontSize: 15, padding: '8px 10px', ...inputStyle }}
+                                      style={{ width: isMultiBlank ? 240 : 200, fontSize: 22, padding: '12px 14px', ...inputStyle }}
                                       value={texts[idx] || ''}
                                       onChange={(e) => realInput(question, idx, e.target.value)}
                                     />
@@ -855,7 +865,7 @@ export default function KnowledgePage() {
                                 })}
                               </div>
                               {isMultiBlank && (
-                                <div style={{ marginTop: 8, fontSize: 12, color: '#90a4ae' }}>
+                                <div style={{ marginTop: 8, fontSize: 18, color: '#90a4ae' }}>
                                   本题为多项填空，共 {blankCount} 个空位：请按题目空位顺序，在每个空位下方的输入框中填写答案
                                 </div>
                               )}
@@ -911,6 +921,16 @@ export default function KnowledgePage() {
                                 <b>📝 解析：</b><RichContent text={analysis} />
                               </div>
                             )}
+                            {question.knowledgePointPoints?.length > 0 && (
+                              <div className="knowledge-q-kp">
+                                <b>📚 本题知识点：</b>{question.knowledgePointName}
+                                <ul>
+                                  {question.knowledgePointPoints.map((kpText, i) => (
+                                    <li key={i}><RichContent text={kpText} /></li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         )}
                         {/* 提交答案按钮：点击后才判定（参考 image-2：右下角常驻，未作答置灰） */}
@@ -930,16 +950,16 @@ export default function KnowledgePage() {
                           knowledgePointName={currentKpName}
                         />
                         {/* 导航 */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 14 }}>
-                          <button className="knowledge-back" disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)}>上一题</button>
-                          <div style={{ fontSize: 13, color: '#90a4ae' }}>
+                        <div className="qz-nav">
+                          <button className="qz-nav-btn" disabled={currentQ === 0} onClick={() => setCurrentQ((c) => c - 1)}>上一题</button>
+                          <div className="qz-nav-meta">
                             已判定 {Object.keys(judgeState).length}/{realQuestions.length} 题
                           </div>
                           {currentQ < realQuestions.length - 1 ? (
-                            <button className="knowledge-back" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
+                            <button className="qz-nav-btn" onClick={() => setCurrentQ((c) => c + 1)}>下一题</button>
                           ) : (
                             realQuestions.every((q) => judgeState[q.id]) && !isPreviewFlow && tab !== 'redo' ? (
-                              <button className="knowledge-back" onClick={realSubmit} disabled={realSubmitting}>
+                              <button className="qz-nav-btn is-primary" onClick={realSubmit} disabled={realSubmitting}>
                                 {realSubmitting ? '提交中…' : '完成'}
                               </button>
                             ) : (
@@ -948,7 +968,7 @@ export default function KnowledgePage() {
                           )}
                         </div>
                         {!showResult && (
-                          <div style={{ marginTop: 8, fontSize: 12, color: '#b26a00' }}>
+                          <div style={{ marginTop: 8, fontSize: 18, color: '#b26a00' }}>
                             选择题/填空作答后，点击「提交答案」才会判定
                           </div>
                         )}
@@ -1053,26 +1073,25 @@ export default function KnowledgePage() {
                   })()}
                 </div>
 
-                {/* 右侧：答题指示器（题号卡） */}
-                <div style={{ width: 120, flexShrink: 0 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 13 }}>答题指示器</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                {/* 右侧：答题卡（题号 + 图例） */}
+                <div className="qz-rail">
+                  <div className="qz-rail-title">答题卡</div>
+                  <div className="qz-rail-grid">
                     {realQuestions.map((q, i) => {
                       const answered = !!realAnswers[q.id];
                       const active = i === currentQ;
                       return (
                         <div key={q.id} onClick={() => setCurrentQ(i)}
-                          style={{ width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            borderRadius: 6, fontSize: 12, cursor: 'pointer',
-                            background: active ? '#0288d1' : answered ? '#c8e6c9' : '#e0e0e0',
-                            color: active ? '#fff' : '#333' }}>
+                          className={`qz-rail-num${active ? ' is-active' : (answered ? ' is-done' : '')}`}>
                           {i + 1}
                         </div>
                       );
                     })}
                   </div>
-                  <div style={{ marginTop: 10, fontSize: 11, color: '#90a4ae' }}>
-                    <span style={{ display: 'inline-block', width: 10, height: 10, background: '#c8e6c9', borderRadius: 2, marginRight: 4 }} />已答
+                  <div className="qz-rail-legend">
+                    <span className="qz-rail-legend-item"><i className="is-active" />当前</span>
+                    <span className="qz-rail-legend-item"><i className="is-done" />已答</span>
+                    <span className="qz-rail-legend-item"><i />未答</span>
                   </div>
                 </div>
               </div>

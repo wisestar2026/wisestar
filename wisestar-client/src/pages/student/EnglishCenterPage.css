@@ -27,8 +27,8 @@
   box-shadow: 0 12px 28px rgba(255, 122, 89, 0.28);
   color: #fff;
 }
-.eng-hero-title { font-size: 26px; font-weight: 800; letter-spacing: 0.5px; }
-.eng-hero-sub { margin-top: 6px; font-size: 15px; opacity: 0.92; }
+.eng-hero-title { font-size: 39px; font-weight: 800; letter-spacing: 0.5px; }
+.eng-hero-sub { margin-top: 6px; font-size: 22.5px; opacity: 0.92; }
 .eng-hero-actions { display: flex; align-items: center; gap: 10px; }
 
 .eng-term {
@@ -41,7 +41,7 @@
   border: none;
   background: transparent;
   color: #fff;
-  font-size: 13px;
+  font-size: 19.5px;
   padding: 6px 16px;
   border-radius: 999px;
   cursor: pointer;
@@ -57,7 +57,7 @@
   background: #fff;
   color: #ff7a59;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 21px;
   padding: 10px 20px;
   border-radius: 999px;
   cursor: pointer;
@@ -70,7 +70,7 @@
 /* ---------- 单元网格 ---------- */
 .eng-section-title {
   margin: 26px 4px 14px;
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 800;
   color: #0f6f96;
   display: flex;
@@ -91,14 +91,14 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 .eng-unit-card:hover { transform: translateY(-4px) scale(1.015); box-shadow: 0 14px 28px rgba(64, 140, 190, 0.24); }
-.eng-unit-name { font-size: 15px; font-weight: 800; color: #14506e; line-height: 1.35; min-height: 40px; }
+.eng-unit-name { font-size: 22.5px; font-weight: 800; color: #14506e; line-height: 1.35; min-height: 40px; }
 .eng-unit-badge {
   position: absolute;
   top: 12px;
   right: 12px;
   background: #ff7a59;
   color: #fff;
-  font-size: 11px;
+  font-size: 16.5px;
   font-weight: 700;
   border-radius: 999px;
   padding: 2px 8px;
@@ -106,10 +106,10 @@
 .eng-unit-stats { display: flex; gap: 14px; margin: 12px 0; }
 .eng-stat { flex: 1; }
 .eng-unit-mastery { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-.eng-unit-mastery-label { font-size: 12px; color: #5b7f92; white-space: nowrap; }
+.eng-unit-mastery-label { font-size: 18px; color: #5b7f92; white-space: nowrap; }
 .eng-unit-mastery-stars { line-height: 1; }
-.eng-unit-mastery-val { font-size: 12px; font-weight: 800; color: #2e9e5b; margin-left: auto; }
-.eng-stat-label { font-size: 12px; color: #5b7f92; display: flex; justify-content: space-between; }
+.eng-unit-mastery-val { font-size: 18px; font-weight: 800; color: #2e9e5b; margin-left: auto; }
+.eng-stat-label { font-size: 18px; color: #5b7f92; display: flex; justify-content: space-between; }
 .eng-stat-bar {
   margin-top: 5px;
   height: 8px;
@@ -130,7 +130,7 @@
   border: none;
   border-radius: 12px;
   padding: 9px 0;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease;
@@ -144,7 +144,7 @@
 .eng-btn-grammar { background: #f1ecff; color: #6a4bd0; }
 .eng-btn-scenario { background: #e6f7f4; color: #128a72; }
 .eng-btn-pattern { background: #fdf1e6; color: #c2762a; }
-.eng-btn-eliminate { background: #ffe9e6; color: #d94a3a; padding: 8px 18px; font-size: 14px; }
+.eng-btn-eliminate { background: #ffe9e6; color: #d94a3a; padding: 8px 18px; font-size: 21px; }
 
 /* ---------- 重点语法页 ---------- */
 .eng-grammar-hero { margin-bottom: 18px; }
@@ -163,16 +163,16 @@
   border-radius: 50%;
   background: #f1ecff;
   color: #6a4bd0;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .eng-grammar-title { font-size: clamp(17px, 1.2vw, 20px); font-weight: 800; color: #14506e; line-height: 1.5; }
-.eng-grammar-content { margin: 8px 0 0 36px; font-size: 15px; color: #43647a; line-height: 1.75; }
+.eng-grammar-content { margin: 8px 0 0 36px; font-size: 22.5px; color: #43647a; line-height: 1.75; }
 .eng-grammar-examples { margin: 12px 0 0 36px; }
-.eng-grammar-examples-label { font-size: 13px; font-weight: 700; color: #6a4bd0; margin-bottom: 6px; }
+.eng-grammar-examples-label { font-size: 19.5px; font-weight: 700; color: #6a4bd0; margin-bottom: 6px; }
 .eng-grammar-examples ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .eng-grammar-examples li {
   display: flex;
@@ -183,15 +183,15 @@
   border-radius: 12px;
   padding: 9px 12px;
 }
-.eng-grammar-en { font-size: 15px; color: #14506e; font-weight: 600; }
-.eng-grammar-zh { font-size: 14px; color: #7a8fa0; }
+.eng-grammar-en { font-size: 22.5px; color: #14506e; font-weight: 600; }
+.eng-grammar-zh { font-size: 21px; color: #7a8fa0; }
 .eng-grammar-sound {
   margin-left: auto;
   border: none;
   border-radius: 999px;
   background: #e6f6fd;
   color: #1479a6;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 700;
   padding: 4px 14px;
   cursor: pointer;
@@ -199,7 +199,7 @@
 .eng-grammar-sound:hover { background: #d5eefb; }
 
 /* ---------- 学习卡片 ---------- */
-.eng-learn-wrap { max-width: 1080px; margin: 0 auto; padding: 20px 20px 100px; font-size: 16px; }
+.eng-learn-wrap { max-width: 1240px; margin: 0 auto; padding: 20px 20px 100px; font-size: 24px; }
 /* 句子练习（内嵌 EnglishSentenceExercise）：铺满中间容器，不再受子页 1080 上限压缩 */
 .eng-detail-card > .eng-learn-wrap { max-width: none; width: 100%; margin: 0; }
 /* 单词学习页：撑满可用宽度（避免 flex 子项因 margin:auto 收缩为内容宽度） */
@@ -211,7 +211,7 @@
   background: linear-gradient(90deg, #ff9a76, #4bb7e8);
   transition: width 0.35s ease;
 }
-.eng-progress-text { font-size: 13px; color: #1479a6; font-weight: 700; white-space: nowrap; }
+.eng-progress-text { font-size: 19.5px; color: #1479a6; font-weight: 700; white-space: nowrap; }
 /* 学员端按小节分组：当前学习内容的小节标题 */
 .eng-section-title {
   display: inline-block;
@@ -220,7 +220,7 @@
   border-radius: 999px;
   background: linear-gradient(90deg, #e8f6fd, #fdeee7);
   color: #1479a6;
-  font-size: 17px;
+  font-size: 25.5px;
   font-weight: 800;
   box-shadow: 0 6px 14px rgba(64, 140, 190, 0.16);
 }
@@ -234,6 +234,7 @@
 }
 /* 单词卡片：固定尺寸容器，宽度不随单词长短变化 */
 .eng-card-word {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -242,26 +243,26 @@
   min-height: 580px;
   padding: 40px 48px;
 }
-.eng-word { font-size: 40px; font-weight: 900; color: #14506e; letter-spacing: 1px; word-break: break-word; }
+.eng-word { font-size: 48px; font-weight: 900; color: #14506e; letter-spacing: 1px; word-break: break-word; }
 /* 点击单词直接朗读（浏览器语音合成，无需音频文件） */
 .eng-word-clickable { cursor: pointer; transition: color 0.15s ease; }
 .eng-word-clickable:hover { color: #2f9fd4; }
 .eng-word-clickable:active { transform: scale(0.98); }
-.eng-phonetic { margin-top: 8px; color: #6a93a8; font-size: 15px; }
-.eng-meaning { margin-top: 18px; font-size: 18px; color: #d9603a; font-weight: 700; min-height: 28px; }
+.eng-phonetic { margin-top: 8px; color: #6a93a8; font-size: 22.5px; }
+.eng-meaning { margin-top: 18px; font-size: 27px; color: #d9603a; font-weight: 700; min-height: 28px; }
 .eng-meaning.hidden { color: #a9c3d1; font-weight: 500; }
 .eng-image { margin: 16px auto 0; max-width: 180px; max-height: 140px; border-radius: 16px; display: block; }
 
 /* 单词学习页内的放大样式（句子学习 / 复习页保持原样） */
-.eng-card-word .eng-word { font-size: 56px; }
-.eng-card-word .eng-phonetic { margin-top: 12px; font-size: 20px; }
-.eng-card-word .eng-meaning { margin-top: 24px; font-size: 28px; min-height: 34px; }
-.eng-card-word .eng-meaning.hidden { font-size: 20px; }
+.eng-card-word .eng-word { font-size: 67px; }
+.eng-card-word .eng-phonetic { margin-top: 12px; font-size: 30px; }
+.eng-card-word .eng-meaning { margin-top: 24px; font-size: 42px; min-height: 34px; }
+.eng-card-word .eng-meaning.hidden { font-size: 30px; }
 .eng-card-word .eng-image { margin-top: 20px; max-width: 320px; max-height: 260px; }
 
 .eng-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
 .eng-btn {
-  border: none; border-radius: 14px; padding: 12px 26px; font-size: 15px; font-weight: 700; cursor: pointer;
+  border: none; border-radius: 14px; padding: 12px 26px; font-size: 22.5px; font-weight: 700; cursor: pointer;
   transition: transform 0.15s ease;
 }
 .eng-btn:hover { transform: translateY(-2px); }
@@ -279,10 +280,10 @@
   border-radius: 999px;
   background: linear-gradient(90deg, #e8f6fd, #fdeee7);
   color: #1479a6;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 800;
 }
-.eng-quiz-hint { font-size: 14px; color: #6a93a8; margin-bottom: 8px; }
+.eng-quiz-hint { font-size: 22.5px; color: #6a93a8; margin-bottom: 10px; }
 .eng-quiz-image {
   display: block;
   margin: 4px auto 8px;
@@ -299,25 +300,26 @@
   border-radius: 999px;
   background: #fff0e8;
   color: #d9603a;
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 800;
 }
-.eng-quiz-prompt-meaning { font-size: 36px; font-weight: 900; color: #d9603a; }
+.eng-quiz-prompt-meaning { font-size: 48px; font-weight: 900; color: #d9603a; }
 .eng-quiz-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
   width: 100%;
-  max-width: 640px;
-  margin: 26px auto 0;
+  max-width: 960px;
+  margin: 32px auto 0;
 }
 .eng-quiz-option {
   border: 2px solid #cfe7f4;
   background: #f6fbfe;
   color: #14506e;
   border-radius: 16px;
-  padding: 18px 14px;
-  font-size: 20px;
+  padding: 26px 24px;
+  min-height: 92px;
+  font-size: 31.5px;
   font-weight: 700;
   cursor: pointer;
   word-break: break-word;
@@ -329,13 +331,13 @@
 .eng-quiz-option.wrong { background: #ffe0e0; border-color: #e06666; color: #c0392b; }
 
 /* ---------- 组句 ---------- */
-.eng-sentence-hint { font-size: 20px; color: #d9603a; font-weight: 700; margin-bottom: 16px; }
+.eng-sentence-hint { font-size: 30px; color: #d9603a; font-weight: 700; margin-bottom: 16px; }
 .eng-difficulty-tag {
   display: inline-block;
   margin-right: 10px;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 700;
   vertical-align: 2px;
 }
@@ -343,7 +345,7 @@
 .eng-difficulty-tag.level-2 { background: #fff2dd; color: #c17816; }
 .eng-difficulty-tag.level-3 { background: #fde6e3; color: #c0392b; }
 .eng-fill-stem {
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 600;
   color: #2f4b5a;
   background: #f6fbfe;
@@ -366,7 +368,7 @@ input.eng-dictation-field {
   width: 92px;
   padding: 4px 6px 7px;
   text-align: center;
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 600;
   color: #2f4b5a;
   background: transparent !important;
@@ -382,7 +384,7 @@ input.eng-dictation-field:focus {
 }
 .eng-dictation-punct {
   padding-bottom: 6px;
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 600;
   color: #2f4b5a;
 }
@@ -404,7 +406,7 @@ input.eng-dictation-field:focus {
   border: none;
   border-radius: 12px;
   padding: 9px 14px;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 600;
   cursor: pointer;
   background: #e6f6fd;
@@ -417,16 +419,21 @@ input.eng-dictation-field:focus {
 .eng-token.correct { background: #d8f5e2; color: #1f8f4d; }
 .eng-token.wrong { background: #ffe0e0; color: #c0392b; }
 
-.eng-feedback { margin-top: 16px; font-size: 15px; font-weight: 700; }
+.eng-feedback { margin-top: 16px; font-size: 22.5px; font-weight: 700; }
 .eng-feedback.ok { color: #1f8f4d; }
 .eng-feedback.no { color: #c0392b; }
 
 /* 作答后的汉语提示：拼写 / 音标 / 中文释义 */
 .eng-quiz-reinforce {
-  margin: 14px auto 0;
+  /* 常驻占位：未作答时是一块空白，作答后原地填充，避免选项整体下移 */
+  box-sizing: border-box;
+  /* 空占位与作答后同高：未作答留白的观感偏窄，按用户要求再放大一半 */
+  min-height: 99px;
+  margin: 12px auto 16px;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
+  align-content: center;
   justify-content: center;
   gap: 10px;
   max-width: 640px;
@@ -435,9 +442,11 @@ input.eng-dictation-field:focus {
   background: linear-gradient(90deg, #eefaf3, #e8f6fd);
   border: 1px solid #d3ecdf;
 }
-.eng-quiz-reinforce-word { font-size: 22px; font-weight: 900; color: #14506e; }
-.eng-quiz-reinforce-phonetic { font-size: 15px; color: #6a93a8; }
-.eng-quiz-reinforce-zh { font-size: 18px; font-weight: 800; color: #d9603a; }
+.eng-quiz-reinforce.is-blank { background: none; border-color: transparent; }
+
+.eng-quiz-reinforce-word { font-size: 33px; font-weight: 900; color: #14506e; }
+.eng-quiz-reinforce-phonetic { font-size: 22.5px; color: #6a93a8; }
+.eng-quiz-reinforce-zh { font-size: 27px; font-weight: 800; color: #d9603a; }
 
 /* ---------- 空态/完成态 ---------- */
 .eng-empty {
@@ -448,12 +457,12 @@ input.eng-dictation-field:focus {
   border-radius: 24px;
   box-shadow: 0 10px 24px rgba(64, 140, 190, 0.16);
 }
-.eng-empty-emoji { font-size: 56px; }
-.eng-empty-title { font-size: 18px; font-weight: 800; color: #14506e; margin: 12px 0 6px; }
+.eng-empty-emoji { font-size: 67px; }
+.eng-empty-title { font-size: 27px; font-weight: 800; color: #14506e; margin: 12px 0 6px; }
 .eng-done-stats { display: flex; justify-content: center; gap: 28px; margin: 20px 0; }
-.eng-done-stat b { font-size: 26px; color: #ff7a59; display: block; }
-.eng-done-stat span { font-size: 13px; color: #5b7f92; }
-.eng-tip { font-size: 13px; color: #6a93a8; line-height: 1.6; }
+.eng-done-stat b { font-size: 39px; color: #ff7a59; display: block; }
+.eng-done-stat span { font-size: 19.5px; color: #5b7f92; }
+.eng-tip { font-size: 19.5px; color: #6a93a8; line-height: 1.6; }
 
 /* 需加强标记与列表 */
 .eng-weak-tag {
@@ -463,7 +472,7 @@ input.eng-dictation-field:focus {
   border-radius: 999px;
   background: #fff0e8;
   color: #d9603a;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 800;
 }
 /* 掌握层级标记（四会/三会） */
@@ -472,14 +481,14 @@ input.eng-dictation-field:focus {
   margin-bottom: 12px;
   padding: 3px 12px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: 1px;
 }
 .eng-level-four { background: #e8f2ff; color: #2f6fd0; }
 .eng-level-three { background: #eef1f4; color: #6b7683; }
 .eng-weak-list { margin: 18px auto 0; max-width: 620px; text-align: left; }
-.eng-weak-list-title { font-size: 14px; font-weight: 800; color: #d9603a; margin-bottom: 10px; text-align: center; }
+.eng-weak-list-title { font-size: 21px; font-weight: 800; color: #d9603a; margin-bottom: 10px; text-align: center; }
 .eng-weak-item {
   display: flex;
   justify-content: space-between;
@@ -500,11 +509,11 @@ input.eng-dictation-field:focus {
   gap: 12px;
   margin-bottom: 6px;
 }
-.eng-drill-tip { font-size: 13px; color: #6a93a8; }
-.eng-drill-progress-text { font-size: 13px; font-weight: 800; color: #1479a6; white-space: nowrap; }
+.eng-drill-tip { font-size: 19.5px; color: #6a93a8; }
+.eng-drill-progress-text { font-size: 19.5px; font-weight: 800; color: #1479a6; white-space: nowrap; }
 .eng-drill-meta {
   margin: 10px 0 4px;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 700;
   color: #d9603a;
   text-align: center;
@@ -512,20 +521,20 @@ input.eng-dictation-field:focus {
 .eng-drill-done {
   padding: 32px 0 8px;
   text-align: center;
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 800;
   color: #1f8f4d;
 }
 .eng-drill-done .anticon { margin-right: 6px; }
 .eng-drill-judge { text-align: center; padding: 10px 0; }
 .eng-drill-judge .eng-word { cursor: pointer; }
-.eng-drill-meaning { margin-top: 12px; font-size: 18px; font-weight: 700; color: #14506e; }
+.eng-drill-meaning { margin-top: 12px; font-size: 27px; font-weight: 700; color: #14506e; }
 .eng-drill-judge-actions { display: flex; justify-content: center; gap: 16px; margin-top: 22px; }
 .eng-drill-judge-btn {
   border: 2px solid transparent;
   border-radius: 14px;
   padding: 10px 26px;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 800;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease;
@@ -536,19 +545,21 @@ input.eng-dictation-field:focus {
 .eng-drill-judge-btn.is-no { background: #ffe0e0; border-color: #e06666; color: #c0392b; }
 
 @media (max-width: 600px) {
-  .eng-word { font-size: 30px; }
+  .eng-word { font-size: 45px; }
   .eng-card-word { min-height: 420px; padding: 28px 20px; }
-  .eng-card-word .eng-word { font-size: 36px; }
-  .eng-card-word .eng-phonetic { font-size: 16px; }
-  .eng-card-word .eng-meaning { font-size: 20px; }
+  .eng-card-word .eng-word { font-size: 43px; }
+  .eng-card-word .eng-phonetic { font-size: 24px; }
+  .eng-card-word .eng-meaning { font-size: 30px; }
   .eng-card-word .eng-image { max-width: 220px; max-height: 180px; }
   .eng-quiz-options { grid-template-columns: 1fr; }
+  /* 窄屏放不下左上角浮标：听发音回到正常流内 */
+  .eng-quiz-sound { position: static; margin: 0 auto 10px; }
   .eng-quiz-image { max-width: 100%; max-height: 220px; }
-  .eng-quiz-prompt-meaning { font-size: 24px; }
+  .eng-quiz-prompt-meaning { font-size: 36px; }
   .eng-hero { padding: 16px; }
   .eng-dictation-field.ant-input,
-  input.eng-dictation-field { width: 68px; font-size: 16px; }
-  .eng-dictation-punct { font-size: 16px; }
+  input.eng-dictation-field { width: 68px; font-size: 24px; }
+  .eng-dictation-punct { font-size: 24px; }
 }
 @media (max-height: 820px) {
   .eng-card-word { min-height: 440px; }
@@ -563,7 +574,7 @@ input.eng-dictation-field:focus {
 .eng-unit-q-stem {
   display: flex;
   gap: 6px;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 700;
   color: #20415f;
   line-height: 1.7;
@@ -575,7 +586,7 @@ input.eng-dictation-field:focus {
   list-style: none;
 }
 .eng-unit-q-options li {
-  font-size: 14px;
+  font-size: 21px;
   color: #41678c;
   line-height: 1.8;
   padding-left: 10px;
@@ -601,8 +612,8 @@ input.eng-dictation-field:focus {
   box-shadow: 0 8px 20px rgba(64, 140, 190, 0.14);
 }
 .eng-wrong-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-.eng-wrong-unit { font-size: 14px; font-weight: 800; color: #14506e; }
-.eng-wrong-times { margin-left: auto; font-size: 12px; font-weight: 700; color: #e07856; }
+.eng-wrong-unit { font-size: 21px; font-weight: 800; color: #14506e; }
+.eng-wrong-times { margin-left: auto; font-size: 18px; font-weight: 700; color: #e07856; }
 
 /* ============================================================
  * 主从布局：左侧单元导航 + 右侧单元详情/模块入口
@@ -621,7 +632,7 @@ input.eng-dictation-field:focus {
   padding: 20px 16px;
 }
 .eng-aside-title {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 800;
   color: #3d7fa0;
   text-align: center;
@@ -635,7 +646,7 @@ input.eng-dictation-field:focus {
   background: #ffffff;
   border-radius: 18px;
   padding: 14px 10px 12px;
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 800;
   color: #2b6c8f;
   cursor: pointer;
@@ -658,7 +669,7 @@ input.eng-dictation-field:focus {
   margin-top: 6px;
   line-height: 1;
 }
-.eng-aside-pct { font-size: 11px; font-weight: 700; color: #3d7fa0; white-space: nowrap; }
+.eng-aside-pct { font-size: 16.5px; font-weight: 700; color: #3d7fa0; white-space: nowrap; }
 .eng-aside-track {
   display: block;
   height: 4px;
@@ -683,7 +694,7 @@ input.eng-dictation-field:focus {
   right: -7px;
   background: #ff7a59;
   color: #fff;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 800;
   border-radius: 999px;
   padding: 2px 8px;
@@ -701,15 +712,15 @@ input.eng-dictation-field:focus {
 .eng-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .eng-detail-title { font-size: clamp(26px, 1.8vw, 34px); font-weight: 900; color: #14506e; letter-spacing: 0.5px; }
 .eng-detail-title-sub { color: #2f9fd4; margin-left: 12px; font-size: clamp(20px, 1.4vw, 26px); }
-.eng-detail-tip { margin-top: 10px; font-size: 16px; color: #6a93a8; }
+.eng-detail-tip { margin-top: 10px; font-size: 24px; color: #6a93a8; }
 .eng-review-pill {
   flex: none;
   border: none;
   background: #ff8a5c;
   color: #fff;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 800;
-  padding: 9px 20px;
+  padding: 12px 26px;
   border-radius: 999px;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(255, 122, 89, 0.32);
@@ -719,13 +730,13 @@ input.eng-dictation-field:focus {
 
 /* 熟练度 */
 .eng-mastery-row { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
-.eng-mastery-label { font-size: 16px; color: #5b7f92; font-weight: 700; }
-.eng-mastery-val { font-size: 24px; font-weight: 900; color: #2e9e5b; margin-left: auto; }
+.eng-mastery-label { font-size: 24px; color: #5b7f92; font-weight: 700; }
+.eng-mastery-val { font-size: 36px; font-weight: 900; color: #2e9e5b; margin-left: auto; }
 
 /* 单词 / 句子 / 语法 三段进度 */
 .eng-progress-grid { display: flex; gap: 24px; margin-top: 22px; }
 .eng-progress-item { flex: 1; min-width: 0; }
-.eng-progress-item .eng-stat-label { font-size: 15px; }
+.eng-progress-item .eng-stat-label { font-size: 22.5px; }
 .eng-progress-item .eng-stat-bar { height: 12px; margin-top: 8px; }
 
 /* 四张模块入口大卡（底部对齐，撑满容器） */
@@ -752,9 +763,9 @@ input.eng-dictation-field:focus {
 }
 .eng-mod-card:hover { transform: translateY(-3px); box-shadow: 0 14px 26px rgba(64, 140, 190, 0.22); }
 .eng-mod-card:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-.eng-mod-card em { font-style: normal; font-size: 16px; }
+.eng-mod-card em { font-style: normal; font-size: 24px; }
 .eng-mod-title { display: inline-flex; align-items: baseline; gap: 8px; }
-.eng-mod-sub { font-size: 16px; font-weight: 600; opacity: 0.75; }
+.eng-mod-sub { font-size: 24px; font-weight: 600; opacity: 0.75; }
 .eng-mod-word { background: #dbe9fb; color: #2f6bd0; }
 .eng-mod-sentence { background: #fce4d6; color: #d9603a; }
 .eng-mod-grammar { background: #fdf1cf; color: #c1901a; }
@@ -771,8 +782,8 @@ input.eng-dictation-field:focus {
 }
 .eng-model-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
 .eng-model-name { font-size: clamp(19px, 1.3vw, 24px); font-weight: 900; color: #14506e; }
-.eng-model-done { font-size: 15px; font-weight: 800; color: #2e9e5b; }
-.eng-model-count { font-size: 14px; color: #7a9aac; margin-left: auto; }
+.eng-model-done { font-size: 22.5px; font-weight: 800; color: #2e9e5b; }
+.eng-model-count { font-size: 21px; color: #7a9aac; margin-left: auto; }
 .eng-model-bar {
   height: 10px;
   border-radius: 999px;
@@ -792,7 +803,7 @@ input.eng-dictation-field:focus {
   border: none;
   border-radius: 16px;
   padding: 20px 10px;
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 800;
   cursor: pointer;
   transition: transform 0.15s ease;
@@ -838,7 +849,7 @@ input.eng-dictation-field:focus {
   border: none;
   background: #eef4f8;
   color: #4b7285;
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 700;
   padding: 8px 16px;
   border-radius: 999px;
@@ -871,10 +882,10 @@ input.eng-dictation-field:focus {
  * 说明：用 .sll-main .eng-stage 提高优先级，覆盖 .eng-learn-wrap / .sc-wrap / .kd-wrap 的窄宽度上限
  * ============================================================ */
 .sll-main .eng-stage {
-  width: clamp(1120px, 60%, 1500px);
+  width: clamp(1240px, 80%, 1500px);
   max-width: none;
   margin: 0 auto;
-  font-size: 17px;
+  font-size: 25.5px;
 }
 /* 窄屏：60% 会偏窄，改为占满可用宽度 */
 @media (max-width: 1180px) {
@@ -882,68 +893,76 @@ input.eng-dictation-field:focus {
 }
 
 /* --- 句子学习（连词成句卡片）--- */
-.eng-stage .eng-section-title { font-size: 20px; padding: 8px 18px; }
-.eng-stage .eng-progress-text { font-size: 15px; }
+.eng-stage .eng-section-title { font-size: 30px; padding: 8px 18px; }
+.eng-stage .eng-progress-text { font-size: 22.5px; }
 .eng-stage .eng-card { padding: 34px 30px; }
-.eng-stage .eng-sentence-hint { font-size: 24px; }
-.eng-stage .eng-fill-stem { font-size: 24px; }
+.eng-stage .eng-sentence-hint { font-size: 36px; }
+.eng-stage .eng-fill-stem { font-size: 36px; }
 .eng-stage .eng-answer-slot { min-height: 74px; padding: 14px; }
 .eng-stage .eng-dictation-field.ant-input,
-.eng-stage input.eng-dictation-field { width: 108px; font-size: 21px; border-bottom-width: 3px !important; }
-.eng-stage .eng-dictation-punct { font-size: 21px; }
+.eng-stage input.eng-dictation-field { width: 108px; font-size: 31.5px; border-bottom-width: 3px !important; }
+.eng-stage .eng-dictation-punct { font-size: 31.5px; }
 @media (max-width: 600px) {
   .eng-stage .eng-dictation-field.ant-input,
-  .eng-stage input.eng-dictation-field { width: 76px; font-size: 18px; }
-  .eng-stage .eng-dictation-punct { font-size: 18px; }
+  .eng-stage input.eng-dictation-field { width: 76px; font-size: 27px; }
+  .eng-stage .eng-dictation-punct { font-size: 27px; }
 }
-.eng-stage .eng-token { font-size: 18px; padding: 11px 18px; }
-.eng-stage .eng-feedback { font-size: 18px; }
-.eng-stage .eng-learn-back { font-size: 16px; padding: 9px 18px; }
-.eng-stage .eng-btn { font-size: 17px; padding: 13px 30px; }
+.eng-stage .eng-token { font-size: 27px; padding: 11px 18px; }
+.eng-stage .eng-feedback { font-size: 27px; }
+.eng-stage .eng-learn-back { font-size: 24px; padding: 9px 18px; }
+.eng-stage .eng-btn { font-size: 25.5px; padding: 13px 30px; }
 
 /* --- 场景对话（情景对话练习）--- */
-.eng-stage .sc-hero-title { font-size: 24px; }
-.eng-stage .sc-hero-sub { font-size: 15px; }
-.eng-stage .sc-summary-score { font-size: 26px; }
-.eng-stage .sc-summary-rate { font-size: 17px; }
-.eng-stage .sc-summary-hint { font-size: 15px; }
+.eng-stage .sc-hero-title { font-size: 36px; }
+.eng-stage .sc-hero-sub { font-size: 22.5px; }
+.eng-stage .sc-summary-score { font-size: 39px; }
+.eng-stage .sc-summary-rate { font-size: 25.5px; }
+.eng-stage .sc-summary-hint { font-size: 22.5px; }
 .eng-stage .sc-scene { padding: 22px 26px 16px; }
-.eng-stage .sc-scene-title { font-size: 19px; }
-.eng-stage .sc-word { font-size: 14px; padding: 3px 12px; }
-.eng-stage .sc-speaker { flex: 0 0 32px; height: 32px; font-size: 15px; }
-.eng-stage .sc-en { font-size: 18px; line-height: 2.15; }
-.eng-stage .sc-blank { width: 128px; font-size: 18px; }
-.eng-stage .sc-zh { font-size: 15px; }
-.eng-stage .sc-answer-chip { font-size: 14px; }
-.eng-stage .sc-pager-info { font-size: 16px; }
+.eng-stage .sc-scene-title { font-size: 28.5px; }
+.eng-stage .sc-word { font-size: 21px; padding: 3px 12px; }
+.eng-stage .sc-speaker { flex: 0 0 32px; height: 32px; font-size: 22.5px; }
+.eng-stage .sc-en { font-size: 27px; line-height: 2.15; }
+.eng-stage .sc-blank { width: 128px; font-size: 27px; }
+.eng-stage .sc-zh { font-size: 22.5px; }
+.eng-stage .sc-answer-chip { font-size: 21px; }
+.eng-stage .sc-pager-info { font-size: 24px; }
 
 /* --- 语法练习 / 单元练习（沿用知识点检测版式）--- */
-.eng-stage .kd-answer-title { font-size: 22px; }
-.eng-stage .kd-answer-meta { font-size: 15px; }
-.eng-stage .kd-nav-dot { width: 34px; height: 34px; font-size: 14px; }
+.eng-stage .kd-answer-title { font-size: 33px; }
+.eng-stage .kd-answer-meta { font-size: 22.5px; }
+.eng-stage .kd-nav-dot { width: 34px; height: 34px; font-size: 21px; }
 .eng-stage .kd-question-box { padding: 28px 30px; }
 .eng-stage .kd-card { padding: 22px 26px; }
-.eng-stage .kd-card-title { font-size: 19px; }
-.eng-stage .kd-report-title { font-size: 24px; }
-.eng-stage .kd-report-line { font-size: 16px; }
-.eng-stage .kd-report-percent { font-size: 30px; }
-.eng-stage .kd-detail-line { font-size: 15px; }
-.eng-stage .kd-detail-analysis { font-size: 14px; }
-.eng-stage .kd-weak-name { font-size: 15px; }
-.eng-stage .kd-weak-chapter { font-size: 13px; }
+.eng-stage .kd-card-title { font-size: 28.5px; }
+.eng-stage .kd-report-title { font-size: 36px; }
+.eng-stage .kd-report-line { font-size: 24px; }
+.eng-stage .kd-report-percent { font-size: 45px; }
+.eng-stage .kd-detail-line { font-size: 22.5px; }
+.eng-stage .kd-detail-analysis { font-size: 21px; }
+.eng-stage .kd-weak-name { font-size: 22.5px; }
+.eng-stage .kd-weak-chapter { font-size: 19.5px; }
 
 /* 单词选择题：统一发音提示按钮 */
+/* 选择题作答卡：内容从顶部起排（听发音浮标与题型徽标同处一行），多出的空间留在卡片底部 */
+.eng-card-word.eng-card-quiz { justify-content: flex-start; }
+
 .eng-quiz-sound {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 14px auto 0;
+  /* 固定在卡片左上角，题干长短变化时不跟着上下漂移 */
+  position: absolute;
+  top: 26px;
+  left: 30px;
+  z-index: 2;
+  margin: 0;
   padding: 9px 20px;
   border: 1px solid #bfe6f5;
   border-radius: 999px;
   background: #eefaff;
   color: #1479a6;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 800;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.15s ease;
@@ -988,7 +1007,7 @@ input.eng-dictation-field:focus {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.88);
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 1.5px;
 }
@@ -1021,7 +1040,7 @@ input.eng-dictation-field:focus {
   background: linear-gradient(135deg, #ffa886, #ff8566);
   box-shadow: 0 14px 26px rgba(232, 96, 62, 0.4);
 }
-.eng-review-btn .anticon { font-size: 15px; }
+.eng-review-btn .anticon { font-size: 22.5px; }
 
 /* ---------- 左侧单元导航：浅色玻璃、海洋高亮 ---------- */
 .eng-aside {
@@ -1131,7 +1150,7 @@ input.eng-dictation-field:focus {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.82);
   color: currentColor;
-  font-size: 21px;
+  font-size: 31.5px;
   box-shadow: 0 6px 14px rgba(23, 107, 158, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 .eng-mod-title {
@@ -1140,20 +1159,20 @@ input.eng-dictation-field:focus {
   align-items: baseline;
   gap: 8px;
   padding-right: 62px;
-  font-size: 19px;
+  font-size: 28.5px;
   line-height: 1.35;
 }
 .eng-mod-card em {
   position: absolute;
   top: 22px;
   right: 20px;
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 900;
   letter-spacing: 0.2px;
 }
 .eng-mod-sub {
   color: #5b7f92;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 600;
   opacity: 0.9;
 }
@@ -1204,7 +1223,7 @@ input.eng-dictation-field:focus {
   right: 22px;
   bottom: 16px;
   color: currentColor;
-  font-size: 24px;
+  font-size: 36px;
   font-weight: 800;
   opacity: 0.45;
   pointer-events: none;
@@ -1322,8 +1341,8 @@ input.eng-dictation-field:focus {
 
 @media (max-width: 760px) {
   .eng-hero { padding: 18px 18px; border-radius: 22px; }
-  .eng-hero-title { font-size: 23px; }
-  .eng-hero-eyebrow { font-size: 11px; letter-spacing: 1px; }
+  .eng-hero-title { font-size: 34.5px; }
+  .eng-hero-eyebrow { font-size: 16.5px; letter-spacing: 1px; }
   .eng-mod-grid { grid-template-columns: 1fr; }
   .eng-mod-card { min-height: 138px; padding: 18px 18px 16px; }
   .eng-detail-card { padding: 24px 20px 26px; }
@@ -1334,7 +1353,7 @@ input.eng-dictation-field:focus {
 .eng-mod-history {
   margin-top: auto;
   padding-top: 6px;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 800;
   color: currentColor;
   text-decoration: underline;
@@ -1373,14 +1392,14 @@ input.eng-dictation-field:focus {
 }
 .eng-hist-score {
   min-width: 64px;
-  font-size: 22px;
+  font-size: 33px;
   font-weight: 900;
   color: #1976d2;
 }
-.eng-hist-score small { margin-left: 2px; font-size: 12px; font-weight: 700; }
+.eng-hist-score small { margin-left: 2px; font-size: 18px; font-weight: 700; }
 .eng-hist-main { display: flex; flex: 1; flex-direction: column; gap: 2px; }
-.eng-hist-date { font-size: 14px; font-weight: 700; color: #23495c; }
-.eng-hist-sub { font-size: 12px; color: #6b8a9c; }
+.eng-hist-date { font-size: 21px; font-weight: 700; color: #23495c; }
+.eng-hist-sub { font-size: 18px; color: #6b8a9c; }
 .eng-hist-arrow { color: #9db9c9; }
 .eng-hist-detail-head {
   display: flex;
@@ -1390,4 +1409,51 @@ input.eng-dictation-field:focus {
   gap: 12px;
   margin-bottom: 10px;
 }
-.eng-hist-detail-meta { font-size: 13px; color: #607d8b; }
+.eng-hist-detail-meta { font-size: 19.5px; color: #607d8b; }
+
+/* ---------- 句子练习：题型切换 + 听音题 ---------- */
+.eng-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 14px;
+}
+.eng-mode-tab {
+  border: 1px solid #cfe3f5;
+  background: #f7fbff;
+  color: #35597a;
+  border-radius: 999px;
+  padding: 9px 20px;
+  font-size: 24px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.eng-mode-tab:hover { border-color: #64b5f6; background: #eaf6ff; }
+.eng-mode-tab.active {
+  border-color: transparent;
+  background: linear-gradient(135deg, #64b5f6, #1976d2);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(25, 118, 210, 0.28);
+}
+.eng-listen-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 22px;
+}
+.eng-listen-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 22px 64px;
+  font-size: 33px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #4bb7e8, #1976d2);
+  box-shadow: 0 10px 24px rgba(25, 118, 210, 0.3);
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.eng-listen-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(25, 118, 210, 0.36); }
+.eng-listen-tip { font-size: 22.5px; font-weight: 700; color: #5b7c9b; }

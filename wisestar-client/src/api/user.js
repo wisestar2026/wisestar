@@ -27,7 +27,6 @@
  */
 
 import request from './request';
-import JSEncrypt from 'jsencrypt';
 
 // ============================================================
 // 获取系统信息
@@ -59,6 +58,8 @@ export async function login(username, password) {
   // 步骤2：使用 jsencrypt 库进行 RSA 加密
   // 为什么这么写：密码不能明文传输，防止被抓包泄露；
   // jsencrypt 的 encrypt() 返回加密后的 Base64 字符串
+  // 动态加载：仅点登录时才下载这个包，首屏不背它的体积
+  const { default: JSEncrypt } = await import('jsencrypt');
   const encrypt = new JSEncrypt();
   encrypt.setPublicKey(publicKey);
   const encryptedPwd = encrypt.encrypt(password);

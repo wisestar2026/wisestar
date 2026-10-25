@@ -11,14 +11,14 @@
 .practice-word-slot.ant-input {
   flex: 1 1 0;
   width: 0;
-  min-width: 72px;
-  max-width: 150px;
+  min-width: 104px;
+  max-width: 220px;
   border: 0;
   border-bottom: 2px solid #9db4c4;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 17px;
+  font-size: 25px;
   font-weight: 500;
 }
 .practice-word-slot.ant-input:hover {

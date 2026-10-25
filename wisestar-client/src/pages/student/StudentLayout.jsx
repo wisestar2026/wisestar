@@ -19,7 +19,7 @@
  *       useStudentStore、../student/student.css
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Select, Dropdown, Switch, message } from 'antd';
 import {
@@ -145,6 +145,20 @@ export default function StudentLayout() {
     },
     { path: '/student/profile', icon: '👤', tone: 'purple', label: '个人中心', match: ['/student/profile'] },
   ];
+
+  // 学习 / 练习类页面隐藏底部导航：这些页面本身是逐题沉浸作答，
+  // 悬浮导航会压住题卡与选项，也容易误触跳走。
+  const HIDE_TABBAR_PREFIXES = [
+    '/student/study',
+    '/student/knowledge',
+    '/student/wrong',
+    '/student/detect',
+    '/student/diagnose',
+    '/student/english',
+  ];
+  const hideTabbar = HIDE_TABBAR_PREFIXES.some(
+    (prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
+  );
 
   // 仅在学员端首页可切换学科/年级/册别；其余页面这些控件只读（置灰展示当前值，不可操作）。
   // 教材版本不在锁定范围内，保持可切换。
@@ -302,26 +316,30 @@ export default function StudentLayout() {
 
       {/* ---- 页面内容区（淡入过渡） ---- */}
       <main className="sll-main">
-        <Outlet />
+        <Suspense fallback={<div style={{ padding: 48, textAlign: 'center', color: '#8a94a6' }}>正在加载…</div>}>
+          <Outlet />
+        </Suspense>
       </main>
 
-      {/* ---- 底部导航栏（首页/学习/错题本/个人中心） ---- */}
-      <nav className="sll-tabbar">
-        {tabs.map((t) => {
-          const active = t.match.includes(location.pathname)
-            || (t.path === '/student' && location.pathname.startsWith('/student/knowledge'));
-          return (
-            <button
-              key={t.path}
-              className={`sll-tabbar-item ${active ? 'active' : ''}`}
-              onClick={() => navigate(t.path)}
-            >
-              <IconTile emoji={t.icon} tone={t.tone} size="sm" dim={!active} className="sll-tabbar-tile" />
-              <span className="sll-tabbar-label">{t.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* ---- 底部导航栏（首页/学习/错题本/个人中心）：学习与练习页隐藏 ---- */}
+      {!hideTabbar && (
+        <nav className="sll-tabbar">
+          {tabs.map((t) => {
+            const active = t.match.includes(location.pathname)
+              || (t.path === '/student' && location.pathname.startsWith('/student/knowledge'));
+            return (
+              <button
+                key={t.path}
+                className={`sll-tabbar-item ${active ? 'active' : ''}`}
+                onClick={() => navigate(t.path)}
+              >
+                <IconTile emoji={t.icon} tone={t.tone} size="sm" dim={!active} className="sll-tabbar-tile" />
+                <span className="sll-tabbar-label">{t.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      )}
 
       {/* ---- 左下角悬浮「返回上一级」：按信息架构回父级页面（非浏览器 history），首页不显示 ---- */}
       {location.pathname !== '/student' && (

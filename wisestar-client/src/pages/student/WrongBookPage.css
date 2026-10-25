@@ -17,13 +17,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 700;
   color: #0277bd;
 }
 
 .wrong-sub {
-  font-size: 14px;
+  font-size: 21px;
   color: #90a4ae;
   margin: 4px 0 16px;
 }
@@ -35,14 +35,14 @@
 }
 .wrong-empty-icon {
   display: block;
-  font-size: 44px;
+  font-size: 53px;
   color: #7ed3a4;
   margin-bottom: 10px;
 }
 .wrong-empty-small {
   padding: 20px 8px;
   text-align: center;
-  font-size: 14px;
+  font-size: 21px;
   color: #90a4ae;
 }
 
@@ -68,12 +68,12 @@
   flex: 0 0 auto;
 }
 .wrong-donut-total {
-  font-size: 26px;
+  font-size: 39px;
   font-weight: 700;
   fill: #0277bd;
 }
 .wrong-donut-label {
-  font-size: 12px;
+  font-size: 18px;
   fill: #90a4ae;
 }
 .wrong-donut-legend {
@@ -86,7 +86,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 19.5px;
   color: #455a64;
   padding: 3px 0;
 }
@@ -115,13 +115,13 @@
   padding: 14px;
 }
 .wrong-stat-block-title {
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 700;
   color: #0277bd;
   margin-bottom: 8px;
 }
 .wrong-stat-empty {
-  font-size: 13px;
+  font-size: 19.5px;
   color: #90a4ae;
   padding: 8px 0;
 }
@@ -134,7 +134,7 @@
   align-items: center;
   gap: 8px;
   padding: 4px 0;
-  font-size: 13px;
+  font-size: 19.5px;
   color: #455a64;
 }
 .wrong-stat-name {
@@ -178,7 +178,7 @@
   min-width: 0;
 }
 .wrong-col-title {
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 700;
   color: #0277bd;
   margin-bottom: 10px;
@@ -200,7 +200,7 @@
   border-radius: 8px;
   padding: 9px 10px;
   margin-bottom: 6px;
-  font-size: 15px;
+  font-size: 22.5px;
   color: #37474f;
   cursor: pointer;
   transition: all .15s;
@@ -223,7 +223,7 @@
 }
 .wrong-col-count {
   flex: 0 0 auto;
-  font-size: 14px;
+  font-size: 21px;
   color: #0288d1;
 }
 
@@ -239,7 +239,7 @@
   margin: 4px 0 10px;
 }
 .wrong-kp-group-name {
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 700;
   color: #6a1b9a;
 }
@@ -247,14 +247,14 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 14px;
+  font-size: 21px;
   color: #6a1b9a;
   background: #f3e5f5;
   border-radius: 8px;
   padding: 3px 12px;
 }
 .wrong-repo {
-  font-size: 13px;
+  font-size: 19.5px;
   color: #90a4ae;
 }
 
@@ -274,20 +274,20 @@
 }
 /* 放大卡片内题型标签（antd Tag 默认偏小） */
 .wrong-card-item .ant-tag {
-  font-size: 14px;
+  font-size: 21px;
   line-height: 24px;
   padding: 2px 12px;
   margin: 0;
 }
 .wrong-question {
-  font-size: 17px;
+  font-size: 25.5px;
   font-weight: 600;
   color: #263238;
   margin-bottom: 12px;
   line-height: 1.6;
 }
 .wrong-ans {
-  font-size: 15px;
+  font-size: 22.5px;
   border-radius: 10px;
   padding: 8px 12px;
   margin-bottom: 8px;
@@ -309,7 +309,7 @@
   margin-top: 8px;
 }
 .wrong-meta {
-  font-size: 13px;
+  font-size: 19.5px;
   color: #90a4ae;
 }
 
@@ -326,7 +326,7 @@
   margin-bottom: 10px;
 }
 .wrong-type-group-count {
-  font-size: 13px;
+  font-size: 19.5px;
   color: #90a4ae;
 }
 
@@ -352,7 +352,7 @@
   padding: 16px 4px;
 }
 .wrong-drill-result-ok {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 700;
   color: #2e7d32;
   display: flex;
@@ -361,7 +361,7 @@
   padding: 20px 0;
 }
 .wrong-drill-result-no {
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 600;
   color: #c62828;
   display: flex;
@@ -383,7 +383,7 @@
   border: 1px solid #ffccc7;
   border-radius: 8px;
   padding: 8px 12px;
-  font-size: 13px;
+  font-size: 19.5px;
 }
 .wrong-drill-wrong-name {
   flex: 1 1 auto;

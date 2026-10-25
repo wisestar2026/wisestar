@@ -202,7 +202,7 @@ export default function EnglishUnitPracticePage() {
           })}
         </div>
 
-        <div className="kd-question-box">
+        <div className="kd-question-box quiz-stage">
           <QuestionCard
             question={{ ...q, template: q.schema }}
             index={current + 1}

@@ -36,73 +36,92 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import zhCN from 'antd/locale/zh_CN'; // Ant Design 中文语言包
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import useUserStore from './stores/useUserStore';
 import AuthGuard from './components/common/AuthGuard';
-import MainLayout from './components/layout/MainLayout';
-import LoginPage from './pages/login/LoginPage';
-import StudentLoginPage from './pages/student/StudentLoginPage';
-import DashboardPage from './pages/dashboard/DashboardPage';
-import RepoListPage from './pages/repo/RepoListPage';
-import RepoDetailPage from './pages/repo/RepoDetailPage';
-import QuestionListPage from './pages/question/QuestionListPage';
-import PracticeHomePage from './pages/practice/PracticeHomePage';
-import PracticeSessionPage from './pages/practice/PracticeSessionPage';
-import WrongQuestionPage from './pages/practice/WrongQuestionPage';
-import StudentLayout from './pages/student/StudentLayout';
-import StudentHomePage from './pages/student/StudentHomePage';
-import StudyPage from './pages/student/StudyPage';
-import KnowledgePage from './pages/student/KnowledgePage';
-import KnowledgeDetectPage from './pages/student/KnowledgeDetectPage';
-import EnglishDiagnosePage from './pages/student/EnglishDiagnosePage';
-import StudentMyArchivePage from './pages/student/StudentMyArchivePage';
-import ProfilePage from './pages/student/ProfilePage';
-import MallPage from './pages/student/MallPage';
-import WrongBookPage from './pages/student/WrongBookPage';
-import EnglishCenterPage from './pages/student/EnglishCenterPage';
-import EnglishWordLearnPage from './pages/student/EnglishWordLearnPage';
-import EnglishWordPracticePage from './pages/student/EnglishWordPracticePage';
-import EnglishReadingPage from './pages/student/EnglishReadingPage';
-import EnglishReadAloudPage from './pages/student/EnglishReadAloudPage';
-import EnglishSentenceLearnPage from './pages/student/EnglishSentenceLearnPage';
-import EnglishGrammarLearnPage from './pages/student/EnglishGrammarLearnPage';
-import EnglishGrammarPracticePage from './pages/student/EnglishGrammarPracticePage';
-import EnglishUnitPracticePage from './pages/student/EnglishUnitPracticePage';
-import EnglishScenarioPracticePage from './pages/student/EnglishScenarioPracticePage';
-import EnglishPatternScenarioPage from './pages/student/EnglishPatternScenarioPage';
-import EnglishReviewPage from './pages/student/EnglishReviewPage';
-import MallGoodsManagePage from './pages/system/MallGoodsManagePage';
-import ChapterManagePage from './pages/knowledge/ChapterManagePage';
-import SectionManagePage from './pages/knowledge/SectionManagePage';
-import KnowledgePointManagePage from './pages/knowledge/KnowledgePointManagePage';
-import PracticeStrategyPage from './pages/knowledge/PracticeStrategyPage';
-import StudentManagePage from './pages/student/StudentManagePage';
-import StudentArchivePage from './pages/student/StudentArchivePage';
-import OrderManagePage from './pages/student/OrderManagePage';
-import RoleManagePage from './pages/hr/RoleManagePage';
-import UserManagePage from './pages/system/UserManagePage';
-import DeptManagePage from './pages/system/DeptManagePage';
-import PositionManagePage from './pages/system/PositionManagePage';
-import DictManagePage from './pages/system/DictManagePage';
-import DictItemManagePage from './pages/system/DictItemManagePage';
-import AiSettingPage from './pages/system/AiSettingPage';
-import WordManagePage from './pages/english/WordManagePage';
-import WordAiManagePage from './pages/english/WordAiManagePage';
-import ScenarioPackManagePage from './pages/english/ScenarioPackManagePage';
-import UnitPaperManagePage from './pages/english/UnitPaperManagePage';
-import SentencePackManagePage from './pages/english/SentencePackManagePage';
-import StudentSupervisionPage from './pages/student/StudentSupervisionPage';
-import HandRaisePage from './pages/student/HandRaisePage';
-import TaskAssignmentPage from './pages/student/TaskAssignmentPage';
-import TeachingResearchPlatformPage from './pages/exercise/TeachingResearchPlatformPage';
-import SentenceManagePage from './pages/english/SentenceManagePage';
-import VerifyPage from './pages/mall/VerifyPage';
-import CampusManagePage from './pages/admin/CampusManagePage';
-import UnitManagePage from './pages/english/UnitManagePage';
-import EnglishSectionManagePage from './pages/english/SectionManagePage';
-import EnglishGrammarManagePage from './pages/english/GrammarManagePage';
-import WordImageReviewPage from './pages/english/WordImageReviewPage';
+const MainLayout = lazy(() => import('./components/layout/MainLayout'));
+const LoginPage = lazy(() => import('./pages/login/LoginPage'));
+const StudentLoginPage = lazy(() => import('./pages/student/StudentLoginPage'));
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
+const RepoListPage = lazy(() => import('./pages/repo/RepoListPage'));
+const RepoDetailPage = lazy(() => import('./pages/repo/RepoDetailPage'));
+const QuestionListPage = lazy(() => import('./pages/question/QuestionListPage'));
+const PracticeHomePage = lazy(() => import('./pages/practice/PracticeHomePage'));
+const PracticeSessionPage = lazy(() => import('./pages/practice/PracticeSessionPage'));
+const WrongQuestionPage = lazy(() => import('./pages/practice/WrongQuestionPage'));
+const StudentLayout = lazy(() => import('./pages/student/StudentLayout'));
+const StudentHomePage = lazy(() => import('./pages/student/StudentHomePage'));
+const StudyPage = lazy(() => import('./pages/student/StudyPage'));
+const KnowledgePage = lazy(() => import('./pages/student/KnowledgePage'));
+const KnowledgeDetectPage = lazy(() => import('./pages/student/KnowledgeDetectPage'));
+const EnglishDiagnosePage = lazy(() => import('./pages/student/EnglishDiagnosePage'));
+const StudentMyArchivePage = lazy(() => import('./pages/student/StudentMyArchivePage'));
+const ProfilePage = lazy(() => import('./pages/student/ProfilePage'));
+const MallPage = lazy(() => import('./pages/student/MallPage'));
+const WrongBookPage = lazy(() => import('./pages/student/WrongBookPage'));
+const EnglishCenterPage = lazy(() => import('./pages/student/EnglishCenterPage'));
+const EnglishWordLearnPage = lazy(() => import('./pages/student/EnglishWordLearnPage'));
+const EnglishWordPracticePage = lazy(() => import('./pages/student/EnglishWordPracticePage'));
+const EnglishReadingPage = lazy(() => import('./pages/student/EnglishReadingPage'));
+const EnglishReadAloudPage = lazy(() => import('./pages/student/EnglishReadAloudPage'));
+const EnglishSentenceLearnPage = lazy(() => import('./pages/student/EnglishSentenceLearnPage'));
+const EnglishGrammarLearnPage = lazy(() => import('./pages/student/EnglishGrammarLearnPage'));
+const EnglishGrammarPracticePage = lazy(() => import('./pages/student/EnglishGrammarPracticePage'));
+const EnglishUnitPracticePage = lazy(() => import('./pages/student/EnglishUnitPracticePage'));
+const EnglishScenarioPracticePage = lazy(() => import('./pages/student/EnglishScenarioPracticePage'));
+const EnglishPatternScenarioPage = lazy(() => import('./pages/student/EnglishPatternScenarioPage'));
+const EnglishReviewPage = lazy(() => import('./pages/student/EnglishReviewPage'));
+const MallGoodsManagePage = lazy(() => import('./pages/system/MallGoodsManagePage'));
+const ChapterManagePage = lazy(() => import('./pages/knowledge/ChapterManagePage'));
+const SectionManagePage = lazy(() => import('./pages/knowledge/SectionManagePage'));
+const KnowledgePointManagePage = lazy(() => import('./pages/knowledge/KnowledgePointManagePage'));
+const PracticeStrategyPage = lazy(() => import('./pages/knowledge/PracticeStrategyPage'));
+const StudentManagePage = lazy(() => import('./pages/student/StudentManagePage'));
+const StudentArchivePage = lazy(() => import('./pages/student/StudentArchivePage'));
+const OrderManagePage = lazy(() => import('./pages/student/OrderManagePage'));
+const RoleManagePage = lazy(() => import('./pages/hr/RoleManagePage'));
+const UserManagePage = lazy(() => import('./pages/system/UserManagePage'));
+const DeptManagePage = lazy(() => import('./pages/system/DeptManagePage'));
+const PositionManagePage = lazy(() => import('./pages/system/PositionManagePage'));
+const DictManagePage = lazy(() => import('./pages/system/DictManagePage'));
+const DictItemManagePage = lazy(() => import('./pages/system/DictItemManagePage'));
+const AiSettingPage = lazy(() => import('./pages/system/AiSettingPage'));
+const WordManagePage = lazy(() => import('./pages/english/WordManagePage'));
+const WordAiManagePage = lazy(() => import('./pages/english/WordAiManagePage'));
+const ScenarioPackManagePage = lazy(() => import('./pages/english/ScenarioPackManagePage'));
+const UnitPaperManagePage = lazy(() => import('./pages/english/UnitPaperManagePage'));
+const SentencePackManagePage = lazy(() => import('./pages/english/SentencePackManagePage'));
+const StudentSupervisionPage = lazy(() => import('./pages/student/StudentSupervisionPage'));
+const HandRaisePage = lazy(() => import('./pages/student/HandRaisePage'));
+const TaskAssignmentPage = lazy(() => import('./pages/student/TaskAssignmentPage'));
+const TeachingResearchPlatformPage = lazy(() => import('./pages/exercise/TeachingResearchPlatformPage'));
+const SentenceManagePage = lazy(() => import('./pages/english/SentenceManagePage'));
+const VerifyPage = lazy(() => import('./pages/mall/VerifyPage'));
+const CampusManagePage = lazy(() => import('./pages/admin/CampusManagePage'));
+const UnitManagePage = lazy(() => import('./pages/english/UnitManagePage'));
+const EnglishSectionManagePage = lazy(() => import('./pages/english/SectionManagePage'));
+const EnglishGrammarManagePage = lazy(() => import('./pages/english/GrammarManagePage'));
+const WordImageReviewPage = lazy(() => import('./pages/english/WordImageReviewPage'));
 
+
+// 路由懒加载骨架：纯 DOM，不引入 antd，首屏不用等额外 chunk
+function RouteFallback() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        fontFamily: 'system-ui, sans-serif',
+        fontSize: 14,
+        color: '#8a94a6',
+      }}
+    >
+      正在加载…
+    </div>
+  );
+}
 
 export default function App() {
   const { fetchCurrentUser } = useUserStore();
@@ -119,10 +138,12 @@ export default function App() {
 
   return (
     // ConfigProvider: 为所有 Ant Design 组件设置中文语言
-    <ConfigProvider locale={zhCN}>
+    // cssVar：把主题变量交给 CSS 变量，减少旧机器上 antd 运行时的样式哈希计算
+    <ConfigProvider locale={zhCN} theme={{ cssVar: true }}>
       {/* BrowserRouter: React Router 的 HTML5 History 模式路由 */}
       <BrowserRouter>
-        <Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
           {/* ---- 公开路由（无需登录） ---- */}
           {/* 登录页 */}
           <Route path="/login" element={<LoginPage />} />
@@ -523,7 +544,8 @@ export default function App() {
               }
             />
           </Route>
-        </Routes>
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </ConfigProvider>
   );

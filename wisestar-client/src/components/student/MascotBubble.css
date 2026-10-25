@@ -1,0 +1,103 @@
+/**
+ * MascotBubble.css - 白卡外的海豚反馈气泡（学员端答题页共用）
+ *
+ * 位置：进度条与白色主卡之间，右对齐；高度固定为 --mb-h，
+ * 保证「未作答 → 答对/答错」只换文案和配色，卡片不会被顶下去。
+ */
+
+.mb-wrap {
+  --mb-h: 94px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-height: var(--mb-h);
+  margin: -6px 0 10px;
+  padding-right: 4px;
+}
+
+.mb-bubble {
+  position: relative;
+  max-width: min(680px, 72vw);
+  padding: 14px 24px;
+  border-radius: 22px;
+  background: #f4fbff;
+  border: 2px solid #bfe4f6;
+  box-shadow: 0 8px 20px rgba(64, 140, 190, 0.16);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: #1c6f97;
+  /* 文案切换时的轻微弹入；不做常驻动画，低配机也不会掉帧 */
+  animation: mb-pop 0.24s ease-out;
+}
+
+/* 气泡尾巴指向右侧的海豚 */
+.mb-bubble::before,
+.mb-bubble::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 12px solid transparent;
+}
+.mb-bubble::before {
+  right: -24px;
+  border-left-color: #bfe4f6;
+}
+.mb-bubble::after {
+  right: -20px;
+  border-left-color: #f4fbff;
+}
+
+.mb-text { display: block; }
+.mb-text > div + div { margin-top: 4px; }
+
+.mb-avatar {
+  width: 84px;
+  height: 84px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #eaf7ff;
+  border: 3px solid #ffffff;
+  box-shadow: 0 8px 18px rgba(33, 150, 243, 0.28);
+}
+
+/* 答对：薄荷绿 */
+.mb-wrap.is-ok .mb-bubble {
+  background: #f1fdf6;
+  border-color: #9fe3bb;
+  color: #1f8f4d;
+  box-shadow: 0 8px 20px rgba(31, 143, 77, 0.16);
+}
+.mb-wrap.is-ok .mb-bubble::before { border-left-color: #9fe3bb; }
+.mb-wrap.is-ok .mb-bubble::after { border-left-color: #f1fdf6; }
+
+/* 答错：暖橙红，只提示不责备 */
+.mb-wrap.is-no .mb-bubble {
+  background: #fff6f4;
+  border-color: #ffc0b8;
+  color: #b8422f;
+  box-shadow: 0 8px 20px rgba(192, 57, 43, 0.14);
+}
+.mb-wrap.is-no .mb-bubble::before { border-left-color: #ffc0b8; }
+.mb-wrap.is-no .mb-bubble::after { border-left-color: #fff6f4; }
+
+@keyframes mb-pop {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 760px) {
+  .mb-wrap { --mb-h: 84px; gap: 8px; }
+  .mb-bubble {
+    max-width: calc(100vw - 110px);
+    padding: 10px 16px;
+    font-size: 16px;
+    border-radius: 18px;
+  }
+  .mb-bubble::before { right: -20px; border-width: 10px; }
+  .mb-bubble::after { right: -16px; border-width: 10px; }
+  .mb-avatar { width: 64px; height: 64px; border-width: 2px; }
+}

@@ -2,12 +2,18 @@
  * EnglishSentenceExercise.jsx - 学员端英语「句子练习」（多题型，读取管理端已固化内容）
  *
  * 题型:
- *   build     连词成句（给中文与正确英文，点词块拼句）
- *   dictation 句子默写（给中文，按词数逐词填空）
- *   choice    句子选择（给中文题干，选正确英文句）
+ *   build          连词成句（看中文，点词块拼出英文）
+ *   listen-build   听音组句（只播英文，点词块拼句，不看文本）
+ *   listen-meaning 听力理解（只播英文，从 4 个中文释义中选）
+ *   dictation      句子默写（给中文，按词数逐词填空）
+ *   choice         句子选择（给中文题干，选正确英文句）
+ *
+ * 「连词成句 / 听音组句 / 听力理解」三种为按单元句子即时生成（不依赖 AI 固化内容），
+ * 「综合练习」沿用管理端固化的混合题型。
  *
  * 数据流:
  *   GET  /api/english/student/sentence-exercises?version=&grade=&term=&unit=
+ *   GET  /api/english/student/sentences       单元句子（用于生成听音/组句题型）
  *   POST /api/english/student/sentence/record  { sentenceId, correct }
  *   POST /api/english/student/session          { type:'sentence', durationSeconds, correctCount }
  *
@@ -18,12 +24,37 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Empty, Input, Spin, message } from 'antd';
 import {
   getEnglishSentenceExercises,
+  getEnglishSentences,
   recordEnglishSentence,
   recordEnglishSession,
 } from '../../api/englishStudent';
 import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../utils/english';
+import MascotBubble from '../../components/student/MascotBubble';
 
-const KIND_LABELS = { build: '连词成句', dictation: '句子默写', choice: '句子选择', fill: '词汇填空' };
+const KIND_LABELS = {
+  build: '连词成句',
+  'listen-build': '听音组句',
+  'listen-meaning': '听力理解',
+  dictation: '句子默写',
+  choice: '句子选择',
+  fill: '词汇填空',
+};
+
+/** 句子练习模式：mix 为管理端固化的综合题，其余三种按单元句子即时生成 */
+const MODES = [
+  { key: 'mix', label: '综合练习' },
+  { key: 'build', label: '连词成句' },
+  { key: 'listen-build', label: '听音组句' },
+  { key: 'listen-meaning', label: '听力理解' },
+];
+
+/** 每轮即时生成题型的题量 */
+const GENERATED_MAX = 10;
+
+/** 是否听力类题型（进入即自动播放） */
+function isListenKind(kind) {
+  return kind === 'listen-build' || kind === 'listen-meaning';
+}
 const DIFFICULTY_LABELS = { 1: '基础', 2: '提高', 3: '挑战' };
 
 /** 默写分组：每个单词一个输入框，标点跟随前一个单词展示 */
@@ -46,6 +77,8 @@ function buildDictationGroups(sentence) {
 export default function EnglishSentenceExercise({ unit, version, grade, term, onBack }) {
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
+  const [sentences, setSentences] = useState([]);
+  const [mode, setMode] = useState('mix');
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState(null); // 'ok' | 'no'
   const [correctCount, setCorrectCount] = useState(0);
@@ -63,10 +96,14 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getEnglishSentenceExercises({ version, grade, term, unit })
-      .then((res) => {
+    Promise.all([
+      getEnglishSentenceExercises({ version, grade, term, unit }).catch(() => ({ data: [] })),
+      getEnglishSentences({ version, grade, term, unit }).catch(() => ({ data: [] })),
+    ])
+      .then(([exRes, senRes]) => {
         if (cancelled) return;
-        setExercises(res?.data || []);
+        setExercises(exRes?.data || []);
+        setSentences(senRes?.data || []);
         setIndex(0);
         setCorrectCount(0);
         setFeedback(null);
@@ -78,7 +115,46 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     return () => { cancelled = true; };
   }, [unit, version, grade, term]);
 
-  const current = exercises[index];
+  // 即时生成题型：按单元句子直接产出，答案/释义都来自句子本体，不需要 AI
+  const generated = useMemo(() => {
+    if (mode === 'mix') {
+      return [];
+    }
+    const pool = sentences.filter((s) => s?.en).slice(0, GENERATED_MAX);
+    if (mode === 'listen-meaning') {
+      const zhPool = Array.from(new Set(sentences.map((s) => String(s?.zh || '').trim()).filter(Boolean)));
+      return pool.map((s) => {
+        const correct = String(s.zh || '').trim();
+        const distractors = shuffle(zhPool.filter((zh) => zh !== correct)).slice(0, 3);
+        return {
+          kind: 'listen-meaning',
+          sentenceId: s.id,
+          zh: correct,
+          en: s.en,
+          options: shuffle([correct, ...distractors]),
+        };
+      }).filter((item) => item.options.length >= 2);
+    }
+    return pool.map((s) => ({
+      kind: mode,
+      sentenceId: s.id,
+      zh: s.zh,
+      en: s.en,
+    }));
+  }, [mode, sentences]);
+
+  const taskList = mode === 'mix' ? exercises : generated;
+  const current = taskList[index];
+
+  // 切换模式重新开始一轮（题量与来源都不一样）
+  const switchMode = useCallback((next) => {
+    setMode(next);
+    setIndex(0);
+    setCorrectCount(0);
+    setFeedback(null);
+    startAt.current = Date.now();
+    finishedRef.current = false;
+  }, []);
   const dictationGroups = useMemo(
     () => (current?.kind === 'dictation' ? buildDictationGroups(current.en) : []),
     [current],
@@ -91,14 +167,18 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     setSelected([]);
     setTyped('');
     setDictationWords(dictationGroups.map(() => ''));
-    if (current.kind === 'build') {
+    if (current.kind === 'build' || current.kind === 'listen-build') {
       setPool(shuffle(tokenizeSentence(current.en || '')));
     } else {
       setPool([]);
     }
+    // 听力题进入即播放，不用学员再点一次
+    if (isListenKind(current.kind) && current.en) {
+      speakEnglish(current.en);
+    }
   }, [index, current, dictationGroups]);
 
-  const finished = !loading && exercises.length > 0 && index >= exercises.length;
+  const finished = !loading && taskList.length > 0 && index >= taskList.length;
 
   useEffect(() => {
     if (finished && !finishedRef.current) {
@@ -144,6 +224,9 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   const handleFillCheck = () => submit(typed, current?.answer);
 
   const optionList = useMemo(() => {
+    if (current?.kind === 'listen-meaning') {
+      return Array.isArray(current.options) ? current.options : [];
+    }
     if (current?.kind !== 'choice') return [];
     const opts = Array.isArray(current.options) ? current.options : [];
     return opts.length ? opts : [current.en];
@@ -153,11 +236,26 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     return <div className="eng-learn-wrap"><Spin /></div>;
   }
 
-  if (exercises.length === 0) {
+  if (taskList.length === 0) {
     return (
       <div className="eng-learn-wrap">
         <button type="button" className="eng-learn-back" onClick={onBack}>← 返回句式通关</button>
-        <Empty description="该单元暂无句子练习，请老师先在后台生成固化" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        <div className="eng-mode-tabs">
+          {MODES.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={`eng-mode-tab${mode === item.key ? ' active' : ''}`}
+              onClick={() => switchMode(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <Empty
+          description={sentences.length === 0 ? '该单元暂无句子，请老师先配置单元句子' : '当前题型暂无题目，换个题型试试'}
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
       </div>
     );
   }
@@ -171,7 +269,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
           <div className="eng-empty-title">本单元句子练习已完成</div>
           <div className="eng-done-stats">
             <div className="eng-done-stat"><b>{correctCount}</b><span>答对</span></div>
-            <div className="eng-done-stat"><b>{exercises.length}</b><span>题目总数</span></div>
+            <div className="eng-done-stat"><b>{taskList.length}</b><span>题目总数</span></div>
           </div>
           <div className="eng-actions">
             <button type="button" className="eng-btn eng-btn-ghost" onClick={onBack}>返回句式通关</button>
@@ -181,26 +279,68 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     );
   }
 
-  const progress = Math.round((index / exercises.length) * 100);
+  const progress = Math.round((index / taskList.length) * 100);
   const kindLabel = KIND_LABELS[current?.kind] || '句子练习';
   const difficultyLabel = DIFFICULTY_LABELS[current?.difficulty || 1] || '基础';
 
   return (
     <div className="eng-learn-wrap">
       <button type="button" className="eng-learn-back" onClick={onBack}>← 返回句式通关</button>
+      <div className="eng-mode-tabs">
+        {MODES.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            className={`eng-mode-tab${mode === item.key ? ' active' : ''}`}
+            onClick={() => switchMode(item.key)}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
-        <div className="eng-progress-text">{index + 1} / {exercises.length}</div>
+        <div className="eng-progress-text">{index + 1} / {taskList.length}</div>
       </div>
 
-      <div className="eng-card">
+      <MascotBubble tone={feedback === 'ok' ? 'ok' : feedback === 'no' ? 'no' : 'idle'}>
+        {!feedback && '读一读、连一连，做完我告诉你对不对～'}
+        {feedback === 'ok' && '太棒了，完全正确！'}
+        {feedback === 'no' && (
+          <>
+            <div>再想想～</div>
+            <div>正确答案：{current?.en}</div>
+            {isListenKind(current?.kind) && current?.zh && <div>句意：{current.zh}</div>}
+          </>
+        )}
+      </MascotBubble>
+
+      <div className="eng-card quiz-stage">
         <div className="eng-sentence-hint">
           <span className={`eng-difficulty-tag level-${current?.difficulty || 1}`}>{difficultyLabel}</span>
-          {kindLabel}：{current?.zh || '（无中文提示）'}
+          {kindLabel}
+          {isListenKind(current?.kind) ? '：听音频作答' : `：${current?.zh || '（无中文提示）'}`}
         </div>
 
-        {/* 连词成句 */}
-        {current?.kind === 'build' && (
+        {/* 听力题：大按钮重播，不带任何英文文本 */}
+        {isListenKind(current?.kind) && (
+          <div className="eng-listen-box">
+            <button
+              type="button"
+              className="eng-listen-btn"
+              onClick={() => speakEnglish(current.en)}
+              aria-label="播放英文音频"
+            >
+              🔊 点击听音频
+            </button>
+            <div className="eng-listen-tip">
+              {current?.kind === 'listen-build' ? '听完后，按顺序点下面的单词拼出这句话' : '听完后，选出这句话的中文意思'}
+            </div>
+          </div>
+        )}
+
+        {/* 连词成句 / 听音组句：共用词块拼句交互 */}
+        {(current?.kind === 'build' || current?.kind === 'listen-build') && (
           <>
             <div className="eng-answer-slot">
               {selected.length === 0 && <span style={{ color: '#a9c3d1' }}>点击下方词块，按顺序拼出句子</span>}
@@ -293,6 +433,28 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
           </div>
         )}
 
+        {/* 听力理解：听英文，选中文 */}
+        {current?.kind === 'listen-meaning' && (
+          <div className="eng-quiz-options" style={{ marginTop: 8 }}>
+            {optionList.map((opt, oi) => {
+              const isAnswer = opt === current.zh;
+              const cls = ['eng-quiz-option'];
+              if (feedback && isAnswer) cls.push('correct');
+              return (
+                <button
+                  key={`${opt}-${oi}`}
+                  type="button"
+                  className={cls.join(' ')}
+                  disabled={Boolean(feedback)}
+                  onClick={() => submit(opt, current.zh)}
+                >
+                  {String.fromCharCode(65 + oi)}. {opt}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* 句子选择 */}
         {current?.kind === 'choice' && (
           <div className="eng-quiz-options" style={{ marginTop: 8 }}>
@@ -315,25 +477,18 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
           </div>
         )}
 
-        {feedback === 'ok' && <div className="eng-feedback ok">太棒了，完全正确！</div>}
-        {feedback === 'no' && (
-          <div className="eng-feedback no">
-            再想想～<div>正确答案：{current?.en}</div>
-          </div>
-        )}
-
         <div className="eng-actions">
           {current?.en && (
             <button type="button" className="eng-btn eng-btn-sound" onClick={() => speakEnglish(current.en)}>
               朗读
             </button>
           )}
-          {current?.kind === 'build' && (
+          {(current?.kind === 'build' || current?.kind === 'listen-build') && (
             <button type="button" className="eng-btn eng-btn-ghost" onClick={() => setSelected([])} disabled={feedback === 'ok'}>
               清空
             </button>
           )}
-          {current?.kind === 'build' && (
+          {(current?.kind === 'build' || current?.kind === 'listen-build') && (
             <button
               type="button"
               className="eng-btn eng-btn-primary"

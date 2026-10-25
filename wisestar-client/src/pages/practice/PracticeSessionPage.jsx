@@ -396,8 +396,8 @@ export default function PracticeSessionPage() {
 
   // ---- 答题区（一题一屏） ----
   return (
-    <div style={{ padding: 24, maxWidth: 860, margin: '0 auto' }}>
-      <Card>
+    <div style={{ padding: 24, maxWidth: 'var(--quiz-stage-w)', margin: '0 auto' }}>
+      <Card className="quiz-stage-card">
         {/* ---- 顶部工具条 ---- */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <Space>
@@ -426,6 +426,7 @@ export default function PracticeSessionPage() {
         />
 
         {/* ---- 当前题 ---- */}
+        <div className="quiz-stage-body">
         <QuestionCard
           question={q}
           index={current + 1}
@@ -436,6 +437,7 @@ export default function PracticeSessionPage() {
           confirmed={confirmed}
           onConfirm={handleConfirm}
         />
+        </div>
 
         {/* ---- 底部导航 ---- */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, borderTop: '1px solid #f0f0f0', paddingTop: 20 }}>

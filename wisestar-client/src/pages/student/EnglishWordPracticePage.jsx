@@ -3,15 +3,18 @@
  *
  * 功能:
  *   1. 以单元为单位出选择题，三种题型：看图选单词 / 看中文选单词 / 看单词选中文
+ *      读音只在学员点「听发音」或点单词本身时播放，不自动朗读
  *   2. 每题 4 个选项（1 正确 + 3 同单元干扰项），作答即判分并展示正确答案
  *   3. 答错单词在本轮末尾重出，直到答对（每词最多重出 3 次，防卡死）
  *   4. 作答回写单词熟练度与复习队列，结束记录会话（type=word-quiz）
  *
  * URL: /student/english/practice?unit=xxx
+ *      /student/english/practice?mode=review&ids=1,2,3（智能复习·单词复习，跨单元）
  * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片「单词练习」
  *
  * 数据流:
- *   GET  /api/english/word/word-book → 单元单词
+ *   GET  /api/english/word/word-book → 单元单词（单元练习）
+ *   GET  /api/english/student/review/words → 跨单元复习队列（mode=review）
  *   POST /api/english/word/record    → 记录单词作答
  *   POST /api/english/student/session → 记录会话
  */
@@ -20,10 +23,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishWordBook, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
-import { speakEnglish } from '../../utils/english';
+import { getEnglishWordBook, getEnglishWordReview, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
+import { prefetchEnglishAudio, speakEnglish, stopEnglishAudio, WORD_TTS_SPEED } from '../../utils/english';
 import { buildQuiz, buildQuestionForWord, availableTypes, WORD_PLACEHOLDER } from '../../utils/englishQuiz';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
+import MascotBubble from '../../components/student/MascotBubble';
 import './EnglishCenterPage.css';
 
 /** 同一单词本轮答错后最多重出的次数（防止一直答错无法结束） */
@@ -35,6 +39,8 @@ export default function EnglishWordPracticePage() {
   const unit = searchParams.get('unit') || '';
   // 复习页可只传待复习单词 id（逗号分隔），避免把整单元单词重做一遍
   const idsParam = searchParams.get('ids') || '';
+  // mode=review：智能复习的「单词复习」，跨单元取词（不分unit）
+  const reviewMode = searchParams.get('mode') === 'review';
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
@@ -56,20 +62,35 @@ export default function EnglishWordPracticePage() {
   const firstTryCorrect = useRef(0);
 
   const load = useCallback(() => {
-    if (!unit) {
+    if (!unit && !reviewMode) {
       setLoading(false);
       return;
     }
     setLoading(true);
     setLoadFailed(false);
-    getEnglishWordBook({ version, grade, term, unit, pageSize: -1 })
-      .then((res) => {
-        const list = res?.data?.list || [];
+    // 复习模式的取词（只含到期单词）与干扰项词库分开取：到期单词可能少于 4 个，
+    // 选项干扰项仍从该年级整册词库中挑，保证四选一能出题。
+    const source = reviewMode
+      ? Promise.all([
+        getEnglishWordReview({ version, grade }),
+        getEnglishWordBook({ version, grade, pageSize: -1 }),
+      ]).then(([reviewRes, bookRes]) => ({
+        targetList: reviewRes?.data || [],
+        poolList: bookRes?.data?.list || [],
+      }))
+      : getEnglishWordBook({ version, grade, term, unit, pageSize: -1, speed: WORD_TTS_SPEED }).then((res) => ({
+        targetList: res?.data?.list || [],
+        poolList: res?.data?.list || [],
+      }));
+    source
+      .then(({ targetList, poolList }) => {
+        const pool = poolList.length ? poolList : targetList;
         const ids = idsParam.split(',').map((id) => id.trim()).filter(Boolean);
-        const target = ids.length ? list.filter((w) => ids.includes(w.id)) : list;
-        setWords(list);
-        // 干扰项始终从整单元单词中取，保证 4 个选项可用
-        setQuestions(buildQuiz(target, list));
+        const filtered = ids.length ? targetList.filter((w) => ids.includes(w.id)) : targetList;
+        // 复习队列按复习时间实时变化，ids 可能已被新一批替换；过滤为空时退回本批，避免空页
+        const target = filtered.length ? filtered : targetList;
+        setWords(pool);
+        setQuestions(buildQuiz(target, pool));
         setIndex(0);
         setSelectedKey(null);
         setCorrectCount(0);
@@ -85,7 +106,7 @@ export default function EnglishWordPracticePage() {
         message.error('单词加载失败');
       })
       .finally(() => setLoading(false));
-  }, [version, grade, term, unit, idsParam]);
+  }, [version, grade, term, unit, idsParam, reviewMode]);
 
   useEffect(() => {
     load();
@@ -94,6 +115,22 @@ export default function EnglishWordPracticePage() {
   const current = questions[index];
   const answered = selectedKey != null;
   const finished = !loading && questions.length > 0 && index >= questions.length;
+
+  // 不做任何自动朗读：题目出现、作答揭晓、切题都保持安静，只有学员点
+  // 「听发音」或点单词本身才出声（自动播音会打断思考，也容易干扰同教室的其他同学）
+  // 这里只预取当前题的读音，让点击时立刻出声
+  useEffect(() => {
+    const spell = current?.promptType === 'word'
+      ? (current?.prompt || current?.word?.spell)
+      : (current?.word?.spell || current?.prompt);
+    if (!spell) return undefined;
+    prefetchEnglishAudio([spell], WORD_TTS_SPEED);
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, current?.wordId, current?.promptType]);
+
+  // 离开页面时停掉正在播的读音
+  useEffect(() => () => stopEnglishAudio(), []);
 
   // 完成一轮后记录会话
   useEffect(() => {
@@ -155,7 +192,7 @@ export default function EnglishWordPracticePage() {
     </button>
   );
 
-  if (!unit) {
+  if (!unit && !reviewMode) {
     return (
       <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
@@ -177,23 +214,16 @@ export default function EnglishWordPracticePage() {
     );
   }
 
-  if (words.length < 4) {
-    return (
-      <div className="eng-learn-wrap eng-learn-wide">
-        <div className="eng-empty">
-          <div className="eng-empty-title">本单元单词太少，暂时无法出题</div>
-          <div>至少需要 4 个单词才能生成选择题</div>
-          {backButton}
-        </div>
-      </div>
-    );
-  }
-
   if (questions.length === 0) {
     return (
       <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
-          <div className="eng-empty-title">暂无可练习的题目</div>
+          <div className="eng-empty-title">{reviewMode ? '今天没有需要复习的单词' : '暂无可练习的题目'}</div>
+          {reviewMode ? (
+            <div>到期单词已经复习完，按记忆周期安排，晚点再来吧</div>
+          ) : (
+            <div>至少需要 4 个单词才能生成选择题</div>
+          )}
           {backButton}
         </div>
       </div>
@@ -203,7 +233,7 @@ export default function EnglishWordPracticePage() {
   if (finished) {
     const firstTryTotal = firstAttempts.current.size;
     const firstTryRate = firstTryTotal ? Math.round((firstTryCorrect.current / firstTryTotal) * 100) : 0;
-    const canGoScenario = firstTryRate >= 80 && words.length >= 4;
+    const canGoScenario = !reviewMode && firstTryRate >= 80 && words.length >= 4;
     return (
       <div className="eng-learn-wrap eng-learn-wide">
         <div className="eng-empty">
@@ -224,7 +254,9 @@ export default function EnglishWordPracticePage() {
               <button
                 type="button"
                 className={canGoScenario ? 'eng-btn eng-btn-again' : 'eng-btn eng-btn-primary'}
-                onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(wrongIds.join(','))}`)}
+                onClick={() => navigate(reviewMode
+                  ? `/student/english/practice?mode=review&ids=${encodeURIComponent(wrongIds.join(','))}`
+                  : `/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(wrongIds.join(','))}`)}
               >
                 复习错词 · {wrongIds.length}
               </button>
@@ -246,6 +278,9 @@ export default function EnglishWordPracticePage() {
   }
 
   const progress = Math.round((index / questions.length) * 100);
+  // 判题结论改由白卡外的海豚气泡播报，卡片里不再重复显示
+  const selectedOption = current?.options.find((option) => option.key === selectedKey);
+  const verdict = !answered ? 'idle' : (selectedOption?.correct ? 'ok' : 'no');
 
   // 举手用题目视图：单词练习是选择题，按当前题拼出单选结构，便于老师看懂题意与选项
   const raiseId = current ? `word:${current.key}` : '';
@@ -256,7 +291,7 @@ export default function EnglishWordPracticePage() {
     id: raiseId,
     name: raiseTitle,
     questionType: 'Radio',
-    tag: ['单词', unit],
+    tag: ['单词', unit || '复习'],
     schema: {
       id: raiseId,
       title: raiseTitle,
@@ -283,7 +318,22 @@ export default function EnglishWordPracticePage() {
         <div className="eng-progress-text">{index + 1} / {questions.length}</div>
       </div>
 
-      <div className="eng-card eng-card-word">
+      <MascotBubble tone={verdict}>
+        {verdict === 'idle' && (reviewMode ? '这些是你该复习的词，选一个吧～' : '选一个答案，我在旁边看着你～')}
+        {verdict === 'ok' && '答对了，真棒！'}
+        {verdict === 'no' && `答错啦，正确答案：${current.answerText}`}
+      </MascotBubble>
+
+      <div className="eng-card eng-card-word eng-card-quiz quiz-stage">
+        {/* 听发音固定在卡片左上角，不随题干高度上下浮动 */}
+        <button
+          type="button"
+          className="eng-quiz-sound"
+          onClick={() => speakEnglish(current.word?.spell, current.audioUrl, WORD_TTS_SPEED)}
+          title="听单词发音"
+        >
+          🔊 听发音
+        </button>
         <div className="eng-quiz-badge">{current.typeLabel}</div>
 
         {current.promptType === 'image' && (
@@ -316,11 +366,11 @@ export default function EnglishWordPracticePage() {
               role="button"
               tabIndex={0}
               title="点击朗读"
-              onClick={() => speakEnglish(current.prompt, current.audioUrl)}
+              onClick={() => speakEnglish(current.prompt, current.audioUrl, WORD_TTS_SPEED)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  speakEnglish(current.prompt, current.audioUrl);
+                  speakEnglish(current.prompt, current.audioUrl, WORD_TTS_SPEED);
                 }
               }}
             >
@@ -330,14 +380,18 @@ export default function EnglishWordPracticePage() {
           </>
         )}
 
-        <button
-          type="button"
-          className="eng-quiz-sound"
-          onClick={() => speakEnglish(current.word?.spell, current.audioUrl)}
-          title="听单词发音"
-        >
-          🔊 听发音
-        </button>
+        {/* 答案回显位常驻：未作答时留一块空白，作答后就地填充，选项与判题区不会整体下移 */}
+        <div className={`eng-quiz-reinforce${answered && current.word?.meaning ? '' : ' is-blank'}`}>
+          {answered && current.word?.meaning && (
+            <>
+              <b className="eng-quiz-reinforce-word">{current.word.spell}</b>
+              {current.word.phonetic && (
+                <span className="eng-quiz-reinforce-phonetic">/{current.word.phonetic}/</span>
+              )}
+              <span className="eng-quiz-reinforce-zh">汉语：{current.word.meaning}</span>
+            </>
+          )}
+        </div>
 
         <div className="eng-quiz-options">
           {current.options.map((option) => {
@@ -357,25 +411,6 @@ export default function EnglishWordPracticePage() {
             );
           })}
         </div>
-
-        {answered && (
-          <div className={`eng-feedback ${current.options.find((o) => o.key === selectedKey)?.correct ? 'ok' : 'no'}`}>
-            {current.options.find((o) => o.key === selectedKey)?.correct
-              ? '答对了，真棒！'
-              : `答错啦，正确答案：${current.answerText}`}
-          </div>
-        )}
-
-        {/* 汉语提示：作答后回显该单词的拼写 / 音标 / 中文释义，帮助记忆巩固 */}
-        {answered && current.word?.meaning && (
-          <div className="eng-quiz-reinforce">
-            <b className="eng-quiz-reinforce-word">{current.word.spell}</b>
-            {current.word.phonetic && (
-              <span className="eng-quiz-reinforce-phonetic">/{current.word.phonetic}/</span>
-            )}
-            <span className="eng-quiz-reinforce-zh">汉语：{current.word.meaning}</span>
-          </div>
-        )}
 
         <div className="eng-actions">
           <button

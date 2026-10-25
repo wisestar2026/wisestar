@@ -1,0 +1,68 @@
+/**
+ * 低配/省电模式样式
+ *
+ * 触发方式（见 src/utils/perfLight.js）：
+ *   - 设备逻辑核心数 <= 4 或内存 <= 4GB，自动开启
+ *   - 地址栏加 `?perf=high` 可强制关闭，`?perf=light` 可强制开启
+ *   - localStorage `wisestar:perf` = 'high' | 'light' 长期记住选择
+ *
+ * 关掉的是两类「老机器杀手」：
+ *   1. backdrop-filter（毛玻璃）—— Intel HD 3000 这类核显上由 CPU 软件栅格化，
+ *      每次滚动/重绘都要对整块区域重新模糊，页面会明显掉帧
+ *   2. 无限循环的装饰动画（海浪、漂浮飞船、呼吸光晕）—— 持续占用主线程与合成器
+ * 一次性的入场动画（0.2~0.35s）保留，不影响观感。
+ */
+
+html.low-perf *,
+html.low-perf *::before,
+html.low-perf *::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* 毛玻璃取消后把半透明卡片补成接近不透明，保证文字对比度 */
+html.low-perf .slh-root,
+html.low-perf .slh-panel,
+html.low-perf .slh-side,
+html.low-perf .sll-card,
+html.low-perf .eng-card,
+html.low-perf .eng-hub-card,
+html.low-perf .eng-unit-card {
+  background-color: rgba(255, 255, 255, 0.96);
+}
+
+/* 停掉无限循环的装饰动画（保留记录中的脉冲提示） */
+html.low-perf .sll-wave-back,
+html.low-perf .sll-wave-front,
+html.low-perf .slh-ship,
+html.low-perf .slh-start,
+html.low-perf .sl-bubble,
+html.low-perf .ocf-node.ocf-claimable {
+  animation: none !important;
+}
+
+/* 首页那层虚化背景本身只是装饰，去掉它 70px 的大阴影 */
+html.low-perf .slh-root::before {
+  box-shadow: none !important;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+/* 阴影减负：老核显上大面积多层阴影同样走软件绘制 */
+html.low-perf .slh-panel,
+html.low-perf .sll-card,
+html.low-perf .eng-card {
+  box-shadow: 0 4px 12px rgba(64, 140, 190, 0.16) !important;
+}
+
+/* 系统级「减少动态效果」偏好同样生效 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}

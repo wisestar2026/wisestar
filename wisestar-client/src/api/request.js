@@ -17,6 +17,8 @@
  *     QuestionListPage → api/template.js → request.js → GET /api/template/list
  *   - 注意: 文件上传类接口（api/upload.js、api/repo.js 的 importTemplate）不走本实例，
  *     而是使用原生 axios + multipart/form-data，因为拦截器只解包 JSON。
+ *   - 可降级资源（如英语朗读音频）传 { meta: { silent: true } }：失败时不弹全局提示，
+ *     由调用方自行回退（浏览器语音合成）。
  *
  * 核心数据流:
  *   页面调用 API 函数 → request.get/post(...) → 后端返回 { code, data } → 拦截器解包
@@ -46,6 +48,9 @@ request.interceptors.response.use(
   // ---- 请求成功（HTTP 2xx）----
   (response) => {
     // 后端标准响应格式 { code: 200, data: {...}, message: "..." }
+    if (response.config?.meta?.silent && response.data?.code !== undefined && response.data.code !== 200) {
+      return Promise.reject(new Error(response.data.message || '请求失败'));
+    }
     if (response.data && response.data.code !== undefined) {
       if (response.data.code === 200) {
         // 成功：直接返回 response.data（调用方通过 .data 获取业务数据）
@@ -68,6 +73,11 @@ request.interceptors.response.use(
   // ---- 请求失败（HTTP 非 2xx 或网络错误）----
   (error) => {
     const status = error.response?.status;
+
+    // 可降级资源：静默失败，交给调用方回退，不打扰用户
+    if (error.config?.meta?.silent) {
+      return Promise.reject(error);
+    }
 
     // 根据 HTTP 状态码分类处理
     if (status === 401) {

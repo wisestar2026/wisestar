@@ -141,46 +141,50 @@
   padding: 8px 14px;
 }
 
-/* 题目卡片（参考 image-2：白底细边框 + 顶部题型标题 + 分隔线） */
+/* 题目卡片（参考 image-2：白底细边框 + 顶部题型标题 + 分隔线，主卡占满左侧栏） */
 .knowledge-question-card {
   background: #fff;
   border: 1px solid #eceff1;
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 18px;
+  padding: 28px 32px 24px;
+  box-shadow: 0 6px 22px rgba(64, 140, 190, 0.07);
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 .knowledge-q-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-bottom: 14px;
-  margin-bottom: 18px;
+  padding-bottom: 16px;
+  margin-bottom: 22px;
   border-bottom: 1px solid #eceff1;
 }
-.knowledge-q-type { font-size: 16px; font-weight: 700; color: #263238; }
-.knowledge-q-progress { margin-left: auto; font-size: 13px; color: #90a4ae; }
+.knowledge-q-type { font-size: 17px; font-weight: 800; color: #263238; }
+.knowledge-q-progress { margin-left: auto; font-size: 14px; font-weight: 700; color: #90a4ae; }
 .knowledge-q-text {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #1d3a5f;
-  margin-bottom: 16px;
-  line-height: 1.7;
+  margin-bottom: 20px;
+  line-height: 1.85;
 }
 
-/* 选项：整行卡片 + 左侧字母圆标（参考 image-2） */
+/* 选项：整行卡片 + 左侧字母圆标（参考 image-2，58px 行高 + 16px 文本） */
 .knowledge-options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .knowledge-option {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: #fff;
   border: 1px solid #e3e7ea;
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: 12px;
+  padding: 15px 18px;
+  min-height: 58px;
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;
@@ -205,12 +209,12 @@
   background: #fff5f5;
 }
 .knowledge-opt-key {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: #f1f4f6;
   color: #607d8b;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -230,12 +234,19 @@
   background: linear-gradient(135deg, #ef9a9a, #ef5350);
   color: #fff;
 }
-.knowledge-opt-text { flex: 1; font-size: 15px; color: #37474f; }
+.knowledge-opt-text { flex: 1; font-size: 16px; line-height: 1.6; color: #37474f; }
 .knowledge-opt-mark { color: #4caf50; font-size: 16px; font-weight: 900; }
 .knowledge-opt-mark.wrong { color: #ef5350; }
 
-/* 提交按钮（右下角常驻） */
-.knowledge-q-submit { display: flex; justify-content: flex-end; margin-top: 18px; }
+/* 提交按钮（右下角常驻，加大命中区域） */
+.knowledge-q-submit { display: flex; justify-content: flex-end; margin-top: 22px; }
+.knowledge-q-submit .ant-btn {
+  height: 46px;
+  padding: 0 34px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 800;
+}
 
 /* 答案与解析：先答案，再解析，字号与题目一致（16px） */
 .knowledge-q-analysis { margin-top: 16px; }
@@ -471,4 +482,167 @@
 
 @media (max-width: 760px) {
   .trial-summary { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+ * 逐题作答台（参考 image-2：左侧宽题卡 + 右侧答题卡栏）
+ * 目标：主卡约 950~1000px，右栏 240px 常驻，题干/选项/导航字号加大一档，
+ *       整体容器在 quizMode 下放宽到 1340px（见 KnowledgePage.jsx）
+ * ============================================================ */
+.qz-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 22px;
+  align-items: start;
+}
+.qz-main { min-width: 0; }
+
+/* 右侧答题卡 */
+.qz-rail {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #eceff1;
+  border-radius: 18px;
+  padding: 20px 18px;
+  box-shadow: 0 6px 22px rgba(64, 140, 190, 0.07);
+}
+.qz-rail-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1d3a5f;
+  margin-bottom: 14px;
+}
+.qz-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.qz-rail-num {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #f1f4f6;
+  color: #607d8b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.qz-rail-num:hover { background: #e3f2fd; color: #1565c0; }
+.qz-rail-num.is-done { background: #e3f6e6; color: #2e7d32; }
+.qz-rail-num.is-active {
+  background: linear-gradient(135deg, #64b5f6, #1976d2);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+.qz-rail-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f4f7;
+  font-size: 12px;
+  color: #78909c;
+}
+.qz-rail-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+.qz-rail-legend-item i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  background: #f1f4f6;
+  border: 1px solid #e0e6ea;
+}
+.qz-rail-legend-item i.is-active { background: #1976d2; border-color: #1976d2; }
+.qz-rail-legend-item i.is-done { background: #c8e6c9; border-color: #a5d6a7; }
+
+/* 底部导航：两侧大按钮 + 中间进度文案 */
+.qz-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #eceff1;
+}
+.qz-nav-btn {
+  height: 44px;
+  padding: 0 26px;
+  border-radius: 999px;
+  border: 1.5px solid #cfe3f5;
+  background: #f7fbff;
+  color: #2b6ca3;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.qz-nav-btn:hover:not(:disabled) { background: #e3f2fd; border-color: #64b5f6; }
+.qz-nav-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.qz-nav-btn.is-primary {
+  border-color: transparent;
+  background: linear-gradient(135deg, #64b5f6, #2196f3);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.3);
+}
+.qz-nav-meta { font-size: 13px; font-weight: 700; color: #90a4ae; }
+
+/* ============================================================
+ * 做题界面字号整体 +50%（覆盖前文尺度；改这里即可全页同步）
+ * ============================================================ */
+.knowledge-question-card { padding: 38px 44px 32px; min-height: 560px; }
+.knowledge-q-head { padding-bottom: 20px; margin-bottom: 28px; }
+.knowledge-q-type { font-size: 25px; }
+.knowledge-q-progress { font-size: 20px; }
+.knowledge-q-text { font-size: 26px; margin-bottom: 26px; }
+.knowledge-options { gap: 16px; }
+.knowledge-option { gap: 20px; padding: 20px 24px; min-height: 78px; border-radius: 16px; }
+.knowledge-opt-key { width: 44px; height: 44px; font-size: 21px; }
+.knowledge-opt-text { font-size: 24px; }
+.knowledge-opt-mark { font-size: 24px; }
+.knowledge-q-analysis { margin-top: 22px; }
+.knowledge-q-verdict { font-size: 24px; margin-bottom: 10px; }
+.knowledge-q-answer { font-size: 24px; }
+.knowledge-q-analysis-body { font-size: 22px; padding: 16px 18px; }
+.knowledge-q-kp {
+  margin-top: 12px;
+  padding: 16px 18px;
+  background: #f2f9ff;
+  border-left: 4px solid #64b5f6;
+  border-radius: 8px;
+  font-size: 22px;
+  color: #1d3a5f;
+  line-height: 1.7;
+}
+.knowledge-q-kp b { color: #1565c0; }
+.knowledge-q-kp ul { margin: 8px 0 0; padding-left: 26px; }
+.knowledge-q-kp li { margin-bottom: 4px; }
+.knowledge-q-submit .ant-btn { height: 58px; padding: 0 44px; font-size: 24px; }
+.knowledge-submit-btn { font-size: 24px; padding: 14px 52px; }
+.knowledge-retry-btn { font-size: 21px; padding: 12px 32px; }
+.knowledge-result-summary { font-size: 22px; }
+.qz-shell { grid-template-columns: minmax(0, 1fr) 280px; gap: 26px; }
+.qz-rail { padding: 22px 20px; }
+.qz-rail-title { font-size: 22px; margin-bottom: 16px; }
+.qz-rail-grid { gap: 10px; }
+.qz-rail-num { height: 52px; font-size: 21px; border-radius: 11px; }
+.qz-rail-legend { font-size: 18px; gap: 14px; }
+.qz-rail-legend-item i { width: 16px; height: 16px; }
+.qz-nav { gap: 18px; padding-top: 24px; }
+.qz-nav-btn { height: 58px; padding: 0 34px; font-size: 22px; }
+.qz-nav-meta { font-size: 19px; }
+
+/* 窄屏：右栏落到题卡下方，题号单行横排 */
+@media (max-width: 1180px) {
+  .qz-shell { grid-template-columns: minmax(0, 1fr); }
+  .qz-rail { position: static; order: -1; max-height: none; overflow: visible; }
+  .qz-rail-grid { grid-template-columns: repeat(10, 1fr); }
+  .qz-rail-legend { margin-top: 12px; padding-top: 12px; }
+  .knowledge-question-card { padding: 24px 20px 20px; }
 }

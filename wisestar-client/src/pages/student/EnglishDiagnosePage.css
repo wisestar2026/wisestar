@@ -7,7 +7,7 @@
 
 .eng-diag-wrap {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 8px 4px 40px;
 }
@@ -29,22 +29,34 @@
   border-radius: 999px;
   background: rgba(47, 138, 224, 0.12);
   color: #1f6db3;
-  font-size: 13px;
+  font-size: 19.5px;
   letter-spacing: 2px;
 }
 
 .eng-diag-intro-title {
   margin: 18px 0 12px;
-  font-size: 28px;
+  font-size: 42px;
   color: #12405f;
 }
 
 .eng-diag-intro-desc {
   margin: 0 auto;
   max-width: 600px;
-  font-size: 15px;
+  font-size: 22.5px;
   line-height: 1.9;
   color: #4c6c83;
+}
+
+.eng-diag-intro-scope {
+  margin: 12px auto 0;
+  max-width: 600px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  display: inline-block;
+  background: #eaf4ff;
+  color: #2f6fa0;
+  font-size: 19.5px;
+  font-weight: 600;
 }
 
 .eng-diag-intro-grid {
@@ -65,13 +77,13 @@
 }
 
 .eng-diag-intro-num {
-  font-size: 30px;
+  font-size: 45px;
   font-weight: 800;
   color: #2f8ae0;
 }
 
 .eng-diag-intro-label {
-  font-size: 13px;
+  font-size: 19.5px;
   color: #7d94a6;
 }
 
@@ -81,7 +93,7 @@
   gap: 18px;
   flex-wrap: wrap;
   margin-bottom: 26px;
-  font-size: 13px;
+  font-size: 19.5px;
   color: #5d7c92;
 }
 
@@ -97,7 +109,7 @@
   min-width: 220px;
   height: 52px;
   border-radius: 999px;
-  font-size: 17px;
+  font-size: 25.5px;
   font-weight: 700;
 }
 
@@ -111,13 +123,13 @@
 }
 
 .eng-diag-answer-title {
-  font-size: 18px;
+  font-size: 27px;
   font-weight: 700;
   color: #12405f;
 }
 
 .eng-diag-answer-meta {
-  font-size: 13px;
+  font-size: 19.5px;
   color: #7d94a6;
 }
 
@@ -135,7 +147,7 @@
   border: 1px solid #dbeaf6;
   background: #fff;
   color: #5d7c92;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -159,7 +171,7 @@
 }
 
 .eng-diag-level-tip {
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 700;
   letter-spacing: 1px;
   margin-bottom: 10px;
@@ -214,7 +226,7 @@
 }
 
 .eng-diag-brand {
-  font-size: 13px;
+  font-size: 19.5px;
   letter-spacing: 2px;
   color: #2f8ae0;
   font-weight: 700;
@@ -222,12 +234,12 @@
 
 .eng-diag-paper-title {
   margin: 8px 0 0;
-  font-size: 24px;
+  font-size: 36px;
   color: #12405f;
 }
 
 .eng-diag-paper-meta {
-  font-size: 12.5px;
+  font-size: 19px;
   line-height: 1.9;
   color: #5d7c92;
   text-align: right;
@@ -265,7 +277,7 @@
 }
 
 .eng-diag-donut-score {
-  font-size: 34px;
+  font-size: 51px;
   font-weight: 800;
   line-height: 1;
   color: #12405f;
@@ -273,7 +285,7 @@
 
 .eng-diag-donut-label {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 18px;
   color: #7d94a6;
 }
 
@@ -283,14 +295,14 @@
 }
 
 .eng-diag-overview-title {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 700;
   color: #12405f;
   margin-bottom: 6px;
 }
 
 .eng-diag-overview-line {
-  font-size: 13.5px;
+  font-size: 20px;
   color: #4c6c83;
   line-height: 1.8;
 }
@@ -305,7 +317,7 @@
 .eng-diag-chip {
   padding: 5px 14px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 600;
   color: var(--chip-color);
   background: color-mix(in srgb, var(--chip-color) 12%, #fff);
@@ -326,7 +338,7 @@
 
 .eng-diag-level-name {
   width: 26px;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
 }
 
@@ -341,12 +353,12 @@
 
 .eng-diag-section-title {
   margin: 0 0 14px;
-  font-size: 16px;
+  font-size: 24px;
   color: #12405f;
 }
 
 .eng-diag-sub-title {
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 700;
   color: #5d7c92;
   margin-bottom: 10px;
@@ -382,7 +394,7 @@
 .eng-diag-bar-name {
   width: 76px;
   flex-shrink: 0;
-  font-size: 12.5px;
+  font-size: 19px;
   color: #4c6c83;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -406,7 +418,7 @@
 .eng-diag-bar-value {
   width: 28px;
   text-align: right;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
   color: #2f8ae0;
 }
@@ -421,7 +433,7 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 12.5px;
+  font-size: 19px;
   color: #4c6c83;
   padding: 6px 10px;
   border-radius: 10px;
@@ -439,14 +451,14 @@
   border-radius: 12px;
   background: #f5faff;
   color: #8aa2b5;
-  font-size: 12.5px;
+  font-size: 19px;
   text-align: center;
 }
 
 .eng-diag-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12.5px;
+  font-size: 19px;
 }
 
 .eng-diag-table th,
@@ -466,7 +478,7 @@
   margin: 0;
   padding-left: 20px;
   color: #3c5d74;
-  font-size: 13.5px;
+  font-size: 20px;
   line-height: 1.9;
 }
 
@@ -500,7 +512,7 @@
   border-radius: 8px;
   background: #2f8ae0;
   color: #fff;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -512,17 +524,17 @@
   padding: 2px 9px;
   border-radius: 999px;
   color: #fff;
-  font-size: 11px;
+  font-size: 16.5px;
   font-weight: 600;
 }
 
 .eng-diag-detail-kp {
-  font-size: 12.5px;
+  font-size: 19px;
   color: #5d7c92;
 }
 
 .eng-diag-detail-body {
-  font-size: 12.5px;
+  font-size: 19px;
   color: #3c5d74;
   line-height: 1.8;
 }
@@ -549,7 +561,7 @@
   margin-top: 26px;
   padding-top: 16px;
   border-top: 1px solid #e6f1fa;
-  font-size: 12.5px;
+  font-size: 19px;
   color: #5d7c92;
 }
 
@@ -593,7 +605,7 @@
   }
 
   .eng-diag-paper-title {
-    font-size: 20px;
+    font-size: 30px;
   }
 
   .eng-diag-donut {
@@ -607,7 +619,7 @@
   }
 
   .eng-diag-donut-score {
-    font-size: 28px;
+    font-size: 42px;
   }
 }
 
@@ -618,7 +630,7 @@
   }
 
   .eng-diag-intro-title {
-    font-size: 22px;
+    font-size: 33px;
   }
 
   .eng-diag-intro-grid {
@@ -661,12 +673,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 17px;
+  font-size: 25.5px;
   font-weight: 800;
   color: #12405f;
   margin-bottom: 14px;
 }
-.eng-diag-history-count { font-size: 13px; font-weight: 600; color: #8aa2b5; }
+.eng-diag-history-count { font-size: 19.5px; font-weight: 600; color: #8aa2b5; }
 .eng-diag-history-list { display: flex; flex-direction: column; gap: 10px; }
 .eng-diag-history-item {
   display: flex;
@@ -679,21 +691,21 @@
 }
 .eng-diag-history-score {
   min-width: 76px;
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 900;
   line-height: 1;
 }
-.eng-diag-history-score small { font-size: 12px; font-weight: 700; margin-left: 2px; }
+.eng-diag-history-score small { font-size: 18px; font-weight: 700; margin-left: 2px; }
 .eng-diag-history-main { flex: 1; min-width: 0; }
-.eng-diag-history-date { font-size: 15px; font-weight: 800; color: #1b5478; }
-.eng-diag-history-meta { font-size: 13px; color: #7d94a6; margin-top: 4px; }
+.eng-diag-history-date { font-size: 22.5px; font-weight: 800; color: #1b5478; }
+.eng-diag-history-meta { font-size: 19.5px; color: #7d94a6; margin-top: 4px; }
 .eng-diag-history-weak { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; max-width: 45%; }
 .eng-diag-history-weak span {
   padding: 3px 10px;
   border-radius: 999px;
   background: #fff0e8;
   color: #c05a34;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 700;
 }
 @media (max-width: 640px) {

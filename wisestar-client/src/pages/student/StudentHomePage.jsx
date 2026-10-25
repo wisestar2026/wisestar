@@ -124,7 +124,9 @@ export default function StudentHomePage() {
     }
     setAssessOpen(false);
     if (mode === 'diagnose') {
-      navigate('/student/diagnose');
+      // 诊断卷按所选单元出题：首页把单元名带进诊断页，避免回落到整册全部单元
+      const names = assessUnits.filter((u) => assessUnitIds.includes(u.id)).map((u) => u.name);
+      navigate(`/student/diagnose?units=${encodeURIComponent(names.join(','))}`);
       return;
     }
     navigate(`/student/detect?unitIds=${encodeURIComponent(assessUnitIds.join(','))}`);

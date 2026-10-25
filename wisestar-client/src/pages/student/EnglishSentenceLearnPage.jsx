@@ -25,6 +25,7 @@ import { speakEnglish, tokenizeSentence, normalizeAnswer, shuffle } from '../../
 import EnglishUnitAside from './EnglishUnitAside';
 import EnglishSentenceExercise from './EnglishSentenceExercise';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
+import MascotBubble from '../../components/student/MascotBubble';
 import './EnglishCenterPage.css';
 
 /** 后端以 familiarity>=1 视为「已学」，完成度按此口径统计。 */
@@ -355,7 +356,18 @@ export default function EnglishSentenceLearnPage() {
         <div className="eng-progress-text">{index + 1} / {learnList.length}</div>
       </div>
 
-      <div className="eng-card">
+      <MascotBubble tone={feedback === 'ok' ? 'ok' : feedback === 'no' ? 'no' : 'idle'}>
+        {!feedback && '按顺序点出单词，连成一句完整的话～'}
+        {feedback === 'ok' && '太棒了，完全正确！'}
+        {feedback === 'no' && (
+          <>
+            <div>再想想～</div>
+            {wrongTries >= 3 && current && <div>正确答案：{current.en}</div>}
+          </>
+        )}
+      </MascotBubble>
+
+      <div className="eng-card quiz-stage">
         <div className="eng-sentence-hint">
           <span className={`eng-difficulty-tag level-${current?.difficulty || 1}`}>
             {DIFFICULTY_LABELS[current?.difficulty || 1] || '基础'}
@@ -393,13 +405,6 @@ export default function EnglishSentenceLearnPage() {
             );
           })}
         </div>
-
-        {feedback === 'ok' && <div className="eng-feedback ok">太棒了，完全正确！</div>}
-        {feedback === 'no' && (
-          <div className="eng-feedback no">
-            再想想～{wrongTries >= 3 && current && <div>正确答案：{current.en}</div>}
-          </div>
-        )}
 
         <div className="eng-actions">
           <button type="button" className="eng-btn eng-btn-sound" onClick={() => speakEnglish(current?.en, current?.audioUrl)}>

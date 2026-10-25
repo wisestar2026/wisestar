@@ -47,6 +47,9 @@ function toCardQuestion(source, fallbackType) {
     id: source.id,
     name: source.name,
     questionType: source.questionType || fallbackType,
+    knowledgePointId: source.knowledgePointId,
+    knowledgePointName: source.knowledgePointName,
+    knowledgePointPoints: source.knowledgePointPoints,
     template: source.schema || {},
   };
 }

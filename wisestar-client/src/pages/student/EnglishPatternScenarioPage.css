@@ -9,7 +9,7 @@
   border-left: 3px solid #4bb7e8;
   background: #f3fafd;
   border-radius: 0 10px 10px 0;
-  font-size: 13px;
+  font-size: 19.5px;
   color: #42708a;
   line-height: 1.6;
 }
@@ -20,7 +20,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 700;
   color: #0f6f96;
   line-height: 1.6;
@@ -31,7 +31,7 @@
   color: #fff;
   border-radius: 6px;
   padding: 1px 8px;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 800;
 }
 
@@ -53,7 +53,7 @@
   border-radius: 12px;
   background: #fff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 21px;
   color: #1c3d4d;
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
@@ -65,7 +65,7 @@
   border-radius: 50%;
   background: #e6f6fd;
   color: #1479a6;
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -81,7 +81,7 @@
 
 .ps-explain {
   margin-top: 8px;
-  font-size: 12.5px;
+  font-size: 19px;
   color: #5b7f92;
   line-height: 1.6;
   background: #f7fafc;
@@ -91,4 +91,4 @@
 
 /* 重点句式：交卷后再展示，避免提前泄露答案 */
 .ps-patterns { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(65, 103, 140, 0.25); }
-.ps-patterns-label { width: 100%; font-size: 12px; font-weight: 800; color: #5b7fa3; }
+.ps-patterns-label { width: 100%; font-size: 18px; font-weight: 800; color: #5b7fa3; }

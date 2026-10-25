@@ -110,9 +110,9 @@ export default function QuestionCard({
       }
     }
     return {
-      border, background: bg, borderRadius: 8, padding: '14px 18px',
-      cursor: locked ? 'default' : 'pointer', marginBottom: 12,
-      display: 'flex', alignItems: 'center', gap: 10, fontSize: 17,
+      border, background: bg, borderRadius: 16, padding: '22px 26px',
+      cursor: locked ? 'default' : 'pointer', marginBottom: 18, minHeight: 80,
+      display: 'flex', alignItems: 'center', gap: 16, fontSize: 24,
       transition: 'all .2s',
     };
   };
@@ -297,9 +297,9 @@ export default function QuestionCard({
   );
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       {/* ---- 题号 + 题型 + 难度 ---- */}
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 18 }}>
         <Tag color="blue">{TYPE_LABELS[qtype] || qtype}</Tag>
         {(() => {
           const d = DIFFICULTY_LABELS[question?.difficulty || attr.difficulty];
@@ -309,7 +309,7 @@ export default function QuestionCard({
       </Space>
 
       {/* ---- 题干 ---- */}
-      <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 12 : 20, lineHeight: 1.6, fontSize: 20, fontWeight: isWordCloze ? 400 : undefined }}>
+      <Title level={4} style={{ marginTop: 0, marginBottom: attr.examImages?.length ? 18 : 28, lineHeight: 1.75, fontSize: 30, fontWeight: isWordCloze ? 400 : undefined }}>
         <span style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
           <span style={{ flex: 'none' }}>{index}.</span>
           <span style={{ flex: 1, minWidth: 0 }}>
@@ -434,11 +434,11 @@ export default function QuestionCard({
             );
           })}
           {keyboardUsable && qtype === 'MultipleBlank' && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: 18 }}>
               符号 / 字母难输入？点右下角「虚拟键盘」
             </Text>
           )}
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <Text type="secondary" style={{ fontSize: 18 }}>
             按题目空位顺序作答，全部空位填写后提交判分
           </Text>
         </div>
@@ -503,7 +503,7 @@ export default function QuestionCard({
             />
           )}
           {keyboardUsable && (
-            <Text type="secondary" style={{ fontSize: 12 }}>
+            <Text type="secondary" style={{ fontSize: 18 }}>
               符号 / 字母难输入？点右下角「虚拟键盘」
             </Text>
           )}
@@ -518,7 +518,7 @@ export default function QuestionCard({
           block
           disabled={!hasValue}
           onClick={onConfirm}
-          style={{ marginTop: 20, height: 44 }}
+          style={{ marginTop: 26, height: 56, fontSize: 22 }}
         >
           确认提交
         </Button>
@@ -533,26 +533,26 @@ export default function QuestionCard({
         return (
           <div
             style={{
-              marginTop: 20, padding: '14px 18px', borderRadius: 8,
+              marginTop: 26, padding: '18px 22px', borderRadius: 12,
               background: result.correct === 1 ? '#f6ffed' : partial ? '#fffbe6' : result.correct === 0 ? '#fff2f0' : '#fafafa',
               border: `1px solid ${result.correct === 1 ? '#b7eb8f' : partial ? '#ffe58f' : result.correct === 0 ? '#ffa39e' : '#e8e8e8'}`,
             }}
           >
             <Space style={{ marginBottom: result.correctAnswers.length ? 8 : 0 }}>
               {result.correct === 1 ? (
-                <Text strong style={{ color: '#52c41a', fontSize: 15 }}>
+                <Text strong style={{ color: '#52c41a', fontSize: 22 }}>
                   <CheckCircleOutlined /> 回答正确
                 </Text>
               ) : partial ? (
-                <Text strong style={{ color: '#fa8c16', fontSize: 15 }}>
+                <Text strong style={{ color: '#fa8c16', fontSize: 22 }}>
                   部分正确：答对 {hitCount}/{result.blankTotal} 空，本题得分 {result.earnedScore ?? 0} 分
                 </Text>
               ) : result.correct === 0 ? (
-                <Text strong style={{ color: '#ff4d4f', fontSize: 15 }}>
+                <Text strong style={{ color: '#ff4d4f', fontSize: 22 }}>
                   <CloseCircleOutlined /> 回答错误
                 </Text>
               ) : (
-                <Text strong style={{ color: '#faad14', fontSize: 15 }}>未判分（无标准答案）</Text>
+                <Text strong style={{ color: '#faad14', fontSize: 22 }}>未判分（无标准答案）</Text>
               )}
             </Space>
             {(partial || result.correct === 0) && result.correctAnswers.length > 0 && (
@@ -564,9 +564,22 @@ export default function QuestionCard({
               </div>
             )}
             {attr.examAnalysis && (
-              <Paragraph style={{ margin: 0, color: '#666' }}>
+              <Paragraph style={{ margin: 0, color: '#666', fontSize: 22 }}>
                 <Text strong>解析：</Text><RichContent text={attr.examAnalysis} />
               </Paragraph>
+            )}
+            {question?.knowledgePointPoints?.length > 0 && (
+              <div style={{
+                marginTop: 14, padding: '16px 18px', background: '#f2f9ff',
+                borderLeft: '3px solid #64b5f6', borderRadius: 8,
+              }}>
+                <Text strong>本题知识点：{question.knowledgePointName}</Text>
+                <ul style={{ margin: '6px 0 0', paddingLeft: 20, color: '#54647a' }}>
+                  {question.knowledgePointPoints.map((p, i) => (
+                    <li key={i}><RichContent text={p} /></li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         );

@@ -398,7 +398,7 @@ export default function EnglishWordLearnPage() {
         <div className="eng-progress-text">{mastered} / {total}</div>
       </div>
 
-      <div className="eng-card eng-card-word">
+      <div className="eng-card eng-card-word quiz-stage">
         {currentWeak && <div className="eng-weak-tag">需加强</div>}
         {current?.level && (
           <div className={`eng-level-tag ${current.level === '四会' ? 'eng-level-four' : 'eng-level-three'}`}>

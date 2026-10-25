@@ -1,0 +1,35 @@
+/* ============================================================
+ * 答题区统一容器
+ * 目的：所有答题/练习页中间的白色主卡宽度一致、常规内容下高度一致；
+ *      内容变多时卡片跟着长高，交给浏览器整体滚动，卡内不做滚动条。
+ * ============================================================ */
+:root {
+  --quiz-stage-w: 1240px;
+  --quiz-stage-min: clamp(520px, calc(100vh - 260px), 720px);
+}
+
+/* 双类名提高优先级，避免被各页后加载的同名单类规则覆盖 */
+.quiz-stage.quiz-stage {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--quiz-stage-w);
+  min-height: var(--quiz-stage-min);
+  height: auto;
+  margin-left: auto;
+  margin-right: auto;
+  overflow: visible;
+}
+
+/* antd Card 版答题页（专项练习 / 套卷）：卡随内容长高，整页滚动 */
+.quiz-stage-card.quiz-stage-card {
+  min-height: var(--quiz-stage-min);
+  display: flex;
+  flex-direction: column;
+}
+.quiz-stage-card.quiz-stage-card > .ant-card-body {
+  display: flex;
+  flex-direction: column;
+}
+.quiz-stage-body {
+  flex: 1 0 auto;
+}

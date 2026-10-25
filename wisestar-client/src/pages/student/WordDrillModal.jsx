@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal, Progress } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import { recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
-import { speakEnglish } from '../../utils/english';
+import { prefetchEnglishAudio, speakEnglish, stopEnglishAudio, WORD_TTS_SPEED } from '../../utils/english';
 import { buildQuestionForWord, QUIZ_TYPE, WORD_PLACEHOLDER } from '../../utils/englishQuiz';
 
 /** 单个单词在本轮巩固中最多出现的次数 */
@@ -61,12 +61,16 @@ export default function WordDrillModal({ open, words, onFinish }) {
     setVerdict(null);
     startAt.current = Date.now();
     sessionRecorded.current = false;
+    // 预取本轮所有单词的读音：切词时直接命中缓存，声音与单词同时出现
+    prefetchEnglishAudio((words || []).map((w) => w.spell), WORD_TTS_SPEED);
   }, [open, words]);
 
   useEffect(() => () => {
     if (timer.current) {
       clearTimeout(timer.current);
     }
+    // 关闭弹窗时停掉正在播的读音
+    stopEnglishAudio();
   }, []);
 
   const current = queue[0];
@@ -83,6 +87,16 @@ export default function WordDrillModal({ open, words, onFinish }) {
     [current, total, words],
   );
   const useJudge = Boolean(current) && !question;
+
+  // 换词后自动朗读：巩固环节要求「听到声音再判断」，默认替学员播一次
+  useEffect(() => {
+    if (!open || !current?.word?.spell) {
+      return undefined;
+    }
+    speakEnglish(current.word.spell, current.word.audioUrl, WORD_TTS_SPEED);
+    return () => stopEnglishAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, current?.word?.id, current?.seq]);
 
   // 全部巩固完成后记录一次学习会话（每个自然天至多一次）
   useEffect(() => {
@@ -136,7 +150,7 @@ export default function WordDrillModal({ open, words, onFinish }) {
         role="button"
         tabIndex={0}
         title="点击朗读"
-        onClick={() => speakEnglish(current.word.spell, current.word.audioUrl)}
+        onClick={() => speakEnglish(current.word.spell, current.word.audioUrl, WORD_TTS_SPEED)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -190,11 +204,11 @@ export default function WordDrillModal({ open, words, onFinish }) {
             role="button"
             tabIndex={0}
             title="点击朗读"
-            onClick={() => speakEnglish(question.prompt, question.audioUrl)}
+            onClick={() => speakEnglish(question.prompt, question.audioUrl, WORD_TTS_SPEED)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                speakEnglish(question.prompt, question.audioUrl);
+                speakEnglish(question.prompt, question.audioUrl, WORD_TTS_SPEED);
               }
             }}
           >

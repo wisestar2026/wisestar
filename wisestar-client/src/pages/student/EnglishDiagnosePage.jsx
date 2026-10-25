@@ -17,7 +17,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Progress, Spin, message } from 'antd';
 import { LeftOutlined, PrinterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
@@ -127,6 +127,12 @@ function formatDuration(ms) {
 
 export default function EnglishDiagnosePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // 首页「学习检测」选择单元后跳转，?units=Welcome,Unit 1 限定诊断范围；为空时按当前册别全部单元出题
+  const scopeUnits = useMemo(() => (searchParams.get('units') || '')
+    .split(',')
+    .map((u) => u.trim())
+    .filter(Boolean), [searchParams]);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
   const version = useStudentStore((s) => s.version);
@@ -175,7 +181,12 @@ export default function EnglishDiagnosePage() {
   const handleStart = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getEnglishDiagnosePaper({ version, grade, term });
+      const res = await getEnglishDiagnosePaper({
+        version,
+        grade,
+        term,
+        units: scopeUnits.length > 0 ? scopeUnits : undefined,
+      });
       const list = (res?.data?.sections || []).filter((s) => s.questions?.length);
       if (list.length === 0) {
         message.warning('当前年级/册别暂无可用诊断题，请先完成单元学习');
@@ -194,7 +205,7 @@ export default function EnglishDiagnosePage() {
     } finally {
       setLoading(false);
     }
-  }, [version, grade, term]);
+  }, [version, grade, term, scopeUnits]);
 
   // 记录选项改选次数：交给后端做「掌握 / 不稳定 / 漏洞」三态判定
   const handleAnswerChange = (id, value) => {
@@ -239,12 +250,15 @@ export default function EnglishDiagnosePage() {
       <div className="eng-diag-wrap sll-page-enter">
         <div className="eng-diag-intro">
           <div className="eng-diag-intro-badge">英语学习诊断</div>
-          <h1 className="eng-diag-intro-title">一次 24 题，看清孩子的英语掌握情况</h1>
+          <h1 className="eng-diag-intro-title">一次最多 24 题，看清孩子的英语掌握情况</h1>
           <p className="eng-diag-intro-desc">
-            诊断卷按基础、进阶、挑战三档递进，从当前册别各单元抽取真实题目。
+            诊断卷按基础、进阶、挑战三档递进，从当前册别所选单元抽取真实题目。
             交卷后生成一份可打印的学习报告，包含综合得分、知识模块、能力分析与学习趋势，
             方便老师与家长一起看。
           </p>
+          {scopeUnits.length > 0 && (
+            <div className="eng-diag-intro-scope">本次范围：{scopeUnits.join(' / ')}</div>
+          )}
           <div className="eng-diag-intro-grid">
             <div className="eng-diag-intro-item">
               <span className="eng-diag-intro-num">24</span>
@@ -348,7 +362,7 @@ export default function EnglishDiagnosePage() {
         <div className="eng-diag-level-tip" style={{ color: LEVEL_COLOR[q.level] || '#2f8ae0' }}>
           第 {current + 1} 题 · {q.levelLabel || q.level}档
         </div>
-        <div className="eng-diag-question">
+        <div className="eng-diag-question quiz-stage">
           <QuestionCard
             question={{ ...q, template: q.schema }}
             index={current + 1}
