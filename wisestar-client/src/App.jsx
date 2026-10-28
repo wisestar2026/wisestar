@@ -46,6 +46,7 @@ const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const RepoListPage = lazy(() => import('./pages/repo/RepoListPage'));
 const RepoDetailPage = lazy(() => import('./pages/repo/RepoDetailPage'));
 const QuestionListPage = lazy(() => import('./pages/question/QuestionListPage'));
+const MathPaperManagePage = lazy(() => import('./pages/exercise/MathPaperManagePage'));
 const PracticeHomePage = lazy(() => import('./pages/practice/PracticeHomePage'));
 const PracticeSessionPage = lazy(() => import('./pages/practice/PracticeSessionPage'));
 const WrongQuestionPage = lazy(() => import('./pages/practice/WrongQuestionPage'));
@@ -242,6 +243,16 @@ export default function App() {
               element={
                 <AuthGuard required={['template:list']}>
                   <QuestionListPage lockedSubject="数学" />
+                </AuthGuard>
+              }
+            />
+
+            {/* 数学组卷（通用/按学员错题 → 打印卷 + 答案解析） */}
+            <Route
+              path="/math-paper"
+              element={
+                <AuthGuard required={['template:list']}>
+                  <MathPaperManagePage />
                 </AuthGuard>
               }
             />

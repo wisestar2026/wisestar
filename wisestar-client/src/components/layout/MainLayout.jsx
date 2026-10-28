@@ -128,6 +128,7 @@ export default function MainLayout() {
       key: 'exercise-group', icon: <BookOutlined />, label: '习题管理',
       children: [
         { key: '/questions', label: '题目管理', required: ['template:list'] },
+        { key: '/math-paper', label: '数学组卷', required: ['template:list'] },
         { key: '/repos', label: '练习列表', required: ['repo:list'] },
         { key: '/practice', label: '在线练习', required: ['exercise:list'] },
         { key: '/wrong-questions', label: '错题管理', required: ['repo:list', 'exercise:list'] },
@@ -249,7 +250,7 @@ export default function MainLayout() {
   // 顶层菜单项 key = 第一段路径（如 /projects、/practice）；
   // 子菜单项 key = 完整路径（如 /knowledge/chapters）。
   // 一级入口教研平台 key=/exercise/list，同样需要精确匹配到第一段路径规则之外
-  const SUB_PATH_KEYS = ['/student/hand-raise', '/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/knowledge/strategy', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/word-image', '/english/sentence', '/english/grammar', '/english/questions', '/english/word-ai', '/english/scenario-pack', '/english/unit-paper', '/english/sentence-pack'];
+  const SUB_PATH_KEYS = ['/student/hand-raise', '/exercise/list', '/mall/goods', '/students/activity', '/wrong-questions', '/math-paper', '/knowledge/chapters', '/knowledge/sections', '/knowledge/points', '/knowledge/strategy', '/admin/roles', '/system/users', '/system/depts', '/system/positions', '/system/dicts', '/system/dict-items', '/english/unit', '/english/section', '/english/word', '/english/word-image', '/english/sentence', '/english/grammar', '/english/questions', '/english/word-ai', '/english/scenario-pack', '/english/unit-paper', '/english/sentence-pack'];
   const selectedKey = location.pathname === '/'
     ? '/'
     : (SUB_PATH_KEYS.includes(location.pathname)

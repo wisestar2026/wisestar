@@ -2982,6 +2982,19 @@
   学币兑换订单服务。
   学员在商城兑换商品后生成订单并「暂时扣除」学币、下发随机 6 位核销码； 老师在核销页凭核销码完成订单（学币正式扣除），订单记录永久保留。
 
+### `shared/src/main/java/cn/wisestar/server/service/MathPaperService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface MathPaperService`
+- **类说明**：
+  数学组卷服务接口（后台管理端）。通用组卷按章节/小节/知识点 + 难度/题型/题量从数学题库抽题；按学员组卷优先取该学员数学错题，不足时同范围补齐；生成结果含标准答案与解析。
+- 方法:
+  - `public MathPaperMetaView meta()`
+    组卷配置元数据（年级/册别/章节/小节/知识点树 + 题型、难度题量统计）。
+  - `public List<MathPaperStudentView> searchStudents(String keyword)`
+    按学号或姓名搜索学员。
+  - `public MathPaperView generate(MathPaperRequest request)`
+    生成试卷（含标准答案与解析）。
+
 ### `shared/src/main/java/cn/wisestar/server/service/OnlineChestService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface OnlineChestService`

@@ -1,0 +1,258 @@
+/* MathPaperManagePage.css - 数学组卷（后台组卷 + 打印） */
+
+.math-paper-page {
+  max-width: 1180px;
+}
+
+.math-paper-config .math-paper-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.math-paper-config .math-paper-row:last-of-type {
+  margin-bottom: 8px;
+}
+
+.math-paper-hint {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #8a94a6;
+}
+
+.math-paper-warnings {
+  margin-bottom: 12px;
+}
+
+.math-paper-warnings ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.math-paper-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+/* 试卷主体（A4 观感） */
+.math-paper-page .paper {
+  max-width: 840px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 32px 40px 48px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  color: #1f2329;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+.math-paper-page .paper-title {
+  text-align: center;
+  font-size: 23px;
+  font-weight: 800;
+  margin: 0 0 18px;
+}
+
+.math-paper-page .paper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  font-size: 14px;
+  color: #333;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.math-paper-page .paper-tip {
+  margin: 10px 0 22px;
+  font-size: 13px;
+  color: #888;
+}
+
+.math-paper-page .paper-question {
+  margin-bottom: 24px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.math-paper-page .paper-q-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.math-paper-page .paper-q-no {
+  font-weight: 800;
+  flex: none;
+}
+
+.math-paper-page .paper-q-stem {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.math-paper-page .paper-q-wrong {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 1px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px dashed #ff7875;
+  color: #d4380d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.math-paper-page .paper-q-tags {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.math-paper-page .paper-q-score {
+  flex: none;
+  font-size: 12px;
+  color: #999;
+}
+
+.math-paper-page .paper-q-images {
+  margin: 8px 0;
+}
+
+.math-paper-page .paper-q-images img {
+  max-width: 320px;
+  max-height: 240px;
+  margin-right: 8px;
+}
+
+.math-paper-page .paper-q-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 20px;
+  margin: 6px 0 4px 22px;
+}
+
+.math-paper-page .paper-q-options.is-judge {
+  grid-template-columns: repeat(2, minmax(0, 180px));
+}
+
+.math-paper-page .paper-option {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.math-paper-page .paper-option-letter {
+  font-weight: 700;
+  flex: none;
+}
+
+.math-paper-page .paper-option-text {
+  word-break: break-word;
+}
+
+.math-paper-page .paper-blank-area {
+  margin: 8px 0 4px 22px;
+}
+
+.math-paper-page .paper-blank-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.math-paper-page .paper-blank-label {
+  flex: none;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.math-paper-page .paper-blank-line {
+  flex: 1;
+  border-bottom: 1px solid #c8c8c8;
+  height: 20px;
+}
+
+/* 答案与解析（单独起页打印） */
+.math-paper-page .paper-answers {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px dashed #d9d9d9;
+  page-break-before: always;
+  break-before: page;
+}
+
+.math-paper-page .paper-answers-title {
+  text-align: center;
+  font-size: 19px;
+  font-weight: 800;
+  margin: 0 0 14px;
+}
+
+.math-paper-page .paper-answer-item {
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.8;
+  break-inside: avoid;
+}
+
+.math-paper-page .paper-answer-no {
+  font-weight: 800;
+  margin-right: 6px;
+}
+
+.math-paper-page .paper-answer-value {
+  font-weight: 600;
+  color: #1d6fd6;
+}
+
+.math-paper-page .paper-answer-analysis {
+  color: #555;
+  font-size: 13px;
+  margin-top: 2px;
+  padding-left: 18px;
+}
+
+/* 打印：仅输出试卷主体，隐藏后台框架与工具栏 */
+@media print {
+  .ant-layout-sider,
+  .ant-layout-header,
+  .ant-layout-footer,
+  .no-print,
+  .ant-message {
+    display: none !important;
+  }
+
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .math-paper-page {
+    max-width: none;
+  }
+
+  .math-paper-page .paper {
+    max-width: none;
+    box-shadow: none !important;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  body {
+    background: #fff !important;
+  }
+}

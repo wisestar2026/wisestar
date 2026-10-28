@@ -740,6 +740,20 @@
 
     **权限**：hasAuthority('mall:update')。
 
+### `api/src/main/java/cn/wisestar/server/api/MathPaperApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class MathPaperApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  数学组卷接口（后台管理端）。类级路径 `${api.prefix}/math/paper`，三个接口均要求 `template:list`：`/meta` 下发组卷可选树与题量统计，`/students` 按学号/姓名搜学员，`/generate` 生成含答案与解析的试卷。
+- 方法:
+  - `public MathPaperMetaView meta()`
+    组卷配置元数据（年级→册别→章节→小节→知识点树 + 难度/题型题量）。
+  - `public List<MathPaperStudentView> students(@RequestParam(required = false) String keyword)`
+    按学号/姓名搜索学员（空关键字返回前 20 名）。
+  - `public MathPaperView generate(@RequestBody MathPaperRequest request)`
+    通用组卷或按学员错题组卷，返回可直接打印的试卷与答案解析。
+
 ### `api/src/main/java/cn/wisestar/server/api/OrderApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class OrderApi`
