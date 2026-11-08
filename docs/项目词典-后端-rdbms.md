@@ -390,6 +390,22 @@
 - **类说明**：
   用户单词本实体（对应数据库表 t_english_word_book）。
 
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishLearningState.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishLearningState`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语知识点学习状态实体（对应数据库表 t_english_learning_state）。记录学员在某知识点（单词 / 句子 / 语法点）上的三态掌握状态、连续答对/答错计数、输出类题型答对次数与薄弱标记，供通关判定与薄弱点攻克使用。与 `t_english_word_book` / `t_english_sentence_book` / `t_english_grammar_book` 并存：`*_book` 管熟练度与下次复习时间，本表只回答「这个知识点现在是熟练、一般还是陌生，是否在薄弱池」，两套字段各自演进、互不覆盖。业务键 `user_id + module + knowledge_id` 唯一。
+- 注入/字段: userId / module（word/sentence/grammar）/ knowledgeId / state（familiar/ordinary/unfamiliar）/ consecutiveCorrect / consecutiveWrong / outputCorrectCount / lastAngle / memoryTotal / memoryCorrect / practiceTotal / practiceCorrect / useTotal / useCorrect / weakFlag / weakReason（consecutive_wrong/accuracy/output_error）
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishExamAngleUse.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishExamAngleUse`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语考察角度使用记录实体（对应数据库表 t_english_exam_angle_use）。记录某学员在某知识点上已使用过的考察角度与次数，供复习取题时轮换角度，避免同一知识点连续推送同一考法的派生题（「换汤不换药」）。业务键 `user_id + module + knowledge_id + angle` 唯一。
+- 注入/字段: userId / module / knowledgeId / angle / useCount / lastUseAt
+
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishWrongRedo.java`
 - 包: `cn.wisestar.server.domain.model`
 - 类型: `class EnglishWrongRedo`（继承 `BaseModel`）
@@ -1021,7 +1037,7 @@
 - 注解: @Slf4j, @Service
 - **类说明**：
   英语单元句子题内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 取重点句子，生成练习 20-25 题（`choice/fill/build/dictation` 各不少于 3）与学习 10-15 题（课本句式 `build`）；练习不足时用课本句式与学习题补足，同一 `theme` 最多 2 题。练习排序截断后再次校验题型配额，超配题型可替换为缺项；学习不足 10 题时先拆课本原句分句，再从练习补足。`fill` 锚定课本原句并重算 `stem`/首字母提示/中文；`savePack` 按业务键覆盖保存，学员端 `getExercises(...,stage)` 按阶段读取，无内容返回空列表，不触发 AI；`choice` 题读出后按「阶段 + 英文 + 中文 + 选项」种子稳定打乱选项（正确句优先取 `answer`、为空取 `en`），避免正确项固定排首位。生成练习时把 `EnglishVocabScope.learnedWords` 的已学词表写进提示词，要求全部句子只用本单元及之前已学的词、人名只用课文人物；生成结果与存量内容包在出参前都按 `EnglishVocabScope` 过滤，答案含超纲词的题目直接丢弃（补题逻辑会用课本句式回填），记录「丢弃超纲句子题」日志。
-  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一委托 `EnglishDifficultyUtil` 重算：`choice` 按识别类、`fill` 按有提示产出、`build` 按完整产出，再叠加英文长度、从句/转折/情态/被动/比较级、答案词数、空位数与选项干扰；`dictation`（句子默写）不参与评分，恒为 3 档（挑战），与提示词「3 挑战（dictation）」的设计一致；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 按内容包年级对全部内容包幂等重算难度。
+  质检拒绝非 ASCII 英文、`___` 英文、多句残句；`fill` 中文占位符用答案回填，其他题型含占位符直接丢弃；同阶段同题型同英文句子去重。非课本变式须通过中文完整性（问句/破损标点/悬垂动词/连词/动词/数字/单元词）校验；`choice` 题干译文只取答案对应原句，非原句答案需通过动词与名词覆盖校验，否则退回 `fill/build`。难度统一委托 `EnglishDifficultyUtil` 重算：`choice` 按识别类、`fill` 按有提示产出、`build` 按完整产出，再叠加英文长度、从句/转折/情态/被动/比较级、答案词数、空位数与选项干扰；`dictation`（句子默写）不参与评分，恒为 3 档（挑战），与提示词「3 挑战（dictation）」的设计一致；生成入口与 `sanitizeExercises` 双重过滤提示词示例句，避免跨单元污染；`recalibrateAll` 按内容包年级对全部内容包幂等重算难度，返回 `EnglishRecalibrateResultView`（`{updated, skipped, failed}`：`updated` 为逐包重写练习难度的计数，缺英文内容计 `skipped`、异常计 `failed`）。
 - 常量: `SENTENCE_GROUP_SIZE=6`、`DEFAULT_MODEL=deepseek-chat`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentenceServiceImpl.java`
@@ -1136,6 +1152,57 @@
   - `public static int firstCorrectRate(EnglishWordBook book)`
   - `public static int intValue(Integer value)`
 - 常量: LEVEL_NONE/LEVEL_WEAK/LEVEL_FAMILIAR/LEVEL_MASTERED、FAMILIAR_RATE(60)、MASTERED_RATE(80)、UNIT_PASS_RATE(80)、UNIT_WEAK_RATE(10)
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishLearningRuleServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishLearningRuleServiceImpl implements EnglishLearningRuleService`
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语学习规则服务实现：把「分阶段通关 / 薄弱攻克 / 复习派生」的可判定口径收敛到一处，学员端页面只消费本服务结果，不再各自计算阈值。`loadStates`/`angleUsed` 批量取数避免逐条查库；`recordAnswer` 更新三态、连续正确/错误、输出题达标与阶段计数（仅首次作答计数）；`sectionProgress` 按小节汇总三阶完成与三态分布；`reviewCandidates` 按单元收敛候选（`unit` 为空时覆盖全册，单元集合由单词/句子/语法内容表推导，不依赖 `t_english_unit` 目录表）；`unitPass` 输出小节/单元通关判定；`wordPassSummary` 供列表页批量回填。阈值取自 `EnglishMastery` 与 `EnglishPassRule`，判定口径见 `EnglishStateRule`。
+- 方法:
+  - `public Map<String, EnglishLearningStateView> loadStates(String userId, List<String> modules)`
+    批次加载三个模块学习状态，键为 `module|knowledgeId`。
+  - `public void recordAnswer(String userId, String module, String knowledgeId, String angle, boolean correct, String stage, boolean firstAttempt)`
+    记录一次作答并更新学习状态。
+  - `public Map<String, List<String>> angleUsed(String userId, String module, List<String> knowledgeIds)`
+    批量加载已使用考察角度。
+  - `public List<EnglishSectionProgressView> sectionProgress(String userId, String version, String grade, String term, String unit)`
+    某单元小节级三阶进度。
+  - `public List<EnglishReviewCandidateView> reviewCandidates(String userId, String version, String grade, String term, String unit, String module)`
+    某单元复习候选知识点（`unit` 为空覆盖全册）。
+  - `public Map<String, EnglishUnitProgressView> wordPassSummary(String userId, String version, String grade, String term)`
+    整册单词通关汇总，供列表页批量回填。
+  - `public EnglishUnitProgressView unitPass(String userId, String version, String grade, String term, String unit)`
+    单元/小节通关判定与各阶段正确率。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishStateRule.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `final class EnglishStateRule`
+- **类说明**：
+  英语知识点三态与薄弱/攻克的纯规则计算（不读写数据库、不依赖 Spring，便于单测）。三态口径：无记录或正确率 <60% 为 unfamiliar，60%~85% 为 ordinary，≥85% 且输出题至少 1 次正确为 familiar；在薄弱池时最高只能到 ordinary。薄弱判定：连续答错 ≥2 次、累计正确率 <60%（样本 ≥3）或输出类题型出错。攻克要求连续 2 道不同角度正确，若存在输出题错题还要求至少 1 道输出题答对，答错清零。
+- 常量: FAMILIAR/ORDINARY/UNFAMILIAR、REASON_CONSECUTIVE_WRONG/REASON_ACCURACY/REASON_OUTPUT_ERROR
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishExamAngle.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `final class EnglishExamAngle`
+- **类说明**：
+  英语考察角度规则（纯函数，无数据库依赖）。「考察角度」回答「同一个知识点换哪种考法」，用于复习时避免把原题重刷一遍。角度池：单词 `word-meaning / meaning-word / image-word / word-collocation / word-listen / word-dictation`；句式 `sentence-listen-build / sentence-build / sentence-fill / sentence-zh-en / sentence-en-zh / sentence-listen-meaning / sentence-dictation`；语法 `grammar-rule-id / grammar-choice / grammar-judge / grammar-transform / grammar-rewrite`。角度耗尽后才允许复用；`isSameAngle` 用于「换汤不换药」判定（题型与角度都相同、只换名词或人名视为同一角度）。
+- 方法:
+  - `public static List<String> anglesOf(String module)`
+    模块可用角度池（只读）。
+  - `public static String labelOf(String angle)`
+    角度中文标签。
+  - `public static String nextAngle(String module, List<String> usedAngles)`
+    在未使用角度中挑选下一个；全部用过时回落到池首位，调用方负责换语境而不是重复同一道题。
+  - `public static boolean isSameAngle(String a, String b)`
+    两个角度是否等价。
+
+### `rdbms/src/main/java/cn/wisestar/server/core/uitls/EnglishPassRule.java`
+- 包: `cn.wisestar.server.core.uitls`
+- 类型: `final class EnglishPassRule`
+- **类说明**：
+  英语分阶段通关阈值常量。单词三阶阈值、三态分界与单元通关门槛维护在 `EnglishMastery`；本类承载句式与语法模块阈值及薄弱/攻克计数，避免同一批数字散落在服务实现与前端页面中。统计粒度：句式按单元重点句式集合，语法按语法知识点。
+- 常量: SENTENCE_LISTEN_BUILD_RATE(85) / SENTENCE_BUILD_RATE(85) / SENTENCE_FILL_RATE(75) / SENTENCE_CHOICE_RATE(80) / SENTENCE_DICTATION_RATE(70) / SENTENCE_SCENARIO_RATE(75) / GRAMMAR_RECOGNITION_RATE(80) / GRAMMAR_OUTPUT_RATE(70) / WEAK_MIN_SAMPLE(3) / WEAK_ACCURACY_RATE(60) / WEAK_CONSECUTIVE_WRONG(2) / BREAKTHROUGH_CONSECUTIVE_CORRECT(2)
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishPracticeEvaluator.java`
 - 包: `cn.wisestar.server.impl`
@@ -1740,6 +1807,7 @@
 - **类说明**：
   当日学习总结服务实现。
   聚合学员当日练习记录、答题明细、学习行为、掌握度与薄弱点数据，优先调用系统 AI 生成 面向家长的总结文本；AI 未启用或调用失败时降级为规则模板，`model` 标记为 rule。聚合结果同时回填练习/答题/正确率/积分/学币/知识点/掌握度等计数与 weakNames/strengthenedNames 名单；`preview` 可在不落库前提下返回规则模板或已有总结。
+  家长版口径：`buildRuleContent` 固定输出三段式（学了什么 / 进步在哪 / 下一步一个小目标），禁积分、学习币、错题率、掌握度百分比等内部指标，零学习日转周视角鼓励；`preview/toView` 的 `parentContent` 始终由规则模板重算，历史记录也按新口径展示。`aggregate` 另算上次学习日正确率对比（`lastAccuracy < 20` 时 `hasComparison=false`，避免 0% 起步写出「提高 N 个百分点」）、近 7 天汇总、已攻克薄弱点、连续学习天数与 `topicLabel`（练习记录 `section_id` → 小节名）。
 - 方法:
   - `public StudySummaryView generate(String studentId, String summaryDate, String sessionId)`
   - `public StudySummaryView getMySummary()`
@@ -1854,8 +1922,8 @@
     查询题目模板的全部标签（题目管理页「按标签筛选」下拉选项）。
   - `public TemplateView getTemplate(TemplateQuery query)`
     查询单个题目模板详情（含当前用户的错题本信息回填）。
-  - `public int recalibrateEnglishDifficulty()`
-    重算全部英语题目难度，同步 `t_template.difficulty` 与 `template.attribute.difficulty`；统一委托 `EnglishDifficultyUtil`，按题型作答方式、年级长度阈值、句子复杂度、答案词数/空位数与选项干扰综合评分，输出 easy/medium/hard。
+  - `public EnglishRecalibrateResultView recalibrateEnglishDifficulty()`
+    重算全部英语题目难度，同步 `t_template.difficulty` 与 `template.attribute.difficulty`；统一委托 `EnglishDifficultyUtil`，按题型作答方式、年级长度阈值、句子复杂度、答案词数/空位数与选项干扰综合评分，输出 easy/medium/hard。返回 `{updated, skipped, failed}`：`updated` 只计难度发生变化的记录，缺英文内容计 `skipped`、解析或落库异常计 `failed`；因继承的 `log` 为 `org.apache.ibatis.logging.Log`（仅单参 String 方法），日志用字符串拼接 + `log.debug`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/UserBookServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

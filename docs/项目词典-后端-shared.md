@@ -2009,8 +2009,9 @@
 - 注解: @Data
 - **类说明**：
   英语单元进度视图 DTO（学员端学习中心）。
-  含 wordFinished/sentenceFinished（熟练度 >= 1 的数量）、mastery（单词+句子 familiarity 均值归一化到 0~100 的综合熟练度）、reviewDue（待复习数），
+  含 wordFinished/sentenceFinished（熟练度 >= 1 的数量）、mastery（单词+句子 familiarity 均值归一化到 0~100 的综合熟练度）、reviewDue（待复习知识点数，与复习页「单元复习」同一口径，由 `reviewCandidates` 汇总 word/sentence/grammar），
   以及 wordMastered（已掌握单词数）、wordWeak（待巩固单词数）、wordPass（单词通关：掌握 >= 80% 且待巩固 <= 10%）。
+  2026-11-05 新增：wordPassRate（单词小节通关率）、sentencePassRate（句式通关率）、reviewDueWord/reviewDueSentence/reviewDueGrammar（分模块待复习数）、sections（小节级三阶进度 `List<EnglishSectionProgressView>`）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitQuery.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2039,7 +2040,47 @@
 - 注解: @Data
 - **类说明**：
   英语单词视图 DTO。
-- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）/ quizTotal（练习首答次数）/ quizFirstCorrect（首答答对次数）/ firstCorrectRate（首答正确率 0~100）/ masteryLevel（0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握）/ masteryLabel（中文标签）
+- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）/ quizTotal（练习首答次数）/ quizFirstCorrect（首答答对次数）/ firstCorrectRate（首答正确率 0~100）/ masteryLevel（0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握）/ masteryLabel（中文标签）/ masteryState（三态 familiar/ordinary/unfamiliar，与单词本 familiarity 语义不同）/ masteryStateLabel（熟练/一般/陌生）/ angleUsed（已使用考察角度，推荐下一角度时排除）
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishReviewCandidateView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishReviewCandidateView`
+- 注解: @Data
+- **类说明**：
+  英语复习候选视图：某单元内待复习知识点及其可用考察角度。供单元复习入口与复习角标使用，返回的知识点全部属于请求单元（`unit` 为空时覆盖全册），前端据此展示角标数字并按知识点取派生题，不复用全局错题本的原始题目。
+- 字段: module / knowledgeId / name / unit / section / state / stateLabel / weak / weakReason / reasons（weak/wrong/due）/ angles（推荐角度排首位）/ nextAngleLabel
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSectionProgressView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishSectionProgressView`
+- 注解: @Data
+- **类说明**：
+  英语小节三阶进度视图：单词记忆 / 单词练习 / 单词运用三个阶段在小节内的完成与通关情况。统计粒度为小节，通关口径见 `EnglishMastery` 常量。
+- 字段: section（未分节时为「未分节」）/ wordCount / memoryDone / memoryCorrect / memoryRate / memoryPass / practiceDone / practiceCorrect / practiceRate / practicePass / useDone / useCorrect / useRate / usePass / familiarCount / ordinaryCount / unfamiliarCount / sectionPass
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishLearningStateView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishLearningStateView`
+- 注解: @Data
+- **类说明**：
+  英语知识点学习状态视图（shared 层传递用）。由 `EnglishLearningRuleService` 返回，学员端与规则计算只读本视图，不直接接触 rdbms 实体，保持分层依赖方向。
+- 字段: module / knowledgeId / state（familiar/ordinary/unfamiliar）/ consecutiveCorrect / consecutiveWrong / outputCorrectCount / lastAngle / weak / weakReason / memoryTotal / memoryCorrect / practiceTotal / practiceCorrect / useTotal / useCorrect
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishLearnStateRequest.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishLearnStateRequest`
+- 注解: @Data
+- **类说明**：
+  上报一次英语知识点作答的请求体，供 `POST /english/student/learn-state` 使用。
+- 字段: module / knowledgeId / angle / correct / stage（memory/practice/use）/ firstAttempt（缺省按 true）
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishRecalibrateResultView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishRecalibrateResultView`
+- 注解: @Data
+- **类说明**：
+  英语难度重算结果：题目模板与句子内容包两个重算接口统一返回 `{updated, skipped, failed}`。`skipped` 为缺英文题干/答案/选项无法评分的条目数，`failed` 为解析或落库异常数。
+- 字段: updated / skipped / failed
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishWrongQuestionView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2651,6 +2692,7 @@
 - 注解: @Data
 - **类说明**：
   学习总结视图（学员本人 / 教师查看）。字段：id/studentId/studentName/summaryDate/sessionId/content/model（规则模板为 rule）/status/createTime、durationMs（当日累计学习时长）、practiceCount/questionCount/correctCount/accuracy/wrongCount/points/coins/knowledgeCount/avgMastery（当日学习数据聚合）、weakNames（当前薄弱点名称）、strengthenedNames（当日强化的知识点名称）。
+  家长版扩展字段：parentContent（家长信三段式文案，由规则模板实时生成，不复用库内旧 content）、lastStudyDate/lastAccuracy/accuracyDelta/hasComparison（与上一次学习日对比，上次正确率 <20% 视为偶然命中不构成基准）、weekPracticeCount/weekQuestionCount/weekAccuracy（近 7 天含当日汇总）、conqueredCount/conqueredNames（已移出薄弱池的知识点，名称经 shortName 截断）、streakDays（连续学习天数）、topicLabel（当日练习小节名）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/WeakCompareView.java`
 - 包: `cn.wisestar.server.domain.dto.student`
@@ -2871,6 +2913,8 @@
   - `List<String> listUnits(String version, String grade, String term)`
   - `List<EnglishSentenceExercise> getExercises(String version, String grade, String term, String unit, String stage)`
     学员端读取：该单元已固化的句子题，`stage=learn` 取学习题、`practice` 取练习题（无内容时返回空列表）。
+  - `EnglishRecalibrateResultView recalibrateAll()`
+    按内容包年级对全部内容包幂等重算难度，返回 `{updated, skipped, failed}`。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishSentenceService.java`
 - 包: `cn.wisestar.server.service`
@@ -2906,6 +2950,27 @@
 - 类型: `interface EnglishWordManagerService`
 - **类说明**：
   英语单词管理服务接口。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishLearningRuleService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishLearningRuleService`
+- **类说明**：
+  英语学习规则服务：把「分阶段通关 / 薄弱攻克 / 复习派生」的可判定口径收敛到一处。学员端页面只消费本服务的结果，不再各自计算阈值与状态，避免同一条规则在多个页面写出不同数字。
+- 方法:
+  - `Map<String, EnglishLearningStateView> loadStates(String userId, List<String> modules)`
+    批次加载三个模块的学习状态，键为 `module|knowledgeId`。
+  - `void recordAnswer(String userId, String module, String knowledgeId, String angle, boolean correct, String stage, boolean firstAttempt)`
+    记录一次作答并更新学习状态（三态、连续正确、输出题达标、阶段计数）。
+  - `Map<String, List<String>> angleUsed(String userId, String module, List<String> knowledgeIds)`
+    批量加载已使用考察角度。
+  - `List<EnglishSectionProgressView> sectionProgress(String userId, String version, String grade, String term, String unit)`
+    某单元的小节级三阶进度。
+  - `List<EnglishReviewCandidateView> reviewCandidates(String userId, String version, String grade, String term, String unit, String module)`
+    某单元的复习候选知识点（`unit` 为空覆盖全册，`module` 为空返回全部）。
+  - `Map<String, EnglishUnitProgressView> wordPassSummary(String userId, String version, String grade, String term)`
+    整册单词通关汇总。
+  - `EnglishUnitProgressView unitPass(String userId, String version, String grade, String term, String unit)`
+    单元/小节通关判定与各阶段正确率。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishWordService.java`
 - 包: `cn.wisestar.server.service`
