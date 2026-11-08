@@ -7,9 +7,13 @@
  *   listen-meaning 听力理解（只播英文，从 4 个中文释义中选）
  *   dictation      句子默写（给中文，按词数逐词填空）
  *   choice         句子选择（给中文题干，选正确英文句）
+ *   fill           词汇填空（给带空白的英文句，按空位拆多个输入框）
  *
  * 「连词成句 / 听音组句 / 听力理解」三种为按单元句子即时生成（不依赖 AI 固化内容），
  * 「综合练习」沿用管理端固化的混合题型。
+ *
+ * 步骤条支持 mix / build / listen-build / listen-meaning / fill / dictation 六种，
+ * 句式四段里「句子学习」用 mode=fill，「句子练习」用 mode=dictation 可直达对应题型。
  *
  * 数据流:
  *   GET  /api/english/student/sentence-exercises?version=&grade=&term=&unit=
@@ -46,7 +50,25 @@ const MODES = [
   { key: 'build', label: '连词成句' },
   { key: 'listen-build', label: '听音组句' },
   { key: 'listen-meaning', label: '听力理解' },
+  { key: 'fill', label: '词汇填空' },
+  { key: 'dictation', label: '句子默写' },
 ];
+
+/** 各题型对应的考察角度（与后端 EnglishExamAngle 编码一致） */
+const KIND_ANGLE = {
+  'listen-build': 'sentence-listen-build',
+  build: 'sentence-build',
+  fill: 'sentence-fill',
+  'listen-meaning': 'sentence-listen-meaning',
+  dictation: 'sentence-dictation',
+};
+const KIND_STAGE = {
+  'listen-build': 'memory',
+  build: 'memory',
+  fill: 'memory',
+  'listen-meaning': 'practice',
+  dictation: 'practice',
+};
 
 /** 每轮即时生成题型的题量 */
 const GENERATED_MAX = 10;
@@ -56,6 +78,26 @@ function isListenKind(kind) {
   return kind === 'listen-build' || kind === 'listen-meaning';
 }
 const DIFFICULTY_LABELS = { 1: '基础', 2: '提高', 3: '挑战' };
+
+/** 填空挖空时跳过的功能词，避免把 the / is 挖成答案 */
+const FILL_STOP_WORDS = new Set([
+  'a', 'an', 'the', 'is', 'am', 'are', 'was', 'were', 'be', 'to', 'of', 'in', 'on', 'at', 'and',
+  'but', 'or', 'it', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'we', 'they',
+  'my', 'your', 'his', 'her', 'our', 'their', 'do', 'does', 'did', 'can', 'will', 'not',
+]);
+
+/**
+ * 从英文句子中挑一个适合挖空的实义词：优先最长的非功能词。
+ *
+ * @param {string} sentence 英文句子
+ * @returns {string} 选中的单词，句子过短时返回空串
+ */
+function pickFillWord(sentence) {
+  const words = String(sentence || '').match(/[A-Za-z][A-Za-z'’-]*/g) || [];
+  const candidates = words.filter((w) => !FILL_STOP_WORDS.has(w.toLowerCase()) && w.length >= 3);
+  if (candidates.length < 2) return '';
+  return candidates.reduce((best, cur) => (cur.length > best.length ? cur : best), '');
+}
 
 /** 默写分组：每个单词一个输入框，标点跟随前一个单词展示 */
 function buildDictationGroups(sentence) {
@@ -74,11 +116,27 @@ function buildDictationGroups(sentence) {
   return groups;
 }
 
-export default function EnglishSentenceExercise({ unit, version, grade, term, onBack }) {
+/**
+ * 按 ___ 把题干拆成「文本片段 + 空位」结构，供逐空输入。
+ *
+ * @param {string} stem 含空位的题干
+ * @returns {object[]} 交替的 { type:'text', value } 与 { type:'blank', index }
+ */
+function splitFillBlanks(stem) {
+  const parts = String(stem || '').split(/_{2,}/);
+  const result = [];
+  parts.forEach((part, index) => {
+    if (part) result.push({ type: 'text', value: part });
+    if (index < parts.length - 1) result.push({ type: 'blank', index });
+  });
+  return result;
+}
+
+export default function EnglishSentenceExercise({ unit, version, grade, term, initialMode = 'mix', onBack }) {
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
   const [sentences, setSentences] = useState([]);
-  const [mode, setMode] = useState('mix');
+  const [mode, setMode] = useState(MODES.some((item) => item.key === initialMode) ? initialMode : 'mix');
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState(null); // 'ok' | 'no'
   const [correctCount, setCorrectCount] = useState(0);
@@ -88,8 +146,9 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
   // 连词成句：词块池与已选
   const [pool, setPool] = useState([]);
   const [selected, setSelected] = useState([]);
-  // 句子默写：逐词输入；词汇填空：单框输入
+  // 句子默写：逐词输入；词汇填空：按空位数逐空输入
   const [typed, setTyped] = useState('');
+  const [fillWords, setFillWords] = useState([]);
   const [dictationWords, setDictationWords] = useState([]);
   const dictationRefs = useRef([]);
 
@@ -135,6 +194,25 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
         };
       }).filter((item) => item.options.length >= 2);
     }
+    if (mode === 'fill') {
+      // 词汇填空：从句子中挑一个实义词挖空，中文提示沿用整句释义
+      return pool.map((s) => {
+        const word = pickFillWord(s.en);
+        if (!word) return null;
+        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const stem = String(s.en).replace(new RegExp(`(?<![A-Za-z])${escaped}(?![A-Za-z])`, 'i'), '___');
+        return {
+          kind: 'fill',
+          sentenceId: s.id,
+          zh: s.zh,
+          en: s.en,
+          stem,
+          answer: word,
+          hint: word.slice(0, 1),
+          blanks: splitFillBlanks(stem),
+        };
+      }).filter(Boolean);
+    }
     return pool.map((s) => ({
       kind: mode,
       sentenceId: s.id,
@@ -167,6 +245,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
     setSelected([]);
     setTyped('');
     setDictationWords(dictationGroups.map(() => ''));
+    setFillWords((current?.blanks || []).filter((part) => part.type === 'blank').map(() => ''));
     if (current.kind === 'build' || current.kind === 'listen-build') {
       setPool(shuffle(tokenizeSentence(current.en || '')));
     } else {
@@ -190,7 +269,12 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
 
   const record = useCallback((ok) => {
     if (current?.sentenceId) {
-      recordEnglishSentence({ sentenceId: current.sentenceId, correct: ok }).catch(() => {});
+      recordEnglishSentence({
+        sentenceId: current.sentenceId,
+        correct: ok,
+        angle: KIND_ANGLE[current.kind],
+        stage: KIND_STAGE[current.kind],
+      }).catch(() => {});
     }
   }, [current]);
 
@@ -221,7 +305,18 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
       .join(' ');
     submit(answer, expected);
   };
-  const handleFillCheck = () => submit(typed, current?.answer);
+  const fillBlanks = (current?.blanks || []).filter((part) => part.type === 'blank');
+  const fillComplete = fillBlanks.length > 0 && fillWords.every((word) => String(word || '').trim());
+  const handleFillCheck = () => {
+    // 多空：逐空与答案比对；单空沿用原答案字段
+    const expected = current?.answer || '';
+    if (fillBlanks.length > 1) {
+      const joined = fillWords.map((word) => String(word || '').trim()).join(' ');
+      submit(joined, expected);
+      return;
+    }
+    submit(fillWords[0] || typed, expected);
+  };
 
   const optionList = useMemo(() => {
     if (current?.kind === 'listen-meaning') {
@@ -417,19 +512,45 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
           </div>
         )}
 
-        {/* 词汇填空 */}
+        {/* 词汇填空：按空位拆多个透明下划线输入框 */}
         {current?.kind === 'fill' && (
           <div style={{ margin: '4px 0 8px' }}>
-            {current?.stem && <div className="eng-fill-stem">{current.stem}</div>}
-            <Input
-              size="large"
-              placeholder={current?.hint ? `提示：${current.hint}...` : '请填写缺失的单词'}
-              value={typed}
-              disabled={feedback === 'ok'}
-              onChange={(e) => setTyped(e.target.value)}
-              onPressEnter={handleFillCheck}
-            />
-            {current?.hint && <div className="eng-mod-sub" style={{ marginTop: 6 }}>首字母提示：{current.hint}</div>}
+            <div className="eng-fill-inline">
+              {(current?.blanks || []).map((part, partIndex) => (
+                part.type === 'text' ? (
+                  <span className="eng-fill-text" key={`t-${partIndex}`}>{part.value}</span>
+                ) : (
+                  <input
+                    key={`b-${part.index}`}
+                    className="eng-fill-input"
+                    value={fillWords[part.index] || ''}
+                    disabled={feedback === 'ok'}
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label={`第 ${part.index + 1} 个空`}
+                    placeholder={current?.hint || ''}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/[^A-Za-z0-9'’-]/g, '');
+                      setFillWords((prev) => {
+                        const next = [...prev];
+                        next[part.index] = value;
+                        return next;
+                      });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleFillCheck();
+                      }
+                    }}
+                  />
+                )
+              ))}
+              {!current?.blanks?.length && current?.stem && (
+                <span className="eng-fill-text">{current.stem}</span>
+              )}
+            </div>
+            {current?.zh && <div className="eng-mod-sub" style={{ marginTop: 8 }}>句意：{current.zh}</div>}
           </div>
         )}
 
@@ -513,7 +634,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, on
               type="button"
               className="eng-btn eng-btn-primary"
               onClick={handleFillCheck}
-              disabled={!typed.trim() || feedback === 'ok'}
+              disabled={!fillComplete || feedback === 'ok'}
             >
               检查
             </button>

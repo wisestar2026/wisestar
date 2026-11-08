@@ -103,6 +103,26 @@ export function getEnglishWordReview(params) {
   return request.get('/english/student/review/words', { params });
 }
 
+/** 单元小节三阶进度（单词记忆 / 练习 / 运用） */
+export function getEnglishUnitProgress(params) {
+  return request.get('/english/student/unit-progress', { params });
+}
+
+/** 单元复习候选知识点（含推荐考察角度） */
+export function getEnglishReviewCandidates(params) {
+  return request.get('/english/student/review/candidates', { params });
+}
+
+/** 单元通关判定（单词按小节、句式与语法按单元） */
+export function getEnglishUnitPass(params) {
+  return request.get('/english/student/unit-pass', { params });
+}
+
+/** 上报一次知识点作答（更新三态与薄弱攻克计数） */
+export function recordEnglishLearnState(data) {
+  return request.post('/english/student/learn-state', data);
+}
+
 /** 单词复习概览：应复习词数、熟练度分布（陌生/一般/熟练）、涉及单元 */
 export function getEnglishWordReviewSummary(params) {
   return request.get('/english/student/review/word-summary', { params });

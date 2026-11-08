@@ -12,7 +12,7 @@
  *
  * 数据流:
  *   GET /api/english/student/units → 单元进度
- *   GET /api/english/student/review → 复习队列（用于待复习计数）
+ *   GET /api/english/student/review/candidates → 单元复习候选（用于待复习角标）
  *   GET /api/english/word/drill/completed → 当天是否已完成巩固（服务端判定）
  *   GET /api/english/word/drill → 待巩固单词（强制巩固弹窗）
  */
@@ -34,7 +34,7 @@ import useUserStore from '../../stores/useUserStore';
 import StarRating from '../../components/common/StarRating';
 import {
   getEnglishUnits,
-  getEnglishReview,
+  getEnglishReviewCandidates,
   getEnglishDrillWords,
   getEnglishDrillCompleted,
   getEnglishPracticeSummary,
@@ -95,8 +95,9 @@ export default function EnglishCenterPage() {
     }
   }, [unitParam, units]);
 
+  // 待复习角标与复习页「单元复习」Tab 取同一份候选，避免角标数字与列表数量打架
   useEffect(() => {
-    getEnglishReview({ limit: 50 })
+    getEnglishReviewCandidates({ version, grade, term })
       .then((res) => setReviewCount((res?.data || []).length))
       .catch(() => setReviewCount(0));
   }, [version, grade, term]);
@@ -160,7 +161,7 @@ export default function EnglishCenterPage() {
 
   const finishDrill = () => {
     setDrillOpen(false);
-    getEnglishReview({ limit: 50 })
+    getEnglishReviewCandidates({ version, grade, term })
       .then((res) => setReviewCount((res?.data || []).length))
       .catch(() => {});
   };

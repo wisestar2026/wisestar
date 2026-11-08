@@ -8,6 +8,7 @@
  *   POST /api/template/update      更新题目
  *   POST /api/template/delete      删除题目（支持批量，传 ids 数组）
  *   POST /api/template/batchCreate 批量创建题目
+ *   POST /api/template/recalibrate-english-difficulty 重算英语题目难度（返回 {updated, skipped, failed}）
  *
  * 调用方一览:
  *   - listTemplate        : QuestionListPage（题目管理列表）、RepoDetailPage（题库内题目列表）、
@@ -110,4 +111,13 @@ export async function deleteTemplate(data) {
  */
 export async function batchCreateTemplate(data) {
   return request.post('/template/batchCreate', data);
+}
+
+/**
+ * 重算英语题目难度（按题型与内容复杂度重新打 easy/medium/hard 标签）。
+ *
+ * @returns {Promise} 重算结果 {updated, skipped, failed}
+ */
+export function recalibrateEnglishDifficulty() {
+  return request.post('/template/recalibrate-english-difficulty', null, { timeout: 600000 });
 }

@@ -728,6 +728,28 @@ input.eng-dictation-field:focus {
 }
 .eng-review-pill:hover { transform: translateY(-2px); }
 
+/* 句式与语法共用句子的提示（R8） */
+.eng-shared-tip {
+  margin-top: 10px;
+  font-size: 20px;
+  color: #8a6d3b;
+  background: #fff8e6;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+/* ---------- 智能复习：单元复习候选 ---------- */
+.eng-review-unit-count { margin-left: auto; font-size: 20px; font-weight: 700; color: #e07856; }
+.eng-review-reason {
+  font-size: 18px;
+  color: #b07a4a;
+  background: #fff4e6;
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.eng-review-angle { font-size: 18px; color: #1479a6; }
+.eng-review-more { margin-top: 10px; font-size: 19px; color: #7a8fa0; }
+
 /* 熟练度 */
 .eng-mastery-row { display: flex; align-items: center; gap: 10px; margin-top: 20px; }
 .eng-mastery-label { font-size: 24px; color: #5b7f92; font-weight: 700; }
@@ -1457,3 +1479,199 @@ input.eng-dictation-field:focus {
 }
 .eng-listen-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(25, 118, 210, 0.36); }
 .eng-listen-tip { font-size: 22.5px; font-weight: 700; color: #5b7c9b; }
+
+/* ============================================================
+ * 2026-11 单词三阶（记忆 / 练习 / 运用）
+ * 小节卡片内的三态计数与阶段条目；尺寸沿用第 198 节后的放大基准
+ * ============================================================ */
+.eng-state-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.eng-state-chip {
+  border-radius: 999px;
+  padding: 7px 18px;
+  font-size: 21px;
+  font-weight: 800;
+  background: #eef6fc;
+  color: #5b7f92;
+}
+.eng-state-familiar { background: #dff4e6; color: #1f8f4d; }
+.eng-state-ordinary { background: #fdf1cf; color: #b98a10; }
+.eng-state-unfamiliar { background: #fde4e1; color: #c0392b; }
+
+.eng-stage-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.eng-stage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(214, 232, 244, 0.9);
+  background: rgba(255, 255, 255, 0.86);
+}
+.eng-stage-item.is-pass { border-color: #9fdcb5; background: #f2fbf5; }
+.eng-stage-item-head { display: flex; align-items: center; gap: 10px; }
+.eng-stage-index {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #dff2fc;
+  color: #1f7fae;
+  font-size: 21px;
+  font-weight: 800;
+}
+.eng-stage-name { font-size: 23px; font-weight: 900; color: #14506e; }
+.eng-stage-pass {
+  margin-left: auto;
+  font-size: 19px;
+  font-weight: 800;
+  color: #1f8f4d;
+}
+.eng-stage-metric { display: flex; align-items: baseline; gap: 10px; }
+.eng-stage-metric b { font-size: 30px; font-weight: 900; color: #ff7a59; }
+.eng-stage-metric span { font-size: 20px; color: #7a9aac; }
+.eng-stage-btn {
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  border-radius: 14px;
+  padding: 12px 10px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #1479a6;
+  background: #eefaff;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.eng-stage-btn:hover:not(:disabled) { background: #ddf4fe; transform: translateY(-1px); }
+.eng-stage-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.eng-stage-hint {
+  margin-bottom: 14px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #fff7e8;
+  color: #a9761a;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+@media (max-width: 1180px) {
+  .eng-stage-row { grid-template-columns: 1fr; }
+}
+
+/* ---------- 单词运用：选词填空 / 词汇默写 ---------- */
+.eng-word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 18px 0 6px;
+}
+.eng-word-bank-item {
+  border-radius: 999px;
+  padding: 9px 20px;
+  background: #eefaff;
+  color: #1479a6;
+  font-size: 22px;
+  font-weight: 800;
+}
+.eng-use-input {
+  display: block;
+  width: min(520px, 100%);
+  margin: 18px auto 8px;
+  padding: 14px 18px;
+  border: none;
+  border-bottom: 3px solid #4bb7e8;
+  background: transparent;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1479a6;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.eng-use-input::placeholder { color: #b8d6e4; font-weight: 500; font-size: 22px; }
+.eng-use-input:focus { border-color: #ff7a59; }
+.eng-use-input.is-correct { border-color: #33b463; color: #1f8f4d; }
+.eng-use-input.is-wrong { border-color: #e05a4f; color: #c0392b; }
+.eng-use-input:disabled { background: transparent; }
+
+.eng-use-answer {
+  text-align: center;
+  font-size: 22px;
+  color: #5b7f92;
+  margin-bottom: 6px;
+}
+.eng-use-answer b { color: #d9603a; font-size: 24px; margin: 0 6px; }
+
+.eng-quiz-listen {
+  display: block;
+  margin: 8px auto 0;
+  padding: 12px 26px;
+  border: 1px solid #bfe6f5;
+  border-radius: 999px;
+  background: #eefaff;
+  color: #1479a6;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.eng-quiz-listen:hover { background: #ddf4fe; transform: translateY(-1px); }
+
+/* ---------- 句式四段入口 ---------- */
+.eng-stage-row-sentence { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.eng-sentence-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 24px 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  background: linear-gradient(150deg, #f5f9ff 0%, #e6f2fb 100%);
+  box-shadow: 0 10px 24px rgba(23, 107, 158, 0.10);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.eng-sentence-stage:hover { transform: translateY(-3px); box-shadow: 0 18px 32px rgba(23, 107, 158, 0.16); }
+.eng-sentence-stage-name { font-size: 26px; font-weight: 900; color: #14506e; }
+.eng-sentence-stage-hint { font-size: 20px; color: #6a93a8; }
+.eng-sentence-stage-rate { font-size: 20px; font-weight: 800; color: #1f8f4d; }
+
+@media (max-width: 1180px) {
+  .eng-stage-row-sentence { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- 句式词汇填空：按空位内联输入 ---------- */
+.eng-fill-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px 2px;
+  font-size: 27px;
+  line-height: 2;
+  color: #2f4b5a;
+  font-weight: 600;
+  margin: 8px 0 4px;
+}
+.eng-fill-text { white-space: pre-wrap; }
+.eng-fill-input {
+  width: 132px;
+  padding: 2px 6px 5px;
+  border: none;
+  border-bottom: 2px solid #9fc7db;
+  background: transparent;
+  font-size: 27px;
+  font-weight: 600;
+  color: #1479a6;
+  text-align: center;
+  outline: none;
+}
+.eng-fill-input::placeholder { color: #c3dbe8; font-weight: 400; }
+.eng-fill-input:focus { border-bottom-color: #2f9fd4; }

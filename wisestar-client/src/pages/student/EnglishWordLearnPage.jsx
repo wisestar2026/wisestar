@@ -3,7 +3,7 @@
  *
  * 结构（对应「单词学习界面」参考图）:
  *   顶部 hub：左侧 UNIT 导航，右侧「UnitX 单词通关」标题 + 单词进度 +
- *            按小节(model)分组的卡片，每组提供「单词学习 / 单词练习 / 场景对话」入口
+ *            按小节(model)分组的卡片，每组按「记忆 → 练习 → 运用」三阶展示进度与入口
  *   学习态：进入某小节后逐词卡片学习（认识 / 不认识，本节内间隔重复）
  *
  * 功能:
@@ -18,6 +18,7 @@
  * 数据流:
  *   GET  /api/english/student/units   → 单元列表（左侧导航）
  *   GET  /api/english/word/word-book  → 单元单词（含小节 section / 熟练度 familiarity）
+ *   GET  /api/english/student/unit-progress → 小节三阶进度与三态计数
  *   POST /api/english/word/record     → 记录作答
  *   POST /api/english/student/session → 记录会话
  */
@@ -26,7 +27,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishUnits, getEnglishWordBook, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
+import {
+  getEnglishUnits, getEnglishWordBook, getEnglishUnitProgress, recordEnglishWord, recordEnglishSession,
+} from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
 import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
@@ -49,6 +52,109 @@ function groupWordsBySection(list) {
   const groups = [...named.entries()].map(([section, items]) => ({ section, items }));
   if (unsectioned.length) groups.push({ section: '未分节', items: unsectioned });
   return groups;
+}
+
+/**
+ * 小节三阶卡片：记忆 → 练习 → 运用。
+ *
+ * 每阶只展示后端给的达标状态与进度，阈值不在此处计算；
+ * 前一阶段未达标时保留入口并提示，避免学员卡在某一阶无法继续。
+ */
+function WordStageCard({ group, section, words, onLearn, onPractice, onUse, onScenario }) {
+  const done = group.items.filter((w) => (w.familiarity || 0) >= FINISHED_FAMILIARITY).length;
+  const donePct = percent(done, group.items.length);
+  const memoryPass = Boolean(section?.memoryPass);
+  const practicePass = Boolean(section?.practicePass);
+  const usePass = Boolean(section?.usePass);
+  const stageHint = !memoryPass
+    ? '建议先完成『单词记忆』，记忆没过关时练习会反复出现陌生词'
+    : (!practicePass ? '建议先完成『单词练习』，首答正确率到 80% 再去运用' : '');
+  const canPractice = words.length >= 4;
+  return (
+    <div className="eng-model-group">
+      <div className="eng-model-head">
+        <span className="eng-model-name">{group.section}</span>
+        <span className="eng-model-done">完成度 {donePct}%</span>
+        <span className="eng-model-count">{done}/{group.items.length} 词</span>
+      </div>
+      <div className="eng-model-bar"><span style={{ width: `${donePct}%` }} /></div>
+
+      <div className="eng-state-row">
+        <span className="eng-state-chip eng-state-familiar">熟练 {section?.familiarCount ?? 0}</span>
+        <span className="eng-state-chip eng-state-ordinary">一般 {section?.ordinaryCount ?? 0}</span>
+        <span className="eng-state-chip eng-state-unfamiliar">陌生 {section?.unfamiliarCount ?? 0}</span>
+      </div>
+
+      <div className="eng-stage-row">
+        <StageItem
+          index="1"
+          name="单词记忆"
+          rate={section?.memoryRate}
+          pass={memoryPass}
+          done={section?.memoryDone}
+          total={group.items.length}
+          actionLabel="去记忆"
+          onClick={onLearn}
+        />
+        <StageItem
+          index="2"
+          name="单词练习"
+          rate={section?.practiceRate}
+          pass={practicePass}
+          done={section?.practiceDone}
+          total={null}
+          actionLabel="去练习"
+          disabled={!canPractice}
+          onClick={onPractice}
+        />
+        <StageItem
+          index="3"
+          name="单词运用"
+          rate={section?.useRate}
+          pass={usePass}
+          done={section?.useDone}
+          total={null}
+          actionLabel="去运用"
+          disabled={!canPractice}
+          onClick={() => onUse('use')}
+        />
+      </div>
+
+      {stageHint && <div className="eng-stage-hint">{stageHint}</div>}
+
+      <div className="eng-model-actions">
+        <button type="button" className="eng-model-learn" onClick={onLearn}>单词学习</button>
+        <button type="button" className="eng-model-practice" disabled={!canPractice} onClick={onPractice}>
+          单词练习
+        </button>
+        <button type="button" className="eng-model-scenario" disabled={!canPractice} onClick={onScenario}>
+          场景对话
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** 单个阶段条目：阶段名 + 正确率 + 达标标记 + 入口 */
+function StageItem({ index, name, rate, pass, done, total, actionLabel, disabled, onClick }) {
+  const rateText = rate == null ? '未开始' : `${rate}%`;
+  const countText = total == null ? (done ? `已答 ${done} 次` : '') : `${done || 0}/${total}`;
+  return (
+    <div className={`eng-stage-item${pass ? ' is-pass' : ''}`}>
+      <div className="eng-stage-item-head">
+        <span className="eng-stage-index">{index}</span>
+        <span className="eng-stage-name">{name}</span>
+        {pass && <span className="eng-stage-pass">已达标</span>}
+      </div>
+      <div className="eng-stage-metric">
+        <b>{rateText}</b>
+        {countText && <span>{countText}</span>}
+      </div>
+      <button type="button" className="eng-stage-btn" disabled={disabled} onClick={onClick}>
+        {actionLabel}
+      </button>
+    </div>
+  );
 }
 
 /** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
@@ -74,6 +180,7 @@ export default function EnglishWordLearnPage() {
   const [learnSection, setLearnSection] = useState(null);
   const [words, setWords] = useState([]);
   const [groups, setGroups] = useState([]);
+  const [sections, setSections] = useState([]);
   const [queue, setQueue] = useState([]);
   const [mastered, setMastered] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -104,12 +211,16 @@ export default function EnglishWordLearnPage() {
       return;
     }
     setLoading(true);
-    getEnglishWordBook({ version, grade, term, unit, pageSize: -1 })
-      .then((res) => {
-        const list = res?.data?.list || [];
+    Promise.all([
+      getEnglishWordBook({ version, grade, term, unit, pageSize: -1 }),
+      getEnglishUnitProgress({ version, grade, term, unit }).catch(() => null),
+    ])
+      .then(([wordRes, progressRes]) => {
+        const list = wordRes?.data?.list || [];
         const gs = groupWordsBySection(list);
         setWords(list);
         setGroups(gs);
+        setSections(progressRes?.data || []);
         setMode('hub');
         setLearnSection(null);
         setQueue([]);
@@ -285,42 +396,18 @@ export default function EnglishWordLearnPage() {
               </div>
 
               {groups.map((group) => {
-                const done = group.items.filter((w) => (w.familiarity || 0) >= FINISHED_FAMILIARITY).length;
-                const donePct = percent(done, group.items.length);
+                const section = sections.find((item) => item.section === group.section);
                 return (
-                  <div className="eng-model-group" key={group.section}>
-                    <div className="eng-model-head">
-                      <span className="eng-model-name">{group.section}</span>
-                      <span className="eng-model-done">完成度 {donePct}%</span>
-                      <span className="eng-model-count">{done}/{group.items.length} 词</span>
-                    </div>
-                    <div className="eng-model-bar"><span style={{ width: `${donePct}%` }} /></div>
-                    <div className="eng-model-actions">
-                      <button
-                        type="button"
-                        className="eng-model-learn"
-                        onClick={() => startLearn(group.section)}
-                      >
-                        单词学习
-                      </button>
-                      <button
-                        type="button"
-                        className="eng-model-practice"
-                        disabled={words.length < 4}
-                        onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`)}
-                      >
-                        单词练习
-                      </button>
-                      <button
-                        type="button"
-                        className="eng-model-scenario"
-                        disabled={words.length < 4}
-                        onClick={() => navigate(`/student/english/scenario?unit=${encodeURIComponent(unit)}`)}
-                      >
-                        场景对话
-                      </button>
-                    </div>
-                  </div>
+                  <WordStageCard
+                    key={group.section}
+                    group={group}
+                    section={section}
+                    words={words}
+                    onLearn={() => startLearn(group.section)}
+                    onPractice={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(group.section)}`)}
+                    onUse={(stage) => navigate(`/student/english/word-use?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(group.section)}&stage=${stage}`)}
+                    onScenario={() => navigate(`/student/english/scenario?unit=${encodeURIComponent(unit)}`)}
+                  />
                 );
               })}
 

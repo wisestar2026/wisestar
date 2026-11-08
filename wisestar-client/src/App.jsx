@@ -63,6 +63,7 @@ const WrongBookPage = lazy(() => import('./pages/student/WrongBookPage'));
 const EnglishCenterPage = lazy(() => import('./pages/student/EnglishCenterPage'));
 const EnglishWordLearnPage = lazy(() => import('./pages/student/EnglishWordLearnPage'));
 const EnglishWordPracticePage = lazy(() => import('./pages/student/EnglishWordPracticePage'));
+const EnglishWordUsePage = lazy(() => import('./pages/student/EnglishWordUsePage'));
 const EnglishReadingPage = lazy(() => import('./pages/student/EnglishReadingPage'));
 const EnglishReadAloudPage = lazy(() => import('./pages/student/EnglishReadAloudPage'));
 const EnglishSentenceLearnPage = lazy(() => import('./pages/student/EnglishSentenceLearnPage'));
@@ -189,6 +190,7 @@ export default function App() {
             <Route path="english/word" element={<EnglishWordLearnPage />} />
             {/* 英语单词选择题练习（?unit=） */}
             <Route path="english/practice" element={<EnglishWordPracticePage />} />
+            <Route path="english/word-use" element={<EnglishWordUsePage />} />
             {/* 英语句子学习·连词成句（?unit=） */}
             <Route path="english/sentence" element={<EnglishSentenceLearnPage />} />
             {/* 英语重点语法（只读，?unit=） */}

@@ -2,8 +2,8 @@
  * EnglishWordPracticePage.jsx - 学员端英语单词选择题练习
  *
  * 功能:
- *   1. 以单元为单位出选择题，三种题型：看图选单词 / 看中文选单词 / 看单词选中文
- *      读音只在学员点「听发音」或点单词本身时播放，不自动朗读
+ *   1. 以单元为单位出选择题，四种题型：看图选单词 / 看中文选单词 / 看单词选中文 / 听英文选中文
+ *      读音只在学员点「听发音」或点单词本身时播放；仅「听英文选中文」在题目出现时自动播放一次
  *   2. 每题 4 个选项（1 正确 + 3 同单元干扰项），作答即判分并展示正确答案
  *   3. 答错单词在本轮末尾重出，直到答对（每词最多重出 3 次，防卡死）
  *   4. 作答回写单词熟练度与复习队列，结束记录会话（type=word-quiz）
@@ -23,9 +23,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishWordBook, getEnglishWordReview, recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
+import {
+  getEnglishWordBook, getEnglishWordReview, getEnglishReviewCandidates, recordEnglishWord, recordEnglishSession,
+} from '../../api/englishStudent';
 import { prefetchEnglishAudio, speakEnglish, stopEnglishAudio, WORD_TTS_SPEED } from '../../utils/english';
-import { buildQuiz, buildQuestionForWord, availableTypes, WORD_PLACEHOLDER } from '../../utils/englishQuiz';
+import {
+  buildQuiz, buildQuestionForWord, availableTypes, QUIZ_TYPE_ANGLE, WORD_PLACEHOLDER,
+} from '../../utils/englishQuiz';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
 import MascotBubble from '../../components/student/MascotBubble';
 import './EnglishCenterPage.css';
@@ -39,6 +43,8 @@ export default function EnglishWordPracticePage() {
   const unit = searchParams.get('unit') || '';
   // 复习页可只传待复习单词 id（逗号分隔），避免把整单元单词重做一遍
   const idsParam = searchParams.get('ids') || '';
+  // 小节入口：只练该小节的单词，干扰项仍取整单元词库（不足 4 词时四选一无法出题）
+  const sectionParam = searchParams.get('section') || '';
   // mode=review：智能复习的「单词复习」，跨单元取词（不分unit）
   const reviewMode = searchParams.get('mode') === 'review';
   const version = useStudentStore((s) => s.version);
@@ -74,23 +80,40 @@ export default function EnglishWordPracticePage() {
       ? Promise.all([
         getEnglishWordReview({ version, grade }),
         getEnglishWordBook({ version, grade, pageSize: -1 }),
-      ]).then(([reviewRes, bookRes]) => ({
-        targetList: reviewRes?.data || [],
-        poolList: bookRes?.data?.list || [],
-      }))
-      : getEnglishWordBook({ version, grade, term, unit, pageSize: -1, speed: WORD_TTS_SPEED }).then((res) => ({
-        targetList: res?.data?.list || [],
-        poolList: res?.data?.list || [],
-      }));
+        // 复习时按知识点推荐下一个未考角度，避免同一考法连续重刷
+        getEnglishReviewCandidates({ version, grade, term, module: 'word' }).catch(() => ({ data: [] })),
+      ]).then(([reviewRes, bookRes, candidateRes]) => {
+        const angleByWord = {};
+        (candidateRes?.data || []).forEach((c) => {
+          if (c.angles?.length) angleByWord[c.knowledgeId] = c.angles[0];
+        });
+        return {
+          targetList: reviewRes?.data || [],
+          poolList: bookRes?.data?.list || [],
+          angleByWord,
+        };
+      })
+      : getEnglishWordBook({ version, grade, term, unit, pageSize: -1, speed: WORD_TTS_SPEED }).then((res) => {
+        const list = res?.data?.list || [];
+        const scoped = sectionParam
+          ? list.filter((w) => String(w.section || '').trim() === sectionParam.trim())
+          : list;
+        return { targetList: scoped.length ? scoped : list, poolList: list, angleByWord: null };
+      });
     source
-      .then(({ targetList, poolList }) => {
+      .then(({ targetList, poolList, angleByWord }) => {
         const pool = poolList.length ? poolList : targetList;
         const ids = idsParam.split(',').map((id) => id.trim()).filter(Boolean);
         const filtered = ids.length ? targetList.filter((w) => ids.includes(w.id)) : targetList;
-        // 复习队列按复习时间实时变化，ids 可能已被新一批替换；过滤为空时退回本批，避免空页
-        const target = filtered.length ? filtered : targetList;
+        // 单元复习候选中可能包含「薄弱但未到期」的词，不在当日复习队列里；
+        // 这时从整册词库按候选 id 取词，保证复习页点进来的知识点都能练到。
+        const fromPool = ids.length && !filtered.length
+          ? pool.filter((w) => ids.includes(w.id))
+          : [];
+        // 复习队列按复习时间实时变化，ids 也可能已被新一批替换；仍为空时退回本批，避免空页
+        const target = filtered.length ? filtered : (fromPool.length ? fromPool : targetList);
         setWords(pool);
-        setQuestions(buildQuiz(target, pool));
+        setQuestions(buildQuiz(target, pool, angleByWord));
         setIndex(0);
         setSelectedKey(null);
         setCorrectCount(0);
@@ -106,7 +129,7 @@ export default function EnglishWordPracticePage() {
         message.error('单词加载失败');
       })
       .finally(() => setLoading(false));
-  }, [version, grade, term, unit, idsParam, reviewMode]);
+  }, [version, grade, term, unit, idsParam, reviewMode, sectionParam]);
 
   useEffect(() => {
     load();
@@ -116,15 +139,18 @@ export default function EnglishWordPracticePage() {
   const answered = selectedKey != null;
   const finished = !loading && questions.length > 0 && index >= questions.length;
 
-  // 不做任何自动朗读：题目出现、作答揭晓、切题都保持安静，只有学员点
-  // 「听发音」或点单词本身才出声（自动播音会打断思考，也容易干扰同教室的其他同学）
-  // 这里只预取当前题的读音，让点击时立刻出声
+  // 默认不自动朗读：题目出现、作答揭晓、切题都保持安静，只有学员点
+  // 「听发音」或点单词本身才出声（自动播音会打断思考，也容易干扰同教室的其他同学）。
+  // 例外是「听英文选中文」：题干本身就是声音，出现时自动播一次。
   useEffect(() => {
     const spell = current?.promptType === 'word'
       ? (current?.prompt || current?.word?.spell)
       : (current?.word?.spell || current?.prompt);
     if (!spell) return undefined;
     prefetchEnglishAudio([spell], WORD_TTS_SPEED);
+    if (current?.promptType === 'listen' && !answered) {
+      speakEnglish(spell, current?.audioUrl, WORD_TTS_SPEED);
+    }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, current?.wordId, current?.promptType]);
@@ -161,6 +187,7 @@ export default function EnglishWordPracticePage() {
       correct: option.correct,
       source: 'practice',
       firstAttempt: isFirstAttempt,
+      angle: QUIZ_TYPE_ANGLE[current.type],
     }).catch(() => {});
     // 答错：本轮末尾重出，直到答对（每词最多重出 MAX_RETRY 次，防卡死）
     if (!option.correct) {
@@ -285,7 +312,9 @@ export default function EnglishWordPracticePage() {
   // 举手用题目视图：单词练习是选择题，按当前题拼出单选结构，便于老师看懂题意与选项
   const raiseId = current ? `word:${current.key}` : '';
   const raiseTitle = current
-    ? `${current.typeLabel}：${current.promptType === 'image' ? (current.word?.meaning || '看图选单词') : current.prompt}`
+    ? `${current.typeLabel}：${current.promptType === 'image'
+      ? (current.word?.meaning || '看图选单词')
+      : (current.promptType === 'listen' ? (current.word?.spell || '听英文选中文') : current.prompt)}`
     : '';
   const raiseQuestion = current ? {
     id: raiseId,
@@ -355,6 +384,19 @@ export default function EnglishWordPracticePage() {
           <>
             <div className="eng-quiz-hint">看中文，选单词</div>
             <div className="eng-quiz-prompt-meaning">{current.prompt}</div>
+          </>
+        )}
+
+        {current.promptType === 'listen' && (
+          <>
+            <div className="eng-quiz-hint">听英文，选中文</div>
+            <button
+              type="button"
+              className="eng-quiz-listen"
+              onClick={() => speakEnglish(current.word?.spell, current.audioUrl, WORD_TTS_SPEED)}
+            >
+              🔊 再听一遍
+            </button>
           </>
         )}
 

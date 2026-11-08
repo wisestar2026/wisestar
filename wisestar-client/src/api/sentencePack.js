@@ -8,6 +8,7 @@
  *   GET  /english/sentence-pack/detail?id=  详情（含正文）
  *   POST /english/sentence-pack/delete?id=  删除
  *   GET  /english/sentence-pack/units?version=&grade=&term=  该册可用单元（批量用）
+ *   POST /english/sentence-pack/recalibrate  按题型重算全部内容包难度（返回 {updated, skipped, failed}）
  *
  * 生成类请求单独放大超时：一次生成包含多组 AI 调用，默认 30s 不够。
  */
@@ -37,6 +38,11 @@ export function getSentencePackDetail(id) {
 /** 删除句子练习内容包 */
 export function deleteSentencePack(id) {
   return request.post('/english/sentence-pack/delete', null, { params: { id } });
+}
+
+/** 重算全部内容包难度（返回 {updated, skipped, failed}） */
+export function recalibrateSentencePacks() {
+  return request.post('/english/sentence-pack/recalibrate', null, { timeout: 600000 });
 }
 
 /** 该册可用单元列表（用于批量生成） */

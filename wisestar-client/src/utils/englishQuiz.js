@@ -1,10 +1,11 @@
 /**
  * englishQuiz.js - 英语单词选择题出题工具（纯函数）
  *
- * 三种题型:
+ * 四种题型:
  *   image   看图选单词：展示配图，从 4 个英文单词里选正确拼写
  *   meaning 看中文选单词：展示中文释义，从 4 个英文单词里选正确拼写
  *   word    看单词选中文：展示英文单词，从 4 个中文释义里选正确含义
+ *   listen  听英文选中文：自动播放发音，从 4 个中文释义里选正确含义
  *
  * 约定:
  *   - 每道题恰好 1 个正确选项 + 3 个同单元干扰项，4 个选项互不相同
@@ -16,12 +17,30 @@ export const QUIZ_TYPE = {
   IMAGE: 'image',
   MEANING: 'meaning',
   WORD: 'word',
+  LISTEN: 'listen',
 };
 
 export const QUIZ_TYPE_LABEL = {
   image: '看图选单词',
   meaning: '看中文选单词',
   word: '看单词选中文',
+  listen: '听英文选中文',
+};
+
+/** 题型对应的考察角度（与后端 EnglishExamAngle 编码一致） */
+export const QUIZ_TYPE_ANGLE = {
+  image: 'image-word',
+  meaning: 'meaning-word',
+  word: 'word-meaning',
+  listen: 'word-listen',
+};
+
+/** 考察角度 → 选择题题型（仅四种选择题角度；搭配填空/默写在单词运用页） */
+export const ANGLE_TO_TYPE = {
+  'image-word': QUIZ_TYPE.IMAGE,
+  'meaning-word': QUIZ_TYPE.MEANING,
+  'word-meaning': QUIZ_TYPE.WORD,
+  'word-listen': QUIZ_TYPE.LISTEN,
 };
 
 /** 单词缺图时统一使用的占位图 */
@@ -30,8 +49,8 @@ export const WORD_PLACEHOLDER = '/word-placeholder.svg';
 /** 每个单词可选的题型（有图才出看图题） */
 export function availableTypes(word) {
   return word && word.imageUrl
-    ? [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD]
-    : [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD];
+    ? [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN]
+    : [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
 }
 
 function text(value) {
@@ -74,13 +93,14 @@ export function buildQuestion(word, pool, type, key) {
   if (!word || !availableTypes(word).includes(type)) {
     return null;
   }
-  const answerText = type === QUIZ_TYPE.WORD ? text(word.meaning) : text(word.spell);
+  const answerIsMeaning = type === QUIZ_TYPE.WORD || type === QUIZ_TYPE.LISTEN;
+  const answerText = answerIsMeaning ? text(word.meaning) : text(word.spell);
   if (!answerText) {
     return null;
   }
 
   // 候选值：按题型取全部拼写或全部释义并去重
-  const sourceKey = (item) => (type === QUIZ_TYPE.WORD ? text(item.meaning) : text(item.spell));
+  const sourceKey = (item) => (answerIsMeaning ? text(item.meaning) : text(item.spell));
   const values = [];
   const seen = new Set();
   [word, ...(pool || [])].forEach((item) => {
@@ -119,6 +139,10 @@ export function buildQuestion(word, pool, type, key) {
   } else if (type === QUIZ_TYPE.MEANING) {
     question.promptType = 'meaning';
     question.prompt = text(word.meaning);
+  } else if (type === QUIZ_TYPE.LISTEN) {
+    question.promptType = 'listen';
+    question.prompt = '';
+    question.autoPlay = true;
   } else {
     question.promptType = 'word';
     question.prompt = text(word.spell);
@@ -146,21 +170,28 @@ export function buildQuestionForWord(word, pool, preferredType, key) {
  * 为一组单元单词生成一轮题目（题型在可用题型间轮换）。
  * @param {object[]} words 需要出题的单词列表
  * @param {object[]} [pool] 干扰项候选池（默认同 words），复习时传入整单元单词
+ * @param {Object<string,string>} [angleByWord] 复习时每个单词推荐的考察角度，键为单词 ID
  * @returns {object[]} 题目数组
  */
-export function buildQuiz(words, pool = words) {
+export function buildQuiz(words, pool = words, angleByWord = null) {
   const source = words || [];
   const candidates = pool || source;
-  const rotation = [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD];
+  const rotation = [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
   const questions = [];
   source.forEach((word, index) => {
     const types = availableTypes(word);
+    // 复习优先用后端推荐的下一个未考角度，避免连续重刷同一考法
+    const recommended = angleByWord ? ANGLE_TO_TYPE[angleByWord[word.id]] : null;
     let preferred = types[0];
-    for (let k = 0; k < rotation.length; k += 1) {
-      const candidate = rotation[(index + k) % rotation.length];
-      if (types.includes(candidate)) {
-        preferred = candidate;
-        break;
+    if (recommended && types.includes(recommended)) {
+      preferred = recommended;
+    } else {
+      for (let k = 0; k < rotation.length; k += 1) {
+        const candidate = rotation[(index + k) % rotation.length];
+        if (types.includes(candidate)) {
+          preferred = candidate;
+          break;
+        }
       }
     }
     const question = buildQuestionForWord(word, candidates, preferred, `${index}-${word.id}`);
