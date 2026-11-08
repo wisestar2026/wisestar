@@ -782,6 +782,16 @@
   - `public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authenticationException) throws IOException, ServletException`
     输出未认证 JSON 响应（认证失败的统一出口）。
 
+### `shared/src/main/java/cn/wisestar/server/core/uitls/AiEndpointUtils.java`
+- 包: `cn.wisestar.server.core.uitls`
+- 类型: `class AiEndpointUtils`（final，不可实例化）
+- **类说明**：
+  AI 接口地址工具。系统 AI 设置允许填写任意 OpenAI 兼容服务，本工具把用户填的基础地址归一为完整的 `/v1/chat/completions` 对话补全地址，未填写时回退默认 SiliconFlow 地址。
+- 字段/常量: `DEFAULT_CHAT_URL`（`https://api.siliconflow.cn/v1/chat/completions`）
+- 方法:
+  - `public static String resolveChatUrl(String baseUrl)`
+    解析对话补全地址：已含 `/chat/completions` 原样返回；以版本段结尾（`/v1`、`/v4`、`/v1beta`、`/compatible-mode/v1` 等）时补 `/chat/completions`；只有域名时补 `/v1/chat/completions`。
+
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/Ansi.java`
 - 包: `cn.wisestar.server.core.uitls`
 - 类型: `class Ansi`
@@ -1657,6 +1667,13 @@
 - 方法:
   - `public String getName()`
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/SubjectStudentCount.java`
+- 包: `cn.wisestar.server.domain.dto`
+- 类型: `class SubjectStudentCount`
+- 注解: @Data
+- **类说明**：
+  按学科统计的学员数（管理端仪表盘「科次」卡片数据项）。字段 subjectId / subjectName / studentCount（同一学员去重）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/SurveySchema.java`
 - 包: `cn.wisestar.server.domain.dto`
 - 类型: `class SurveySchema`
@@ -1669,6 +1686,70 @@
   - `public DataSource()`
   - `public DataSource(String label, String value, List<DataSource> children)`
   - `public SurveySchema deepCopy()`
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/handraise/HandRaiseHandleRequest.java`
+- 包: `cn.wisestar.server.domain.dto.handraise`
+- 类型: `class HandRaiseHandleRequest`
+- 注解: @Data
+- **类说明**：
+  HandRaiseHandleRequest：举手反馈处理请求（标记已处理/已忽略）。
+- 注入/字段: id / status / handleNote
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/handraise/HandRaiseQuery.java`
+- 包: `cn.wisestar.server.domain.dto.handraise`
+- 类型: `class HandRaiseQuery`（继承 `PageQuery`）
+- 注解: @Data, @EqualsAndHashCode
+- **类说明**：
+  HandRaiseQuery：举手反馈分页查询条件（教师端/题目管理端列表）。
+- 注入/字段: raiseType / status / subject / keyword / studentId
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/handraise/HandRaiseRequest.java`
+- 包: `cn.wisestar.server.domain.dto.handraise`
+- 类型: `class HandRaiseRequest`
+- 注解: @Data
+- **类说明**：
+  HandRaiseRequest：学员举手反馈提交请求（服务端按 questionId 回填题干/选项/标准答案/解析，客户端字段仅作兜底）。
+- 注入/字段: raiseType / questionId / questionType / subject / chapter / knowledgePoint / difficulty / questionContent / optionsJson / studentAnswer / studentOptionIds / correctAnswer / correctOptionIds / answerAnalysis / page / sectionId / remark
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/handraise/HandRaiseView.java`
+- 包: `cn.wisestar.server.domain.dto.handraise`
+- 类型: `class HandRaiseView`
+- 注解: @Data
+- **类说明**：
+  HandRaiseView：举手反馈视图（教师端提醒列表 + 作答详情弹窗）。
+- 注入/字段: raiseType / status / studentId / studentName / studentNo / campus / questionId / questionType / subject / chapter / knowledgePoint / difficulty / questionContent / optionsJson / studentAnswer / studentOptionIds / correctAnswer / correctOptionIds / answerAnalysis / page / remark / handlerName / handleAt / handleNote / createAt
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/math/MathPaperMetaView.java`
+- 包: `cn.wisestar.server.domain.dto.math`
+- 类型: `class MathPaperMetaView`
+- 注解: @Data
+- **类说明**：
+  MathPaperMetaView：数学组卷配置元数据（年级→册别→章节→小节→知识点整棵可选树 + 题型/难度选项与题量统计，一次下发免二次请求）。
+- 注入/字段: totalQuestions / difficulties / questionTypes / grades / term / label / questionCount / type / questionCount
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/math/MathPaperRequest.java`
+- 包: `cn.wisestar.server.domain.dto.math`
+- 类型: `class MathPaperRequest`
+- 注解: @Data
+- **类说明**：
+  MathPaperRequest：数学组卷请求（mode=chapter 按章节/小节/知识点范围抽题；mode=student 优先取该学员错题、不足时同范围补齐）。
+- 注入/字段: mode / studentId / studentNo / chapterIds / sectionIds / knowledgePoints / difficulty / questionTypes / questionCount / title
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/math/MathPaperStudentView.java`
+- 包: `cn.wisestar.server.domain.dto.math`
+- 类型: `class MathPaperStudentView`
+- 注解: @Data
+- **类说明**：
+  MathPaperStudentView：组卷选人结果（按学号/姓名搜索学员）。
+- 注入/字段: studentNo
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/math/MathPaperView.java`
+- 包: `cn.wisestar.server.domain.dto.math`
+- 类型: `class MathPaperView`
+- 注解: @Data
+- **类说明**：
+  MathPaperView：数学试卷视图（含标准答案与解析，供教师打印）。
+- 注入/字段: title / mode / studentId / studentNo / studentName / questionCount / totalScore / generatedAt / warnings / wrongQuestionCount / questions / typeStats / difficultyStats / chapterStats / knowledgePointStats / id / name / questionType / questionTypeLabel / difficulty / difficultyLabel / score / chapter / section / knowledgePoints / schema / answerText / analysis / wrongCount
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/SystemInfo.java`
 - 包: `cn.wisestar.server.domain.dto`
@@ -1833,6 +1914,55 @@
 - 注解: @Data
 - **类说明**：
   错题错误归因请求（学员在查看错题时标注）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/DictionaryEntryView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class DictionaryEntryView`
+- 注解: @Data
+- **类说明**：
+  词典查询结果 DTO（音标 / 释义 / 例句）。字段 word / phonetic（不含斜杠）/ meaning / exampleSentence。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishGrammarQuery.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishGrammarQuery`（继承 `PageQuery`）
+- 注解: @Data, @EqualsAndHashCode
+- **类说明**：
+  英语语法查询 DTO。字段 version / grade / term / unit / section / title（模糊）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSectionQuery.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishSectionQuery`（继承 `PageQuery`）
+- 注解: @Data, @EqualsAndHashCode
+- **类说明**：
+  英语小节查询 DTO。字段 version / grade / term / unit / section（模糊）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSectionView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishSectionView`
+- 注解: @Data
+- **类说明**：
+  英语小节视图 DTO。字段 id / version / grade / term / unit / section / sort。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishWordReviewSummaryView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishWordReviewSummaryView`
+- 注解: @Data
+- **类说明**：
+  单词复习概览视图 DTO：复习页卡片展示「应复习多少词、按熟练度怎么分布、涉及哪些单元」。字段 due（应复习总数，不受单次上限影响）/ unfamiliar（熟练度 0~1）/ ordinary（熟练度 2）/ familiar（熟练度 3~4）/ unitCount / units（最多 4 个）/ batchSize（单次复习上限）。概览与复习队列复用同一 `dueWords` 取词，概览不限量、队列截 20。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/WordImageCandidateView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class WordImageCandidateView`
+- 注解: @Data
+- **类说明**：
+  单词配图候选视图 DTO（仅用于审核选择，不落库）。字段 wordId / spell / meaning / candidates（候选图片地址列表）。
+
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/WordImageView.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class WordImageView`
+- 注解: @Data
+- **类说明**：
+  单词配图结果视图 DTO（确认入库后返回）。字段 wordId / spell / imageUrl（`/api/file?id=...`）。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishAiPackQuery.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2834,6 +2964,128 @@
 
   **调用方**：api 模块系统管理相关接口（SystemApi 中的字典管理端点）。
 
+### `shared/src/main/java/cn/wisestar/server/service/EnglishDictionaryService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishDictionaryService`
+- **类说明**：
+  英语词典查询服务（免费公开词典接口）。
+- 方法:
+  - `DictionaryEntryView lookup(String word)`
+    查询单词的音标、释义与例句；无结果返回 null。
+  - `List<String> lookupImages(String word)`
+    查询单词的配图候选地址；无结果返回空列表。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishGrammarService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishGrammarService`
+- **类说明**：
+  英语语法服务（管理端与 AI 同步共用）。
+- 方法:
+  - `PaginationResponse<EnglishGrammarView> list(EnglishGrammarQuery query)`
+    语法分页列表。
+  - `void saveOrUpdate(EnglishGrammarView view)`
+    新增/更新语法（有 id 为更新）。
+  - `void delete(String id)`
+    删除语法。
+  - `boolean upsertFromAi(EnglishGrammarView view)`
+    AI 内容包同步语法：按「版本 + 年级 + 学期 + 单元 + 小节 + 标题」判定新增或更新。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishPracticeRecordService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishPracticeRecordService`
+- **类说明**：
+  英语练习作答记录与错题本服务。只负责「练习结果」这一层：保存每次交卷得分、维护最高分/上次得分、把做错的题写入英语错题本；诊断报告仍由 `EnglishUnitPaperService` 负责。
+- 方法:
+  - `EnglishPracticeSummaryView record(String userId, EnglishPracticeRecordRequest request)`
+    保存一次练习作答，返回本次与历史成绩概览。
+  - `EnglishPracticeSummaryView recordFromReport(String userId, String module, String version, String grade, ...)`
+    由检测/诊断报告落一次练习记录（无逐题交卷体时使用）。
+  - `EnglishPracticeSummaryView summary(String userId, String module, String unit)`
+    某模块某单元的成绩概览（最高分/上次得分/次数）。
+  - `List<EnglishPracticeHistoryView> history(String userId, String module, String unit, Integer limit)`
+    过往记录列表（时间倒序）。
+  - `EnglishPracticeRecordView detail(String userId, String recordId)`
+    单次记录逐题明细（供逐题解析）。
+  - `EnglishPracticeRecordView last(String userId, String module, String unit, String excludeId)`
+    上一条记录（供「与上次对比」）。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishSectionService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishSectionService`
+- **类说明**：
+  英语小节目录服务（管理端与学员端共用）。
+- 方法:
+  - `PaginationResponse<EnglishSectionView> list(EnglishSectionQuery query)`
+    小节分页列表。
+  - `List<EnglishSectionView> listByUnit(String version, String grade, String term, String unit)`
+    按单元查询全部小节（不分页，用于下拉候选与学员端分组）。
+  - `void saveOrUpdate(EnglishSectionView view)`
+    新增/更新小节（同一单元下重名拒绝）。
+  - `void delete(String id)`
+    删除小节（仅删目录项，不级联删除内容）。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishTtsService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishTtsService`
+- **类说明**：
+  英语朗读音频合成服务（服务端 TTS）。学员端设备不一定装有英文语音包，浏览器语音合成会静默失败；这里由服务端合成并缓存短句音频，前端优先播放该音频，取不到时退回浏览器语音合成。
+- 方法:
+  - `boolean available()`
+    服务端合成是否可用（引擎存在且已启用）。
+  - `byte[] synthesize(String text, String speed)`
+    合成英文短句音频；服务不可用或失败返回 null。
+  - `default void warmUp(Collection<String> texts)`
+    按默认语速预热一批文本。
+  - `void warmUp(Collection<String> texts, String speed)`
+    按指定语速预热（缓存键含语速，语速对不上的预热无效）。
+  - `String contentType()`
+    合成结果的 MIME 类型（如 audio/mpeg）。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishUnitPaperService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishUnitPaperService`
+- **类说明**：
+  英语单元练习组卷服务（内容包阶梯卷）。以 `t_english_content_tag` 为索引，把句子包/情景包中的真实考题按知识点分组，组内按 D1→D3 递进取题；缺失难度用最近难度补位，优先覆盖学员薄弱模块。交卷时按内容键回读题库答案判分并入账。
+- 方法:
+  - `List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
+    组卷（剥离答案），按知识点阶梯顺序返回题目。
+  - `DetectReportView submit(EnglishUnitPaperSubmitRequest request)`
+    单元练习交卷，按内容键回读判分并生成诊断报告。
+  - `EnglishDiagnosePaperView diagnosePaper(EnglishDiagnoseRequest request)`
+    英语学习诊断组卷（三档 24 题）。
+  - `DetectReportView diagnoseSubmit(EnglishDiagnoseSubmitRequest request)`
+    学习诊断交卷并生成家长向报告。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishWordImageService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishWordImageService`
+- **类说明**：
+  英语单词配图服务（候选抓取 / 确认入库 / 手动上传）。
+- 方法:
+  - `List<WordImageCandidateView> fetchCandidates(List<String> wordIds)`
+    为若干单词抓取候选图片（只读，不落库）。
+  - `WordImageView confirmCandidate(String wordId, String imageUrl)`
+    确认候选图：下载外部图片存到文件服务，回写单词图片地址。
+  - `WordImageView uploadForWord(String wordId, MultipartFile file)`
+    手动上传图片入库。
+  - `ImportResult autoFillByCondition(String version, String grade, String term, String unit)`
+    按条件批量自动补图（名词/形容词优先）。
+
+### `shared/src/main/java/cn/wisestar/server/service/HandRaiseService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface HandRaiseService`
+- **类说明**：
+  学员举手反馈服务接口。学员题目页「举手」提交（寻求讲解 / 题干有误 / 答案有误）、教师端提醒列表与处理、待处理数量统计。
+- 方法:
+  - `void createByStudent(HandRaiseRequest request)`
+    学员提交举手反馈（服务端按题目 ID 回填题干/选项/标准答案/解析快照）。
+  - `PaginationResponse<HandRaiseView> listHandRaises(HandRaiseQuery query)`
+    举手提醒分页列表（按校区数据权限过滤）。
+  - `void handle(HandRaiseHandleRequest request)`
+    处理举手反馈（标记状态与处理人/时间/备注）。
+  - `Map<String, Long> pendingCount()`
+    各类型待处理数量（菜单角标）。
+
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishAiPackService.java`
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishAiPackService`
@@ -2928,6 +3180,14 @@
 - **类说明**：
   英语学员学习服务（学员端学习中心）。
 - 方法:
+  - `List<EnglishUnitProgressView> unitProgress(String userId, String version, String grade, String term)`
+    单元列表 + 学习进度（含综合熟练度 mastery、分模块待复习数与单词通关汇总）。
+  - `void recordGrammar(String userId, String grammarId, boolean correct, String angle, String stage)`
+    记录语法作答（默认重载留空 angle/stage）；带角度与阶段时同步更新三态与阶段计数。
+  - `void recordSentence(String userId, String sentenceId, boolean correct, String angle, String stage)`
+    记录句子作答（默认重载留空 angle/stage）。
+  - `List<EnglishWordReviewSummaryView> wordReviewSummary(String userId, String version, Integer grade)`
+    复习页卡片概览：应复习词数、熟练度三档分布、涉及单元与单次上限。
   - `List<EnglishWrongQuestionView> wrongQuestions(String userId, Integer limit)`
     英语复习错题（聚合该学员英语学科检测记录里做错的题目，按 questionId 去重、累计错误次数、保留最近做错时间，并剔除已消灭题；题目快照已剥离标准答案与解析）。
   - `StudentQuestionView wrongQuestion(String userId, String questionId)`

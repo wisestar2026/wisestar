@@ -388,6 +388,50 @@
   - `public void delete(@RequestParam String id)`
     删除单元。
 
+### `api/src/main/java/cn/wisestar/server/api/EnglishGrammarApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class EnglishGrammarApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  英语语法管理接口（后台管理端，类级路径 `${api.prefix}/english/grammar`）。
+- 方法:
+  - `public PaginationResponse<EnglishGrammarView> list(EnglishGrammarQuery query)`
+    语法分页列表（`english:grammar:list`）。
+  - `public void save(@RequestBody EnglishGrammarView view)`
+    新增/更新语法（`english:grammar:create` 或 `english:grammar:update`）。
+  - `public void delete(@RequestParam String id)`
+    删除语法（`english:grammar:delete`）。
+
+### `api/src/main/java/cn/wisestar/server/api/EnglishSectionApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class EnglishSectionApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  英语小节管理接口（后台管理端，类级路径 `${api.prefix}/english/section`）。
+- 方法:
+  - `public PaginationResponse<EnglishSectionView> list(EnglishSectionQuery query)`
+    小节分页列表（`english:section:list`）。
+  - `public void save(@RequestBody EnglishSectionView view)`
+    新增/更新小节（`english:section:create` 或 `english:section:update`）。
+  - `public void delete(@RequestParam String id)`
+    删除小节（`english:section:delete`）。
+
+### `api/src/main/java/cn/wisestar/server/api/EnglishWordImageApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class EnglishWordImageApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  英语单词配图接口（后台管理端，类级路径 `${api.prefix}/english/word-image`；全部方法要求 `english:word:update`）。
+- 方法:
+  - `public List<WordImageCandidateView> candidates(@RequestBody Map<String, Object> request)`
+    批量抓取候选配图（只读，不落库）。
+  - `public WordImageView confirm(@RequestBody Map<String, String> request)`
+    确认候选图并下载入库（`{wordId, imageUrl}`）。
+  - `public WordImageView upload(@RequestParam String wordId, @RequestParam MultipartFile file)`
+    手动上传图片入库（multipart）。
+  - `public ImportResult autoFill(@RequestBody(required = false) Map<String, String> request)`
+    按版本/年级/册别/单元批量自动补图。
+
 ### `api/src/main/java/cn/wisestar/server/api/EnglishWordAiApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class EnglishWordAiApi`
@@ -634,6 +678,22 @@
     **调用的下层 Service**：GrowthArchiveService#generate(GrowthReportRequest)。
 
     **权限**：isAuthenticated()。
+
+### `api/src/main/java/cn/wisestar/server/api/HandRaiseApi.java`
+- 包: `cn.wisestar.server.api`
+- 类型: `class HandRaiseApi`
+- 注解: @RestController, @RequestMapping, @RequiredArgsConstructor
+- **类说明**：
+  学员举手反馈接口（类级路径 `${api.prefix}/hand-raise`）。学员题目页「举手」提交；教师端举手提醒列表、待处理数量与处理操作。
+- 方法:
+  - `public void create(@RequestBody HandRaiseRequest request)`
+    学员提交举手反馈（登录即可，服务层校验当前账号为学员）。
+  - `public PaginationResponse<HandRaiseView> list(HandRaiseQuery query)`
+    举手反馈分页列表（`handraise:list`，按校区数据权限过滤）。
+  - `public void handle(@RequestBody HandRaiseHandleRequest request)`
+    处理举手反馈（`handraise:handle`）。
+  - `public Map<String, Long> pendingCount()`
+    待处理数量（`handraise:list`；explain / error / total）。
 
 ### `api/src/main/java/cn/wisestar/server/api/KnowledgePointApi.java`
 - 包: `cn.wisestar.server.api`

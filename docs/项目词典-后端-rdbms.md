@@ -311,6 +311,14 @@
   英语语法实体（对应数据库表 t_english_grammar）。
 - 注入/字段: String id
 
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishSection.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishSection`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语小节目录实体（对应数据库表 t_english_section）。维护某「版本 + 年级 + 学期 + 单元」下的小节名称与排序，词库、句库、语法共用。
+- 注入/字段: version / grade / term / unit / section / sort
+
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishLearningLog.java`
 - 包: `cn.wisestar.server.domain.model`
 - 类型: `class EnglishLearningLog`
@@ -319,6 +327,14 @@
   英语学习日志实体（对应数据库表 t_english_learning_log）。
   该表沿用早期字段命名（duration / correct_count / created_at）， 不继承 BaseModel。
 - 注入/字段: String id
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishPracticeRecord.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishPracticeRecord`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语练习作答记录实体（对应数据库表 t_english_practice_record）。保存一次「单元练习 / 阅读理解 / 学习诊断」交卷的汇总分与逐题明细 JSON，供学习中心「过往记录」与逐题解析回看。
+- 注入/字段: userId / module / version / grade / term / unit / score / correctCount / totalCount / accuracy / durationSeconds / details
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishSentence.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -335,6 +351,14 @@
 - **类说明**：
   用户句子本实体（对应数据库表 t_english_sentence_book）。
   记录学员对句子的熟练度与复习调度信息。
+
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishScenarioPack.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishScenarioPack`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语单元情景练习内容包实体（对应数据库表 t_english_scenario_pack）。一条记录对应「版本 + 年级 + 册别 + 单元」，分别保存单词情景（wordContent）与句式情景（patternContent）两套分组 JSON，供学员端只读合并展示。
+- 注入/字段: version / grade / term / unit / wordContent / wordCount / patternContent / patternCount / readingContent
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishSentencePack.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -413,6 +437,14 @@
 - **类说明**：
   英语错题消灭记录实体（对应数据库表 t_english_wrong_redo）。字段 studentId/questionId，唯一键 (student_id, question_id) 保证幂等；学员重做正确后落库，作为「该错题已消灭」的持久化依据，聚合英语错题时剔除。
 
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishWrongQuestion.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class EnglishWrongQuestion`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  英语练习错题实体（对应数据库表 t_english_wrong_question）。记录学员在英语单元练习/阅读理解/诊断中做错的题目快照（题干 JSON、正确答案、解析、知识点）与累计错误次数、最近做错时间，供「我的错题本」聚合与重做。
+- 注入/字段: userId / module / questionId / version / grade / term / unit / chapter / knowledgePoint / questionType / questionJson / correctAnswer / answerAnalysis / wrongCount / lastWrongTime / eliminated
+
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/File.java`
 - 包: `cn.wisestar.server.domain.model`
 - 类型: `class File`
@@ -441,6 +473,14 @@
 - **类说明**：
   学习轨迹事件实体（对应数据库表 t_learning_growth）。学员成长档案的「学习轨迹」载体：每次已落库的学习行为（在线练习、单元检测、英语语法练习、上课记录）追加一条事件；写入独立于交卷主事务，幂等键为「学员 + 来源类型 + 业务对象ID」，语法类按「grammarId + 日期」累加。字段含事件类型（eventType: PRACTICE/DETECT/GRAMMAR/CLASS）、来源类型（sourceType: practice/detect/grammar/archive_record）、业务对象ID（sourceId）、发生日期/时间（eventDate/occurredAt）、章节与知识点（chapter/chapterId/knowledgePoints JSON 数组）、题量/正确数/正确率（questionCount/correctCount/accuracy）、时长（durationMs）、积分与学习币（points/coins）、标题与备注（title/remark），以及 studentId/subjectId/subjectName 与审计列。
 
+### `rdbms/src/main/java/cn/wisestar/server/domain/model/HandRaise.java`
+- 包: `cn.wisestar.server.domain.model`
+- 类型: `class HandRaise`（继承 `BaseModel`）
+- 注解: @Data, @TableName, @EqualsAndHashCode
+- **类说明**：
+  学员举手反馈实体（对应数据库表 t_hand_raise）。学员在题目页点「举手」提交反馈，按 `raiseType` 分流：`explain`（求助讲解）进学管师/教师端「举手提醒」；`question_error` / `answer_error` 进题目管理端待修任务。提交时服务端按 questionId 回填题干、选项、标准答案与解析快照，并连同学员作答与选中选项 ID 一起落库，保证题目后续被修改后仍能还原当时现场。
+- 注入/字段: studentId / raiseType / status / questionId / questionType / subject / chapter / knowledgePoint / difficulty / questionContent / optionsJson / studentAnswer / studentOptionIds / correctAnswer / correctOptionIds / answerAnalysis / page / sectionId / remark / handlerId / handlerName / handleAt / handleNote
+
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/MallGoods.java`
 - 包: `cn.wisestar.server.domain.model`
 - 类型: `class MallGoods`
@@ -455,13 +495,6 @@
 - **类说明**：
   学币兑换订单实体（对应数据库表 t_mall_order）。
   学员在商城发起兑换时生成订单并「暂时扣除」学币，同时下发随机 6 位核销码； 老师在核销页凭核销码确认后订单完成（学币正式扣除）。订单记录永久保留。
-
-### `rdbms/src/main/java/cn/wisestar/server/domain/model/Permission.java`
-- 包: `cn.wisestar.server.domain.model`
-- 类型: `class Permission`
-- 注解: @Data, @TableName, @EqualsAndHashCode
-- **类说明**：
-  这个只用来存用户自定义的权限
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/Position.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -527,11 +560,6 @@
 - 类型: `class Role`
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - 注入/字段: Date createAt
-
-### `rdbms/src/main/java/cn/wisestar/server/domain/model/RolePermission.java`
-- 包: `cn.wisestar.server.domain.model`
-- 类型: `class RolePermission`
-- 注解: @Data, @TableName, @EqualsAndHashCode
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/Section.java`
 - 包: `cn.wisestar.server.domain.model`
@@ -1286,6 +1314,94 @@
   - `static Mastery judgeDictation(String expected, String actual)`
   - `static Mastery judgeBlanks(List<String> expected, String actualText, Boolean hintUsed)`
   - `static Mastery judgeTurn(List<String> expected, String actualText, Integer changes)`
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishGrammarServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishGrammarServiceImpl implements EnglishGrammarService`
+- 注解: @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语语法服务实现。
+- 方法:
+  - `public PaginationResponse<EnglishGrammarView> list(EnglishGrammarQuery query)`
+    语法分页列表（版本/年级/册别/单元/小节/标题筛选）。
+  - `public void saveOrUpdate(EnglishGrammarView view)`
+    新增/更新语法（有 id 为更新）。
+  - `public void delete(String id)`
+    删除语法。
+  - `public boolean upsertFromAi(EnglishGrammarView view)`
+    AI 内容包同步语法：按「版本 + 年级 + 学期 + 单元 + 小节 + 标题」判定新增或更新。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSectionServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishSectionServiceImpl implements EnglishSectionService`
+- 注解: @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语小节目录服务实现。
+- 方法:
+  - `public PaginationResponse<EnglishSectionView> list(EnglishSectionQuery query)`
+    小节分页列表。
+  - `public List<EnglishSectionView> listByUnit(String version, String grade, String term, String unit)`
+    按单元查询全部小节（不分页，用于下拉候选与学员端分组）。
+  - `public void saveOrUpdate(EnglishSectionView view)`
+    新增/更新小节（同一单元下重名拒绝）。
+  - `public void delete(String id)`
+    删除小节（仅删目录项，不级联删除内容）。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishWordImageServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishWordImageServiceImpl implements EnglishWordImageService`
+- 注解: @Slf4j, @Service, @RequiredArgsConstructor
+- **类说明**：
+  英语单词配图服务实现。候选图来自词典接口的附图字段，确认入库时下载图片并复用 `FileService.upload` 落盘，单词 `imageUrl` 指向 `/api/file?id=<fileId>`（免登录可访问）。
+- 方法:
+  - `public List<WordImageCandidateView> fetchCandidates(List<String> wordIds)`
+    批量抓取候选配图（只读，不落库）。
+  - `public WordImageView confirmCandidate(String wordId, String imageUrl)`
+    确认候选图并下载入库，回写单词 imageUrl。
+  - `public WordImageView uploadForWord(String wordId, MultipartFile file)`
+    手动上传图片入库。
+  - `public ImportResult autoFillByCondition(String version, String grade, String term, String unit)`
+    按单元为名词/形容词批量自动补图。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/HandRaiseServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class HandRaiseServiceImpl extends BaseService<HandRaiseMapper, HandRaise> implements HandRaiseService`
+- 注解: @Service, @RequiredArgsConstructor
+- **类说明**：
+  学员举手反馈服务实现。提交链路：学员端题目页「举手」→ `createByStudent`，按 `t_template` 当前内容回填题干/选项/标准答案/解析/知识点快照，连同学员作答与选中选项 ID 落库。处理链路：教师端「举手提醒」列表（按校区数据权限过滤）→ explain 类展示学员作答并标记已处理；question_error / answer_error 类作为题目管理端待修任务。
+- 方法:
+  - `public void createByStudent(HandRaiseRequest request)`
+    学员提交举手反馈（回填题目快照）。
+  - `public PaginationResponse<HandRaiseView> listHandRaises(HandRaiseQuery query)`
+    举手提醒分页列表（按校区数据权限过滤）。
+  - `public void handle(HandRaiseHandleRequest request)`
+    处理举手反馈（标记状态 + 处理人/时间/备注）。
+  - `public Map<String, Long> pendingCount()`
+    各类型待处理数量（菜单角标，30 秒轮询）。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/YoudaoDictionaryServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class YoudaoDictionaryServiceImpl implements EnglishDictionaryService`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  有道词典查询服务实现。使用免费公开接口 `https://dict.youdao.com/jsonapi?q=<word>`，无需密钥；返回音标（`ec.word[].usphone/ukphone`）、中文释义（`ec.word[].trs`）、双语例句（`blng_sents_part.sentence-pair[]`）与附图（`pic_dict.pic[]`）。
+- 方法:
+  - `public DictionaryEntryView lookup(String word)`
+    查询单词的音标/释义/例句。
+  - `public List<String> lookupImages(String word)`
+    查询单词的候选配图地址（供配图审核）。
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/ByteArrayMultipartFile.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class ByteArrayMultipartFile implements MultipartFile`
+- 注解: 无（普通类）
+- **类说明**：
+  基于字节数组的 `MultipartFile` 实现。用于把程序下载到的图片字节（如候选配图）包装成 MultipartFile，复用 `FileService.upload` 落盘与元数据入库。
+- 方法:
+  - `public ByteArrayMultipartFile(String name, String originalFilename, String contentType, byte[] bytes)`
+    构造：名称、原始文件名、MIME、字节内容。
+  - `public byte[] getBytes()` / `public InputStream getInputStream()` / `public long getSize()` / `public String getName()` / `public String getOriginalFilename()` / `public String getContentType()` / `public boolean isEmpty()` / `public void transferTo(File dest)`
+    `MultipartFile` 契约实现。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EvaluationServiceImpl.java`
 - 包: `cn.wisestar.server.impl`
@@ -2069,6 +2185,42 @@
 - **类说明**：
   EnglishSentencePack Mapper（MyBatis-Plus 基础 CRUD）。
 
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishLearningStateMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishLearningStateMapper extends BaseMapper<EnglishLearningState>`
+- **类说明**：
+  英语知识点学习状态（三态 + 薄弱攻克计数）Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishExamAngleUseMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishExamAngleUseMapper extends BaseMapper<EnglishExamAngleUse>`
+- **类说明**：
+  英语考察角度使用记录（复习派生题按角度轮换）Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishPracticeRecordMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishPracticeRecordMapper`
+- **类说明**：
+  英语练习作答记录实体 Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishScenarioPackMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishScenarioPackMapper`
+- **类说明**：
+  英语单元情景练习内容包 Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishSectionMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishSectionMapper`
+- **类说明**：
+  英语小节目录实体 Mapper（MyBatis-Plus 基础 CRUD）。
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishWrongQuestionMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface EnglishWrongQuestionMapper`
+- **类说明**：
+  英语练习错题实体 Mapper（MyBatis-Plus 基础 CRUD）。
+
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/EnglishUnitMapper.java`
 - 包: `cn.wisestar.server.mapper`
 - 类型: `interface EnglishUnitMapper`
@@ -2096,6 +2248,12 @@
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/FileMapper.java`
 - 包: `cn.wisestar.server.mapper`
 - 类型: `interface FileMapper`
+
+### `rdbms/src/main/java/cn/wisestar/server/mapper/HandRaiseMapper.java`
+- 包: `cn.wisestar.server.mapper`
+- 类型: `interface HandRaiseMapper`
+- **类说明**：
+  学员举手反馈 Mapper（MyBatis-Plus 基础 CRUD）。
 
 ### `rdbms/src/main/java/cn/wisestar/server/mapper/KnowledgePointMapper.java`
 - 包: `cn.wisestar.server.mapper`
