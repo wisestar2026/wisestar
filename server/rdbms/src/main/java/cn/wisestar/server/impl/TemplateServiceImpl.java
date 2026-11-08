@@ -6,6 +6,7 @@ import cn.wisestar.server.core.uitls.ContextHelper;
 import cn.wisestar.server.core.uitls.EnglishDifficultyUtil;
 import cn.wisestar.server.core.uitls.SecurityContextUtils;
 import cn.wisestar.server.domain.dto.*;
+import cn.wisestar.server.domain.dto.english.EnglishRecalibrateResultView;
 import cn.wisestar.server.domain.mapper.TemplateViewMapper;
 import cn.wisestar.server.domain.model.Repo;
 import cn.wisestar.server.domain.model.Tag;
@@ -298,25 +299,61 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
     }
 
     @Override
-    public int recalibrateEnglishDifficulty() {
+    public EnglishRecalibrateResultView recalibrateEnglishDifficulty() {
+        EnglishRecalibrateResultView summary = new EnglishRecalibrateResultView();
         List<Template> templates = list(Wrappers.<Template>lambdaQuery().eq(Template::getSubject, "英语"));
-        int updated = 0;
         for (Template template : templates) {
-            String level = englishDifficulty(template);
-            boolean changed = !level.equals(template.getDifficulty());
-            SurveySchema schema = template.getTemplate();
-            if (schema != null && schema.getAttribute() != null && !level.equals(schema.getAttribute().getDifficulty())) {
-                schema.getAttribute().setDifficulty(level);
-                template.setTemplate(schema);
-                changed = true;
-            }
-            if (changed) {
-                template.setDifficulty(level);
-                updateById(template);
-                updated++;
+            try {
+                if (isBlankEnglishContent(template)) {
+                    // 缺少英文题干与答案的题目无法评分，跳过并计数，便于管理端排查
+                    summary.setSkipped(summary.getSkipped() + 1);
+                    continue;
+                }
+                String level = englishDifficulty(template);
+                boolean changed = !level.equals(template.getDifficulty());
+                SurveySchema schema = template.getTemplate();
+                if (schema != null && schema.getAttribute() != null
+                        && !level.equals(schema.getAttribute().getDifficulty())) {
+                    schema.getAttribute().setDifficulty(level);
+                    template.setTemplate(schema);
+                    changed = true;
+                }
+                if (changed) {
+                    template.setDifficulty(level);
+                    updateById(template);
+                }
+                summary.setUpdated(summary.getUpdated() + 1);
+            } catch (Exception e) {
+                summary.setFailed(summary.getFailed() + 1);
+                log.warn("英语题目难度重算失败 template=" + template.getId() + " " + e.getMessage());
             }
         }
-        return updated;
+        log.debug("英语题目难度重算完成 updated=" + summary.getUpdated() + " skipped=" + summary.getSkipped()
+                + " failed=" + summary.getFailed());
+        return summary;
+    }
+
+    /** 题干、答案与选项都没有英文内容时视为缺少标签，无法评分 */
+    private boolean isBlankEnglishContent(Template template) {
+        if (EnglishDifficultyUtil.words(template.getName()).isEmpty()) {
+            return true;
+        }
+        SurveySchema schema = template.getTemplate();
+        if (schema == null) {
+            return false;
+        }
+        if (schema.getAttribute() != null && !EnglishDifficultyUtil
+                .words(schema.getAttribute().getExamCorrectAnswer()).isEmpty()) {
+            return false;
+        }
+        if (schema.getChildren() != null) {
+            for (SurveySchema child : schema.getChildren()) {
+                if (!EnglishDifficultyUtil.words(child.getTitle()).isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

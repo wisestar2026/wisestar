@@ -2311,6 +2311,55 @@ ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS update_by varchar(256);
 ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS is_deleted tinyint DEFAULT 0;
 UPDATE t_english_grammar SET create_at = created_at WHERE create_at IS NULL AND created_at IS NOT NULL;
 
+-- 英语知识点学习状态（三态 + 攻克计数 + 角度使用，供单词/句式/语法三模块共用）
+-- 与 t_english_word_book / t_english_sentence_book / t_english_grammar_book 并存：
+--   *_book 管熟练度与复习时间；本表管熟练/一般/陌生三态、连续正确计数与输出题达标计数。
+CREATE TABLE IF NOT EXISTS t_english_learning_state (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL,
+  module varchar(16) NOT NULL COMMENT '模块：word/sentence/grammar',
+  knowledge_id varchar(191) NOT NULL COMMENT '知识点ID：单词ID/句子ID/语法点ID',
+  state varchar(16) DEFAULT 'unfamiliar' COMMENT '掌握状态：familiar/ordinary/unfamiliar',
+  consecutive_correct int DEFAULT 0 COMMENT '连续答对计数（攻克判定用，答错清零）',
+  consecutive_wrong int DEFAULT 0 COMMENT '连续答错计数（薄弱判定用，答对清零）',
+  output_correct_count int DEFAULT 0 COMMENT '输出类题型答对次数（默写/填空/组句/改写）',
+  last_angle varchar(32) COMMENT '最近一次作答的考察角度',
+  memory_total int DEFAULT 0 COMMENT '记忆阶段答题总数',
+  memory_correct int DEFAULT 0 COMMENT '记忆阶段答对总数',
+  practice_total int DEFAULT 0 COMMENT '练习阶段答题总数',
+  practice_correct int DEFAULT 0 COMMENT '练习阶段答对总数',
+  use_total int DEFAULT 0 COMMENT '运用阶段答题总数',
+  use_correct int DEFAULT 0 COMMENT '运用阶段答对总数',
+  weak_flag tinyint DEFAULT 0 COMMENT '是否在薄弱池',
+  weak_reason varchar(64) COMMENT '薄弱原因：consecutive_wrong/accuracy/output_error',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_module_kp (user_id, module, knowledge_id)
+);
+CREATE INDEX IF NOT EXISTS idx_english_learning_state_weak ON t_english_learning_state (user_id, module, weak_flag);
+
+-- 英语考察角度使用记录（防止同一知识点连续用同一角度，形成「换汤不换药」）
+CREATE TABLE IF NOT EXISTS t_english_exam_angle_use (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL,
+  module varchar(16) NOT NULL COMMENT '模块：word/sentence/grammar',
+  knowledge_id varchar(191) NOT NULL COMMENT '知识点ID',
+  angle varchar(32) NOT NULL COMMENT '考察角度编码',
+  use_count int DEFAULT 1 COMMENT '使用次数',
+  last_use_at timestamp COMMENT '最近使用时间',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_user_module_kp_angle (user_id, module, knowledge_id, angle)
+);
+
 -- 用户语法本（熟练度 + 复习调度，供英语语法练习与复习）
 CREATE TABLE IF NOT EXISTS t_english_grammar_book (
   id varchar(64) NOT NULL,

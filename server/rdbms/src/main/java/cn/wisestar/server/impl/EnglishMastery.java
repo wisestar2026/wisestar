@@ -43,6 +43,33 @@ public final class EnglishMastery {
 	/** 单词通关门槛：待巩固词占单元词数比例（百分比，上限） */
 	public static final int UNIT_WEAK_RATE = 10;
 
+	/** 单词记忆通关：小节内答题正确率（百分比） */
+	public static final int WORD_MEMORY_PASS_RATE = 85;
+
+	/** 单词记忆通关：小节内标记为「熟练」的占比（百分比） */
+	public static final int WORD_MEMORY_FAMILIAR_RATE = 70;
+
+	/** 单词练习通关：三个子题型各自正确率（百分比） */
+	public static final int WORD_PRACTICE_PASS_RATE = 80;
+
+	/** 单词运用通关：三个子功能正确率（百分比） */
+	public static final int WORD_USE_PASS_RATE = 75;
+
+	/** 掌握状态：熟练 */
+	public static final String STATE_FAMILIAR = "familiar";
+
+	/** 掌握状态：一般 */
+	public static final String STATE_ORDINARY = "ordinary";
+
+	/** 掌握状态：陌生 */
+	public static final String STATE_UNFAMILIAR = "unfamiliar";
+
+	/** 三态分界：一般及以上要求的最低正确率（百分比） */
+	public static final int STATE_ORDINARY_RATE = 60;
+
+	/** 三态分界：熟练要求的最低正确率（百分比） */
+	public static final int STATE_FAMILIAR_RATE = 85;
+
 	private EnglishMastery() {
 	}
 
@@ -87,6 +114,22 @@ public final class EnglishMastery {
 			case LEVEL_WEAK: return "待巩固";
 			default: return "未掌握";
 		}
+	}
+
+	/**
+	 * 掌握状态中文标签。
+	 *
+	 * @param state familiar / ordinary / unfamiliar
+	 * @return 熟练 / 一般 / 陌生
+	 */
+	public static String stateLabel(String state) {
+		if (STATE_FAMILIAR.equals(state)) {
+			return "熟练";
+		}
+		if (STATE_ORDINARY.equals(state)) {
+			return "一般";
+		}
+		return "陌生";
 	}
 
 	/**

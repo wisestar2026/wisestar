@@ -9,6 +9,7 @@ import cn.wisestar.server.domain.model.EnglishWordBook;
 import cn.wisestar.server.mapper.EnglishLearningLogMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
+import cn.wisestar.server.service.EnglishLearningRuleService;
 import cn.wisestar.server.service.EnglishTtsService;
 import cn.wisestar.server.service.EnglishWordService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -42,6 +43,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	private final EnglishLearningLogMapper englishLearningLogMapper;
 	private final EnglishPracticeEvaluator englishPracticeEvaluator;
 	private final EnglishTtsService englishTtsService;
+	private final EnglishLearningRuleService englishLearningRuleService;
 
 	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
 	private static final int WEAK_WRONG_TIMES = 2;
@@ -60,6 +62,20 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 
 	/** 上报来源：进入学习前的强制巩固 */
 	private static final String SOURCE_DRILL = "drill";
+
+	/** 上报来源：单词运用（选词填空、词汇默写） */
+	private static final String SOURCE_USE = "use";
+
+	/** 运用阶段别名（前端按规格传 word-use / word-scenario） */
+	private static final String SOURCE_WORD_USE = "word-use";
+
+	private static final String SOURCE_WORD_SCENARIO = "word-scenario";
+
+	/** 词汇默写：属运用阶段，角度固定为默写 */
+	private static final String SOURCE_WORD_DICTATION = "word-dictation";
+
+	/** 上报来源：情景对话 */
+	private static final String SOURCE_SCENARIO = "scenario";
 
 	@Override
 	public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query) {
@@ -149,6 +165,36 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			v.setMasteryLevel(masteryLevel);
 			v.setMasteryLabel(EnglishMastery.label(masteryLevel));
 		});
+		fillLearningState(userId, views);
+	}
+
+	/**
+	 * 回填三态掌握与已用考察角度（与单词本 familiarity 并存，互不覆盖）。
+	 *
+	 * @param userId 用户 ID
+	 * @param views 单词视图
+	 */
+	private void fillLearningState(String userId, List<EnglishWordView> views) {
+		if (userId == null || views.isEmpty()) {
+			return;
+		}
+		java.util.Map<String, cn.wisestar.server.domain.dto.english.EnglishLearningStateView> states =
+				englishLearningRuleService.loadStates(userId,
+						java.util.List.of(cn.wisestar.server.impl.EnglishExamAngle.MODULE_WORD));
+		java.util.Map<String, java.util.List<String>> usedAngles = englishLearningRuleService.angleUsed(userId,
+				cn.wisestar.server.impl.EnglishExamAngle.MODULE_WORD,
+				views.stream().map(EnglishWordView::getId).collect(Collectors.toList()));
+		views.forEach(v -> {
+			cn.wisestar.server.domain.dto.english.EnglishLearningStateView state = states.get(
+					cn.wisestar.server.impl.EnglishExamAngle.MODULE_WORD + "|" + v.getId());
+			String stateValue = state == null || state.getState() == null
+					? cn.wisestar.server.impl.EnglishStateRule.UNFAMILIAR
+					: state.getState();
+			v.setMasteryState(stateValue);
+			v.setMasteryStateLabel(EnglishMastery.stateLabel(stateValue));
+			java.util.List<String> used = usedAngles.get(v.getId());
+			v.setAngleUsed(used == null ? java.util.Collections.emptyList() : used);
+		});
 	}
 
 	@Override
@@ -236,6 +282,12 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 
 	@Override
 	public void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt) {
+		recordLearning(userId, wordId, correct, source, firstAttempt, null);
+	}
+
+	@Override
+	public void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt,
+			String angle) {
 		// 「练习/巩固」的首次作答计入首答统计；学习环节的点击与重做不算
 		boolean quizFirst = firstAttempt
 				&& (SOURCE_PRACTICE.equals(source) || SOURCE_DRILL.equals(source));
@@ -281,6 +333,45 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 			englishPracticeEvaluator.record(userId, word.getVersion(), word.getGrade(), word.getTerm(),
 					word.getUnit(), EnglishPracticeEvaluator.MODULE_WORD, correct);
 		}
+		// 三态与三阶进度：仅首答计入，重做不重复累计
+		String stage = stageOf(source);
+		String resolvedAngle = angle != null ? angle : angleOf(source);
+		englishLearningRuleService.recordAnswer(userId, EnglishExamAngle.MODULE_WORD, wordId, resolvedAngle, correct,
+				stage, firstAttempt);
+	}
+
+	/**
+	 * 作答来源 → 三阶阶段。
+	 */
+	private String stageOf(String source) {
+		if (SOURCE_LEARN.equals(source)) {
+			return "memory";
+		}
+		if (SOURCE_USE.equals(source) || SOURCE_SCENARIO.equals(source)
+				|| SOURCE_WORD_USE.equals(source) || SOURCE_WORD_SCENARIO.equals(source)
+				|| SOURCE_WORD_DICTATION.equals(source)) {
+			return "use";
+		}
+		return "practice";
+	}
+
+	/**
+	 * 作答来源 → 默认考察角度（前端未显式传角度时使用）。
+	 */
+	private String angleOf(String source) {
+		if (SOURCE_LEARN.equals(source)) {
+			return EnglishExamAngle.WORD_MEANING;
+		}
+		if (SOURCE_USE.equals(source) || SOURCE_WORD_USE.equals(source)) {
+			return EnglishExamAngle.WORD_COLLOCATION;
+		}
+		if (SOURCE_WORD_DICTATION.equals(source)) {
+			return EnglishExamAngle.WORD_DICTATION;
+		}
+		if (SOURCE_SCENARIO.equals(source) || SOURCE_WORD_SCENARIO.equals(source)) {
+			return EnglishExamAngle.WORD_COLLOCATION;
+		}
+		return EnglishExamAngle.MEANING_WORD;
 	}
 
 	/**

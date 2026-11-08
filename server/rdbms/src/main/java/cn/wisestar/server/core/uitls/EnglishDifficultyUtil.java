@@ -99,6 +99,17 @@ public final class EnglishDifficultyUtil {
 		public String getLabel() {
 			return level >= 3 ? "hard" : level == 2 ? "medium" : "easy";
 		}
+
+		/**
+		 * 本题是否超出该年级允许的难度上限。
+		 *
+		 * @param grade 年级，如 三年级
+		 * @param module 模块：word / sentence / grammar
+		 * @return true 表示超限，应丢弃重生成
+		 */
+		public boolean exceedsGradeLimit(String grade, String module) {
+			return level > maxLevelOf(grade, module);
+		}
 	}
 
 	private static final Pattern WORD = Pattern.compile("[A-Za-z0-9]+(?:[.'’-][A-Za-z0-9]+)*");
@@ -237,6 +248,78 @@ public final class EnglishDifficultyUtil {
 	/**
 	 * 一~四年级按更短的句子判断；其余年级按高年级阈值。
 	 */
+	/**
+	 * 年级难度上限：1~2 年级单词 easy/medium、句式仅 easy；3~4 年级 easy/medium；
+	 * 5~6 年级与更高年级开放三档。句子内容包不得出现超过上限的难度。
+	 *
+	 * @param grade 年级，如 三年级；为空按高年级上限
+	 * @param module 模块：word / sentence / grammar；句式模块低年级更严
+	 * @return 允许的最大 level（1 简单 / 2 中等 / 3 困难）
+	 */
+	public static int maxLevelOf(String grade, String module) {
+		int gradeNo = gradeNumber(grade);
+		if (gradeNo <= 0) {
+			return 3;
+		}
+		if (gradeNo <= 2) {
+			return "sentence".equals(module) ? 1 : 2;
+		}
+		if (gradeNo <= 4) {
+			return 2;
+		}
+		return 3;
+	}
+
+	/**
+	 * 从年级文案中取数字。
+	 *
+	 * @param grade 如 三年级 / 6年级 / 七年级
+	 * @return 1~12，无法识别返回 0
+	 */
+	public static int gradeNumber(String grade) {
+		if (isBlank(grade)) {
+			return 0;
+		}
+		String value = grade.replace(" ", "");
+		// 阿拉伯数字优先
+		Matcher digit = Pattern.compile("(\\d{1,2})").matcher(value);
+		if (digit.find()) {
+			try {
+				return Integer.parseInt(digit.group(1));
+			} catch (NumberFormatException ignored) {
+				return 0;
+			}
+		}
+		if (value.contains("一")) {
+			return 1;
+		}
+		if (value.contains("二")) {
+			return 2;
+		}
+		if (value.contains("三")) {
+			return 3;
+		}
+		if (value.contains("四")) {
+			return 4;
+		}
+		if (value.contains("五")) {
+			return 5;
+		}
+		if (value.contains("六")) {
+			return 6;
+		}
+		if (value.contains("七")) {
+			return 7;
+		}
+		if (value.contains("八")) {
+			return 8;
+		}
+		if (value.contains("九")) {
+			return 9;
+		}
+		return 0;
+	}
+
 	private static boolean isLowerGrade(String grade) {
 		if (isBlank(grade)) {
 			return false;

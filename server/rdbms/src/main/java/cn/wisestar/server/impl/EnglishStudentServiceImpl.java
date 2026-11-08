@@ -41,6 +41,7 @@ import cn.wisestar.server.mapper.EnglishWrongQuestionMapper;
 import cn.wisestar.server.mapper.DetectRecordMapper;
 import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
+import cn.wisestar.server.service.EnglishLearningRuleService;
 import cn.wisestar.server.service.EnglishStudentService;
 import cn.wisestar.server.service.EnglishUnitService;
 import cn.wisestar.server.service.GrowthArchiveService;
@@ -96,6 +97,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final GrowthArchiveService growthArchiveService;
 	private final ObjectMapper objectMapper;
 	private final EnglishPracticeEvaluator englishPracticeEvaluator;
+	private final EnglishLearningRuleService englishLearningRuleService;
 
 	/** 单词复习单次上限：一次 20 词，未复习完的到期单词留到下一轮 */
 	private static final int MAX_WORD_REVIEW = 20;
@@ -129,11 +131,13 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			grammarUnitById.put(grammar.getId(), grammar.getUnit());
 		}
 
-		Date now = new Date();
 		List<EnglishWordBook> wordBooks = loadWordBooks(userId, new ArrayList<>(wordUnitById.keySet()));
 		List<EnglishSentenceBook> sentenceBooks = loadSentenceBooks(userId, new ArrayList<>(sentenceUnitById.keySet()));
 		List<EnglishGrammarBook> grammarBooks = loadGrammarBooks(userId, new ArrayList<>(grammarUnitById.keySet()));
 
+		// 单词通关口径与小节三阶一致，统一由规则服务计算，避免列表页与详情页数字打架
+		Map<String, EnglishUnitProgressView> wordPassSummary = englishLearningRuleService.wordPassSummary(userId,
+				version, grade, term);
 		List<EnglishUnitProgressView> result = new ArrayList<>();
 		for (EnglishUnitView unit : units) {
 			EnglishUnitProgressView view = new EnglishUnitProgressView();
@@ -147,7 +151,6 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			int wordMastered = 0;
 			int wordWeak = 0;
 			int familiaritySum = 0;
-			int reviewDue = 0;
 			for (EnglishWordBook book : wordBooks) {
 				if (!unit.getUnit().equals(wordUnitById.get(book.getWordId()))) {
 					continue;
@@ -164,9 +167,6 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				else if (wordMastery == EnglishMastery.LEVEL_WEAK) {
 					wordWeak++;
 				}
-				if (isDue(book.getNextReviewTime(), now)) {
-					reviewDue++;
-				}
 			}
 
 			int sentenceFinished = 0;
@@ -178,9 +178,6 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				familiaritySum += Math.min(Math.max(familiarity, 0), 4);
 				if (familiarity >= 1) {
 					sentenceFinished++;
-				}
-				if (isDue(book.getNextReviewTime(), now)) {
-					reviewDue++;
 				}
 			}
 
@@ -203,20 +200,41 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			int mastery = totalItems == 0 ? 0
 					: (int) Math.round(familiaritySum * 100.0 / (4.0 * totalItems));
 
-			int wordTotal = unit.getWordCount() == null ? 0 : unit.getWordCount();
-			// 单词通关：掌握 >= 80% 且待巩固 <= 10%（待巩固含历史遗留的「有记录无首答」单词）
-			boolean wordPass = wordTotal > 0
-					&& wordMastered * 100 >= wordTotal * EnglishMastery.UNIT_PASS_RATE
-					&& wordWeak * 100 <= wordTotal * EnglishMastery.UNIT_WEAK_RATE;
+			EnglishUnitProgressView wordSummary = wordPassSummary.get(unit.getUnit());
+			boolean wordPass = wordSummary != null && Boolean.TRUE.equals(wordSummary.getWordPass());
+			// 待复习数统一取 rule service 的复习候选，避免左侧角标与复习页列表口径不一致
+			List<cn.wisestar.server.domain.dto.english.EnglishReviewCandidateView> candidates =
+					englishLearningRuleService.reviewCandidates(userId, version, grade, term, unit.getUnit(), null);
+			int dueWord = 0;
+			int dueSentence = 0;
+			int dueGrammar = 0;
+			for (cn.wisestar.server.domain.dto.english.EnglishReviewCandidateView candidate : candidates) {
+				if ("sentence".equals(candidate.getModule())) {
+					dueSentence++;
+				} else if ("grammar".equals(candidate.getModule())) {
+					dueGrammar++;
+				} else {
+					dueWord++;
+				}
+			}
 
 			view.setWordFinished(wordFinished);
 			view.setWordMastered(wordMastered);
 			view.setWordWeak(wordWeak);
 			view.setWordPass(wordPass);
+			if (wordSummary != null) {
+				view.setWordPassRate(wordSummary.getWordPassRate());
+				view.setSections(wordSummary.getSections());
+			} else {
+				view.setWordPassRate(0);
+			}
 			view.setSentenceFinished(sentenceFinished);
 			view.setGrammarFinished(grammarFinished);
 			view.setMastery(mastery);
-			view.setReviewDue(reviewDue);
+			view.setReviewDue(candidates.size());
+			view.setReviewDueWord(dueWord);
+			view.setReviewDueSentence(dueSentence);
+			view.setReviewDueGrammar(dueGrammar);
 			result.add(view);
 		}
 		return result;
@@ -253,6 +271,11 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 
 	@Override
 	public void recordGrammar(String userId, String grammarId, boolean correct) {
+		recordGrammar(userId, grammarId, correct, null, "practice");
+	}
+
+	@Override
+	public void recordGrammar(String userId, String grammarId, boolean correct, String angle, String stage) {
 		Date now = new Date();
 		EnglishGrammarBook book = englishGrammarBookMapper.selectOne(
 				Wrappers.<EnglishGrammarBook>lambdaQuery()
@@ -281,6 +304,10 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		}
 
 		writeLog(userId, "grammar", grammarId, 0, correct ? 1 : 0);
+		String resolvedAngle = angle != null ? angle : EnglishExamAngle.GRAMMAR_CHOICE;
+		String resolvedStage = normalizeStage(stage);
+		englishLearningRuleService.recordAnswer(userId, EnglishExamAngle.MODULE_GRAMMAR, grammarId, resolvedAngle,
+				correct, resolvedStage, true);
 
 		// 成长档案：语法练习轨迹留痕（按 grammarId + 日期累加，幂等；失败不阻断）
 		try {
@@ -336,8 +363,29 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		return views;
 	}
 
+	/**
+	 * 前端讲「学习阶段」用 learn / practice，规则服务只认 memory / practice / use，这里做一次收敛。
+	 */
+	private String normalizeStage(String stage) {
+		if (stage == null) {
+			return "practice";
+		}
+		if ("learn".equals(stage)) {
+			return "memory";
+		}
+		if ("memory".equals(stage) || "use".equals(stage)) {
+			return stage;
+		}
+		return "practice";
+	}
+
 	@Override
 	public void recordSentence(String userId, String sentenceId, boolean correct) {
+		recordSentence(userId, sentenceId, correct, null, "practice");
+	}
+
+	@Override
+	public void recordSentence(String userId, String sentenceId, boolean correct, String angle, String stage) {
 		Date now = new Date();
 		EnglishSentenceBook book = englishSentenceBookMapper.selectOne(
 				Wrappers.<EnglishSentenceBook>lambdaQuery()
@@ -372,6 +420,10 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			englishPracticeEvaluator.record(userId, sentence.getVersion(), sentence.getGrade(), sentence.getTerm(),
 					sentence.getUnit(), EnglishPracticeEvaluator.MODULE_SENTENCE, correct);
 		}
+		String resolvedAngle = angle != null ? angle : EnglishExamAngle.SENTENCE_BUILD;
+		String resolvedStage = normalizeStage(stage);
+		englishLearningRuleService.recordAnswer(userId, EnglishExamAngle.MODULE_SENTENCE, sentenceId, resolvedAngle,
+				correct, resolvedStage, true);
 	}
 
 	@Override

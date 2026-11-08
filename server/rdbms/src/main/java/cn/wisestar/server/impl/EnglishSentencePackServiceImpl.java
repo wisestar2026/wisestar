@@ -5,6 +5,7 @@ import cn.wisestar.server.core.constant.AiPromptKeys;
 import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.core.uitls.EnglishDifficultyUtil;
 import cn.wisestar.server.domain.dto.SystemInfo;
+import cn.wisestar.server.domain.dto.english.EnglishRecalibrateResultView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceExercise;
 import cn.wisestar.server.domain.dto.english.EnglishSentencePackQuery;
 import cn.wisestar.server.domain.dto.english.EnglishSentencePackView;
@@ -1703,16 +1704,19 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 	// ------------------------------------------------------------------ 保存 / 查询
 
 	@Override
-	public int recalibrateAll() {
+	public EnglishRecalibrateResultView recalibrateAll() {
+		EnglishRecalibrateResultView summary = new EnglishRecalibrateResultView();
 		List<EnglishSentencePack> packs = packMapper.selectList(null);
-		int updated = 0;
 		for (EnglishSentencePack pack : packs) {
 			if (isBlank(pack.getContent())) {
+				// 空内容包没有可评分的题目，计入跳过便于管理端核对
+				summary.setSkipped(summary.getSkipped() + 1);
 				continue;
 			}
 			try {
 				JsonNode arr = objectMapper.readTree(pack.getContent());
 				if (!arr.isArray()) {
+					summary.setSkipped(summary.getSkipped() + 1);
 					continue;
 				}
 				List<EnglishSentenceExercise> exercises = new ArrayList<>();
@@ -1723,12 +1727,15 @@ public class EnglishSentencePackServiceImpl implements EnglishSentencePackServic
 				pack.setContent(writeExercises(exercises));
 				pack.setCount(exercises.size());
 				packMapper.updateById(pack);
-				updated++;
+				summary.setUpdated(summary.getUpdated() + 1);
 			} catch (Exception e) {
+				summary.setFailed(summary.getFailed() + 1);
 				log.error("句子内容包难度重算失败：{} {}", pack.getId(), e.getMessage());
 			}
 		}
-		return updated;
+		log.info("句子内容包难度重算完成 updated={} skipped={} failed={}", summary.getUpdated(), summary.getSkipped(),
+				summary.getFailed());
+		return summary;
 	}
 
 	@Override

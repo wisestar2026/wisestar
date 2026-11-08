@@ -2290,6 +2290,53 @@ CREATE TABLE IF NOT EXISTS `t_english_grammar_book` (
   UNIQUE KEY `uk_user_grammar` (`user_id`, `grammar_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户英语语法本';
 
+-- 英语知识点学习状态（三态 + 攻克计数 + 角度使用，供单词/句式/语法三模块共用）
+CREATE TABLE IF NOT EXISTS `t_english_learning_state` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `module` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '模块：word/sentence/grammar',
+  `knowledge_id` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '知识点ID：单词ID/句子ID/语法点ID',
+  `state` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT 'unfamiliar' COMMENT '掌握状态：familiar/ordinary/unfamiliar',
+  `consecutive_correct` int DEFAULT 0 COMMENT '连续答对计数（攻克判定用，答错清零）',
+  `consecutive_wrong` int DEFAULT 0 COMMENT '连续答错计数（薄弱判定用，答对清零）',
+  `output_correct_count` int DEFAULT 0 COMMENT '输出类题型答对次数',
+  `last_angle` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '最近一次作答的考察角度',
+  `memory_total` int DEFAULT 0 COMMENT '记忆阶段答题总数',
+  `memory_correct` int DEFAULT 0 COMMENT '记忆阶段答对总数',
+  `practice_total` int DEFAULT 0 COMMENT '练习阶段答题总数',
+  `practice_correct` int DEFAULT 0 COMMENT '练习阶段答对总数',
+  `use_total` int DEFAULT 0 COMMENT '运用阶段答题总数',
+  `use_correct` int DEFAULT 0 COMMENT '运用阶段答对总数',
+  `weak_flag` tinyint DEFAULT 0 COMMENT '是否在薄弱池',
+  `weak_reason` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '薄弱原因：consecutive_wrong/accuracy/output_error',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_module_kp` (`user_id`, `module`, `knowledge_id`),
+  KEY `idx_english_learning_state_weak` (`user_id`, `module`, `weak_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='英语知识点学习状态';
+
+-- 英语考察角度使用记录（防止同一知识点连续用同一角度，形成「换汤不换药」）
+CREATE TABLE IF NOT EXISTS `t_english_exam_angle_use` (
+  `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `user_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `module` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '模块：word/sentence/grammar',
+  `knowledge_id` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '知识点ID',
+  `angle` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '考察角度编码',
+  `use_count` int DEFAULT 1 COMMENT '使用次数',
+  `last_use_at` timestamp NULL DEFAULT NULL COMMENT '最近使用时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `create_by` varchar(64) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT NULL,
+  `is_deleted` tinyint DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_module_kp_angle` (`user_id`, `module`, `knowledge_id`, `angle`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='英语考察角度使用记录';
+
 CREATE TABLE IF NOT EXISTS `t_english_learning_log` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `user_id` varchar(64) CHARACTER SET utf8mb4_bin NOT NULL,
