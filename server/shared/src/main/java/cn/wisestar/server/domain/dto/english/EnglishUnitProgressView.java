@@ -2,6 +2,8 @@ package cn.wisestar.server.domain.dto.english;
 
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * 英语单元进度视图 DTO（学员端学习中心）。
  *
@@ -47,7 +49,25 @@ public class EnglishUnitProgressView {
 	/** 单元综合熟练度（单词 + 句子 + 语法 familiarity 均值，0~100） */
 	private Integer mastery;
 
-	/** 待复习数（单词本 + 句子本中已到期记录） */
+	/** 待复习知识点数（与复习页「单元复习」Tab 同一口径：薄弱 / 做错 / 到期） */
 	private Integer reviewDue;
+
+	/** 单词小节通关率（已通关小节 / 小节总数，百分比） */
+	private Integer wordPassRate;
+
+	/** 句式通关率（已通关句子 / 句子总数，百分比） */
+	private Integer sentencePassRate;
+
+	/** 待复习单词数 */
+	private Integer reviewDueWord;
+
+	/** 待复习句子数 */
+	private Integer reviewDueSentence;
+
+	/** 待复习语法数 */
+	private Integer reviewDueGrammar;
+
+	/** 小节级三阶进度 */
+	private List<EnglishSectionProgressView> sections;
 
 }

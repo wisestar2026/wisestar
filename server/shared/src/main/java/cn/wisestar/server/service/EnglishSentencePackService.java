@@ -25,8 +25,10 @@ public interface EnglishSentencePackService {
 
 	/**
 	 * 按题型形式与内容复杂度重算全部内容包难度。
+	 *
+	 * @return 重算结果（更新 / 跳过 / 失败数量）
 	 */
-	int recalibrateAll();
+	cn.wisestar.server.domain.dto.english.EnglishRecalibrateResultView recalibrateAll();
 
 	/**
 	 * 保存句子练习内容包（同 版本+年级+册别+单元 覆盖更新）。

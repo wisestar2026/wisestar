@@ -6,12 +6,15 @@ import cn.wisestar.server.domain.dto.english.EnglishDiagnosePaperView;
 import cn.wisestar.server.domain.dto.english.EnglishDiagnoseRequest;
 import cn.wisestar.server.domain.dto.english.EnglishDiagnoseSubmitRequest;
 import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
+import cn.wisestar.server.domain.dto.english.EnglishLearnStateRequest;
 import cn.wisestar.server.domain.dto.english.EnglishPatternScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeHistoryView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordRequest;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeRecordView;
 import cn.wisestar.server.domain.dto.english.EnglishPracticeSummaryView;
 import cn.wisestar.server.domain.dto.english.EnglishReadAloudView;
+import cn.wisestar.server.domain.dto.english.EnglishReviewCandidateView;
+import cn.wisestar.server.domain.dto.english.EnglishSectionProgressView;
 import cn.wisestar.server.domain.dto.english.EnglishReadingView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioView;
 import cn.wisestar.server.domain.dto.english.EnglishSentenceExercise;
@@ -27,6 +30,7 @@ import cn.wisestar.server.domain.dto.student.StudentPreviewCompleteView;
 import cn.wisestar.server.domain.dto.student.StudentQuestionView;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoRequest;
 import cn.wisestar.server.domain.dto.student.StudentWrongRedoView;
+import cn.wisestar.server.service.EnglishLearningRuleService;
 import cn.wisestar.server.service.EnglishPracticeRecordService;
 import cn.wisestar.server.service.EnglishReadAloudService;
 import cn.wisestar.server.service.EnglishReadingService;
@@ -75,6 +79,8 @@ public class EnglishStudentApi {
 
 	private final EnglishTtsService ttsService;
 
+	private final EnglishLearningRuleService englishLearningRuleService;
+
 	/**
 	 * 单元列表 + 学习进度。
 	 */
@@ -84,6 +90,59 @@ public class EnglishStudentApi {
 			@RequestParam(required = false) String grade,
 			@RequestParam(required = false) String term) {
 		return englishStudentService.unitProgress(SecurityContextUtils.getUserId(), version, grade, term);
+	}
+
+	/**
+	 * 单元小节三阶进度（单词记忆 / 练习 / 运用）。
+	 */
+	@GetMapping("/unit-progress")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishSectionProgressView> unitProgressSections(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam String unit) {
+		return englishLearningRuleService.sectionProgress(SecurityContextUtils.getUserId(), version, grade, term,
+				unit);
+	}
+
+	/**
+	 * 上报一次知识点作答，更新三态与薄弱攻克计数。
+	 */
+	@PostMapping("/learn-state")
+	@PreAuthorize("isAuthenticated()")
+	public void learnState(@RequestBody EnglishLearnStateRequest request) {
+		englishLearningRuleService.recordAnswer(SecurityContextUtils.getUserId(), request.getModule(),
+				request.getKnowledgeId(), request.getAngle(), Boolean.TRUE.equals(request.getCorrect()),
+				request.getStage(), !Boolean.FALSE.equals(request.getFirstAttempt()));
+	}
+
+	/**
+	 * 单元复习候选（按知识点给出可用考察角度）。
+	 *
+	 * <p>{@code unit} 为空时覆盖本册全部单元，供复习页「单元复习」Tab 展示全册待复习池；
+	 * 指定单元时严格限定在该单元内，不携带其他单元知识点。</p>
+	 */
+	@GetMapping("/review/candidates")
+	@PreAuthorize("isAuthenticated()")
+	public List<EnglishReviewCandidateView> reviewCandidates(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam(required = false) String unit,
+			@RequestParam(required = false) String module) {
+		return englishLearningRuleService.reviewCandidates(SecurityContextUtils.getUserId(), version, grade, term,
+				unit, module);
+	}
+
+	/**
+	 * 单元通关判定（单词按小节、句式与语法按单元）。
+	 */
+	@GetMapping("/unit-pass")
+	@PreAuthorize("isAuthenticated()")
+	public EnglishUnitProgressView unitPass(@RequestParam(required = false) String version,
+			@RequestParam(required = false) String grade,
+			@RequestParam(required = false) String term,
+			@RequestParam String unit) {
+		return englishLearningRuleService.unitPass(SecurityContextUtils.getUserId(), version, grade, term, unit);
 	}
 
 	/**
@@ -119,7 +178,11 @@ public class EnglishStudentApi {
 		String userId = SecurityContextUtils.getUserId();
 		String grammarId = String.valueOf(request.get("grammarId"));
 		boolean correct = Boolean.parseBoolean(String.valueOf(request.get("correct")));
-		englishStudentService.recordGrammar(userId, grammarId, correct);
+		Object angleValue = request.get("angle");
+		Object stageValue = request.get("stage");
+		englishStudentService.recordGrammar(userId, grammarId, correct,
+				angleValue == null ? null : String.valueOf(angleValue),
+				stageValue == null ? null : String.valueOf(stageValue));
 	}
 
 	/**
@@ -140,7 +203,11 @@ public class EnglishStudentApi {
 		String userId = SecurityContextUtils.getUserId();
 		String sentenceId = String.valueOf(request.get("sentenceId"));
 		boolean correct = Boolean.parseBoolean(String.valueOf(request.get("correct")));
-		englishStudentService.recordSentence(userId, sentenceId, correct);
+		Object angleValue = request.get("angle");
+		Object stageValue = request.get("stage");
+		englishStudentService.recordSentence(userId, sentenceId, correct,
+				angleValue == null ? null : String.valueOf(angleValue),
+				stageValue == null ? null : String.valueOf(stageValue));
 	}
 
 	/**

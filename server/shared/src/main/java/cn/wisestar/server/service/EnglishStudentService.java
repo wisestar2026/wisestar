@@ -65,6 +65,19 @@ public interface EnglishStudentService {
 	void recordGrammar(String userId, String grammarId, boolean correct);
 
 	/**
+	 * 记录语法作答并带上考察角度（供三阶进度与薄弱点判定使用）。
+	 *
+	 * @param userId 用户 ID
+	 * @param grammarId 语法点 ID
+	 * @param correct 是否正确
+	 * @param angle 考察角度，可为空
+	 * @param stage 阶段：memory / practice / use
+	 */
+	default void recordGrammar(String userId, String grammarId, boolean correct, String angle, String stage) {
+		recordGrammar(userId, grammarId, correct);
+	}
+
+	/**
 	 * 待学习/复习句子。
 	 *
 	 * @param userId 用户 ID
@@ -81,6 +94,19 @@ public interface EnglishStudentService {
 	 * @param correct 是否正确
 	 */
 	void recordSentence(String userId, String sentenceId, boolean correct);
+
+	/**
+	 * 记录句子作答并带上考察角度与阶段（供句式四段通关与薄弱点判定使用）。
+	 *
+	 * @param userId 用户 ID
+	 * @param sentenceId 句子 ID
+	 * @param correct 是否正确
+	 * @param angle 考察角度，可为空
+	 * @param stage 阶段：memory / practice / use
+	 */
+	default void recordSentence(String userId, String sentenceId, boolean correct, String angle, String stage) {
+		recordSentence(userId, sentenceId, correct);
+	}
 
 	/**
 	 * 智能复习会话（单词 + 句子混合，按到期时间升序）。

@@ -2,6 +2,7 @@ package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.*;
+import cn.wisestar.server.domain.dto.english.EnglishRecalibrateResultView;
 import cn.wisestar.server.service.TemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -163,15 +164,15 @@ public class TemplateApi {
 	 *
 	 * <p><b>HTTP 方法 + 完整路径</b>：POST ${api.prefix}/template/recalibrate-english-difficulty。</p>
 	 *
-	 * <p><b>返回值结构</b>：实际更新的题目数量（int）。</p>
+	 * <p><b>返回值结构</b>：重算结果 {@code {updated, skipped, failed}}，缺标签题目计入 skipped。</p>
 	 *
 	 * <p><b>权限</b>：@PreAuthorize("hasAuthority('template:update')")。</p>
 	 *
-	 * @return 更新的题目数量
+	 * @return 重算结果（更新 / 跳过 / 失败数量）
 	 */
 	@PostMapping("/recalibrate-english-difficulty")
 	@PreAuthorize("hasAuthority('template:update')")
-	public int recalibrateEnglishDifficulty() {
+	public EnglishRecalibrateResultView recalibrateEnglishDifficulty() {
 		return templateService.recalibrateEnglishDifficulty();
 	}
 

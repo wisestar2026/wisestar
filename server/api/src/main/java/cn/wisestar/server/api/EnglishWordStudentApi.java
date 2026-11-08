@@ -79,7 +79,9 @@ public class EnglishWordStudentApi {
 		String source = sourceValue == null ? "learn" : String.valueOf(sourceValue);
 		Object firstValue = request.get("firstAttempt");
 		boolean firstAttempt = firstValue != null && Boolean.parseBoolean(String.valueOf(firstValue));
-		englishWordService.recordLearning(userId, wordId, correct, source, firstAttempt);
+		Object angleValue = request.get("angle");
+		englishWordService.recordLearning(userId, wordId, correct, source, firstAttempt,
+				angleValue == null ? null : String.valueOf(angleValue));
 	}
 
 	/**

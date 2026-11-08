@@ -79,4 +79,13 @@ public class EnglishWordView {
 	/** 下次复习时间（为空表示尚未进入复习队列） */
 	private java.util.Date nextReviewTime;
 
+	/** 掌握三态：familiar / ordinary / unfamiliar（与单词本 familiarity 并存，语义不同） */
+	private String masteryState;
+
+	/** 掌握三态中文标签：熟练 / 一般 / 陌生 */
+	private String masteryStateLabel;
+
+	/** 已使用的考察角度（推荐下一个角度时排除） */
+	private java.util.List<String> angleUsed;
+
 }

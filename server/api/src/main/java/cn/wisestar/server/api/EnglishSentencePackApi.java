@@ -40,10 +40,12 @@ public class EnglishSentencePackApi {
 
 	/**
 	 * 按题型形式与内容复杂度重算全部内容包难度。
+	 *
+	 * @return 重算结果 {@code {updated, skipped, failed}}
 	 */
 	@PostMapping("/recalibrate")
 	@PreAuthorize("hasAuthority('english:word:ai')")
-	public int recalibrate() {
+	public cn.wisestar.server.domain.dto.english.EnglishRecalibrateResultView recalibrate() {
 		return sentencePackService.recalibrateAll();
 	}
 

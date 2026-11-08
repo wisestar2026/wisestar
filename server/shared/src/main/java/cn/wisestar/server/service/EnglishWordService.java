@@ -72,9 +72,24 @@ public interface EnglishWordService {
 	 * @param userId 用户 ID
 	 * @param wordId 单词 ID
 	 * @param correct 是否正确
-	 * @param source 来源：learn 学习 / practice 练习 / drill 巩固
+	 * @param source 来源：learn 学习 / practice 练习 / drill 巩固 / use 运用 / scenario 情景
 	 * @param firstAttempt 是否该词本轮练习的首次作答（重做不计入首答）
 	 */
 	void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt);
+
+	/**
+	 * 记录学习/练习结果，并带上考察角度，供三阶进度与薄弱点判定使用。
+	 *
+	 * @param userId 用户 ID
+	 * @param wordId 单词 ID
+	 * @param correct 是否正确
+	 * @param source 来源：learn / practice / drill / use / scenario
+	 * @param firstAttempt 是否首次作答
+	 * @param angle 考察角度，可为空（空时按来源推断）
+	 */
+	default void recordLearning(String userId, String wordId, boolean correct, String source, boolean firstAttempt,
+			String angle) {
+		recordLearning(userId, wordId, correct, source, firstAttempt);
+	}
 
 }

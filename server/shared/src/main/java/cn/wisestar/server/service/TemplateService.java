@@ -107,9 +107,9 @@ public interface TemplateService {
 	/**
 	 * 按题型形式与内容复杂度重算英语题目难度。
 	 *
-	 * @return 实际更新的题目数量
+	 * @return 重算结果（更新 / 跳过 / 失败数量）
 	 */
-	int recalibrateEnglishDifficulty();
+	cn.wisestar.server.domain.dto.english.EnglishRecalibrateResultView recalibrateEnglishDifficulty();
 
 	/**
 	 * 获取模板详情。
