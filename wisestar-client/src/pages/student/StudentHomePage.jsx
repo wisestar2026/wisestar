@@ -327,9 +327,9 @@ export default function StudentHomePage() {
         </FloatCard>
 
         {/* 今日学习总结（学习时长累计满 1 小时后自动生成） */}
-        {summary?.content && (
+        {(summary?.parentContent || summary?.content) && (
           <FloatCard title="今日学习总结" icon="📝" tone="blue">
-            <div className="slh-summary-text">{summary.content}</div>
+            <div className="slh-summary-text">{summary.parentContent || summary.content}</div>
           </FloatCard>
         )}
       </aside>

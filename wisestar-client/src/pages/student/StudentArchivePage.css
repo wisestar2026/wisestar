@@ -89,3 +89,63 @@
     background: #fff !important;
   }
 }
+
+/* ---------- 家长版：叙述 + 进步徽章 ---------- */
+.archive-parent-letter {
+  margin-bottom: 16px;
+}
+
+.archive-parent-para {
+  font-size: 15px;
+  line-height: 2;
+  color: #2b3a48;
+  margin-bottom: 10px;
+  text-indent: 0;
+}
+
+.archive-parent-para:last-child {
+  margin-bottom: 0;
+}
+
+.archive-parent-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+
+.archive-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #f2f8fd;
+  border: 1px solid #dceaf7;
+}
+
+.archive-badge-green {
+  background: #f0fbf4;
+  border-color: #cdeed9;
+}
+
+.archive-badge-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2f6fa8;
+  line-height: 1;
+}
+
+.archive-badge-green .archive-badge-num {
+  color: #2e9e63;
+}
+
+.archive-badge-label {
+  font-size: 12px;
+  color: #6b8299;
+}
+
+.archive-parent-note {
+  margin: 0;
+  font-size: 12px;
+}

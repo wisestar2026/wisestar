@@ -74,4 +74,40 @@ public class StudySummaryView {
 	/** 当日强化的知识点名称（当日有练习进度的知识点） */
 	private java.util.List<String> strengthenedNames;
 
+	/** 上一次有练习的日期（yyyy-MM-dd，无历史时为 null） */
+	private String lastStudyDate;
+
+	/** 上一次练习的正确率 0-100 */
+	private int lastAccuracy;
+
+	/** 与前一次相比的正确率变化（百分点，正数为进步；无对比时为 0） */
+	private int accuracyDelta;
+
+	/** 是否具备前后对比数据 */
+	private boolean hasComparison;
+
+	/** 近 7 天练习次数 */
+	private int weekPracticeCount;
+
+	/** 近 7 天答题数 */
+	private int weekQuestionCount;
+
+	/** 近 7 天正确率 0-100 */
+	private int weekAccuracy;
+
+	/** 已攻克薄弱知识点数量（历史累计） */
+	private int conqueredCount;
+
+	/** 已攻克薄弱知识点名称（最多 3 个，供家长版展示） */
+	private java.util.List<String> conqueredNames;
+
+	/** 连续学习天数 */
+	private int streakDays;
+
+	/** 本次学习集中涉及的单元/小节（用于家长版叙述） */
+	private String topicLabel;
+
+	/** 家长版叙述（三段式：学了什么 / 进步在哪 / 下一步），供档案与首页直接展示 */
+	private String parentContent;
+
 }

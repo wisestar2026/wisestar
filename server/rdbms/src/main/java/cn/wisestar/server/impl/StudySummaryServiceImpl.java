@@ -8,6 +8,7 @@ import cn.wisestar.server.domain.dto.student.StudySummaryView;
 import cn.wisestar.server.domain.model.KnowledgePoint;
 import cn.wisestar.server.domain.model.PracticeDetail;
 import cn.wisestar.server.domain.model.PracticeRecord;
+import cn.wisestar.server.domain.model.Section;
 import cn.wisestar.server.domain.model.Student;
 import cn.wisestar.server.domain.model.StudySession;
 import cn.wisestar.server.domain.model.StudySummary;
@@ -17,6 +18,7 @@ import cn.wisestar.server.domain.model.UserWeakKnowledge;
 import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.PracticeDetailMapper;
 import cn.wisestar.server.mapper.PracticeRecordMapper;
+import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.StudentMapper;
 import cn.wisestar.server.mapper.StudySessionMapper;
 import cn.wisestar.server.mapper.StudySummaryMapper;
@@ -36,6 +38,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.text.SimpleDateFormat;
@@ -77,6 +80,7 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	private final UserWeakKnowledgeMapper userWeakKnowledgeMapper;
 	private final KnowledgePointMapper knowledgePointMapper;
 	private final StudentMapper studentMapper;
+	private final SectionMapper sectionMapper;
 	private final SystemService systemService;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
@@ -276,7 +280,7 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 				for (UserKnowledgeProgress p : progresses) {
 					String name = progressNameMap.get(p.getKnowledgePointId());
 					if (name != null) {
-						agg.strengthenedNames.add(name);
+						agg.strengthenedNames.add(shortName(name));
 					}
 				}
 			}
@@ -299,10 +303,102 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 				for (UserWeakKnowledge w : weaks) {
 					String name = nameMap.get(w.getKnowledgePointId());
 					if (name != null) {
-						agg.weakNames.add(name);
+						agg.weakNames.add(shortName(name));
 					}
 				}
 			}
+		}
+
+		// 本次学习涉及的单元/小节（家长版叙述用，最多取 3 个）
+		Set<String> sectionIds = records.stream().map(PracticeRecord::getSectionId)
+				.filter(StringUtils::hasText).collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+		if (!sectionIds.isEmpty()) {
+			List<Section> sections = sectionMapper.selectBatchIds(sectionIds);
+			agg.topicLabel = sections.stream().map(Section::getName).filter(StringUtils::hasText)
+					.map(StudySummaryServiceImpl::shortName).limit(3).collect(Collectors.joining("、"));
+		}
+
+		// 上一次学习日的正确率，用于「比上次提高 N 个百分点」
+		List<PracticeRecord> history = practiceRecordMapper.selectList(new LambdaQueryWrapper<PracticeRecord>()
+				.eq(PracticeRecord::getUserId, studentId)
+				.lt(PracticeRecord::getCreateAt, start)
+				.orderByDesc(PracticeRecord::getCreateAt)
+				.last("limit 100"));
+		if (!history.isEmpty()) {
+			ZoneId zone = ZoneId.systemDefault();
+			LocalDate prevDate = history.get(0).getCreateAt().toInstant().atZone(zone).toLocalDate();
+			Date[] prevRange = dayRange(prevDate.toString());
+			int prevTotal = 0;
+			int prevCorrect = 0;
+			for (PracticeRecord r : history) {
+				Date at = r.getCreateAt();
+				if (at == null || at.before(prevRange[0]) || !at.before(prevRange[1])) {
+					continue;
+				}
+				prevTotal += r.getTotalQuestions() == null ? 0 : r.getTotalQuestions();
+				prevCorrect += r.getCorrectCount() == null ? 0 : r.getCorrectCount();
+			}
+			if (prevTotal > 0) {
+				agg.lastStudyDate = prevDate.toString();
+				agg.lastAccuracy = (int) Math.round(prevCorrect * 100.0 / prevTotal);
+			}
+		}
+		if (agg.questionCount > 0) {
+			int currentAccuracy = (int) Math.round(agg.correctCount * 100.0 / agg.questionCount);
+			// 上次正确率低于 20% 时基数是偶然命中，不构成可比基准：不做「提高 N 个百分点」的结论
+			agg.hasComparison = agg.lastStudyDate != null && agg.lastAccuracy >= 20;
+			agg.accuracyDelta = agg.hasComparison ? currentAccuracy - agg.lastAccuracy : 0;
+		}
+
+		// 近 7 天（含当日）练习汇总
+		Date weekStart = Date.from(LocalDate.parse(summaryDate, DateTimeFormatter.ISO_LOCAL_DATE)
+				.minusDays(6).atStartOfDay(ZoneId.systemDefault()).toInstant());
+		List<PracticeRecord> weekRecords = practiceRecordMapper.selectList(new LambdaQueryWrapper<PracticeRecord>()
+				.eq(PracticeRecord::getUserId, studentId)
+				.ge(PracticeRecord::getCreateAt, weekStart)
+				.lt(PracticeRecord::getCreateAt, end));
+		agg.weekPracticeCount = weekRecords.size();
+		for (PracticeRecord r : weekRecords) {
+			agg.weekQuestionCount += r.getTotalQuestions() == null ? 0 : r.getTotalQuestions();
+			agg.weekCorrectCount += r.getCorrectCount() == null ? 0 : r.getCorrectCount();
+		}
+		if (agg.weekQuestionCount > 0) {
+			agg.weekAccuracy = (int) Math.round(agg.weekCorrectCount * 100.0 / agg.weekQuestionCount);
+		}
+
+		// 已攻克薄弱点（历史累计，名称最多回填 3 个）
+		List<UserWeakKnowledge> conquered = userWeakKnowledgeMapper.selectList(
+				new LambdaQueryWrapper<UserWeakKnowledge>()
+						.eq(UserWeakKnowledge::getUserId, studentId)
+						.eq(UserWeakKnowledge::getStatus, "conquered"));
+		agg.conqueredCount = conquered.size();
+		if (!conquered.isEmpty()) {
+			Set<String> conqueredIds = conquered.stream().map(UserWeakKnowledge::getKnowledgePointId)
+					.filter(StringUtils::hasText).collect(Collectors.toSet());
+			if (!conqueredIds.isEmpty()) {
+				List<String> names = new ArrayList<>();
+				for (KnowledgePoint kp : knowledgePointMapper.selectBatchIds(conqueredIds)) {
+					if (StringUtils.hasText(kp.getName())) {
+						names.add(shortName(kp.getName()));
+					}
+				}
+				agg.conqueredNames = names.stream().filter(StringUtils::hasText).distinct()
+						.limit(3).collect(Collectors.toList());
+			}
+		}
+
+		// 连续学习天数（以当日为终点往前数，任一天有练习记录即算）
+		LocalDate cursor = LocalDate.parse(summaryDate, DateTimeFormatter.ISO_LOCAL_DATE);
+		Set<LocalDate> studyDates = practiceRecordMapper.selectList(new LambdaQueryWrapper<PracticeRecord>()
+						.eq(PracticeRecord::getUserId, studentId)
+						.ge(PracticeRecord::getCreateAt, Date.from(cursor.minusDays(59).atStartOfDay(ZoneId.systemDefault()).toInstant()))
+						.lt(PracticeRecord::getCreateAt, end)).stream()
+				.map(r -> r.getCreateAt() == null ? null
+						: r.getCreateAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate())
+				.filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+		while (studyDates.contains(cursor)) {
+			agg.streakDays++;
+			cursor = cursor.minusDays(1);
 		}
 
 		// 当日累计在线时长（全部会话）
@@ -334,11 +430,44 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 				.append("，答对：").append(agg.correctCount).append("，错题：").append(agg.wrongCount).append("\n");
 		sb.append("获得学海积分：").append(agg.points).append("，学习币：").append(agg.coins).append("\n");
 		sb.append("涉及知识点：").append(agg.knowledgeCount).append(" 个，平均掌握度：").append(agg.avgMastery).append("%\n");
+		if (StringUtils.hasText(agg.topicLabel)) {
+			sb.append("本次学习单元/小节：").append(agg.topicLabel).append("\n");
+		}
+		if (agg.hasComparison) {
+			sb.append("上一次学习日期：").append(agg.lastStudyDate).append("，当时正确率：")
+					.append(agg.lastAccuracy).append("%，本次正确率比上次").append(agg.accuracyDelta >= 0 ? "提高" : "下降")
+					.append(Math.abs(agg.accuracyDelta)).append(" 个百分点");
+			if (agg.lastAccuracy < 20) {
+				sb.append("（上次基数很低，不要写成大幅进步，可写「刚开始练、正在找到感觉」）");
+			}
+			sb.append("\n");
+		} else {
+			sb.append("本次是近期第一次练习，没有历史对比数据\n");
+		}
+		sb.append("近 7 天：练习 ").append(agg.weekPracticeCount).append(" 次，共 ").append(agg.weekQuestionCount)
+				.append(" 题，正确率 ").append(agg.weekAccuracy).append("%\n");
+		sb.append("连续学习天数：").append(agg.streakDays).append(" 天\n");
 		if (!agg.weakNames.isEmpty()) {
 			sb.append("薄弱知识点：").append(String.join("、", agg.weakNames)).append("\n");
 		}
-		sb.append("\n请用 200 字以内的中文，面向家长口吻，总结该学员今日学习表现，"
-				+ "指出进步与薄弱点，并给出一条具体可执行的改进建议。直接输出总结正文，不要标题与 Markdown。");
+		sb.append("\n写作要求：\n")
+				.append("1. 写三段话，每段一到两句，总字数控制在 100~180 字，用一句换行分隔。\n")
+				.append("2. 第一段写「今天学了什么」，用单元/小节或口语化描述，不要堆知识点术语。\n")
+				.append("3. 第二段写「进步在哪」，必须引用上面给出的前后对比数据"
+						+ "（如正确率比上次提高几个百分点、攻克了哪个知识点），没有对比数据时用今天全对/掌握扎实的事实。\n")
+				.append("4. 第三段写「下一步一个小目标」，给出具体可执行的动作，并带一句鼓励。\n")
+				.append("5. 禁止出现：积分、学习币、错题率、薄弱知识点、掌握度百分比、答错几道。\n")
+				.append("6. 不要标题、不要 Markdown、不要分点符号，直接输出三段正文。\n");
+		if (!agg.weakNames.isEmpty()) {
+			sb.append("可用作「下一步」的知识点（请改写成口语描述）：")
+					.append(String.join("、", agg.weakNames.stream().limit(2).collect(Collectors.toList())))
+					.append("\n");
+		}
+		if (agg.conqueredCount > 0) {
+			sb.append("已攻克薄弱点：").append(agg.conqueredCount).append(" 个")
+					.append(agg.conqueredNames.isEmpty() ? "" : "（" + String.join("、", agg.conqueredNames) + "）")
+					.append("\n");
+		}
 		return sb.toString();
 	}
 
@@ -350,24 +479,74 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	 * @return 规则模板总结文本
 	 */
 	private String buildRuleContent(String summaryDate, Aggregation agg) {
-		int accuracy = agg.questionCount == 0 ? 0 : (int) Math.round(agg.correctCount * 100.0 / agg.questionCount);
 		StringBuilder sb = new StringBuilder();
-		sb.append("【").append(summaryDate).append(" 学习总结】");
-		sb.append("今日在线学习约 ").append(minutes(agg.onlineDurationMs)).append(" 分钟，");
-		sb.append("完成练习 ").append(agg.practiceCount).append(" 次，共 ").append(agg.questionCount)
-				.append(" 题，答对 ").append(agg.correctCount).append(" 题，正确率 ").append(accuracy).append("%。");
-		if (agg.wrongCount > 0) {
-			sb.append("存在错题 ").append(agg.wrongCount).append(" 道，建议及时订正。");
+
+		// 零学习日：不罗列 0 值，改用周视角 + 鼓励，避免家长误解系统异常
+		if (agg.questionCount == 0) {
+			sb.append("今天孩子没有进行在线练习，我们把这一天记为休息日。");
+			if (agg.weekQuestionCount > 0) {
+				sb.append("回顾这一周，孩子完成了 ").append(agg.weekPracticeCount).append(" 次练习共 ")
+						.append(agg.weekQuestionCount).append(" 题，正确率 ").append(agg.weekAccuracy).append("%");
+				if (agg.conqueredCount > 0) {
+					sb.append("，已经攻克了 ").append(agg.conqueredNames.isEmpty()
+							? agg.conqueredCount + " 个薄弱知识点"
+							: String.join("、", agg.conqueredNames) + " 等 " + agg.conqueredCount + " 个知识点");
+				}
+				sb.append("。休息是为了更好地出发。");
+			} else {
+				sb.append("明天我们从一个小目标开始，先做 5 道题找找手感就好。");
+			}
+			return sb.toString();
 		}
-		sb.append("今日获得学海积分 ").append(agg.points).append("、学习币 ").append(agg.coins).append("。");
-		if (agg.knowledgeCount > 0) {
-			sb.append("覆盖知识点 ").append(agg.knowledgeCount).append(" 个，平均掌握度 ")
-					.append(agg.avgMastery).append("%。");
+
+		int accuracy = (int) Math.round(agg.correctCount * 100.0 / agg.questionCount);
+		String topic = StringUtils.hasText(agg.topicLabel) ? agg.topicLabel : "今天的练习内容";
+
+		// 第一段：学了什么
+		sb.append("今天孩子完成了 ").append(topic);
+		if (agg.questionCount > 0) {
+			sb.append("，一共 ").append(agg.questionCount).append(" 道题，答对 ").append(agg.correctCount).append(" 道");
 		}
-		if (!agg.weakNames.isEmpty()) {
-			sb.append("当前薄弱知识点：").append(String.join("、", agg.weakNames)).append("，建议针对性巩固。");
+		sb.append("。");
+
+		// 第二段：进步在哪（优先用对比数据，其次用攻克/熟练证据）
+		StringBuilder progress = new StringBuilder();
+		// 只有上次已形成可比基准（≥20%）时才声明「提高 N 个百分点」，
+		// 避免从 0% 起步时写出「提高 67 个百分点」这类失真表述。
+		if (agg.hasComparison && agg.lastAccuracy >= 20 && agg.accuracyDelta >= 5) {
+			progress.append("正确率 ").append(accuracy).append("%，比上一次提高了 ")
+					.append(agg.accuracyDelta).append(" 个百分点");
+		} else if (agg.hasComparison && agg.lastAccuracy >= 20 && agg.accuracyDelta <= -5) {
+			progress.append("正确率 ").append(accuracy).append("%，这次略有起伏，属于正常波动");
+		} else if (agg.hasComparison && agg.lastAccuracy >= 20) {
+			progress.append("正确率 ").append(accuracy).append("%，和上一次基本持平");
 		} else {
-			sb.append("暂无明显薄弱知识点，保持当前节奏继续努力。");
+			progress.append("正确率 ").append(accuracy).append("%");
+		}
+		if (agg.wrongCount == 0) {
+			progress.append("，这次全部答对");
+		}
+		if (!agg.conqueredNames.isEmpty()) {
+			progress.append("；之前重点练的「").append(String.join("」「", agg.conqueredNames))
+					.append("」已经拿下");
+		}
+		if (!agg.strengthenedNames.isEmpty()) {
+			progress.append("；今天在「").append(String.join("」「", agg.strengthenedNames.stream().limit(2)
+					.collect(Collectors.toList()))).append("」上练得比较扎实");
+		}
+		sb.append(progress).append("。");
+
+		// 第三段：下一步 + 鼓励
+		if (!agg.weakNames.isEmpty()) {
+			sb.append("接下来重点攻克「").append(String.join("」「", agg.weakNames.stream().limit(2)
+					.collect(Collectors.toList()))).append("」，每天几道题，慢慢就稳了。");
+		} else {
+			sb.append("目前没有明显吃力的地方，接下来保持现在的节奏，适当加一点难度。");
+		}
+		if (agg.streakDays >= 2) {
+			sb.append("已经连续学习 ").append(agg.streakDays).append(" 天，这份坚持很值得肯定。");
+		} else {
+			sb.append("今天的状态不错，明天继续保持。");
 		}
 		return sb.toString();
 	}
@@ -427,6 +606,8 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		view.setSummaryDate(summary.getSummaryDate());
 		view.setSessionId(summary.getSessionId());
 		view.setContent(summary.getContent());
+		// 家长版固定用规则模板重新生成，保证历史记录也按新口径叙述（不依赖旧 AI 文案）
+		view.setParentContent(agg == null ? summary.getContent() : buildRuleContent(summary.getSummaryDate(), agg));
 		view.setModel(summary.getModel());
 		view.setStatus(summary.getStatus());
 		if (agg != null) {
@@ -443,6 +624,17 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 			view.setAvgMastery(agg.avgMastery);
 			view.setWeakNames(agg.weakNames);
 			view.setStrengthenedNames(agg.strengthenedNames);
+			view.setLastStudyDate(agg.lastStudyDate);
+			view.setLastAccuracy(agg.lastAccuracy);
+			view.setAccuracyDelta(agg.accuracyDelta);
+			view.setHasComparison(agg.hasComparison);
+			view.setWeekPracticeCount(agg.weekPracticeCount);
+			view.setWeekQuestionCount(agg.weekQuestionCount);
+			view.setWeekAccuracy(agg.weekAccuracy);
+			view.setConqueredCount(agg.conqueredCount);
+			view.setConqueredNames(agg.conqueredNames);
+			view.setStreakDays(agg.streakDays);
+			view.setTopicLabel(agg.topicLabel);
 		}
 		Student student = studentMapper.selectById(studentId);
 		if (student != null) {
@@ -469,6 +661,24 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 	}
 
 	/**
+	 * 知识点/单元名称过长时截断为口语化短名，避免家长版出现整段规则描述。
+	 *
+	 * @param name 原始名称
+	 * @return 截断后的短名（最多 12 个字符）
+	 */
+	private static String shortName(String name) {
+		if (!StringUtils.hasText(name)) {
+			return "";
+		}
+		String cleaned = name.replaceAll("\\s+", " ").trim();
+		int colon = cleaned.indexOf('：');
+		if (colon > 0 && colon <= 12) {
+			cleaned = cleaned.substring(0, colon);
+		}
+		return cleaned.length() <= 12 ? cleaned : cleaned.substring(0, 12);
+	}
+
+	/**
 	 * 将毫秒数换算为分钟数（四舍五入）。
 	 *
 	 * @param ms 毫秒数
@@ -492,6 +702,18 @@ public class StudySummaryServiceImpl implements StudySummaryService {
 		private long onlineDurationMs;
 		private List<String> weakNames = Collections.emptyList();
 		private List<String> strengthenedNames = Collections.emptyList();
+		private String lastStudyDate;
+		private int lastAccuracy;
+		private int accuracyDelta;
+		private boolean hasComparison;
+		private int weekPracticeCount;
+		private int weekQuestionCount;
+		private int weekCorrectCount;
+		private int weekAccuracy;
+		private int conqueredCount;
+		private List<String> conqueredNames = Collections.emptyList();
+		private int streakDays;
+		private String topicLabel;
 	}
 
 }

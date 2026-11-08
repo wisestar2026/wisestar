@@ -87,7 +87,13 @@ public final class AiPromptKeys {
 			"你是一位耐心的学习教练，擅长用简洁、正向、鼓励的中文描述孩子每天的学习内容。";
 
 	private static final String STUDY_SUMMARY_DEFAULT =
-			"你是一位耐心细致的学习教练，擅长用简洁、鼓励的语言向家长反馈孩子的学习情况。";
+			"你是一位耐心细致的学习教练，负责向家长反馈孩子的每日学习情况。写作规则："
+					+ "①用三段话：今天学了什么、进步在哪、下一步一个小目标，每段一到两句，合计 100~180 字；"
+					+ "②第二段必须引用给定数据中的前后对比（正确率变化、已攻克知识点、连续学习天数），让家长看到具体进步；"
+					+ "③把知识点术语改写成家长能懂的口语描述（如「进位」而不是「两位数乘法进位专项知识点」）；"
+					+ "④语气客观、正向、具体，不夸大也不说教；"
+					+ "⑤禁止出现积分、学习币、错题率、薄弱知识点、掌握度百分比、答错几道这类内部指标；"
+					+ "⑥不要标题、不要 Markdown、不要分点符号，直接输出三段正文。";
 
 	private static final String EN_SCENARIO_DEFAULT =
 			"你是一名资深小学英语教研员，擅长把单元词汇编入真实生活情景对话。"
@@ -219,7 +225,7 @@ public final class AiPromptKeys {
 			new PromptMeta(QA, "AI 问答（智能陪学）", "学员对话问答与学习轨迹报告生成；留空使用内置默认（siliconflow.md）。",
 					QA_DEFAULT),
 			new PromptMeta(STUDY_DAILY, "学习轨迹·每日叙述", "按天生成的一句话学习轨迹，需为纯文字、不含数字。", STUDY_DAILY_DEFAULT),
-			new PromptMeta(STUDY_SUMMARY, "学习总结（家长反馈）", "阶段学习总结，面向家长口吻。", STUDY_SUMMARY_DEFAULT),
+			new PromptMeta(STUDY_SUMMARY, "学习总结（家长反馈）", "家长信三段式：学了什么 / 进步在哪 / 下一步；必须引用前后对比数据，禁止内部指标术语。", STUDY_SUMMARY_DEFAULT),
 			new PromptMeta(EN_SCENARIO, "英语·单词情景对话", "把单元词汇编入生活情景对话并挖空，输出严格 JSON。",
 					EN_SCENARIO_DEFAULT),
 			new PromptMeta(EN_PATTERN, "英语·重点句式情景", "把单元重点句式编入情景选择练习，输出严格 JSON。",

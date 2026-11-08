@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Button, Card, Descriptions, Form, Input, InputNumber, List, Modal, Popconfirm, Select, Space,
+  Button, Card, Descriptions, Form, Input, InputNumber, List, Modal, Popconfirm, Radio, Select, Space,
   Table, Tag, Typography, message,
 } from 'antd';
 import {
@@ -51,6 +51,8 @@ export default function StudentArchivePage() {
 
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(false);
+  // 家长版（默认）：只展示叙述与进步；老师版：保留全部指标与知识点明细
+  const [viewMode, setViewMode] = useState('parent');
   const [saving, setSaving] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
   const [growthCompare, setGrowthCompare] = useState(null);
@@ -247,6 +249,14 @@ export default function StudentArchivePage() {
           <Title level={4} className="archive-title">学员学习档案</Title>
         </div>
         <Space>
+          <Radio.Group
+            size="small"
+            value={viewMode}
+            onChange={(e) => setViewMode(e.target.value)}
+            optionType="button"
+            buttonStyle="solid"
+            options={[{ label: '家长版', value: 'parent' }, { label: '老师版', value: 'teacher' }]}
+          />
           <Button icon={<ReloadOutlined />} onClick={load}>刷新</Button>
           <Button icon={<PrinterOutlined />} onClick={() => window.print()}>打印</Button>
           {canEdit && (
@@ -283,32 +293,84 @@ export default function StudentArchivePage() {
       </Card>
 
       {/* ---- 一、初始档案 ---- */}
-      <Card title="一、初始档案（知识点检测 / 薄弱点）" className="archive-section">
-        <Paragraph>
-          <Text strong>初始薄弱知识点：</Text>
-        </Paragraph>
-        <div className="archive-kp-tags">
-          {detail?.initialWeakPoints?.length
-            ? detail.initialWeakPoints.map((n) => <Tag key={n} color="purple">{n}</Tag>)
-            : <Text className="archive-empty">建案时暂无检测薄弱点</Text>}
-        </div>
-        <Paragraph>
-          <Text strong>当前薄弱知识点：</Text>
-        </Paragraph>
-        <div className="archive-kp-tags">
-          {detail?.weakPoints?.length
-            ? detail.weakPoints.map((w) => (
-              <Tag key={w.kpId} color="red">{w.name || w.kpId}（掌握度 {w.mastery}%）</Tag>
-            ))
-            : <Text className="archive-empty">暂无薄弱知识点</Text>}
-        </div>
-        <Paragraph>
-          <Text strong>当日学习情况：</Text>
-        </Paragraph>
-        <Paragraph className="archive-record-summary">
-          {detail?.today?.content || <Text className="archive-empty">今日暂无学习记录</Text>}
-        </Paragraph>
-      </Card>
+      {viewMode === 'parent' ? (
+        <Card title="一、孩子最近的学习情况" className="archive-section archive-parent">
+          <div className="archive-parent-letter">
+            {(detail?.today?.parentContent || detail?.today?.content)
+              ? String(detail?.today?.parentContent || detail?.today?.content)
+                .split(/\n+/).filter(Boolean).map((para, i) => (
+                  <Paragraph key={i} className="archive-parent-para">{para}</Paragraph>
+                ))
+              : <Text className="archive-empty">还没有记录到学习情况，孩子完成练习后这里会自动生成</Text>}
+          </div>
+          <div className="archive-parent-badges">
+            {detail?.today?.conqueredCount > 0 && (
+              <div className="archive-badge archive-badge-green">
+                <span className="archive-badge-num">{detail.today.conqueredCount}</span>
+                <span className="archive-badge-label">个知识点已攻克</span>
+              </div>
+            )}
+            {detail?.today?.weekQuestionCount > 0 && (
+              <div className="archive-badge">
+                <span className="archive-badge-num">{detail.today.weekQuestionCount}</span>
+                <span className="archive-badge-label">道题（近 7 天）</span>
+              </div>
+            )}
+            {detail?.today?.weekAccuracy > 0 && (
+              <div className="archive-badge">
+                <span className="archive-badge-num">{detail.today.weekAccuracy}%</span>
+                <span className="archive-badge-label">近 7 天正确率</span>
+              </div>
+            )}
+            {detail?.today?.hasComparison && detail.today.accuracyDelta !== 0 && (
+              <div className={`archive-badge ${detail.today.accuracyDelta > 0 ? 'archive-badge-green' : ''}`}>
+                <span className="archive-badge-num">
+                  {detail.today.accuracyDelta > 0 ? '↑' : '↓'}{Math.abs(detail.today.accuracyDelta)}
+                </span>
+                <span className="archive-badge-label">个百分点（较上次）</span>
+              </div>
+            )}
+            {detail?.today?.streakDays > 0 && (
+              <div className="archive-badge">
+                <span className="archive-badge-num">{detail.today.streakDays}</span>
+                <span className="archive-badge-label">天连续学习</span>
+              </div>
+            )}
+          </div>
+          <Paragraph className="archive-parent-note">
+            <Text type="secondary">
+              这一段由系统根据孩子的练习记录自动生成，记录的是每天学了什么、比之前进步在哪里。
+            </Text>
+          </Paragraph>
+        </Card>
+      ) : (
+        <Card title="一、初始档案（知识点检测 / 薄弱点）" className="archive-section">
+          <Paragraph>
+            <Text strong>初始薄弱知识点：</Text>
+          </Paragraph>
+          <div className="archive-kp-tags">
+            {detail?.initialWeakPoints?.length
+              ? detail.initialWeakPoints.map((n) => <Tag key={n} color="purple">{n}</Tag>)
+              : <Text className="archive-empty">建案时暂无检测薄弱点</Text>}
+          </div>
+          <Paragraph>
+            <Text strong>当前薄弱知识点：</Text>
+          </Paragraph>
+          <div className="archive-kp-tags">
+            {detail?.weakPoints?.length
+              ? detail.weakPoints.map((w) => (
+                <Tag key={w.kpId} color="red">{w.name || w.kpId}（掌握度 {w.mastery}%）</Tag>
+              ))
+              : <Text className="archive-empty">暂无薄弱知识点</Text>}
+          </div>
+          <Paragraph>
+            <Text strong>当日学习情况：</Text>
+          </Paragraph>
+          <Paragraph className="archive-record-summary">
+            {detail?.today?.content || <Text className="archive-empty">今日暂无学习记录</Text>}
+          </Paragraph>
+        </Card>
+      )}
 
       {/* ---- 二、成长对比（基线 vs 当前） ---- */}
       <Card title="二、成长对比（基线 vs 当前）" className="archive-section">
