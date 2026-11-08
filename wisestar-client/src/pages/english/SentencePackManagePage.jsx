@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import {
   generateSentencePack, saveSentencePack, listSentencePacks,
-  getSentencePackDetail, deleteSentencePack, listSentencePackUnits,
+  getSentencePackDetail, deleteSentencePack, listSentencePackUnits, recalibrateSentencePacks,
 } from '../../api/sentencePack';
 
 const VERSIONS = ['苏教版', '北师大版', '外研版'];
@@ -125,6 +125,7 @@ export default function SentencePackManagePage() {
 
   // ---- 批量生成 ----
   const [batchRunning, setBatchRunning] = useState(false);
+  const [recalibrating, setRecalibrating] = useState(false);
   const [batchResults, setBatchResults] = useState([]);
 
   // ---- 历史内容包列表 ----
@@ -272,6 +273,21 @@ export default function SentencePackManagePage() {
     loadList(1, pageSize);
   };
 
+  // ---- 按年级重算难度 ----
+  const handleRecalibrate = async () => {
+    setRecalibrating(true);
+    try {
+      const res = await recalibrateSentencePacks();
+      const r = dataOf(res) || {};
+      message.success(`难度重算完成：更新 ${r.updated || 0} 个、跳过 ${r.skipped || 0} 个、失败 ${r.failed || 0} 个`);
+      loadList(page, pageSize);
+    } catch {
+      // 拦截器已统一提示
+    } finally {
+      setRecalibrating(false);
+    }
+  };
+
   // ---- 删除 ----
   const handleDelete = async (id) => {
     try {
@@ -386,6 +402,13 @@ export default function SentencePackManagePage() {
           >
             批量生成整册
           </Button>
+          <Popconfirm
+            title="按年级重算全部内容包难度？"
+            description="按题型与内容复杂度重新打难度标签，缺标签题目会计入跳过"
+            onConfirm={handleRecalibrate}
+          >
+            <Button icon={<ReloadOutlined />} loading={recalibrating}>重算难度</Button>
+          </Popconfirm>
         </Space>
         <Alert
           type="info"

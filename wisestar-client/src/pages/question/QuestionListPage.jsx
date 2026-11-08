@@ -47,7 +47,10 @@ import {
   ExportOutlined, SearchOutlined, PictureOutlined, CheckCircleOutlined,
   ReloadOutlined,
 } from '@ant-design/icons';
-import { listTemplate, getTemplate, createTemplate, updateTemplate, deleteTemplate, listTemplateTag } from '../../api/template';
+import {
+  listTemplate, getTemplate, createTemplate, updateTemplate, deleteTemplate, listTemplateTag,
+  recalibrateEnglishDifficulty,
+} from '../../api/template';
 import { listRepo, exportTemplate } from '../../api/repo';
 import QuestionEditModal from '../../components/question/QuestionEditModal';
 import ImportModal from '../../components/question/ImportModal';
@@ -113,6 +116,7 @@ export default function QuestionListPage({ lockedSubject }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [importOpen, setImportOpen] = useState(false); // Excel 导入弹窗
+  const [recalibrating, setRecalibrating] = useState(false);
 
   // ---- 加载练习列表（全量，供筛选下拉 + 编辑弹窗练习选择） ----
   // pageSize=200 一次性拉取，业务上练习数量级不大，够用
@@ -182,6 +186,21 @@ export default function QuestionListPage({ lockedSubject }) {
 
   // 任一筛选条件 / 页码变化时自动重新拉取（输入框 onChange 同时 setPage(1) 保证从首页开始）
   useEffect(() => { fetchData(page); }, [page, keyword, filterType, filterRepoId, filterSubject, filterGrade, filterChapter, filterSection, filterDifficulty, filterKnowledgePoint, filterTag, filterHasImage, fetchData]);
+
+  // ---- 按年级重算难度（仅英语板块） ----
+  const handleRecalibrate = async () => {
+    setRecalibrating(true);
+    try {
+      const res = await recalibrateEnglishDifficulty();
+      const r = res?.data || {};
+      message.success(`难度重算完成：更新 ${r.updated || 0} 道、跳过 ${r.skipped || 0} 道、失败 ${r.failed || 0} 道`);
+      fetchData(1);
+    } catch {
+      // 拦截器已统一提示
+    } finally {
+      setRecalibrating(false);
+    }
+  };
 
   // ---- 新建 ----
   // editRecord 置 null → 弹窗进入"新建模式"（清空表单）
@@ -412,6 +431,15 @@ export default function QuestionListPage({ lockedSubject }) {
         <Space>
           <Button icon={<ImportOutlined />} onClick={() => setImportOpen(true)}>Excel 导入</Button>
           <Button icon={<ExportOutlined />} onClick={handleExport}>导出</Button>
+          {lockedSubject === '英语' && can('template:update') && (
+            <Popconfirm
+              title="按年级重算英语题目难度？"
+              description="按题型与内容复杂度重新打难度标签，缺少英文内容的题目会计入跳过"
+              onConfirm={handleRecalibrate}
+            >
+              <Button icon={<ReloadOutlined />} loading={recalibrating}>重算难度</Button>
+            </Popconfirm>
+          )}
           {can('template:create') && (
             <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>新建题目</Button>
           )}
