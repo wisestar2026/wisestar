@@ -1791,6 +1791,12 @@ CREATE TABLE IF NOT EXISTS t_chapter (
   KEY idx_chapter_subject (subject_id)
 );
 
+-- 章节表补年级/学期/版本字段：必须早于下面的种子 INSERT，否则全新库建表时
+-- 插入语句引用的 grade/term/version 尚不存在。
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS grade varchar(32) DEFAULT NULL COMMENT '年级（一年级~六年级）';
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS term varchar(16) DEFAULT NULL COMMENT '学期（上/下）';
+ALTER TABLE t_chapter ADD COLUMN IF NOT EXISTS version varchar(64) DEFAULT NULL COMMENT '教材版本（人教版/苏教版等）';
+
 -- ----------------------------
 -- Records of t_chapter
 -- ----------------------------
@@ -2837,12 +2843,8 @@ CREATE INDEX IF NOT EXISTS idx_growth_timeline ON t_learning_growth (student_id,
 
 -- ============================================================
 -- 学员档案：基线与报告元数据列 + 学员+学期+学科唯一
+-- （ALTER 已移至 t_student_archive 建表语句之后，避免引用未创建的表）
 -- ============================================================
-ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS baseline_detect_id varchar(64) DEFAULT NULL COMMENT '基线检测记录ID';
-ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS baseline_at timestamp NULL DEFAULT NULL COMMENT '基线定格时间';
-ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS report_model varchar(64) DEFAULT NULL COMMENT '报告生成模型(ai模型名或rule)';
-ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS report_generated_at timestamp NULL DEFAULT NULL COMMENT '报告生成时间';
-CREATE UNIQUE INDEX IF NOT EXISTS uk_student_archive ON t_student_archive (student_id, semester, subject_id);
 
 -- 错题订正标记 + 手动发币学科归集
 ALTER TABLE t_practice_detail ADD COLUMN IF NOT EXISTS corrected tinyint DEFAULT 0 COMMENT '错题是否已订正';
@@ -2915,6 +2917,13 @@ CREATE TABLE IF NOT EXISTS t_student_archive (
   PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_student_archive_student ON t_student_archive (student_id, semester);
+
+-- 学员档案基线与报告元数据列（建表后补齐，兼容早期已建表）
+ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS baseline_detect_id varchar(64) DEFAULT NULL COMMENT '基线检测记录ID';
+ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS baseline_at timestamp NULL DEFAULT NULL COMMENT '基线定格时间';
+ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS report_model varchar(64) DEFAULT NULL COMMENT '报告生成模型(ai模型名或rule)';
+ALTER TABLE t_student_archive ADD COLUMN IF NOT EXISTS report_generated_at timestamp DEFAULT NULL COMMENT '报告生成时间';
+CREATE UNIQUE INDEX IF NOT EXISTS uk_student_archive ON t_student_archive (student_id, semester, subject_id);
 
 -- 学员上课记录/学习日志（每次课一条，含系统草稿与老师定稿）
 CREATE TABLE IF NOT EXISTS t_student_archive_record (
