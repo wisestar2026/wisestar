@@ -226,45 +226,54 @@ export default function StudentLayout() {
           <div className="sll-tabs">
             {hasPermission ? (
               <Select
-                className="sll-subject"
-                size="small"
+                className="sll-select sll-subject"
                 value={activeSubject}
                 onChange={handleSubjectChange}
                 disabled={lockContext}
                 title={lockContext ? '仅首页可切换学科' : undefined}
-                options={visibleSubjects.map((s) => ({ value: s.key, label: `${s.icon} ${s.name}` }))}
+                prefix={
+                  <span className="sll-select-icon sll-icon-subject">
+                    {visibleSubjects.find((s) => s.key === activeSubject)?.icon || '📚'}
+                  </span>
+                }
+                options={visibleSubjects.map((s) => ({ value: s.key, label: s.name }))}
                 popupMatchSelectWidth={false}
+                classNames={{ popup: { root: 'sll-select-popup' } }}
               />
             ) : (
               <span className="sll-no-perm">暂无可访问学科，请联系管理员开通</span>
             )}
             <Select
-              className="sll-version"
-              size="small"
+              className="sll-select sll-version"
               value={version}
               onChange={setVersion}
+              prefix={<span className="sll-select-icon sll-icon-version">📘</span>}
+              title="教材版本"
               options={getVisibleVersions(activeSubject).map((v) => ({ label: v, value: v }))}
               popupMatchSelectWidth={false}
+              classNames={{ popup: { root: 'sll-select-popup' } }}
             />
             <Select
-              className="sll-grade"
-              size="small"
+              className="sll-select sll-grade"
               value={grade}
               onChange={setGrade}
+              prefix={<span className="sll-select-icon sll-icon-grade">🎓</span>}
               disabled={lockContext || getVisibleGrades(activeSubject).length === 0}
-              title={lockContext ? '仅首页可切换年级' : undefined}
+              title={lockContext ? '仅首页可切换年级' : '切换年级'}
               options={getVisibleGrades(activeSubject).map((g) => ({ label: g, value: g }))}
               popupMatchSelectWidth={false}
+              classNames={{ popup: { root: 'sll-select-popup' } }}
             />
             <Select
-              className="sll-term"
-              size="small"
+              className="sll-select sll-term"
               value={term}
               onChange={setTerm}
+              prefix={<span className="sll-select-icon sll-icon-term">🗓️</span>}
               disabled={lockContext || getVisibleTerms(activeSubject).length === 0}
-              title={lockContext ? '仅首页可切换册别' : undefined}
+              title={lockContext ? '仅首页可切换册别' : '切换册别'}
               options={getVisibleTerms(activeSubject).map((t) => ({ label: t, value: t }))}
               popupMatchSelectWidth={false}
+              classNames={{ popup: { root: 'sll-select-popup' } }}
             />
           </div>
         </div>

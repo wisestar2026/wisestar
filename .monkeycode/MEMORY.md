@@ -165,3 +165,13 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
 - Instructions:
   - 学员端接口用 cookie/header `sk-token` 鉴权（`curl -b "sk-token=<token>"`），`Authorization: Bearer` 无效；未带 token 返回 401 `Full authentication is required`
   - 英语复习错题取自学员英语学科（`t_subject.code='ENGLISH'`）的检测记录 `t_detect_record.details`，按 `correct=0` 聚合；因此英语单元/语法练习交卷必须带 `subjectId`（含 `grade`/`term`），否则记录 `subjectId` 为空、聚合取不到
+
+[新环境恢复补充经验（2026-11-09）]
+- Date: 2026-11-09
+- Context: Agent 从零恢复 wisestar 新环境（clone → 构建 → 快照恢复 → fetch-files → TTS）时发现
+- Category: 环境配置
+- Instructions:
+  - `server/fetch-files.sh` 的 9 个分片会偶发 `HTTP 504`（GitHub 网关侧），脚本内只重试 6 次常不够；分片已下载的会按 sha256 跳过，直接重跑脚本即可续传，卡住时用同样的 `--http1.1 -C -` 参数手工单独下载失败分片再重跑
+  - `server/tts-setup.sh` 从 huggingface.co 下载音色模型在本环境 TLS 握手直接失败（`SSL_ERROR_SYSCALL`），改用 ModelScope 同路径镜像可行：`https://modelscope.cn/models/rhasspy/piper-voices/resolve/master/en/en_GB/jenny_dioco/medium/en_GB-jenny_dioco-medium.onnx(.json)`，下载后放到 `/opt/wisestar-tts/voices/` 同名即可
+  - TTS 引擎可用性在启动时一次性探测（`EnglishTtsServiceImpl` 缓存 `ready`），装完 espeak-ng/piper 后必须重启后端才会生效；重启后日志应出现 `服务端语音合成已启用：piper=true`
+  - 登录接口密码必须 RSA 加密（先 `GET /api/system` 取 publicKey），明文 POST 返回 `code=1024`；node 侧可用 `require('./node_modules/jsencrypt/bin/jsencrypt.js')` 验证接口
