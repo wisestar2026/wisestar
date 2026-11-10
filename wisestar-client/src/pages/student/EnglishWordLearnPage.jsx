@@ -36,6 +36,7 @@ import {
   getEnglishUnits, getEnglishWordBook, getEnglishUnitProgress, recordEnglishWord, recordEnglishSession,
 } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
+import StageRing from '../../components/student/StageRing';
 import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 import './EnglishWordLearnPage.css';
@@ -60,50 +61,6 @@ function groupWordsBySection(list) {
   return groups;
 }
 
-/** 圆环几何：外圈细线（整圈参考线） + 内圈粗弧（实际进度） */
-const RING_OUTER_RADIUS = 50;
-const RING_RADIUS = 41;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
-/**
- * 三阶圆环：圆心显示考法名称与「已覆盖/词数」，环弧按比例填充。
- *
- * 纯展示 + 点击入口，进度由调用方按后端字段算好传入，组件本身不判断阈值。
- */
-function StageRing({ tone, label, done, total, onClick, disabled, hint }) {
-  const safeTotal = total || 0;
-  const safeDone = Math.max(0, Math.min(done || 0, safeTotal));
-  const pct = safeTotal ? safeDone / safeTotal : 0;
-  return (
-    <button
-      type="button"
-      className={`eng-ring eng-ring-${tone}`}
-      onClick={onClick}
-      disabled={disabled}
-      title={hint || `${label} ${safeDone}/${safeTotal}`}
-    >
-      <span className="eng-ring-frame">
-        <svg viewBox="0 0 108 108" aria-hidden="true">
-          <circle className="eng-ring-outline" cx="54" cy="54" r={RING_OUTER_RADIUS} />
-          <circle className="eng-ring-track" cx="54" cy="54" r={RING_RADIUS} />
-          <circle
-            className="eng-ring-fill"
-            cx="54"
-            cy="54"
-            r={RING_RADIUS}
-            strokeDasharray={`${pct * RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
-            transform="rotate(-90 54 54)"
-          />
-        </svg>
-        <span className="eng-ring-text">
-          <b>{label}</b>
-          <em>{safeDone}/{safeTotal}</em>
-        </span>
-      </span>
-    </button>
-  );
-}
-
 /** 阶段之间的箭头：橙色表示练习、绿色表示运用，只做流程示意，不承担跳转 */
 function StageArrow({ tone, label }) {
   return (
@@ -114,7 +71,7 @@ function StageArrow({ tone, label }) {
 }
 
 /**
- * 小节三阶流程：记忆 →（练习：看中文选英文 / 看英文选中文 / 听英文选中文）
+ * 小节三阶流程：记忆 →（练习：看中文选英文 / 看英文选中文 / 听英文选单词）
  * →（运用：情景对话 / 词汇填空 / 词汇默写）。
  *
  * 圆环口径：
@@ -163,6 +120,7 @@ function WordStageFlow({ group, section, onLearn, onPractice, onUse, onScenario 
           <StageRing
             tone="memory"
             label="单词记忆"
+            size="lg"
             done={memoryDone}
             total={total}
             onClick={onLearn}
@@ -179,7 +137,8 @@ function WordStageFlow({ group, section, onLearn, onPractice, onUse, onScenario 
             done={practiceDone('meaning-word')}
             total={total}
             disabled={!canPractice}
-            onClick={onPractice}
+            onClick={() => onPractice('meaning')}
+            hint="只考「看中文选英文」，本小节每个单词各 1 题"
           />
           <StageRing
             tone="practice"
@@ -187,15 +146,17 @@ function WordStageFlow({ group, section, onLearn, onPractice, onUse, onScenario 
             done={practiceDone('word-meaning')}
             total={total}
             disabled={!canPractice}
-            onClick={onPractice}
+            onClick={() => onPractice('word')}
+            hint="只考「看英文选中文」，本小节每个单词各 1 题"
           />
           <StageRing
             tone="practice"
-            label="听英文选中文"
+            label="听英文选单词"
             done={practiceDone('word-listen')}
             total={total}
             disabled={!canPractice}
-            onClick={onPractice}
+            onClick={() => onPractice('listen')}
+            hint="只考「听英文选单词」，本小节每个单词各 1 题"
           />
         </div>
 
@@ -501,7 +462,7 @@ export default function EnglishWordLearnPage() {
                     group={activeGroup}
                     section={sections.find((item) => item.section === activeGroup.section)}
                     onLearn={() => startLearn(activeGroup.section)}
-                    onPractice={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(activeGroup.section)}`)}
+                    onPractice={(type) => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(activeGroup.section)}&type=${type}`)}
                     onUse={(stage) => navigate(`/student/english/word-use?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(activeGroup.section)}&stage=${stage}`)}
                     onScenario={() => navigate(`/student/english/scenario?unit=${encodeURIComponent(unit)}`)}
                   />

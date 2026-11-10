@@ -1,56 +1,59 @@
 /**
  * englishQuiz.js - 英语单词选择题出题工具（纯函数）
  *
- * 四种题型:
- *   image   看图选单词：展示配图，从 4 个英文单词里选正确拼写
- *   meaning 看中文选单词：展示中文释义，从 4 个英文单词里选正确拼写
- *   word    看单词选中文：展示英文单词，从 4 个中文释义里选正确含义
- *   listen  听英文选中文：自动播放发音，从 4 个中文释义里选正确含义
+ * 三种题型（对齐需求文档 1.3.2）:
+ *   meaning 看中文选英文：展示中文释义（有配图时一并展示作提示），
+ *                        从 4 个英文拼写里选正确单词
+ *   word    看英文选中文：展示英文单词，从 4 个中文释义里选正确含义
+ *   listen  听英文选单词：只播英文语音不给文字题干，
+ *                        从 4 个英文拼写里选正确单词
  *
  * 约定:
  *   - 每道题恰好 1 个正确选项 + 3 个同单元干扰项，4 个选项互不相同
- *   - 缺图单词不出「看图选单词」题
+ *   - 图片只作为「看中文选英文」的提示，不单独构成题型（旧 image 题型已并入 meaning）
  *   - 干扰项不足（同单元可用单词少于 4 个）时返回 null，由调用方跳过
  */
 
 export const QUIZ_TYPE = {
-  IMAGE: 'image',
   MEANING: 'meaning',
   WORD: 'word',
   LISTEN: 'listen',
 };
 
 export const QUIZ_TYPE_LABEL = {
-  image: '看图选单词',
-  meaning: '看中文选单词',
-  word: '看单词选中文',
-  listen: '听英文选中文',
+  meaning: '看中文选英文',
+  word: '看英文选中文',
+  listen: '听英文选单词',
 };
 
 /** 题型对应的考察角度（与后端 EnglishExamAngle 编码一致） */
 export const QUIZ_TYPE_ANGLE = {
-  image: 'image-word',
   meaning: 'meaning-word',
   word: 'word-meaning',
   listen: 'word-listen',
 };
 
-/** 考察角度 → 选择题题型（仅四种选择题角度；搭配填空/默写在单词运用页） */
+/**
+ * 考察角度 → 选择题题型。
+ * `image-word` 是旧的「看图选单词」角度，配图已并入「看中文选英文」，
+ * 这里保留映射让历史复习数据继续按 meaning 出题。
+ */
 export const ANGLE_TO_TYPE = {
-  'image-word': QUIZ_TYPE.IMAGE,
+  'image-word': QUIZ_TYPE.MEANING,
   'meaning-word': QUIZ_TYPE.MEANING,
   'word-meaning': QUIZ_TYPE.WORD,
   'word-listen': QUIZ_TYPE.LISTEN,
 };
 
+/** 轮转顺序（不指定题型时使用） */
+const ROTATION = [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
+
 /** 单词缺图时统一使用的占位图 */
 export const WORD_PLACEHOLDER = '/word-placeholder.svg';
 
-/** 每个单词可选的题型（有图才出看图题） */
-export function availableTypes(word) {
-  return word && word.imageUrl
-    ? [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN]
-    : [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
+/** 每个单词可选的题型（三种题型对全部单词都可用） */
+export function availableTypes() {
+  return [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
 }
 
 function text(value) {
@@ -85,15 +88,16 @@ function pickDistractors(answer, values, n) {
  * 组装一道题。
  * @param {object} word 目标单词
  * @param {object[]} pool 同单元单词池
- * @param {string} type 题型
+ * @param {string} type 题型（meaning / word / listen）
  * @param {string} key 题目唯一键
  * @returns {object|null} 题目对象，无法出题时返回 null
  */
 export function buildQuestion(word, pool, type, key) {
-  if (!word || !availableTypes(word).includes(type)) {
+  if (!word || !ROTATION.includes(type)) {
     return null;
   }
-  const answerIsMeaning = type === QUIZ_TYPE.WORD || type === QUIZ_TYPE.LISTEN;
+  // 「看英文选中文」的答案是中文释义，另外两种题型都选英文拼写
+  const answerIsMeaning = type === QUIZ_TYPE.WORD;
   const answerText = answerIsMeaning ? text(word.meaning) : text(word.spell);
   if (!answerText) {
     return null;
@@ -133,10 +137,7 @@ export function buildQuestion(word, pool, type, key) {
     options,
     answerText,
   };
-  if (type === QUIZ_TYPE.IMAGE) {
-    question.promptType = 'image';
-    question.prompt = '';
-  } else if (type === QUIZ_TYPE.MEANING) {
+  if (type === QUIZ_TYPE.MEANING) {
     question.promptType = 'meaning';
     question.prompt = text(word.meaning);
   } else if (type === QUIZ_TYPE.LISTEN) {
@@ -167,17 +168,29 @@ export function buildQuestionForWord(word, pool, preferredType, key) {
 }
 
 /**
- * 为一组单元单词生成一轮题目（题型在可用题型间轮换）。
+ * 为一组单元单词生成一轮题目。
  * @param {object[]} words 需要出题的单词列表
  * @param {object[]} [pool] 干扰项候选池（默认同 words），复习时传入整单元单词
  * @param {Object<string,string>} [angleByWord] 复习时每个单词推荐的考察角度，键为单词 ID
+ * @param {string} [onlyType] 只出这一种题型（圆环直达入口使用）；为空时三种题型轮换
  * @returns {object[]} 题目数组
  */
-export function buildQuiz(words, pool = words, angleByWord = null) {
+export function buildQuiz(words, pool = words, angleByWord = null, onlyType = null) {
   const source = words || [];
   const candidates = pool || source;
-  const rotation = [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
   const questions = [];
+
+  // 圆环直达：每个单词各出 1 道该题型，保证该题型覆盖全部单词
+  if (onlyType && ROTATION.includes(onlyType)) {
+    source.forEach((word, index) => {
+      const question = buildQuestion(word, candidates, onlyType, `${index}-${word.id}`);
+      if (question) {
+        questions.push(question);
+      }
+    });
+    return questions;
+  }
+
   source.forEach((word, index) => {
     const types = availableTypes(word);
     // 复习优先用后端推荐的下一个未考角度，避免连续重刷同一考法
@@ -186,8 +199,8 @@ export function buildQuiz(words, pool = words, angleByWord = null) {
     if (recommended && types.includes(recommended)) {
       preferred = recommended;
     } else {
-      for (let k = 0; k < rotation.length; k += 1) {
-        const candidate = rotation[(index + k) % rotation.length];
+      for (let k = 0; k < ROTATION.length; k += 1) {
+        const candidate = ROTATION[(index + k) % ROTATION.length];
         if (types.includes(candidate)) {
           preferred = candidate;
           break;

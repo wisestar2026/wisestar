@@ -26,11 +26,13 @@ const MAX_APPEARANCE = 5;
 /** 答题后展示反馈的时长（毫秒） */
 const FEEDBACK_MS = 900;
 
-/** 按出现次数轮换题型 */
-function typeAt(word, seq) {
-  const types = word && word.imageUrl
-    ? [QUIZ_TYPE.IMAGE, QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD]
-    : [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD];
+/**
+ * 按出现次数轮换题型。
+ * 配图已并入「看中文选英文」作提示，这里只在三种题型间轮换；
+ * 复习巩固本就需要换考法，因此不带 listen（听觉题不适合连续重刷）。
+ */
+function typeAt(seq) {
+  const types = [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD];
   return types[seq % types.length];
 }
 
@@ -82,7 +84,7 @@ export default function WordDrillModal({ open, words, onFinish }) {
   // 选择后的 verdict 重渲染不会打乱选项（修复选项顺序跳变）。
   const question = useMemo(
     () => (current && total >= 4
-      ? buildQuestionForWord(current.word, words, typeAt(current.word, current.seq), `${current.seq}-${current.word.id}`)
+      ? buildQuestionForWord(current.word, words, typeAt(current.seq), `${current.seq}-${current.word.id}`)
       : null),
     [current, total, words],
   );
@@ -176,24 +178,19 @@ export default function WordDrillModal({ open, words, onFinish }) {
   const renderChoice = () => (
     <>
       <div className="eng-quiz-badge">{question.typeLabel}</div>
-      {question.promptType === 'image' && (
-        <>
-          {/* 中文提示：图片上方给出该单词的中文释义，帮助理解词义 */}
-          {question.word?.meaning && (
-            <div className="eng-quiz-image-hint">提示：{question.word.meaning}</div>
-          )}
-          <img
-            className="eng-quiz-image"
-            src={question.imageUrl || WORD_PLACEHOLDER}
-            alt="看图选单词"
-            onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
-          />
-        </>
-      )}
       {question.promptType === 'meaning' && (
         <>
-          <div className="eng-quiz-hint">看中文，选单词</div>
+          <div className="eng-quiz-hint">看中文，选英文</div>
           <div className="eng-quiz-prompt-meaning">{question.prompt}</div>
+          {/* 配图只是「看中文选英文」的辅助提示，不单独构成题型 */}
+          {question.imageUrl && (
+            <img
+              className="eng-quiz-image"
+              src={question.imageUrl}
+              alt={question.prompt || '单词配图'}
+              onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
+            />
+          )}
         </>
       )}
       {question.promptType === 'word' && (

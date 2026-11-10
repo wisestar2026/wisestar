@@ -2,15 +2,19 @@
  * EnglishWordPracticePage.jsx - 学员端英语单词选择题练习
  *
  * 功能:
- *   1. 以单元为单位出选择题，四种题型：看图选单词 / 看中文选单词 / 看单词选中文 / 听英文选中文
- *      读音只在学员点「听发音」或点单词本身时播放；仅「听英文选中文」在题目出现时自动播放一次
+ *   1. 三种题型（对齐需求文档 1.3.2）：
+ *        meaning 看中文选英文 / word 看英文选中文 / listen 听英文选单词
+ *      由 `?type=` 指定，一进页面只出这一种题型，且该小节每个单词各出 1 题。
+ *      不带 type（学习中心「单词练习」大卡、单元复习）时三种题型轮换。
+ *      「看中文选英文」有配图时把图片一并作为提示，不再单独出「看图选单词」。
+ *      读音只在学员点「听发音」或点单词本身时播放；仅「听英文选单词」在题目出现时自动播放一次
  *   2. 每题 4 个选项（1 正确 + 3 同单元干扰项），作答即判分并展示正确答案
- *   3. 答错单词在本轮末尾重出，直到答对（每词最多重出 3 次，防卡死）
+ *   3. 答错单词在本轮末尾用同一题型重出一次，保证每个单词每个题型都被覆盖
  *   4. 作答回写单词熟练度与复习队列，结束记录会话（type=word-quiz）
  *
- * URL: /student/english/practice?unit=xxx
+ * URL: /student/english/practice?unit=xxx&section=xxx&type=meaning
  *      /student/english/practice?mode=review&ids=1,2,3（智能复习·单词复习，跨单元）
- * 被谁引用: App.jsx 路由表；入口来自英语学习中心单元卡片「单词练习」
+ * 被谁引用: App.jsx 路由表；入口来自单词通关页三个练习圆环与英语学习中心「单词练习」大卡
  *
  * 数据流:
  *   GET  /api/english/word/word-book → 单元单词（单元练习）
@@ -28,14 +32,18 @@ import {
 } from '../../api/englishStudent';
 import { prefetchEnglishAudio, speakEnglish, stopEnglishAudio, WORD_TTS_SPEED } from '../../utils/english';
 import {
-  buildQuiz, buildQuestionForWord, availableTypes, QUIZ_TYPE_ANGLE, WORD_PLACEHOLDER,
+  buildQuiz, buildQuestionForWord, QUIZ_TYPE, QUIZ_TYPE_ANGLE, QUIZ_TYPE_LABEL, WORD_PLACEHOLDER,
 } from '../../utils/englishQuiz';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
 import MascotBubble from '../../components/student/MascotBubble';
 import './EnglishCenterPage.css';
 
-/** 同一单词本轮答错后最多重出的次数（防止一直答错无法结束） */
-const MAX_RETRY = 3;
+/** 同一单词本轮答错后重出的次数上限（答错后按同题型补 1 次，避免无限重做） */
+const MAX_RETRY = 2;
+
+/** 支持的题型；`?type=` 不在这三种内时退回题型轮换 */
+const SUPPORTED_TYPES = [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD, QUIZ_TYPE.LISTEN];
+const TYPE_ALIAS = { image: QUIZ_TYPE.MEANING };
 
 export default function EnglishWordPracticePage() {
   const navigate = useNavigate();
@@ -47,6 +55,11 @@ export default function EnglishWordPracticePage() {
   const sectionParam = searchParams.get('section') || '';
   // mode=review：智能复习的「单词复习」，跨单元取词（不分unit）
   const reviewMode = searchParams.get('mode') === 'review';
+  // 圆环直达入口：只出这一种题型（每个单词各 1 题）；空值表示三题型轮换
+  const typeParam = searchParams.get('type') || '';
+  const onlyType = SUPPORTED_TYPES.includes(TYPE_ALIAS[typeParam] || typeParam)
+    ? (TYPE_ALIAS[typeParam] || typeParam)
+    : null;
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
@@ -113,7 +126,7 @@ export default function EnglishWordPracticePage() {
         // 复习队列按复习时间实时变化，ids 也可能已被新一批替换；仍为空时退回本批，避免空页
         const target = filtered.length ? filtered : (fromPool.length ? fromPool : targetList);
         setWords(pool);
-        setQuestions(buildQuiz(target, pool, angleByWord));
+        setQuestions(buildQuiz(target, pool, angleByWord, onlyType));
         setIndex(0);
         setSelectedKey(null);
         setCorrectCount(0);
@@ -129,7 +142,7 @@ export default function EnglishWordPracticePage() {
         message.error('单词加载失败');
       })
       .finally(() => setLoading(false));
-  }, [version, grade, term, unit, idsParam, reviewMode, sectionParam]);
+  }, [version, grade, term, unit, idsParam, reviewMode, sectionParam, onlyType]);
 
   useEffect(() => {
     load();
@@ -141,7 +154,7 @@ export default function EnglishWordPracticePage() {
 
   // 默认不自动朗读：题目出现、作答揭晓、切题都保持安静，只有学员点
   // 「听发音」或点单词本身才出声（自动播音会打断思考，也容易干扰同教室的其他同学）。
-  // 例外是「听英文选中文」：题干本身就是声音，出现时自动播一次。
+  // 例外是「听英文选单词」：题干本身就是声音，出现时自动播一次。
   useEffect(() => {
     const spell = current?.promptType === 'word'
       ? (current?.prompt || current?.word?.spell)
@@ -195,10 +208,11 @@ export default function EnglishWordPracticePage() {
       const attempts = (wrongAttempts.current.get(current.wordId) || 0) + 1;
       wrongAttempts.current.set(current.wordId, attempts);
       if (attempts < MAX_RETRY) {
-        // 换一种题型重出，避免机械记忆同一题面
-        const types = availableTypes(current.word);
-        const preferred = types[(types.indexOf(current.type) + 1) % types.length];
-        const retry = buildQuestionForWord(current.word, words, preferred, `retry-${current.wordId}-${attempts}`);
+        // 用同一题型重出：本轮承诺「每个单词每个题型都覆盖」，
+        // 换题型会让这一种的题量悄悄变少、另一种多出来。
+        const retry = buildQuestionForWord(
+          current.word, words, current.type, `retry-${current.wordId}-${attempts}`,
+        );
         if (retry) setQuestions((prev) => [...prev, retry]);
       }
     }
@@ -283,7 +297,7 @@ export default function EnglishWordPracticePage() {
                 className={canGoScenario ? 'eng-btn eng-btn-again' : 'eng-btn eng-btn-primary'}
                 onClick={() => navigate(reviewMode
                   ? `/student/english/practice?mode=review&ids=${encodeURIComponent(wrongIds.join(','))}`
-                  : `/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(wrongIds.join(','))}`)}
+                  : `/student/english/practice?unit=${encodeURIComponent(unit)}&ids=${encodeURIComponent(wrongIds.join(','))}${sectionParam ? `&section=${encodeURIComponent(sectionParam)}` : ''}${onlyType ? `&type=${onlyType}` : ''}`)}
               >
                 复习错词 · {wrongIds.length}
               </button>
@@ -312,9 +326,9 @@ export default function EnglishWordPracticePage() {
   // 举手用题目视图：单词练习是选择题，按当前题拼出单选结构，便于老师看懂题意与选项
   const raiseId = current ? `word:${current.key}` : '';
   const raiseTitle = current
-    ? `${current.typeLabel}：${current.promptType === 'image'
-      ? (current.word?.meaning || '看图选单词')
-      : (current.promptType === 'listen' ? (current.word?.spell || '听英文选中文') : current.prompt)}`
+    ? `${current.typeLabel}：${current.promptType === 'listen'
+      ? (current.word?.spell || QUIZ_TYPE_LABEL[QUIZ_TYPE.LISTEN])
+      : current.prompt}`
     : '';
   const raiseQuestion = current ? {
     id: raiseId,
@@ -365,31 +379,25 @@ export default function EnglishWordPracticePage() {
         </button>
         <div className="eng-quiz-badge">{current.typeLabel}</div>
 
-        {current.promptType === 'image' && (
-          <>
-            {/* 中文提示：图片上方给出该单词的中文释义，帮助理解词义 */}
-            {current.word?.meaning && (
-              <div className="eng-quiz-image-hint">提示：{current.word.meaning}</div>
-            )}
-            <img
-              className="eng-quiz-image"
-              src={current.imageUrl || WORD_PLACEHOLDER}
-              alt="看图选单词"
-              onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
-            />
-          </>
-        )}
-
         {current.promptType === 'meaning' && (
           <>
-            <div className="eng-quiz-hint">看中文，选单词</div>
+            <div className="eng-quiz-hint">看中文，选英文</div>
             <div className="eng-quiz-prompt-meaning">{current.prompt}</div>
+            {/* 配图只是「看中文选英文」的辅助提示，不单独构成题型 */}
+            {current.imageUrl && (
+              <img
+                className="eng-quiz-image"
+                src={current.imageUrl}
+                alt={current.prompt || '单词配图'}
+                onError={(e) => { e.currentTarget.src = WORD_PLACEHOLDER; }}
+              />
+            )}
           </>
         )}
 
         {current.promptType === 'listen' && (
           <>
-            <div className="eng-quiz-hint">听英文，选中文</div>
+            <div className="eng-quiz-hint">听英文，选单词</div>
             <button
               type="button"
               className="eng-quiz-listen"

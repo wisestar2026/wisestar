@@ -292,17 +292,6 @@
   border-radius: 20px;
   box-shadow: 0 10px 24px rgba(64, 140, 190, 0.18);
 }
-/* 看图选单词：图片上方给出中文释义提示，帮助理解词义 */
-.eng-quiz-image-hint {
-  display: inline-block;
-  margin: 2px auto 6px;
-  padding: 6px 18px;
-  border-radius: 999px;
-  background: #fff0e8;
-  color: #d9603a;
-  font-size: 27px;
-  font-weight: 800;
-}
 .eng-quiz-prompt-meaning { font-size: 48px; font-weight: 900; color: #d9603a; }
 .eng-quiz-options {
   display: grid;
