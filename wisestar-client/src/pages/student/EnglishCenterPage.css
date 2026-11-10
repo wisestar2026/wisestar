@@ -795,47 +795,6 @@ input.eng-dictation-field:focus {
 .eng-mod-reading { background: #d8ecfb; color: #176b9e; }
 .eng-mod-readaloud { background: #ffe6d8; color: #b3542a; }
 
-/* 单词通关：按小节(model)分组的卡片 */
-.eng-model-group {
-  background: #eef6fc;
-  border-radius: 22px;
-  padding: 20px 22px;
-  margin-top: 16px;
-}
-.eng-model-head { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
-.eng-model-name { font-size: clamp(19px, 1.3vw, 24px); font-weight: 900; color: #14506e; }
-.eng-model-done { font-size: 22.5px; font-weight: 800; color: #2e9e5b; }
-.eng-model-count { font-size: 21px; color: #7a9aac; margin-left: auto; }
-.eng-model-bar {
-  height: 10px;
-  border-radius: 999px;
-  background: #dbeaf4;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-.eng-model-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #5bd07f, #33b463);
-  transition: width 0.35s ease;
-}
-.eng-model-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.eng-model-actions button {
-  border: none;
-  border-radius: 16px;
-  padding: 20px 10px;
-  font-size: 27px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.eng-model-actions button:hover:not(:disabled) { transform: translateY(-2px); }
-.eng-model-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
-.eng-model-learn { background: #d9f2df; color: #1f8f4d; }
-.eng-model-practice { background: #fce4d6; color: #d9603a; }
-.eng-model-scenario { background: #fdf1cf; color: #c1901a; }
-
 /* 句式通关：两个入口大卡（底部对齐，撑满容器） */
 .eng-hub-cards {
   display: grid;
@@ -893,7 +852,6 @@ input.eng-dictation-field:focus {
   .eng-mod-grid, .eng-hub-cards { grid-template-columns: 1fr; margin-top: 20px; }
   .eng-hub-card { padding: 44px 18px; }
   .eng-progress-grid { flex-direction: column; gap: 14px; }
-  .eng-model-actions { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
@@ -1256,21 +1214,6 @@ input.eng-dictation-field:focus {
 .eng-hub-scenario { background: linear-gradient(150deg, #fff9f5 0%, #fce5d8 100%); }
 .eng-hub-practice { background: linear-gradient(150deg, #f5f9ff 0%, #e3edfc 100%); }
 
-.eng-model-group {
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(238, 248, 255, 0.72));
-  box-shadow: 0 10px 24px rgba(23, 107, 158, 0.08);
-}
-.eng-model-actions button {
-  border: 1px solid rgba(255, 255, 255, 0.96);
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow: 0 6px 14px rgba(23, 107, 158, 0.08);
-}
-.eng-model-actions button:hover:not(:disabled) {
-  background: #fff;
-  box-shadow: 0 10px 20px rgba(23, 107, 158, 0.14);
-}
-
 /* 语法卡片只调整外壳，正文仍是白底高对比 */
 .eng-grammar-card {
   border: 1px solid rgba(214, 232, 244, 0.9);
@@ -1481,39 +1424,15 @@ input.eng-dictation-field:focus {
 .eng-listen-tip { font-size: 22.5px; font-weight: 700; color: #5b7c9b; }
 
 /* ============================================================
- * 2026-11 单词三阶（记忆 / 练习 / 运用）
- * 小节卡片内的三态计数与阶段条目；尺寸沿用第 198 节后的放大基准
+ * 2026-11 三阶阶段条目（句式四段入口共用 eng-stage-row/-index/-hint）
+ * 尺寸沿用第 198 节后的放大基准；单词通关页的三阶圆环见 EnglishWordLearnPage.css
  * ============================================================ */
-.eng-state-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
-.eng-state-chip {
-  border-radius: 999px;
-  padding: 7px 18px;
-  font-size: 21px;
-  font-weight: 800;
-  background: #eef6fc;
-  color: #5b7f92;
-}
-.eng-state-familiar { background: #dff4e6; color: #1f8f4d; }
-.eng-state-ordinary { background: #fdf1cf; color: #b98a10; }
-.eng-state-unfamiliar { background: #fde4e1; color: #c0392b; }
-
 .eng-stage-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
-.eng-stage-item {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 18px 18px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(214, 232, 244, 0.9);
-  background: rgba(255, 255, 255, 0.86);
-}
-.eng-stage-item.is-pass { border-color: #9fdcb5; background: #f2fbf5; }
-.eng-stage-item-head { display: flex; align-items: center; gap: 10px; }
 .eng-stage-index {
   width: 30px;
   height: 30px;
@@ -1526,29 +1445,6 @@ input.eng-dictation-field:focus {
   font-size: 21px;
   font-weight: 800;
 }
-.eng-stage-name { font-size: 23px; font-weight: 900; color: #14506e; }
-.eng-stage-pass {
-  margin-left: auto;
-  font-size: 19px;
-  font-weight: 800;
-  color: #1f8f4d;
-}
-.eng-stage-metric { display: flex; align-items: baseline; gap: 10px; }
-.eng-stage-metric b { font-size: 30px; font-weight: 900; color: #ff7a59; }
-.eng-stage-metric span { font-size: 20px; color: #7a9aac; }
-.eng-stage-btn {
-  border: 1px solid rgba(255, 255, 255, 0.96);
-  border-radius: 14px;
-  padding: 12px 10px;
-  font-size: 22px;
-  font-weight: 800;
-  color: #1479a6;
-  background: #eefaff;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.2s ease;
-}
-.eng-stage-btn:hover:not(:disabled) { background: #ddf4fe; transform: translateY(-1px); }
-.eng-stage-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .eng-stage-hint {
   margin-bottom: 14px;
   padding: 12px 18px;

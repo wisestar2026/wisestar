@@ -1,0 +1,315 @@
+/* ============================================================
+ * EnglishWordLearnPage.css - 学员端「单词通关」hub 版式
+ *
+ * 参考图口径：
+ *   顶部一行「单词」进度条；下方每个小节一张面板，面板内按
+ *   记忆（蓝）→ 练习（橙）→ 运用（绿）三组圆环排列，
+ *   阶段之间用箭头串联；箭头只做流程示意，入口全部落在圆环上。
+ *
+ * 配色沿用英语主题：海蓝 #16b5e6 / 珊瑚橙 #c75e0e / 通关绿 #02b451；
+ * 只新增 .eng-word-* / .eng-ring* / .eng-arrow* 前缀，不改动共用类。
+ * ============================================================ */
+
+/* ---------- 顶部「单词」进度行（与标题同行，参考图口径） ---------- */
+.eng-word-head {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.eng-word-progress {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 10px;
+}
+.eng-word-progress-label {
+  flex: none;
+  font-size: 24px;
+  font-weight: 800;
+  color: #6b93a8;
+  letter-spacing: 1px;
+}
+.eng-word-progress-track {
+  flex: 1;
+  height: 16px;
+  border-radius: 999px;
+  background: #e2f1fa;
+  box-shadow: inset 0 1px 2px rgba(20, 80, 110, 0.06);
+  overflow: hidden;
+}
+.eng-word-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7ed0f2, #16b5e6);
+  transition: width 0.35s ease;
+}
+.eng-word-progress-count {
+  flex: none;
+  font-size: 23px;
+  font-weight: 800;
+  color: #5b7f92;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 小节 tab（参考图：并排的蓝色标题条，当前小节实心） ---------- */
+.eng-word-tabs {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+.eng-word-tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #3fa9da;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.eng-word-tab:hover { background: #eef9ff; }
+.eng-word-tab.active {
+  background: linear-gradient(135deg, #2fb6e8, #0ea5de);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(14, 165, 222, 0.28);
+}
+.eng-word-tab-name { font-size: 23px; font-weight: 900; }
+.eng-word-tab-count { font-size: 18px; font-weight: 700; opacity: 0.8; }
+
+/* ---------- 小节面板容器 ---------- */
+.eng-word-flow-card {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+  min-width: 0;
+  border-radius: 20px;
+  border: 1px solid rgba(214, 232, 244, 0.9);
+  background: #f8fcff;
+}
+
+/* ---------- 小节头部：名称 + 三态计数 ---------- */
+.eng-word-flow { padding: 20px 22px 22px; }
+.eng-word-section-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.eng-word-section-name {
+  font-size: 26px;
+  font-weight: 900;
+  color: #0e74b4;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.eng-word-states {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 21px;
+  font-weight: 800;
+  color: #1467a8;
+}
+
+/* ---------- 三阶圆环排布 ---------- */
+.eng-word-stages {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+.eng-word-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  min-width: 0;
+  padding: 6px 10px;
+}
+/* 列间参考竖线（参考图里三组圆环之间的浅色分隔） */
+.eng-word-col-practice,
+.eng-word-col-use {
+  border-left: 1px dashed #d9ecf7;
+  margin-left: 6px;
+  padding-left: 18px;
+}
+
+/* ---------- 圆环 ---------- */
+.eng-ring {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+.eng-ring:hover:not(:disabled) { transform: translateY(-3px) scale(1.02); }
+.eng-ring:disabled { cursor: not-allowed; opacity: 0.55; }
+.eng-ring-frame {
+  position: relative;
+  display: block;
+  width: clamp(112px, 9vw, 152px);
+  aspect-ratio: 1;
+}
+.eng-word-col-memory .eng-ring-frame { width: clamp(132px, 11vw, 186px); }
+.eng-ring-frame svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.eng-ring-outline {
+  fill: none;
+  stroke-width: 2;
+}
+.eng-ring-track {
+  fill: none;
+  stroke-width: 10;
+}
+.eng-ring-fill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: butt;
+  transition: stroke-dasharray 0.4s ease;
+}
+.eng-ring-memory .eng-ring-outline { stroke: #8fd8f4; }
+.eng-ring-memory .eng-ring-track { stroke: #eaf7fd; }
+.eng-ring-memory .eng-ring-fill { stroke: #16b5e6; }
+.eng-ring-practice .eng-ring-outline { stroke: #f0c8a4; }
+.eng-ring-practice .eng-ring-track { stroke: #fdf3ec; }
+.eng-ring-practice .eng-ring-fill { stroke: #c75e0e; }
+.eng-ring-use .eng-ring-outline { stroke: #a4e8c4; }
+.eng-ring-use .eng-ring-track { stroke: #eefaf3; }
+.eng-ring-use .eng-ring-fill { stroke: #02b451; }
+
+.eng-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 14px;
+  text-align: center;
+  pointer-events: none;
+}
+.eng-ring-text b {
+  font-size: clamp(15px, 1.15vw, 19px);
+  font-weight: 900;
+  line-height: 1.25;
+  color: #3f8db5;
+  word-break: break-word;
+}
+.eng-ring-text em {
+  font-style: normal;
+  font-size: clamp(14px, 1.05vw, 18px);
+  font-weight: 800;
+  color: #6b93a8;
+  font-variant-numeric: tabular-nums;
+}
+.eng-ring-memory .eng-ring-text b { color: #2f9fd4; }
+.eng-ring-practice .eng-ring-text b { color: #b4550d; }
+.eng-ring-use .eng-ring-text b { color: #0f9152; }
+
+/* ---------- 阶段箭头 ---------- */
+/* 纯流程示意，不承担跳转，因此无 hover 反馈 */
+.eng-arrow {
+  border: none;
+  padding: 12px 26px 12px 34px;
+  font-size: 21px;
+  font-weight: 900;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  clip-path: polygon(0 0, 78% 0, 100% 50%, 78% 100%, 0 100%, 14% 50%);
+}
+.eng-arrow-practice { background: linear-gradient(135deg, #d9701c, #b4550d); }
+.eng-arrow-use { background: linear-gradient(135deg, #21cb68, #029c46); }
+.eng-arrow-label { white-space: nowrap; }
+
+/* ---------- 底部图例 ---------- */
+.eng-word-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed #d9ecf7;
+}
+.eng-word-legend-item {
+  border-radius: 999px;
+  padding: 5px 16px;
+  font-size: 19px;
+  font-weight: 800;
+}
+.eng-word-legend-memory { background: #ddf3fd; color: #1687ba; }
+.eng-word-legend-practice { background: #fbe7d5; color: #b4550d; }
+.eng-word-legend-use { background: #ddf7e7; color: #0f9152; }
+.eng-word-legend-tip {
+  font-size: 18px;
+  color: #7fa3b6;
+  font-weight: 600;
+}
+
+/* ---------- 断点 ---------- */
+/* 窄屏：标题与复习按钮同行，进度条降到下一行占满 */
+@media (max-width: 1280px) {
+  .eng-word-head { flex-wrap: wrap; }
+  .eng-word-progress {
+    order: 3;
+    flex: 1 0 100%;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 1100px) {
+  .eng-word-stages {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 6px;
+  }
+  .eng-word-col {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    border-left: none;
+    border-top: 1px dashed #d9ecf7;
+    padding: 14px 6px 4px;
+    margin-left: 0;
+    width: 100%;
+  }
+  .eng-word-col-memory { border-top: none; padding-top: 4px; }
+  /* 竖排时箭头改成圆角胶囊 + 向下箭头，避免旋转文字 */
+  .eng-arrow {
+    clip-path: none;
+    border-radius: 999px;
+    padding: 10px 26px;
+    font-size: 19px;
+  }
+  .eng-arrow::before { content: '↓ '; }
+}
+
+@media (max-width: 760px) {
+  .eng-word-tabs { flex-wrap: wrap; }
+  .eng-word-tab { flex: 1 1 42%; }
+  .eng-word-tab-name { font-size: 20px; }
+  .eng-word-flow { padding: 16px 14px 18px; }
+  .eng-word-section-name { font-size: 23px; }
+  .eng-word-states { font-size: 19px; }
+  .eng-word-progress-label,
+  .eng-word-progress-count { font-size: 20px; }
+  .eng-word-progress-track { height: 12px; }
+  .eng-word-legend-tip { display: none; }
+}
