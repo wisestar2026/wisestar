@@ -1214,7 +1214,7 @@
 - 包: `cn.wisestar.server.impl`
 - 类型: `final class EnglishExamAngle`
 - **类说明**：
-  英语考察角度规则（纯函数，无数据库依赖）。「考察角度」回答「同一个知识点换哪种考法」，用于复习时避免把原题重刷一遍。角度池：单词 `word-meaning / meaning-word / image-word / word-collocation / word-listen / word-dictation`；句式 `sentence-listen-build / sentence-build / sentence-fill / sentence-zh-en / sentence-en-zh / sentence-listen-meaning / sentence-dictation`；语法 `grammar-rule-id / grammar-choice / grammar-judge / grammar-transform / grammar-rewrite`。角度耗尽后才允许复用；`isSameAngle` 用于「换汤不换药」判定（题型与角度都相同、只换名词或人名视为同一角度）。
+  英语考察角度规则（纯函数，无数据库依赖）。「考察角度」回答「同一个知识点换哪种考法」，用于复习时避免把原题重刷一遍。角度池：单词 `word-meaning（看词选义）/ meaning-word（看义选词）/ image-word（看图识词，保留兼容但配图已并入看义选词）/ word-collocation / word-listen（听音选词）/ word-dictation`；句式 `sentence-listen-build / sentence-build / sentence-fill / sentence-zh-en / sentence-en-zh / sentence-listen-meaning / sentence-dictation / sentence-scenario`；语法 `grammar-rule-id / grammar-choice / grammar-judge / grammar-transform / grammar-rewrite`。角度耗尽后才允许复用；`isSameAngle` 用于「换汤不换药」判定（题型与角度都相同、只换名词或人名视为同一角度）。
 - 方法:
   - `public static List<String> anglesOf(String module)`
     模块可用角度池（只读）。
