@@ -49,4 +49,13 @@ public class EnglishSentenceView {
 	/** 累计答错次数 */
 	private Integer wrongCount;
 
+	/** 已使用的考察角度（句式通关各题型的覆盖口径，推荐下一个角度时排除） */
+	private java.util.List<String> angleUsed;
+
+	/** 掌握三态：familiar / ordinary / unfamiliar */
+	private String masteryState;
+
+	/** 掌握三态中文标签：熟练 / 一般 / 陌生 */
+	private String masteryStateLabel;
+
 }

@@ -4,16 +4,18 @@
  * 题型:
  *   build          连词成句（看中文，点词块拼出英文）
  *   listen-build   听音组句（只播英文，点词块拼句，不看文本）
- *   listen-meaning 听力理解（只播英文，从 4 个中文释义中选）
- *   dictation      句子默写（给中文，按词数逐词填空）
+ *   zh-en          看中文选英文（给中文题干，4 个英文选项）
+ *   en-zh          看英文选中文（给英文句子，4 个中文选项）
+ *   listen-meaning 听英文选中文（只播英文，从 4 个中文释义中选）
+ *   dictation      句子默写（给中文，按词数逐词填空；上报 use 阶段，归入句子运用）
  *   choice         句子选择（给中文题干，选正确英文句）
  *   fill           词汇填空（给带空白的英文句，按空位拆多个输入框）
  *
- * 「连词成句 / 听音组句 / 听力理解」三种为按单元句子即时生成（不依赖 AI 固化内容），
- * 「综合练习」沿用管理端固化的混合题型。
+ * 除「综合练习」沿用管理端固化的混合题型外，其余题型都按单元句子即时生成：
+ * 干扰项取同单元其他句子，句子不足 2 条时四选一题型自动跳过。
  *
- * 步骤条支持 mix / build / listen-build / listen-meaning / fill / dictation 六种，
- * 句式四段里「句子学习」用 mode=fill，「句子练习」用 mode=dictation 可直达对应题型。
+ * 步骤条覆盖 mix / build / listen-build / zh-en / en-zh / listen-meaning / fill / dictation，
+ * 句式通关页的每个圆环都用 mode 直达对应题型（整组提交的情景对话走独立页面）。
  *
  * 数据流:
  *   GET  /api/english/student/sentence-exercises?version=&grade=&term=&unit=
@@ -38,18 +40,27 @@ import MascotBubble from '../../components/student/MascotBubble';
 const KIND_LABELS = {
   build: '连词成句',
   'listen-build': '听音组句',
-  'listen-meaning': '听力理解',
+  'listen-meaning': '听英文选中文',
+  'zh-en': '看中文选英文',
+  'en-zh': '看英文选中文',
   dictation: '句子默写',
   choice: '句子选择',
   fill: '词汇填空',
 };
 
-/** 句子练习模式：mix 为管理端固化的综合题，其余三种按单元句子即时生成 */
+/**
+ * 句子练习模式：
+ *   mix 沿用管理端固化的综合题；其余按单元句子即时生成。
+ *   句子学习（听音组句 / 连词成句 / 词汇填空）、句子练习（看中文选英文 /
+ *   看英文选中文 / 听英文选中文）与句子运用（句子默写）共用这一个步骤条。
+ */
 const MODES = [
   { key: 'mix', label: '综合练习' },
   { key: 'build', label: '连词成句' },
   { key: 'listen-build', label: '听音组句' },
-  { key: 'listen-meaning', label: '听力理解' },
+  { key: 'zh-en', label: '看中文选英文' },
+  { key: 'en-zh', label: '看英文选中文' },
+  { key: 'listen-meaning', label: '听英文选中文' },
   { key: 'fill', label: '词汇填空' },
   { key: 'dictation', label: '句子默写' },
 ];
@@ -59,6 +70,8 @@ const KIND_ANGLE = {
   'listen-build': 'sentence-listen-build',
   build: 'sentence-build',
   fill: 'sentence-fill',
+  'zh-en': 'sentence-zh-en',
+  'en-zh': 'sentence-en-zh',
   'listen-meaning': 'sentence-listen-meaning',
   dictation: 'sentence-dictation',
 };
@@ -66,9 +79,15 @@ const KIND_STAGE = {
   'listen-build': 'memory',
   build: 'memory',
   fill: 'memory',
+  'zh-en': 'practice',
+  'en-zh': 'practice',
   'listen-meaning': 'practice',
-  dictation: 'practice',
+  // 句式通关页把「句子默写」摆在句子运用列，答题也按运用阶段计数
+  dictation: 'use',
 };
+
+/** 四选一题型：选项来自同单元其他句子，至少要有 2 句才能出题 */
+const CHOICE_KINDS = new Set(['zh-en', 'en-zh', 'listen-meaning']);
 
 /** 每轮即时生成题型的题量 */
 const GENERATED_MAX = 10;
@@ -180,19 +199,25 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
       return [];
     }
     const pool = sentences.filter((s) => s?.en).slice(0, GENERATED_MAX);
-    if (mode === 'listen-meaning') {
+    if (mode === 'listen-meaning' || mode === 'zh-en' || mode === 'en-zh') {
+      // 四选一：正确答案与干扰项都取同单元其他句子，选项至少 2 个才出题
+      const enPool = Array.from(new Set(sentences.map((s) => String(s?.en || '').trim()).filter(Boolean)));
       const zhPool = Array.from(new Set(sentences.map((s) => String(s?.zh || '').trim()).filter(Boolean)));
+      const source = mode === 'zh-en' ? enPool : zhPool;
       return pool.map((s) => {
-        const correct = String(s.zh || '').trim();
-        const distractors = shuffle(zhPool.filter((zh) => zh !== correct)).slice(0, 3);
+        const correct = String((mode === 'zh-en' ? s.en : s.zh) || '').trim();
+        if (!correct) return null;
+        const distractors = shuffle(source.filter((value) => value !== correct)).slice(0, 3);
+        if (distractors.length < 3) return null;
         return {
-          kind: 'listen-meaning',
+          kind: mode,
           sentenceId: s.id,
-          zh: correct,
+          zh: s.zh,
           en: s.en,
+          answer: correct,
           options: shuffle([correct, ...distractors]),
         };
-      }).filter((item) => item.options.length >= 2);
+      }).filter(Boolean);
     }
     if (mode === 'fill') {
       // 词汇填空：从句子中挑一个实义词挖空，中文提示沿用整句释义
@@ -319,13 +344,24 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
   };
 
   const optionList = useMemo(() => {
-    if (current?.kind === 'listen-meaning') {
+    if (CHOICE_KINDS.has(current?.kind)) {
       return Array.isArray(current.options) ? current.options : [];
     }
     if (current?.kind !== 'choice') return [];
     const opts = Array.isArray(current.options) ? current.options : [];
     return opts.length ? opts : [current.en];
   }, [current]);
+
+  /** 选择题正确答案：即时生成题目直接读 answer，固化题目沿用 answer / en */
+  const optionAnswer = current?.answer || (current?.kind === 'zh-en' ? current?.en : current?.zh);
+
+  /** 题干文案：看中文选英文给中文、看英文选中文给英文、听力题只提示听音频 */
+  const stemText = (() => {
+    if (!current) return '（无中文提示）';
+    if (isListenKind(current.kind)) return '听音频作答';
+    if (current.kind === 'en-zh') return current.en || '';
+    return current.zh || '（无中文提示）';
+  })();
 
   if (loading) {
     return <div className="eng-learn-wrap"><Spin /></div>;
@@ -404,8 +440,9 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
         {feedback === 'no' && (
           <>
             <div>再想想～</div>
-            <div>正确答案：{current?.en}</div>
+            <div>正确答案：{optionAnswer || current?.en}</div>
             {isListenKind(current?.kind) && current?.zh && <div>句意：{current.zh}</div>}
+            {current?.kind === 'en-zh' && current?.en && <div>原句：{current.en}</div>}
           </>
         )}
       </MascotBubble>
@@ -413,8 +450,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
       <div className="eng-card quiz-stage">
         <div className="eng-sentence-hint">
           <span className={`eng-difficulty-tag level-${current?.difficulty || 1}`}>{difficultyLabel}</span>
-          {kindLabel}
-          {isListenKind(current?.kind) ? '：听音频作答' : `：${current?.zh || '（无中文提示）'}`}
+          {kindLabel}：{stemText}
         </div>
 
         {/* 听力题：大按钮重播，不带任何英文文本 */}
@@ -554,11 +590,11 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
           </div>
         )}
 
-        {/* 听力理解：听英文，选中文 */}
-        {current?.kind === 'listen-meaning' && (
+        {/* 四选一：看中文选英文 / 看英文选中文 / 听英文选中文 / 综合练习里的句子选择 */}
+        {(CHOICE_KINDS.has(current?.kind) || current?.kind === 'choice') && (
           <div className="eng-quiz-options" style={{ marginTop: 8 }}>
             {optionList.map((opt, oi) => {
-              const isAnswer = opt === current.zh;
+              const isAnswer = opt === optionAnswer;
               const cls = ['eng-quiz-option'];
               if (feedback && isAnswer) cls.push('correct');
               return (
@@ -567,29 +603,7 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
                   type="button"
                   className={cls.join(' ')}
                   disabled={Boolean(feedback)}
-                  onClick={() => submit(opt, current.zh)}
-                >
-                  {String.fromCharCode(65 + oi)}. {opt}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 句子选择 */}
-        {current?.kind === 'choice' && (
-          <div className="eng-quiz-options" style={{ marginTop: 8 }}>
-            {optionList.map((opt, oi) => {
-              const isAnswer = opt === (current.answer || current.en);
-              const cls = ['eng-quiz-option'];
-              if (feedback && isAnswer) cls.push('correct');
-              return (
-                <button
-                  key={oi}
-                  type="button"
-                  className={cls.join(' ')}
-                  disabled={Boolean(feedback)}
-                  onClick={() => submit(opt, current.answer || current.en)}
+                  onClick={() => submit(opt, optionAnswer)}
                 >
                   {String.fromCharCode(65 + oi)}. {opt}
                 </button>

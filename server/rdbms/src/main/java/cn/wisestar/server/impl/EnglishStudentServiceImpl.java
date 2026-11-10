@@ -1052,11 +1052,25 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 								.in(EnglishSentenceBook::getSentenceId, sentenceIds))
 				.stream()
 				.collect(Collectors.toMap(EnglishSentenceBook::getSentenceId, b -> b, (a, b) -> b));
+		// 三态与已用考察角度：句式通关页按题型画圆环需要，与句子本 familiarity 并存、互不覆盖
+		Map<String, cn.wisestar.server.domain.dto.english.EnglishLearningStateView> states =
+				englishLearningRuleService.loadStates(userId, List.of(EnglishExamAngle.MODULE_SENTENCE));
+		Map<String, List<String>> usedAngles = englishLearningRuleService.angleUsed(userId,
+				EnglishExamAngle.MODULE_SENTENCE, sentenceIds);
 		views.forEach(v -> {
 			EnglishSentenceBook book = bookBySentence.get(v.getId());
 			v.setFamiliarity(book == null || book.getFamiliarity() == null ? 0 : book.getFamiliarity());
 			v.setCorrectCount(book == null || book.getCorrectCount() == null ? 0 : book.getCorrectCount());
 			v.setWrongCount(book == null || book.getWrongCount() == null ? 0 : book.getWrongCount());
+			cn.wisestar.server.domain.dto.english.EnglishLearningStateView state = states.get(
+					EnglishExamAngle.MODULE_SENTENCE + "|" + v.getId());
+			String stateValue = state == null || state.getState() == null
+					? EnglishStateRule.UNFAMILIAR
+					: state.getState();
+			v.setMasteryState(stateValue);
+			v.setMasteryStateLabel(EnglishMastery.stateLabel(stateValue));
+			List<String> used = usedAngles.get(v.getId());
+			v.setAngleUsed(used == null ? java.util.Collections.emptyList() : used);
 		});
 	}
 

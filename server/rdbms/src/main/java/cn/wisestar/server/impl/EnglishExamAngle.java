@@ -71,6 +71,9 @@ public final class EnglishExamAngle {
 	/** 句式角度：句子默写 */
 	public static final String SENTENCE_DICTATION = "sentence-dictation";
 
+	/** 句式角度：情景运用（单元情景对话中的实际使用） */
+	public static final String SENTENCE_SCENARIO = "sentence-scenario";
+
 	/** 语法角度：规则识别 */
 	public static final String GRAMMAR_RULE_ID = "grammar-rule-id";
 
@@ -95,7 +98,7 @@ public final class EnglishExamAngle {
 				WORD_MEANING, MEANING_WORD, IMAGE_WORD, WORD_COLLOCATION, WORD_LISTEN, WORD_DICTATION)));
 		pools.put(MODULE_SENTENCE, Collections.unmodifiableList(Arrays.asList(
 				SENTENCE_LISTEN_BUILD, SENTENCE_BUILD, SENTENCE_FILL, SENTENCE_ZH_EN,
-				SENTENCE_EN_ZH, SENTENCE_LISTEN_MEANING, SENTENCE_DICTATION)));
+				SENTENCE_EN_ZH, SENTENCE_LISTEN_MEANING, SENTENCE_DICTATION, SENTENCE_SCENARIO)));
 		pools.put(MODULE_GRAMMAR, Collections.unmodifiableList(Arrays.asList(
 				GRAMMAR_RULE_ID, GRAMMAR_CHOICE, GRAMMAR_JUDGE, GRAMMAR_TRANSFORM, GRAMMAR_REWRITE)));
 		POOLS = Collections.unmodifiableMap(pools);
@@ -114,6 +117,7 @@ public final class EnglishExamAngle {
 		labels.put(SENTENCE_EN_ZH, "看英文选中文");
 		labels.put(SENTENCE_LISTEN_MEANING, "听英文选中文");
 		labels.put(SENTENCE_DICTATION, "句子默写");
+		labels.put(SENTENCE_SCENARIO, "情景运用");
 		labels.put(GRAMMAR_RULE_ID, "规则识别");
 		labels.put(GRAMMAR_CHOICE, "语法单选");
 		labels.put(GRAMMAR_JUDGE, "语法判断");

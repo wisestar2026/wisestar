@@ -1,0 +1,140 @@
+/* ============================================================
+ * EnglishSentenceLearnPage.css - 学员端「句式通关」hub 版式
+ *
+ * 三列分组（不用阶段箭头串联）：
+ *   句子学习（海蓝）/ 句子练习（珊瑚橙）/ 句子运用（通关绿）
+ * 每列上方一块彩色矩形标题，标题下方是该列的题型圆环。
+ * 列内圆环统一尺寸，三列等宽。
+ *
+ * 圆环与 hub 骨架（进度行 / 面板 / 图例）的视觉定义都在
+ * styles/english-stage.css（与单词通关页共用）；本文件只补充
+ * 课本跟读入口条、三列网格与列标题矩形。
+ * ============================================================ */
+
+/* ---------- 课本跟读入口条（四段链路的第 1 段，独立页面） ---------- */
+.eng-sentence-read-aloud {
+  margin-top: 18px;
+}
+.eng-sentence-ra-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px;
+  border: 1px dashed #a8d8ef;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0faff, #e3f4ff);
+  color: #12769f;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+.eng-sentence-ra-btn:hover {
+  border-color: #4bb7e8;
+  transform: translateY(-1px);
+}
+.eng-sentence-ra-btn span {
+  margin-left: auto;
+  font-size: 19px;
+  font-weight: 700;
+  color: #6a93a8;
+}
+
+/* ---------- 三列：等宽，各自一块标题矩形 ---------- */
+.eng-sentence-stages {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
+}
+.eng-sentence-col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+  min-width: 0;
+}
+/* 列标题矩形：颜色区分阶段，文字居中加粗 */
+.eng-sentence-col-head {
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 2px;
+}
+.eng-sentence-col-head-memory {
+  background: linear-gradient(135deg, #2fb6e8, #0e8fc4);
+  box-shadow: 0 6px 16px rgba(22, 181, 230, 0.28);
+}
+.eng-sentence-col-head-practice {
+  background: linear-gradient(135deg, #d9701c, #b4550d);
+  box-shadow: 0 6px 16px rgba(199, 94, 14, 0.28);
+}
+.eng-sentence-col-head-use {
+  background: linear-gradient(135deg, #21cb68, #029c46);
+  box-shadow: 0 6px 16px rgba(2, 180, 81, 0.28);
+}
+/* 圆环区：纵向排列，统一居中 */
+.eng-sentence-col-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding: 4px 0 8px;
+}
+/* 列内圆环统一尺寸：不受「首环放大」影响，三列看起来一样大 */
+.eng-sentence-col-body .eng-ring-frame,
+.eng-sentence-col-body .eng-ring-lg .eng-ring-frame {
+  width: clamp(112px, 8.4vw, 150px);
+}
+/* 列内文案随环径轻微缩放，保证三列字数不同的题型都不溢出 */
+.eng-sentence-col-body .eng-ring-text b {
+  font-size: clamp(14px, 1.05vw, 17px);
+}
+
+/* 宽屏：列间浅色竖虚线用伪元素画，保证三列内容区等宽 */
+@media (min-width: 1101px) {
+  .eng-sentence-col { position: relative; }
+  .eng-sentence-col + .eng-sentence-col::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: -10px;
+    border-left: 1px dashed #d9ecf7;
+  }
+}
+
+/* 窄屏：三列纵向堆叠，竖虚线改上边框 */
+@media (max-width: 1100px) {
+  .eng-sentence-stages {
+    grid-template-columns: minmax(0, 1fr);
+    /* 共享骨架在窄屏用 justify-items:center 居中圆环，本页有整行标题矩形，需拉满 */
+    justify-items: stretch;
+    gap: 18px;
+  }
+  .eng-sentence-col + .eng-sentence-col {
+    border-top: 1px dashed #d9ecf7;
+    padding-top: 20px;
+  }
+  /* 窄屏一列只有 2~3 个环，横向排开更省高度 */
+  .eng-sentence-col-body {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .eng-sentence-ra-btn { font-size: 20px; flex-wrap: wrap; gap: 6px; }
+  .eng-sentence-ra-btn span { margin-left: 0; font-size: 17px; }
+  .eng-sentence-col-head { font-size: 20px; padding: 10px 14px; }
+  .eng-sentence-col-body .eng-ring-frame,
+  .eng-sentence-col-body .eng-ring-lg .eng-ring-frame {
+    width: clamp(104px, 28vw, 132px);
+  }
+}
