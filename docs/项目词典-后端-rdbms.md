@@ -1291,7 +1291,7 @@
 - 类型: `class EnglishVocabScope`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语题目词汇范围（本单元及之前所学）判定。范围 = 当前册排序不晚于当前单元的单元词表单词与重点句子 + 更早册别（低年级各册、同年级前一册）的全部单词与重点句子 + 内置功能词表（冠词/代词/be 动词/情态动词/介词/疑问词/数词等）；学期顺序由 `GRADE_ORDER`（一~六年级）与 `TERM_ORDER`（上下册）算出；单元顺序取 `t_english_unit.sort` 与词表/句子里出现的单元名合并后再排（`Welcome` 无数字排最前、其余按 `Unit N` 数字升序），避免单元表只落了一部分行时取不到「之前的单元」。判定做简单词形还原（复数、第三人称单数、`-ing`/`-ed`、比较级），句中首字母大写且不在词表内的词按人名地名放过，避免误杀 `Sam`/`Amy`/`Daming`。用于句子练习题生成提示词、生成结果过滤与组卷入卷过滤，保证填空答案不超纲。
+  英语题目词汇范围（本单元及之前所学）判定。范围 = 当前册排序不晚于当前单元的单元词表单词与重点句子 + 更早册别（低年级各册、同年级前一册）的全部单词与重点句子 + 内置功能词表（冠词/代词/be 动词/情态动词/介词/疑问词/数词等）；学期顺序由 `GRADE_ORDER`（一~九年级）与 `TERM_ORDER`（上下册）算出；单元顺序取 `t_english_unit.sort` 与词表/句子里出现的单元名合并后再排（`Welcome` 无数字排最前、其余按 `Unit N` 数字升序），避免单元表只落了一部分行时取不到「之前的单元」。判定做简单词形还原（复数、第三人称单数、`-ing`/`-ed`、比较级），句中首字母大写且不在词表内的词按人名地名放过，避免误杀 `Sam`/`Amy`/`Daming`。用于句子练习题生成提示词、生成结果过滤与组卷入卷过滤，保证填空答案不超纲。
 - 常量: `GRADE_ORDER`、`TERM_ORDER`、`FUNCTION_WORDS`（约 120 个功能词）。
 - 方法:
   - `public Set<String> allowed(String version, String grade, String term, String unit)`
@@ -1553,7 +1553,7 @@
   数学组卷实现（后台管理端）。题目以「学科 + 章节名 + 小节名 + 知识点名」直接标注，按名称圈定范围；先只查标注列（`id/name/questionType/difficulty/chapter/section/knowledgePoint`）筛选，选中后再按 ID 回读完整 schema，避免整表题目 JSON 反序列化。同名题目按「题型 + 题干」去重，防止多题库重复收录。按学员组卷时复用 `PracticeService.listWrongQuestions` 取该生错题（`is_correct=0` 且未订正），按做错次数降序优先入卷，不足时在同一范围内补齐；若未指定章节，则按错题涉及章节圈定补题范围。试题最终按「题型 → 难度 → 章节」排序，并统计题型/难度/章节/知识点分布；选择题标准答案转选项字母，多空题按 `|` 拆空后用 ①②③ 展示。卷内每题的 `wrongCount` 回填该生做错次数，`wrongQuestionCount` 汇总卷内错题数，供前端标记「错题」。
 - 方法:
   - `public MathPaperMetaView meta()`
-    章节按年级（一~六年级）、学期（上/下）、sort 排序组织成树；题量按题目 `chapter`/`section` 名称统计（与章节表无关的孤立题目不计入节点）。
+    章节按年级（一~九年级）、学期（上/下）、sort 排序组织成树；题量按题目 `chapter`/`section` 名称统计（与章节表无关的孤立题目不计入节点）。
   - `public List<MathPaperStudentView> searchStudents(String keyword)`
     关键字字母开头按学号、否则按姓名走 `StudentService.pageStudents`（继承校区数据权限）。
   - `public MathPaperView generate(MathPaperRequest request)`
