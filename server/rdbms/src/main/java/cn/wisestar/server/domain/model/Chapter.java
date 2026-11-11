@@ -29,7 +29,7 @@ public class Chapter extends BaseModel {
 	private String name;
 
 	/**
-	 * 年级（一年级~六年级）。
+	 * 年级（一年级~九年级）。
 	 */
 	private String grade;
 

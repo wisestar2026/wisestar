@@ -43,7 +43,7 @@ public class EnglishVocabScope {
 
 	/** 年级顺序，用于判断「之前所学」涵盖哪些册别 */
 	private static final List<String> GRADE_ORDER = Arrays.asList("一年级", "二年级", "三年级", "四年级", "五年级",
-			"六年级");
+			"六年级", "七年级", "八年级", "九年级");
 
 	/** 册别顺序 */
 	private static final List<String> TERM_ORDER = Arrays.asList("上册", "下册");

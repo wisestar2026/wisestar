@@ -29,7 +29,7 @@ public class ChapterRequest {
 	private String name;
 
 	/**
-	 * 年级（一年级~六年级，可选；GET /list 时作为筛选条件）。
+	 * 年级（一年级~九年级，可选；GET /list 时作为筛选条件）。
 	 */
 	private String grade;
 

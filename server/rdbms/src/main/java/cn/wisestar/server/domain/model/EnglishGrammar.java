@@ -31,7 +31,7 @@ public class EnglishGrammar extends BaseModel {
 	/** 教材版本（人教版/苏教版等） */
 	private String version;
 
-	/** 年级（一年级~六年级） */
+	/** 年级（一年级~九年级） */
 	private String grade;
 
 	/** 学期/册别（上册/下册） */

@@ -24,7 +24,7 @@ public class ChapterView {
 	private String name;
 
 	/**
-	 * 年级（一年级~六年级，筛选与展示用）。
+	 * 年级（一年级~九年级，筛选与展示用）。
 	 */
 	private String grade;
 
