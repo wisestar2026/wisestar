@@ -44,7 +44,7 @@ import ImportanceTag, { IMPORTANCE_OPTIONS } from '../../utils/importance';
 const { Text } = Typography;
 
 // 年级/学期可选项（与章节管理页一致）
-const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
+const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }, { value: '七年级', label: '七年级' }, { value: '八年级', label: '八年级' }, { value: '九年级', label: '九年级' }];
 const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
 
 // 绑定题库用途：预习专用 / 练习专用 / 通用（决定学员端预习与练习的题源）

@@ -31,7 +31,7 @@ import { usePermission } from '../../utils/usePermission';
 const { Title } = Typography;
 
 // 年级（前端常量：固定枚举）
-const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级']
+const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级']
   .map((g) => ({ value: g, label: g }));
 
 // 教材版本（前端常量：固定枚举）

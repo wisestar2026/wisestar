@@ -98,7 +98,7 @@ export function getEnglishReadAloud(params) {
 }
 
 /** 英文短句朗读音频（服务端合成 mp3/wav，返回 Blob；失败静默，由调用方回退浏览器语音） */
-/** 单词复习队列：跨单元按熟练度由低到高、复习间隔由长到短，词量按年级（三四年级 20 / 五六年级 30） */
+/** 单词复习队列：只取 next_review_time 已到期的词，按到期时间升序，单次上限 20 词 */
 export function getEnglishWordReview(params) {
   return request.get('/english/student/review/words', { params });
 }

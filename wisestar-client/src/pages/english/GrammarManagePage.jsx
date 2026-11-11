@@ -25,7 +25,7 @@ import { getGrammars, saveGrammar, deleteGrammar } from '../../api/englishAdmin'
 const { Title } = Typography;
 
 const VERSION_OPTIONS = ['苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
-const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'].map((g) => ({ value: g, label: g }));
+const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'].map((g) => ({ value: g, label: g }));
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 export default function GrammarManagePage() {

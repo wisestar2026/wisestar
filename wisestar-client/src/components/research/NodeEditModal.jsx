@@ -17,7 +17,7 @@ import { Modal, Form, Input, InputNumber, Select, Button, message } from 'antd';
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { IMPORTANCE_OPTIONS } from '../../utils/importance';
 
-const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级'];
+const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 const TERMS = ['上', '下'];
 
 const TYPE_TITLES = { chapter: '章节', section: '小节', knowledgePoint: '知识点' };

@@ -48,8 +48,8 @@ const TYPE_LABELS = {
   Remark: '备注说明', Judge: '判断题', MultipleBlank: '多项填空',
 };
 
-// 年级选项（与知识管理各页保持一致，一年级 ~ 六年级）
-const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级']
+// 年级选项（与知识管理各页保持一致，一年级 ~ 九年级）
+const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级']
   .map((g) => ({ label: g, value: g }));
 
 export default function RepoListPage() {

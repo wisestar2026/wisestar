@@ -25,7 +25,7 @@ const { Text } = Typography;
 /** 英语学科 ID */
 const ENGLISH_SUBJECT_ID = '1003';
 
-const GRADES = ['三年级', '四年级', '五年级', '六年级'];
+const GRADES = ['三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 const TERMS = ['上册', '下册'];
 const COUNTS = [10, 15, 20, 30];
 

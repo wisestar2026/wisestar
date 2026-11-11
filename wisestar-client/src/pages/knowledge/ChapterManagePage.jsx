@@ -17,7 +17,7 @@
  *   listSections({ chapterId }) → 小节查看弹窗（小节数据由小节管理表 t_section 提供）
  */
 
-const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }];
+const GRADE_OPTIONS = [{ value: '一年级', label: '一年级' }, { value: '二年级', label: '二年级' }, { value: '三年级', label: '三年级' }, { value: '四年级', label: '四年级' }, { value: '五年级', label: '五年级' }, { value: '六年级', label: '六年级' }, { value: '七年级', label: '七年级' }, { value: '八年级', label: '八年级' }, { value: '九年级', label: '九年级' }];
 const TERM_OPTIONS = [{ value: '上', label: '上册' }, { value: '下', label: '下册' }];
 const VERSION_OPTIONS = [{ value: '人教版', label: '人教版' }, { value: '苏教版', label: '苏教版' }, { value: '北师大版', label: '北师大版' }, { value: '外研版', label: '外研版' }];
 

@@ -343,6 +343,9 @@ export default function WordManagePage() {
           { value: '四年级', label: '四年级' },
           { value: '五年级', label: '五年级' },
           { value: '六年级', label: '六年级' },
+          { value: '七年级', label: '七年级' },
+          { value: '八年级', label: '八年级' },
+          { value: '九年级', label: '九年级' },
         ]} />
         <Select placeholder="册别" allowClear style={{ width: 90 }} value={term} onChange={setTerm} options={[
           { value: '上册', label: '上册' },
@@ -427,6 +430,9 @@ export default function WordManagePage() {
                 { value: '四年级', label: '四年级' },
                 { value: '五年级', label: '五年级' },
                 { value: '六年级', label: '六年级' },
+                { value: '七年级', label: '七年级' },
+                { value: '八年级', label: '八年级' },
+                { value: '九年级', label: '九年级' },
               ]} />
             </Form.Item>
             <Form.Item name="term" label="册别">
