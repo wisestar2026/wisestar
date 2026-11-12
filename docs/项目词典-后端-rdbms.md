@@ -1582,6 +1582,7 @@
   - 按 items 中的 questionId 批量回源题目（t_template）；
   - 逐题用 AnswerJudgeUtil 复核判分（与前端判分语义一致，防篡改）；
   - 汇总得分/答对数后写 t_practice_record，逐题写 t_practice_detail （is_correct=0 即错题，供阶段二错题本查询）；
+  - 交卷结果逐题回填标准答案时统一走 `formatCorrectAnswerText`：多项答案以「、」连接，多项填空按「空1: x；空2: y」，`FillBlank` 整句题（连词成句，`@` 分隔大小写/标点变体）只展示首个变体，结果页与错题本都不再把多个变体全列出来；
 
   **判分与计分约定**（与前端 practiceHelpers 一致）：
    - 每题分值 = attribute.examScore，无则 1 分； - 单项填空/多项填空：有标准答案时逐空判分（attribute.examBlankScores 为空时按 整题分 ÷ 空位数 均摊），按正确空位分值累加计分（部分给分）；其余题型整题判分： 答对得分 = 题分；答错/未作答 = 0 分；无标准答案 = 不计分也不当错题； - is_correct=1 仅表示该题全对（填空中每空均正确）； - total_score = 全部题分值之和；score = 各题得分之和（含填空部分分）； correct_count = 判对（全对）题数。
@@ -2518,3 +2519,5 @@
 ---
 
 > 种子脚本：`server/rdbms/src/main/resources/scripts/init-h2.sql` 与 `init-mysql.sql` 保持幂等同步，现各含 71 张表（含成长相关表 `t_detect_record`、`t_learning_growth`、`t_weak_point_event`，以及课文跟读表 `t_english_read_aloud`）。
+>
+> 两套脚本还内置外研版初中（七/八/九年级）习题库数据：`t_chapter` 45 / `t_section` 67 / `t_repo` 45 / `t_chapter_repo` 45 / `t_section_repo` 67 / `t_knowledge_point` 604 / `t_template` 1463（`Radio` 1109 + `FillBlank` 354）/ `t_knowledge_point_question` 1463，ID 前缀分别为 `jc-ch-` / `jc-sec-` / `jc-repo-` / `jc-cr-` / `jc-sr-` / `jc-kp-` / `jc-q-` / `jc-kpq-`。连词成句为 `FillBlank` + `attribute.blankCount`（= 答案词数）+ 整句 `examCorrectAnswer`（`@` 汇总大小写/标点变体），供前端逐词空位渲染。

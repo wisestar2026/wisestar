@@ -283,6 +283,11 @@ export function formatCorrectAnswers(qtype, answers) {
       .map((p, i) => `空${i + 1}: ${stdToDisplayText(p).replace(/@/g, '或')}`)
       .join('；');
   }
+  // 连词成句（整句作答，含大小写/标点变体）只展示首个写法，避免「A或a或A.」刷屏；
+  // 其余填空/选择题仍并列展示多个可接受答案
+  if (qtype === 'FillBlank' && !answers.some((a) => String(a || '').includes('|'))) {
+    return stdToDisplayText(String(answers[0] || '').split('@')[0]);
+  }
   return answers.map((a) => stdToDisplayText(String(a)).replace(/@/g, '或')).join('、');
 }
 

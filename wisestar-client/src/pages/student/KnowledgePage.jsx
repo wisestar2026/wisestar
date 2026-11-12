@@ -292,6 +292,20 @@ export default function KnowledgePage() {
     return schema.attribute?.blankCount || 1;
   }
 
+  // 逐词空位（连词成句：blankCount = 答案词数，标准答案无「|」）内部按「|」逐格存储，
+  // 判分与提交前替换为空格拼回整句，与标准答案做整句等值比较
+  function isWordSlotQuestion(question) {
+    if (question.questionType !== 'FillBlank' || !(Number(question.schema?.attribute?.blankCount) > 1)) return false;
+    const answers = extractCorrectAnswers({ template: question.schema || {} }) || [];
+    return !answers.some((a) => String(a).includes('|'));
+  }
+
+  function wordSlotText(question, answer) {
+    const text = answer?.type === 'text' ? String(answer.text || '') : '';
+    if (!isWordSlotQuestion(question)) return text;
+    return text.split('|').map((s) => s.trim()).filter(Boolean).join(' ');
+  }
+
   // 真实模式：试炼本地即时判分（题目带答案，比对选项文本）
   // 填空类（单项/多项填空）标准答案含 | 分隔多空时逐空判分（每空独立归一化比较），
   // 返回 blankTotal/blankHits 供"答对部分空也给分"的展示与统计
@@ -330,14 +344,20 @@ export default function KnowledgePage() {
       };
     }
 
-    // ---- 选择题 / 单空文本：归一化集合比对 ----
+    // ---- 填空文本：与标准答案逐条 blankMatches（支持 @ 多解、大小写/标点归一化）----
+    if (picked.type === 'text') {
+      const text = isWordSlotQuestion(q) ? wordSlotText(q, picked) : String(picked.text || '');
+      if (!text.trim()) return null;
+      const hit = correctAnswers.some((ca) => blankMatches(ca, text));
+      return { correct: hit ? 1 : 0, answer: correctAnswers[0], blankTotal: 0 };
+    }
+
+    // ---- 选择题：归一化集合比对 ----
     const options = questionOptions(q);
     const titleOf = (id) => options.find((o) => o.id === id)?.title;
     const mine = picked.type === 'option'
       ? [titleOf(picked.optionId)]
-      : picked.type === 'options'
-        ? (picked.optionIds || []).map(titleOf)
-        : [picked.text || ''];
+      : (picked.optionIds || []).map(titleOf);
     const mineSet = new Set(mine.map((x) => normBlank(String(x))).filter(Boolean));
     // 标准答案归一化：支持 选项文本 / 选项字母(A/B/C…) / 选项序号(1/2/3…)
     const LETTERS = 'ABCDEFGHIJ';
@@ -355,14 +375,15 @@ export default function KnowledgePage() {
     return { correct: isRight ? 1 : 0, answer: [...answerSet].join('、'), blankTotal: 0 };
   };
 
-  // 标准答案展示文本：多项填空按空位分行（空1: …；空2: …），其余原样
+  // 标准答案展示文本：多项填空按空位分行（空1: …；空2: …）；
+  // 填空类含多个可接受写法（@ 分隔）时只展示首个（完整原句），避免刷屏
   const answerDisplayOf = (judge) => {
     if (!judge) return '—';
     if (judge.blankTotal > 1 && judge.answer) {
       const parts = String(judge.answer).split('|');
-      return parts.map((p, i) => `空${i + 1}: ${p.trim().replace(/@/g, '或')}`).join('；');
+      return parts.map((p, i) => `空${i + 1}: ${p.trim().split('@')[0]}`).join('；');
     }
-    return judge.answer;
+    return String(judge.answer ?? '').split('@')[0];
   };
 
   // 本地判分统计（与后端判分对齐后展示一致）
@@ -390,7 +411,15 @@ export default function KnowledgePage() {
     const titleOf = (id) => questionOptions(q).find((o) => o.id === id)?.title;
     if (picked.type === 'option') return titleOf(picked.optionId) || '—';
     if (picked.type === 'options') return (picked.optionIds || []).map(titleOf).join('、');
-    return picked.text || '—';
+    return wordSlotText(q, picked) || '—';
+  };
+
+  // 提交给后端的答案：逐词空位（连词成句）把内部的「|」改写为空格，拼回整句
+  const submitAnswerOf = (q) => {
+    const picked = realAnswers[q.id];
+    if (!picked) return null;
+    if (picked.type !== 'text' || !isWordSlotQuestion(q)) return picked;
+    return { type: 'text', text: wordSlotText(q, picked) };
   };
 
   // 真实模式：填空作答（单空/多空统一：按空位顺序以 | 拼接存入 text）
@@ -437,7 +466,7 @@ export default function KnowledgePage() {
   // 真实模式：交卷（后端判分，返回对错 + 标准答案）
   const realSubmit = () => {
     if (realSubmitting || !realQuestions?.length) return;
-    const items = realQuestions.map((q) => ({ questionId: q.id, answer: realAnswers[q.id] || null }));
+    const items = realQuestions.map((q) => ({ questionId: q.id, answer: submitAnswerOf(q) }));
     // 专项练习以 special 记录（练习奖励）；小节通关保持 trial（试炼奖励+通关判定）
     const mode = tab === 'practice' ? 'special' : tab;
     setRealSubmitting(true);
@@ -457,7 +486,7 @@ export default function KnowledgePage() {
   const realRedo = () => {
     if (realSubmitting || !realQuestions?.length) return;
     const q = realQuestions[0];
-    const answer = realAnswers[q.id];
+    const answer = submitAnswerOf(q);
     if (!answer) { setRedoResult({ ok: false, message: '请先作答' }); return; }
     setRealSubmitting(true);
     wrongRedo({ questionId: q.id, answer })

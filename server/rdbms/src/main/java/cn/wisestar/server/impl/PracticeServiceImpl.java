@@ -418,7 +418,8 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 				}
 				List<String> answers = AnswerJudgeUtil.extractCorrectAnswers(schema);
 				if (answers != null) {
-					correctAnswer = String.join(" / ", answers);
+					correctAnswer = formatCorrectAnswerText(
+							template.getQuestionType() == null ? null : template.getQuestionType().name(), answers);
 				}
 			}
 			String detailId = details.stream()
@@ -572,6 +573,10 @@ public class PracticeServiceImpl extends BaseService<PracticeRecordMapper, Pract
 				builder.append("空").append(i + 1).append(": ").append(blanks.get(i).trim());
 			}
 			return builder.toString();
+		}
+		// 连词成句等整句填空：@ 分隔的是大小写/标点变体，只展示首个写法，避免「A或a或A.」刷屏
+		if ("FillBlank".equals(questionType)) {
+			return cleaned.get(0).split("@")[0];
 		}
 		return String.join("、", cleaned);
 	}
