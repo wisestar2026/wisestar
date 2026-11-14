@@ -21,10 +21,12 @@ import org.springframework.web.client.RestTemplate;
 import javax.validation.ValidationException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 英语重点句式情景生成服务实现（按分组子集生成）。
@@ -75,9 +77,74 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			return new ArrayList<>();
 		}
 
+		Set<String> allowed = new HashSet<>();
+		Map<String, String> meanings = new HashMap<>();
+		for (EnglishPatternSentence sentence : sentences) {
+			String en = sentence.getEn() == null ? "" : normalizeSentence(sentence.getEn());
+			if (!en.isEmpty()) {
+				allowed.add(en);
+				String zh = sentence.getZh() == null ? "" : sentence.getZh().trim();
+				if (!zh.isEmpty()) {
+					meanings.put(en, zh);
+				}
+			}
+		}
+
 		String raw = callChat(grade, unit, sentences, Math.max(1, count), avoidTitles);
-		JsonNode root = parseRawJson(raw);
-		return normalizeScenarios(root);
+		List<EnglishPatternScenarioView> scenarios = normalizeScenarios(parseRawJson(raw), allowed, meanings);
+		// 只有首轮被闸门拦下（情景/轮次不足）时才做二次校对，避免每单元都翻倍耗时
+		if (!scenarios.isEmpty() && needsRepair(parseRawJson(raw), scenarios)) {
+			List<EnglishPatternScenarioView> repaired = normalizeScenarios(
+					parseRawJson(repairChat(grade, unit, raw)), allowed, meanings);
+			if (repaired.size() >= scenarios.size()) {
+				scenarios = repaired;
+			}
+		}
+		return scenarios;
+	}
+
+	/**
+	 * 判断首轮结果是否需要二次校对：有情景/轮次被闸门丢弃，或作答轮不足 2 个、总轮次不足 4 个。
+	 */
+	private boolean needsRepair(JsonNode root, List<EnglishPatternScenarioView> accepted) {
+		JsonNode rawScenarios = firstNode(root, SCENARIO_ARRAY_KEYS);
+		if (rawScenarios == null || !rawScenarios.isArray() || rawScenarios.size() > accepted.size()) {
+			return true;
+		}
+		for (EnglishPatternScenarioView view : accepted) {
+			List<EnglishPatternTurn> turns = view.getTurns();
+			if (turns == null || turns.size() < 4) {
+				return true;
+			}
+			long answers = turns.stream().filter(t -> t.getAnswerIndex() != null && t.getAnswerIndex() >= 0).count();
+			if (answers < 2) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 二次校对：让模型逐轮检查对话是否连贯、作答轮是否答非所问、干扰项是否唯一，返回同结构 JSON。
+	 */
+	private String repairChat(String grade, String unit, String raw) {
+		StringBuilder prompt = new StringBuilder();
+		prompt.append("下面是你为「").append(grade).append(" ").append(unit)
+				.append("」编写的句式情景练习 JSON。请逐轮校对并只修正有问题的部分：\n");
+		prompt.append("1) 每个情景是一段完整对话：人物固定、地点固定、话题前后一致；禁止同一人连续说两轮、禁止上一轮已说出答案下一轮再考、禁止同一情景内题目重复；\n");
+		prompt.append("2) 作答轮的 answer 必须是给定重点句式之一（逐字一致），且要直接回应上一轮的话；\n");
+		prompt.append("3) 其余 3 个选项必须在本情景下明显不合适，不能有两个都说得通；\n");
+		prompt.append("4) explanation 必须与 answer 一致；已给出轮次的英文通顺、有 zh 译文；\n");
+		prompt.append("5) 保持 JSON 结构、字段名、情景标题不变，输出完整 JSON，不要输出解释。\n");
+		prompt.append("待校对 JSON：\n").append(raw);
+		return postChat(prompt.toString(), 0.2);
+	}
+
+	/**
+	 * 归一化句子用于比对：去掉标点与多余空白并转小写。
+	 */
+	private static String normalizeSentence(String text) {
+		return text == null ? "" : text.toLowerCase().replaceAll("[^a-z0-9\\s']", " ").replaceAll("\\s+", " ").trim();
 	}
 
 	/**
@@ -85,6 +152,13 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	 */
 	private String callChat(String grade, String unit, List<EnglishPatternSentence> sentences,
 			int scenarioCount, List<String> avoidTitles) {
+		return postChat(buildUserPrompt(grade, unit, sentences, scenarioCount, avoidTitles), 0.6);
+	}
+
+	/**
+	 * 调用大模型对话接口。
+	 */
+	private String postChat(String userPrompt, double temperature) {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		if (aiSetting == null || aiSetting.getEnabled() == null || !aiSetting.getEnabled()) {
 			throw new ValidationException("AI 服务未启用：请先在系统设置中开启 AI 并完成平台配置");
@@ -98,8 +172,6 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 				? aiSetting.getModels().get(0)
 				: DEFAULT_MODEL;
 
-		String userPrompt = buildUserPrompt(grade, unit, sentences, scenarioCount, avoidTitles);
-
 		try {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
@@ -112,7 +184,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			Map<String, Object> body = new HashMap<>();
 			body.put("model", model);
 			body.put("messages", messages);
-			body.put("temperature", 0.7);
+			body.put("temperature", temperature);
 			body.put("max_tokens", 8192);
 			body.put("stream", false);
 
@@ -166,10 +238,13 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		sb.append("1) 每个情景 4-8 轮，A、B 交替你一言我一语，场景生活化、自然连贯；")
 				.append(scenarioCount).append(" 个情景必须是不同场景，禁止重复；情景 title、cue、explanation 统一用中文；\n");
 		sb.append("2) 每个情景至少一半轮次为作答轮：只给 cue（中文情景提示），不给 en；\n");
-		sb.append("3) 作答轮的 answer 必须是上面列出的重点句式之一，options 给出 4 个英文句子（含 answer 与 3 个明显不合本情景的干扰项）；\n");
-		sb.append("4) 作答轮的 cue 用中文描述学员要表达的意思，与 answer 严格对应；已给出轮次必须有 en 与 zh；\n");
-		sb.append("5) explanation 用简短中文说明选择依据；\n");
-		sb.append("6) title 必须是具体的中文场景名（如「在文具店买铅笔」），禁止「情景标题1」这类编号占位；")
+		sb.append("3) 作答轮的 answer 必须是上面列出的重点句式之一（逐字一致），options 给出 4 个英文句子（含 answer 与 3 个干扰项）；\n");
+		sb.append("4) cue 必须真的需要 answer 才能完成对话；answer 要直接回应上一轮的话与 cue，"
+				+ "禁止答非所问、禁止用反问回答陈述型 cue、禁止用第三人称复述（对话双方用 I / we / you）；\n");
+		sb.append("5) 其余 3 个干扰项必须在本情景下明显不合适（话题不符、时态不符或答非所问），不能有两个都说得通的选项；\n");
+		sb.append("6) explanation 用简短中文说明为什么选它，必须与 answer 一致；\n");
+		sb.append("7) 已给出轮次必须有 en 与 zh，英文要通顺、语法正确，与作答轮衔接自然；\n");
+		sb.append("8) title 必须是具体的中文场景名（如「在文具店买铅笔」），禁止「情景标题1」这类编号占位；")
 				.append("每个情景的地点、人物、目的都要不同，禁止复用已有情景的台词或情节。");
 		return sb.toString();
 	}
@@ -209,7 +284,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	/**
 	 * 将模型 JSON 规整为句式情景列表：对齐选项与答案下标、过滤无效场景。
 	 */
-	private List<EnglishPatternScenarioView> normalizeScenarios(JsonNode root) {
+	private List<EnglishPatternScenarioView> normalizeScenarios(JsonNode root, Set<String> allowed, Map<String, String> meanings) {
 		List<EnglishPatternScenarioView> result = new ArrayList<>();
 		JsonNode rawScenarios = firstNode(root, SCENARIO_ARRAY_KEYS);
 		if (rawScenarios == null || !rawScenarios.isArray()) {
@@ -236,7 +311,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 				int idx = 0;
 				int answerTotal = 0;
 				for (JsonNode rawTurn : rawTurns) {
-					EnglishPatternTurn turn = normalizeTurn(rawTurn, idx);
+					EnglishPatternTurn turn = normalizeTurn(rawTurn, idx, allowed, meanings);
 					if (turn == null) {
 						continue;
 					}
@@ -264,7 +339,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 	 *
 	 * @return 规整后的轮次；无效（既无 en 又无可作答选项）返回 null
 	 */
-	private EnglishPatternTurn normalizeTurn(JsonNode rawTurn, int idx) {
+	private EnglishPatternTurn normalizeTurn(JsonNode rawTurn, int idx, Set<String> allowed, Map<String, String> meanings) {
 		String speaker = firstString(rawTurn, "speaker", "role", "who", "name");
 		String finalSpeaker = (speaker == null || speaker.trim().isEmpty()) ? (idx % 2 == 0 ? "A" : "B") : speaker.trim();
 
@@ -299,14 +374,30 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 				options.add(answer);
 				answerIndex = options.size() - 1;
 			}
+		} else {
+			JsonNode rawIndex = firstNode(rawTurn, "answerIndex", "correctIndex");
+			if (rawIndex != null && rawIndex.canConvertToInt()) {
+				answerIndex = rawIndex.asInt();
+			}
 		}
-		if (options.size() < 2 || answerIndex < 0) {
+		// 质量闸门：必须恰好 4 个互不相同的选项，答案下标有效且答案来自本单元句式
+		if (options.size() != 4 || answerIndex < 0 || answerIndex >= options.size()) {
+			return null;
+		}
+		if (allowed != null && !allowed.isEmpty()
+				&& !allowed.contains(normalizeSentence(options.get(answerIndex)))) {
 			return null;
 		}
 
+		String correct = options.get(answerIndex);
+		// 提示语直接取该句式的单元释义，保证「中文提示 → 正确英文」严格对应
+		String cue = meanings == null ? null : meanings.get(normalizeSentence(correct));
+		if (cue == null || cue.trim().isEmpty()) {
+			cue = firstString(rawTurn, "cue", "hint", "prompt", "zh", "cn", "chinese");
+		}
 		EnglishPatternTurn turn = new EnglishPatternTurn();
 		turn.setSpeaker(finalSpeaker);
-		turn.setCue(nullToEmpty(firstString(rawTurn, "cue", "hint", "prompt", "zh", "cn", "chinese")));
+		turn.setCue(nullToEmpty(cue));
 		turn.setZh(nullToEmpty(firstString(rawTurn, "zh", "cn", "chinese")));
 		turn.setOptions(options);
 		turn.setAnswerIndex(answerIndex);

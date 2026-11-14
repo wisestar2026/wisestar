@@ -270,7 +270,7 @@
 - 注解: 无（final 工具类 + 私有构造）
 - **类说明**：
   AI 分场景系统提示词目录。系统 AI 配置 `t_sys_info.ai_setting.prompts` 以本类 key 为键；某场景留空/未配置时回退内置默认，历史通用字段 `aiSetting.prompt` 仅作为「AI 问答」「学习轨迹·每日叙述」兜底。
-  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-25 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式；示例句仅说明字段格式，禁止出现在生成结果中）。
+  **场景 key**：qa（AI 问答/学习轨迹报告）、study_daily（学习轨迹·每日叙述）、study_summary（学习总结·家长反馈）、en_scenario（英语·单词情景对话）、en_pattern（英语·重点句式情景）、en_pack（英语·单元内容生成）、en_sentence（英语·单元句子同步练习：练习 20-25 题、四题型各不少于 3 道；学习 10-15 题覆盖课本句式；示例句仅说明字段格式，禁止出现在生成结果中）、en_reading（英语·单元阅读理解：短文 + 4 题，每题须同时给 answer 文本与 answerIndex，选项禁前缀/元选项，正确答案的事实或感受原文只能出现一处，正文与选项禁中文，禁用 narrator/gymnasium/auditorium 等超纲词）。
 - 内部类型 `PromptMeta`（key/label/description/defaultPrompt，getter 访问，Jackson 可序列化）
 - 方法:
   - `public static List<PromptMeta> catalog()`
@@ -3118,6 +3118,8 @@
 - 方法:
   - `List<EnglishReadingView> getReadings(String version, String grade, String term, String unit)`
     取该单元阅读理解列表，无缓存时生成单篇并落库。
+  - `List<EnglishReadingView> generateArticles(String version, String grade, String term, String unit, int count)`
+    批量生成并固化单元阅读理解（后台内容准备）：逐篇调用 AI，每篇固定保留 4 道选择题（生成时按词数与题数硬校验，不足则重生成），整体覆盖写入该单元 `reading_content`；生成时把已产出篇目的标题与开头传给 AI，避免同单元多篇高度雷同。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishScenarioPackService.java`
 - 包: `cn.wisestar.server.service`

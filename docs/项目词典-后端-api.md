@@ -287,6 +287,8 @@
     按单元分组调用 AI 生成情景内容包预览（不落库）。
   - `public EnglishScenarioPackView save(@RequestBody EnglishScenarioPackView pack)`
     保存情景内容包（同 版本+年级+册别+单元 覆盖更新）。
+  - `public List<EnglishReadingView> generateReading(@RequestParam String version, @RequestParam String grade, @RequestParam String term, @RequestParam String unit, @RequestParam(defaultValue = "5") int count)`
+    批量生成该单元阅读理解（每篇 4 题），整体覆盖固化到单元内容包；用于初中阅读按「5 篇 × 4 题」口径批量补齐。
   - `public PaginationResponse<EnglishScenarioPackView> list(EnglishScenarioPackQuery query)`
     情景内容包分页列表（不含正文）。
   - `public EnglishScenarioPackView detail(@RequestParam String id)`

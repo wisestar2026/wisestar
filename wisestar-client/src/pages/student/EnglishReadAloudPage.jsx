@@ -17,7 +17,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Modal, Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishReadAloud } from '../../api/englishStudent';
-import { getEnglishAudioUrl, getSpeechReport, isSpeechSupported, speakEnglish } from '../../utils/english';
+import { getEnglishAudioUrl, speakEnglish } from '../../utils/english';
 import { scoreLevel, scorePronunciation } from '../../utils/pronunciationScore';
 import './EnglishReadAloudPage.css';
 
@@ -133,30 +133,22 @@ export default function EnglishReadAloudPage() {
     });
   };
 
-  // 播放原音：浏览器语音合成失败时明确提示，避免出现「点了没反应」的哑按钮
+  // 播放原音：统一走服务端语音包，拿不到音频时明确提示，避免出现「点了没反应」的哑按钮
   const playLine = (text) => {
-    if (!isSpeechSupported()) {
-      message.warning('当前浏览器不支持英文语音合成，请改用 Chrome / Edge 最新版');
-      return;
-    }
     speakEnglish(text).then((ok) => {
       if (!ok) {
-        message.warning('英文语音没有播放出来，点下方「语音自检」查看浏览器语音环境');
+        message.warning('暂时拿不到原音，请检查网络后重试');
       }
     });
   };
 
-  // 语音自检：把浏览器语音环境与试播结果摊开，便于判断是缺音色、被拦截还是引擎卡死
+  // 语音自检：只检查服务端语音包是否可用（项目不再使用浏览器自带语音合成）
   const runSpeechCheck = async () => {
-    const ok = await speakEnglish('Hello, this is a voice test.');
-    const report = getSpeechReport();
+    const url = await getEnglishAudioUrl('Hello, this is a voice test.');
     const rows = [
-      `语音合成：${report.supported ? '支持' : '不支持（请改用 Chrome / Edge 最新版）'}`,
-      `系统音色总数：${report.voiceCount}`,
-      `英文音色：${report.englishVoices.length ? report.englishVoices.join('；') : '无（系统没有安装英文语音包）'}`,
-      `当前选用：${report.chosen || '浏览器默认音色'}`,
-      `试播结果：${ok ? '成功' : '失败'}`,
-      `引擎状态：speaking=${String(report.speaking)}，paused=${String(report.paused)}`,
+      `服务端语音包：${url ? '可用' : '不可用（请检查后端 TTS 配置与网络）'}`,
+      `试听：${url ? await speakEnglish('Hello, this is a voice test.') ? '成功' : '失败' : '跳过'}`,
+      '说明：英语朗读统一由服务端语音包合成，不使用浏览器自带语音。',
     ];
     Modal.info({
       title: '语音自检',
@@ -277,7 +269,6 @@ export default function EnglishReadAloudPage() {
 
       <div className="eng-ra-tip">
         小提示：先听原音，再跟着完整读一遍，录完自动打分（60 分以上记为已跟读）；打分主要看是否连贯读完（明显卡顿或漏读才扣分），带点口音没关系，不联网、录音不上传。
-        {!isSpeechSupported() && ' 当前浏览器不支持英文语音合成，请改用 Chrome / Edge 最新版。'}
         <button type="button" className="eng-ra-check-btn" onClick={runSpeechCheck}>
           语音自检
         </button>

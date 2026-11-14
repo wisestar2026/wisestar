@@ -106,13 +106,29 @@ export default function EnglishWordPracticePage() {
           angleByWord,
         };
       })
-      : getEnglishWordBook({ version, grade, term, unit, pageSize: -1, speed: WORD_TTS_SPEED }).then((res) => {
-        const list = res?.data?.list || [];
-        const scoped = sectionParam
-          ? list.filter((w) => String(w.section || '').trim() === sectionParam.trim())
-          : list;
-        return { targetList: scoped.length ? scoped : list, poolList: list, angleByWord: null };
-      });
+      : getEnglishWordBook({ version, grade, term, unit, pageSize: -1, speed: WORD_TTS_SPEED })
+        .then((res) => {
+          const list = res?.data?.list || [];
+          const scoped = sectionParam
+            ? list.filter((w) => String(w.section || '').trim() === sectionParam.trim())
+            : list;
+          const targets = scoped.length ? scoped : list;
+          // 单元词汇不足 4 个时四选一凑不出干扰项（如六年级下册 Unit 4 仅 3 词），
+          // 干扰项退回整册词库，避免整页提示「至少需要 4 个单词」。
+          if (list.length >= 4) {
+            return { targetList: targets, poolList: list, angleByWord: null };
+          }
+          return getEnglishWordBook({ version, grade, term, pageSize: -1, speed: WORD_TTS_SPEED })
+            .then((bookRes) => {
+              const bookList = bookRes?.data?.list || [];
+              return {
+                targetList: targets,
+                poolList: bookList.length > list.length ? bookList : list,
+                angleByWord: null,
+              };
+            })
+            .catch(() => ({ targetList: targets, poolList: list, angleByWord: null }));
+        });
     source
       .then(({ targetList, poolList, angleByWord }) => {
         const pool = poolList.length ? poolList : targetList;

@@ -25,4 +25,19 @@ public interface EnglishReadingService {
 	 */
 	List<EnglishReadingView> getReadings(String version, String grade, String term, String unit);
 
+	/**
+	 * 批量生成并固化单元阅读理解文章（后台内容准备）。
+	 *
+	 * <p>逐篇调用 AI 生成，每篇保留前 4 道选择题，结果整体写入该单元的
+	 * {@code reading_content} 覆盖旧内容。</p>
+	 *
+	 * @param version 教材版本
+	 * @param grade   年级
+	 * @param term    册别
+	 * @param unit    单元
+	 * @param count   生成篇数（1~5）
+	 * @return 生成并按文章序号排序的文章列表
+	 */
+	List<EnglishReadingView> generateArticles(String version, String grade, String term, String unit, int count);
+
 }

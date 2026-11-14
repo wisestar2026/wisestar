@@ -644,6 +644,28 @@ public class EnglishFusionQuestionFactory {
 		return new Target(token, label, options);
 	}
 
+	/**
+	 * 例句既可能是纯字符串，也可能是 {en, zh} / {text} 对象，统一取英文文本，
+	 * 与前端 EnglishGrammarLearnPage 的 exampleText 口径保持一致。
+	 */
+	private String exampleText(JsonNode item) {
+		if (item == null || item.isNull()) {
+			return null;
+		}
+		if (item.isTextual()) {
+			return item.asText();
+		}
+		if (item.isObject()) {
+			for (String field : new String[] { "en", "text", "example" }) {
+				JsonNode value = item.get(field);
+				if (value != null && value.isTextual() && StringUtils.hasText(value.asText())) {
+					return value.asText();
+				}
+			}
+		}
+		return null;
+	}
+
 	private List<String> parseExamples(String json) {
 		List<String> result = new ArrayList<>();
 		if (!StringUtils.hasText(json)) {
@@ -653,8 +675,9 @@ public class EnglishFusionQuestionFactory {
 			JsonNode node = objectMapper.readTree(json);
 			if (node.isArray()) {
 				for (JsonNode item : node) {
-					if (item != null && StringUtils.hasText(item.asText())) {
-						result.add(item.asText());
+					String value = exampleText(item);
+					if (StringUtils.hasText(value)) {
+						result.add(value);
 					}
 				}
 			}

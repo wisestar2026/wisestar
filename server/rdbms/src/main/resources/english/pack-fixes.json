@@ -1,1 +1,302 @@
-[{"grade":"五年级","term":"上册","unit":"Unit 4","groupNo":"2","title":"在体育比赛现场","turnNo":1,"en":"Hey, B. Are you excited for the upcoming soccer ___?","answers":["match"]},{"grade":"六年级","term":"上册","unit":"Unit 2","groupNo":"2","title":"健康咨询","turnNo":3,"en":"What's the ___?","answers":["matter"]},{"grade":"六年级","term":"上册","unit":"Unit 2","groupNo":"2","title":"课堂规则","turnNo":3,"en":"What's the ___ for the line?","answers":["rule"]},{"grade":"五年级","term":"下册","unit":"Unit 6","groupNo":"1","title":"在餐厅","turnNo":2,"en":"Sure, that's a good choice. Would you like some _?","zh":"当然，这是个好选择。你想要一些吗？"}]
+[
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 4",
+  "title": "在体育比赛现场",
+  "turnNo": 1,
+  "en": "Hey, B. Are you excited for the upcoming soccer ___?",
+  "newEn": "Hey! Are you excited for the upcoming soccer ___?",
+  "zh": "嘿！你对即将到来的足球比赛激动吗？",
+  "answers": [
+   "match"
+  ]
+ },
+ {
+  "grade": "六年级",
+  "term": "上册",
+  "unit": "Unit 2",
+  "title": "健康咨询",
+  "turnNo": 3,
+  "en": "What's the ___?",
+  "answers": [
+   "matter"
+  ]
+ },
+ {
+  "grade": "六年级",
+  "term": "上册",
+  "unit": "Unit 2",
+  "title": "课堂规则",
+  "turnNo": 3,
+  "en": "What's the ___ for the line?",
+  "answers": [
+   "rule"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 6",
+  "title": "在餐厅",
+  "turnNo": 2,
+  "en": "Sure, that's a good choice. Would you like some _?",
+  "newEn": "Sure, that's a good choice. Would you like some ___?",
+  "zh": "当然，这是个好选择。你想要一些吗？",
+  "answers": [
+   "rice"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "It's ___, near the ___.",
+  "newEn": "It's in the ___, not far from here.",
+  "zh": "它在北方，离这里不远。",
+  "answers": [
+   "north"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Look at this ___, it's so ___.",
+  "newEn": "Look at this ___, it's so beautiful.",
+  "zh": "看看这件珠宝，它太美了。",
+  "answers": [
+   "jewel"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Yes, it's a famous one, located in the ___.",
+  "newEn": "Yes, it's very old, and it was found in the ___.",
+  "zh": "是的，它很古老，是在北方被发现的。",
+  "answers": [
+   "north"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "It must have been someone from the ___, they are usually very ___.",
+  "newEn": "The winner is from the ___. He is so fast.",
+  "zh": "冠军来自北方。他跑得真快。",
+  "answers": [
+   "north"
+  ]
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "I have an ___ in the ___.",
+  "newEn": "I have a ___ in the evening.",
+  "zh": "我晚上有一节课。",
+  "answers": [
+   "class"
+  ]
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "At ___, and I have to be there on time.",
+  "newEn": "It starts at ___ past five, and I must be there on time.",
+  "zh": "五点半开始，我必须准时到那里。",
+  "answers": [
+   "half"
+  ]
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "I'm going to my ___ at ___.",
+  "newEn": "I'm going to my ___ in the evening.",
+  "zh": "我晚上要去上课。",
+  "answers": [
+   "class"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 4",
+  "en": "I think my ___ was pretty good in the ___.",
+  "newEn": "I think I did pretty well in the ___.",
+  "zh": "我觉得我在这次测验中做得不错。",
+  "answers": [
+   "test"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 4",
+  "en": "That's good to hear. ___, B.",
+  "newEn": "That's good to hear. Remember to ___ more water.",
+  "zh": "听到这个我很高兴。记得多喝水。",
+  "answers": [
+   "drink"
+  ]
+ },
+ {
+  "grade": "六年级",
+  "term": "上册",
+  "unit": "Unit 1",
+  "en": "I heard that if you have a ___ you can turn ___.",
+  "newEn": "I heard that if you have the ___, you can make a lot of money.",
+  "zh": "我听说如果你有点石成金的本领，就能赚很多钱。",
+  "answers": [
+   "golden touch"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 1",
+  "en": "Yes, I ___. It feels really ___.",
+  "newEn": "Yes, I ___. I feel really proud.",
+  "zh": "是的，我练习了。我感到非常自豪。",
+  "answers": [
+   "practiced"
+  ]
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 6",
+  "en": "Hi, B. Do you want to go to the ___?",
+  "newEn": "Hi! Do you want to go to the ___?",
+  "zh": "嗨！你想去___吗？"
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 6",
+  "en": "Hey, B. Have you ever been to a ___?",
+  "newEn": "Hey! Have you ever been to a ___?",
+  "zh": "嘿！你去过___吗？"
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 6",
+  "en": "Hi, B. Do you have any interesting ___?",
+  "newEn": "Hi! Do you have any interesting ___?",
+  "zh": "嗨！你有什么有趣的___吗？"
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 6",
+  "en": "Hello, B. Do you know the difference between October and September?",
+  "newEn": "Hello! Do you know the difference between October and September?",
+  "zh": "你好！你知道十月和九月有什么区别吗？"
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 6",
+  "en": "That's a beautiful poem. Thank you, A.",
+  "newEn": "That's a beautiful poem. Thank you.",
+  "zh": "这是一首优美的诗。谢谢你。"
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Good morning, B. Do you know what time it is?",
+  "newEn": "Good morning! Do you know what time it is?",
+  "zh": "早上好！你知道现在几点了吗？"
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Thank you, A. See you later.",
+  "newEn": "Thank you. See you later.",
+  "zh": "谢谢你。待会见。"
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Hello, B. How are you?",
+  "newEn": "Hello! How are you?",
+  "zh": "你好！你好吗？"
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Thank you, B. Have a good day at the ___.",
+  "newEn": "Thank you. Have a good day at the ___.",
+  "zh": "谢谢你。在___度过美好的一天。"
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "You too, A. See you.",
+  "newEn": "You too. See you.",
+  "zh": "你也是。再见。"
+ },
+ {
+  "grade": "三年级",
+  "term": "下册",
+  "unit": "Unit 5",
+  "en": "Lunch time, B. Do you have anything good to eat?",
+  "newEn": "It's lunch time. Do you have anything good to eat?",
+  "zh": "午餐时间到了。你有什么好吃的吗？"
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 4",
+  "en": "Hi, B. What are you doing here?",
+  "newEn": "Hi! What are you doing here?",
+  "zh": "嗨！你在这里做什么？"
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 4",
+  "en": "Thanks, A. I really appreciate your support.",
+  "newEn": "Thanks. I really appreciate your support.",
+  "zh": "谢谢。我真的很感激你的支持。"
+ },
+ {
+  "grade": "五年级",
+  "term": "上册",
+  "unit": "Unit 4",
+  "en": "Good morning, B. How can I help you?",
+  "newEn": "Good morning! How can I help you?",
+  "zh": "早上好！我能帮您什么吗？"
+ },
+ {
+  "grade": "五年级",
+  "term": "下册",
+  "unit": "Unit 1",
+  "en": "Hello, B. Do you want to go to the ___?",
+  "newEn": "Hello! Do you want to go to the ___?",
+  "zh": "你好！你想去___吗？"
+ },
+ {
+  "grade": "四年级",
+  "term": "上册",
+  "unit": "Unit 5",
+  "en": "Yes, it's a ___. I love to ___.",
+  "newEn": "Yes, it's a big ___. I love it.",
+  "zh": "是的，它是一艘大船。我很喜欢它。",
+  "answers": [
+   "ship"
+  ]
+ }
+]

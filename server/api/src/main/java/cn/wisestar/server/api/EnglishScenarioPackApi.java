@@ -1,8 +1,10 @@
 package cn.wisestar.server.api;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.domain.dto.english.EnglishReadingView;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioPackQuery;
 import cn.wisestar.server.domain.dto.english.EnglishScenarioPackView;
+import cn.wisestar.server.service.EnglishReadingService;
 import cn.wisestar.server.service.EnglishScenarioPackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,8 @@ import java.util.List;
 public class EnglishScenarioPackApi {
 
 	private final EnglishScenarioPackService scenarioPackService;
+
+	private final EnglishReadingService readingService;
 
 	/**
 	 * 按单元生成情景内容包预览（分组调用 AI，不落库）。
@@ -85,6 +89,26 @@ public class EnglishScenarioPackApi {
 	@PreAuthorize("hasAuthority('english:word:ai')")
 	public void delete(@RequestParam String id) {
 		scenarioPackService.deletePack(id);
+	}
+
+	/**
+	 * 批量生成该单元阅读理解（每篇 4 题），并整体覆盖固化到单元内容包。
+	 *
+	 * @param version 教材版本
+	 * @param grade   年级
+	 * @param term    册别
+	 * @param unit    单元
+	 * @param count   篇数（默认 5）
+	 */
+	@PostMapping("/generate-reading")
+	@PreAuthorize("hasAuthority('english:word:ai')")
+	public List<EnglishReadingView> generateReading(
+			@RequestParam String version,
+			@RequestParam String grade,
+			@RequestParam String term,
+			@RequestParam String unit,
+			@RequestParam(defaultValue = "5") int count) {
+		return readingService.generateArticles(version, grade, term, unit, count);
 	}
 
 	/**
