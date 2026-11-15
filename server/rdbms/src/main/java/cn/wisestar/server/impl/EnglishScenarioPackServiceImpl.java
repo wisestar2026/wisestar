@@ -198,6 +198,10 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		entity.setWordCount(countScenarios(pack.getWordContent()));
 		entity.setPatternContent(pack.getPatternContent());
 		entity.setPatternCount(countScenarios(pack.getPatternContent()));
+		// 阅读理解允许人工/AI 双通道写入：只在显式传入时覆盖，留空保持原内容
+		if (!isBlank(pack.getReadingContent())) {
+			entity.setReadingContent(pack.getReadingContent());
+		}
 
 		if (update) {
 			packMapper.updateById(entity);
@@ -534,6 +538,7 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		view.setWordCount(pack.getWordCount());
 		view.setPatternContent(pack.getPatternContent());
 		view.setPatternCount(pack.getPatternCount());
+		view.setReadingContent(pack.getReadingContent());
 		view.setCreateAt(pack.getCreateAt());
 		return view;
 	}

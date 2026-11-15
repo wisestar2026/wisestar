@@ -791,6 +791,8 @@
 - 方法:
   - `public static String resolveChatUrl(String baseUrl)`
     解析对话补全地址：已含 `/chat/completions` 原样返回；以版本段结尾（`/v1`、`/v4`、`/v1beta`、`/compatible-mode/v1` 等）时补 `/chat/completions`；只有域名时补 `/v1/chat/completions`。
+  - `public static void applyReasoningControl(Map<String, Object> body, String model)`
+    思考控制（第 226 节）：模型名以 `glm-4.5` / `glm-4.7` 开头时写入 `thinking={"type":"disabled"}` 并把 `max_tokens` 置为 `16384`，避免思考链耗尽输出额度导致正文为空、单请求拖到读超时；其他模型不动。三个英语内容生成服务在 `body.put("stream", false)` 之后调用。
 
 ### `shared/src/main/java/cn/wisestar/server/core/uitls/Ansi.java`
 - 包: `cn.wisestar.server.core.uitls`
@@ -2084,7 +2086,7 @@
 - 类型: `class EnglishScenarioPackView`
 - 注解: @Data
 - **类说明**：
-  英语单元情景练习内容包视图 DTO。一条记录对应 版本+年级+册别+单元，分别保存单词情景（wordContent/wordCount）与句式情景（patternContent/patternCount）两套分组 JSON；学员端读取时按组顺序合并展示。
+  英语单元情景练习内容包视图 DTO。一条记录对应 版本+年级+册别+单元，分别保存单词情景（wordContent/wordCount）与句式情景（patternContent/patternCount）两套分组 JSON；学员端读取时按组顺序合并展示。`readingContent`（第 226 节）保存阅读理解 JSON（`{"articles":[...]}`），管理端 `detail` 会一并下发，`savePack` 仅在非空时覆盖。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishScenarioPackQuery.java`
 - 包: `cn.wisestar.server.domain.dto.english`

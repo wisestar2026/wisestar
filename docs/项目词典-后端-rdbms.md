@@ -994,6 +994,7 @@
 - **类说明**：
   英语重点句式情景生成服务实现（按分组子集生成）：依据传入的一组重点句式 DTO 调用系统 AI 生成调用方指定数量的生活情景对话——部分轮次给出英文台词，若干轮次仅给中文情景提示，由学员从候选项中选出符合情景的重点句式；可传入本单元已用情景标题避免跨组重复，并按参考场景列表强制每个情景使用不同地点、标题须为具体中文场景名；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。解析时对齐 answer 与 options（按字符串匹配正确项下标、必要时补齐）、过滤无作答轮的场景。
   **质量闸门（第 225 节）**：`normalizeSentence` 归一比对句式；作答轮必须恰好 4 个互异选项、answerIndex 有效、answer 逐字来自本单元句式，cue 从句式释义映射生成；`needsRepair` 仅在情景/轮次被丢弃或作答轮不足时触发 `repairChat` 二次校对。
+  **超时与思考控制（第 226 节）**：读超时 300→600 秒；请求体在 `stream=false` 之后调用 `AiEndpointUtils.applyReasoningControl`，`glm-4.5/4.7` 关闭思考并放宽 `max_tokens`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishReviewScheduler.java`
 - 包: `cn.wisestar.server.impl`
@@ -1015,6 +1016,7 @@
   英语单元阅读理解服务实现：优先解析 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}` 多篇结构并按 articleNo 返回；兼容旧的单篇对象。缓存缺失时读取该单元最多 40 个单词与 30 个重点句子，调用系统 AI 生成一篇短文、中文参考译文与选择题并落库。`generateArticles` 为后台批量生成入口：逐篇调用 AI、每篇固定保留 4 题、整体覆盖写回 `reading_content`，并把已产出篇目的标题与开头（前 40 字符）拼进用户提示词，要求换主角/场景/叙述起点（含禁用相同的 `Good morning, everyone!` 开场）；若新篇标题归一后撞车、或开头前 60 字符相同/公共前缀 ≥30，视为雷同并重试最多 3 次。用户提示词明确要求「4 道选择题」而非 5 道。
 - **词数与题数硬校验**：AI 常忽略「约 N 词」写成 60~80 词的短篇，`generate` 改为最多 3 次重生成，按年级目标词数校验（七年级 120、八年级 145、九年级 180、小学 120；允许 70%~160%），并要求题目数 ≥4，多次不达标取最接近的一版（题数不足优先级最高），避免整单元失败。`buildUserPrompt` 的篇幅要求写成「必须落在 X~Y 词之间，少于 X 词视为不合格」；`max_tokens` 提到 8192 以容纳更长短文与译文。
   **质量闸门（第 225 节）**：题干/选项含中文、出现 All/None of the above、选项重复、选项不足 4 个的题直接丢弃；`answer` 文本与选项归一比对优先于 `answerIndex`（模型下标常错位）；`sanitizeWording` 把 narrator/gymnasium/auditorium 换成 writer/sports hall/school hall；短文正文混入中文则整篇重试；提示词新增「答案依据在原文只能出现一处」「正文/题干禁中文」。二次校对 `repairReading` 因单篇耗时翻倍（900s 超时）已移除，只保留 prompt + 硬闸门。出参前对每道题按「标题 + 题干 + 选项」种子稳定打乱选项并重算 `answerIndex`（AI 与内置素材都把正确项固定放在首位），缓存内容保持规范顺序、只在读取时乱序。
+  **超时与思考控制（第 226 节）**：读超时 180→600 秒；请求体在 `stream=false` 之后调用 `AiEndpointUtils.applyReasoningControl`，`glm-4.5/4.7` 关闭思考并放宽 `max_tokens`；`getReadings` 命中 `reading_content` 缓存时直接返回，人工写入的阅读与 AI 生成走同一读取口径。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishOptionShuffler.java`
 - 包: `cn.wisestar.server.impl`
@@ -1052,7 +1054,7 @@
 - 类型: `class EnglishScenarioPackServiceImpl`
 - 注解: @Slf4j, @Service
 - **类说明**：
-  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景；句式情景全单元固定 10 个，按分组数量均分（如 2 组各 5 个、4 组按 3/3/2/2 分配），并按「缺口 + 缓冲」请求数量、按台词签名全局去重后不足 10 个继续补生成（最多 3 轮），跨组共享已用标题与签名；结果写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）；句式情景在展平后按「说话人+台词/提示+正确项」签名去重（AI 会把同一段对话写进不同标题的情景），并用「标题+轮次+候选内容」稳定旋转候选项，保证正确项不再固定出现在首位。
+  英语单元情景练习内容包服务实现（预生成 + 固化落库 + 学员端只读）。管理端按 版本+年级+册别+单元 把单元单词/句式读取后自动分组（单词 `WORD_GROUP_SIZE=8` 按 spell 升序、句式 `PATTERN_GROUP_SIZE=6` 按 sort 升序），逐组调用 `EnglishScenarioService`/`EnglishPatternScenarioService` 生成情景；句式情景全单元固定 10 个，按分组数量均分（如 2 组各 5 个、4 组按 3/3/2/2 分配），并按「缺口 + 缓冲」请求数量、按台词签名全局去重后不足 10 个继续补生成（最多 3 轮），跨组共享已用标题与签名；结果写入 `word_content`/`pattern_content` 分组 JSON（结构 `{groups:[{groupNo,words|sentences,scenarios:[...]}]}`），返回预览（不落库）；`savePack` 按业务键覆盖保存并重新统计情景数，`readingContent` 非空时一并写入（留空保持原阅读，避免后台只改情景时清空阅读）；`toView` 同时回填 `readingContent`，管理端 `detail` 可直接核对阅读（第 226 节）；`listPacks` 不下发正文；学员端 `getWordScenarios`/`getPatternScenarios` 按业务键取最新一条、按 groupNo 顺序展平（无内容返回空列表，不触发 AI）；句式情景在展平后按「说话人+台词/提示+正确项」签名去重（AI 会把同一段对话写进不同标题的情景），并用「标题+轮次+候选内容」稳定旋转候选项，保证正确项不再固定出现在首位。
 - 常量: `WORD_GROUP_SIZE=8`、`PATTERN_GROUP_SIZE=6`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioServiceImpl.java`
@@ -1062,6 +1064,7 @@
 - **类说明**：
   英语情景对话生成服务实现（按分组子集生成）：依据传入的一组单词 DTO 调用系统 AI 生成 3-4 个生活情景对话并把目标单词从英文台词中挖空形成填空练习；结果不落库（仅注入 `SystemService` 读取 AI 设置，不再加载 rdbms 实体）。生成提示词要求 AI 先写完整句、再用 `[[word]]` 标记 1 个目标词，服务端机械替换为 `___` 并生成 answers；`a/an/the/i/you/my/to/what/how/am/is/are/can` 等功能词只作句子骨架、不强制挖空；一行最多 1 个空，解析时多余标记恢复原词。解析时统一空位标记 `___`、逐行对齐 answers、过滤无效场景。
   **质量闸门（第 225 节）**：`matchesAllowed` 要求答案属于本单元词表并容忍常见词形；`repairChinese` 把 zh 里的 `[[word]]` 换成中文释义/原词并去掉标记；`BLANK_SUFFIX`（`_{2,}[A-Za-z]`）拦截 `___s` 这类粘词形；每场景校验挖空答案都在本段 bank；`hasDuplicateLines` 过滤跨场景重复台词；首轮全被拦下时重试一次；`needsRepair` 仅在场景/台词被丢弃或空位不足时触发 `repairChat` 二次校对（否则单次生成，避免翻倍耗时）。`cleanMeaning` 把词库释义「v. 批评，抨击；袭击」压成第一义项，避免污染 zh 与提示词。
+  **超时与思考控制（第 226 节）**：读超时 180→600 秒；请求体在 `stream=false` 之后调用 `AiEndpointUtils.applyReasoningControl`，`glm-4.5/4.7` 关闭思考并放宽 `max_tokens`。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishSentencePackServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

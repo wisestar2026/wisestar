@@ -64,7 +64,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 		this.objectMapper = new ObjectMapper();
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 		factory.setConnectTimeout(15_000);
-		factory.setReadTimeout(300_000);
+		factory.setReadTimeout(600_000);
 		this.restTemplate = new RestTemplate(factory);
 	}
 
@@ -187,6 +187,7 @@ public class EnglishPatternScenarioServiceImpl implements EnglishPatternScenario
 			body.put("temperature", temperature);
 			body.put("max_tokens", 8192);
 			body.put("stream", false);
+			AiEndpointUtils.applyReasoningControl(body, model);
 
 			HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 			JsonNode resp = objectMapper.readTree(restTemplate.postForObject(

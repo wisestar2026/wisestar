@@ -42,6 +42,9 @@ public class EnglishScenarioPackView {
 	/** 句式情景情景总数 */
 	private Integer patternCount;
 
+	/** 阅读理解内容 JSON（{@code {"articles": [...]}}，保存时留空表示不改动） */
+	private String readingContent;
+
 	/** 创建时间 */
 	private Date createAt;
 

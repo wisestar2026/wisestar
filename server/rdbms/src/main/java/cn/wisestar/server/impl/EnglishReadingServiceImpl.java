@@ -63,7 +63,7 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 		this.objectMapper = new ObjectMapper();
 		SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 		factory.setConnectTimeout(15_000);
-		factory.setReadTimeout(180_000);
+		factory.setReadTimeout(600_000);
 		this.restTemplate = new RestTemplate(factory);
 	}
 
@@ -424,6 +424,7 @@ public class EnglishReadingServiceImpl implements EnglishReadingService {
 			body.put("temperature", temperature);
 			body.put("max_tokens", 8192);
 			body.put("stream", false);
+			AiEndpointUtils.applyReasoningControl(body, model);
 			JsonNode resp = objectMapper.readTree(restTemplate.postForObject(
 					AiEndpointUtils.resolveChatUrl(aiSetting.getBaseUrl()),
 					new HttpEntity<>(body, headers), String.class));
