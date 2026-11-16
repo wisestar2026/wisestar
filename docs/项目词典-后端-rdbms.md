@@ -72,7 +72,7 @@
 - 类型: `class EnglishReadAloudSeeder implements ApplicationRunner`
 - 注解: @Component, @Order(3), @RequiredArgsConstructor, @Slf4j
 - **类说明**：
-  英语课文跟读内容初始化器。启动时读取 classpath:english/read-aloud.json（142 篇、901 句），按「版本+年级+册别+单元+标题」增量写入 `t_english_read_aloud`；同一单元内按资源顺序写入 sort，已有篇章仅在 content 或 lineCount 变化时更新。
+  英语课文跟读内容初始化器。启动时读取 classpath:english/read-aloud.json（248 篇、1552 句，单元标签为外研版官方单元全名），按「版本+年级+册别+单元+标题」增量写入 `t_english_read_aloud`；同一单元内按资源顺序写入 sort，已有篇章仅在 content 或 lineCount 变化时更新。
 - 注入/字段: EnglishReadAloudMapper readAloudMapper, ObjectMapper objectMapper
 - 方法:
   - `public void run(ApplicationArguments args)`
@@ -357,7 +357,7 @@
 - 类型: `class EnglishScenarioPack`（继承 `BaseModel`）
 - 注解: @Data, @TableName, @EqualsAndHashCode
 - **类说明**：
-  英语单元情景练习内容包实体（对应数据库表 t_english_scenario_pack）。一条记录对应「版本 + 年级 + 册别 + 单元」，分别保存单词情景（wordContent）与句式情景（patternContent）两套分组 JSON，供学员端只读合并展示。
+  英语单元情景练习内容包实体（对应数据库表 t_english_scenario_pack）。一条记录对应「版本 + 年级 + 册别 + 单元」，分别保存单词情景（wordContent）与句式情景（patternContent）两套分组 JSON，供学员端只读合并展示；`reading_content` 由阅读初始化器/批量生成写入。单元列按外研版官方全名（含标点，最长 33 字符）设计为 `varchar(128)`，短列宽写长标题会报 500。
 - 注入/字段: version / grade / term / unit / wordContent / wordCount / patternContent / patternCount / readingContent
 
 ### `rdbms/src/main/java/cn/wisestar/server/domain/model/EnglishSentencePack.java`

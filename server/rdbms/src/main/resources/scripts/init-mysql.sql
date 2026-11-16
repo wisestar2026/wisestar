@@ -2406,7 +2406,7 @@ CREATE TABLE IF NOT EXISTS `t_english_ai_pack` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
   `grade` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级',
-  `unit` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
+  `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
   `topic` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '主题',
   `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '内容包标题',
   `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'AI 生成的整套内容 JSON',
@@ -2421,6 +2421,7 @@ ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `create_by` varchar(64)
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_at` timestamp DEFAULT NULL;
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `update_by` varchar(64) DEFAULT NULL;
 ALTER TABLE `t_english_ai_pack` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
+ALTER TABLE `t_english_ai_pack` MODIFY COLUMN `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元';
 UPDATE `t_english_ai_pack` SET `create_at` = `created_at` WHERE `create_at` IS NULL AND `created_at` IS NOT NULL;
 
 -- 英语单元情景练习内容包（预生成固化：单词情景 + 句式情景，按 版本/年级/册别/单元 唯一）
@@ -2429,7 +2430,7 @@ CREATE TABLE IF NOT EXISTS `t_english_scenario_pack` (
   `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
   `grade` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级',
   `term` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期（上册/下册）',
-  `unit` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
+  `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
   `word_content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '单词情景分组 JSON',
   `word_count` int DEFAULT '0' COMMENT '单词情景场景总数',
   `pattern_content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '句式情景分组 JSON',
@@ -2449,6 +2450,7 @@ ALTER TABLE `t_english_scenario_pack` ADD COLUMN IF NOT EXISTS `create_by` varch
 ALTER TABLE `t_english_scenario_pack` ADD COLUMN IF NOT EXISTS `update_at` timestamp DEFAULT NULL;
 ALTER TABLE `t_english_scenario_pack` ADD COLUMN IF NOT EXISTS `update_by` varchar(64) DEFAULT NULL;
 ALTER TABLE `t_english_scenario_pack` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
+ALTER TABLE `t_english_scenario_pack` MODIFY COLUMN `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元';
 ALTER TABLE `t_english_scenario_pack` ADD COLUMN IF NOT EXISTS `reading_content` text;
 
 -- 英语单元句子同步练习内容包（预生成固化：多题型句子练习，按 版本/年级/册别/单元 唯一）
@@ -2457,7 +2459,7 @@ CREATE TABLE IF NOT EXISTS `t_english_sentence_pack` (
   `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
   `grade` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '年级',
   `term` varchar(16) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '学期（上册/下册）',
-  `unit` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
+  `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元',
   `content` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '题目 JSON 数组',
   `count` int DEFAULT '0' COMMENT '题目总数',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -2474,6 +2476,7 @@ ALTER TABLE `t_english_sentence_pack` ADD COLUMN IF NOT EXISTS `create_by` varch
 ALTER TABLE `t_english_sentence_pack` ADD COLUMN IF NOT EXISTS `update_at` timestamp DEFAULT NULL;
 ALTER TABLE `t_english_sentence_pack` ADD COLUMN IF NOT EXISTS `update_by` varchar(64) DEFAULT NULL;
 ALTER TABLE `t_english_sentence_pack` ADD COLUMN IF NOT EXISTS `is_deleted` tinyint DEFAULT 0;
+ALTER TABLE `t_english_sentence_pack` MODIFY COLUMN `unit` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '单元';
 
 -- 英语题目打标标签（按内容键绑定句子包/情景包中的真实考题，供薄弱点组卷按知识点与难度取题）
 CREATE TABLE IF NOT EXISTS `t_english_content_tag` (
