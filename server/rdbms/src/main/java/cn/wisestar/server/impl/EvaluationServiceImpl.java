@@ -16,6 +16,7 @@ import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
 import cn.wisestar.server.service.EvaluationService;
+import cn.wisestar.server.service.MemoryReviewService;
 import cn.wisestar.server.service.RewardService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +73,8 @@ public class EvaluationServiceImpl implements EvaluationService {
 	private final RewardService rewardService;
 
 	private final WeakPointEventRecorder weakPointEventRecorder;
+
+	private final MemoryReviewService memoryReviewService;
 
 	@Override
 	public void recordPractice(PracticeEvaluationContext context) {
@@ -353,6 +356,15 @@ public class EvaluationServiceImpl implements EvaluationService {
 		}
 		// 掌握度达精通即「消灭知识点」，每学期每知识点结算一次
 		settleKpMaster(userId, ctx, kpId);
+		// 记忆调度双写：旧掌握度与薄弱口径保留，新引擎按遗忘曲线接管到期与攻克判定
+		try {
+			KnowledgePoint point = knowledgePointMapper.selectById(kpId);
+			memoryReviewService.recordKpPractice(userId, subjectId, kpId,
+					point == null ? null : point.getName(), rate, total);
+		}
+		catch (Exception e) {
+			log.warn("record practice: memory review skipped kp={}", kpId, e);
+		}
 	}
 
 	/**

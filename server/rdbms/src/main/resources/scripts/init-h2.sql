@@ -2348,6 +2348,78 @@ CREATE TABLE IF NOT EXISTS t_english_learning_state (
 );
 CREATE INDEX IF NOT EXISTS idx_english_learning_state_weak ON t_english_learning_state (user_id, module, weak_flag);
 
+-- 记忆调度项（FSRS-5 + SM-2 冷启动）：每个学员每个知识点一条
+CREATE TABLE IF NOT EXISTS t_memory_schedule (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL,
+  module varchar(32) NOT NULL COMMENT '模块：word/sentence/grammar/kp',
+  subject_id varchar(64) DEFAULT NULL COMMENT '学科ID（知识点级必填）',
+  knowledge_id varchar(191) NOT NULL COMMENT '知识点ID：单词/句子/语法点/学科知识点',
+  state varchar(16) DEFAULT 'new' COMMENT 'new/learning/review/relearning',
+  difficulty double DEFAULT 5 COMMENT 'FSRS 难度 1~10',
+  stability double DEFAULT 0 COMMENT 'FSRS 稳定度（天）',
+  reps int DEFAULT 0 COMMENT '累计复习次数',
+  lapses int DEFAULT 0 COMMENT '累计失误次数',
+  consecutive_wrong int DEFAULT 0 COMMENT '连续答错次数',
+  answers int DEFAULT 0 COMMENT '累计作答次数',
+  corrects int DEFAULT 0 COMMENT '累计答对次数',
+  ease_factor double DEFAULT 2.5 COMMENT 'SM-2 ease factor（冷启动用）',
+  last_grade int DEFAULT 0 COMMENT '最近一次评分1~4',
+  last_angle varchar(32) DEFAULT NULL COMMENT '最近一次考察角度',
+  last_demand varchar(16) DEFAULT NULL COMMENT '最近一次作答方式',
+  last_review_at timestamp NULL DEFAULT NULL COMMENT '最近一次复习时间',
+  due_at timestamp NULL DEFAULT NULL COMMENT '下次到期时间',
+  scheduled_days double DEFAULT 0 COMMENT '上次安排间隔（天）',
+  elapsed_days double DEFAULT 0 COMMENT '距上次复习天数',
+  output_wrong int DEFAULT 0 COMMENT '输出类累计错误次数',
+  weak_flag tinyint DEFAULT 0 COMMENT '是否在薄弱池',
+  weak_reason varchar(32) DEFAULT NULL COMMENT 'low_retrievability/consecutive_wrong/output_error/lapse',
+  first_weak_at timestamp NULL DEFAULT NULL COMMENT '首次进入薄弱池时间',
+  conquered_at timestamp NULL DEFAULT NULL COMMENT '最近一次攻克时间',
+  reclaim_count int DEFAULT 0 COMMENT '攻克后复发次数',
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_memory_user_module_kp (user_id, module, knowledge_id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_due ON t_memory_schedule (user_id, due_at);
+CREATE INDEX IF NOT EXISTS idx_memory_weak ON t_memory_schedule (user_id, weak_flag, due_at);
+
+-- 记忆复习日志：每次作答一条，供归因与参数拟合
+CREATE TABLE IF NOT EXISTS t_memory_review_log (
+  id varchar(64) NOT NULL,
+  user_id varchar(64) NOT NULL,
+  module varchar(32) NOT NULL,
+  subject_id varchar(64) DEFAULT NULL,
+  knowledge_id varchar(191) NOT NULL,
+  grade int NOT NULL COMMENT '评分1~4',
+  correct tinyint DEFAULT 0,
+  latency_ms int DEFAULT NULL COMMENT '作答耗时（毫秒）',
+  angle varchar(32) DEFAULT NULL,
+  demand varchar(16) DEFAULT NULL,
+  stability_before double DEFAULT NULL,
+  stability_after double DEFAULT NULL,
+  difficulty_before double DEFAULT NULL,
+  difficulty_after double DEFAULT NULL,
+  retrievability_before double DEFAULT NULL,
+  elapsed_days double DEFAULT NULL,
+  scheduled_days double DEFAULT NULL,
+  target_retention double DEFAULT NULL,
+  session_id varchar(64) DEFAULT NULL,
+  reviewed_at timestamp NULL DEFAULT NULL,
+  create_at timestamp DEFAULT CURRENT_TIMESTAMP,
+  create_by varchar(256),
+  update_at timestamp,
+  update_by varchar(256),
+  is_deleted tinyint DEFAULT 0,
+  PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_memory_log_kp ON t_memory_review_log (user_id, module, knowledge_id, reviewed_at);
+CREATE INDEX IF NOT EXISTS idx_memory_log_day ON t_memory_review_log (user_id, reviewed_at);
+
 -- 英语考察角度使用记录（防止同一知识点连续用同一角度，形成「换汤不换药」）
 CREATE TABLE IF NOT EXISTS t_english_exam_angle_use (
   id varchar(64) NOT NULL,

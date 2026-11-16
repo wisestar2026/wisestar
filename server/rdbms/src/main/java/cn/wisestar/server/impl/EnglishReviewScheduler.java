@@ -10,9 +10,14 @@ import java.util.Date;
  * 下次复习间隔沿用艾宾浩斯曲线：
  * 0→5 分钟、1→30 分钟、2→12 小时、3→1 天、4→2 天、5+→4 天。</p>
  *
+ * <p>自 2026/11/16 起复习到期与薄弱判定由 {@code MemoryReviewService}（FSRS-5）接管，
+ * 本类仅作旧数据兜底与冷启动档位参考，新代码不要再依赖其固定档位。</p>
+ *
  * @author wisestar
  * @date 2026/9/15
+ * @deprecated 使用 {@code MemoryReviewService} 的遗忘曲线调度
  */
+@Deprecated
 public final class EnglishReviewScheduler {
 
 	private EnglishReviewScheduler() {

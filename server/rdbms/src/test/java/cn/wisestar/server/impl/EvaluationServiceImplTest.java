@@ -13,6 +13,7 @@ import cn.wisestar.server.mapper.KnowledgePointMapper;
 import cn.wisestar.server.mapper.SectionMapper;
 import cn.wisestar.server.mapper.UserKnowledgeProgressMapper;
 import cn.wisestar.server.mapper.UserWeakKnowledgeMapper;
+import cn.wisestar.server.service.MemoryReviewService;
 import cn.wisestar.server.service.RewardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,12 +68,15 @@ class EvaluationServiceImplTest {
 	@Mock
 	private WeakPointEventRecorder weakPointEventRecorder;
 
+	@Mock
+	private MemoryReviewService memoryReviewService;
+
 	private EvaluationServiceImpl service;
 
 	@BeforeEach
 	void setUp() {
 		service = new EvaluationServiceImpl(progressMapper, weakMapper, knowledgePointMapper, sectionMapper,
-				chapterMapper, rewardService, weakPointEventRecorder);
+				chapterMapper, rewardService, weakPointEventRecorder, memoryReviewService);
 	}
 
 	@Test

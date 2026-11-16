@@ -43,6 +43,10 @@ import cn.wisestar.server.mapper.SubjectMapper;
 import cn.wisestar.server.mapper.TemplateMapper;
 import cn.wisestar.server.service.EnglishLearningRuleService;
 import cn.wisestar.server.service.EnglishStudentService;
+import cn.wisestar.server.service.MemoryReviewService;
+import cn.wisestar.server.impl.fsrs.ReviewDemand;
+import cn.wisestar.server.domain.dto.review.ReviewAnswerCommand;
+import cn.wisestar.server.core.constant.ReviewConsts;
 import cn.wisestar.server.service.EnglishUnitService;
 import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.RewardService;
@@ -98,6 +102,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 	private final ObjectMapper objectMapper;
 	private final EnglishPracticeEvaluator englishPracticeEvaluator;
 	private final EnglishLearningRuleService englishLearningRuleService;
+	private final MemoryReviewService memoryReviewService;
 
 	/** 单词复习单次上限：一次 20 词，未复习完的到期单词留到下一轮 */
 	private static final int MAX_WORD_REVIEW = 20;
@@ -309,6 +314,21 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		englishLearningRuleService.recordAnswer(userId, EnglishExamAngle.MODULE_GRAMMAR, grammarId, resolvedAngle,
 				correct, resolvedStage, true);
 
+		// 记忆调度双写：旧三阶与复习档位保留，新引擎按遗忘曲线接管到期与薄弱判定
+		try {
+			ReviewAnswerCommand review = new ReviewAnswerCommand();
+			review.setModule(ReviewConsts.MODULE_GRAMMAR);
+			review.setKnowledgeId(grammarId);
+			review.setCorrect(correct);
+			review.setAngle(resolvedAngle);
+			review.setDemand(ReviewDemand.of(resolvedAngle, resolvedStage));
+			review.setFirstAttempt(true);
+			memoryReviewService.recordAnswer(userId, review);
+		}
+		catch (Exception e) {
+			log.warn("record grammar: memory review skipped grammar={}", grammarId, e);
+		}
+
 		// 成长档案：语法练习轨迹留痕（按 grammarId + 日期累加，幂等；失败不阻断）
 		try {
 			String date = LocalDate.now().toString();
@@ -424,6 +444,21 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		String resolvedStage = normalizeStage(stage);
 		englishLearningRuleService.recordAnswer(userId, EnglishExamAngle.MODULE_SENTENCE, sentenceId, resolvedAngle,
 				correct, resolvedStage, true);
+
+		// 记忆调度双写：旧三阶与复习档位保留，新引擎按遗忘曲线接管到期与薄弱判定
+		try {
+			ReviewAnswerCommand review = new ReviewAnswerCommand();
+			review.setModule(ReviewConsts.MODULE_SENTENCE);
+			review.setKnowledgeId(sentenceId);
+			review.setCorrect(correct);
+			review.setAngle(resolvedAngle);
+			review.setDemand(ReviewDemand.of(resolvedAngle, resolvedStage));
+			review.setFirstAttempt(true);
+			memoryReviewService.recordAnswer(userId, review);
+		}
+		catch (Exception e) {
+			log.warn("record sentence: memory review skipped sentence={}", sentenceId, e);
+		}
 	}
 
 	@Override

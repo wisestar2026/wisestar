@@ -457,6 +457,13 @@
 
   **类职责**：定义项目报表（数据看板）中使用的统计指标 Key， 作为统计数据聚合结果的标识（如日报表按天统计的数量）。 目前仅定义"每日数量"指标，后续统计维度在此扩展。
 
+### `shared/src/main/java/cn/wisestar/server/core/constant/ReviewConsts.java`
+- 包: `cn.wisestar.server.core.constant`
+- 类型: `class ReviewConsts`
+- **类说明**：
+  记忆调度常量。统一模块（word/sentence/grammar/kp）、作答方式（recognition/cued/application/full）、调度状态（new/learning/review/relearning）、薄弱原因（low_retrievability/consecutive_wrong/output_error/lapse）与队列来源（due/weak/new），供 shared 层 DTO 与 rdbms 调度实现共用，避免字符串散落。
+- 常量: `MODULES`、`MODULE_WORD`、`MODULE_SENTENCE`、`MODULE_GRAMMAR`、`MODULE_KP`、`DEMAND_*`、`STATE_*`、`REASON_*`、`SOURCE_*`
+
 ### `shared/src/main/java/cn/wisestar/server/core/constant/ResponseCode.java`
 - 包: `cn.wisestar.server.core.constant`
 - 类型: `enum ResponseCode`
@@ -2486,6 +2493,21 @@
 - **类说明**：
   学币兑换订单视图（学员端兑换记录 / 老师端核销申请）。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/review/`
+- 包: `cn.wisestar.server.domain.dto.review`
+- 类型: 记忆调度 DTO 集合
+- **类说明**：
+  学员端复习与薄弱攻克接口的入参/出参，学员标识由服务端从登录上下文取，DTO 不携带 userId。
+- 类清单:
+  - `ReviewAnswerCommand`：作答入参（module/knowledgeId/subjectId/correct/angle/demand/latencyMs/hint/retry/correctRate/total/sessionId）。
+  - `ReviewAnswerResult`：调度结果（grade/state/R/S/D/intervalDays/dueAt/mastery/weak/weakReason/conquered/reviews/lapses）。
+  - `ReviewPlanView`：今日计划（due/overdue/weak/fresh/estimatedMinutes/目标保持率 + 各模块统计）。
+  - `ReviewQueueRequest`：队列筛选（module/subjectId/version/grade/term/unit/modes/limit）。
+  - `ReviewQueueItemView`：队列条目（名称/角度/作答方式/R/掌握度/到期/薄弱/严重度/来源）。
+  - `ReviewForecastView`：未来到期预测（按天 due、平均可提取度）。
+  - `WeakBoardItemView`：薄弱看板条目（严重度/R/掌握度/遗忘时间/建议角度与方式）。
+  - `WeakSessionRequest`：攻克组卷（范围 + size 6~10，输出题占比 ≥40%）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/student/OrderQuery.java`
 - 包: `cn.wisestar.server.domain.dto.student`
 - 类型: `class OrderQuery`
@@ -3323,6 +3345,29 @@
     按学号或姓名搜索学员。
   - `public MathPaperView generate(MathPaperRequest request)`
     生成试卷（含标准答案与解析）。
+
+### `shared/src/main/java/cn/wisestar/server/service/MemoryReviewService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface MemoryReviewService`
+- **类说明**：
+  记忆调度服务（FSRS-5 主模型 + SM-2 冷启动）。按 `user_id + module + knowledge_id` 维护难度、稳定度、到期时间与薄弱状态，并向旧表回写熟练度/复习时间/掌握度/薄弱标记，保证既有页面口径不变。
+- 方法:
+  - `ReviewAnswerResult recordAnswer(String userId, ReviewAnswerCommand command)`
+    作答入账：评分折算 → 冷启动或 FSRS-5 更新 → 薄弱状态机 → 写复习日志与旧表。内部吞异常记 warn，不阻断答题主流程。
+  - `ReviewAnswerResult recordKpPractice(String userId, String subjectId, String kpId, String name, int correctRate, int total)`
+    知识点练习入账（按会话正确率折算评分）。
+  - `ReviewPlanView plan(String userId, String subjectId)`
+    今日复习计划。
+  - `List<ReviewQueueItemView> queue(String userId, ReviewQueueRequest request)`
+    复习队列（到期优先、薄弱次之、新项配额 30%）。
+  - `ReviewForecastView forecast(String userId, String subjectId, int days)`
+    未来 1~90 天到期预测。
+  - `List<WeakBoardItemView> weakBoard(String userId, String subjectId, int limit)`
+    薄弱看板（严重度降序）。
+  - `List<ReviewQueueItemView> weakSession(String userId, WeakSessionRequest request)`
+    攻克训练组卷（6~10 题，输出题 ≥40%，轮换角度）。
+  - `int backfill(String userId)`
+    把既有单词/句子/语法本与知识点进度幂等回填为调度项，返回新增条数。
 
 ### `shared/src/main/java/cn/wisestar/server/service/OnlineChestService.java`
 - 包: `cn.wisestar.server.service`

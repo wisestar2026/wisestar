@@ -1,6 +1,7 @@
 package cn.wisestar.server.impl;
 
 import cn.wisestar.server.core.common.PaginationResponse;
+import cn.wisestar.server.core.constant.ReviewConsts;
 import cn.wisestar.server.domain.dto.english.EnglishWordQuery;
 import cn.wisestar.server.domain.dto.english.EnglishWordView;
 import cn.wisestar.server.domain.model.EnglishLearningLog;
@@ -12,10 +13,14 @@ import cn.wisestar.server.mapper.EnglishWordBookMapper;
 import cn.wisestar.server.service.EnglishLearningRuleService;
 import cn.wisestar.server.service.EnglishTtsService;
 import cn.wisestar.server.service.EnglishWordService;
+import cn.wisestar.server.service.MemoryReviewService;
+import cn.wisestar.server.impl.fsrs.ReviewDemand;
+import cn.wisestar.server.domain.dto.review.ReviewAnswerCommand;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -34,6 +39,7 @@ import java.util.stream.Collectors;
  * @author wisestar
  * @date 2026/8/30
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EnglishWordServiceImpl implements EnglishWordService {
@@ -44,6 +50,7 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 	private final EnglishPracticeEvaluator englishPracticeEvaluator;
 	private final EnglishTtsService englishTtsService;
 	private final EnglishLearningRuleService englishLearningRuleService;
+	private final MemoryReviewService memoryReviewService;
 
 	/** 需加强阈值：累计「不认识」达到该次数的单词标记为需加强。 */
 	private static final int WEAK_WRONG_TIMES = 2;
@@ -338,6 +345,20 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		String resolvedAngle = angle != null ? angle : angleOf(source);
 		englishLearningRuleService.recordAnswer(userId, EnglishExamAngle.MODULE_WORD, wordId, resolvedAngle, correct,
 				stage, firstAttempt);
+		// 记忆调度双写：旧口径保留，新引擎按遗忘曲线接管到期与薄弱判定
+		try {
+			ReviewAnswerCommand review = new ReviewAnswerCommand();
+			review.setModule(ReviewConsts.MODULE_WORD);
+			review.setKnowledgeId(wordId);
+			review.setCorrect(correct);
+			review.setAngle(resolvedAngle);
+			review.setDemand(ReviewDemand.of(resolvedAngle, source));
+			review.setFirstAttempt(firstAttempt);
+			memoryReviewService.recordAnswer(userId, review);
+		}
+		catch (Exception e) {
+			log.warn("record word learning: memory review skipped word={}", wordId, e);
+		}
 	}
 
 	/**
