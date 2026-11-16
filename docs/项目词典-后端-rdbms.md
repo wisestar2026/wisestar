@@ -1585,8 +1585,8 @@
 - 包: `cn.wisestar.server.impl`
 - 类型: `class MemoryReviewServiceImpl`（实现 `MemoryReviewService`）
 - **类说明**：
-  记忆调度核心实现。`apply()` 按 `reps<2` 走 SM-2 冷启动、否则走 FSRS-5（同日复习用 short-term stability），随后交给 `WeakStateMachine` 判定薄弱/攻克/复发，写 `t_memory_review_log` 并回写 `t_english_*_book`、`t_english_learning_state`、`t_user_knowledge_progress`、`t_user_weak_knowledge` 与 `WeakPointEvent`。查询侧提供计划、队列（到期→薄弱→新项 30% 配额）、预测、薄弱看板与攻克组卷（6~10 题、输出题 ≥40%、角度轮换）。
-- 关键常量: 目标保持率 0.9、攻克稳定度 7 天、遗忘阈值 R=0.6、队列默认/上限 20/100
+  记忆调度核心实现。`apply()` 按 `reps<2` 走 SM-2 冷启动、否则走 FSRS-5（同日复习用 short-term stability），随后交给 `WeakStateMachine` 判定薄弱/攻克/复发，写 `t_memory_review_log` 并回写 `t_english_*_book`、`t_english_learning_state`、`t_user_knowledge_progress`、`t_user_weak_knowledge` 与 `WeakPointEvent`。`firstAttempt=false`（重做/补答）走 `skipped()` 只回显状态，不写日志、不改调度；知识点级（`module=kp`）没有输出题概念，不计 `output_wrong` 也不要求输出达标。查询侧提供计划、队列（到期→薄弱→新项 30% 配额）、预测、薄弱看板与攻克组卷（6~10 题、输出题 ≥40%、角度轮换）。
+- 关键常量: 目标保持率 0.9、攻克稳定度 7 天、遗忘阈值 R=0.6、队列默认/上限 20/100、知识点会话最少 3 题
 - 依赖: MemoryScheduleMapper、MemoryReviewLogMapper、英语三模块 Mapper、KnowledgePointMapper、UserKnowledgeProgressMapper、UserWeakKnowledgeMapper、WeakPointEventRecorder
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/fsrs/`
@@ -1602,7 +1602,7 @@
 - 包: `cn.wisestar.server.impl`
 - 类型: `class WeakStateMachine`
 - **类说明**：
-  薄弱状态机（纯函数）。进入薄弱：R<0.6（且已作答 ≥2 次）、连续答错 ≥2、输出题答错、攻克后复发；保持薄弱不因 R 回升自动移出；攻克需同时满足复习前 R<0.85、评分 ≥3、角度变化、输出薄弱需输出题达标、复习后 S≥7 天。输入输出为不可变快照/证据/转移对象。
+  薄弱状态机（纯函数）。进入薄弱：R<0.6（且已作答 ≥2 次）、连续答错 ≥2、输出题答错、攻克后不论是否到期再次答错、连续两次「答对但评分 2」（`fragile`）、累计作答 ≥6 次且正确率 <60%（`low_accuracy`）；保持薄弱不因 R 回升自动移出。攻克需同时满足复习前 R<0.85、本次与上一轮评分均 ≥3、角度变化（无角度知识点自动满足）、输出薄弱需输出型作答达标、复习后 S≥7 天。输入输出为不可变快照/证据/转移对象，知识点与英语模块共用同一套判定。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/PositionServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

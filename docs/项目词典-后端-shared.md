@@ -461,7 +461,7 @@
 - 包: `cn.wisestar.server.core.constant`
 - 类型: `class ReviewConsts`
 - **类说明**：
-  记忆调度常量。统一模块（word/sentence/grammar/kp）、作答方式（recognition/cued/application/full）、调度状态（new/learning/review/relearning）、薄弱原因（low_retrievability/consecutive_wrong/output_error/lapse）与队列来源（due/weak/new），供 shared 层 DTO 与 rdbms 调度实现共用，避免字符串散落。
+  记忆调度常量。统一模块（word/sentence/grammar/kp）、作答方式（recognition/cued/application/full）、调度状态（new/learning/review/relearning）、薄弱原因（low_retrievability/consecutive_wrong/output_error/lapse/fragile/low_accuracy）与队列来源（due/weak/new），供 shared 层 DTO 与 rdbms 调度实现共用，避免字符串散落。
 - 常量: `MODULES`、`MODULE_WORD`、`MODULE_SENTENCE`、`MODULE_GRAMMAR`、`MODULE_KP`、`DEMAND_*`、`STATE_*`、`REASON_*`、`SOURCE_*`
 
 ### `shared/src/main/java/cn/wisestar/server/core/constant/ResponseCode.java`

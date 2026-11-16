@@ -2371,7 +2371,7 @@ CREATE TABLE IF NOT EXISTS `t_memory_schedule` (
   `elapsed_days` double DEFAULT 0 COMMENT '距上次复习天数',
   `output_wrong` int DEFAULT 0 COMMENT '输出类累计错误次数',
   `weak_flag` tinyint DEFAULT 0 COMMENT '是否在薄弱池',
-  `weak_reason` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'low_retrievability/consecutive_wrong/output_error/lapse',
+  `weak_reason` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'low_retrievability/consecutive_wrong/output_error/lapse/fragile/low_accuracy',
   `first_weak_at` timestamp NULL DEFAULT NULL COMMENT '首次进入薄弱池时间',
   `conquered_at` timestamp NULL DEFAULT NULL COMMENT '最近一次攻克时间',
   `reclaim_count` int DEFAULT 0 COMMENT '攻克后复发次数',

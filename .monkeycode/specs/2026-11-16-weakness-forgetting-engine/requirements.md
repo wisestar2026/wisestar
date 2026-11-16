@@ -62,10 +62,13 @@ Status: 待确认
 1. WHEN 调度项证据少于 2 次，the system SHALL 只记录状态，不把调度项纳入薄弱池。
 2. WHEN 可提取度低于 0.6 且证据不少于 2 次，the system SHALL 把调度项纳入薄弱池并记录薄弱原因。
 3. WHEN 同一知识点连续答错达到 2 次，the system SHALL 把调度项纳入薄弱池。
-4. WHEN 输出类作答方式答错一次，the system SHALL 把调度项纳入薄弱池并记录输出薄弱原因。
-5. WHEN 调度项已在薄弱池且可提取度回升到 0.7 以上，the system SHALL 保持薄弱标记直到满足攻克条件。
-6. WHEN 学员从薄弱池移出后再次答错，the system SHALL 重新纳入薄弱池并累计复发次数。
-7. the system SHALL 把薄弱原因限定为 `low_retrievability`、`consecutive_wrong`、`output_error`、`lapse`。
+4. WHEN 输出类作答方式答错一次（知识点级会话无输出概念时除外），the system SHALL 把调度项纳入薄弱池并记录输出薄弱原因。
+5. WHEN 连续两次作答均为「答对但评分 2」（使用提示、超时或正确率刚过线），the system SHALL 把调度项纳入薄弱池并记 `fragile`。
+6. WHEN 累计作答不少于 6 次且累计正确率低于 60%，the system SHALL 把调度项纳入薄弱池并记 `low_accuracy`。
+7. WHEN 调度项已在薄弱池且可提取度回升，the system SHALL 保持薄弱标记直到满足攻克条件。
+8. WHEN 学员从薄弱池移出后再次答错，无论是否到期，the system SHALL 重新纳入薄弱池并累计复发次数。
+9. the system SHALL 把薄弱原因限定为 `low_retrievability`、`consecutive_wrong`、`output_error`、`lapse`、`fragile`、`low_accuracy`。
+10. WHEN 作答被标记为非首答（重做或补答），the system SHALL 只回显当前状态，不重复计入难度、稳定度、正确率与薄弱证据。
 
 ### R4 攻克判定
 
@@ -73,11 +76,13 @@ Status: 待确认
 
 #### Acceptance Criteria
 
-1. WHEN 学员在到期状态下（复习前可提取度低于 0.85）答对，且本次考察角度与上次不同，the system SHALL 计入一次有效攻克证据。
-2. WHEN 薄弱原因为输出薄弱，the system SHALL 要求至少一次 `cued`、`application` 或 `full` 作答达到评分 3 以上。
-3. WHEN 有效攻克证据成立且复习后稳定度不低于 7 天，the system SHALL 把调度项移出薄弱池并记录攻克事件。
-4. WHEN 复习后稳定度低于 7 天，the system SHALL 保留薄弱标记并缩短下次复习间隔。
-5. the system SHALL 在攻克时保持既有奖励幂等口径（每知识点终身一次）。
+1. WHEN 学员在到期状态下（复习前可提取度低于 0.85）作答且评分不低于 3，且上一次作答评分同样不低于 3，the system SHALL 计入一次有效攻克证据。
+2. WHEN 本次考察角度与上次相同时，the system SHALL 不计入有效攻克证据；知识点级没有考察角度时，该条 SHALL 自动满足。
+3. WHEN 薄弱原因为输出薄弱，the system SHALL 要求本次为 `cued`、`application` 或 `full` 的作答且评分不低于 3。
+4. WHEN 有效攻克证据成立且复习后稳定度不低于 7 天，the system SHALL 把调度项移出薄弱池并记录攻克事件。
+5. WHEN 复习后稳定度低于 7 天，the system SHALL 保留薄弱标记并缩短下次复习间隔。
+6. the system SHALL 对英语三模块与全学科知识点使用同一套攻克条件。
+7. the system SHALL 在攻克时保持既有奖励幂等口径（每知识点终身一次）。
 
 ### R5 复习计划与队列
 

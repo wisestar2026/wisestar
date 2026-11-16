@@ -110,6 +110,9 @@ public class MemoryReviewServiceImpl implements MemoryReviewService {
 	/** 攻克训练输出题占比下限 */
 	private static final double OUTPUT_QUOTA_RATIO = 0.4;
 
+	/** 知识点级计入调度的最少会话题量：一两道题的会话噪声太大 */
+	private static final int MIN_KP_SESSION_QUESTIONS = 3;
+
 	private final MemoryScheduleMapper scheduleMapper;
 
 	private final MemoryReviewLogMapper logMapper;
@@ -155,6 +158,9 @@ public class MemoryReviewServiceImpl implements MemoryReviewService {
 	@Override
 	public ReviewAnswerResult recordKpPractice(String userId, String subjectId, String knowledgePointId,
 			String knowledgeName, int correctRate, int total) {
+		if (total < MIN_KP_SESSION_QUESTIONS) {
+			return null;
+		}
 		ReviewAnswerCommand command = new ReviewAnswerCommand();
 		command.setModule(ReviewConsts.MODULE_KP);
 		command.setSubjectId(subjectId);
@@ -498,6 +504,10 @@ public class MemoryReviewServiceImpl implements MemoryReviewService {
 		int grade = command.getCorrectRate() != null
 				? ReviewGrade.gradeOfRate(command.getCorrectRate(), command.getTotal() == null ? 0 : command.getTotal())
 				: ReviewGrade.gradeOf(correct, command.getLatencyMs(), hint, retried, demand);
+		if (Boolean.FALSE.equals(command.getFirstAttempt())) {
+			// 重做/补答只作训练：首答已记过失，重做再记会把稳定度洗白，故不重复入账
+			return skipped(schedule, grade, now);
+		}
 
 		int oldReps = nz(schedule.getReps());
 		double oldStability = nzDouble(schedule.getStability());
@@ -544,16 +554,18 @@ public class MemoryReviewServiceImpl implements MemoryReviewService {
 		Date dueAt = new Date(now.getTime() + Math.round(interval * 24L * 60 * 60 * 1000));
 
 		int consecutiveWrong = correct ? 0 : nz(schedule.getConsecutiveWrong()) + 1;
-		boolean output = ReviewDemand.isOutput(demand);
+		// 知识点级按会话上报，没有「输出题」概念，避免把普通答错记成输出错误
+		boolean kp = ReviewConsts.MODULE_KP.equals(module);
+		boolean output = !kp && ReviewDemand.isOutput(demand);
 		boolean outputWrong = output && !correct;
 		WeakStateMachine.WeakSnapshot snapshot = new WeakStateMachine.WeakSnapshot(
 				nz(schedule.getWeakFlag()) == 1, schedule.getWeakReason(), schedule.getLastAngle(),
 				nz(schedule.getAnswers()), nz(schedule.getConsecutiveWrong()), nz(schedule.getLapses()),
-				schedule.getConqueredAt() != null);
-		boolean outputWeakRequired = ReviewConsts.REASON_OUTPUT_ERROR.equals(schedule.getWeakReason())
-				|| nz(schedule.getOutputWrong()) > 0;
+				schedule.getConqueredAt() != null, nz(schedule.getCorrects()), nz(schedule.getLastGrade()));
+		boolean outputWeakRequired = !kp && (ReviewConsts.REASON_OUTPUT_ERROR.equals(schedule.getWeakReason())
+				|| nz(schedule.getOutputWrong()) > 0);
 		WeakStateMachine.WeakEvidence evidence = new WeakStateMachine.WeakEvidence(correct, grade, beforeR,
-				newStability, demand, command.getAngle(), outputWeakRequired);
+				newStability, demand, output, command.getAngle(), outputWeakRequired);
 		WeakStateMachine.WeakTransition transition = WeakStateMachine.evaluate(snapshot, evidence);
 
 		schedule.setSubjectId(StringUtils.hasText(command.getSubjectId()) ? command.getSubjectId()
@@ -613,6 +625,33 @@ public class MemoryReviewServiceImpl implements MemoryReviewService {
 		result.setConquered(transition.conquered());
 		result.setReviews(schedule.getReps());
 		result.setLapses(schedule.getLapses());
+		return result;
+	}
+
+	/**
+	 * 重做/补答：不写日志、不改调度，只回显当前状态。
+	 *
+	 * @param schedule 当前调度
+	 * @param grade 本次尝试的评分
+	 * @param now 当前时间
+	 * @return 调度结果（ignored=true）
+	 */
+	private ReviewAnswerResult skipped(MemorySchedule schedule, int grade, Date now) {
+		ReviewAnswerResult result = new ReviewAnswerResult();
+		result.setIgnored(true);
+		result.setGrade(grade);
+		result.setState(schedule.getState());
+		result.setRetrievabilityBefore(round3(retrievability(schedule, now)));
+		result.setStability(round3(nzDouble(schedule.getStability())));
+		result.setDifficulty(round3(nzDouble(schedule.getDifficulty())));
+		result.setIntervalDays(round3(nzDouble(schedule.getScheduledDays())));
+		result.setDueAt(schedule.getDueAt());
+		result.setMastery(mastery(schedule, now));
+		result.setWeak(nz(schedule.getWeakFlag()) == 1);
+		result.setWeakReason(schedule.getWeakReason());
+		result.setConquered(false);
+		result.setReviews(nz(schedule.getReps()));
+		result.setLapses(nz(schedule.getLapses()));
 		return result;
 	}
 
@@ -938,7 +977,7 @@ public class MemoryReviewServiceImpl implements MemoryReviewService {
 		double weight = ReviewDemand.weight(schedule.getLastDemand() == null ? ReviewConsts.DEMAND_CUED
 				: schedule.getLastDemand());
 		double value = (1 - r) * weight * (1 + 0.5 * nz(schedule.getLapses()));
-		if (nz(schedule.getOutputWrong()) > 0) {
+		if (nz(schedule.getOutputWrong()) > 0 && !ReviewConsts.MODULE_KP.equals(schedule.getModule())) {
 			value *= 1.3;
 		}
 		if (nz(schedule.getWeakFlag()) == 1) {

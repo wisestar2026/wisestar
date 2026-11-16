@@ -199,20 +199,25 @@ D'     = w7·D0(4) + (1-w7)·(D - w6·(G-3))    // clamp 1..10
 
 ### 薄弱状态机
 
-进入（满足其一，且证据 ≥2 次或输出错误）：
-- `R_now < 0.6`
+进入（满足其一）：
+- `R_now < 0.6` 且证据 ≥2 次
 - 连续答错 ≥ 2
-- 输出类答错
-- 已攻克后再次答错（`lapse`，同时 `reclaim_count++`）
+- 输出类答错（知识点级会话无输出概念，不适用）
+- 已攻克后再次答错（`lapse`，不论是否到期，同时 `reclaim_count++`）
+- 连续两次「答对但评分 2」（提示/超时/正确率刚过线）→ `fragile`
+- 累计作答 ≥6 次且正确率 <60% → `low_accuracy`
 
-保持：已在薄弱池时，即使 `R_now ≥ 0.7` 也不自动移出，必须走攻克判定。
+保持：已在薄弱池时，即使 `R_now` 回升也不自动移出，必须走攻克判定。
 
 攻克（全部满足）：
 - 复习前 `R < 0.85`（确属到期复习）
-- 本次 `grade ≥ 3`
-- 本次角度 ≠ `last_angle`
-- 输出薄弱时，本次 `demand ∈ {cued, application, full}` 且 `grade ≥ 3`
+- 本次 `grade ≥ 3`（提示、重做、超时的 2 分不算）
+- 上一轮 `last_grade ≥ 3`（连续两次间隔复现通过）
+- 本次角度 ≠ `last_angle`；无角度概念的知识点自动满足
+- 输出薄弱时，本次为输出型作答且 `grade ≥ 3`
 - 复习后 `S ≥ 7 天`
+
+非首答（`firstAttempt=false`）只回显状态：不写日志、不改调度，防止重做把「首答错」洗白。
 
 移出后写 `conquered_at`、发 `conquered` 事件；后续答错发 `reopened`。
 
@@ -235,7 +240,7 @@ mastery = 100 × (0.45·R_now + 0.55·accuracy) × confidence × gradeFactor −
 
 ### 预计遗忘日期
 
-解得 `R(t)=0.6` 的 t：`t = S/(19/81)·(0.6^(-2)-1) ≈ 1.7778·S` 天，从 `last_review_at` 起算；无复习记录时从当前时间起算。
+解得 `R(t)=0.6` 的 t：`t = S/(19/81)·(0.6^(-2)-1) ≈ 7.5789·S` 天，从 `last_review_at` 起算；无复习记录时从当前时间起算。
 
 ## Correctness Properties
 
@@ -244,7 +249,7 @@ mastery = 100 × (0.45·R_now + 0.55·accuracy) × confidence × gradeFactor −
 3. 同一 S 下 `grade` 越大，成功后 S 越大；`G=4` 的 S 大于 `G=3`。
 4. 难度始终落在 1~10，稳定度始终 ≥ 0.1，失败后 S 不增加。
 5. 同日多次作答不会把到期时间排到过去。
-6. 薄弱进入/攻克满足状态机转移表；攻克必须同时满足 5 个条件。
+6. 薄弱进入/攻克满足状态机转移表；攻克必须同时满足 6 个条件，知识点级无角度时角度条件自动满足。
 7. 同一（用户、模块、知识点）只有一条调度记录，回填幂等。
 8. 旧表回写后 `next_review_time` 与调度 `due_at` 一致。
 
@@ -262,7 +267,7 @@ mastery = 100 × (0.45·R_now + 0.55·accuracy) × confidence × gradeFactor −
 - `Fsrs5Test`：R/I 恒等与单调性、D/S 边界、失败不增益、同日公式。
 - `Sm2ColdStartTest`：1/6 天序列、EF 下限、失败回退。
 - `ReviewGradeTest`：四种作答方式的对错/快慢/提示/重做映射。
-- `WeakStateMachineTest`：单次选择错不薄弱、输出错薄弱、攻克五条件、复发。
+- `WeakStateMachineTest`：单次选择错不薄弱、输出错薄弱、攻克六条件（含连续两次通过、无角度知识点）、假会与低正确率入池、复发。
 - `MemoryMapperTest`：回填映射与幂等（mock mapper 或 H2 切片）。
 
 接口自测：`/review/plan`、`/review/queue`、`/review/answer`、`/review/forecast`、`/weak/board`、`/weak/session`、`/review/backfill`，用管理员与学员账号各跑一遍，确认只返回本人数据。

@@ -52,4 +52,7 @@ public class ReviewAnswerResult {
 	/** 累计失误次数 */
 	private int lapses;
 
+	/** 是否未计入调度（重做/补答只作训练） */
+	private boolean ignored;
+
 }

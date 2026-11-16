@@ -77,6 +77,12 @@ public final class ReviewConsts {
 	/** 薄弱原因：攻克后复发 */
 	public static final String REASON_LAPSE = "lapse";
 
+	/** 薄弱原因：答对但不稳（靠提示、超时或刚过线） */
+	public static final String REASON_FRAGILE = "fragile";
+
+	/** 薄弱原因：累计正确率过低 */
+	public static final String REASON_LOW_ACCURACY = "low_accuracy";
+
 	/** 队列来源：到期 */
 	public static final String SOURCE_DUE = "due";
 
