@@ -8,9 +8,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -30,6 +32,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -133,11 +137,14 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	/** 常驻进程单句等待上限（毫秒）：超时视为进程卡死，杀掉后回退一次性进程 */
 	private static final long DAEMON_WAIT_MILLIS = 30_000L;
 
-	/** 常驻进程轮询输出文件的间隔（毫秒） */
-	private static final long DAEMON_POLL_MILLIS = 10L;
+	/** 缓存键版本：合成链路修复后递增，旧的有问题音频自动失效 */
+	private static final String CACHE_VERSION = "v2";
 
 	/** 按语速缓存的常驻 Piper 进程 */
 	private final Map<Integer, PiperDaemon> daemons = new ConcurrentHashMap<>();
+
+	/** 允许常驻的语速：来自 preload-speeds，未配置时默认只给默认语速 */
+	private final Set<Integer> daemonRates = ConcurrentHashMap.newKeySet();
 
 	/** 首选语速：常驻名额满时优先保留它（默认单词练习 125，课文走批量预热） */
 	private volatile int preferredRate = -1;
@@ -341,6 +348,11 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		if (existing != null && existing.alive()) {
 			return existing;
 		}
+		// 只为 preload-speeds 里的语速起常驻进程（默认仅 125）；课文 109 走一次性合成 + 批量预热，
+		// 避免首句请求抢占唯一名额，把单词练习的常驻进程挤掉
+		if (!daemonRates.contains(rate) && !(daemonRates.isEmpty() && rate == defaultSpeed)) {
+			return null;
+		}
 		synchronized (daemons) {
 			existing = daemons.get(rate);
 			if (existing != null && existing.alive()) {
@@ -385,13 +397,19 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		}
 	}
 
-	/** 持续读走子进程输出，避免管道写满后 Piper 阻塞 */
-	private void drain(InputStream stream) {
+	/** 持续读走子进程输出，避免管道写满后 Piper 阻塞；「Wrote ...」行作为合成完成信号 */
+	private void drain(InputStream stream, BlockingQueue<Path> written) {
 		Thread thread = new Thread(() -> {
-			byte[] buffer = new byte[4096];
-			try {
-				while (stream.read(buffer) >= 0) {
-					// 输出仅用于排查，读走即丢弃
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					int index = line.indexOf("Wrote ");
+					if (index >= 0) {
+						String path = line.substring(index + "Wrote ".length()).trim();
+						if (!path.isEmpty()) {
+							written.offer(Paths.get(path));
+						}
+					}
 				}
 			} catch (IOException e) {
 				log.debug("常驻语音进程输出流已关闭：{}", e.getMessage());
@@ -415,6 +433,9 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		private Writer stdin;
 
 		private Path workDir;
+
+		/** Piper 每写完一个 wav 输出一行「Wrote <路径>」，据此判断文件已完整落盘 */
+		private final BlockingQueue<Path> written = new LinkedBlockingQueue<>();
 
 		private volatile long lastUsed = System.currentTimeMillis();
 
@@ -445,7 +466,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 				builder.redirectErrorStream(true);
 				process = builder.start();
 				stdin = new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8);
-				drain(process.getInputStream());
+				drain(process.getInputStream(), written);
 				log.info("常驻语音进程已启动：语速 {}，音色 {}", rate, piperVoice);
 				return true;
 			} catch (Exception e) {
@@ -455,7 +476,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			}
 		}
 
-		/** 同步合成一句：写一行文本进去，等输出目录里出现写完的 wav */
+		/** 同步合成一句：写一行文本进去，等 Piper 报出「Wrote」后再读文件 */
 		synchronized byte[] synthesize(String text) {
 			lastUsed = System.currentTimeMillis();
 			if (!alive()) {
@@ -464,6 +485,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			try {
 				// 先清掉可能残留的输出（上次超时或读取失败），避免把上一句的音频当成本句
 				clearWavs();
+				written.clear();
 				stdin.write(text);
 				stdin.write("\n");
 				stdin.flush();
@@ -496,46 +518,23 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			}
 		}
 
-		/** 等输出目录里出现一个写完的 wav（Piper 先建文件再写内容，必须等长度够） */
-		private Path awaitWav() throws InterruptedException, IOException {
+		/** 等 Piper 报出「Wrote」：此时文件已写完并关闭，直接读不会拿到半截音频 */
+		private Path awaitWav() throws InterruptedException {
 			long deadline = System.currentTimeMillis() + DAEMON_WAIT_MILLIS;
 			while (System.currentTimeMillis() < deadline) {
+				long remain = Math.max(1L, deadline - System.currentTimeMillis());
+				Path wav = written.poll(remain, TimeUnit.MILLISECONDS);
+				if (wav == null) {
+					return null;
+				}
 				if (!alive()) {
 					return null;
 				}
-				try (java.util.stream.Stream<Path> stream = Files.list(workDir)) {
-					java.util.Iterator<Path> iterator = stream.iterator();
-					while (iterator.hasNext()) {
-						Path wav = iterator.next();
-						if (wav.toString().endsWith(".wav") && complete(wav)) {
-							return wav;
-						}
-					}
+				if (Files.isReadable(wav)) {
+					return wav;
 				}
-				Thread.sleep(DAEMON_POLL_MILLIS);
 			}
 			return null;
-		}
-
-		/** 文件是否已写完：RIFF 头里的长度 + 8 等于实际大小 */
-		private boolean complete(Path wav) {
-			try {
-				long size = Files.size(wav);
-				if (size < 44) {
-					return false;
-				}
-				try (InputStream in = Files.newInputStream(wav)) {
-					byte[] header = new byte[12];
-					if (in.read(header) < 12) {
-						return false;
-					}
-					long riff = (header[4] & 0xffL) | ((header[5] & 0xffL) << 8)
-							| ((header[6] & 0xffL) << 16) | ((header[7] & 0xffL) << 24);
-					return size >= riff + 8;
-				}
-			} catch (IOException e) {
-				return false;
-			}
 		}
 
 		void close() {
@@ -622,6 +621,8 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			rates.add(defaultSpeed);
 		}
 		preferredRate = rates.get(0);
+		daemonRates.clear();
+		daemonRates.addAll(rates);
 		try {
 			warmupPool().execute(() -> rates.forEach(rate -> {
 				// 起进程加载模型后直接跑一次合成，把 ONNX 首帧推理的开销也放在启动阶段（结果丢弃，不写缓存）
@@ -778,6 +779,8 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		try {
 			ProcessBuilder builder = new ProcessBuilder(cmd);
 			builder.redirectErrorStream(false);
+			// stderr 不参与返回值：直接丢弃，避免长时间合成时管道写满把子进程卡住
+			builder.redirectError(ProcessBuilder.Redirect.DISCARD);
 			process = builder.start();
 			if (stdin != null) {
 				try (OutputStream out = process.getOutputStream()) {
@@ -827,6 +830,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			return null;
 		}
 		if (value.length() > maxChars) {
+			log.debug("语音文本超过 {} 字符，已截断：{}", maxChars, abbreviate(value));
 			value = value.substring(0, maxChars);
 		}
 		return value;
@@ -849,7 +853,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		try {
 			Path dir = resolveCacheDir();
 			Files.createDirectories(dir);
-			String key = engine + "|" + piperVoice + "|" + voice + "|" + rate + "|" + text;
+			String key = CACHE_VERSION + "|" + engine + "|" + piperVoice + "|" + voice + "|" + rate + "|" + text;
 			MessageDigest digest = MessageDigest.getInstance("SHA-1");
 			byte[] hash = digest.digest(key.getBytes(StandardCharsets.UTF_8));
 			StringBuilder name = new StringBuilder();

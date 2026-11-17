@@ -18,7 +18,7 @@
  *   - 注意: 文件上传类接口（api/upload.js、api/repo.js 的 importTemplate）不走本实例，
  *     而是使用原生 axios + multipart/form-data，因为拦截器只解包 JSON。
  *   - 可降级资源（如英语朗读音频）传 { meta: { silent: true } }：失败时不弹全局提示，
- *     由调用方自行回退（浏览器语音合成）。
+ *     由调用方自行提示或重试（英语朗读不回退浏览器语音合成）。
  *
  * 核心数据流:
  *   页面调用 API 函数 → request.get/post(...) → 后端返回 { code, data } → 拦截器解包

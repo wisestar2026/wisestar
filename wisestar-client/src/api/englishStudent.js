@@ -97,7 +97,7 @@ export function getEnglishReadAloud(params) {
   return request.get('/english/student/read-aloud', { params });
 }
 
-/** 英文短句朗读音频（服务端合成 mp3/wav，返回 Blob；失败静默，由调用方回退浏览器语音） */
+/** 英文短句朗读音频（服务端合成 mp3/wav，返回 Blob；失败静默，由调用方提示重试） */
 /** 单词复习队列：只取 next_review_time 已到期的词，按到期时间升序，单次上限 20 词 */
 export function getEnglishWordReview(params) {
   return request.get('/english/student/review/words', { params });
