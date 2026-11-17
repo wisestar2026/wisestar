@@ -21,6 +21,23 @@ import {
 // ---- 年级枚举（与订单管理/后台内容年级一致，顺序即展示顺序） ----
 export const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 
+const GRADE_ORDER = GRADES.reduce((map, name, index) => map.set(name, index), new Map());
+
+// 权限内的年级按「一年级 → 九年级」升序展示；未知年级保留原顺序排在末尾，重复项去掉
+export const sortGrades = (grades) => {
+  if (!Array.isArray(grades)) return [];
+  const seen = new Set();
+  const known = [];
+  const unknown = [];
+  grades.forEach((name) => {
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    (GRADE_ORDER.has(name) ? known : unknown).push(name);
+  });
+  known.sort((a, b) => GRADE_ORDER.get(a) - GRADE_ORDER.get(b));
+  return [...known, ...unknown];
+};
+
 // ---- 五级头衔 + 证书体系（学海积分自动晋升，无降级） ----
 export const TITLES = [
   { key: 'beginner', name: '初探者', need: 0,   cert: '学海初探·启航荣誉证书',   emoji: '🌱' },
@@ -454,10 +471,10 @@ const useStudentStore = create((set, get) => ({
     const real = get().studyContent?.subjects;
     if (real && real.length > 0) {
       const rs = real.find((s) => s.id === subjectKey);
-      if (rs && rs.grades?.length) return rs.grades;
+      if (rs && rs.grades?.length) return sortGrades(rs.grades);
       if (rs) return [];
     }
-    return GRADES;
+    return sortGrades(GRADES);
   },
   // 按订单权限过滤可见教材版本（优先真实学科版本）
   getVisibleVersions: (subjectKey) => {
