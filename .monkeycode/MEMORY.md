@@ -175,3 +175,5 @@ Agent 在任务执行过程中发现的条目应遵循以下格式：
   - `server/tts-setup.sh` 从 huggingface.co 下载音色模型在本环境 TLS 握手直接失败（`SSL_ERROR_SYSCALL`），改用 ModelScope 同路径镜像可行：`https://modelscope.cn/models/rhasspy/piper-voices/resolve/master/en/en_GB/jenny_dioco/medium/en_GB-jenny_dioco-medium.onnx(.json)`，下载后放到 `/opt/wisestar-tts/voices/` 同名即可
   - TTS 引擎可用性在启动时一次性探测（`EnglishTtsServiceImpl` 缓存 `ready`），装完 espeak-ng/piper 后必须重启后端才会生效；重启后日志应出现 `服务端语音合成已启用：piper=true`
   - 登录接口密码必须 RSA 加密（先 `GET /api/system` 取 publicKey），明文 POST 返回 `code=1024`；node 侧可用 `require('./node_modules/jsencrypt/bin/jsencrypt.js')` 验证接口
+  - 环境总内存 8GB（Firecracker + balloon：`free` 的 used 有 5~6GB 是气球，available 才是可用量）；2026-11-17 发现 11-13 遗留的 headless chromium（9222 端口、页面 /student/detect）约占 680MB，`kill` 后 available 从 1.2GB 回到 1.9GB，构建前先 `ps` 确认没有遗留浏览器进程
+  - `wisestar-client` 的 `npm run build` 峰值约 1GB，内存紧张时串行跑，避免与后端启动/快照恢复同时执行
