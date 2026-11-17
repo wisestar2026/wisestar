@@ -115,7 +115,7 @@ function RouteFallback() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '60vh',
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: 'var(--font-sans)',
         fontSize: 14,
         color: '#8a94a6',
       }}
@@ -141,7 +141,7 @@ export default function App() {
   return (
     // ConfigProvider: 为所有 Ant Design 组件设置中文语言
     // cssVar：把主题变量交给 CSS 变量，减少旧机器上 antd 运行时的样式哈希计算
-    <ConfigProvider locale={zhCN} theme={{ cssVar: true }}>
+    <ConfigProvider locale={zhCN} theme={{ cssVar: true, token: { fontFamily: 'var(--font-sans)' } }}>
       {/* BrowserRouter: React Router 的 HTML5 History 模式路由 */}
       <BrowserRouter>
         <Suspense fallback={<RouteFallback />}>

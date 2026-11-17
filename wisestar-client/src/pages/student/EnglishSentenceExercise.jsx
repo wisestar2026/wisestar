@@ -155,7 +155,8 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
   const [loading, setLoading] = useState(true);
   const [exercises, setExercises] = useState([]);
   const [sentences, setSentences] = useState([]);
-  const [mode, setMode] = useState(MODES.some((item) => item.key === initialMode) ? initialMode : 'mix');
+  // 题型由入口决定（句式通关页选择），页内不再提供题型快速跳转
+  const mode = MODES.some((item) => item.key === initialMode) ? initialMode : 'mix';
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState(null); // 'ok' | 'no'
   const [correctCount, setCorrectCount] = useState(0);
@@ -249,15 +250,6 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
   const taskList = mode === 'mix' ? exercises : generated;
   const current = taskList[index];
 
-  // 切换模式重新开始一轮（题量与来源都不一样）
-  const switchMode = useCallback((next) => {
-    setMode(next);
-    setIndex(0);
-    setCorrectCount(0);
-    setFeedback(null);
-    startAt.current = Date.now();
-    finishedRef.current = false;
-  }, []);
   const dictationGroups = useMemo(
     () => (current?.kind === 'dictation' ? buildDictationGroups(current.en) : []),
     [current],
@@ -371,18 +363,6 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
     return (
       <div className="eng-learn-wrap">
         <button type="button" className="eng-learn-back" onClick={onBack}>← 返回句式通关</button>
-        <div className="eng-mode-tabs">
-          {MODES.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              className={`eng-mode-tab${mode === item.key ? ' active' : ''}`}
-              onClick={() => switchMode(item.key)}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
         <Empty
           description={sentences.length === 0 ? '该单元暂无句子，请老师先配置单元句子' : '当前题型暂无题目，换个题型试试'}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -417,18 +397,6 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
   return (
     <div className="eng-learn-wrap">
       <button type="button" className="eng-learn-back" onClick={onBack}>← 返回句式通关</button>
-      <div className="eng-mode-tabs">
-        {MODES.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className={`eng-mode-tab${mode === item.key ? ' active' : ''}`}
-            onClick={() => switchMode(item.key)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
         <div className="eng-progress-text">{index + 1} / {taskList.length}</div>

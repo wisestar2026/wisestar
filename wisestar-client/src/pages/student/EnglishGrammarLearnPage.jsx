@@ -128,7 +128,7 @@ export default function EnglishGrammarLearnPage() {
   }
 
   return (
-    <div className="eng-page">
+    <div className="eng-page eng-page--aside">
       <div className="eng-master">
         <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
 

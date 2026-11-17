@@ -179,7 +179,7 @@ export default function EnglishCenterPage() {
   };
 
   return (
-    <div className="eng-page">
+    <div className="eng-page eng-page--aside">
       <div className="eng-hero">
         <div>
           <div className="eng-hero-eyebrow">海洋智学 · 英语学习航线</div>

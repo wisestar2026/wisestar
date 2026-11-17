@@ -35,7 +35,7 @@ export default function EnglishUnitAside({ units = [], activeUnit, onSelect, tit
             >
               <span className="eng-aside-name">{name}</span>
               <span className="eng-aside-progress">
-                <StarRating value={pct} size={12} className="eng-aside-stars" />
+                <StarRating value={pct} size={18} className="eng-aside-stars" />
                 <span className="eng-aside-pct">达成 {pct}%</span>
               </span>
               <span className="eng-aside-track" aria-hidden="true">

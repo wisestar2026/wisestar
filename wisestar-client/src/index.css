@@ -18,9 +18,33 @@
   box-sizing: border-box;
 }
 
-/* 全局字体栈（优先使用系统字体，无需额外下载） */
+/* 全局字体栈：拉丁字形走系统 UI 字体，中文按苹方/微软雅黑/思源黑体回退，
+   学员端、管理端共用同一套，避免同一个页面里英文和数字换字体 */
+:root {
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+html,
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* 表单控件默认不继承页面字体（按钮会退回浏览器默认字体），统一改为继承 */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
 }
 
 /* React 应用根容器，至少占满全屏 */

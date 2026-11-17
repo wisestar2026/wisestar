@@ -228,7 +228,7 @@ export default function EnglishSentenceLearnPage() {
   // ---------- hub：句式通关总览 ----------
   if (mode === 'hub') {
     return (
-      <div className="eng-page">
+      <div className="eng-page eng-page--aside">
         <div className="eng-master">
           <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
 
@@ -342,7 +342,7 @@ export default function EnglishSentenceLearnPage() {
   // ---------- exercise：多题型句子练习（读取管理端固化内容） ----------
   if (mode === 'exercise') {
     return (
-      <div className="eng-page">
+      <div className="eng-page eng-page--aside">
         <div className="eng-master">
           <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
           <div className="eng-detail">
