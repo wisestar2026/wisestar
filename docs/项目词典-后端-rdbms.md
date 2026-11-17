@@ -62,7 +62,7 @@
 - 类型: `class EnglishReadingSeeder implements ApplicationRunner`
 - 注解: @Component, @Order(2), @RequiredArgsConstructor, @Slf4j
 - **类说明**：
-  英语阅读理解内容初始化器。启动时读取 classpath:english/reading-articles.json（265 篇、53 个单元），按单元聚合并按 articleNo 排序，写入 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}`；内容包不存在时新建，已一致时跳过。
+  英语阅读理解内容初始化器。启动时读取 classpath:english/reading-articles.json（265 篇、53 个单元），按单元聚合并按 articleNo 排序，写入 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}`；内容包不存在时新建，已一致时跳过。内容口径（第 234 节）：中英逐句对应、结尾只收束故事不写主题点评、同一英文句不得跨篇复用、每篇 4 题的正确答案在文内只有一处依据。
 - 注入/字段: EnglishScenarioPackMapper packMapper, ObjectMapper objectMapper
 - 方法:
   - `public void run(ApplicationArguments args)`
@@ -1031,7 +1031,7 @@
   英语单元阅读理解服务实现：优先解析 `t_english_scenario_pack.reading_content` 的 `{"articles":[...]}` 多篇结构并按 articleNo 返回；兼容旧的单篇对象。缓存缺失时读取该单元最多 40 个单词与 30 个重点句子，调用系统 AI 生成一篇短文、中文参考译文与选择题并落库。`generateArticles` 为后台批量生成入口：逐篇调用 AI、每篇固定保留 4 题、整体覆盖写回 `reading_content`，并把已产出篇目的标题与开头（前 40 字符）拼进用户提示词，要求换主角/场景/叙述起点（含禁用相同的 `Good morning, everyone!` 开场）；若新篇标题归一后撞车、或开头前 60 字符相同/公共前缀 ≥30，视为雷同并重试最多 3 次。用户提示词明确要求「4 道选择题」而非 5 道。
 - **词数与题数硬校验**：AI 常忽略「约 N 词」写成 60~80 词的短篇，`generate` 改为最多 3 次重生成，按年级目标词数校验（七年级 120、八年级 145、九年级 180、小学 120；允许 70%~160%），并要求题目数 ≥4，多次不达标取最接近的一版（题数不足优先级最高），避免整单元失败。`buildUserPrompt` 的篇幅要求写成「必须落在 X~Y 词之间，少于 X 词视为不合格」；`max_tokens` 提到 8192 以容纳更长短文与译文。
   **质量闸门（第 225 节）**：题干/选项含中文、出现 All/None of the above、选项重复、选项不足 4 个的题直接丢弃；`answer` 文本与选项归一比对优先于 `answerIndex`（模型下标常错位）；`sanitizeWording` 把 narrator/gymnasium/auditorium 换成 writer/sports hall/school hall；短文正文混入中文则整篇重试；提示词新增「答案依据在原文只能出现一处」「正文/题干禁中文」。二次校对 `repairReading` 因单篇耗时翻倍（900s 超时）已移除，只保留 prompt + 硬闸门。出参前对每道题按「标题 + 题干 + 选项」种子稳定打乱选项并重算 `answerIndex`（AI 与内置素材都把正确项固定放在首位），缓存内容保持规范顺序、只在读取时乱序。
-  **超时与思考控制（第 226 节）**：读超时 180→600 秒；请求体在 `stream=false` 之后调用 `AiEndpointUtils.applyReasoningControl`，`glm-4.5/4.7` 关闭思考并放宽 `max_tokens`；`getReadings` 命中 `reading_content` 缓存时直接返回，人工写入的阅读与 AI 生成走同一读取口径。
+  **超时与思考控制（第 226 节）**：读超时 180→600 秒；请求体在 `stream=false` 之后调用 `AiEndpointUtils.applyReasoningControl`，`glm-4.5/4.7` 关闭思考并放宽 `max_tokens`；`getReadings` 命中 `reading_content` 缓存时直接返回，人工写入的阅读与 AI 生成走同一读取口径。第 234 节按「跨篇重复句 / 结论不唯一 / 人物与时间线矛盾」对 265 篇内置素材做过全量清洗，改种子后重启由 Seeder 覆盖缓存。
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishOptionShuffler.java`
 - 包: `cn.wisestar.server.impl`
