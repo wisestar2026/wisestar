@@ -92,6 +92,10 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	@Value("${english.tts.max-chars:240}")
 	private int maxChars;
 
+	/** Piper 句间停顿秒数：句号/问号/感叹号后多留一点，方便学员跟读换气 */
+	@Value("${english.tts.sentence-silence:0.3}")
+	private double sentenceSilence;
+
 	/** 缓存目录，空则用临时目录 */
 	@Value("${english.tts.cache-dir:}")
 	private String cacheDir;
@@ -138,7 +142,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	private static final long DAEMON_WAIT_MILLIS = 30_000L;
 
 	/** 缓存键版本：合成链路修复后递增，旧的有问题音频自动失效 */
-	private static final String CACHE_VERSION = "v2";
+	private static final String CACHE_VERSION = "v3";
 
 	/** 按语速缓存的常驻 Piper 进程 */
 	private final Map<Integer, PiperDaemon> daemons = new ConcurrentHashMap<>();
@@ -287,6 +291,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			cmd.add(dir.toString());
 			cmd.add("--length-scale");
 			cmd.add(String.format(Locale.ROOT, "%.2f", lengthScale(rate)));
+			addSentenceSilence(cmd);
 			byte[] input = (String.join("\n", batch) + "\n").getBytes(StandardCharsets.UTF_8);
 			if (run(cmd, input) == null) {
 				log.warn("批量语音预热失败，改为逐条合成");
@@ -462,6 +467,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 				cmd.add(workDir.toString());
 				cmd.add("--length-scale");
 				cmd.add(String.format(Locale.ROOT, "%.2f", lengthScale(rate)));
+				addSentenceSilence(cmd);
 				ProcessBuilder builder = new ProcessBuilder(cmd);
 				builder.redirectErrorStream(true);
 				process = builder.start();
@@ -708,6 +714,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			cmd.add(wav.toString());
 			cmd.add("--length-scale");
 			cmd.add(String.format(Locale.ROOT, "%.2f", lengthScale(rate)));
+			addSentenceSilence(cmd);
 			if (run(cmd, text.getBytes(StandardCharsets.UTF_8)) == null || !Files.isReadable(wav)) {
 				return null;
 			}
@@ -809,6 +816,13 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			log.debug("命令执行失败：{}，原因={}", cmd.get(0), e.getMessage());
 			return null;
 		}
+	}
+
+	/** 追加句间停顿参数（Piper 在每个句号/问号/感叹号后插入固定静音） */
+	private void addSentenceSilence(List<String> cmd) {
+		double seconds = Math.max(0d, Math.min(1.5d, sentenceSilence));
+		cmd.add("--sentence-silence");
+		cmd.add(String.format(Locale.ROOT, "%.2f", seconds));
 	}
 
 	/**

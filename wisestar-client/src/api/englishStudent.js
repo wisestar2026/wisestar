@@ -128,9 +128,12 @@ export function getEnglishWordReviewSummary(params) {
   return request.get('/english/student/review/word-summary', { params });
 }
 
+/** 音频 URL 版本号：响应带 7 天浏览器缓存，合成链路变化时递增，旧 URL 自然失效 */
+export const TTS_AUDIO_VERSION = 3;
+
 export function getEnglishTts(text, speed) {
   return request.get('/english/student/tts', {
-    params: { text, speed },
+    params: { text, speed, v: TTS_AUDIO_VERSION },
     responseType: 'blob',
     meta: { silent: true },
   });

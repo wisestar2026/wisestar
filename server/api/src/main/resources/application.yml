@@ -96,6 +96,7 @@ english:
     voice: en-gb  # espeak-ng 回退音色，与 Piper 音色保持同一口音
     speed: 109  # espeak 词/分口径；109 ≈ 常速的 0.75 倍（小学课件慢速朗读），调大更快
     max-chars: 600  # 必须覆盖最长跟读句（当前 516 字符），否则「听原音」会读半句
+    sentence-silence: 0.3  # 句号/问号/感叹号后的停顿秒数，给跟读留换气时间
     cache-dir: ${ENGLISH_TTS_CACHE_DIR:}
     timeout-seconds: 30
     warmup-threads: 2
