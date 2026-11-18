@@ -199,6 +199,24 @@ export function normalizeAnswer(value) {
  * @param {string[]} tokens 原始词块
  * @returns {string[]} 乱序词块
  */
+/**
+ * 把英语单元全名匹配到检测单元（检测单元名常只有「Unit 1」，英语单元名带标题）。
+ * 例如用「Unit 1 What's on your plate?」匹配「Unit 1」，但不会把「Unit 10」当成「Unit 1」。
+ */
+export function matchDetectUnit(units, unitName) {
+  const target = String(unitName || '').trim().toLowerCase();
+  if (!target) return undefined;
+  const list = (units || []).filter((item) => item && item.name);
+  const exact = list.find((item) => item.name.trim().toLowerCase() === target);
+  if (exact) return exact;
+  return list.find((item) => {
+    const name = item.name.trim().toLowerCase();
+    if (!target.startsWith(name)) return false;
+    const rest = target.slice(name.length);
+    return rest === '' || /^[\s:：\-—.、]/.test(rest);
+  });
+}
+
 export function shuffle(tokens) {
   const source = [...tokens];
   if (source.length <= 1) {

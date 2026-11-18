@@ -28,6 +28,7 @@ import {
 import QuestionCard from '../../components/practice/QuestionCard';
 import EnglishPracticeResult from '../../components/student/EnglishPracticeResult';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
+import { matchDetectUnit } from '../../utils/english';
 import { formatCorrectAnswers } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
 import './EnglishCenterPage.css';
@@ -62,7 +63,7 @@ export default function EnglishUnitPracticePage() {
     setStep('loading');
     try {
       const unitsRes = await getDetectUnits({ subjectId, grade, term });
-      const target = (unitsRes?.data || []).find((u) => u.name === unit);
+      const target = matchDetectUnit(unitsRes?.data, unit);
       if (!target) {
         setStep('empty');
         return;

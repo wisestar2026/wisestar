@@ -21,7 +21,7 @@ import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishGrammars, getEnglishUnits } from '../../api/englishStudent';
 import { getDetectUnits } from '../../api/detect';
-import { speakEnglish } from '../../utils/english';
+import { matchDetectUnit, speakEnglish } from '../../utils/english';
 import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 
@@ -117,7 +117,7 @@ export default function EnglishGrammarLearnPage() {
     getDetectUnits({ subjectId: activeSubject || '1003', grade, term })
       .then((res) => {
         if (cancelled) return;
-        const target = (res?.data || []).find((u) => u.name === unit);
+        const target = matchDetectUnit(res?.data, unit);
         setQuestionCount(target?.questionCount || 0);
       })
       .catch(() => { if (!cancelled) setQuestionCount(0); });
