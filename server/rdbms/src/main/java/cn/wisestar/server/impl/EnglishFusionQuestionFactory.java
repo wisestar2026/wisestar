@@ -129,7 +129,7 @@ public class EnglishFusionQuestionFactory {
 		Set<String> keys = new LinkedHashSet<>();
 		result.addAll(wordCloze(version, grade, term, unit, sentences, words, keys));
 		result.addAll(patternQuestions(version, grade, term, unit, sentences, words, keys));
-		result.addAll(grammarQuestions(version, grade, term, unit, grammars, keys));
+		result.addAll(grammarQuestions(version, grade, term, unit, grammars, sentences, keys));
 		return result;
 	}
 
@@ -492,10 +492,18 @@ public class EnglishFusionQuestionFactory {
 	// ============================ 语法：从单元语法例句派生 ============================
 
 	private List<DerivedQuestion> grammarQuestions(String version, String grade, String term, String unit,
-			List<EnglishGrammar> grammars, Set<String> keys) {
+			List<EnglishGrammar> grammars, List<EnglishSentence> sentences, Set<String> keys) {
 		List<DerivedQuestion> result = new ArrayList<>();
 		if (grammars.isEmpty()) {
 			return result;
+		}
+		Set<String> sentenceKeys = new HashSet<>();
+		Set<String> buildAnswers = new HashSet<>();
+		for (EnglishSentence sentence : sentences) {
+			String normalized = normalizeSentenceKey(sentence.getEn());
+			if (StringUtils.hasText(normalized)) {
+				sentenceKeys.add(normalized);
+			}
 		}
 		for (EnglishGrammar grammar : grammars) {
 			List<String> examples = parseExamples(grammar.getExamples());
@@ -514,6 +522,204 @@ public class EnglishFusionQuestionFactory {
 					}
 				}
 			}
+			// 学习页例句同时作为「连词成句」；优先选不与句式模块原句重复的句子，
+			// 若该语法点全部例句都来自课本原句，则回退到例句本身，保证语法模块两种题型混排。
+			List<String> samples = parseExamples(grammar.getSamples());
+			List<String> buildSources = samples.isEmpty() ? examples : samples;
+			int buildIndex = 0;
+			int buildsBefore = result.size();
+			for (String source : buildSources) {
+				for (String sentence : splitSentences(source)) {
+					if (addGrammarBuild(result, keys, buildAnswers, version, grade, term, unit, grammar,
+							sentence, buildIndex, false, sentenceKeys)) {
+						buildIndex++;
+					}
+				}
+			}
+			if (result.size() == buildsBefore) {
+				for (String source : buildSources) {
+					for (String sentence : splitSentences(source)) {
+						if (addGrammarBuild(result, keys, buildAnswers, version, grade, term, unit, grammar,
+								sentence, buildIndex, true, sentenceKeys)) {
+							buildIndex++;
+							break;
+						}
+					}
+					if (result.size() > buildsBefore) {
+						break;
+					}
+				}
+			}
+			// 后台/内容包配置的练习题优先入池，题型支持选择与连词成句。
+			List<JsonNode> exercises = parseExercises(grammar.getExercises());
+			int exerciseIndex = 0;
+			for (JsonNode exercise : exercises) {
+				DerivedQuestion question = grammarExercise(version, grade, term, unit, grammar, exercise,
+						exerciseIndex++, sentenceKeys, buildAnswers);
+				if (question != null && keys.add(question.key())) {
+					result.add(question);
+				}
+			}
+		}
+		return result;
+	}
+
+	/** 追加一道语法连词成句；allowSentenceDuplicate=true 仅在例句全部来自课本原句时兜底。 */
+	private boolean addGrammarBuild(List<DerivedQuestion> result, Set<String> keys, Set<String> buildAnswers,
+			String version, String grade, String term, String unit, EnglishGrammar grammar, String sentence,
+			int index, boolean allowSentenceDuplicate, Set<String> sentenceKeys) {
+		String normalizedSentence = normalizeSentenceKey(sentence);
+		if (sentence.length() < 4 || (!allowSentenceDuplicate && sentenceKeys.contains(normalizedSentence))
+				|| buildAnswers.contains(normalizedSentence)) {
+			return false;
+		}
+		String key = contentKey("grammar-build", version, grade, term, unit, grammar.getId(), String.valueOf(index));
+		List<String> bank = sentenceWords(sentence);
+		if (bank.size() < 2 || !keys.add(key)) {
+			return false;
+		}
+		buildAnswers.add(normalizedSentence);
+		Collections.shuffle(bank, new Random(key.hashCode()));
+		String title = "连词成句，用所给单词连成句子\n（" + String.join(" / ", bank) + "）";
+		result.add(new DerivedQuestion(key, "语法", unit + "·语法", "连词成句",
+				"语法", "产出", difficulty(sentence, grade, EnglishDifficultyUtil.Demand.FULL, bank, sentence),
+				title, SurveySchema.QuestionType.FillBlank, sentence, null, null,
+				"语法点：" + grammar.getTitle() + "。注意词序、大小写与句末标点。"));
+		return true;
+	}
+
+	/** 把后台配置的语法练习转成题目：有 options 视为选择，否则视为连词成句。 */
+	private DerivedQuestion grammarExercise(String version, String grade, String term, String unit,
+			EnglishGrammar grammar, JsonNode exercise, int index, Set<String> sentenceKeys,
+			Set<String> buildAnswers) {
+		if (exercise == null || !exercise.isObject()) {
+			return null;
+		}
+		String stem = text(exercise, "q", "stem", "question");
+		String explanation = text(exercise, "explanation", "analysis", "note");
+		String answer = text(exercise, "answer", "correct", "key");
+		String type = text(exercise, "type", "kind");
+		List<String> options = new ArrayList<>();
+		JsonNode optionsNode = exercise.has("options") ? exercise.get("options") : exercise.get("choices");
+		if (optionsNode != null && optionsNode.isArray()) {
+			for (JsonNode option : optionsNode) {
+				if (option.isTextual() && StringUtils.hasText(option.asText())) {
+					options.add(option.asText().trim());
+				}
+			}
+		}
+		if (options.isEmpty() && !"build".equalsIgnoreCase(type)) {
+			return null;
+		}
+		if (options.isEmpty()) {
+			String sentence = StringUtils.hasText(answer) ? answer : stem;
+			String normalized = normalizeSentenceKey(sentence);
+			if (!StringUtils.hasText(sentence) || sentenceKeys.contains(normalized)
+					|| !buildAnswers.add(normalized)) {
+				return null;
+			}
+			List<String> bank = sentenceWords(sentence);
+			if (bank.size() < 2) {
+				return null;
+			}
+			String key = contentKey("grammar-custom-build", version, grade, term, unit,
+					grammar.getId(), String.valueOf(index));
+			Collections.shuffle(bank, new Random(key.hashCode()));
+			String cue = StringUtils.hasText(stem) ? stem.trim() : "用所给单词连成句子";
+			String title = "连词成句，用所给单词连成句子\n" + cue + "（" + String.join(" / ", bank) + "）";
+			return new DerivedQuestion(key, "语法", unit + "·语法", "连词成句", "语法", "产出",
+					difficulty(sentence, grade, EnglishDifficultyUtil.Demand.FULL, bank, sentence),
+					title, SurveySchema.QuestionType.FillBlank, sentence, null, null,
+					StringUtils.hasText(explanation) ? explanation : "语法点：" + grammar.getTitle() + "。");
+		}
+		// 答案可能给字母 A/B/C/D，统一还原为选项文本
+		if (StringUtils.hasText(answer) && answer.trim().length() == 1) {
+			int optionIndex = Character.toUpperCase(answer.trim().charAt(0)) - 'A';
+			if (optionIndex >= 0 && optionIndex < options.size()) {
+				answer = options.get(optionIndex);
+			}
+		}
+		if (!StringUtils.hasText(answer)) {
+			return null;
+		}
+		if (!options.contains(answer)) {
+			options.add(answer);
+		}
+		List<String> unique = new ArrayList<>();
+		for (String option : options) {
+			if (!unique.contains(option)) {
+				unique.add(option);
+			}
+		}
+		if (unique.size() < 2) {
+			return null;
+		}
+		String key = contentKey("grammar-custom-choice", version, grade, term, unit,
+				grammar.getId(), String.valueOf(index));
+		Collections.shuffle(unique, new Random(key.hashCode()));
+		String questionTitle = "选正确形式，从选项中选出最合适的一项。\n" + (StringUtils.hasText(stem) ? stem.trim() : answer);
+		return new DerivedQuestion(key, "语法", unit + "·语法", "语法选择", "语法", "应用",
+				difficulty(stem, grade, EnglishDifficultyUtil.Demand.APPLICATION, unique, answer),
+				questionTitle, SurveySchema.QuestionType.Radio, answer, null, unique,
+				StringUtils.hasText(explanation) ? explanation : "语法点：" + grammar.getTitle() + "。");
+	}
+
+	/** 读取对象字段中的第一个非空文本。 */
+	private String text(JsonNode node, String... fields) {
+		for (String field : fields) {
+			JsonNode value = node.get(field);
+			if (value != null && value.isValueNode() && StringUtils.hasText(value.asText())) {
+				return value.asText().trim();
+			}
+		}
+		return "";
+	}
+
+	/** 连词成句词库：按空格切词并保留词尾标点。 */
+	private List<String> sentenceWords(String sentence) {
+		List<String> result = new ArrayList<>();
+		if (!StringUtils.hasText(sentence)) {
+			return result;
+		}
+		for (String word : sentence.trim().split("\\s+")) {
+			if (StringUtils.hasText(word)) {
+				result.add(word);
+			}
+		}
+		return result;
+	}
+
+	/** 句子去重键：忽略大小写、标点与多余空格。 */
+	private String normalizeSentenceKey(String sentence) {
+		return sentence == null ? ""
+				: sentence.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9\\s]", "").replaceAll("\\s+", " ").trim();
+	}
+
+	/** 解析语法练习 JSON，兼容 exercises 为数组或包在对象中的情况。 */
+	private List<JsonNode> parseExercises(String json) {
+		List<JsonNode> result = new ArrayList<>();
+		if (!StringUtils.hasText(json)) {
+			return result;
+		}
+		try {
+			JsonNode node = objectMapper.readTree(json);
+			if (node.isTextual()) {
+				node = objectMapper.readTree(node.asText());
+			}
+			JsonNode array = node;
+			if (node.isObject()) {
+				array = node.has("exercises") ? node.get("exercises") : node.get("items");
+			}
+			if (array != null && array.isArray()) {
+				for (JsonNode item : array) {
+					if (item.isObject()) {
+						result.add(item);
+					}
+				}
+			}
+		}
+		catch (Exception e) {
+			log.debug("english fusion: parse grammar exercises failed", e);
 		}
 		return result;
 	}
@@ -594,7 +800,7 @@ public class EnglishFusionQuestionFactory {
 			String key = keyBase + "-" + variant;
 			Collections.shuffle(options, new Random(key.hashCode()));
 			// 题干隐藏语法点，避免直接提示答案；语法点只在交卷后的答案解析中展示
-			String questionTitle = "选词填空，选出合适的单词填入空中。\n" + blanked;
+			String questionTitle = "选正确形式，从选项中选出最合适的单词或语法形态。\n" + blanked;
 			result.add(new DerivedQuestion(key, "语法", unit + "·语法", "语法变形",
 					"语法", "应用", difficulty(blanked, grade, EnglishDifficultyUtil.Demand.APPLICATION, options, token), questionTitle, SurveySchema.QuestionType.Radio,
 					token, null, options, "语法点：" + title + "。结合该语法点判断正确形式。"));

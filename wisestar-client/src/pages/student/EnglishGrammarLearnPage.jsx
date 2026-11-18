@@ -3,7 +3,7 @@
  *
  * 功能:
  *   1. 左侧单元导航 + 中间内容容器（与学习中心 / 单词通关同构、同宽）
- *   2. 展示单元重点语法：规则标题 + 讲解 + 例句（可朗读）
+ *   2. 展示单元重点语法：讲解 + 结构 + 课本原文 + 例句 + 例题解析（可朗读）
  *   3. 语法为只读知识呈现，不参与熟练度与复习队列
  *   4. 本单元练习只提供跳转入口，实际作答在独立界面 EnglishGrammarPracticePage
  *
@@ -47,6 +47,21 @@ function exampleText(item) {
 function exampleZh(item) {
   if (item == null || typeof item === 'string') return '';
   return item.zh || '';
+}
+
+/** 例题正确答案文本：答案可能是字符串、选项字母或数组 */
+function answerText(answer) {
+  if (answer == null) return '';
+  if (Array.isArray(answer)) return answer.join(' / ');
+  return String(answer);
+}
+
+/** 讲解段落按换行拆分为多段，避免长文本挤成一块 */
+function splitParagraphs(text) {
+  return String(text || '')
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 }
 
 export default function EnglishGrammarLearnPage() {
@@ -154,15 +169,64 @@ export default function EnglishGrammarLearnPage() {
 
             <div className="eng-grammar-list" style={{ marginTop: 18 }}>
               {list.map((item, idx) => {
-                const examples = parseList(item.examples);
-                const showContent = item.content && item.content.trim() !== (item.title || '').trim();
+                const samples = parseList(item.samples);
+                const examples = samples.length > 0 ? samples : parseList(item.examples);
+                const textbook = parseList(item.textbook);
+                const exercises = parseList(item.exercises).slice(0, 3);
+                const contentParagraphs = splitParagraphs(item.content)
+                  .filter((line) => line !== (item.title || '').trim());
                 return (
                   <div className="eng-grammar-card" key={item.id || `${unit}-${idx}`}>
                     <div className="eng-grammar-head">
                       <span className="eng-grammar-index">{idx + 1}</span>
                       <span className="eng-grammar-title">{item.title}</span>
                     </div>
-                    {showContent && <div className="eng-grammar-content">{item.content}</div>}
+
+                    {contentParagraphs.length > 0 && (
+                      <div className="eng-grammar-content">
+                        {contentParagraphs.map((line, i) => (
+                          <p key={`${item.id || idx}-p-${i}`}>{line}</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {item.structure && (
+                      <div className="eng-grammar-block eng-grammar-structure">
+                        <div className="eng-grammar-examples-label">结构</div>
+                        <div className="eng-grammar-structure-text">{item.structure}</div>
+                      </div>
+                    )}
+
+                    {textbook.length > 0 && (
+                      <div className="eng-grammar-block">
+                        <div className="eng-grammar-examples-label">课本原文</div>
+                        <ul className="eng-grammar-textbook">
+                          {textbook.map((line, i) => {
+                            const en = exampleText(line);
+                            const zh = exampleZh(line);
+                            const source = typeof line === 'object' && line ? (line.source || '') : '';
+                            return (
+                              <li key={`${item.id || idx}-tb-${i}`}>
+                                <span className="eng-grammar-en">{en}</span>
+                                {zh && <span className="eng-grammar-zh">{zh}</span>}
+                                {source && <span className="eng-grammar-source">{source}</span>}
+                                {en && (
+                                  <button
+                                    type="button"
+                                    className="eng-grammar-sound"
+                                    title="朗读课本原文"
+                                    onClick={() => speakEnglish(en)}
+                                  >
+                                    朗读
+                                  </button>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    )}
+
                     {examples.length > 0 && (
                       <div className="eng-grammar-examples">
                         <div className="eng-grammar-examples-label">例句</div>
@@ -170,10 +234,12 @@ export default function EnglishGrammarLearnPage() {
                           {examples.map((ex, i) => {
                             const en = exampleText(ex);
                             const zh = exampleZh(ex);
+                            const note = typeof ex === 'object' && ex ? (ex.note || ex.explanation || '') : '';
                             return (
                               <li key={`${item.id || idx}-ex-${i}`}>
                                 <span className="eng-grammar-en">{en}</span>
                                 {zh && <span className="eng-grammar-zh">{zh}</span>}
+                                {note && <span className="eng-grammar-note">{note}</span>}
                                 {en && (
                                   <button
                                     type="button"
@@ -188,6 +254,40 @@ export default function EnglishGrammarLearnPage() {
                             );
                           })}
                         </ul>
+                      </div>
+                    )}
+
+                    {exercises.length > 0 && (
+                      <div className="eng-grammar-block eng-grammar-exercises">
+                        <div className="eng-grammar-examples-label">例题</div>
+                        <ol>
+                          {exercises.map((ex, i) => {
+                            const options = Array.isArray(ex?.options) ? ex.options : [];
+                            return (
+                              <li key={`${item.id || idx}-qs-${i}`}>
+                                <div className="eng-grammar-q">{ex?.q || ex?.stem || ''}</div>
+                                {options.length > 0 && (
+                                  <div className="eng-grammar-options">
+                                    {options.map((option, oi) => (
+                                      <span
+                                        key={`${item.id || idx}-opt-${i}-${oi}`}
+                                        className={`eng-grammar-option${
+                                          answerText(ex?.answer) === String(option) ? ' is-answer' : ''
+                                        }`}
+                                      >
+                                        {option}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                <div className="eng-grammar-answer">
+                                  答案：{answerText(ex?.answer) || '见解析'}
+                                  {ex?.explanation && <span>　解析：{ex.explanation}</span>}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ol>
                       </div>
                     )}
                   </div>

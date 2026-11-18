@@ -9,6 +9,8 @@ import cn.wisestar.server.service.EnglishGrammarService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 
 	private final EnglishGrammarMapper englishGrammarMapper;
+
+	private final ObjectMapper objectMapper;
 
 	@Override
 	public PaginationResponse<EnglishGrammarView> list(EnglishGrammarQuery query) {
@@ -86,6 +90,9 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		}
 		exist.setTitle(title);
 		exist.setContent(view.getContent());
+		exist.setStructure(view.getStructure());
+		exist.setTextbook(view.getTextbook());
+		exist.setSamples(view.getSamples());
 		exist.setExamples(view.getExamples());
 		exist.setExercises(view.getExercises());
 		exist.setVersion(view.getVersion());
@@ -135,6 +142,9 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		entity.setId(view.getId());
 		entity.setTitle(view.getTitle() == null ? null : view.getTitle().trim());
 		entity.setContent(view.getContent());
+		entity.setStructure(view.getStructure());
+		entity.setTextbook(view.getTextbook());
+		entity.setSamples(view.getSamples());
 		entity.setExamples(view.getExamples());
 		entity.setExercises(view.getExercises());
 		entity.setVersion(view.getVersion());
@@ -157,8 +167,11 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		view.setId(entity.getId());
 		view.setTitle(entity.getTitle());
 		view.setContent(entity.getContent());
+		view.setStructure(entity.getStructure());
+		view.setTextbook(entity.getTextbook());
+		view.setSamples(entity.getSamples());
 		view.setExamples(entity.getExamples());
-		view.setExercises(entity.getExercises());
+		view.setExercises(unwrapJsonText(entity.getExercises()));
 		view.setVersion(entity.getVersion());
 		view.setGrade(entity.getGrade());
 		view.setTerm(entity.getTerm());
@@ -167,6 +180,24 @@ public class EnglishGrammarServiceImpl implements EnglishGrammarService {
 		view.setSort(entity.getSort());
 		view.setUpdateAt(entity.getUpdateAt());
 		return view;
+	}
+
+	/** H2 的 json 列按字符串写入时会被二次编码，读取时解包为原始 JSON 文本。 */
+	private String unwrapJsonText(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return raw;
+		}
+		String value = raw.trim();
+		if (!value.startsWith("\"") || !value.endsWith("\"")) {
+			return raw;
+		}
+		try {
+			JsonNode node = objectMapper.readTree(value);
+			return node.isTextual() ? node.asText() : raw;
+		}
+		catch (Exception e) {
+			return raw;
+		}
 	}
 
 	/**

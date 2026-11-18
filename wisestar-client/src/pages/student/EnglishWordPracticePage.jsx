@@ -243,9 +243,16 @@ export default function EnglishWordPracticePage() {
     return <div className="eng-learn-wrap eng-learn-wide"><Spin /></div>;
   }
 
+  // 返回所属大板块：普通练习回单词通关，智能复习回复习页；没选单元时才回学习中心
+  const backTarget = reviewMode
+    ? '/student/english/review'
+    : unit
+      ? `/student/english/word?unit=${encodeURIComponent(unit)}`
+      : '/student/english';
+  const backText = reviewMode ? '返回智能复习' : unit ? '返回单词通关' : '返回英语学习中心';
   const backButton = (
-    <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-      返回英语学习中心
+    <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate(backTarget)}>
+      {backText}
     </button>
   );
 
@@ -372,6 +379,9 @@ export default function EnglishWordPracticePage() {
 
   return (
     <div className="eng-learn-wrap eng-learn-wide">
+      <button type="button" className="eng-learn-back" onClick={() => navigate(backTarget)}>
+        ← {backText}
+      </button>
       <div className="eng-progress-row">
         <div className="eng-progress-track"><span style={{ width: `${progress}%` }} /></div>
         <div className="eng-progress-text">{index + 1} / {questions.length}</div>

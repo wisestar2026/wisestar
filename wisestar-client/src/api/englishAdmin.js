@@ -13,6 +13,7 @@
  *   GET  /english/grammar/list   → 语法分页列表（version/grade/term/unit/section/title）
  *   POST /english/grammar/save   → 新增/更新语法
  *   POST /english/grammar/delete → 删除语法
+ *   POST /english/grammar/ai-enrich → AI 批量补齐单元语法点（仅预览）
  *
  * 调用方:
  *   - pages/english/SectionManagePage.jsx
@@ -61,6 +62,11 @@ export function getGrammars(params) {
 /** 新增/更新语法 */
 export function saveGrammar(data) {
   return request.post('/english/grammar/save', data);
+}
+
+/** AI 批量补齐单元语法点（仅预览，确认后逐条 saveGrammar 入库；生成慢，单独放大超时） */
+export function enrichGrammar(params) {
+  return request.post('/english/grammar/ai-enrich', null, { params, timeout: 300000 });
 }
 
 /** 删除语法 */

@@ -52,6 +52,7 @@ import cn.wisestar.server.service.GrowthArchiveService;
 import cn.wisestar.server.service.RewardService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1171,6 +1172,24 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		return view;
 	}
 
+	/** H2 的 json 列按字符串写入时会被二次编码，读取时解包为原始 JSON 文本。 */
+	private String unwrapGrammarJson(String raw) {
+		if (raw == null || raw.isBlank()) {
+			return raw;
+		}
+		String value = raw.trim();
+		if (!value.startsWith("\"") || !value.endsWith("\"")) {
+			return raw;
+		}
+		try {
+			JsonNode node = objectMapper.readTree(value);
+			return node.isTextual() ? node.asText() : raw;
+		}
+		catch (Exception e) {
+			return raw;
+		}
+	}
+
 	/**
 	 * 将英语语法点实体转换为视图对象。
 	 *
@@ -1182,8 +1201,11 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 		view.setId(entity.getId());
 		view.setTitle(entity.getTitle());
 		view.setContent(entity.getContent());
+		view.setStructure(entity.getStructure());
+		view.setTextbook(entity.getTextbook());
+		view.setSamples(entity.getSamples());
 		view.setExamples(entity.getExamples());
-		view.setExercises(entity.getExercises());
+		view.setExercises(unwrapGrammarJson(entity.getExercises()));
 		view.setVersion(entity.getVersion());
 		view.setGrade(entity.getGrade());
 		view.setTerm(entity.getTerm());

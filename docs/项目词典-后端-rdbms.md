@@ -992,7 +992,7 @@
 - 注解: @Slf4j, @Service
 - **类说明**：
   AI 单元内容包服务实现。
-  功能：调用系统 AI 设置（SystemInfo.AiSetting：SiliconFlow 平台，与 AI 问答同一套 enabled/token/models 配置）为指定 版本+年级+单元 生成整套英语学习内容；生成结果先 以内容包形式预览/保存，确认后再同步到正式词库（t_english_word）与语法库 （t_english_grammar），供后续学生端单词记忆、语法学习闭环使用。
+  功能：调用系统 AI 设置（SystemInfo.AiSetting：SiliconFlow 平台，与 AI 问答同一套 enabled/token/models 配置）为指定 版本+年级+单元 生成整套英语学习内容；生成结果先 以内容包形式预览/保存，确认后再同步到正式词库（t_english_word）与语法库 （t_english_grammar），供后续学生端单词记忆、语法学习闭环使用。2026-11 起语法节点额外生成 `structure`/`textbook`/`samples`/`exercises`（例题 `type=choice|build`，带答案与解析），`generateGrammarPreview` 在 AI 内容包之外单独按单元补齐现有语法点，供管理端预览后入库。
 - 方法:
   - `public EnglishAiPackServiceImpl(EnglishAiPackMapper packMapper, EnglishWordMapper wordMapper, EnglishGrammarMapper grammarMapper, SystemService systemService)`
   - `public PaginationResponse<EnglishAiPackView> listPacks(EnglishAiPackQuery query)`
@@ -1275,6 +1275,8 @@
 - **类说明**：
   英语单元融合题派生器。不调用 AI、不依赖管理端重新生成内容包，直接读取本单元 `t_english_sentence` / `t_english_word` / `t_english_grammar`：单词模块从原句挖核心词并生成四词词库的选词填空（排除缩写与功能词），题干首行为「选词填空：选择合适的单词补全句子。（词1 / 词2 / 词3 / 词4）」，次行为加粗的英文句子与中文提示；句式模块生成原句短语挖空、换人称改写与情景选原句；语法模块从语法点 `examples` 挖 be/do/情态/冠词/介词/代词/动词形式生成单选。词汇/语用类 `FillBlank`、语法变形按产出类评分；难度统一委托 `EnglishDifficultyUtil`，按年级长度阈值、句子复杂度、答案形式与选项干扰综合计算，不再只按词数切档。题目标识 `contentKey=fusion:{type}:{version}:{grade}:{term}:{unit}:{sourceId}:{hash}`，只依赖稳定 ID 与源内容，保证组卷与交卷可重复对齐。
 - 方法:
+  - `public List<DerivedQuestion> grammarQuestions(...)`
+    除从 `examples` 派生语法变形单/多选外，还从 `samples`（回退 `examples`）派生「连词成句」、从 `exercises` 派生自定义 `choice`/`build` 题；连词成句与句式模块原句重复时跳过，全部重复才兜底 1 题。
   - `public List<DerivedQuestion> build(String version, String grade, String term, String unit)`
     返回该单元可派生的单词/句式/语法题；无句子数据或源内容不足时返回空列表。
 
@@ -1301,7 +1303,7 @@
 - 类型: `class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语单元练习组卷与学习诊断实现（内容包阶梯卷 + 融合派生题）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，并追加 `EnglishFusionQuestionFactory` 从原句/单词/语法例句派生的题目；模块统一为「单词 / 句式 / 语法」，请求可传 `module` 只组单模块，不传时按「单词→句式→语法」固定路径平均分题。题内连词成句题干固定两行（首行「连词成句，用所给单词连成句子」，次行中文提示加词库「 、 」分隔；句式通关页的交互式拼句不在此路径）；语法变形题干为「选词填空，选出合适的单词填入空中。」加挖空句；句子类 `FillBlank` 按答案单词数下发 `attribute.blankCount`，情景多词答案拆成逐词空位，标题中的单个 `_____` 按词数展开；按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位；同一知识点题量超过 3 道时继续按 D1→D3 顺序补足，避免单一知识点只出 3 题；题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先。交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数、加权得分、知识模块（`moduleStats`）与语言技能/认知层级/题型/难度聚合的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。句子包 `choice` 题入卷前按内容种子打乱选项并重新定位正确项，情景题候选项按「标题 + 轮次 + 候选内容」稳定旋转，保证正确答案不固定落在 A 项。句子里装载入组卷前同样按 `EnglishVocabScope` 过滤：句子包答案含本单元及之前未学过的词时跳过该题并记日志，避免单元卷/诊断卷出现超纲填空；诊断卷（`diagnosePaper`）跨当前册别全部单元按 D1/D2/D3 各取 8 题（共 24 题）、同档内优先覆盖不同单元；单词·情景题按「情景标题 + 本轮之前全部台词（中英对照）」生成题干，历史空位显示为「……」、作答行前缀「【作答】」并只保留本轮 `_____`（答案几个单词就几个空），单空按 `FillBlank`、多空按 `MultipleBlank`，并经 `attribute.blankCount` 下发空位数；诊断交卷（`diagnoseSubmit`）复用同一判分与聚合逻辑，额外落 `t_detect_record`（`detect_type=DIAG`，不计成长基线）并按最近 8 次重算 `trend` 学习趋势。
+  英语单元练习组卷与学习诊断实现（内容包阶梯卷 + 融合派生题）。以 `t_english_content_tag` 为索引回读句子包/情景包真实考题，并追加 `EnglishFusionQuestionFactory` 从原句/单词/语法例句派生的题目；模块统一为「单词 / 句式 / 语法」，请求可传 `module` 只组单模块，不传时三模块均分名额：默认 36 题（`DEFAULT_COUNT`，上限 40），每个模块内 `takeModule` 按知识点权重分配（薄弱知识点 priority==0 权重 2、其余 1），再按知识点 D1→D3 阶梯取题，空出的名额由 carry 逻辑补到其他模块。题内连词成句题干固定两行（首行「连词成句，用所给单词连成句子」，次行中文提示加词库「 、 」分隔；句式通关页的交互式拼句不在此路径）；语法变形题干为「选词填空，选出合适的单词填入空中。」加挖空句；句子类 `FillBlank` 按答案单词数下发 `attribute.blankCount`，情景多词答案拆成逐词空位，标题中的单个 `_____` 按词数展开；按知识点分组、组内 D1→D3 递进取题，缺档取最近且未用过的难度补位；同一知识点题量超过 3 道时继续按 D1→D3 顺序补足，避免单一知识点只出 3 题；题量不足继续取下一知识点，并按薄弱知识点/薄弱模块优先。交卷按内容键复核答案，并由 `EnglishBehaviorJudge` 按作答行为判定「掌握/不稳定/漏洞」（掌握 100 / 不稳定 60 / 漏洞 0，与薄弱阈值 55 对齐），生成带三态计数、加权得分、知识模块（`moduleStats`）与语言技能/认知层级/题型/难度聚合的 `DetectReportView`，再按「单元·模块」调用 `EnglishPracticeEvaluator.recordScores` 入账；打标文件的历史脏标题（`情景标题N：` 前缀、`情景标题(X)` 包裹）在读取时收敛为纯标题。句子包 `choice` 题入卷前按内容种子打乱选项并重新定位正确项，情景题候选项按「标题 + 轮次 + 候选内容」稳定旋转，保证正确答案不固定落在 A 项。句子里装载入组卷前同样按 `EnglishVocabScope` 过滤：句子包答案含本单元及之前未学过的词时跳过该题并记日志，避免单元卷/诊断卷出现超纲填空；诊断卷（`diagnosePaper`）跨当前册别全部单元按 D1/D2/D3 各取 8 题（共 24 题）、同档内优先覆盖不同单元；单词·情景题按「情景标题 + 本轮之前全部台词（中英对照）」生成题干，历史空位显示为「……」、作答行前缀「【作答】」并只保留本轮 `_____`（答案几个单词就几个空），单空按 `FillBlank`、多空按 `MultipleBlank`，并经 `attribute.blankCount` 下发空位数；诊断交卷（`diagnoseSubmit`）复用同一判分与聚合逻辑，额外落 `t_detect_record`（`detect_type=DIAG`，不计成长基线）并按最近 8 次重算 `trend` 学习趋势。
 - 方法:
   - `public List<StudentQuestionView> generate(EnglishUnitPaperRequest request)`
     支持 `module` 单模块过滤；融合题与内容包题共用同一套 `contentKey`。自 2026-10-25 起按题目 tag 的知识点名称批量回填 `knowledgePointName`/`knowledgePointPoints`（`loadKpPoints`，一次 `in` 查询 + 解析 content 的 `points`），交卷报告详情同样回填。
@@ -1344,7 +1346,7 @@
 - 类型: `class EnglishGrammarServiceImpl implements EnglishGrammarService`
 - 注解: @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语语法服务实现。
+  英语语法服务实现。语法结构化字段 `structure/textbook/samples/exercises` 在 `toView` 时对 H2 `json` 列做解包（`unwrapJsonText`），避免 `exercises` 以字符串套字符串返回前端。
 - 方法:
   - `public PaginationResponse<EnglishGrammarView> list(EnglishGrammarQuery query)`
     语法分页列表（版本/年级/册别/单元/小节/标题筛选）。

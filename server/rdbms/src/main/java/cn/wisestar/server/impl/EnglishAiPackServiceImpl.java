@@ -6,6 +6,7 @@ import cn.wisestar.server.core.uitls.AiEndpointUtils;
 import cn.wisestar.server.domain.dto.SystemInfo;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackQuery;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackView;
+import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.PackSyncResult;
 import cn.wisestar.server.domain.model.EnglishAiPack;
 import cn.wisestar.server.domain.model.EnglishGrammar;
@@ -28,6 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
@@ -141,10 +143,203 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		return view;
 	}
 
+	@Override
+	public List<EnglishGrammarView> generateGrammarPreview(String version, String grade, String term, String unit) {
+		requireNotBlank(version, "教材版本");
+		requireNotBlank(grade, "年级");
+		requireNotBlank(unit, "单元");
+
+		List<EnglishGrammar> existing = grammarMapper.selectList(Wrappers.<EnglishGrammar>lambdaQuery()
+				.eq(EnglishGrammar::getVersion, version)
+				.eq(EnglishGrammar::getGrade, grade)
+				.eq(StringUtils.hasText(term), EnglishGrammar::getTerm, term)
+				.eq(EnglishGrammar::getUnit, unit)
+				.orderByAsc(EnglishGrammar::getSort));
+		List<EnglishWord> words = wordMapper.selectList(Wrappers.<EnglishWord>lambdaQuery()
+				.eq(EnglishWord::getVersion, version)
+				.eq(EnglishWord::getGrade, grade)
+				.eq(EnglishWord::getUnit, unit)
+				.orderByAsc(EnglishWord::getSpell));
+
+		StringBuilder prompt = new StringBuilder();
+		prompt.append("请为以下小学英语单元批量生成语法点教学内容：\n");
+		prompt.append("教材版本：").append(version).append("\n");
+		prompt.append("年级：").append(grade).append("\n");
+		if (StringUtils.hasText(term)) {
+			prompt.append("册别：").append(term).append("\n");
+		}
+		prompt.append("单元：").append(unit).append("\n");
+		if (!words.isEmpty()) {
+			prompt.append("本单元核心词汇：").append(words.stream().map(EnglishWord::getSpell)
+					.limit(30).collect(Collectors.joining(", "))).append("\n");
+		}
+		if (!existing.isEmpty()) {
+			prompt.append("已存在的语法点标题（请沿用这些标题，逐个补齐内容）：")
+					.append(existing.stream().map(EnglishGrammar::getTitle).collect(Collectors.joining("；")))
+					.append("\n请再补充 1-2 个本单元其他重点语法，总数 3-5 个。\n");
+		}
+		else {
+			prompt.append("请梳理本单元 3-5 个重点语法点。\n");
+		}
+
+		String raw = callAi(GRAMMAR_SYSTEM_PROMPT, prompt.toString(), 0.45, 8192);
+		JsonNode root = parseRawJson(raw);
+		JsonNode array = firstNode(root, "grammars", "grammarPoints", "grammarList");
+		if (array == null) {
+			array = firstNode(root, "grammar", "grammarPoint");
+		}
+		List<EnglishGrammarView> result = new ArrayList<>();
+		if (array == null) {
+			return result;
+		}
+		List<JsonNode> nodes = new ArrayList<>();
+		if (array.isArray()) {
+			array.forEach(nodes::add);
+		}
+		else if (array.isObject()) {
+			nodes.add(array);
+		}
+		Map<String, EnglishGrammar> byTitle = new HashMap<>();
+		existing.forEach(item -> byTitle.put(normalizeTitle(item.getTitle()), item));
+		int index = 0;
+		for (JsonNode node : nodes) {
+			if (node == null || !node.isObject()) {
+				continue;
+			}
+			String title = firstString(node, "title", "name");
+			if (!StringUtils.hasText(title)) {
+				continue;
+			}
+			EnglishGrammar match = byTitle.get(normalizeTitle(title));
+			EnglishGrammarView view = new EnglishGrammarView();
+			view.setId(match == null ? null : match.getId());
+			view.setTitle(title.trim());
+			view.setContent(nullToEmpty(firstString(node, "content", "explanation", "detail")));
+			view.setStructure(nullToEmpty(firstString(node, "structure", "pattern", "formula")));
+			view.setTextbook(writeJson(normalizeGrammarItems(firstNode(node, "textbook", "textbookSentences", "texts"), true)));
+			view.setSamples(writeJson(normalizeGrammarItems(firstNode(node, "samples", "examples", "exampleList"), false)));
+			view.setExamples(view.getSamples());
+			view.setExercises(writeJson(normalizeGrammarExercises(firstNode(node, "exercises", "practice", "quiz"))));
+			view.setVersion(version);
+			view.setGrade(grade);
+			view.setTerm(term);
+			view.setUnit(unit);
+			view.setSection(match == null ? null : match.getSection());
+			view.setSort(match == null ? existing.size() + index + 1 : match.getSort());
+			result.add(view);
+			index++;
+		}
+		if (result.isEmpty()) {
+			throw new ValidationException("AI 未返回可用语法点，请重试");
+		}
+		return result;
+	}
+
+	/** 语法内容生成系统提示词。 */
+	private static final String GRAMMAR_SYSTEM_PROMPT = "你是一名资深小学英语教研员，负责把单元语法讲清楚并配足练习。"
+			+ "只输出 JSON 对象，不要输出解释或 Markdown 代码块。JSON 结构：\n"
+			+ "{\"grammars\":[{\"title\":\"语法点标题\",\"content\":\"面向小学生的详细中文讲解，分 2-4 句，说明什么时候用、怎么变、常见错误\",\"structure\":\"句式结构或变化规则，如：主语 + be 动词 + 表语\",\"textbook\":[{\"en\":\"课本原句\",\"zh\":\"中文\",\"source\":\"Unit X Part A\"}],\"samples\":[{\"en\":\"典型例句\",\"zh\":\"中文\",\"note\":\"这句体现的语法规律\"}],\"exercises\":[{\"type\":\"choice\",\"q\":\"含空格的题干\",\"options\":[\"选项1\",\"选项2\",\"选项3\",\"选项4\"],\"answer\":\"正确选项文本\",\"explanation\":\"答案解析\"},{\"type\":\"build\",\"q\":\"中文提示\",\"answer\":\"完整英文句子\",\"explanation\":\"词序与语法说明\"}]}]}\n"
+			+ "要求：textbook 恰好 3 句，尽量贴近该单元课本原句；samples 恰好 3 句并带 note；"
+			+ "exercises 恰好 3 题，其中至少 2 题 choice（选正确单词/语法形态）、1 题 build（连词成句），答案与解析必须准确；"
+			+ "所有题目要围绕该语法点，不要与单元单词题、句子题重复；英文必须自然、符合该年级水平；所有字符串中的双引号必须转义。";
+
+	/** 将课本原文或例句规整为 [{en, zh, source/note}]。 */
+	private ArrayNode normalizeGrammarItems(JsonNode raw, boolean textbook) {
+		ArrayNode result = objectMapper.createArrayNode();
+		if (raw == null) {
+			return result;
+		}
+		List<JsonNode> items = new ArrayList<>();
+		if (raw.isArray()) {
+			raw.forEach(items::add);
+		}
+		else if (raw.isObject() || raw.isTextual()) {
+			items.add(raw);
+		}
+		for (JsonNode item : items) {
+			String en;
+			String zh = "";
+			if (item.isTextual()) {
+				en = item.asText().trim();
+			}
+			else {
+				en = nullToEmpty(firstString(item, "en", "english", "sentence", "text")).trim();
+				zh = nullToEmpty(firstString(item, "zh", "chinese", "translation")).trim();
+			}
+			if (!StringUtils.hasText(en)) {
+				continue;
+			}
+			ObjectNode node = result.addObject();
+			node.put("en", en);
+			node.put("zh", zh);
+			if (item.isObject()) {
+				if (textbook) {
+					node.put("source", nullToEmpty(firstString(item, "source", "from", "part")));
+				}
+				else {
+					node.put("note", nullToEmpty(firstString(item, "note", "explanation", "analysis")));
+				}
+			}
+		}
+		return result;
+	}
+
+	/** 将语法练习规整为 [{type, q, options, answer, explanation}]，兼容答案给字母的情况。 */
+	private ArrayNode normalizeGrammarExercises(JsonNode raw) {
+		ArrayNode result = objectMapper.createArrayNode();
+		if (raw == null || !raw.isArray()) {
+			return result;
+		}
+		for (JsonNode item : raw) {
+			if (item == null || !item.isObject()) {
+				continue;
+			}
+			String q = nullToEmpty(firstString(item, "q", "question", "stem")).trim();
+			String answer = nullToEmpty(firstString(item, "answer", "correct", "key")).trim();
+			ObjectNode exercise = result.addObject();
+			ArrayNode options = exercise.putArray("options");
+			JsonNode rawOptions = firstNode(item, "options", "choices");
+			if (rawOptions != null && rawOptions.isArray()) {
+				for (JsonNode option : rawOptions) {
+					if (option.isTextual() && StringUtils.hasText(option.asText())) {
+						options.add(option.asText().trim());
+					}
+				}
+			}
+			if (options.size() > 0 && answer.length() == 1) {
+				int optionIndex = Character.toUpperCase(answer.charAt(0)) - 'A';
+				if (optionIndex >= 0 && optionIndex < options.size()) {
+					answer = options.get(optionIndex).asText();
+				}
+			}
+			boolean build = options.isEmpty();
+			exercise.put("type", build ? "build" : "choice");
+			exercise.put("q", q);
+			exercise.put("answer", answer);
+			exercise.put("explanation", nullToEmpty(firstString(item, "explanation", "analysis", "note")));
+		}
+		return result;
+	}
+
+	/** 标题去重键：去空格并转小写。 */
+	private String normalizeTitle(String title) {
+		return title == null ? "" : title.replaceAll("\\s+", "").toLowerCase();
+	}
+
 	/**
 	 * 调用大模型生成整套单元内容。
 	 */
 	private String callChat(String version, String grade, String unit, String topic) {
+		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
+		if (aiSetting == null || aiSetting.getEnabled() == null || !aiSetting.getEnabled()) {
+			throw new ValidationException("AI 服务未启用：请先在系统设置中开启 AI 并完成平台配置");
+		}
+		return callAi(AiPromptKeys.resolve(aiSetting, AiPromptKeys.EN_PACK, null),
+				buildUserPrompt(version, grade, unit, topic), 0.5, 4096);
+	}
+
+	/** 通用 AI 调用：系统提示词 + 用户提示词，供内容包与语法点补齐复用。 */
+	private String callAi(String systemPrompt, String userPrompt, double temperature, int maxTokens) {
 		SystemInfo.AiSetting aiSetting = systemService.getSystemAiSetting();
 		if (aiSetting == null || aiSetting.getEnabled() == null || !aiSetting.getEnabled()) {
 			throw new ValidationException("AI 服务未启用：请先在系统设置中开启 AI 并完成平台配置");
@@ -158,22 +353,20 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 				? aiSetting.getModels().get(0)
 				: DEFAULT_MODEL;
 
-		String userPrompt = buildUserPrompt(version, grade, unit, topic);
-
 		try {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_JSON);
 			headers.setBearerAuth(token.trim());
 
 			List<Map<String, String>> messages = new ArrayList<>();
-			messages.add(message("system", AiPromptKeys.resolve(aiSetting, AiPromptKeys.EN_PACK, null)));
+			messages.add(message("system", systemPrompt));
 			messages.add(message("user", userPrompt));
 
 			Map<String, Object> body = new HashMap<>();
 			body.put("model", model);
 			body.put("messages", messages);
-			body.put("temperature", 0.5);
-			body.put("max_tokens", 4096);
+			body.put("temperature", temperature);
+			body.put("max_tokens", maxTokens);
 			body.put("stream", false);
 
 			HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
@@ -191,7 +384,7 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		} catch (ValidationException e) {
 			throw e;
 		} catch (Exception e) {
-			log.error("AI 单元内容生成请求失败：{}", e.getMessage(), e);
+			log.error("AI 内容生成请求失败：{}", e.getMessage(), e);
 			throw new ValidationException("AI 生成失败：" + e.getMessage());
 		}
 	}
@@ -304,6 +497,14 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 		grammar.put("content", grammarNode == null
 				? ""
 				: nullToEmpty(firstString(grammarNode, "content", "explanation", "detail")));
+		grammar.put("structure", grammarNode == null
+				? ""
+				: nullToEmpty(firstString(grammarNode, "structure", "pattern", "formula")));
+		grammar.set("textbook", normalizeGrammarItems(
+				grammarNode == null ? null : firstNode(grammarNode, "textbook", "textbookSentences", "texts"), true));
+		JsonNode rawSamples = grammarNode == null ? null
+				: firstNode(grammarNode, "samples", "examples", "exampleList");
+		grammar.set("samples", normalizeGrammarItems(rawSamples, false));
 		ArrayNode examples = grammar.putArray("examples");
 		if (grammarNode != null) {
 			JsonNode rawExamples = firstNode(grammarNode, "examples", "exampleList");
@@ -471,6 +672,9 @@ public class EnglishAiPackServiceImpl implements EnglishAiPackService {
 				exist.setUnit(pack.getUnit());
 				exist.setTitle(gTitle.trim());
 				exist.setContent(textOrNull(grammar.path("content").asText()));
+				exist.setStructure(textOrNull(grammar.path("structure").asText()));
+				exist.setTextbook(writeJson(grammar.path("textbook")));
+				exist.setSamples(writeJson(grammar.path("samples")));
 				exist.setExamples(writeJson(grammar.path("examples")));
 				exist.setExercises(writeJson(grammar.path("exercises")));
 				if (exist.getSort() == null) {

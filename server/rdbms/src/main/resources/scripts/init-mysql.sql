@@ -2256,6 +2256,9 @@ CREATE TABLE IF NOT EXISTS `t_english_grammar` (
   `id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
   `title` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '标题',
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '讲解内容',
+  `structure` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '结构/句式模板',
+  `textbook` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '课本原文',
+  `samples` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '典型例句与解析',
   `examples` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT '例句',
   `exercises` json DEFAULT NULL COMMENT '练习题',
   `version` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '教材版本',
@@ -2269,6 +2272,9 @@ CREATE TABLE IF NOT EXISTS `t_english_grammar` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='英语语法库';
 
 -- 语法库扩展层级与 BaseModel 审计列（幂等）
+ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `structure` text COMMENT '结构/句式模板';
+ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `textbook` text COMMENT '课本原文';
+ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `samples` text COMMENT '典型例句与解析';
 ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `version` varchar(32) DEFAULT NULL COMMENT '教材版本';
 ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `term` varchar(16) DEFAULT NULL COMMENT '学期（上册/下册）';
 ALTER TABLE `t_english_grammar` ADD COLUMN IF NOT EXISTS `unit` varchar(128) DEFAULT NULL COMMENT '单元';

@@ -75,9 +75,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 
-	private static final int DEFAULT_COUNT = 20;
+	private static final int DEFAULT_COUNT = 36;
 
-	private static final int MAX_COUNT = 30;
+	private static final int MAX_COUNT = 40;
 
 	/** 诊断卷每档题量（三档共 24 题，覆盖更多单元与知识点） */
 	private static final int DIAGNOSE_PER_LEVEL = 8;
@@ -143,15 +143,13 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		int carry = 0;
 		for (int i = 0; i < order.size() && paper.size() < limit; i++) {
 			Deque<Group> queue = queues.get(order.get(i));
-			if (queue == null) {
+			if (queue == null || queue.isEmpty()) {
 				continue;
 			}
 			int slots = base + (i < remainder ? 1 : 0) + carry;
-			int target = Math.min(limit, paper.size() + slots);
-			while (paper.size() < target && !queue.isEmpty()) {
-				paper.addAll(ladder(queue.poll(), target - paper.size()));
-			}
-			carry = Math.max(0, target - paper.size());
+			List<Q> picked = takeModule(queue, slots);
+			paper.addAll(picked);
+			carry = Math.max(0, slots - picked.size());
 		}
 		// 某模块题量不足时，用后置模块或同模块剩余题目补足。
 		while (paper.size() < limit) {
@@ -161,8 +159,11 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				if (queue == null || queue.isEmpty()) {
 					continue;
 				}
-				paper.addAll(ladder(queue.poll(), limit - paper.size()));
-				added = true;
+				List<Q> picked = takeModule(queue, limit - paper.size());
+				if (!picked.isEmpty()) {
+					paper.addAll(picked);
+					added = true;
+				}
 				if (paper.size() >= limit) {
 					break;
 				}
@@ -1026,6 +1027,63 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 			result.put(module, new ArrayDeque<>(groups));
 		});
 		return result;
+	}
+
+	/**
+	 * 按知识点权重从一个模块中取题：薄弱知识点权重 2，其余权重 1。
+	 * 先按权重分配名额，再用阶梯顺序从每个知识点取题，避免薄弱点因排在最前而吃掉整个模块。
+	 */
+	private List<Q> takeModule(Deque<Group> queue, int slots) {
+		List<Group> groups = new ArrayList<>(queue);
+		queue.clear();
+		if (groups.isEmpty() || slots <= 0) {
+			return Collections.emptyList();
+		}
+		int totalWeight = groups.stream().mapToInt(this::groupWeight).sum();
+		Map<Group, Integer> quotas = new LinkedHashMap<>();
+		int assigned = 0;
+		for (Group group : groups) {
+			int quota = Math.min(group.items.size(), slots * groupWeight(group) / totalWeight);
+			quotas.put(group, quota);
+			assigned += quota;
+		}
+		// 余数名额按权重从高到低补，仍受知识点题量上限约束；补不完说明总题量不足。
+		List<Group> byWeight = new ArrayList<>(groups);
+		byWeight.sort((a, b) -> {
+			int weightCompare = Integer.compare(groupWeight(b), groupWeight(a));
+			return weightCompare != 0 ? weightCompare : a.key.compareTo(b.key);
+		});
+		while (assigned < slots) {
+			boolean added = false;
+			for (Group group : byWeight) {
+				int quota = quotas.get(group);
+				if (quota >= group.items.size()) {
+					continue;
+				}
+				quotas.put(group, quota + 1);
+				assigned++;
+				added = true;
+				if (assigned >= slots) {
+					break;
+				}
+			}
+			if (!added) {
+				break;
+			}
+		}
+		List<Q> result = new ArrayList<>(assigned);
+		for (Group group : groups) {
+			int quota = quotas.get(group);
+			if (quota > 0) {
+				result.addAll(ladder(group, quota));
+			}
+		}
+		return result;
+	}
+
+	/** 薄弱知识点（priority=0）取题权重 2，其余知识点权重 1。 */
+	private int groupWeight(Group group) {
+		return group.priority != null && group.priority == 0 ? 2 : 1;
 	}
 
 	/**

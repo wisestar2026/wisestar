@@ -2292,6 +2292,9 @@ CREATE TABLE IF NOT EXISTS t_english_grammar (
   id varchar(64) NOT NULL,
   title varchar(256) NOT NULL COMMENT '标题',
   content text COMMENT '讲解内容',
+  structure text COMMENT '结构/句式模板',
+  textbook text COMMENT '课本原文',
+  samples text COMMENT '典型例句与解析',
   examples text COMMENT '例句',
   exercises json COMMENT '练习题',
   version varchar(32) COMMENT '教材版本',
@@ -2305,6 +2308,9 @@ CREATE TABLE IF NOT EXISTS t_english_grammar (
 );
 
 -- 语法库扩展层级与 BaseModel 审计列（幂等）
+ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS structure text;
+ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS textbook text;
+ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS samples text;
 ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS version varchar(32);
 ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS term varchar(16);
 ALTER TABLE t_english_grammar ADD COLUMN IF NOT EXISTS unit varchar(128);

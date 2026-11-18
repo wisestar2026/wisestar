@@ -21,6 +21,15 @@ public class EnglishGrammarView {
 	/** 讲解内容 */
 	private String content;
 
+	/** 结构/句式模板 */
+	private String structure;
+
+	/** 课本原文（JSON：textbook 数组） */
+	private String textbook;
+
+	/** 典型例句（JSON：samples 数组，含解析） */
+	private String samples;
+
 	/** 例句（JSON：examples 数组） */
 	private String examples;
 

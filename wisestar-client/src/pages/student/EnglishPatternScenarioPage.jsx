@@ -116,6 +116,12 @@ export default function EnglishPatternScenarioPage() {
     setPicked({});
   };
 
+  // 该功能属于句式通关板块，返回时保留当前单元
+  const backTarget = unit
+    ? `/student/english/sentence?unit=${encodeURIComponent(unit)}`
+    : '/student/english';
+  const backText = unit ? '返回句式通关' : '返回英语学习中心';
+
   if (step === 'loading') {
     return (
       <div className="eng-learn-wrap sc-wrap eng-stage">
@@ -135,8 +141,8 @@ export default function EnglishPatternScenarioPage() {
           <div className="eng-empty-title">{unit ? '该单元练习尚未生成' : '未选择单元'}</div>
           <div className="sc-empty-hint">请联系老师生成该单元情景练习后再来练习。</div>
           <div className="eng-actions">
-            <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-              返回学习中心
+            <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate(backTarget)}>
+              {backText}
             </button>
           </div>
         </div>
@@ -173,6 +179,9 @@ export default function EnglishPatternScenarioPage() {
 
   return (
     <div className="eng-learn-wrap sc-wrap eng-stage">
+      <button type="button" className="eng-learn-back" onClick={() => navigate(backTarget)}>
+        ← {backText}
+      </button>
       <div className="sc-hero">
         <div className="sc-hero-title">重点句式情景 · {unit}</div>
         <div className="sc-hero-sub">读一读情景，从每题的句子里选出最符合这一情景的重点句式</div>
@@ -304,8 +313,8 @@ export default function EnglishPatternScenarioPage() {
             交卷判分
           </button>
         ) : (
-          <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-            返回学习中心
+          <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate(backTarget)}>
+            {backText}
           </button>
         )}
       </div>

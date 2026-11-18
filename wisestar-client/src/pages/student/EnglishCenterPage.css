@@ -181,6 +181,50 @@
 }
 .eng-grammar-title { font-size: clamp(17px, 1.2vw, 20px); font-weight: 800; color: #14506e; line-height: 1.5; }
 .eng-grammar-content { margin: 8px 0 0 36px; font-size: 22.5px; color: #43647a; line-height: 1.75; }
+.eng-grammar-content p { margin: 0 0 8px; }
+.eng-grammar-content p:last-child { margin-bottom: 0; }
+.eng-grammar-block { margin: 12px 0 0 36px; }
+.eng-grammar-structure-text {
+  background: #f2fbf5;
+  border: 1px solid #d5f0df;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 21px;
+  color: #1c6b45;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+.eng-grammar-textbook { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.eng-grammar-textbook li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: #f5fbff;
+  border-radius: 12px;
+  padding: 9px 12px;
+}
+.eng-grammar-source { font-size: 19.5px; color: #7a8fa0; font-style: italic; }
+.eng-grammar-note { flex: 1 1 100%; font-size: 20px; color: #5d7b90; line-height: 1.65; }
+.eng-grammar-exercises ol { margin: 0; padding-left: 24px; display: flex; flex-direction: column; gap: 10px; }
+.eng-grammar-exercises li {
+  background: #fffaf3;
+  border: 1px solid #f4e4cd;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.eng-grammar-q { font-size: 21px; color: #14506e; line-height: 1.7; white-space: pre-wrap; }
+.eng-grammar-options { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.eng-grammar-option {
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e5edf4;
+  padding: 4px 14px;
+  font-size: 20px;
+  color: #43647a;
+}
+.eng-grammar-option.is-answer { background: #e8f8ee; border-color: #9ddcb5; color: #1c6b45; font-weight: 700; }
+.eng-grammar-answer { margin-top: 8px; font-size: 20px; color: #1c6b45; line-height: 1.7; }
 .eng-grammar-examples { margin: 12px 0 0 36px; }
 .eng-grammar-examples-label { font-size: 19.5px; font-weight: 700; color: #6a4bd0; margin-bottom: 6px; }
 .eng-grammar-examples ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }

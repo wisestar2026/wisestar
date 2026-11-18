@@ -128,7 +128,7 @@ export default function EnglishReviewPage() {
       return;
     }
     const sid = activeSubject || '1003';
-    navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(sid)}`);
+    navigate(`/student/english/grammar-practice?unit=${encodeURIComponent(unit)}&subjectId=${encodeURIComponent(sid)}&from=review`);
   };
 
   if (loading) {

@@ -73,7 +73,7 @@ export default function EnglishUnitPracticePage() {
         term,
         unit,
         chapterId: target.id,
-        questionCount: 20,
+        questionCount: 36,
       });
       const list = genRes?.data || [];
       if (list.length === 0) {
@@ -169,6 +169,9 @@ export default function EnglishUnitPracticePage() {
     const q = questions[current];
     return (
       <div className="kd-wrap kd-answer-wrap sll-page-enter eng-stage">
+        <button type="button" className="eng-learn-back" onClick={() => navigate('/student/english')}>
+          ← 返回学习中心
+        </button>
         <div className="kd-answer-top">
           <div className="kd-answer-title">
             <span className="kd-answer-emoji">📘</span>

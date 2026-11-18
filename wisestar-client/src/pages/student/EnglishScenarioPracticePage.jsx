@@ -212,6 +212,12 @@ export default function EnglishScenarioPracticePage() {
     startAt.current = Date.now();
   };
 
+  // 该功能属于单词通关板块，返回时保留当前单元
+  const backTarget = unit
+    ? `/student/english/word?unit=${encodeURIComponent(unit)}`
+    : '/student/english';
+  const backText = unit ? '返回单词通关' : '返回英语学习中心';
+
   if (step === 'loading') {
     return (
       <div className="eng-learn-wrap sc-wrap eng-stage">
@@ -231,8 +237,8 @@ export default function EnglishScenarioPracticePage() {
           <div className="eng-empty-title">{unit ? '该单元练习尚未生成' : '未选择单元'}</div>
           <div className="sc-empty-hint">请联系老师生成该单元情景练习后再来练习。</div>
           <div className="eng-actions">
-            <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-              返回学习中心
+            <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate(backTarget)}>
+              {backText}
             </button>
           </div>
         </div>
@@ -275,6 +281,9 @@ export default function EnglishScenarioPracticePage() {
 
   return (
     <div className="eng-learn-wrap sc-wrap eng-stage">
+      <button type="button" className="eng-learn-back" onClick={() => navigate(backTarget)}>
+        ← {backText}
+      </button>
       <div className="sc-hero">
         <div className="sc-hero-title">情景对话 · {unit}</div>
         <div className="sc-hero-sub">顺着整段故事往下走，一次只填一个空，回车就能进入下一处</div>
@@ -473,8 +482,8 @@ export default function EnglishScenarioPracticePage() {
             回单词练习巩固
           </button>
         )}
-        <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate('/student/english')}>
-          返回学习中心
+        <button type="button" className="eng-btn eng-btn-primary" onClick={() => navigate(backTarget)}>
+          {backText}
         </button>
       </div>
     </div>

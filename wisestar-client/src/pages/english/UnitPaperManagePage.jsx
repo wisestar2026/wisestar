@@ -27,7 +27,7 @@ const ENGLISH_SUBJECT_ID = '1003';
 
 const GRADES = ['三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 const TERMS = ['上册', '下册'];
-const COUNTS = [10, 15, 20, 30];
+const COUNTS = [10, 15, 20, 36];
 
 const TYPE_LABELS = {
   Radio: '单选题', Checkbox: '多选题', Select: '下拉题',
@@ -48,7 +48,7 @@ export default function UnitPaperManagePage() {
   const [grade, setGrade] = useState('');
   const [term, setTerm] = useState('');
   const [unitId, setUnitId] = useState('');
-  const [questionCount, setQuestionCount] = useState(20);
+  const [questionCount, setQuestionCount] = useState(36);
 
   const [units, setUnits] = useState([]);
   const [loadingUnits, setLoadingUnits] = useState(false);

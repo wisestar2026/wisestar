@@ -39,6 +39,7 @@ export default function EnglishGrammarPracticePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const unit = searchParams.get('unit') || '';
+  const fromReview = searchParams.get('from') === 'review';
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
   const version = useStudentStore((s) => s.version);
@@ -128,6 +129,14 @@ export default function EnglishGrammarPracticePage() {
     }
   };
 
+  // 返回所属大板块：从复习页进来回复习页，从重点语法页进回来语法页
+  const backTarget = fromReview
+    ? '/student/english/review'
+    : unit
+      ? `/student/english/grammar?unit=${encodeURIComponent(unit)}`
+      : '/student/english';
+  const backText = fromReview ? '返回智能复习' : '返回重点语法';
+
   // ============================ 加载 / 无题 ============================
   if (step === 'loading') {
     return <div className="kd-wrap sll-page-enter eng-stage"><div className="kd-loading"><Spin /></div></div>;
@@ -141,8 +150,7 @@ export default function EnglishGrammarPracticePage() {
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
         <div className="kd-actions">
-          <Button onClick={() => navigate('/student/english/review')}>返回复习</Button>
-          <Button type="primary" onClick={() => navigate('/student/english')}>返回学习中心</Button>
+          <Button type="primary" onClick={() => navigate(backTarget)}>{backText}</Button>
         </div>
       </div>
     );
@@ -153,6 +161,9 @@ export default function EnglishGrammarPracticePage() {
     const q = questions[current];
     return (
       <div className="kd-wrap kd-answer-wrap sll-page-enter eng-stage">
+        <button type="button" className="eng-learn-back" onClick={() => navigate(backTarget)}>
+          ← {backText}
+        </button>
         <div className="kd-answer-top">
           <div className="kd-answer-title">
             <span className="kd-answer-emoji">📘</span>
@@ -253,7 +264,8 @@ export default function EnglishGrammarPracticePage() {
       items={items}
       onRetry={loadPaper}
       onWrongBook={() => navigate('/student/english/review')}
-      onBack={() => navigate('/student/english')}
+      onBack={() => navigate(backTarget)}
+      backText={backText}
       loadLast={() => getEnglishPracticeLast({
         module: 'grammar', unit, excludeId: resultSummary.recordId || undefined,
       })}

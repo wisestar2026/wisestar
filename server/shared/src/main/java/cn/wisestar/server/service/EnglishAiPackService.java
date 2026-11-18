@@ -1,8 +1,11 @@
 package cn.wisestar.server.service;
 
+import java.util.List;
+
 import cn.wisestar.server.core.common.PaginationResponse;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackQuery;
 import cn.wisestar.server.domain.dto.english.EnglishAiPackView;
+import cn.wisestar.server.domain.dto.english.EnglishGrammarView;
 import cn.wisestar.server.domain.dto.english.PackSyncResult;
 
 /**
@@ -34,6 +37,17 @@ public interface EnglishAiPackService {
 	 * @return 生成的预览内容包（无 id）
 	 */
 	EnglishAiPackView generateUnit(String version, String grade, String unit, String topic);
+
+	/**
+	 * 调用大模型批量补齐单元语法点的结构化内容（说明/结构/课本原文/例句/例题），仅预览不落库。
+	 *
+	 * @param version 教材版本
+	 * @param grade   年级
+	 * @param term    学期/册别
+	 * @param unit    单元
+	 * @return 生成结果，已匹配到既有语法点时带 id
+	 */
+	List<EnglishGrammarView> generateGrammarPreview(String version, String grade, String term, String unit);
 
 	/**
 	 * 保存内容包（人工确认生成结果后落库）。同 版本+年级+单元 已存在内容包时覆盖更新。
