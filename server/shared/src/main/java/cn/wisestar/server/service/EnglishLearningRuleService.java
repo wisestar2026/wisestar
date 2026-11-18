@@ -52,6 +52,16 @@ public interface EnglishLearningRuleService {
 	java.util.Map<String, List<String>> angleUsed(String userId, String module, List<String> knowledgeIds);
 
 	/**
+	 * 按知识点汇总「答对过」的考察角度。
+	 *
+	 * @param userId       学员 ID
+	 * @param module       模块：word / sentence / grammar
+	 * @param knowledgeIds 知识点 ID 列表
+	 * @return 知识点 ID → 至少答对过一次的角度列表
+	 */
+	java.util.Map<String, List<String>> angleCorrect(String userId, String module, List<String> knowledgeIds);
+
+	/**
 	 * 某单元的小节级三阶进度。
 	 *
 	 * @param userId 用户 ID

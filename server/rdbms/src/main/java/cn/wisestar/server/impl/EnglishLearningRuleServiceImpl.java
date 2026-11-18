@@ -12,6 +12,7 @@ import cn.wisestar.server.domain.model.EnglishSentenceBook;
 import cn.wisestar.server.domain.model.EnglishUnit;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.domain.model.EnglishWordBook;
+import cn.wisestar.server.domain.model.MemoryReviewLog;
 import cn.wisestar.server.mapper.EnglishExamAngleUseMapper;
 import cn.wisestar.server.mapper.EnglishGrammarBookMapper;
 import cn.wisestar.server.mapper.EnglishGrammarMapper;
@@ -21,6 +22,7 @@ import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.mapper.EnglishUnitMapper;
 import cn.wisestar.server.mapper.EnglishWordBookMapper;
 import cn.wisestar.server.mapper.EnglishWordMapper;
+import cn.wisestar.server.mapper.MemoryReviewLogMapper;
 import cn.wisestar.server.domain.model.EnglishExamAngleUse;
 import cn.wisestar.server.service.EnglishLearningRuleService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -71,6 +73,7 @@ public class EnglishLearningRuleServiceImpl implements EnglishLearningRuleServic
 	private final EnglishGrammarMapper grammarMapper;
 	private final EnglishGrammarBookMapper grammarBookMapper;
 	private final EnglishUnitMapper unitMapper;
+	private final MemoryReviewLogMapper memoryReviewLogMapper;
 
 	@Override
 	public Map<String, EnglishLearningStateView> loadStates(String userId, List<String> modules) {
@@ -178,6 +181,35 @@ public class EnglishLearningRuleServiceImpl implements EnglishLearningRuleServic
 	@Override
 	public Map<String, List<String>> angleUsed(String userId, String module, List<String> knowledgeIds) {
 		return loadAngleUse(userId, module, knowledgeIds);
+	}
+
+	@Override
+	public Map<String, List<String>> angleCorrect(String userId, String module, List<String> knowledgeIds) {
+		Map<String, List<String>> result = new LinkedHashMap<>();
+		if (userId == null || module == null || knowledgeIds == null || knowledgeIds.isEmpty()) {
+			return result;
+		}
+		try {
+			List<MemoryReviewLog> rows = memoryReviewLogMapper.selectList(Wrappers.<MemoryReviewLog>lambdaQuery()
+					.eq(MemoryReviewLog::getUserId, userId)
+					.eq(MemoryReviewLog::getModule, module)
+					.eq(MemoryReviewLog::getCorrect, 1)
+					.in(MemoryReviewLog::getKnowledgeId, knowledgeIds)
+					.select(MemoryReviewLog::getKnowledgeId, MemoryReviewLog::getAngle));
+			for (MemoryReviewLog row : rows) {
+				if (row.getKnowledgeId() == null || row.getAngle() == null || row.getAngle().isBlank()) {
+					continue;
+				}
+				List<String> angles = result.computeIfAbsent(row.getKnowledgeId(), k -> new ArrayList<>());
+				if (!angles.contains(row.getAngle())) {
+					angles.add(row.getAngle());
+				}
+			}
+		}
+		catch (Exception e) {
+			log.warn("加载答对角度失败 user={} module={}", userId, module, e);
+		}
+		return result;
 	}
 
 	@Override

@@ -15,7 +15,7 @@
  *   句子学习 = 听音组句 / 连词成句 / 词汇填空 三个角度覆盖的句子数
  *   句子练习 = 看中文选英文 / 看英文选中文 / 听英文选中文 / 句子默写
  *   情景对话 = 整组提交只留正确率，按 useRate 折算句子数
- *   三列统一用「覆盖句数 / 本单元句式总数」，本单元可选句子少于 4 条时
+ *   三列统一用「答对句数 / 本单元句式总数」（答错不计入），本单元可选句子少于 4 条时
  *   四选一题型（三种选择题）置灰，因为凑不齐 1 正 3 干扰项
  *
  * URL: /student/english/sentence?unit=xxx
@@ -37,9 +37,6 @@ import EnglishUnitAside from './EnglishUnitAside';
 import EnglishSentenceExercise from './EnglishSentenceExercise';
 import './EnglishCenterPage.css';
 import './EnglishSentenceLearnPage.css';
-
-/** 后端以 familiarity>=1 视为「已学」，完成度按此口径统计。 */
-const FINISHED_FAMILIARITY = 1;
 
 function percent(finished, total) {
   if (!total) return 0;
@@ -170,12 +167,13 @@ export default function EnglishSentenceLearnPage() {
   }, [loadSentences]);
 
   const activeUnit = units.find((u) => u.unit === unit);
-  const finishedCount = sentences.filter((s) => (s.familiarity || 0) >= FINISHED_FAMILIARITY).length;
+  // 进度按答对统计：答错的句子不进分子，避免做完一轮就显示 100%
+  const finishedCount = sentences.filter((s) => (s.correctCount || 0) > 0).length;
   // 与语法例句重合的句子数量：大于 0 时在句式页提示「同时属于语法点练习」
   const sharedCount = sentences.filter((s) => grammarSentenceKeys.has(normalizeSentence(s.en))).length;
 
-  /** 命中指定角度的句子数（后端回填 angleUsed） */
-  const angleCount = (angle) => sentences.filter((s) => (s.angleUsed || []).includes(angle)).length;
+  /** 该题型答对过的句子数（后端按 memory_review_log 回填 angleCorrect） */
+  const angleCount = (angle) => sentences.filter((s) => (s.angleCorrect || []).includes(angle)).length;
 
   /** 情景对话整组提交只留正确率，按 useRate 折算句子数 */
   const scenarioDone = Math.round(((unitPass?.sentencePassRate || 0) / 100) * sentences.length);
@@ -353,7 +351,10 @@ export default function EnglishSentenceLearnPage() {
                 grade={grade}
                 term={term}
                 initialMode={exerciseMode}
-                onBack={() => setMode('hub')}
+                onBack={() => {
+                  setMode('hub');
+                  loadSentences();
+                }}
               />
             </div>
           </div>

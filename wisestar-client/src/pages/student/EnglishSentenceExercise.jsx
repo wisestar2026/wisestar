@@ -199,7 +199,8 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
     if (mode === 'mix') {
       return [];
     }
-    const pool = sentences.filter((s) => s?.en).slice(0, GENERATED_MAX);
+    // 每次进入题型都重新洗牌，避免孩子按固定顺序背答案
+    const pool = shuffle(sentences.filter((s) => s?.en)).slice(0, GENERATED_MAX);
     if (mode === 'listen-meaning' || mode === 'zh-en' || mode === 'en-zh') {
       // 四选一：正确答案与干扰项都取同单元其他句子，选项至少 2 个才出题
       const enPool = Array.from(new Set(sentences.map((s) => String(s?.en || '').trim()).filter(Boolean)));
@@ -247,7 +248,9 @@ export default function EnglishSentenceExercise({ unit, version, grade, term, in
     }));
   }, [mode, sentences]);
 
-  const taskList = mode === 'mix' ? exercises : generated;
+  // 综合练习沿用后台固化的题目，顺序也打乱；其余题型在 generated 里已洗牌
+  const mixedTasks = useMemo(() => shuffle(exercises), [exercises]);
+  const taskList = mode === 'mix' ? mixedTasks : generated;
   const current = taskList[index];
 
   const dictationGroups = useMemo(

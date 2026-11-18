@@ -1208,7 +1208,7 @@
 - 类型: `class EnglishLearningRuleServiceImpl implements EnglishLearningRuleService`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语学习规则服务实现：把「分阶段通关 / 薄弱攻克 / 复习派生」的可判定口径收敛到一处，学员端页面只消费本服务结果，不再各自计算阈值。`loadStates`/`angleUsed` 批量取数避免逐条查库；`recordAnswer` 更新三态、连续正确/错误、输出题达标与阶段计数（仅首次作答计数）；`sectionProgress` 按小节汇总三阶完成与三态分布；`reviewCandidates` 按单元收敛候选（`unit` 为空时覆盖全册，单元集合由单词/句子/语法内容表推导，不依赖 `t_english_unit` 目录表）；`unitPass` 输出小节/单元通关判定；`wordPassSummary` 供列表页批量回填。阈值取自 `EnglishMastery` 与 `EnglishPassRule`，判定口径见 `EnglishStateRule`。
+  英语学习规则服务实现：把「分阶段通关 / 薄弱攻克 / 复习派生」的可判定口径收敛到一处，学员端页面只消费本服务结果，不再各自计算阈值。`loadStates`/`angleUsed`/`angleCorrect` 批量取数避免逐条查库；`angleCorrect` 只取 `t_memory_review_log` 中 `correct=1` 的角度，供句式通关圆环按答对计数（`angleUsed` 含答错角度，不能用于进度）；`recordAnswer` 更新三态、连续正确/错误、输出题达标与阶段计数（仅首次作答计数）；`sectionProgress` 按小节汇总三阶完成与三态分布；`reviewCandidates` 按单元收敛候选（`unit` 为空时覆盖全册，单元集合由单词/句子/语法内容表推导，不依赖 `t_english_unit` 目录表）；`unitPass` 输出小节/单元通关判定；`wordPassSummary` 供列表页批量回填。阈值取自 `EnglishMastery` 与 `EnglishPassRule`，判定口径见 `EnglishStateRule`。
 - 方法:
   - `public Map<String, EnglishLearningStateView> loadStates(String userId, List<String> modules)`
     批次加载三个模块学习状态，键为 `module|knowledgeId`。
@@ -1216,6 +1216,8 @@
     记录一次作答并更新学习状态。
   - `public Map<String, List<String>> angleUsed(String userId, String module, List<String> knowledgeIds)`
     批量加载已使用考察角度。
+  - `public Map<String, List<String>> angleCorrect(String userId, String module, List<String> knowledgeIds)`
+    批量加载答对过的考察角度（查询 `t_memory_review_log` 的 `correct=1` 记录，按知识点去重）。
   - `public List<EnglishSectionProgressView> sectionProgress(String userId, String version, String grade, String term, String unit)`
     某单元小节级三阶进度。
   - `public List<EnglishReviewCandidateView> reviewCandidates(String userId, String version, String grade, String term, String unit, String module)`

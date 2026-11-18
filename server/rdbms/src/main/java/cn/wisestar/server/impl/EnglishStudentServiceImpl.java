@@ -1092,6 +1092,9 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				englishLearningRuleService.loadStates(userId, List.of(EnglishExamAngle.MODULE_SENTENCE));
 		Map<String, List<String>> usedAngles = englishLearningRuleService.angleUsed(userId,
 				EnglishExamAngle.MODULE_SENTENCE, sentenceIds);
+		// 进度条只看答对过的角度：答错也会写入 angleUsed，不能拿来当完成度
+		Map<String, List<String>> correctAngles = englishLearningRuleService.angleCorrect(userId,
+				EnglishExamAngle.MODULE_SENTENCE, sentenceIds);
 		views.forEach(v -> {
 			EnglishSentenceBook book = bookBySentence.get(v.getId());
 			v.setFamiliarity(book == null || book.getFamiliarity() == null ? 0 : book.getFamiliarity());
@@ -1106,6 +1109,8 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			v.setMasteryStateLabel(EnglishMastery.stateLabel(stateValue));
 			List<String> used = usedAngles.get(v.getId());
 			v.setAngleUsed(used == null ? java.util.Collections.emptyList() : used);
+			List<String> correct = correctAngles.get(v.getId());
+			v.setAngleCorrect(correct == null ? java.util.Collections.emptyList() : correct);
 		});
 	}
 

@@ -52,6 +52,9 @@ public class EnglishSentenceView {
 	/** 已使用的考察角度（句式通关各题型的覆盖口径，推荐下一个角度时排除） */
 	private java.util.List<String> angleUsed;
 
+	/** 已答对过的考察角度（进度条按答对统计，答错的题型不计入） */
+	private java.util.List<String> angleCorrect;
+
 	/** 掌握三态：familiar / ordinary / unfamiliar */
 	private String masteryState;
 

@@ -210,7 +210,8 @@ export function shuffle(tokens) {
       const j = Math.floor(Math.random() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    if (arr.join(' ') !== source.join(' ')) {
+    // 按位置比较，既能给词块洗牌，也能给题目对象数组洗牌
+    if (arr.some((item, index) => item !== source[index])) {
       return arr;
     }
   }
