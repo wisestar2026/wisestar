@@ -59,7 +59,7 @@ export default function StarRating({ value = 0, size = 14, className = '' }) {
   if (!uidRef.current) uidRef.current = `sr${++uidSeq}`;
   const uid = uidRef.current;
   const count = rateToStarCount(value);
-  const gap = size >= 16 ? 2 : 1;
+  const gap = size >= 22 ? 3 : size >= 16 ? 2 : 1;
 
   return (
     <span

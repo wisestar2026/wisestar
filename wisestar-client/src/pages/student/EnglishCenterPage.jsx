@@ -241,7 +241,7 @@ export default function EnglishCenterPage() {
 
               <div className="eng-mastery-row">
                 <span className="eng-mastery-label">熟练度</span>
-                <StarRating value={active.mastery || 0} size={16} className="eng-unit-mastery-stars" />
+                <StarRating value={active.mastery || 0} size={26} className="eng-unit-mastery-stars" />
                 <span className="eng-mastery-val">{active.mastery || 0}%</span>
               </div>
 
