@@ -5,20 +5,20 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: calc(8 * var(--page-u));
   width: 100%;
 }
 .practice-word-slot.ant-input {
   flex: 1 1 0;
   width: 0;
-  min-width: 104px;
-  max-width: 220px;
+  min-width: calc(104 * var(--page-u));
+  max-width: calc(220 * var(--page-u));
   border: 0;
-  border-bottom: 2px solid #9db4c4;
+  border-bottom: calc(2 * var(--page-u)) solid #9db4c4;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 25px;
+  font-size: calc(25 * var(--page-u));
   font-weight: 500;
 }
 .practice-word-slot.ant-input:hover {
@@ -37,5 +37,5 @@
 
 @media (max-width: 640px) {
   .practice-word-slots { flex-wrap: wrap; }
-  .practice-word-slot.ant-input { flex: 0 1 calc(25% - 6px); width: auto; }
+  .practice-word-slot.ant-input { flex: 0 1 calc(25% - calc(6 * var(--page-u))); width: auto; }
 }

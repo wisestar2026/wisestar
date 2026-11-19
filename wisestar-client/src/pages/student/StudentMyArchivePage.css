@@ -1,52 +1,52 @@
 /* StudentMyArchivePage.css - 学员端我的学习档案（只读，可打印） */
 
 .my-archive-page {
-  max-width: 960px;
+  max-width: calc(960 * var(--page-u));
 }
 
 .my-archive-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: calc(12 * var(--page-u));
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: calc(16 * var(--page-u));
 }
 
 .my-archive-title {
   margin: 0;
-  font-size: 20px;
+  font-size: calc(20 * var(--page-u));
   font-weight: 700;
   color: #0b3d5c;
 }
 
 .my-archive-meta {
   color: #5b7a8c;
-  font-size: 13px;
+  font-size: calc(13 * var(--page-u));
 }
 
 .my-archive-section {
-  margin-bottom: 18px;
-  padding: 22px 26px;
+  margin-bottom: calc(18 * var(--page-u));
+  padding: calc(22 * var(--page-u)) calc(26 * var(--page-u));
 }
 
 /* 档案卡片：图二风格——纯白底、大圆角、无标题栏、柔和阴影 */
 .my-archive-page .sll-card {
   background: #ffffff;
-  border-radius: 20px;
-  border: 1px solid rgba(120, 180, 220, 0.16);
-  box-shadow: 0 6px 20px rgba(64, 140, 190, 0.1);
+  border-radius: calc(20 * var(--page-u));
+  border: calc(1 * var(--page-u)) solid rgba(120, 180, 220, 0.16);
+  box-shadow: 0 calc(6 * var(--page-u)) calc(20 * var(--page-u)) rgba(64, 140, 190, 0.1);
 }
 
 .my-archive-section-title {
-  font-size: 18px;
+  font-size: calc(18 * var(--page-u));
   font-weight: 700;
   color: #0b3d5c;
-  margin: 0 0 12px;
+  margin: 0 0 calc(12 * var(--page-u));
 }
 
 .my-archive-promise {
-  margin-top: 12px;
+  margin-top: calc(12 * var(--page-u));
 }
 
 .my-archive-promise-label {
@@ -63,21 +63,21 @@
 .my-archive-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: calc(8 * var(--page-u));
 }
 
 .my-archive-chip {
   display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
+  padding: calc(4 * var(--page-u)) calc(12 * var(--page-u));
+  border-radius: calc(999 * var(--page-u));
   background: rgba(47, 138, 224, 0.12);
   color: #2f6fa0;
-  font-size: 13px;
+  font-size: calc(13 * var(--page-u));
 }
 
 .my-archive-record {
-  padding: 10px 0;
-  border-bottom: 1px dashed rgba(47, 138, 224, 0.25);
+  padding: calc(10 * var(--page-u)) 0;
+  border-bottom: calc(1 * var(--page-u)) dashed rgba(47, 138, 224, 0.25);
 }
 
 .my-archive-record:last-child {
@@ -87,7 +87,7 @@
 .my-archive-record-date {
   font-weight: 700;
   color: #2f8ae0;
-  margin-right: 8px;
+  margin-right: calc(8 * var(--page-u));
 }
 
 .my-archive-record-title {
@@ -96,7 +96,7 @@
 }
 
 .my-archive-record-body {
-  margin-top: 6px;
+  margin-top: calc(6 * var(--page-u));
   color: #456;
   white-space: pre-wrap;
 }

@@ -21,41 +21,41 @@
 .eng-word-head {
   align-items: center;
   flex-wrap: wrap;
-  gap: calc(18 * var(--eng-u));
+  gap: calc(18 * var(--page-u));
 }
 .eng-word-progress {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: calc(12 * var(--eng-u));
-  margin-left: calc(10 * var(--eng-u));
+  gap: calc(12 * var(--page-u));
+  margin-left: calc(10 * var(--page-u));
 }
 .eng-word-progress-label {
   flex: none;
-  font-size: calc(24 * var(--eng-u));
+  font-size: calc(24 * var(--page-u));
   font-weight: 800;
   color: #6b93a8;
-  letter-spacing: calc(1 * var(--eng-u));
+  letter-spacing: calc(1 * var(--page-u));
 }
 .eng-word-progress-track {
   flex: 1;
-  height: calc(16 * var(--eng-u));
-  border-radius: calc(999 * var(--eng-u));
+  height: calc(16 * var(--page-u));
+  border-radius: calc(999 * var(--page-u));
   background: #e2f1fa;
-  box-shadow: inset 0 calc(1 * var(--eng-u)) calc(2 * var(--eng-u)) rgba(20, 80, 110, 0.06);
+  box-shadow: inset 0 calc(1 * var(--page-u)) calc(2 * var(--page-u)) rgba(20, 80, 110, 0.06);
   overflow: hidden;
 }
 .eng-word-progress-fill {
   display: block;
   height: 100%;
-  border-radius: calc(999 * var(--eng-u));
+  border-radius: calc(999 * var(--page-u));
   background: linear-gradient(90deg, #7ed0f2, #16b5e6);
   transition: width 0.35s ease;
 }
 .eng-word-progress-count {
   flex: none;
-  font-size: calc(23 * var(--eng-u));
+  font-size: calc(23 * var(--page-u));
   font-weight: 800;
   color: #5b7f92;
   font-variant-numeric: tabular-nums;
@@ -64,8 +64,8 @@
 /* ---------- 小节 tab（参考图：并排的蓝色标题条，当前小节实心） ---------- */
 .eng-word-tabs {
   display: flex;
-  gap: calc(10 * var(--eng-u));
-  margin-top: calc(22 * var(--eng-u));
+  gap: calc(10 * var(--page-u));
+  margin-top: calc(22 * var(--page-u));
 }
 .eng-word-tab {
   flex: 1;
@@ -73,10 +73,10 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: calc(10 * var(--eng-u));
-  padding: calc(12 * var(--eng-u)) calc(18 * var(--eng-u));
+  gap: calc(10 * var(--page-u));
+  padding: calc(12 * var(--page-u)) calc(18 * var(--page-u));
   border: none;
-  border-radius: calc(10 * var(--eng-u));
+  border-radius: calc(10 * var(--page-u));
   background: transparent;
   color: #3fa9da;
   cursor: pointer;
@@ -86,42 +86,42 @@
 .eng-word-tab.active {
   background: linear-gradient(135deg, #2fb6e8, #0ea5de);
   color: #fff;
-  box-shadow: 0 calc(8 * var(--eng-u)) calc(18 * var(--eng-u)) rgba(14, 165, 222, 0.28);
+  box-shadow: 0 calc(8 * var(--page-u)) calc(18 * var(--page-u)) rgba(14, 165, 222, 0.28);
 }
-.eng-word-tab-name { font-size: calc(23 * var(--eng-u)); font-weight: 900; }
-.eng-word-tab-count { font-size: calc(18 * var(--eng-u)); font-weight: 700; opacity: 0.8; }
+.eng-word-tab-name { font-size: calc(23 * var(--page-u)); font-weight: 900; }
+.eng-word-tab-count { font-size: calc(18 * var(--page-u)); font-weight: 700; opacity: 0.8; }
 
 /* ---------- 小节面板容器 ---------- */
 .eng-word-flow-card {
   display: flex;
   flex-direction: column;
-  margin-top: calc(14 * var(--eng-u));
+  margin-top: calc(14 * var(--page-u));
   min-width: 0;
-  border-radius: calc(20 * var(--eng-u));
-  border: calc(1 * var(--eng-u)) solid rgba(214, 232, 244, 0.9);
+  border-radius: calc(20 * var(--page-u));
+  border: calc(1 * var(--page-u)) solid rgba(214, 232, 244, 0.9);
   background: #f8fcff;
 }
 
 /* ---------- 小节头部：名称 + 三态计数 ---------- */
-.eng-word-flow { padding: calc(20 * var(--eng-u)) calc(22 * var(--eng-u)) calc(22 * var(--eng-u)); }
+.eng-word-flow { padding: calc(20 * var(--page-u)) calc(22 * var(--page-u)) calc(22 * var(--page-u)); }
 .eng-word-section-head {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: calc(4 * var(--eng-u));
+  gap: calc(4 * var(--page-u));
 }
 .eng-word-section-name {
-  font-size: calc(26 * var(--eng-u));
+  font-size: calc(26 * var(--page-u));
   font-weight: 900;
   color: #0e74b4;
-  letter-spacing: calc(0.5 * var(--eng-u));
+  letter-spacing: calc(0.5 * var(--page-u));
   white-space: nowrap;
 }
 .eng-word-states {
   display: flex;
   flex-direction: column;
-  gap: calc(4 * var(--eng-u));
-  font-size: calc(21 * var(--eng-u));
+  gap: calc(4 * var(--page-u));
+  font-size: calc(21 * var(--page-u));
   font-weight: 800;
   color: #1467a8;
 }
@@ -132,22 +132,22 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: calc(10 * var(--eng-u));
-  margin-top: calc(18 * var(--eng-u));
-  padding-top: calc(14 * var(--eng-u));
-  border-top: calc(1 * var(--eng-u)) dashed #d9ecf7;
+  gap: calc(10 * var(--page-u));
+  margin-top: calc(18 * var(--page-u));
+  padding-top: calc(14 * var(--page-u));
+  border-top: calc(1 * var(--page-u)) dashed #d9ecf7;
 }
 .eng-word-legend-item {
-  border-radius: calc(999 * var(--eng-u));
-  padding: calc(5 * var(--eng-u)) calc(16 * var(--eng-u));
-  font-size: calc(19 * var(--eng-u));
+  border-radius: calc(999 * var(--page-u));
+  padding: calc(5 * var(--page-u)) calc(16 * var(--page-u));
+  font-size: calc(19 * var(--page-u));
   font-weight: 800;
 }
 .eng-word-legend-memory { background: #ddf3fd; color: #1687ba; }
 .eng-word-legend-practice { background: #fbe7d5; color: #b4550d; }
 .eng-word-legend-use { background: #ddf7e7; color: #0f9152; }
 .eng-word-legend-tip {
-  font-size: calc(18 * var(--eng-u));
+  font-size: calc(18 * var(--page-u));
   color: #7fa3b6;
   font-weight: 600;
 }
@@ -156,24 +156,24 @@
 .eng-word-stages {
   display: grid;
   align-items: center;
-  gap: calc(16 * var(--eng-u));
-  margin-top: calc(24 * var(--eng-u));
+  gap: calc(16 * var(--page-u));
+  margin-top: calc(24 * var(--page-u));
 }
 .eng-word-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(26 * var(--eng-u));
+  gap: calc(26 * var(--page-u));
   min-width: 0;
-  padding: calc(6 * var(--eng-u)) calc(10 * var(--eng-u));
+  padding: calc(6 * var(--page-u)) calc(10 * var(--page-u));
 }
 /* 列间参考竖线（三组圆环之间的浅色分隔） */
 .eng-word-col-practice,
 .eng-word-col-use,
 .eng-word-col-scenario {
-  border-left: calc(1 * var(--eng-u)) dashed #d9ecf7;
-  margin-left: calc(6 * var(--eng-u));
-  padding-left: calc(18 * var(--eng-u));
+  border-left: calc(1 * var(--page-u)) dashed #d9ecf7;
+  margin-left: calc(6 * var(--page-u));
+  padding-left: calc(18 * var(--page-u));
 }
 
 /* 窄屏：三列改为上下堆叠，圆环横排（两张通关页共用） */
@@ -181,20 +181,20 @@
   .eng-word-stages {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
-    gap: calc(6 * var(--eng-u));
+    gap: calc(6 * var(--page-u));
   }
   .eng-word-col {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    gap: calc(14 * var(--eng-u));
+    gap: calc(14 * var(--page-u));
     border-left: none;
-    border-top: calc(1 * var(--eng-u)) dashed #d9ecf7;
-    padding: calc(14 * var(--eng-u)) calc(6 * var(--eng-u)) calc(4 * var(--eng-u));
+    border-top: calc(1 * var(--page-u)) dashed #d9ecf7;
+    padding: calc(14 * var(--page-u)) calc(6 * var(--page-u)) calc(4 * var(--page-u));
     margin-left: 0;
     width: 100%;
   }
-  .eng-word-col-memory { border-top: none; padding-top: calc(4 * var(--eng-u)); }
+  .eng-word-col-memory { border-top: none; padding-top: calc(4 * var(--page-u)); }
 }
 
 /* ---------- 圆环 ---------- */
@@ -205,16 +205,16 @@
   cursor: pointer;
   transition: transform 0.18s ease;
 }
-.eng-ring:hover:not(:disabled) { transform: translateY(calc(-3 * var(--eng-u))) scale(1.02); }
+.eng-ring:hover:not(:disabled) { transform: translateY(calc(-3 * var(--page-u))) scale(1.02); }
 .eng-ring:disabled { cursor: not-allowed; opacity: 0.55; }
 .eng-ring-frame {
   position: relative;
   display: block;
-  width: clamp(calc(108 * var(--eng-u)), 8.6vw, calc(148 * var(--eng-u)));
+  width: clamp(calc(108 * var(--page-u)), 8.6vw, calc(148 * var(--page-u)));
   aspect-ratio: 1;
 }
 /* 主环节点（每段的第一环）放大一档，形成视觉重心 */
-.eng-ring-lg .eng-ring-frame { width: clamp(calc(128 * var(--eng-u)), 10.4vw, calc(180 * var(--eng-u))); }
+.eng-ring-lg .eng-ring-frame { width: clamp(calc(128 * var(--page-u)), 10.4vw, calc(180 * var(--page-u))); }
 .eng-ring-frame svg {
   width: 100%;
   height: 100%;
@@ -252,13 +252,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(2 * var(--eng-u));
-  padding: 0 calc(14 * var(--eng-u));
+  gap: calc(2 * var(--page-u));
+  padding: 0 calc(14 * var(--page-u));
   text-align: center;
   pointer-events: none;
 }
 .eng-ring-text b {
-  font-size: clamp(calc(15 * var(--eng-u)), 1.15vw, calc(19 * var(--eng-u)));
+  font-size: clamp(calc(15 * var(--page-u)), 1.15vw, calc(19 * var(--page-u)));
   font-weight: 900;
   line-height: 1.25;
   color: #3f8db5;
@@ -266,7 +266,7 @@
 }
 .eng-ring-text em {
   font-style: normal;
-  font-size: clamp(calc(14 * var(--eng-u)), 1.05vw, calc(18 * var(--eng-u)));
+  font-size: clamp(calc(14 * var(--page-u)), 1.05vw, calc(18 * var(--page-u)));
   font-weight: 800;
   color: #6b93a8;
   font-variant-numeric: tabular-nums;
@@ -278,8 +278,8 @@
 /* ---------- 阶段箭头（纯流程示意，不承担跳转） ---------- */
 .eng-arrow {
   border: none;
-  padding: calc(12 * var(--eng-u)) calc(22 * var(--eng-u)) calc(12 * var(--eng-u)) calc(30 * var(--eng-u));
-  font-size: calc(20 * var(--eng-u));
+  padding: calc(12 * var(--page-u)) calc(22 * var(--page-u)) calc(12 * var(--page-u)) calc(30 * var(--page-u));
+  font-size: calc(20 * var(--page-u));
   font-weight: 900;
   color: #fff;
   display: flex;
@@ -295,7 +295,7 @@
 /* 窄屏：三列改为上下堆叠，列间箭头失去横向流程语义，直接隐藏 */
 @media (max-width: 1280px) {
   .eng-arrow { display: none; }
-  .eng-ring-lg .eng-ring-frame { width: clamp(calc(124 * var(--eng-u)), 30vw, calc(168 * var(--eng-u))); }
+  .eng-ring-lg .eng-ring-frame { width: clamp(calc(124 * var(--page-u)), 30vw, calc(168 * var(--page-u))); }
   /* 顶部进度行降到标题下一行占满 */
   .eng-word-head { flex-wrap: wrap; }
   .eng-word-progress {
@@ -308,22 +308,22 @@
 @media (max-width: 760px) {
   .eng-word-tabs { flex-wrap: wrap; }
   .eng-word-tab { flex: 1 1 42%; }
-  .eng-word-tab-name { font-size: calc(20 * var(--eng-u)); }
-  .eng-word-flow { padding: calc(16 * var(--eng-u)) calc(14 * var(--eng-u)) calc(18 * var(--eng-u)); }
-  .eng-word-section-name { font-size: calc(23 * var(--eng-u)); }
-  .eng-word-states { font-size: calc(19 * var(--eng-u)); }
+  .eng-word-tab-name { font-size: calc(20 * var(--page-u)); }
+  .eng-word-flow { padding: calc(16 * var(--page-u)) calc(14 * var(--page-u)) calc(18 * var(--page-u)); }
+  .eng-word-section-name { font-size: calc(23 * var(--page-u)); }
+  .eng-word-states { font-size: calc(19 * var(--page-u)); }
   .eng-word-progress-label,
-  .eng-word-progress-count { font-size: calc(20 * var(--eng-u)); }
-  .eng-word-progress-track { height: calc(12 * var(--eng-u)); }
+  .eng-word-progress-count { font-size: calc(20 * var(--page-u)); }
+  .eng-word-progress-track { height: calc(12 * var(--page-u)); }
   .eng-word-legend-tip { display: none; }
 }
 
 /* 侧栏占位后的中等宽度：收窄流程箭头与主环，避免三列圆环互相压住 */
 @media (min-width: 1281px) and (max-width: 1600px) {
   .eng-arrow {
-    padding: calc(10 * var(--eng-u)) calc(14 * var(--eng-u)) calc(10 * var(--eng-u)) calc(22 * var(--eng-u));
-    font-size: calc(18 * var(--eng-u));
+    padding: calc(10 * var(--page-u)) calc(14 * var(--page-u)) calc(10 * var(--page-u)) calc(22 * var(--page-u));
+    font-size: calc(18 * var(--page-u));
   }
-  .eng-ring-lg .eng-ring-frame { width: clamp(calc(116 * var(--eng-u)), 8.8vw, calc(132 * var(--eng-u))); }
+  .eng-ring-lg .eng-ring-frame { width: clamp(calc(116 * var(--page-u)), 8.8vw, calc(132 * var(--page-u))); }
 }
 

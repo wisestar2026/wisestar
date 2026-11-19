@@ -4,7 +4,7 @@
    ============================================================ */
 
 .icon-tile {
-  --it-size: 30px;
+  --it-size: calc(30 * var(--page-u));
   --it-l1: #8ecbff;
   --it-l2: #3f8ef7;
   --it-shadow: rgba(47, 110, 222, 0.45);
@@ -17,15 +17,15 @@
   flex: 0 0 auto;
   vertical-align: middle;
   border-radius: 34%;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: calc(1 * var(--page-u)) solid rgba(255, 255, 255, 0.6);
   background:
     radial-gradient(120% 95% at 28% 16%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.35) 30%, rgba(255, 255, 255, 0) 54%),
     linear-gradient(155deg, var(--it-l1) 0%, var(--it-l2) 100%);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.9),
-    inset 0 -3px 5px rgba(0, 0, 0, 0.13),
-    0 6px 12px -4px var(--it-shadow),
-    0 2px 4px rgba(0, 0, 0, 0.08);
+    inset 0 calc(1 * var(--page-u)) calc(1 * var(--page-u)) rgba(255, 255, 255, 0.9),
+    inset 0 calc(-3 * var(--page-u)) calc(5 * var(--page-u)) rgba(0, 0, 0, 0.13),
+    0 calc(6 * var(--page-u)) calc(12 * var(--page-u)) calc(-4 * var(--page-u)) var(--it-shadow),
+    0 calc(2 * var(--page-u)) calc(4 * var(--page-u)) rgba(0, 0, 0, 0.08);
   overflow: hidden;
   isolation: isolate;
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
@@ -52,22 +52,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 calc(2 * var(--page-u)) calc(1 * var(--page-u)) rgba(0, 0, 0, 0.2));
 }
 
 .icon-tile.is-round { border-radius: 50%; }
 .icon-tile.is-dim { filter: saturate(0.35) brightness(1.03); }
 
 /* 悬停微浮起（放在按钮里的图标也跟随） */
-.icon-tile:hover { transform: translateY(-1px); }
+.icon-tile:hover { transform: translateY(calc(-1 * var(--page-u))); }
 
 /* ---------- 尺寸 ---------- */
-.icon-tile.it-xs  { --it-size: 20px; border-radius: 30%; }
-.icon-tile.it-sm  { --it-size: 26px; }
-.icon-tile.it-md  { --it-size: 32px; }
-.icon-tile.it-lg  { --it-size: 40px; }
-.icon-tile.it-xl  { --it-size: 50px; border-radius: 30%; }
-.icon-tile.it-2xl { --it-size: 64px; border-radius: 28%; }
+.icon-tile.it-xs  { --it-size: calc(20 * var(--page-u)); border-radius: 30%; }
+.icon-tile.it-sm  { --it-size: calc(26 * var(--page-u)); }
+.icon-tile.it-md  { --it-size: calc(32 * var(--page-u)); }
+.icon-tile.it-lg  { --it-size: calc(40 * var(--page-u)); }
+.icon-tile.it-xl  { --it-size: calc(50 * var(--page-u)); border-radius: 30%; }
+.icon-tile.it-2xl { --it-size: calc(64 * var(--page-u)); border-radius: 28%; }
 .icon-tile.it-xs.is-round,
 .icon-tile.it-sm.is-round,
 .icon-tile.it-md.is-round,

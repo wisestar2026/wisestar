@@ -3,7 +3,7 @@
  * ============================================================ */
 
 .mall-page {
-  max-width: 900px;
+  max-width: calc(900 * var(--page-u));
   margin: 0 auto;
   width: 100%;
   position: relative;
@@ -13,44 +13,44 @@
 .mall-top {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 22px 26px;
-  margin-bottom: 20px;
+  gap: calc(20 * var(--page-u));
+  padding: calc(22 * var(--page-u)) calc(26 * var(--page-u));
+  margin-bottom: calc(20 * var(--page-u));
   background:
     radial-gradient(circle at 90% 20%, rgba(255, 200, 90, 0.22) 0%, transparent 45%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(255, 250, 235, 0.97));
-  border-top: 4px solid #ffb64d;
+  border-top: calc(4 * var(--page-u)) solid #ffb64d;
 }
 .mall-top-info { flex: 1; min-width: 0; }
-.mall-top-label { font-size: 13px; font-weight: 700; color: #9a8a5f; }
-.mall-top-num { font-size: 40px; font-weight: 900; color: #b7791f; line-height: 1.15; }
+.mall-top-label { font-size: calc(13 * var(--page-u)); font-weight: 700; color: #9a8a5f; }
+.mall-top-num { font-size: calc(40 * var(--page-u)); font-weight: 900; color: #b7791f; line-height: 1.15; }
 .mall-top-tip {
-  font-size: 12px;
+  font-size: calc(12 * var(--page-u));
   color: #c0a76a;
-  margin-top: 4px;
+  margin-top: calc(4 * var(--page-u));
 }
-.mall-top-collapse { flex-shrink: 0; min-width: 300px; }
-.mall-collapse-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: #2b4a6b; }
-.mall-detail-list { display: flex; flex-direction: column; gap: 12px; }
-.mall-detail-row { display: flex; align-items: center; gap: 12px; }
+.mall-top-collapse { flex-shrink: 0; min-width: calc(300 * var(--page-u)); }
+.mall-collapse-label { display: inline-flex; align-items: center; gap: calc(6 * var(--page-u)); font-size: calc(13 * var(--page-u)); font-weight: 800; color: #2b4a6b; }
+.mall-detail-list { display: flex; flex-direction: column; gap: calc(12 * var(--page-u)); }
+.mall-detail-row { display: flex; align-items: center; gap: calc(12 * var(--page-u)); }
 .mall-detail-sub {
-  width: 90px;
+  width: calc(90 * var(--page-u));
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: calc(13 * var(--page-u));
   font-weight: 700;
   color: #2b4a6b;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(6 * var(--page-u));
 }
 .mall-detail-icon {
-  width: 24px;
-  height: 24px;
+  width: calc(24 * var(--page-u));
+  height: calc(24 * var(--page-u));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: calc(13 * var(--page-u));
   color: #fff;
 }
 .mall-detail-icon-orange { background: #ff8a3d; }
@@ -58,72 +58,72 @@
 .mall-detail-icon-green  { background: #4caf50; }
 .mall-detail-bar {
   flex: 1;
-  height: 10px;
-  border-radius: 999px;
+  height: calc(10 * var(--page-u));
+  border-radius: calc(999 * var(--page-u));
   background: #f0ead8;
   overflow: hidden;
 }
-.mall-detail-bar-inner { height: 100%; border-radius: 999px; }
+.mall-detail-bar-inner { height: 100%; border-radius: calc(999 * var(--page-u)); }
 .mall-detail-bar-inner.orange { background: linear-gradient(90deg, #ffb64d, #ff8a3d); }
 .mall-detail-bar-inner.blue   { background: linear-gradient(90deg, #64b5f6, #2196f3); }
 .mall-detail-bar-inner.green  { background: linear-gradient(90deg, #81c784, #4caf50); }
-.mall-detail-num { width: 76px; text-align: right; font-size: 14px; font-weight: 800; color: #b7791f; }
-.mall-detail-num small { font-size: 10px; color: #c0a76a; }
+.mall-detail-num { width: calc(76 * var(--page-u)); text-align: right; font-size: calc(14 * var(--page-u)); font-weight: 800; color: #b7791f; }
+.mall-detail-num small { font-size: calc(10 * var(--page-u)); color: #c0a76a; }
 
 /* 商品网格 */
 .mall-section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
+  gap: calc(8 * var(--page-u));
+  font-size: calc(16 * var(--page-u));
   font-weight: 800;
   color: #2b4a6b;
-  margin: 6px 2px 12px;
+  margin: calc(6 * var(--page-u)) calc(2 * var(--page-u)) calc(12 * var(--page-u));
 }
 .mall-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: calc(18 * var(--page-u));
 }
 .mall-goods {
-  padding: 20px 18px 16px;
+  padding: calc(20 * var(--page-u)) calc(18 * var(--page-u)) calc(16 * var(--page-u));
   text-align: center;
-  border-radius: 22px;
+  border-radius: calc(22 * var(--page-u));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: calc(6 * var(--page-u));
 }
 .mall-goods.exchanged { opacity: 0.75; }
 .mall-goods-emoji {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
+  width: calc(72 * var(--page-u));
+  height: calc(72 * var(--page-u));
+  border-radius: calc(20 * var(--page-u));
   background: linear-gradient(135deg, #eaf6ff, #d2ecff);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 38px;
-  box-shadow: 0 4px 12px rgba(64, 140, 190, 0.16);
+  font-size: calc(38 * var(--page-u));
+  box-shadow: 0 calc(4 * var(--page-u)) calc(12 * var(--page-u)) rgba(64, 140, 190, 0.16);
 }
-.mall-goods-name { font-size: 16px; font-weight: 800; color: #1d3a5f; }
-.mall-goods-desc { font-size: 12px; color: #8aa9c4; }
+.mall-goods-name { font-size: calc(16 * var(--page-u)); font-weight: 800; color: #1d3a5f; }
+.mall-goods-desc { font-size: calc(12 * var(--page-u)); color: #8aa9c4; }
 .mall-goods-price {
-  font-size: 15px;
+  font-size: calc(15 * var(--page-u));
   font-weight: 800;
   color: #b7791f;
   background: #fff7d6;
-  border-radius: 999px;
-  padding: 4px 14px;
-  margin-top: 4px;
+  border-radius: calc(999 * var(--page-u));
+  padding: calc(4 * var(--page-u)) calc(14 * var(--page-u));
+  margin-top: calc(4 * var(--page-u));
 }
 .mall-goods-btn {
-  margin-top: 6px;
+  margin-top: calc(6 * var(--page-u));
   border: none;
-  border-radius: 999px;
-  padding: 9px 0;
+  border-radius: calc(999 * var(--page-u));
+  padding: calc(9 * var(--page-u)) 0;
   width: 100%;
-  font-size: 14px;
+  font-size: calc(14 * var(--page-u));
   font-weight: 800;
   cursor: pointer;
   transition: all 0.25s;
@@ -131,9 +131,9 @@
 .mall-goods-btn.ok {
   color: #fff;
   background: linear-gradient(135deg, #ffb64d, #ff8a3d);
-  box-shadow: 0 5px 14px rgba(255, 138, 61, 0.35);
+  box-shadow: 0 calc(5 * var(--page-u)) calc(14 * var(--page-u)) rgba(255, 138, 61, 0.35);
 }
-.mall-goods-btn.ok:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255, 138, 61, 0.45); }
+.mall-goods-btn.ok:hover { transform: translateY(calc(-2 * var(--page-u))); box-shadow: 0 calc(8 * var(--page-u)) calc(20 * var(--page-u)) rgba(255, 138, 61, 0.45); }
 .mall-goods-btn.no {
   color: #9aa7b5;
   background: #eef3f8;
@@ -141,58 +141,58 @@
 }
 
 /* 纯净模式占位 */
-.mall-pure { display: flex; justify-content: center; padding-top: 60px; }
+.mall-pure { display: flex; justify-content: center; padding-top: calc(60 * var(--page-u)); }
 .mall-pure-card {
-  padding: 44px 60px;
+  padding: calc(44 * var(--page-u)) calc(60 * var(--page-u));
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: calc(12 * var(--page-u));
 }
-.mall-pure-title { font-size: 18px; font-weight: 800; color: #2b4a6b; }
-.mall-pure-desc { font-size: 13px; color: #5b7a99; }
+.mall-pure-title { font-size: calc(18 * var(--page-u)); font-weight: 800; color: #2b4a6b; }
+.mall-pure-desc { font-size: calc(13 * var(--page-u)); color: #5b7a99; }
 
 /* 各科明细空态 */
-.mall-detail-empty { font-size: 13px; color: #8aa9c4; padding: 4px 0; }
+.mall-detail-empty { font-size: calc(13 * var(--page-u)); color: #8aa9c4; padding: calc(4 * var(--page-u)) 0; }
 
 /* 我的兑换记录 */
-.mall-orders { display: flex; flex-direction: column; gap: 10px; }
+.mall-orders { display: flex; flex-direction: column; gap: calc(10 * var(--page-u)); }
 .mall-order-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
+  gap: calc(16 * var(--page-u));
+  padding: calc(14 * var(--page-u)) calc(20 * var(--page-u));
 }
 .mall-order-info { flex: 1; min-width: 0; }
-.mall-order-name { font-size: 15px; font-weight: 800; color: #1d3a5f; }
-.mall-order-time { font-size: 12px; color: #8aa9c4; margin-top: 2px; }
-.mall-order-code { font-size: 13px; color: #5b7a99; }
+.mall-order-name { font-size: calc(15 * var(--page-u)); font-weight: 800; color: #1d3a5f; }
+.mall-order-time { font-size: calc(12 * var(--page-u)); color: #8aa9c4; margin-top: calc(2 * var(--page-u)); }
+.mall-order-code { font-size: calc(13 * var(--page-u)); color: #5b7a99; }
 .mall-order-code b {
-  font-size: 18px;
+  font-size: calc(18 * var(--page-u));
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: calc(2 * var(--page-u));
   color: #b7791f;
-  margin-left: 4px;
+  margin-left: calc(4 * var(--page-u));
 }
-.mall-order-coins { font-size: 13px; font-weight: 800; color: #ff8a3d; }
+.mall-order-coins { font-size: calc(13 * var(--page-u)); font-weight: 800; color: #ff8a3d; }
 
 /* 兑换成功弹窗 */
-.mall-success { text-align: center; padding: 8px 0 4px; }
-.mall-success-goods { font-size: 16px; font-weight: 800; color: #1d3a5f; margin-bottom: 12px; }
-.mall-success-label { font-size: 13px; color: #8aa9c4; }
+.mall-success { text-align: center; padding: calc(8 * var(--page-u)) 0 calc(4 * var(--page-u)); }
+.mall-success-goods { font-size: calc(16 * var(--page-u)); font-weight: 800; color: #1d3a5f; margin-bottom: calc(12 * var(--page-u)); }
+.mall-success-label { font-size: calc(13 * var(--page-u)); color: #8aa9c4; }
 .mall-success-code {
-  font-size: 40px;
+  font-size: calc(40 * var(--page-u));
   font-weight: 900;
-  letter-spacing: 8px;
+  letter-spacing: calc(8 * var(--page-u));
   color: #b7791f;
-  margin: 6px 0 14px;
+  margin: calc(6 * var(--page-u)) 0 calc(14 * var(--page-u));
 }
-.mall-success-tip { font-size: 13px; color: #5b7a99; }
+.mall-success-tip { font-size: calc(13 * var(--page-u)); color: #5b7a99; }
 
 @media (max-width: 800px) {
   .mall-grid { grid-template-columns: repeat(2, 1fr); }
   .mall-top { flex-wrap: wrap; }
   .mall-top-collapse { min-width: 100%; }
-  .mall-order-row { flex-wrap: wrap; gap: 8px; }
+  .mall-order-row { flex-wrap: wrap; gap: calc(8 * var(--page-u)); }
 }

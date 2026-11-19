@@ -1,99 +1,99 @@
 /* WrongBookPage.css - 学员端错题本（统计区 + 双页签 + 三栏） */
 
 .wrong-book {
-  max-width: 1320px;
+  max-width: calc(1320 * var(--page-u));
   margin: 0 auto;
-  padding: 16px 12px 88px; /* 底部留出导航栏空间 */
+  padding: calc(16 * var(--page-u)) calc(12 * var(--page-u)) calc(88 * var(--page-u)); /* 底部留出导航栏空间 */
 }
 
 .wrong-card {
-  padding: 20px;
-  border-radius: 16px;
+  padding: calc(20 * var(--page-u));
+  border-radius: calc(16 * var(--page-u));
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 6px 20px rgba(2, 119, 189, 0.12);
+  box-shadow: 0 calc(6 * var(--page-u)) calc(20 * var(--page-u)) rgba(2, 119, 189, 0.12);
 }
 
 .wrong-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 30px;
+  gap: calc(8 * var(--page-u));
+  font-size: calc(30 * var(--page-u));
   font-weight: 700;
   color: #0277bd;
 }
 
 .wrong-sub {
-  font-size: 21px;
+  font-size: calc(21 * var(--page-u));
   color: #90a4ae;
-  margin: 4px 0 16px;
+  margin: calc(4 * var(--page-u)) 0 calc(16 * var(--page-u));
 }
 
 .wrong-empty {
   text-align: center;
-  padding: 48px 0;
+  padding: calc(48 * var(--page-u)) 0;
   color: #90a4ae;
 }
 .wrong-empty-icon {
   display: block;
-  font-size: 53px;
+  font-size: calc(53 * var(--page-u));
   color: #7ed3a4;
-  margin-bottom: 10px;
+  margin-bottom: calc(10 * var(--page-u));
 }
 .wrong-empty-small {
-  padding: 20px 8px;
+  padding: calc(20 * var(--page-u)) calc(8 * var(--page-u));
   text-align: center;
-  font-size: 21px;
+  font-size: calc(21 * var(--page-u));
   color: #90a4ae;
 }
 
 /* ---------------- 顶部统计区 ---------------- */
 .wrong-stats {
   display: grid;
-  grid-template-columns: 330px 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 12px;
+  grid-template-columns: calc(330 * var(--page-u)) 1fr 1fr;
+  gap: calc(16 * var(--page-u));
+  margin-bottom: calc(12 * var(--page-u));
 }
 .wrong-stats-pie {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: calc(14 * var(--page-u));
   background: #f8fcff;
-  border: 1px solid #e3f2fd;
-  border-radius: 12px;
-  padding: 14px;
+  border: calc(1 * var(--page-u)) solid #e3f2fd;
+  border-radius: calc(12 * var(--page-u));
+  padding: calc(14 * var(--page-u));
 }
 .wrong-donut {
-  width: 132px;
-  height: 132px;
+  width: calc(132 * var(--page-u));
+  height: calc(132 * var(--page-u));
   flex: 0 0 auto;
 }
 .wrong-donut-total {
-  font-size: 39px;
+  font-size: calc(39 * var(--page-u));
   font-weight: 700;
   fill: #0277bd;
 }
 .wrong-donut-label {
-  font-size: 18px;
+  font-size: calc(18 * var(--page-u));
   fill: #90a4ae;
 }
 .wrong-donut-legend {
   flex: 1 1 auto;
   min-width: 0;
-  max-height: 140px;
+  max-height: calc(140 * var(--page-u));
   overflow-y: auto;
 }
 .wrong-legend-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 19.5px;
+  gap: calc(6 * var(--page-u));
+  font-size: calc(19.5 * var(--page-u));
   color: #455a64;
-  padding: 3px 0;
+  padding: calc(3 * var(--page-u)) 0;
 }
 .wrong-legend-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 3px;
+  width: calc(11 * var(--page-u));
+  height: calc(11 * var(--page-u));
+  border-radius: calc(3 * var(--page-u));
   flex: 0 0 auto;
 }
 .wrong-legend-name {
@@ -110,54 +110,54 @@
 
 .wrong-stat-block {
   background: #f8fcff;
-  border: 1px solid #e3f2fd;
-  border-radius: 12px;
-  padding: 14px;
+  border: calc(1 * var(--page-u)) solid #e3f2fd;
+  border-radius: calc(12 * var(--page-u));
+  padding: calc(14 * var(--page-u));
 }
 .wrong-stat-block-title {
-  font-size: 21px;
+  font-size: calc(21 * var(--page-u));
   font-weight: 700;
   color: #0277bd;
-  margin-bottom: 8px;
+  margin-bottom: calc(8 * var(--page-u));
 }
 .wrong-stat-empty {
-  font-size: 19.5px;
+  font-size: calc(19.5 * var(--page-u));
   color: #90a4ae;
-  padding: 8px 0;
+  padding: calc(8 * var(--page-u)) 0;
 }
 .wrong-stat-list {
-  max-height: 140px;
+  max-height: calc(140 * var(--page-u));
   overflow-y: auto;
 }
 .wrong-stat-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 19.5px;
+  gap: calc(8 * var(--page-u));
+  padding: calc(4 * var(--page-u)) 0;
+  font-size: calc(19.5 * var(--page-u));
   color: #455a64;
 }
 .wrong-stat-name {
-  flex: 0 0 96px;
+  flex: 0 0 calc(96 * var(--page-u));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .wrong-stat-bar {
   flex: 1 1 auto;
-  height: 9px;
-  border-radius: 4px;
+  height: calc(9 * var(--page-u));
+  border-radius: calc(4 * var(--page-u));
   background: #e3f2fd;
   overflow: hidden;
 }
 .wrong-stat-bar > span {
   display: block;
   height: 100%;
-  border-radius: 4px;
+  border-radius: calc(4 * var(--page-u));
   background: linear-gradient(90deg, #4bb7e8, #7ed3a4);
 }
 .wrong-stat-count {
-  flex: 0 0 28px;
+  flex: 0 0 calc(28 * var(--page-u));
   text-align: right;
   color: #0288d1;
   font-weight: 600;
@@ -166,41 +166,41 @@
 /* ---------------- 三栏布局 ---------------- */
 .wrong-columns {
   display: grid;
-  grid-template-columns: 190px 210px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: calc(190 * var(--page-u)) calc(210 * var(--page-u)) minmax(0, 1fr);
+  gap: calc(14 * var(--page-u));
   align-items: start;
 }
 .wrong-col {
   background: #f8fcff;
-  border: 1px solid #e3f2fd;
-  border-radius: 12px;
-  padding: 12px;
+  border: calc(1 * var(--page-u)) solid #e3f2fd;
+  border-radius: calc(12 * var(--page-u));
+  padding: calc(12 * var(--page-u));
   min-width: 0;
 }
 .wrong-col-title {
-  font-size: 22.5px;
+  font-size: calc(22.5 * var(--page-u));
   font-weight: 700;
   color: #0277bd;
-  margin-bottom: 10px;
+  margin-bottom: calc(10 * var(--page-u));
 }
 .wrong-col-scroll {
-  max-height: 560px;
+  max-height: calc(560 * var(--page-u));
   overflow-y: auto;
-  padding-right: 2px;
+  padding-right: calc(2 * var(--page-u));
 }
 .wrong-col-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: calc(6 * var(--page-u));
   width: 100%;
   text-align: left;
-  border: 1px solid transparent;
+  border: calc(1 * var(--page-u)) solid transparent;
   background: transparent;
-  border-radius: 8px;
-  padding: 9px 10px;
-  margin-bottom: 6px;
-  font-size: 22.5px;
+  border-radius: calc(8 * var(--page-u));
+  padding: calc(9 * var(--page-u)) calc(10 * var(--page-u));
+  margin-bottom: calc(6 * var(--page-u));
+  font-size: calc(22.5 * var(--page-u));
   color: #37474f;
   cursor: pointer;
   transition: all .15s;
@@ -223,74 +223,74 @@
 }
 .wrong-col-count {
   flex: 0 0 auto;
-  font-size: 21px;
+  font-size: calc(21 * var(--page-u));
   color: #0288d1;
 }
 
 /* ---------------- 知识点分组 + 错题卡片 ---------------- */
 .wrong-kp-group {
-  margin-bottom: 16px;
+  margin-bottom: calc(16 * var(--page-u));
 }
 .wrong-kp-group-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin: 4px 0 10px;
+  gap: calc(8 * var(--page-u));
+  margin: calc(4 * var(--page-u)) 0 calc(10 * var(--page-u));
 }
 .wrong-kp-group-name {
-  font-size: 22.5px;
+  font-size: calc(22.5 * var(--page-u));
   font-weight: 700;
   color: #6a1b9a;
 }
 .wrong-kp {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 21px;
+  gap: calc(4 * var(--page-u));
+  font-size: calc(21 * var(--page-u));
   color: #6a1b9a;
   background: #f3e5f5;
-  border-radius: 8px;
-  padding: 3px 12px;
+  border-radius: calc(8 * var(--page-u));
+  padding: calc(3 * var(--page-u)) calc(12 * var(--page-u));
 }
 .wrong-repo {
-  font-size: 19.5px;
+  font-size: calc(19.5 * var(--page-u));
   color: #90a4ae;
 }
 
 .wrong-card-item {
-  border: 1px solid #e3f2fd;
-  border-radius: 14px;
-  padding: 16px 18px;
-  margin-bottom: 14px;
+  border: calc(1 * var(--page-u)) solid #e3f2fd;
+  border-radius: calc(14 * var(--page-u));
+  padding: calc(16 * var(--page-u)) calc(18 * var(--page-u));
+  margin-bottom: calc(14 * var(--page-u));
   background: #fff;
 }
 .wrong-card-head {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: calc(10 * var(--page-u));
+  margin-bottom: calc(10 * var(--page-u));
 }
 /* 放大卡片内题型标签（antd Tag 默认偏小） */
 .wrong-card-item .ant-tag {
-  font-size: 21px;
-  line-height: 24px;
-  padding: 2px 12px;
+  font-size: calc(21 * var(--page-u));
+  line-height: calc(24 * var(--page-u));
+  padding: calc(2 * var(--page-u)) calc(12 * var(--page-u));
   margin: 0;
 }
 .wrong-question {
-  font-size: 25.5px;
+  font-size: calc(25.5 * var(--page-u));
   font-weight: 600;
   color: #263238;
-  margin-bottom: 12px;
+  margin-bottom: calc(12 * var(--page-u));
   line-height: 1.6;
 }
 .wrong-ans {
-  font-size: 22.5px;
-  border-radius: 10px;
-  padding: 8px 12px;
-  margin-bottom: 8px;
+  font-size: calc(22.5 * var(--page-u));
+  border-radius: calc(10 * var(--page-u));
+  padding: calc(8 * var(--page-u)) calc(12 * var(--page-u));
+  margin-bottom: calc(8 * var(--page-u));
   line-height: 1.6;
 }
 .wrong-ans-mine {
@@ -305,11 +305,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
+  gap: calc(8 * var(--page-u));
+  margin-top: calc(8 * var(--page-u));
 }
 .wrong-meta {
-  font-size: 19.5px;
+  font-size: calc(19.5 * var(--page-u));
   color: #90a4ae;
 }
 
@@ -317,73 +317,73 @@
 .wrong-type-groups {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: calc(16 * var(--page-u));
 }
 .wrong-type-group-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: calc(8 * var(--page-u));
+  margin-bottom: calc(10 * var(--page-u));
 }
 .wrong-type-group-count {
-  font-size: 19.5px;
+  font-size: calc(19.5 * var(--page-u));
   color: #90a4ae;
 }
 
 /* ---------------- 消灭错题弹层 ---------------- */
 .wrong-drill {
-  min-height: 220px;
+  min-height: calc(220 * var(--page-u));
 }
 .wrong-drill-loading {
-  padding: 48px 0;
+  padding: calc(48 * var(--page-u)) 0;
   text-align: center;
   color: #90a4ae;
 }
 .wrong-drill-progress {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: calc(12 * var(--page-u));
+  margin-bottom: calc(16 * var(--page-u));
 }
 .wrong-drill-progress .ant-progress {
   flex: 1 1 auto;
 }
 .wrong-drill-result {
-  padding: 16px 4px;
+  padding: calc(16 * var(--page-u)) calc(4 * var(--page-u));
 }
 .wrong-drill-result-ok {
-  font-size: 24px;
+  font-size: calc(24 * var(--page-u));
   font-weight: 700;
   color: #2e7d32;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 20px 0;
+  gap: calc(8 * var(--page-u));
+  padding: calc(20 * var(--page-u)) 0;
 }
 .wrong-drill-result-no {
-  font-size: 22.5px;
+  font-size: calc(22.5 * var(--page-u));
   font-weight: 600;
   color: #c62828;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: calc(8 * var(--page-u));
+  margin-bottom: calc(12 * var(--page-u));
 }
 .wrong-drill-wrong-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: calc(8 * var(--page-u));
 }
 .wrong-drill-wrong-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: calc(8 * var(--page-u));
   background: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 19.5px;
+  border: calc(1 * var(--page-u)) solid #ffccc7;
+  border-radius: calc(8 * var(--page-u));
+  padding: calc(8 * var(--page-u)) calc(12 * var(--page-u));
+  font-size: calc(19.5 * var(--page-u));
 }
 .wrong-drill-wrong-name {
   flex: 1 1 auto;

@@ -4,8 +4,8 @@
  *      内容变多时卡片跟着长高，交给浏览器整体滚动，卡内不做滚动条。
  * ============================================================ */
 :root {
-  --quiz-stage-w: 1240px;
-  --quiz-stage-min: clamp(520px, calc(100vh - 260px), 720px);
+  --quiz-stage-w: calc(1240 * var(--page-u));
+  --quiz-stage-min: clamp(calc(520 * var(--page-u)), calc(100vh - calc(260 * var(--page-u))), calc(720 * var(--page-u)));
 }
 
 /* 双类名提高优先级，避免被各页后加载的同名单类规则覆盖 */

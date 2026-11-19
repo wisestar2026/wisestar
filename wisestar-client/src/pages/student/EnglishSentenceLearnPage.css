@@ -13,19 +13,19 @@
 
 /* ---------- 课本跟读入口条（四段链路的第 1 段，独立页面） ---------- */
 .eng-sentence-read-aloud {
-  margin-top: calc(18 * var(--eng-u));
+  margin-top: calc(18 * var(--page-u));
 }
 .eng-sentence-ra-btn {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: calc(12 * var(--eng-u));
-  padding: calc(14 * var(--eng-u)) calc(22 * var(--eng-u));
-  border: calc(1 * var(--eng-u)) dashed #a8d8ef;
-  border-radius: calc(14 * var(--eng-u));
+  gap: calc(12 * var(--page-u));
+  padding: calc(14 * var(--page-u)) calc(22 * var(--page-u));
+  border: calc(1 * var(--page-u)) dashed #a8d8ef;
+  border-radius: calc(14 * var(--page-u));
   background: linear-gradient(135deg, #f0faff, #e3f4ff);
   color: #12769f;
-  font-size: calc(22 * var(--eng-u));
+  font-size: calc(22 * var(--page-u));
   font-weight: 900;
   cursor: pointer;
   text-align: left;
@@ -33,11 +33,11 @@
 }
 .eng-sentence-ra-btn:hover {
   border-color: #4bb7e8;
-  transform: translateY(calc(-1 * var(--eng-u)));
+  transform: translateY(calc(-1 * var(--page-u)));
 }
 .eng-sentence-ra-btn span {
   margin-left: auto;
-  font-size: calc(19 * var(--eng-u));
+  font-size: calc(19 * var(--page-u));
   font-weight: 700;
   color: #6a93a8;
 }
@@ -46,53 +46,53 @@
 .eng-sentence-stages {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: calc(20 * var(--eng-u));
+  gap: calc(20 * var(--page-u));
 }
 .eng-sentence-col {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: calc(18 * var(--eng-u));
+  gap: calc(18 * var(--page-u));
   min-width: 0;
 }
 /* 列标题矩形：颜色区分阶段，文字居中加粗 */
 .eng-sentence-col-head {
-  padding: calc(12 * var(--eng-u)) calc(16 * var(--eng-u));
-  border-radius: calc(12 * var(--eng-u));
+  padding: calc(12 * var(--page-u)) calc(16 * var(--page-u));
+  border-radius: calc(12 * var(--page-u));
   color: #fff;
-  font-size: calc(22 * var(--eng-u));
+  font-size: calc(22 * var(--page-u));
   font-weight: 900;
   text-align: center;
-  letter-spacing: calc(2 * var(--eng-u));
+  letter-spacing: calc(2 * var(--page-u));
 }
 .eng-sentence-col-head-memory {
   background: linear-gradient(135deg, #2fb6e8, #0e8fc4);
-  box-shadow: 0 calc(6 * var(--eng-u)) calc(16 * var(--eng-u)) rgba(22, 181, 230, 0.28);
+  box-shadow: 0 calc(6 * var(--page-u)) calc(16 * var(--page-u)) rgba(22, 181, 230, 0.28);
 }
 .eng-sentence-col-head-practice {
   background: linear-gradient(135deg, #d9701c, #b4550d);
-  box-shadow: 0 calc(6 * var(--eng-u)) calc(16 * var(--eng-u)) rgba(199, 94, 14, 0.28);
+  box-shadow: 0 calc(6 * var(--page-u)) calc(16 * var(--page-u)) rgba(199, 94, 14, 0.28);
 }
 .eng-sentence-col-head-use {
   background: linear-gradient(135deg, #21cb68, #029c46);
-  box-shadow: 0 calc(6 * var(--eng-u)) calc(16 * var(--eng-u)) rgba(2, 180, 81, 0.28);
+  box-shadow: 0 calc(6 * var(--page-u)) calc(16 * var(--page-u)) rgba(2, 180, 81, 0.28);
 }
 /* 圆环区：纵向排列，统一居中 */
 .eng-sentence-col-body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(22 * var(--eng-u));
-  padding: calc(4 * var(--eng-u)) 0 calc(8 * var(--eng-u));
+  gap: calc(22 * var(--page-u));
+  padding: calc(4 * var(--page-u)) 0 calc(8 * var(--page-u));
 }
 /* 列内圆环统一尺寸：不受「首环放大」影响，三列看起来一样大 */
 .eng-sentence-col-body .eng-ring-frame,
 .eng-sentence-col-body .eng-ring-lg .eng-ring-frame {
-  width: clamp(calc(112 * var(--eng-u)), 8.4vw, calc(150 * var(--eng-u)));
+  width: clamp(calc(112 * var(--page-u)), 8.4vw, calc(150 * var(--page-u)));
 }
 /* 列内文案随环径轻微缩放，保证三列字数不同的题型都不溢出 */
 .eng-sentence-col-body .eng-ring-text b {
-  font-size: clamp(calc(14 * var(--eng-u)), 1.05vw, calc(17 * var(--eng-u)));
+  font-size: clamp(calc(14 * var(--page-u)), 1.05vw, calc(17 * var(--page-u)));
 }
 
 /* 宽屏：列间浅色竖虚线用伪元素画，保证三列内容区等宽 */
@@ -101,10 +101,10 @@
   .eng-sentence-col + .eng-sentence-col::before {
     content: '';
     position: absolute;
-    top: calc(6 * var(--eng-u));
-    bottom: calc(6 * var(--eng-u));
-    left: calc(-10 * var(--eng-u));
-    border-left: calc(1 * var(--eng-u)) dashed #d9ecf7;
+    top: calc(6 * var(--page-u));
+    bottom: calc(6 * var(--page-u));
+    left: calc(-10 * var(--page-u));
+    border-left: calc(1 * var(--page-u)) dashed #d9ecf7;
   }
 }
 
@@ -114,27 +114,27 @@
     grid-template-columns: minmax(0, 1fr);
     /* 共享骨架在窄屏用 justify-items:center 居中圆环，本页有整行标题矩形，需拉满 */
     justify-items: stretch;
-    gap: calc(18 * var(--eng-u));
+    gap: calc(18 * var(--page-u));
   }
   .eng-sentence-col + .eng-sentence-col {
-    border-top: calc(1 * var(--eng-u)) dashed #d9ecf7;
-    padding-top: calc(20 * var(--eng-u));
+    border-top: calc(1 * var(--page-u)) dashed #d9ecf7;
+    padding-top: calc(20 * var(--page-u));
   }
   /* 窄屏一列只有 2~3 个环，横向排开更省高度 */
   .eng-sentence-col-body {
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    gap: calc(16 * var(--eng-u));
+    gap: calc(16 * var(--page-u));
   }
 }
 
 @media (max-width: 760px) {
-  .eng-sentence-ra-btn { font-size: calc(20 * var(--eng-u)); flex-wrap: wrap; gap: calc(6 * var(--eng-u)); }
-  .eng-sentence-ra-btn span { margin-left: 0; font-size: calc(17 * var(--eng-u)); }
-  .eng-sentence-col-head { font-size: calc(20 * var(--eng-u)); padding: calc(10 * var(--eng-u)) calc(14 * var(--eng-u)); }
+  .eng-sentence-ra-btn { font-size: calc(20 * var(--page-u)); flex-wrap: wrap; gap: calc(6 * var(--page-u)); }
+  .eng-sentence-ra-btn span { margin-left: 0; font-size: calc(17 * var(--page-u)); }
+  .eng-sentence-col-head { font-size: calc(20 * var(--page-u)); padding: calc(10 * var(--page-u)) calc(14 * var(--page-u)); }
   .eng-sentence-col-body .eng-ring-frame,
   .eng-sentence-col-body .eng-ring-lg .eng-ring-frame {
-    width: clamp(calc(104 * var(--eng-u)), 28vw, calc(132 * var(--eng-u)));
+    width: clamp(calc(104 * var(--page-u)), 28vw, calc(132 * var(--page-u)));
   }
 }

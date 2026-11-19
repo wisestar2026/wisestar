@@ -118,7 +118,7 @@ export default function MallPage() {
     <div className="sll-page-enter mall-page">
       {/* ---- 顶部数据区 ---- */}
       <div className="sll-card mall-top">
-        <IconTile emoji="🐚" tone="gold" size="2xl" style={{ '--it-size': '76px' }} />
+        <IconTile emoji="🐚" tone="gold" size="2xl" style={{ '--it-size': 'calc(76 * var(--page-u))' }} />
         <div className="mall-top-info">
           <div className="mall-top-label">本学期可兑换总学习币</div>
           <div className="mall-top-num">{coins}</div>

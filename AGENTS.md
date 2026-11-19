@@ -50,7 +50,7 @@ cd wisestar-client && npm ci && npm run dev
 - 重型库按需动态加载（如 `jsencrypt` 在点登录时 `import()`）；首屏 gzip 预算约 300KB，新增全局依赖前先估算。
 - 低配降级：`utils/perfLight.js` 自动判定（`hardwareConcurrency<=4`/`deviceMemory<=4`）并加 `html.low-perf`，`styles/low-perf.css` 关闭毛玻璃与无限装饰动画；`?perf=light|high` 可人工强制。
 - 学员端新增样式避免 `backdrop-filter` 与大面积常驻 `animation`，需要时用 `low-perf` 类提供降级写法。
-- 英语子页按视口比例缩放：`styles/eng-scale.css` 在 `:root` 提供 `--eng-u`（1366→1px，宽屏按视口宽/1366 放大，封顶 1.75，≤760px 固定 1px）。英语页面自有 CSS 的尺寸统一写 `calc(原px * var(--eng-u))`；SVG 的 `size` 属性用 `utils/engScale.js` 的 `useEngUnit()` 同步。共享样式（`quiz-stage.css`、`KnowledgeDetectPage.css`、`QuestionCard`）不要用该变量，避免波及数学/检测等非英语页面。三列/多列流程按容器宽度收敛：带单元栏的页面整页宽度 100%（上限 1600×变量），1281~1600 收窄箭头与主环，≤1280 堆叠并隐藏箭头；新增英语页沿用该口径，不要在页面里另写媒体查询跳档。
+- 学员端页面按视口比例缩放：`styles/page-scale.css` 在 `:root` 提供 `--page-u`（及其原始值 `--page-u-raw`；1366→1px，宽屏按视口宽/1366 放大，封顶 1.75，≤760px 固定 1px）。学员端页面 CSS（首页/研习/知识点/检测/错题/档案/商城/英语/登录）与共用 `quiz-stage.css`、`QuestionCard.css`、`VirtualKeyboard.css`、`IconTile.css` 的尺寸统一写 `calc(原px * var(--page-u))`；SVG 的 `size` 属性用 `utils/pageScale.js` 的 `usePageUnit()` 同步。顶部通栏在 `student.css` 里把 `--page-u` 局部封顶 1.2，避免宽屏徽标把它挤成两行；管理端 CSS 不要引用该变量。`@media` 断点仍用视口 px，不随变量换算。三列/多列流程按容器宽度收敛：带单元栏的页面整页宽度 100%（上限 1600×变量），1281~1600 收窄箭头与主环，≤1280 堆叠并隐藏箭头；新增学员页沿用该口径，不要在页面里另写媒体查询跳档。
 
 ## 做题界面版式约定（学员端）
 

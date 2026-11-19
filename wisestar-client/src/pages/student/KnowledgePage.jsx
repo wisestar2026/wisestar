@@ -536,7 +536,7 @@ export default function KnowledgePage() {
   if (realMode) {
     return (
       <div className={`sll-page-enter knowledge-page${tab === 'preview' || tab === 'wrong' || quizMode ? ' knowledge-page-wide' : ''}`}>
-        <div className="sll-card" style={{ padding: 24, maxWidth: tab === 'preview' ? 960 : (tab === 'wrong' ? 1300 : (quizMode ? 1340 : 720)), margin: '0 auto' }}>
+        <div className="sll-card" style={{ padding: 'calc(24 * var(--page-u))', maxWidth: `calc(${tab === 'preview' ? 960 : (tab === 'wrong' ? 1300 : (quizMode ? 1340 : 720))} * var(--page-u))`, margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div>
               {tab !== 'preview' && (
@@ -597,7 +597,7 @@ export default function KnowledgePage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <b style={{ fontSize: 20 }}>错误归因：</b>
                     <Select
-                      style={{ width: 200 }} size="small" placeholder="选择错误原因"
+                      style={{ width: 'calc(200 * var(--page-u))' }} size="small" placeholder="选择错误原因"
                       value={wrongReasons[q.id]}
                       onChange={(v) => { setWrongReasons((p) => ({ ...p, [q.id]: v })); }}
                       options={['大意', '计算错误', '知识点不熟', '题型不会'].map((r) => ({ value: r, label: r }))}
@@ -860,7 +860,7 @@ export default function KnowledgePage() {
                         {schema.attribute?.examImages?.length > 0 && (
                           <div className="knowledge-q-images">
                             {schema.attribute.examImages.map((img, i) => (
-                              <Image key={i} src={img} alt="题目配图" style={{ maxWidth: 480, marginBottom: 8 }} />
+                              <Image key={i} src={img} alt="题目配图" style={{ maxWidth: 'calc(480 * var(--page-u))', marginBottom: 'calc(8 * var(--page-u))' }} />
                             ))}
                           </div>
                         )}

@@ -15,16 +15,16 @@
   position: absolute;
   left: -20%;
   right: -20%;
-  height: 160px;
+  height: calc(160 * var(--page-u));
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
 }
 .sl-wave-back {
-  bottom: -60px;
+  bottom: calc(-60 * var(--page-u));
   background: rgba(255, 255, 255, 0.35);
   transform: rotate(-2deg);
 }
 .sl-wave-front {
-  bottom: -90px;
+  bottom: calc(-90 * var(--page-u));
   background: rgba(255, 255, 255, 0.55);
   transform: rotate(3deg);
 }
@@ -32,7 +32,7 @@
 /* ---- 气泡/海洋元素 ---- */
 .sl-bubble {
   position: absolute;
-  font-size: 44px;
+  font-size: calc(44 * var(--page-u));
   opacity: 0.75;
   animation: sl-float 5s ease-in-out infinite;
 }
@@ -41,30 +41,30 @@
 .sl-bubble-3 { bottom: 22%; left: 16%; animation-delay: 3s; }
 @keyframes sl-float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
+  50% { transform: translateY(calc(-14 * var(--page-u))); }
 }
 
 /* ---- 居中登录卡片 ---- */
 .sl-card {
-  width: 400px;
-  max-width: calc(100vw - 40px);
+  width: calc(400 * var(--page-u));
+  max-width: calc(100vw - calc(40 * var(--page-u)));
   background: rgba(255, 255, 255, 0.92);
-  border-radius: 20px;
-  padding: 36px 36px 24px;
-  box-shadow: 0 12px 40px rgba(2, 119, 189, 0.25);
-  backdrop-filter: blur(6px);
+  border-radius: calc(20 * var(--page-u));
+  padding: calc(36 * var(--page-u)) calc(36 * var(--page-u)) calc(24 * var(--page-u));
+  box-shadow: 0 calc(12 * var(--page-u)) calc(40 * var(--page-u)) rgba(2, 119, 189, 0.25);
+  backdrop-filter: blur(calc(6 * var(--page-u)));
   position: relative;
   z-index: 2;
 }
 
 .sl-brand {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: calc(28 * var(--page-u));
 }
 .sl-brand-logo {
-  font-size: 46px;
+  font-size: calc(46 * var(--page-u));
   line-height: 1;
-  margin-bottom: 6px;
+  margin-bottom: calc(6 * var(--page-u));
 }
 .sl-title {
   margin: 0 !important;
@@ -78,18 +78,18 @@
 .sl-submit {
   background: linear-gradient(135deg, #29b6f6 0%, #0288d1 100%);
   border: none;
-  border-radius: 8px;
-  height: 44px;
+  border-radius: calc(8 * var(--page-u));
+  height: calc(44 * var(--page-u));
   font-weight: 600;
 }
 
 .sl-footer {
-  margin-top: 8px;
+  margin-top: calc(8 * var(--page-u));
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: #90a4ae;
-  font-size: 13px;
+  font-size: calc(13 * var(--page-u));
 }
 .sl-footer a {
   color: #0288d1;

@@ -59,7 +59,7 @@ export default function ProfilePage() {
     <div className="sll-page-enter profile-page">
       {/* ---- 顶部: 个人信息大卡 ---- */}
       <div className="sll-card profile-info">
-        <IconTile emoji={PROFILE.emoji} tone="blue" size="2xl" round style={{ '--it-size': '88px' }} />
+        <IconTile emoji={PROFILE.emoji} tone="blue" size="2xl" round style={{ '--it-size': 'calc(88 * var(--page-u))' }} />
         <div className="profile-info-main">
           <div className="profile-name">{name}</div>
           <div className="profile-title-chip"><IconTile emoji="🏆" tone="gold" size="xs" /> 最高头衔 · {titleName}</div>

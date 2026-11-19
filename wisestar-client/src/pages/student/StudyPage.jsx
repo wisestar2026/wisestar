@@ -22,6 +22,7 @@ import { getStudySections, uploadActivity, getStudentStats } from '../../api/stu
 import IconTile from '../../components/common/IconTile';
 import StarRating from '../../components/common/StarRating';
 import { IMPORTANCE_META } from '../../utils/importance';
+import { usePageUnit } from '../../utils/pageScale';
 import './StudyPage.css';
 
 // 四大核心功能按钮配置（short 用于小节行内的紧凑按钮；tone 为 3D 黏土图标色调）
@@ -44,6 +45,7 @@ const sectionMastery = (pct) => {
 
 export default function StudyPage() {
   const navigate = useNavigate();
+  const pageScale = usePageUnit();
   const {
     activeSubject, version, grade, term, pureMode,
     studyContent, fetchStudyChapters, fetchStudyProgress, getVisibleSubjects,
@@ -289,7 +291,7 @@ export default function StudyPage() {
                   <div className="study-chapter-info">
                     <div className="study-chapter-name">
                       {ch.name}
-                      {realMode && <StarRating value={ch.progress || 0} size={13} className="study-chapter-stars" />}
+                      {realMode && <StarRating value={ch.progress || 0} size={Math.round(13 * pageScale)} className="study-chapter-stars" />}
                     </div>
                     {realMode ? (
                       <div className="study-chapter-sub">
@@ -512,7 +514,7 @@ export default function StudyPage() {
                           <div className="study-sec-title">
                             <span className="study-sec-name">{sec.name}</span>
                             {imp && <span className={`study-sec-imp ${sec.importance}`}>{imp.label}</span>}
-                            <StarRating value={passRate} size={17} className="study-kp-stars" />
+                            <StarRating value={passRate} size={Math.round(17 * pageScale)} className="study-kp-stars" />
                             <span className="study-sec-mastery" style={{ color: lv.color }}>{lv.label}</span>
                           </div>
                           <div className="study-sec-qstat">已完成 <b>{answeredCount}</b>/{questionCount} 题</div>
