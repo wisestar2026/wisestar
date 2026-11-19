@@ -63,17 +63,15 @@ export default function EnglishUnitPracticePage() {
     setStep('loading');
     try {
       const unitsRes = await getDetectUnits({ subjectId, grade, term });
+      // 检测单元名可能是「Unit 1」或「Module 1」，与内容包全名对不上时仍按单元全名组卷；
+      // chapterId 只用于收敛同名单元的薄弱点，缺失不影响出题。
       const target = matchDetectUnit(unitsRes?.data, unit);
-      if (!target) {
-        setStep('empty');
-        return;
-      }
       const genRes = await getEnglishUnitPaper({
         version,
         grade,
         term,
         unit,
-        chapterId: target.id,
+        chapterId: target?.id,
         questionCount: 36,
       });
       const list = genRes?.data || [];
@@ -81,7 +79,7 @@ export default function EnglishUnitPracticePage() {
         setStep('empty');
         return;
       }
-      setChapterId(target.id);
+      setChapterId(target?.id || '');
       setQuestions(list);
       setAnswers({});
       setChanges({});
