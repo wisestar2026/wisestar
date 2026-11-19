@@ -1358,6 +1358,13 @@
 - **类说明**：
   英语单元练习组卷请求。字段：version（教材版本）、grade（年级）、term（学期/册别）、unit（单元名）、chapterId（章节 ID，兼容旧调用）、questionCount（题量，默认 20）、module（可选；取「单词」「句式」「语法」时只组该模块，为空时按单词→句式→语法固定路径融合组卷）。
 
+### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishTtsPregenerateSummary.java`
+- 包: `cn.wisestar.server.domain.dto.english`
+- 类型: `class EnglishTtsPregenerateSummary`
+- 注解: @Data
+- **类说明**：
+  英语课程音频批量预生成统计。字段：total（去重后的音频总数，同一文本不同语速分别计数）、generated（本次新合成）、cached（命中缓存）、failed（失败）、elapsedMillis（总耗时）、sources（`Map<String, Source>`，key 形如「句子 @ 109」；Source 含 name/total/generated/cached/failed）。
+
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishUnitPaperSubmitRequest.java`
 - 包: `cn.wisestar.server.domain.dto.english`
 - 类型: `class EnglishUnitPaperSubmitRequest`
@@ -3058,12 +3065,25 @@
     服务端合成是否可用（引擎存在且已启用）。
   - `byte[] synthesize(String text, String speed)`
     合成英文短句音频；服务不可用或失败返回 null。
+  - `boolean cached(String text, String speed)`
+    按「归一化文本 + 语速」检查缓存文件是否存在且可读。
+  - `String normalizeText(String text)`
+    按运行时口径归一化文本（合并空白、超长截断）。
   - `default void warmUp(Collection<String> texts)`
     按默认语速预热一批文本。
   - `void warmUp(Collection<String> texts, String speed)`
     按指定语速预热（缓存键含语速，语速对不上的预热无效）。
   - `String contentType()`
     合成结果的 MIME 类型（如 audio/mpeg）。
+
+### `shared/src/main/java/cn/wisestar/server/service/EnglishTtsPregenerateService.java`
+- 包: `cn.wisestar.server.service`
+- 类型: `interface EnglishTtsPregenerateService`
+- **类说明**：
+  英语课程音频批量预生成服务。把句子、单词、课文跟读行与语法例句按学员端实际播放语速提前合成到本地缓存目录，发布时随部署包分发，线上首次点击直接命中缓存。
+- 方法:
+  - `EnglishTtsPregenerateSummary pregenerate()`
+    扫描当前内容库并补齐缺失音频缓存，返回分来源统计。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishUnitPaperService.java`
 - 包: `cn.wisestar.server.service`

@@ -104,6 +104,11 @@ english:
     daemon-max: 2  # 常驻进程上限（每个约 170MB 内存）；109/125 各一个
     daemon-idle-seconds: 0  # 0=不按闲置回收，保证首次点击也在 1s 内
     preload-speeds: 109,125  # 启动时预热：句子/课文 109、单词练习 125 都常驻
+    pregenerate:
+      enabled: false  # true=仅供 server/tts-pregenerate.sh 一次性批量合成，跑完进程自动退出
+      word-speeds: 109,125  # 单词学习页 109、单词练习页 125 都要预生成
+      limit: 0  # 0=全量；小流量冒烟可设 20
+      log-every: 50  # 每处理多少条输出一次进度
 
 # AI 服务配置
 ai:

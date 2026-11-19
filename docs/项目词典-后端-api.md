@@ -34,6 +34,19 @@
 
     **异常**：若数据库不可用、配置错误或端口被占用，启动过程会抛出异常并终止进程。
 
+### `api/src/main/java/cn/wisestar/server/EnglishTtsPregenerateRunner.java`
+- 包: `cn.wisestar.server`
+- 类型: `class EnglishTtsPregenerateRunner`
+- 注解: @Component, @RequiredArgsConstructor, @ConditionalOnProperty(name = "english.tts.pregenerate.enabled", havingValue = "true")
+- **类说明**：
+  英语课程音频预生成命令行入口（`ApplicationRunner`）。由 `server/tts-pregenerate.sh` 以 `-Denglish.tts.pregenerate.enabled=true` 和 `-Dspring.main.web-application-type=none` 触发，启动 Spring 容器后执行一次全量补齐，跑完主动关闭上下文并以退出码结束进程；不监听 HTTP 端口。
+- 注入/字段:
+  - `EnglishTtsPregenerateService pregenerateService`
+  - `ConfigurableApplicationContext context`
+- 方法:
+  - `public void run(ApplicationArguments args)`
+    执行预生成、逐来源打印统计并退出；失败数大于 0 返回 2，异常返回 1，正常返回 0。
+
 ### `api/src/main/java/cn/wisestar/server/api/ArchiveApi.java`
 - 包: `cn.wisestar.server.api`
 - 类型: `class ArchiveApi`

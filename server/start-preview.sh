@@ -38,6 +38,11 @@ fi
 
 cd "$API_DIR"
 
+# 若已用 tts-pregenerate.sh 生成课程音频，预览默认直接使用，避免重新走临时目录合成。
+if [ -z "${ENGLISH_TTS_CACHE_DIR:-}" ] && [ -d "$SERVER_DIR/tts-cache" ]; then
+  export ENGLISH_TTS_CACHE_DIR="$SERVER_DIR/tts-cache"
+fi
+
 URL='jdbc:h2:file:./wisestar;MODE=MySQL;DATABASE_TO_LOWER=TRUE'
 SQL_INIT_MODE=always
 

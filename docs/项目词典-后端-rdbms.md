@@ -1060,9 +1060,23 @@
 - 配置: `english.tts.engine`（piper/espeak/none）、`fallback-engine`、`piper-bin`、`piper-voice`、`espeak-bin`、`lame-bin`、`voice`、`speed`（默认 109 ≈ 常速 0.75 倍，Piper 侧按固定基准 145 换算 length-scale）、`max-chars`、`sentence-silence`、`cache-dir`、`timeout-seconds`、`warmup-threads`、`daemon`/`daemon-max`（默认 2）/`daemon-idle-seconds`（默认 0）/`preload-speeds`（默认 109,125，常驻进程）
 - 方法:
   - `public boolean available()`
+  - `public boolean cached(String text, String speed)`：按归一化文本 + 语速检查缓存文件是否存在且可读
+  - `public String normalizeText(String text)`：与合成共用同一套空白归一化与 `max-chars` 截断，供批量预生成去重
   - `public byte[] synthesize(String text, String speed)`：空白或超长文本归一化截断；失败返回 null
   - `public void warmUp(Collection<String> texts, String speed)`：按语速跳过已缓存文本，10 条一批后台合成（`warmUp(texts)` 为默认语速重载）
   - `public String contentType()`：`audio/mpeg` 或 `audio/wav`
+
+### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishTtsPregenerateServiceImpl.java`
+- 包: `cn.wisestar.server.impl`
+- 类型: `class EnglishTtsPregenerateServiceImpl implements EnglishTtsPregenerateService`
+- 注解: @Slf4j, @Service
+- **类说明**：
+  英语课程音频批量预生成实现，供 `server/tts-pregenerate.sh` 在发布前一次性跑完并随部署包分发。扫描 `t_english_sentence.en`（默认 109）、`t_english_word.spell`（109 与 125，覆盖单词学习页和练习页）、`t_english_read_aloud.content` 的 `en`（109）、`t_english_grammar` 的 `textbook`/`samples`/`examples`（109，兼容 JSON 字符串、字符串套 JSON、数组及 `{en,text,example}` 对象）。统一用 `EnglishTtsService.normalizeText` 归一化后按「语速 + 文本」跨来源去重，已缓存条目跳过；失败会重试一次并计入失败数。支持 `english.tts.pregenerate.limit` 限制本次总量用于冒烟、`log-every` 控制进度日志。
+- 配置: `english.tts.pregenerate.enabled`（命令行开关）、`word-speeds`（默认 `109,125`）、`limit`（0=全量）、`log-every`（默认 50）
+- 方法:
+  - `public EnglishTtsPregenerateSummary pregenerate()`：补齐缺失缓存，返回分来源统计
+  - `static List<String> jsonTexts(String raw, ObjectMapper mapper)`：解析结构化示例列，包内可见供单测
+  - `static List<Integer> parseSpeeds(String raw, int fallback)`：解析逗号语速并按运行时 80~220 边界收敛
 
 ### `rdbms/src/main/java/cn/wisestar/server/impl/EnglishScenarioPackServiceImpl.java`
 - 包: `cn.wisestar.server.impl`

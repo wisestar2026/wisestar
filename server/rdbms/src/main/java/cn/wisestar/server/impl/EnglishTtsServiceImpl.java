@@ -174,6 +174,9 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 				}
 			}
 		}
+		if (ready) {
+			initDaemonRates();
+		}
 		return ready;
 	}
 
@@ -181,6 +184,20 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	public String contentType() {
 		available();
 		return mp3Ready ? "audio/mpeg" : "audio/wav";
+	}
+
+	@Override
+	public boolean cached(String text, String speed) {
+		String normalized = normalize(text);
+		if (normalized == null) {
+			return false;
+		}
+		return cacheExists(normalized, parseSpeed(speed));
+	}
+
+	@Override
+	public String normalizeText(String text) {
+		return normalize(text);
 	}
 
 	@Override
@@ -253,7 +270,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		}
 		ThreadPoolExecutor pool = warmupPool();
 		List<String> pending = new ArrayList<>(unique);
-		pending.removeIf(text -> cached(text, rate));
+		pending.removeIf(text -> cacheExists(text, rate));
 		for (int i = 0; i < pending.size(); i += WARMUP_BATCH_SIZE) {
 			List<String> batch = new ArrayList<>(
 					pending.subList(i, Math.min(pending.size(), i + WARMUP_BATCH_SIZE)));
@@ -577,7 +594,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	}
 
 	/** 缓存是否已存在（缓存键含语速，须按实际播放语速判断） */
-	private boolean cached(String text, int rate) {
+	private boolean cacheExists(String text, int rate) {
 		Path target = cacheFile(text, rate);
 		return target != null && Files.isReadable(target);
 	}
@@ -613,6 +630,37 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	}
 
 	/**
+	 * 初始化允许常驻的语速。
+	 *
+	 * <p>不能只在 ApplicationReadyEvent 里做：批量预生成走 ApplicationRunner，
+	 * 会在 ready 事件之前开始合成，否则 125 这类非默认语速会被误判为「不允许常驻」，
+	 * 每个单词都退回一次性 Piper，速度慢几十倍。</p>
+	 */
+	private void initDaemonRates() {
+		if (!daemonRates.isEmpty()) {
+			return;
+		}
+		synchronized (daemonRates) {
+			if (!daemonRates.isEmpty()) {
+				return;
+			}
+			List<Integer> rates = new ArrayList<>();
+			if (preloadSpeeds != null) {
+				for (String part : preloadSpeeds.split(",")) {
+					if (!part.trim().isEmpty()) {
+						rates.add(parseSpeed(part));
+					}
+				}
+			}
+			if (rates.isEmpty()) {
+				rates.add(defaultSpeed);
+			}
+			preferredRate = rates.get(0);
+			daemonRates.addAll(rates);
+		}
+	}
+
+	/**
 	 * 启动后预热 Piper 模型：模型冷加载要 10 秒以上（磁盘 + ONNX 初始化），
 	 * 放在启动阶段跑掉，学员第一次点「听发音」就不用等这一下。
 	 *
@@ -624,20 +672,10 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		if (!available()) {
 			return;
 		}
-		List<Integer> rates = new ArrayList<>();
-		if (preloadSpeeds != null) {
-			for (String part : preloadSpeeds.split(",")) {
-				if (!part.trim().isEmpty()) {
-					rates.add(parseSpeed(part));
-				}
-			}
-		}
+		List<Integer> rates = new ArrayList<>(daemonRates);
 		if (rates.isEmpty()) {
 			rates.add(defaultSpeed);
 		}
-		preferredRate = rates.get(0);
-		daemonRates.clear();
-		daemonRates.addAll(rates);
 		try {
 			warmupPool().execute(() -> rates.forEach(rate -> {
 				// 起进程加载模型后走一次完整合成（含 mp3 转码），把 ONNX 首帧与 lame 启动开销都放在启动阶段
