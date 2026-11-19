@@ -42,6 +42,7 @@ import {
 import WordDrillModal from './WordDrillModal';
 import EnglishPracticeHistoryModal from '../../components/student/EnglishPracticeHistoryModal';
 import EnglishUnitAside from './EnglishUnitAside';
+import { useEngUnit } from '../../utils/engScale';
 import './EnglishCenterPage.css';
 
 const TERMS = ['上册', '下册'];
@@ -60,6 +61,8 @@ export default function EnglishCenterPage() {
   // 册别由首页统一选择，本页只读展示（不可切换）
   const term = useStudentStore((s) => s.term);
   const userId = useUserStore((s) => s.user?.userId ?? s.user?.id);
+  // rem 试点：块级尺寸交给 CSS 的 --eng-u，SVG 星星按同一比例缩放
+  const engUnitScale = useEngUnit();
 
   const [units, setUnits] = useState([]);
   const [activeUnit, setActiveUnit] = useState('');
@@ -241,7 +244,11 @@ export default function EnglishCenterPage() {
 
               <div className="eng-mastery-row">
                 <span className="eng-mastery-label">熟练度</span>
-                <StarRating value={active.mastery || 0} size={26} className="eng-unit-mastery-stars" />
+                <StarRating
+                  value={active.mastery || 0}
+                  size={Math.round(26 * engUnitScale)}
+                  className="eng-unit-mastery-stars"
+                />
                 <span className="eng-mastery-val">{active.mastery || 0}%</span>
               </div>
 

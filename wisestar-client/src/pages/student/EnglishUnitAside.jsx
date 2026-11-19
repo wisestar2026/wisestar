@@ -16,8 +16,10 @@
  */
 
 import StarRating from '../../components/common/StarRating';
+import { useEngUnit } from '../../utils/engScale';
 
 export default function EnglishUnitAside({ units = [], activeUnit, onSelect, title = '单元' }) {
+  const engUnitScale = useEngUnit();
   return (
     <aside className="eng-aside">
       <div className="eng-aside-title">{title}</div>
@@ -35,7 +37,7 @@ export default function EnglishUnitAside({ units = [], activeUnit, onSelect, tit
             >
               <span className="eng-aside-name">{name}</span>
               <span className="eng-aside-progress">
-                <StarRating value={pct} size={26} className="eng-aside-stars" />
+                <StarRating value={pct} size={Math.round(26 * engUnitScale)} className="eng-aside-stars" />
                 <span className="eng-aside-pct">达成 {pct}%</span>
               </span>
               <span className="eng-aside-track" aria-hidden="true">

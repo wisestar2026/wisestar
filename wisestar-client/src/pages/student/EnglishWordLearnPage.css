@@ -12,7 +12,7 @@
  * ============================================================ */
 
 /* ---------- 宽屏三阶圆环列宽（窄屏堆叠由共享样式接管） ---------- */
-@media (min-width: 1101px) {
+@media (min-width: 1281px) {
   .eng-word-stages {
     grid-template-columns: minmax(0, 1.1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   }

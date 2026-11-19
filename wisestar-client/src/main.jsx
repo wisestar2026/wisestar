@@ -25,6 +25,7 @@ import './index.css';
 import './styles/low-perf.css';
 import './styles/quiz-stage.css';
 import './styles/english-stage.css';
+import './styles/eng-scale.css';
 import { applyPerfMode } from './utils/perfLight';
 
 // 低配模式：必须在首屏渲染前判定，避免先画出毛玻璃再抖动一次

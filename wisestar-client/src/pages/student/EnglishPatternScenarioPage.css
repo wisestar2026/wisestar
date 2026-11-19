@@ -4,23 +4,23 @@
  * ============================================================ */
 
 .ps-context {
-  margin: 10px 0 2px;
-  padding: 8px 12px;
-  border-left: 3px solid #4bb7e8;
+  margin: calc(10 * var(--eng-u)) 0 calc(2 * var(--eng-u));
+  padding: calc(8 * var(--eng-u)) calc(12 * var(--eng-u));
+  border-left: calc(3 * var(--eng-u)) solid #4bb7e8;
   background: #f3fafd;
-  border-radius: 0 10px 10px 0;
-  font-size: 19.5px;
+  border-radius: 0 calc(10 * var(--eng-u)) calc(10 * var(--eng-u)) 0;
+  font-size: calc(19.5 * var(--eng-u));
   color: #42708a;
   line-height: 1.6;
 }
 
 /* ---------- 作答轮：中文情景提示 ---------- */
-.ps-ask { padding-top: 12px; }
+.ps-ask { padding-top: calc(12 * var(--eng-u)); }
 .ps-cue {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 21px;
+  gap: calc(8 * var(--eng-u));
+  font-size: calc(21 * var(--eng-u));
   font-weight: 700;
   color: #0f6f96;
   line-height: 1.6;
@@ -29,9 +29,9 @@
   flex: 0 0 auto;
   background: #ff9a76;
   color: #fff;
-  border-radius: 6px;
-  padding: 1px 8px;
-  font-size: 18px;
+  border-radius: calc(6 * var(--eng-u));
+  padding: calc(1 * var(--eng-u)) calc(8 * var(--eng-u));
+  font-size: calc(18 * var(--eng-u));
   font-weight: 800;
 }
 
@@ -39,40 +39,40 @@
 .ps-options {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
+  gap: calc(8 * var(--eng-u));
+  margin-top: calc(10 * var(--eng-u));
 }
 .ps-option {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(10 * var(--eng-u));
   width: 100%;
   text-align: left;
-  padding: 9px 12px;
-  border: 1.5px solid #dcebf3;
-  border-radius: 12px;
+  padding: calc(9 * var(--eng-u)) calc(12 * var(--eng-u));
+  border: calc(1.5 * var(--eng-u)) solid #dcebf3;
+  border-radius: calc(12 * var(--eng-u));
   background: #fff;
   cursor: pointer;
-  font-size: 21px;
+  font-size: calc(21 * var(--eng-u));
   color: #1c3d4d;
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 .ps-option:hover:not(:disabled) { border-color: #4bb7e8; background: #f5fbfe; }
 .ps-option:disabled { cursor: default; }
 .ps-option-label {
-  flex: 0 0 22px;
-  height: 22px;
+  flex: 0 0 calc(22 * var(--eng-u));
+  height: calc(22 * var(--eng-u));
   border-radius: 50%;
   background: #e6f6fd;
   color: #1479a6;
-  font-size: 18px;
+  font-size: calc(18 * var(--eng-u));
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .ps-option-text { flex: 1; line-height: 1.5; }
-.ps-option.is-picked { border-color: #4bb7e8; background: #eaf7fd; box-shadow: 0 4px 12px rgba(75, 183, 232, 0.18); }
+.ps-option.is-picked { border-color: #4bb7e8; background: #eaf7fd; box-shadow: 0 calc(4 * var(--eng-u)) calc(12 * var(--eng-u)) rgba(75, 183, 232, 0.18); }
 .ps-option.is-picked .ps-option-label { background: #4bb7e8; color: #fff; }
 .ps-option.is-correct { border-color: #33b463; background: #eafaf1; }
 .ps-option.is-correct .ps-option-label { background: #33b463; color: #fff; }
@@ -80,15 +80,15 @@
 .ps-option.is-wrong .ps-option-label { background: #e05a4f; color: #fff; }
 
 .ps-explain {
-  margin-top: 8px;
-  font-size: 19px;
+  margin-top: calc(8 * var(--eng-u));
+  font-size: calc(19 * var(--eng-u));
   color: #5b7f92;
   line-height: 1.6;
   background: #f7fafc;
-  border-radius: 10px;
-  padding: 8px 12px;
+  border-radius: calc(10 * var(--eng-u));
+  padding: calc(8 * var(--eng-u)) calc(12 * var(--eng-u));
 }
 
 /* 重点句式：交卷后再展示，避免提前泄露答案 */
-.ps-patterns { margin-top: 14px; padding-top: 12px; border-top: 1px dashed rgba(65, 103, 140, 0.25); }
-.ps-patterns-label { width: 100%; font-size: 18px; font-weight: 800; color: #5b7fa3; }
+.ps-patterns { margin-top: calc(14 * var(--eng-u)); padding-top: calc(12 * var(--eng-u)); border-top: calc(1 * var(--eng-u)) dashed rgba(65, 103, 140, 0.25); }
+.ps-patterns-label { width: 100%; font-size: calc(18 * var(--eng-u)); font-weight: 800; color: #5b7fa3; }

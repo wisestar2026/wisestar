@@ -1,0 +1,32 @@
+/* ============================================================
+ * eng-scale.css - 英语子页视口缩放（rem 试点）
+ *
+ * --eng-u 是「视口缩放单位」：1366 视口下等于 1px，宽屏按 视口宽/1366
+ * 放大，封顶 1.75；760px 以下固定 1px，手机版式保持原样。
+ *
+ * 只给 `.eng-*` 页面使用：这些页面的 CSS 把尺寸写成
+ * calc(原px * var(--eng-u))。其它页面不写这个变量，尺寸不受影响。
+ *
+ * 共用做题容器（styles/quiz-stage.css）通过覆盖 --quiz-stage-* 变量
+ * 跟随放大，避免改动数学/检测等非英语页面。
+ * ============================================================ */
+
+:root {
+  --eng-u: 1px;
+}
+
+@media (min-width: 761px) {
+  :root {
+    --eng-u: clamp(1px, calc(100vw * 0.0007321), 1.75px);
+  }
+
+  .eng-learn-wrap,
+  .eng-learn-wide {
+    --quiz-stage-w: calc(1240 * var(--eng-u));
+    --quiz-stage-min: clamp(
+      calc(520 * var(--eng-u)),
+      calc(100vh - 260px),
+      calc(720 * var(--eng-u))
+    );
+  }
+}
