@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Typography, AutoComplete } from 'antd';
+import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, Typography, AutoComplete, Tag } from 'antd';
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, SoundOutlined,
 } from '@ant-design/icons';
@@ -202,6 +202,12 @@ export default function SentenceManagePage() {
     { title: '小节', dataIndex: 'section', width: 120, ellipsis: true },
     { title: '册别', dataIndex: 'term', width: 70 },
     { title: '排序', dataIndex: 'sort', width: 70 },
+    {
+      title: '语音包',
+      dataIndex: 'audioCached',
+      width: 110,
+      render: (cached) => (cached ? <Tag color="green">已缓存</Tag> : <Tag>按需合成</Tag>),
+    },
     {
       title: '音频',
       key: 'audio',

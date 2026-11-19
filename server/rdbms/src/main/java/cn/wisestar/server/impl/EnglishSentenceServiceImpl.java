@@ -7,6 +7,7 @@ import cn.wisestar.server.domain.dto.english.ImportResult;
 import cn.wisestar.server.domain.model.EnglishSentence;
 import cn.wisestar.server.mapper.EnglishSentenceMapper;
 import cn.wisestar.server.service.EnglishSentenceService;
+import cn.wisestar.server.service.EnglishTtsService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -16,6 +17,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +37,12 @@ import java.util.stream.Collectors;
 public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 
 	private final EnglishSentenceMapper englishSentenceMapper;
+
+	private final EnglishTtsService englishTtsService;
+
+	/** 句子播放语速，与 english.tts.speed 保持一致 */
+	@Value("${english.tts.speed:109}")
+	private int defaultSpeed;
 
 	@Override
 	public PaginationResponse<EnglishSentenceView> list(EnglishSentenceQuery query) {
@@ -201,6 +209,7 @@ public class EnglishSentenceServiceImpl implements EnglishSentenceService {
 		view.setEn(entity.getEn());
 		view.setZh(entity.getZh());
 		view.setAudioUrl(entity.getAudioUrl());
+		view.setAudioCached(englishTtsService.cached(entity.getEn(), String.valueOf(defaultSpeed)));
 		view.setVersion(entity.getVersion());
 		view.setGrade(entity.getGrade());
 		view.setTerm(entity.getTerm());

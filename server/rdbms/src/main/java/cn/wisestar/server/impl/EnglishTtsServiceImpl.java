@@ -188,6 +188,8 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 
 	@Override
 	public boolean cached(String text, String speed) {
+		// 先完成引擎探测，确保 mp3Ready 等标志已初始化，否则会按 .wav 去查 .mp3 缓存
+		available();
 		String normalized = normalize(text);
 		if (normalized == null) {
 			return false;

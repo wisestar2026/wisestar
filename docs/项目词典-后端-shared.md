@@ -2014,7 +2014,7 @@
 - 类型: `class EnglishSentenceView`
 - 注解: @Data
 - **类说明**：
-  英语句子视图 DTO。
+  英语句子视图 DTO。字段：id / en / zh / audioUrl / version / grade / term / unit / section / sort / familiarity / correctCount / wrongCount / angleUsed / angleCorrect / masteryState / masteryStateLabel；`audioCached`（Boolean）表示默认语速 109 的服务端语音包缓存是否存在，仅供管理端列表展示，学员端接口不填充。
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishSentenceExercise.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -2186,7 +2186,7 @@
 - 注解: @Data
 - **类说明**：
   英语单词视图 DTO。
-- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）/ quizTotal（练习首答次数）/ quizFirstCorrect（首答答对次数）/ firstCorrectRate（首答正确率 0~100）/ masteryLevel（0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握）/ masteryLabel（中文标签）/ masteryState（三态 familiar/ordinary/unfamiliar，与单词本 familiarity 语义不同）/ masteryStateLabel（熟练/一般/陌生）/ angleUsed（已使用考察角度，推荐下一角度时排除）
+- 字段: id / spell / phonetic / meaning / imageUrl / audioUrl / exampleSentence / version / grade / term / unit / section（小节）/ level（掌握层级：四会/三会）/ familiarity / correctCount / wrongCount / weak / nextReviewTime（下次复习时间，未学习为 null）/ quizTotal（练习首答次数）/ quizFirstCorrect（首答答对次数）/ firstCorrectRate（首答正确率 0~100）/ masteryLevel（0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握）/ masteryLabel（中文标签）/ masteryState（三态 familiar/ordinary/unfamiliar，与单词本 familiarity 语义不同）/ masteryStateLabel（熟练/一般/陌生）/ angleUsed（已使用考察角度，推荐下一角度时排除）/ audioCached（109 语速语音包缓存是否存在，仅管理端列表填充）/ audioPracticeCached（125 练习语速语音包缓存是否存在，仅管理端列表填充）
 
 ### `shared/src/main/java/cn/wisestar/server/domain/dto/english/EnglishReviewCandidateView.java`
 - 包: `cn.wisestar.server.domain.dto.english`
@@ -3059,7 +3059,7 @@
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishTtsService`
 - **类说明**：
-  英语朗读音频合成服务（服务端 TTS）。学员端设备不一定装有英文语音包，浏览器语音合成会静默失败；这里由服务端合成并缓存短句音频，前端优先播放该音频，取不到时退回浏览器语音合成。
+  英语朗读音频合成服务（服务端 TTS）。英语语音统一由服务端 Piper/espeak 合成并缓存短句音频，前端播放该音频，不再使用浏览器语音合成。
 - 方法:
   - `boolean available()`
     服务端合成是否可用（引擎存在且已启用）。

@@ -28,6 +28,12 @@ public class EnglishWordView {
 	/** 音频 URL */
 	private String audioUrl;
 
+	/** 服务端语音包（默认语速）是否已生成；管理端列表展示用 */
+	private Boolean audioCached;
+
+	/** 服务端语音包（练习语速 125）是否已生成；管理端列表展示用 */
+	private Boolean audioPracticeCached;
+
 	/** 例句 */
 	private String exampleSentence;
 

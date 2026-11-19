@@ -22,6 +22,9 @@ public class EnglishSentenceView {
 	/** 音频 URL */
 	private String audioUrl;
 
+	/** 服务端语音包是否已生成（默认语速缓存存在；管理端列表展示用） */
+	private Boolean audioCached;
+
 	/** 教材版本 */
 	private String version;
 

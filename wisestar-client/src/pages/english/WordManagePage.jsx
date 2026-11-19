@@ -19,9 +19,10 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { Table, Space, Button, Input, Select, Modal, Form, message, Upload, AutoComplete, Checkbox, Image, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, ReadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOutlined, ReadOutlined, SoundOutlined } from '@ant-design/icons';
 import { usePermission } from '../../utils/usePermission';
 import { getSections, fillDictionary } from '../../api/englishAdmin';
+import { speakEnglish } from '../../utils/english';
 
 const API_BASE = '/api/english/word-manager';
 
@@ -263,11 +264,23 @@ export default function WordManagePage() {
         ),
     },
     {
+      title: '语音包',
+      key: 'tts',
+      width: 190,
+      render: (_, record) => (
+        <Space size={4} wrap>
+          <Tag color={record.audioCached ? 'green' : 'default'}>{record.audioCached ? '109 已缓存' : '109 按需'}</Tag>
+          <Tag color={record.audioPracticeCached ? 'green' : 'default'}>{record.audioPracticeCached ? '125 已缓存' : '125 按需'}</Tag>
+        </Space>
+      ),
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 150,
+      width: 220,
       render: (_, record) => (
         <Space>
+          <Button type="link" size="small" icon={<SoundOutlined />} onClick={() => speakEnglish(record.spell, record.audioUrl)}>试听</Button>
           {can('english:word:update') && (
             <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>编辑</Button>
           )}

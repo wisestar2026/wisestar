@@ -8,6 +8,7 @@ import cn.wisestar.server.domain.dto.english.ImportResult;
 import cn.wisestar.server.domain.model.EnglishWord;
 import cn.wisestar.server.mapper.EnglishWordMapper;
 import cn.wisestar.server.service.EnglishDictionaryService;
+import cn.wisestar.server.service.EnglishTtsService;
 import cn.wisestar.server.service.EnglishWordManagerService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -15,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +40,15 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 	private final EnglishWordMapper englishWordMapper;
 
 	private final EnglishDictionaryService dictionaryService;
+
+	private final EnglishTtsService englishTtsService;
+
+	/** 单词学习页播放语速，与 english.tts.speed 保持一致 */
+	@Value("${english.tts.speed:109}")
+	private int defaultSpeed;
+
+	/** 单词练习页播放语速，与前端 WORD_TTS_SPEED 和预生成 word-speeds 保持一致 */
+	private static final int PRACTICE_SPEED = 125;
 
 	@Override
 	public PaginationResponse<EnglishWordView> listWords(EnglishWordQuery query) {
@@ -254,6 +265,8 @@ public class EnglishWordManagerServiceImpl implements EnglishWordManagerService 
 		view.setMeaning(entity.getMeaning());
 		view.setImageUrl(entity.getImageUrl());
 		view.setAudioUrl(entity.getAudioUrl());
+		view.setAudioCached(englishTtsService.cached(entity.getSpell(), String.valueOf(defaultSpeed)));
+		view.setAudioPracticeCached(englishTtsService.cached(entity.getSpell(), String.valueOf(PRACTICE_SPEED)));
 		view.setExampleSentence(entity.getExampleSentence());
 		view.setVersion(entity.getVersion());
 		view.setGrade(entity.getGrade());
