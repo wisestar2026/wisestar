@@ -307,7 +307,7 @@ export default function SentenceManagePage() {
           <Form.Item name="zh" label="中文释义">
             <Input.TextArea rows={2} />
           </Form.Item>
-          <Form.Item name="audioUrl" label="音频 URL">
+          <Form.Item name="audioUrl" label="音频 URL（留空则使用服务端语音包）">
             <Input />
           </Form.Item>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>

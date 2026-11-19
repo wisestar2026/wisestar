@@ -87,7 +87,7 @@ wisestar:
 # 英语朗读音频（服务端合成）：学员设备常见缺少英文语音包，由服务端合成并缓存
 english:
   tts:
-    engine: piper  # piper=本地神经语音（推荐）/ espeak=本地 espeak-ng / none=关闭（前端退回浏览器语音合成）
+    engine: piper  # piper=本地神经语音（推荐）/ espeak=本地 espeak-ng / none=关闭（前端播放提示失败）
     fallback-engine: espeak  # 主引擎不可用或单句失败时的回退，空表示不回退
     piper-bin: ${ENGLISH_TTS_PIPER_BIN:/opt/wisestar-tts/venv/bin/piper}
     piper-voice: ${ENGLISH_TTS_PIPER_VOICE:/opt/wisestar-tts/voices/en_GB-jenny_dioco-medium.onnx}  # 英式女声（小学课堂带读口径）
@@ -100,10 +100,10 @@ english:
     cache-dir: ${ENGLISH_TTS_CACHE_DIR:}
     timeout-seconds: 30
     warmup-threads: 2
-    daemon: true  # 常驻 Piper 进程：模型只加载一次，单句约 60ms；关闭后每句冷合成约 1.7s
-    daemon-max: 1  # 常驻进程上限（每个约 170MB 内存）；内存宽裕可调到 2 让课文语速也常驻
-    daemon-idle-seconds: 600  # 闲置多久回收常驻进程
-    preload-speeds: 125  # 启动时预热的语速：单词练习 125（课文 109 走整篇批量预热，不占常驻进程）
+    daemon: true  # 常驻 Piper 进程：模型只加载一次，单句约 0.7s；关闭后每次请求都要重载模型
+    daemon-max: 2  # 常驻进程上限（每个约 170MB 内存）；109/125 各一个
+    daemon-idle-seconds: 0  # 0=不按闲置回收，保证首次点击也在 1s 内
+    preload-speeds: 109,125  # 启动时预热：句子/课文 109、单词练习 125 都常驻
 
 # AI 服务配置
 ai:

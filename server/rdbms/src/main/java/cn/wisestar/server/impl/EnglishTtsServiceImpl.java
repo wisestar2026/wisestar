@@ -111,20 +111,20 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	@Value("${english.tts.warmup-threads:2}")
 	private int warmupThreads;
 
-	/** 是否启用常驻 Piper 进程（模型只加载一次，单句约 60ms；关闭则每次请求重载模型约 1.7s） */
+	/** 是否启用常驻 Piper 进程（模型只加载一次，单句约 0.7s；关闭则每次请求重载模型） */
 	@Value("${english.tts.daemon:true}")
 	private boolean daemonEnabled;
 
-	/** 常驻进程上限（按语速各一个，默认只给单词练习的 125 留一个） */
-	@Value("${english.tts.daemon-max:1}")
+	/** 常驻进程上限（按语速各一个，默认 109 与 125 各一个） */
+	@Value("${english.tts.daemon-max:2}")
 	private int daemonMax;
 
-	/** 常驻进程闲置回收秒数：长时间没人播就退出，把 156MB 内存还给系统 */
-	@Value("${english.tts.daemon-idle-seconds:600}")
+	/** 常驻进程闲置回收秒数：长时间没人播就退出，把常驻进程占用的内存还给系统 */
+	@Value("${english.tts.daemon-idle-seconds:0}")
 	private long daemonIdleSeconds;
 
-	/** 启动时预热的语速（逗号分隔）：默认单词练习 125，课文 109 走整篇批量预热 */
-	@Value("${english.tts.preload-speeds:125}")
+	/** 启动时预热的语速（逗号分隔）：默认句子/课文 109 与单词练习 125 */
+	@Value("${english.tts.preload-speeds:109,125}")
 	private String preloadSpeeds;
 
 	private static final Pattern BLANK = Pattern.compile("\\s+");
@@ -132,8 +132,8 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	/** 预热时每个 Piper 进程负责的句子数：模型只加载一次，摊薄到多条 */
 	private static final int WARMUP_BATCH_SIZE = 10;
 
-	/** 启动预热的短文本：只为把 Piper 模型读进内存，内容不重要 */
-	private static final String PRELOAD_TEXT = "Hello, nice to meet you.";
+	/** 启动预热文本：走完整「常驻合成 → mp3」链路，把模型首帧和转码开销都留在启动阶段 */
+	private static final String PRELOAD_TEXT = "Hello, nice to meet you. Today is a beautiful day, and we are going to learn English together.";
 
 	/** 预热批间隔（毫秒）：给接口请求让出 CPU */
 	private static final long WARMUP_BATCH_PAUSE_MILLIS = 250L;
@@ -147,10 +147,10 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	/** 按语速缓存的常驻 Piper 进程 */
 	private final Map<Integer, PiperDaemon> daemons = new ConcurrentHashMap<>();
 
-	/** 允许常驻的语速：来自 preload-speeds，未配置时默认只给默认语速 */
+	/** 允许常驻的语速：来自 preload-speeds，未配置时默认 109/125 */
 	private final Set<Integer> daemonRates = ConcurrentHashMap.newKeySet();
 
-	/** 首选语速：常驻名额满时优先保留它（默认单词练习 125，课文走批量预热） */
+	/** 首选语速：常驻名额满时优先保留它（默认取 preload-speeds 第一项，即 109） */
 	private volatile int preferredRate = -1;
 
 	private volatile Boolean ready;
@@ -191,6 +191,8 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		}
 		int rate = parseSpeed(speed);
 		Path cached = cacheFile(normalized, rate);
+		long started = System.currentTimeMillis();
+		boolean viaDaemon = false;
 		try {
 			if (cached != null && Files.isReadable(cached) && Files.size(cached) > 0) {
 				return Files.readAllBytes(cached);
@@ -199,9 +201,11 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 			if (piperReady) {
 				PiperDaemon daemon = daemon(rate);
 				if (daemon != null) {
+					viaDaemon = true;
 					wav = daemon.synthesize(normalized);
 				}
 				if (wav == null || wav.length == 0) {
+					viaDaemon = false;
 					wav = piper(normalized, rate);
 				}
 			}
@@ -219,6 +223,11 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 				}
 			}
 			saveCache(cached, audio);
+			long cost = System.currentTimeMillis() - started;
+			if (cost > 1000) {
+				log.info("语音合成耗时 {}ms：语速 {}，常驻进程 {}，文本 {}", cost, rate, viaDaemon ? "命中" : "未命中",
+						abbreviate(normalized));
+			}
 			return audio;
 		} catch (Exception e) {
 			log.warn("服务端语音合成失败：text={}，原因={}", abbreviate(normalized), e.getMessage());
@@ -353,7 +362,7 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		if (existing != null && existing.alive()) {
 			return existing;
 		}
-		// 只为 preload-speeds 里的语速起常驻进程（默认仅 125）；课文 109 走一次性合成 + 批量预热，
+		// 只为 preload-speeds 里的语速起常驻进程（默认 109/125）；未列入的语速走一次性合成，
 		// 避免首句请求抢占唯一名额，把单词练习的常驻进程挤掉
 		if (!daemonRates.contains(rate) && !(daemonRates.isEmpty() && rate == defaultSpeed)) {
 			return null;
@@ -607,8 +616,8 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 	 * 启动后预热 Piper 模型：模型冷加载要 10 秒以上（磁盘 + ONNX 初始化），
 	 * 放在启动阶段跑掉，学员第一次点「听发音」就不用等这一下。
 	 *
-	 * <p>按 {@code english.tts.preload-speeds}（默认只有单词练习的 125）起常驻进程，
-	 * 之后单词朗读直接命中已加载的模型，单句约 60ms；课文 109 由整篇批量预热覆盖。</p>
+	 * <p>按 {@code english.tts.preload-speeds}（默认 109,125）起常驻进程，
+	 * 句子/课文 109 与单词练习 125 都直接命中已加载的模型，首次点击也在 1s 内。</p>
 	 */
 	@EventListener(ApplicationReadyEvent.class)
 	public void preloadModel() {
@@ -631,11 +640,9 @@ public class EnglishTtsServiceImpl implements EnglishTtsService {
 		daemonRates.addAll(rates);
 		try {
 			warmupPool().execute(() -> rates.forEach(rate -> {
-				// 起进程加载模型后直接跑一次合成，把 ONNX 首帧推理的开销也放在启动阶段（结果丢弃，不写缓存）
-				PiperDaemon daemon = daemon(rate);
-				if (daemon != null) {
-					daemon.synthesize(PRELOAD_TEXT);
-				}
+				// 起进程加载模型后走一次完整合成（含 mp3 转码），把 ONNX 首帧与 lame 启动开销都放在启动阶段
+				daemon(rate);
+				synthesize(PRELOAD_TEXT, String.valueOf(rate));
 			}));
 		} catch (RejectedExecutionException e) {
 			log.debug("启动预热队列已满，跳过模型预热");
