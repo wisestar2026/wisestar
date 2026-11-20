@@ -167,8 +167,10 @@
 .slh-ship {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center bottom;
+  /* 铺满舞台：容器比原图更高时 contain 会在顶部留白，改用 cover 裁掉左右留白；
+     锚点偏左（25%）保住船头与海豚，右侧多余处裁掉 */
+  object-fit: cover;
+  object-position: 25% bottom;
   user-select: none;
   pointer-events: none;
   filter: drop-shadow(0 calc(18 * var(--page-u)) calc(24 * var(--page-u)) rgba(40, 110, 170, 0.22));
