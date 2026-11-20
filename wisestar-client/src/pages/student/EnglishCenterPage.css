@@ -556,11 +556,12 @@ input.eng-dictation-field:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: calc(12 * var(--page-u));
   margin-bottom: calc(6 * var(--page-u));
 }
 .eng-drill-tip { font-size: calc(19.5 * var(--page-u)); color: #6a93a8; }
-.eng-drill-progress-text { font-size: calc(19.5 * var(--page-u)); font-weight: 800; color: #1479a6; white-space: nowrap; }
+.eng-drill-progress-text { flex-shrink: 0; font-size: calc(19.5 * var(--page-u)); font-weight: 800; color: #1479a6; white-space: nowrap; }
 .eng-drill-meta {
   margin: calc(10 * var(--page-u)) 0 calc(4 * var(--page-u));
   font-size: calc(19.5 * var(--page-u));
@@ -593,6 +594,19 @@ input.eng-dictation-field:focus {
 .eng-drill-judge-btn:disabled { cursor: default; opacity: 0.7; }
 .eng-drill-judge-btn.is-ok { background: #d8f5e2; border-color: #33b463; color: #1f8f4d; }
 .eng-drill-judge-btn.is-no { background: #ffe0e0; border-color: #e06666; color: #c0392b; }
+
+/* 弹窗骨架跟随缩放：antd 默认标题、内边距、按钮是固定 px，
+   宽屏下会和缩放后的正文脱节，这里统一按 --page-u 换算 */
+.eng-drill-modal .ant-modal-title { font-size: calc(24 * var(--page-u)); line-height: 1.4; }
+.eng-drill-modal .ant-modal-content { padding: calc(24 * var(--page-u)); border-radius: calc(22 * var(--page-u)); }
+.eng-drill-modal .ant-modal-body { font-size: calc(19.5 * var(--page-u)); }
+.eng-drill-modal .ant-modal-footer { margin-top: calc(16 * var(--page-u)); }
+.eng-drill-modal .ant-modal-footer .ant-btn {
+  height: calc(46 * var(--page-u));
+  padding: 0 calc(30 * var(--page-u));
+  font-size: calc(20 * var(--page-u));
+  border-radius: calc(12 * var(--page-u));
+}
 
 @media (max-width: 600px) {
   .eng-word { font-size: calc(45 * var(--page-u)); }

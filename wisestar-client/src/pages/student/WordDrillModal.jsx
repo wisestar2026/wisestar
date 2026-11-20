@@ -20,6 +20,7 @@ import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import { recordEnglishWord, recordEnglishSession } from '../../api/englishStudent';
 import { prefetchEnglishAudio, speakEnglish, stopEnglishAudio, WORD_TTS_SPEED } from '../../utils/english';
 import { buildQuestionForWord, QUIZ_TYPE, WORD_PLACEHOLDER } from '../../utils/englishQuiz';
+import { usePageUnit } from '../../utils/pageScale';
 
 /** 单个单词在本轮巩固中最多出现的次数 */
 const MAX_APPEARANCE = 5;
@@ -37,6 +38,9 @@ function typeAt(seq) {
 }
 
 export default function WordDrillModal({ open, words, onFinish }) {
+  // 弹窗宽度与内部字号跟随学员端缩放；1366 基准 680px，窄屏收在视口内
+  const pageScale = usePageUnit();
+  const modalWidth = `min(${Math.round(680 * pageScale)}px, calc(100vw - 24px))`;
   const [queue, setQueue] = useState([]);
   const [selectedKey, setSelectedKey] = useState(null);
   const [verdict, setVerdict] = useState(null);
@@ -242,7 +246,8 @@ export default function WordDrillModal({ open, words, onFinish }) {
     <Modal
       open={open}
       title="先巩固一下，再开始今天的学习"
-      width={560}
+      width={modalWidth}
+      className="eng-drill-modal"
       closable={false}
       maskClosable={false}
       keyboard={false}
