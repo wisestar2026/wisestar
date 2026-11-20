@@ -34,11 +34,8 @@ import {
   getEnglishWordReviewSummary,
   getEnglishReviewCandidates,
   getEnglishWrongQuestions,
-  getEnglishWrongQuestion,
-  redoEnglishWrong,
 } from '../../api/englishStudent';
-import QuestionPreview from '../../components/practice/QuestionPreview';
-import WrongDrillModal from './WrongDrillModal';
+import EnglishWrongBookPanel from '../../components/student/EnglishWrongBookPanel';
 import './EnglishCenterPage.css';
 
 const MODULE_LABELS = { word: '单词', sentence: '句式', grammar: '语法' };
@@ -52,9 +49,6 @@ const STATE_LABELS = { familiar: '熟练', ordinary: '一般', unfamiliar: '陌�
 const STATE_ORDER = ['familiar', 'ordinary', 'unfamiliar'];
 const REASON_LABELS = { weak: '薄弱', wrong: '做错过', due: '到期' };
 const MODULE_ORDER = ['word', 'sentence', 'grammar'];
-
-/** 英语错题消灭不增补提高题（提高题数据源为数学专用），显式返回 null */
-const noopHarder = async () => null;
 
 /** 按单元分组，保留单元出现顺序（候选列表已按薄弱优先排序） */
 function groupByUnit(list) {
@@ -123,13 +117,6 @@ export default function EnglishReviewPage() {
   const [wordSummary, setWordSummary] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [wrongQuestions, setWrongQuestions] = useState([]);
-  const [drillItem, setDrillItem] = useState(null);
-
-  /** 英语错题重做的取题函数（含标准答案），注入给通用错题消灭弹层 */
-  const fetchWrongQuestion = useCallback(async (item) => {
-    const res = await getEnglishWrongQuestion({ questionId: item.questionId });
-    return res?.data;
-  }, []);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -154,7 +141,6 @@ export default function EnglishReviewPage() {
   }, [load]);
 
   const onEliminated = useCallback(() => {
-    setDrillItem(null);
     load();
   }, [load]);
 
@@ -341,33 +327,8 @@ export default function EnglishReviewPage() {
     </>
   );
 
-  const wrongTab = wrongQuestions.length === 0 ? (
-    <Empty description="暂无错题，继续加油" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-  ) : (
-    <div className="eng-wrong-list">
-      {groupByUnit(wrongQuestions.map((w) => ({ ...w, unit: w.chapter }))).map(([unit, list]) => (
-        <div className="eng-rv-wrong-group" key={unit}>
-          <div className="eng-rv-wrong-head">
-            <span className="eng-rv-wrong-unit">{unit}</span>
-            <span className="eng-rv-wrong-count">错题 {list.length} 道</span>
-          </div>
-          {list.map((w) => (
-            <div className="eng-wrong-item" key={w.questionId}>
-              <div className="eng-wrong-head">
-                {w.knowledgePoint && <Tag color="blue">{w.knowledgePoint}</Tag>}
-                <span className="eng-wrong-times">做错 {(w.wrongCount || 1)} 次</span>
-                <span style={{ marginLeft: 'auto' }}>
-                  <button type="button" className="eng-btn-eliminate eng-btn" onClick={() => setDrillItem(w)}>
-                    消灭错题
-                  </button>
-                </span>
-              </div>
-              <QuestionPreview question={w.question} />
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
+  const wrongTab = (
+    <EnglishWrongBookPanel items={wrongQuestions} onEliminated={onEliminated} />
   );
 
   return (
@@ -393,17 +354,6 @@ export default function EnglishReviewPage() {
           返回学习中心
         </button>
       </div>
-
-      <WrongDrillModal
-        open={Boolean(drillItem)}
-        mode="single"
-        originals={drillItem ? [drillItem] : []}
-        onClose={() => setDrillItem(null)}
-        onEliminated={onEliminated}
-        fetchOriginal={fetchWrongQuestion}
-        redoQuestion={redoEnglishWrong}
-        fetchHarder={noopHarder}
-      />
     </div>
   );
 }

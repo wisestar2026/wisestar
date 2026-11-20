@@ -14,15 +14,31 @@
  */
 
 import WrongBookPanel from '../../components/student/WrongBookPanel';
+import EnglishWrongBookPanel from '../../components/student/EnglishWrongBookPanel';
 import IconTile from '../../components/common/IconTile';
+import useStudentStore, { SUBJECTS } from '../../stores/useStudentStore';
 import './WrongBookPage.css';
+import './EnglishCenterPage.css';
 
 export default function WrongBookPage() {
+  // 英语学科下的错题本只展示英语错题（数据源 /english/student/wrong-questions）
+  const activeSubject = useStudentStore((s) => s.activeSubject);
+  const subjects = useStudentStore((s) => s.studyContent?.subjects);
+  // 真实学科的 key 是后端学科 ID（英语为 1003），mock 模式是 english，按名称兜底
+  const activeSubjectInfo = (subjects || []).find((s) => s.id === activeSubject)
+    || SUBJECTS.find((s) => s.key === activeSubject);
+  const isEnglish = activeSubjectInfo?.name === '英语'
+    || activeSubjectInfo?.key === 'english'
+    || activeSubjectInfo?.key === '1003';
+
   return (
     <div className="sll-page-enter wrong-book">
       <div className="sll-card wrong-card">
-        <div className="wrong-title"><IconTile emoji="📕" tone="pink" size="sm" /> 我的错题本</div>
-        <WrongBookPanel />
+        <div className="wrong-title">
+          <IconTile emoji="📕" tone="pink" size="sm" />
+          {isEnglish ? '我的英语错题本' : '我的错题本'}
+        </div>
+        {isEnglish ? <EnglishWrongBookPanel /> : <WrongBookPanel />}
       </div>
     </div>
   );

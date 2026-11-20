@@ -4,40 +4,40 @@
 
 .q-preview {
   border: 1px solid #e6eef6;
-  border-radius: 10px;
+  border-radius: calc(10 * var(--page-u));
   background: #fff;
-  padding: 10px 12px;
+  padding: calc(10 * var(--page-u)) calc(12 * var(--page-u));
 }
 
 .q-preview-head {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: calc(6 * var(--page-u));
+  margin-bottom: calc(6 * var(--page-u));
 }
 
 .q-preview-stem {
-  font-size: 14px;
+  font-size: calc(14 * var(--page-u));
   line-height: 1.75;
   color: #2b3a4a;
 }
 
 .q-preview-images {
-  margin-top: 8px;
+  margin-top: calc(8 * var(--page-u));
 }
 
 .q-preview-options {
-  margin-top: 8px;
+  margin-top: calc(8 * var(--page-u));
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: calc(6 * var(--page-u));
 }
 
 .q-preview-option {
   display: flex;
-  gap: 6px;
+  gap: calc(6 * var(--page-u));
   align-items: flex-start;
-  font-size: 13px;
+  font-size: calc(13 * var(--page-u));
   line-height: 1.7;
   color: #33475b;
 }
