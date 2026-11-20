@@ -247,7 +247,7 @@ export default function EnglishWordPracticePage() {
   const backTarget = reviewMode
     ? '/student/english/review'
     : unit
-      ? `/student/english/word?unit=${encodeURIComponent(unit)}`
+      ? `/student/english/word?unit=${encodeURIComponent(unit)}${sectionParam ? `&section=${encodeURIComponent(sectionParam)}` : ''}`
       : '/student/english';
   const backText = reviewMode ? '返回智能复习' : unit ? '返回单词通关' : '返回英语学习中心';
   const backButton = (

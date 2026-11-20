@@ -71,8 +71,11 @@ public interface EnglishScenarioPackService {
 
 	/**
 	 * 学员端读取：合并返回该单元已固化的单词情景（按组顺序展平），无内容时返回空列表。
+	 *
+	 * <p>传入 section 时只返回考到该小节单词的情景，供「单词分部分」学习按小节隔离练习；
+	 * section 为空则返回整单元全部情景。</p>
 	 */
-	List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit);
+	List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit, String section);
 
 	/**
 	 * 学员端读取：合并返回该单元已固化的句式情景（按组顺序展平），无内容时返回空列表。

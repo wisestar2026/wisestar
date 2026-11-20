@@ -372,8 +372,8 @@
     记录句子作答（{sentenceId, correct}）。
   - `public List<ReviewSessionView> review(@RequestParam(defaultValue = "20") Integer limit)`
     智能复习会话（单词 + 句子混合队列）。
-  - `public List<EnglishScenarioView> scenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
-    情景对话练习：读取管理端固化的单词情景对话（按分组顺序展平，未固化返回空列表，不触发 AI）。
+  - `public List<EnglishScenarioView> scenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit, @RequestParam(required = false) String section)`
+    情景对话练习：读取管理端固化的单词情景对话（按分组顺序展平，未固化返回空列表，不触发 AI）；传 `section` 时只返回考到该小节单词的情景，供单词分部分学习按小节隔离练习。
   - `public List<EnglishPatternScenarioView> patternScenarios(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit)`
     重点句式情景练习：读取管理端固化的句式情景（未固化返回空列表，不触发 AI）。
   - `public List<EnglishSentenceExercise> sentenceExercises(@RequestParam(required = false) String version, @RequestParam(required = false) String grade, @RequestParam(required = false) String term, @RequestParam(required = false) String unit, @RequestParam(defaultValue = "practice") String stage)`

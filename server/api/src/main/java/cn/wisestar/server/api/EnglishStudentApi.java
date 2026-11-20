@@ -249,8 +249,9 @@ public class EnglishStudentApi {
 	public List<EnglishScenarioView> scenarios(@RequestParam(required = false) String version,
 			@RequestParam(required = false) String grade,
 			@RequestParam(required = false) String term,
-			@RequestParam(required = false) String unit) {
-		return scenarioPackService.getWordScenarios(version, grade, term, unit);
+			@RequestParam(required = false) String unit,
+			@RequestParam(required = false) String section) {
+		return scenarioPackService.getWordScenarios(version, grade, term, unit, section);
 	}
 
 	/**

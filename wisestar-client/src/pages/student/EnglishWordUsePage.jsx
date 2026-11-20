@@ -157,7 +157,7 @@ export default function EnglishWordUsePage() {
     <button
       type="button"
       className="eng-btn eng-btn-ghost"
-      onClick={() => navigate(`/student/english/word?unit=${encodeURIComponent(unit)}`)}
+      onClick={() => navigate(`/student/english/word?unit=${encodeURIComponent(unit)}${section ? `&section=${encodeURIComponent(section)}` : ''}`)}
     >
       返回单词通关
     </button>
@@ -225,7 +225,7 @@ export default function EnglishWordUsePage() {
       <button
         type="button"
         className="eng-learn-back"
-        onClick={() => navigate(`/student/english/word?unit=${encodeURIComponent(unit)}`)}
+        onClick={() => navigate(`/student/english/word?unit=${encodeURIComponent(unit)}${section ? `&section=${encodeURIComponent(section)}` : ''}`)}
       >
         ← 返回单词通关
       </button>

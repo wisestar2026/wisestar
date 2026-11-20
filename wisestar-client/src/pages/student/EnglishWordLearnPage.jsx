@@ -217,6 +217,8 @@ export default function EnglishWordLearnPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const unit = searchParams.get('unit') || '';
+  // 从练习/情景返回时带上小节，回到单词页可直接定位到该部分
+  const sectionParam = searchParams.get('section') || '';
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
 
@@ -269,7 +271,8 @@ export default function EnglishWordLearnPage() {
         setWords(list);
         setGroups(gs);
         setSections(progressRes?.data || []);
-        setActiveSection(gs[0]?.section || '');
+        const wanted = sectionParam ? gs.find((g) => g.section === sectionParam) : null;
+        setActiveSection(wanted?.section || gs[0]?.section || '');
         setMode('hub');
         setLearnSection(null);
         setQueue([]);
@@ -278,7 +281,7 @@ export default function EnglishWordLearnPage() {
       })
       .catch(() => message.error('单词加载失败'))
       .finally(() => setLoading(false));
-  }, [version, grade, term, unit]);
+  }, [version, grade, term, unit, sectionParam]);
 
   useEffect(() => {
     loadWords();
@@ -464,7 +467,7 @@ export default function EnglishWordLearnPage() {
                     onLearn={() => startLearn(activeGroup.section)}
                     onPractice={(type) => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(activeGroup.section)}&type=${type}`)}
                     onUse={(stage) => navigate(`/student/english/word-use?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(activeGroup.section)}&stage=${stage}`)}
-                    onScenario={() => navigate(`/student/english/scenario?unit=${encodeURIComponent(unit)}`)}
+                    onScenario={() => navigate(`/student/english/scenario?unit=${encodeURIComponent(unit)}&section=${encodeURIComponent(activeGroup.section)}`)}
                   />
                 </div>
               )}

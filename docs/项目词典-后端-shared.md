@@ -3183,8 +3183,8 @@
     逻辑删除情景内容包。
   - `List<String> listUnits(String version, String grade, String term)`
     该册下存在单词或句式的单元列表（用于批量生成）。
-  - `List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit)`
-    学员端读取：合并返回该单元已固化的单词情景（按组顺序展平），无内容时返回空列表。
+  - `List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit, String section)`
+    学员端读取：合并返回该单元已固化的单词情景（按组顺序展平），无内容时返回空列表；传 `section` 时按「情景考到的单词是否在该小节词表内」过滤，某小节无命中回退整单元。
   - `List<EnglishPatternScenarioView> getPatternScenarios(String version, String grade, String term, String unit)`
     学员端读取：合并返回该单元已固化的句式情景（按组顺序展平），无内容时返回空列表。
 

@@ -40,6 +40,7 @@ export default function EnglishScenarioPracticePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const unit = searchParams.get('unit') || '';
+  const section = searchParams.get('section') || '';
   const version = useStudentStore((s) => s.version);
   const grade = useStudentStore((s) => s.grade);
   const term = useStudentStore((s) => s.term);
@@ -67,7 +68,7 @@ export default function EnglishScenarioPracticePage() {
     setActiveKey(null);
     setDraft('');
     recordedRef.current = false;
-    getEnglishScenarios({ version, grade, term, unit })
+    getEnglishScenarios({ version, grade, term, unit, section })
       .then((res) => {
         const list = res?.data || [];
         setScenarios(list);
@@ -78,7 +79,7 @@ export default function EnglishScenarioPracticePage() {
         message.error(e?.message || '情景对话加载失败，请稍后重试');
         setStep('empty');
       });
-  }, [version, grade, term, unit]);
+  }, [version, grade, term, unit, section]);
 
   useEffect(() => {
     load();
@@ -212,9 +213,10 @@ export default function EnglishScenarioPracticePage() {
     startAt.current = Date.now();
   };
 
-  // 该功能属于单词通关板块，返回时保留当前单元
+  // 该功能属于单词通关板块，返回时保留当前单元与小节
+  const sectionQuery = section ? `&section=${encodeURIComponent(section)}` : '';
   const backTarget = unit
-    ? `/student/english/word?unit=${encodeURIComponent(unit)}`
+    ? `/student/english/word?unit=${encodeURIComponent(unit)}${sectionQuery}`
     : '/student/english';
   const backText = unit ? '返回单词通关' : '返回英语学习中心';
 
@@ -477,7 +479,7 @@ export default function EnglishScenarioPracticePage() {
           <button
             type="button"
             className="eng-btn eng-btn-again"
-            onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}`)}
+            onClick={() => navigate(`/student/english/practice?unit=${encodeURIComponent(unit)}${sectionQuery}`)}
           >
             回单词练习巩固
           </button>

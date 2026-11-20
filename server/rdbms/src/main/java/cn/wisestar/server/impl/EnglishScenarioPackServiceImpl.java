@@ -281,12 +281,48 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 	// ------------------------------------------------------------------ 学员端只读
 
 	@Override
-	public List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit) {
+	public List<EnglishScenarioView> getWordScenarios(String version, String grade, String term, String unit, String section) {
 		EnglishScenarioPack pack = findLatest(version, grade, term, unit);
 		if (pack == null || isBlank(pack.getWordContent())) {
 			return new ArrayList<>();
 		}
-		return readScenarios(pack.getWordContent(), EnglishScenarioView.class);
+		List<EnglishScenarioView> all = readScenarios(pack.getWordContent(), EnglishScenarioView.class);
+		String target = section == null ? "" : section.trim();
+		if (target.isEmpty()) {
+			return all;
+		}
+		// 按小节隔离：只保留「考到的单词」落在该小节词表内的情景。
+		// 情景包按每 8 词分组生成，个别对话可能横跨两个小节，取「命中任一小节单词」即归入该节。
+		Set<String> sectionSpells = loadSectionSpells(version, grade, term, unit, target);
+		if (sectionSpells.isEmpty()) {
+			return all;
+		}
+		List<EnglishScenarioView> filtered = all.stream()
+				.filter(scn -> scn.getWords() != null && scn.getWords().stream()
+						.map(w -> w == null ? "" : w.trim().toLowerCase())
+						.anyMatch(sectionSpells::contains))
+				.collect(Collectors.toList());
+		// 兜底：某小节没有命中的情景时回退整单元，避免练习页空白。
+		return filtered.isEmpty() ? all : filtered;
+	}
+
+	/**
+	 * 读取某小节包含的单词拼写集合（小写），用于过滤单词情景。
+	 */
+	private Set<String> loadSectionSpells(String version, String grade, String term, String unit, String section) {
+		Set<String> spells = new LinkedHashSet<>();
+		List<EnglishWord> words = wordMapper.selectList(Wrappers.<EnglishWord>lambdaQuery()
+				.eq(EnglishWord::getVersion, version)
+				.eq(EnglishWord::getGrade, grade)
+				.eq(EnglishWord::getTerm, term)
+				.eq(EnglishWord::getUnit, unit)
+				.eq(EnglishWord::getSection, section));
+		for (EnglishWord word : words) {
+			if (word.getSpell() != null && !word.getSpell().trim().isEmpty()) {
+				spells.add(word.getSpell().trim().toLowerCase());
+			}
+		}
+		return spells;
 	}
 
 	@Override
