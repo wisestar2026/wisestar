@@ -19,6 +19,8 @@ const LIST_RE = new RegExp(
     '^(\\s*)(',
     `（\\s*[0-9]{1,3}\\s*）|（\\s*[一二三四五六七八九十]{1,3}\\s*）`,
     `|\\(\\s*[0-9]{1,3}\\s*\\)|\\[\\s*[0-9]{1,3}\\s*\\]`,
+    // 「3.4.9×…」= 第 3 小问 + 小数 4.9：先按「编号 + 小数内容」识别，避免被小数守卫挡成正文
+    `|[0-9]{1,2}[.、．)](?=[0-9][0-9]*[.、．)])`,
     `|[0-9]{1,2}[.、．)](?![0-9])`,
     `|[${CIRCLED}]`,
     '|[-*•·]',
@@ -27,30 +29,37 @@ const LIST_RE = new RegExp(
 );
 
 // 空位标记 __①__（单项/多项填空题干规范，见 utils/blankMarkers.js）：
-// 圈号是空位编号而非小问分隔符，含空位标记的题干一律不做自动小问断行，
-// 否则会在每个空位前误插换行，把一行口算题拆成「① __；…」多行错位
-const BLANK_MARKER_RE = /__[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]__/;
+// 圈号是空位编号而非小问分隔符。判断小问断行时要把 __①__ 整段排除，
+// 否则「① …；② …」这类小问会因题干含空位标记而被误判、整段挤成一行。
+const BLANK_RANGE_RE = /__[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]__/g;
 
-// 先补换行再解析：统一 CRLF；无换行时按连续小问标记断行
+// 先补换行再解析：统一 CRLF；逐行把「① …；② …」这类连续小问标记断到新行
+// （即使整题原本已有换行、或题干含 __①__ 空位标记，也要处理行内小问）
 export function normalizeStructuredText(raw) {
   const s = String(raw == null ? '' : raw).replace(/\r\n?/g, '\n');
-  if (!s || s.includes('\n') || BLANK_MARKER_RE.test(s)) return s;
-  const markers = collectSubQuestionMarkers(s);
-  if (!markers) return s;
+  if (!s) return s;
+  return s.split('\n').map(splitInlineSubQuestions).join('\n');
+}
+
+// 把单行内的连续小问标记（①② / （1）（2） …）断到新行
+function splitInlineSubQuestions(line) {
+  if (!line) return line;
+  const markers = collectSubQuestionMarkers(line);
+  if (!markers) return line;
   let out = '';
   let last = 0;
   for (const c of markers) {
-    const seg = s.slice(last, c.index);
+    const seg = line.slice(last, c.index);
     if (seg.trim()) {
       out += seg.replace(/[ \t]+$/, '');
       if (!out.endsWith('\n')) out += '\n';
     } else {
       out += seg;
     }
-    out += s.slice(c.index, c.index + c.len);
+    out += line.slice(c.index, c.index + c.len);
     last = c.index + c.len;
   }
-  out += s.slice(last);
+  out += line.slice(last);
   return out;
 }
 
@@ -112,19 +121,34 @@ function collectSubQuestionMarkers(s) {
           : CIRCLED_MAP[m[4]];
     cands.push({ index: m.index, len: m[0].length, value, strong: true });
   }
-  // 弱标记（1. / 2、 / 3)）：仅当位于句首/标点/空白之后，避免误伤小数
-  const weakRe = /([0-9]{1,2})[.、．)](?![0-9])/g;
+  // 弱标记（1. / 2、 / 3)）：仅当位于句首/标点/空白/右括号之后，避免误伤小数。
+  // 兼容「判断：1. …（__①__）2. …（__②__）3.4.9×5.1…」：后一项编号紧跟右括号，
+  // 需把 ）) 】] 也算作合法前置；且编号后紧跟小数（如「3.4.9」= 第3小问 + 4.9）时，
+  // 仅靠「右括号 + 后面还有一个小数点」判定为小问，避免把「3.5米」这类小数误拆。
+  const weakRe = /([0-9]{1,2})[.、．)]/g;
   while ((m = weakRe.exec(s)) !== null) {
     const prev = m.index === 0 ? '' : s[m.index - 1];
-    if (m.index === 0 || /[。；;！？!?：:，,、\s]/.test(prev)) {
-      cands.push({ index: m.index, len: m[0].length, value: Number(m[1]), strong: false });
+    const prevOk = m.index === 0 || /[。；;！？!?：:，,、\s）)】\]]/.test(prev);
+    if (!prevOk) continue;
+    const next = s[m.index + m[0].length];
+    const nextIsDigit = next !== undefined && /[0-9]/.test(next);
+    if (nextIsDigit) {
+      const afterBracket = /[）)】\]]/.test(prev);
+      const decimalContent = /^[0-9]{1,2}[.、．)][0-9][0-9]*[.、．)]/.test(s.slice(m.index));
+      if (!(afterBracket && decimalContent)) continue;
     }
+    cands.push({ index: m.index, len: m[0].length, value: Number(m[1]), strong: false });
   }
   const strongRanges = cands.filter((c) => c.strong).map((c) => [c.index, c.index + c.len]);
   const mathRanges = findMathRanges(s);
+  const blankRanges = [];
+  BLANK_RANGE_RE.lastIndex = 0;
+  let bm;
+  while ((bm = BLANK_RANGE_RE.exec(s)) !== null) blankRanges.push([bm.index, bm.index + bm[0].length]);
   const kept = cands
     .filter((c) => c.strong || !strongRanges.some(([a, b]) => c.index >= a && c.index < b))
     .filter((c) => !mathRanges.some(([a, b]) => c.index >= a && c.index < b))
+    .filter((c) => !blankRanges.some(([a, b]) => c.index >= a && c.index < b))
     .sort((a, b) => a.index - b.index);
   if (kept.length < 2 || kept.length > 12) return null;
   for (let i = 0; i < kept.length; i += 1) {
