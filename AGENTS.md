@@ -56,10 +56,12 @@ cd wisestar-client && npm ci && npm run dev
 
 - 逐题作答统一走 `KnowledgePage` 的 `quizMode` 版式：容器 1340px、`.qz-shell` 网格「主卡 + 240px 答题卡」，右栏 sticky 题号卡 + 三态图例，底部 `.qz-nav` 胶囊导航；≤1180px 单列、答题卡置顶横排。
 - 尺寸基准：题卡 `padding 28/32`、圆角 18；题干 17px/1.85；选项 `min-height 58`、`padding 15/18`、文本 16px、字母标 30px；提交按钮 46px 高。
-- 共用 `QuestionCard`（检测/单元练习/语法练习/错题重做/练习答题）容器 1000、题干 21px/1.75、选项 `padding 16/20` + `min-height 56`，改它即全站同步，勿在单页覆盖同名字号。
-- 第 198 节起做题与学习页字号整体再放大 50%（题卡 padding 38/44、题干 26px、选项 20/24 + `min-height 78`、共用 `QuestionCard` 题干 30px / 选项 24px + `min-height 80`）；新增页面沿用当前尺度，只调字号/容器/间距/宽度，保持海洋配色与既有元素。
+- 共用 `QuestionCard`（检测/单元练习/语法练习/错题重做/练习答题）容器 1000、题干 20px/1.8/字重 500、选项 `padding 14/18` + `min-height 54`、选项文本 18px，改它即全站同步，勿在单页覆盖同名字号。
+- 做题/学习页字号自第 252 节起对齐「小珈享学」参考站，回归紧凑排版（题干 18px/字重 500/行高 1.8、选项文本 17px、选项 `min-height 54`、题卡 `padding 26/32`、`min-height 440`），取消第 198 节的整体 +50% 放大；新增页面沿用当前紧凑尺度，保持海洋配色与既有元素，长应用题优先保证一屏可读、不频繁滚动。
 - 即时判题（`eng-feedback` 那类结论）一律放在白卡外，用 `components/student/MascotBubble`（海豚头像 + 对话气泡）播报，卡内不再写判题文案：气泡容器固定高度、只换文案与配色，作答不会把选项往下挤。素材 `public/student-assets/dolphin-captain.webp` 由首页 `ship-start.webp` 裁出。
 - 第 199 节起所有答题/练习页的白色主卡统一加 `quiz-stage` 类（`styles/quiz-stage.css`，`main.jsx` 全局引入）：宽度上限 1240px，`min-height: clamp(520px, 100vh-260px, 720px)` 保证常规题目下各页尺寸一致；内容变多时卡片跟着长高，由浏览器整体滚动，卡内禁止出现滚动条（第 201 节起改为 `min-height` 口径，取消内部滚动）。新增答题页只需给主卡加该类，宽度上限统一 1240，`KnowledgePage` 因右侧答题卡网格保持 1076。
+- 英语页自第 253 节起整体再收敛 12%：`.eng-stage / .eng-learn-wrap / .eng-page / .eng-read-wrap / .eng-diag-wrap / .eng-ra-wrap` 局部声明 `--page-u: calc(var(--page-u-raw) * 0.88)`，只用这一处缩放 + 两侧留白，不要在各页零散改字号；`EnglishReadAloudPage.css` 读不到 `EnglishCenterPage.css`，跟读的 `--page-u` 必须在自己的 `.eng-ra-wrap` 上再声明一次。英语练习主卡把 `--quiz-stage-min` 覆盖为 `clamp(260, 100vh-440, 460)`，单词练习选项收紧到 `min-height 56`，语法/单元练习给共用 `QuestionCard` 传 `compact`（选项 46px/文本 16px/间距 8px）以贴近一屏。
+- 学习/练习类页面（`/student/study`、`knowledge`、`wrong`、`detect`、`diagnose`、`english/*`）不渲染 `sll-tabbar`，`StudentLayout` 会给 `.sll-main` 追加 `sll-main--no-tab`，把为悬浮导航预留的底部留白（`clamp(96u,9vw,150u)`）回收为 `24u`；新增隐藏导航的页面时复用该 class，别再让页面底部空出一大截。
 - 学员端学习/练习类页面（`/student/study`、`knowledge`、`wrong`、`detect`、`diagnose`、`english/*`）隐藏悬浮底部导航 `sll-tabbar`（`StudentLayout` 按路径前缀判断），避免压住题卡与选项；首页、档案、商城、个人中心保留。
 
 ## 数据库约定

@@ -206,6 +206,7 @@ export default function EnglishGrammarPracticePage() {
             onChange={(v) => setAnswers((prev) => ({ ...prev, [q.id]: v }))}
             judgeMode={false}
             keyboardDefaultTab="letter"
+            compact
           />
         </div>
 

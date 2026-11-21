@@ -324,7 +324,7 @@ export default function StudentLayout() {
       </header>
 
       {/* ---- 页面内容区（淡入过渡） ---- */}
-      <main className="sll-main">
+      <main className={`sll-main${hideTabbar ? ' sll-main--no-tab' : ''}`}>
         <Suspense fallback={<div style={{ padding: 48, textAlign: 'center', color: '#8a94a6' }}>正在加载…</div>}>
           <Outlet />
         </Suspense>

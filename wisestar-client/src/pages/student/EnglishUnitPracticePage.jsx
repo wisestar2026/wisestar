@@ -213,6 +213,7 @@ export default function EnglishUnitPracticePage() {
             onChange={(v) => handleAnswerChange(q.id, v)}
             judgeMode={false}
             keyboardDefaultTab="letter"
+            compact
           />
         </div>
 

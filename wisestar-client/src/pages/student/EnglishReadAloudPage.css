@@ -1,5 +1,6 @@
 /* EnglishReadAloudPage.css - 课本跟读 */
-.eng-ra-wrap { width: 100%; max-width: calc(980 * var(--page-u)); margin: 0 auto; padding: calc(18 * var(--page-u)) calc(16 * var(--page-u)) calc(56 * var(--page-u)); }
+/* 英语页整体再收敛 ~12%：以视口基准为单位缩放内部宽高与字号（与 EnglishCenterPage.css 同口径） */
+.eng-ra-wrap { --page-u: calc(var(--page-u-raw) * 0.88); width: 100%; max-width: calc(980 * var(--page-u)); margin: 0 auto; padding: calc(18 * var(--page-u)) calc(16 * var(--page-u)) calc(28 * var(--page-u)); }
 .eng-ra-loading { display: grid; place-items: center; padding: calc(100 * var(--page-u)) 0; }
 .eng-ra-empty {
   margin: calc(80 * var(--page-u)) auto; max-width: calc(440 * var(--page-u)); padding: calc(38 * var(--page-u)) calc(26 * var(--page-u)); border-radius: calc(24 * var(--page-u));

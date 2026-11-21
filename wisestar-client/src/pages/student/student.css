@@ -688,3 +688,7 @@
 .sll-main {
   padding-bottom: clamp(calc(96 * var(--page-u)), 9vw, calc(150 * var(--page-u)));
 }
+/* 学习/练习类页面不渲染悬浮导航，回收为导航预留的底部留白 */
+.sll-main.sll-main--no-tab {
+  padding-bottom: calc(24 * var(--page-u));
+}
