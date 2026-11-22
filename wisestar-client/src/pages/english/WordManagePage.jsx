@@ -345,6 +345,7 @@ export default function WordManagePage() {
       {/* 筛选栏 */}
       <Space wrap style={{ marginBottom: 16 }}>
         <Select placeholder="教材版本" allowClear style={{ width: 120 }} value={version} onChange={setVersion} options={[
+          { value: '人教版', label: '人教版' },
           { value: '苏教版', label: '苏教版' },
           { value: '北师大版', label: '北师大版' },
           { value: '外研版', label: '外研版' },
@@ -430,6 +431,7 @@ export default function WordManagePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
             <Form.Item name="version" label="版本">
               <Select options={[
+                { value: '人教版', label: '人教版' },
                 { value: '苏教版', label: '苏教版' },
                 { value: '北师大版', label: '北师大版' },
                 { value: '外研版', label: '外研版' },

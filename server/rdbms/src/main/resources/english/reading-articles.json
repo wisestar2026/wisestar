@@ -15103,5 +15103,2399 @@
     "explanation": "全文讲暑假是为新起点做准备的桥梁。"
    }
   ]
+ },
+ {
+  "articleNo": 1,
+  "title": "开学第一天",
+  "passage": "It is the first day of junior high school. In the morning, Lily meets her new classmate Tom at the school gate. \"Hi!\" says Lily. \"Hello!\" Tom answers with a big smile. \"Good morning,\" says Lily. \"How are you?\" \"I'm fine, thank you. Nice to meet you,\" says Tom. \"Nice to meet you too,\" Lily says. \"What's your name?\" asks Tom. \"My name is Lily. What's your name?\" \"I'm Tom.\" They walk to the classroom together and talk happily.",
+  "passageZh": "这是初中的第一天。早上，莉莉在校门口遇见了她的新同学汤姆。“嗨！”莉莉说。“你好！”汤姆笑着回答。“早上好，”莉莉说，“你好吗？”“我很好，谢谢。很高兴见到你，”汤姆说。“我也很高兴见到你，”莉莉说。“你叫什么名字？”汤姆问。“我叫莉莉。你叫什么名字？”“我叫汤姆。”他们一起走向教室，开心地聊着。",
+  "questions": [
+   {
+    "stem": "Where do Lily and Tom meet?",
+    "options": [
+     "At the school gate",
+     "In the classroom",
+     "At the library",
+     "On the playground"
+    ],
+    "answerIndex": 0,
+    "explanation": "文中提到 at the school gate。"
+   },
+   {
+    "stem": "What does Tom say first?",
+    "options": [
+     "Good morning",
+     "Hello",
+     "Nice to meet you",
+     "How are you"
+    ],
+    "answerIndex": 1,
+    "explanation": "Tom 的第一句是 \"Hello!\"。"
+   },
+   {
+    "stem": "What is the girl's name?",
+    "options": [
+     "Lily",
+     "Tom",
+     "Meimei",
+     "Peter"
+    ],
+    "answerIndex": 0,
+    "explanation": "女孩说 \"My name is Lily.\"。"
+   },
+   {
+    "stem": "How do they feel at the end?",
+    "options": [
+     "Sad",
+     "Angry",
+     "Happy",
+     "Tired"
+    ],
+    "answerIndex": 2,
+    "explanation": "最后一句说他们 talk happily。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 1 Hello!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Finding Lost Items",
+  "passage": "It was Monday morning. Tom arrived at school and found his schoolbag was messy. He looked inside and saw many things. 'What do I have in my schoolbag?' he thought. There were some books under a blue bottle, three red rulers in the bag, and a small eraser on top of everything. Tom was looking for his keys because he needed to open his locker. Suddenly, he found them next to the eraser. 'Thank you for helping me find them,' Tom said to his friend Lily. 'You're welcome,' Lily replied with a smile. Tom felt happy because he had found all his things.",
+  "passageZh": "那是周一早上。汤姆到达学校时发现他的书包很乱。他往里面看，看到许多东西。'我书包里有什么呢？'他想。一些书在蓝色瓶子下面，三把红色尺子在书包里，一块小橡皮在所有东西的上面。汤姆正在找他的钥匙，因为他需要打开他的储物柜。突然，他在橡皮旁边找到了钥匙。'谢谢你帮我找到它们，'汤姆对他的朋友莉莉说。'不客气，'莉莉微笑着回答。汤姆感到很开心，因为他找到了所有的东西。",
+  "questions": [
+   {
+    "stem": "What day was it when Tom found his things?",
+    "options": [
+     "Friday",
+     "Saturday",
+     "Sunday",
+     "Monday"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第一句明确提到'It was Monday morning'"
+   },
+   {
+    "stem": "Where were Tom's keys found?",
+    "options": [
+     "Next to the eraser",
+     "Under the books",
+     "In the bottle",
+     "On the rulers"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'Suddenly, he found them next to the eraser'"
+   },
+   {
+    "stem": "What color were the rulers in Tom's schoolbag?",
+    "options": [
+     "Blue",
+     "Red",
+     "Green",
+     "Yellow"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'three red rulers in the bag'"
+   },
+   {
+    "stem": "How did Tom feel after finding his keys?",
+    "options": [
+     "Happy",
+     "Tired",
+     "Angry",
+     "Sad"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'Tom felt happy because he had found all his things'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 2 Keep Tidy!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "欢迎新朋友",
+  "passage": "Last Sunday morning, Tom visited his uncle's farm. In the yard, he saw many animals. 'What are those?' Tom asked. His uncle smiled and said, 'They are geese.' Tom counted the geese and found there were five. After that, his uncle gave him a carrot. 'Look at this carrot,' said his uncle. 'It's fresh and good for you.' Tom thought it would be fun to feed the animals. He gave a piece of carrot to each goose. One goose ate it quickly and looked for another piece. Tom enjoyed feeding the geese very much. It was a wonderful day at the farm.",
+  "passageZh": "上周日上午，汤姆参观了他叔叔的农场。在院子里，他看到了许多动物。'那些是什么？'汤姆问道。叔叔笑着说：'那些是鹅。'汤姆数了数鹅，发现有五只。之后，叔叔给了他一根胡萝卜。'看看这根胡萝卜，'叔叔说，'它很新鲜，对你有好处。'汤姆觉得喂动物会很有趣。他给了每只鹅一块胡萝卜。一只鹅很快吃完了，又寻找另一块。汤姆非常喜欢喂鹅。在农场的这一天很美好。",
+  "questions": [
+   {
+    "stem": "Where did Tom go last Sunday morning?",
+    "options": [
+     "To the zoo",
+     "To school",
+     "To his uncle's farm",
+     "To the park"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第一句明确提到Tom visited his uncle's farm。"
+   },
+   {
+    "stem": "How many geese did Tom see in the yard?",
+    "options": [
+     "Five",
+     "Six",
+     "Four",
+     "Three"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第三段提到Tom counted the geese and found there were five。"
+   },
+   {
+    "stem": "What did Tom's uncle give him?",
+    "options": [
+     "An apple",
+     "A carrot",
+     "A toy",
+     "Some bread"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第三段明确提到his uncle gave him a carrot。"
+   },
+   {
+    "stem": "How did Tom feel about feeding the geese?",
+    "options": [
+     "Bored",
+     "Tired",
+     "Scared",
+     "Happy"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文最后一段提到Tom enjoyed feeding the geese very much，表明他感到开心。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 3 Welcome!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "新朋友",
+  "passage": "On the first day of school, I met my new classmate Tom. We are in the same class, Class 1, Grade 7. Our class teacher is Ms. Li. She asked us to get to know each other. Tom comes from a small country. His full name is Tom Smith, but he told me we can call him by his first name. Tom's hobby is playing the guitar. He can play very well. I also shared that I like tennis. We both need to make more friends in our new grade. Tom said he would help me learn about our school. I'm happy to have a new friend like him.",
+  "passageZh": "开学第一天，我遇到了我的新同学汤姆。我们在同一个班级，七年级一班。我们的班主任是李老师。她要求我们互相认识。汤姆来自一个小国家。他的全名是汤姆·史密斯，但他告诉我我们可以叫他的名字。汤姆的爱好是弹吉他。他弹得很好。我也分享了我喜欢网球。我们都需要在新的年级交更多的朋友。汤姆说他会帮助我了解我们的学校。我很高兴能有像他这样的新朋友。",
+  "questions": [
+   {
+    "stem": "What is Tom's hobby?",
+    "options": [
+     "Playing the guitar",
+     "Reading books",
+     "Playing tennis",
+     "Drawing pictures"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'Tom's hobby is playing the guitar'"
+   },
+   {
+    "stem": "Where does Tom come from?",
+    "options": [
+     "The US",
+     "A small country",
+     "The Great Wall",
+     "China"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'Tom comes from a small country'"
+   },
+   {
+    "stem": "What class are they in?",
+    "options": [
+     "Class 1, Grade 7",
+     "Class 2, Grade 8",
+     "Class 1, Grade 8",
+     "Class 2, Grade 7"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'We are in the same class, Class 1, Grade 7'"
+   },
+   {
+    "stem": "How does the writer feel about having Tom as a friend?",
+    "options": [
+     "Worried",
+     "Happy",
+     "Sad",
+     "Angry"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'I'm happy to have a new friend like him'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 1 You and Me",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Teng Fei's Family Time",
+  "passage": "Teng Fei is a 14-year-old boy who loves spending time with his family. Every Sunday, he plays ping-pong with his grandpa at the sports hall. His grandpa is very handsome and really enjoys sports. They have two nice ping-pong bats and always have fun together. Teng Fei's father is different from his grandpa - he prefers reading books. He spends a lot of time in the study every day. Teng Fei also has a brother who is 10 years old. The two brothers often play chess in the evening after dinner. They laugh a lot when their father tells funny stories. Everyone in the family feels happy when they are together.",
+  "passageZh": "腾飞是一个14岁的男孩，喜欢和家人一起度过时光。每个星期日，他都在体育馆和爷爷打乒乓球。他的爷爷非常英俊，非常喜欢运动。他们有两副漂亮的乒乓球拍，总是玩得很开心。腾飞的父亲和爷爷不同——他更喜欢读书。他每天花很多时间在书房里。腾飞还有一个10岁的弟弟。两兄弟经常在晚饭后下棋。当他们父亲讲有趣的故事时，他们会大笑不已。当家人聚在一起时，每个人都感到快乐。",
+  "questions": [
+   {
+    "stem": "What does Teng Fei's grandpa enjoy doing?",
+    "options": [
+     "Telling stories",
+     "Playing ping-pong",
+     "Playing chess",
+     "Reading books"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文提到'Teng Fei plays ping-pong with his grandpa'和'His grandpa is very handsome and really enjoys sports'，表明爷爷喜欢打乒乓球。"
+   },
+   {
+    "stem": "What does Teng Fei's father do every day?",
+    "options": [
+     "Plays ping-pong",
+     "Plays chess",
+     "Spends time reading",
+     "Tells funny stories"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确指出'He spends a lot of time in the study every day'，说明父亲每天花时间读书。"
+   },
+   {
+    "stem": "How do Teng Fei and his brother feel when they are with family?",
+    "options": [
+     "Tired",
+     "Happy",
+     "Hungry",
+     "Bored"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句'Everyone in the family feels happy when they are together'直接说明了他们和家人在一起时感到快乐。"
+   },
+   {
+    "stem": "What activity do Teng Fei and his brother do in the evening?",
+    "options": [
+     "Read books",
+     "Listen to stories",
+     "Play ping-pong",
+     "Play chess"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'The two brothers often play chess in the evening after dinner'，表明兄弟俩晚上下棋。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 2 We're Family!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "我的学校",
+  "passage": "My school is a modern building with many special places. At the back of the school, there is a large sports field where we do exercises every morning. Across from the sports field, there is a gym with smart screens for watching sports videos. The library is in the middle of the school building, and there are many bookcases next to the window. I love reading books there during break time. The dining hall is at the front of the school, and the food there is delicious. Our classroom is next to the teachers' office, and we have lockers to put our books in. I think my school is an amazing place to learn and play.",
+  "passageZh": "我的学校是一座拥有许多特殊场所的现代化建筑。在学校后面，有一个大型运动场，我们每天早上在那里做体操。运动场的对面是一个体育馆，里面有智能屏幕可以观看体育视频。图书馆位于学校建筑的中央，窗边有许多书架。我喜欢在休息时间在那里看书。餐厅位于学校前面，那里的食物很美味。我们的教室在教师办公室旁边，我们有锁柜可以放书本。我认为我的学校是一个学习和玩耍的奇妙地方。",
+  "questions": [
+   {
+    "stem": "Where is the library located?",
+    "options": [
+     "In the middle of the school building",
+     "At the back of the school",
+     "Across from the sports field",
+     "Next to the teachers' office"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'The library is in the middle of the school building'"
+   },
+   {
+    "stem": "What does the student like to do in the library?",
+    "options": [
+     "Do exercises",
+     "Read books",
+     "Watch sports videos",
+     "Put books in lockers"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文提到'I love reading books there during break time'"
+   },
+   {
+    "stem": "What is special about the gym?",
+    "options": [
+     "It has a large dining hall",
+     "It is at the back of the school",
+     "It has bookcases",
+     "It has smart screens"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'there is a gym with smart screens for watching sports videos'"
+   },
+   {
+    "stem": "How does the student feel about the school?",
+    "options": [
+     "It is old",
+     "It is boring",
+     "It is small",
+     "It is amazing"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文最后一句明确表示'I think my school is an amazing place'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 3 My School",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "我的最爱科目",
+  "passage": "My name is Lily, and I'm in Grade 7. This term, my favourite subject is biology. I find it exciting because it helps me understand life and how things work. In class, we learn about plants, animals, and even the human body. I'm good at remembering scientific facts, and I want to be a scientist in the future. My teacher is excellent at explaining difficult ideas. She often uses experiments to make learning more interesting. Both geography and history are useful too, but biology is the most exciting for me. I hope to learn more about magic in nature next term.",
+  "passageZh": "我叫莉莉，在七年级。这学期，我最喜欢的科目是生物学。我觉得它令人激动，因为它帮助我理解生命和事物如何运作。在课堂上，我们学习植物、动物，甚至人体。我擅长记住科学事实，将来想成为一名科学家。我的老师很擅长解释复杂的概念。她经常用实验让学习更有趣。地理和历史也很有用，但生物学对我来说是最令人兴奋的。我希望下学期能学习更多关于自然魔力的知识。",
+  "questions": [
+   {
+    "stem": "What is Lily's favourite subject?",
+    "options": [
+     "French",
+     "Biology",
+     "History",
+     "Geography"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第一段明确说明'This term, my favourite subject is biology'"
+   },
+   {
+    "stem": "Why does Lily like biology?",
+    "options": [
+     "It has many experiments",
+     "It helps her understand life",
+     "It's easy to remember",
+     "Her teacher is strict"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第二段指出'I find it exciting because it helps me understand life'"
+   },
+   {
+    "stem": "What does Lily want to be in the future?",
+    "options": [
+     "A singer",
+     "A teacher",
+     "A scientist",
+     "A writer"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第二段提到'I want to be a scientist in the future'"
+   },
+   {
+    "stem": "How does Lily's teacher make biology interesting?",
+    "options": [
+     "By giving homework",
+     "By telling jokes",
+     "By using experiments",
+     "By showing movies"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第二段说明'She often uses experiments to make learning more interesting'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 4 My Favourite Subject",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "有趣的俱乐部选择",
+  "passage": "Last week, our school held a club fair. I was interested in joining a club but couldn't decide which one. There were many options: drama club, music club, and nature club. In the drama club, students act out stories and plays. I can act well, but I'm not interested in memorizing lines. The music club has different musical instruments like violin and drums. Emma can sing well, but she can't play any musical instruments. The nature club organizes hikes and helps students discover wildlife. I love taking photos of insects and plants during hikes. After talking to some club members, I decided to join the nature club. I can't wait to explore more about nature with my new friends!",
+  "passageZh": "上周，我们学校举办了俱乐部招新活动。我想要参加一个俱乐部，但决定不了选择哪一个。有很多选项：戏剧俱乐部、音乐俱乐部和自然俱乐部。在戏剧俱乐部里，学生们表演故事和戏剧。我擅长表演，但对记台词不感兴趣。音乐俱乐部有各种乐器，如小提琴和鼓。艾玛唱歌很好，但她不会演奏任何乐器。自然俱乐部组织远足活动，帮助学生发现野生动物。我喜欢在远足时拍摄昆虫和植物的照片。和一些俱乐部成员交谈后，我决定加入自然俱乐部。我迫不及待地想和新朋友们一起探索更多关于自然的知识！",
+  "questions": [
+   {
+    "stem": "What did the school hold last week?",
+    "options": [
+     "A music concert",
+     "A club fair",
+     "An art exhibition",
+     "A sports competition"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第一句明确提到'Last week, our school held a club fair'。"
+   },
+   {
+    "stem": "Why didn't the writer join the drama club?",
+    "options": [
+     "Because they preferred sports activities",
+     "Because the club was too expensive",
+     "Because they can't act well",
+     "Because they don't like memorizing lines"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第三段提到'I can act well, but I'm not interested in memorizing lines'，表明作者不喜欢记台词。"
+   },
+   {
+    "stem": "What can Emma do well?",
+    "options": [
+     "Play the violin",
+     "Take photos of insects",
+     "Act in plays",
+     "Sing well"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第四段提到'Emma can sing well'，明确说明了艾玛的特长。"
+   },
+   {
+    "stem": "Which club did the writer finally choose?",
+    "options": [
+     "Nature club",
+     "Photography club",
+     "Drama club",
+     "Music club"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文最后一段提到'After talking to some club members, I decided to join the nature club'，明确表明了最终选择。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 5 Fun Clubs",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "我的日常生活",
+  "passage": "My name is Li Ming, and I'm a student from Finland. My daily routine usually starts at 6:30 a.m. when I get up. I brush my teeth and take a shower before having breakfast. After that, I prepare my school bag and go to school. At school, I have different classes like math, science, and home economics. I finish my classes at around 3:30 p.m. and then do my homework. Sometimes I play ice hockey with my friends after school. In the evening, I usually read books or help my parents with housework. I go to bed at 9:30 p.m. On weekends, I stay at home and make use of the time to relax. My daily routine is busy but interesting.",
+  "passageZh": "我叫李明，来自芬兰的一名学生。我的日常生活通常早上6:30开始起床。我刷牙和淋浴后吃早餐。之后，我准备书包去学校。在学校，我有不同的课程，比如数学、科学和家政学。我下午3:30左右完成课程，然后做家庭作业。有时放学后我和朋友们打冰球。晚上，我通常读书或帮父母做家务。我晚上9:30上床睡觉。周末，我待在家里利用时间放松。我的日常生活忙碌但有趣。",
+  "questions": [
+   {
+    "stem": "What time does Li Ming usually get up?",
+    "options": [
+     "At 7:00 a.m.",
+     "At 8:00 a.m.",
+     "At 6:30 a.m.",
+     "At 9:30 p.m."
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第一段明确提到'My daily routine usually starts at 6:30 a.m. when I get up'"
+   },
+   {
+    "stem": "What does Li Ming do after school?",
+    "options": [
+     "Plays ice hockey",
+     "Goes to bed",
+     "Reads books",
+     "Does housework"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第一段提到'Sometimes I play ice hockey with my friends after school'"
+   },
+   {
+    "stem": "What subject is mentioned in Li Ming's school day?",
+    "options": [
+     "Physical education",
+     "Home economics",
+     "Music",
+     "Art"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第一段提到'I have different classes like math, science, and home economics'"
+   },
+   {
+    "stem": "How does Li Ming feel about his daily routine?",
+    "options": [
+     "Stressful",
+     "Busy but interesting",
+     "Tired",
+     "Boring"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句明确说明'My daily routine is busy but interesting'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 6 A Day in the Life",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "生日惊喜",
+  "passage": "Last Saturday was my best friend Lily's birthday. I wanted to give her a special surprise, so I contacted her parents to plan something meaningful. They told me her birthday was on 2nd August, and she would be turning thirteen. I decided to organize a small celebration at her home. I bought a chocolate cake, some colorful balloons, and her favorite pizza. When Lily came home, we turned off the lights and I made her blow out the candles on the cake. She was so surprised and happy! We took photos and enjoyed the party together. It was one of the best birthdays I've ever celebrated.",
+  "passageZh": "上周六是我最好的朋友莉莉的生日。我想给她一个特别的惊喜，所以我联系了她的父母来计划一些有意义的事情。他们告诉我她的生日是8月2日，她将满13岁。我决定在她家组织一个小型庆祝活动。我买了一个巧克力蛋糕、一些彩色气球和她最喜欢的披萨。当莉莉回到家时，我们关了灯，让她吹灭蛋糕上的蜡烛。她非常惊讶和开心！我们一起拍照并享受派对。这是我庆祝过的最好的生日之一。",
+  "questions": [
+   {
+    "stem": "When was Lily's birthday?",
+    "options": [
+     "On 2nd August",
+     "On 4th August",
+     "On 3rd August",
+     "On 1st August"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'her birthday was on 2nd August'"
+   },
+   {
+    "stem": "What did the writer buy for Lily's birthday?",
+    "options": [
+     "A chocolate cake, flowers and books",
+     "A chocolate cake, balloons and oranges",
+     "A chocolate cake, balloons and pizza",
+     "A chocolate cake, balloons and yogurt"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'I bought a chocolate cake, some colorful balloons, and her favorite pizza'"
+   },
+   {
+    "stem": "How did Lily feel when she saw the surprise?",
+    "options": [
+     "Angry and upset",
+     "Sad and disappointed",
+     "Bored and tired",
+     "Surprised and happy"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确说明'She was so surprised and happy!'"
+   },
+   {
+    "stem": "What did they do during the celebration?",
+    "options": [
+     "They went shopping and had dinner",
+     "They watched movies and ate popcorn",
+     "They turned off the lights and took photos",
+     "They played games and sang songs"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'We turned off the lights... We took photos and enjoyed the party together'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 7 Happy Birthday!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "动物朋友的故事",
+  "passage": "Last Sunday, I visited the zoo with my family. I was excited to see many animals there. My favorite animal was the giraffe because it has a very long neck. However, I felt quite sad when I learned that some animals are in danger. For example, elephants are hunted for their ivory, and forests where many animals live are being cut down. I think we should all take care of these beautiful creatures. They are our friends and we need to save them from danger.",
+  "passageZh": "上周日，我和家人一起参观了动物园。我很兴奋看到那里的许多动物。我最喜欢的动物是长颈鹿，因为它有非常长的脖子。然而，当我了解到一些动物处于危险中时，我感到相当难过。例如，大象因为象牙而被猎杀，许多动物居住的森林也被砍伐。我认为我们应该照顾这些美丽的生物。它们是我们的朋友，我们需要将它们从危险中拯救出来。",
+  "questions": [
+   {
+    "stem": "What was the writer's favorite animal at the zoo?",
+    "options": [
+     "shark",
+     "giraffe",
+     "fox",
+     "elephant"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'My favorite animal was the giraffe'"
+   },
+   {
+    "stem": "How did the writer feel when learning about animals in danger?",
+    "options": [
+     "sad",
+     "angry",
+     "scared",
+     "happy"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文直接说明'I felt quite sad when I learned that some animals are in danger'"
+   },
+   {
+    "stem": "What is happening to forests where animals live?",
+    "options": [
+     "They are being expanded",
+     "They are being made into parks",
+     "They are being cut down",
+     "They are being protected"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'forests where many animals live are being cut down'"
+   },
+   {
+    "stem": "What does the writer think we should do for animals?",
+    "options": [
+     "Leave them alone",
+     "Take care of them",
+     "Move them to other places",
+     "Watch them from far away"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确指出'I think we should all take care of these beautiful creatures'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 1 Animal Friends",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "遵守学校规则",
+  "passage": "Tom was late for school yesterday because he didn't follow the rules. His teacher gave him some advice and said, 'You must arrive on time next time.' In the hallway, Tom saw some students running. The teacher reminded them, 'Walk in the hallway. Don't run!' Tom felt awful about being late. He decided to focus on following all the rules from then on. During lunch break, he saw someone littering. Tom remembered that we must keep our school clean and didn't throw any trash himself.",
+  "passageZh": "汤姆昨天上学迟到了，因为他没有遵守规则。老师给了他一些建议说：'下次你必须准时到达。'在走廊里，汤姆看到一些学生在跑。老师提醒他们：'在走廊里要走路，不要跑！'汤姆对迟到感到很糟糕。他决定从那时起专注于遵守所有规则。午餐时间，他看到有人乱扔垃圾。汤姆记得我们必须保持学校清洁，自己也没有扔任何垃圾。",
+  "questions": [
+   {
+    "stem": "Why was Tom late for school yesterday?",
+    "options": [
+     "He didn't follow the rules",
+     "He had to help his parents",
+     "He woke up late",
+     "He was sick"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第一句明确指出汤姆迟到是因为没有遵守规则。"
+   },
+   {
+    "stem": "What did the teacher remind students to do in the hallway?",
+    "options": [
+     "Run quickly",
+     "Talk loudly",
+     "Jump the queue",
+     "Walk in the hallway"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文中老师明确提醒学生在走廊里要走路，不要跑。"
+   },
+   {
+    "stem": "How did Tom feel about being late?",
+    "options": [
+     "Excited",
+     "Happy",
+     "Proud",
+     "Awful"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到汤姆对迟到感到很糟糕(awful)。"
+   },
+   {
+    "stem": "What did Tom remember during lunch break?",
+    "options": [
+     "He didn't have to queue",
+     "He could use his mobile phone",
+     "He must keep the school clean",
+     "He could eat snacks anywhere"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到汤姆记得必须保持学校清洁，没有乱扔垃圾。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 2 No Rules, No Order",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Finding My Badminton Racket",
+  "passage": "Last Tuesday after school, I went to the sports hall to play badminton with my friends. I put my T-shirt and my badminton racket on a mat, but when I returned, they were gone! I asked a few students if they saw them, but no one knew. Then I noticed a blue rope near the door and thought maybe someone took my things by mistake. Just as I was about to leave, Han Lin came over with my racket and T-shirt. 'Is this yours?' he asked. 'Yes, that's mine! Thank you so much,' I replied. I felt so relieved to have my things back. We then played a doubles match, and even though we lost, I had a great time with my friends.",
+  "passageZh": "上周二放学后，我去体育馆和朋友们打羽毛球。我把我的T恤和羽毛球拍放在垫子上，但当我回来时，它们不见了！我问了几个学生是否看到它们，但没人知道。然后我注意到门附近有一根蓝色的绳子，心想也许有人误拿了我的东西。正当我准备离开时，韩林拿着我的T恤和球拍走了过来。'这是你的吗？'他问道。'是的，那是我的！非常感谢，'我回答道。找回我的东西后，我感到非常放松。然后我们进行了一场双打比赛，虽然我们输了，但我和朋友们玩得很开心。",
+  "questions": [
+   {
+    "stem": "Where did the writer put their T-shirt and racket?",
+    "options": [
+     "In the school hall",
+     "Near the door",
+     "In the classroom",
+     "On a mat in the sports hall"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'I put my T-shirt and my badminton racket on a mat'，且场景在体育场馆。"
+   },
+   {
+    "stem": "What did the writer notice near the door?",
+    "options": [
+     "A jump rope",
+     "A baseball glove",
+     "A blue rope",
+     "A red mat"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文中提到'Then I noticed a blue rope near the door'。"
+   },
+   {
+    "stem": "How did the writer feel when they got their things back?",
+    "options": [
+     "Angry",
+     "Relieved",
+     "Excited",
+     "Surprised"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文直接表达了'I felt so relieved to have my things back'。"
+   },
+   {
+    "stem": "What did the writer and friends do after finding the things?",
+    "options": [
+     "Played a doubles match",
+     "Went home",
+     "Played a singles match",
+     "Practiced baseball"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'We then played a doubles match'。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 3 Keep Fit",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Healthy Eating Habits",
+  "passage": "Li Hua is a middle school student who loves eating fast food. After all, it's convenient and tasty. Among his favorite meals are hamburgers and fish and chips. However, his mother is worried because Li Hua is getting a bit fat. She reads an article about healthy eating habits and decides to help him improve his diet. Instead of having fast food for dinner, she now cooks balanced meals with vegetables like cabbage, beans, and onions. Li Hua was not happy at first, but after trying the new dishes, he started to feel healthier. His mother also adds a pear or some salad to his meal. Now, Li Hua has a better habit of eating well and feels more energetic every day.",
+  "passageZh": "李华是一名中学生，他喜欢吃快餐。毕竟，快餐既方便又美味。他最喜欢的食物包括汉堡包和炸鱼薯条。然而，他的妈妈很担心，因为李华有点胖了。她读了一篇关于健康饮食习惯的文章，决定帮助他改善饮食。她不再让李华吃晚饭时吃快餐，而是用卷心菜、豆类和洋葱等蔬菜制作均衡的饭菜。起初李华不高兴，但尝试了新菜肴后，他开始感觉更健康了。妈妈还在他的餐点中加入一个梨或一些沙拉。现在，李华有了更好的饮食习惯，每天感觉更有活力了。",
+  "questions": [
+   {
+    "stem": "Why is Li Hua's mother worried about him?",
+    "options": [
+     "Because he loves eating fast food",
+     "Because he doesn't eat enough vegetables",
+     "Because he is getting a bit fat",
+     "Because he doesn't like his mother's cooking"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确提到'His mother is worried because Li Hua is getting a bit fat'，说明妈妈担心李华变胖了。"
+   },
+   {
+    "stem": "What does Li Hua's mother do to help him improve his diet?",
+    "options": [
+     "Reads articles about healthy eating",
+     "Cooks balanced meals with vegetables",
+     "Buys him more fast food",
+     "Lets him choose what to eat"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文提到'She now cooks balanced meals with vegetables like cabbage, beans, and onions'，说明妈妈通过做均衡餐帮助李华改善饮食。"
+   },
+   {
+    "stem": "How does Li Hua feel after trying his mother's new dishes?",
+    "options": [
+     "Still unhappy and hungry",
+     "Confused about the changes",
+     "Healthier and more energetic",
+     "Tired and bored"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确指出'he started to feel healthier'和'feels more energetic every day'，说明李华尝试新菜肴后感觉更健康更有活力了。"
+   },
+   {
+    "stem": "What does Li Hua's mother add to his meals now?",
+    "options": [
+     "Only meat dishes",
+     "A pear or some salad",
+     "More hamburgers and chips",
+     "More fast food"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文提到'His mother also adds a pear or some salad to his meal'，说明妈妈现在在李华的餐点中加入梨或沙拉。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 4 Eat Well",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Dragon Festival Celebrations",
+  "passage": "It's a bright Saturday morning and I'm at the central market with my family. The market is colourful with many people buying decorations for the Dragon Boat Festival. My mother is looking at some beautiful paintings of dragons while my father is talking to a passenger about the festival races. At the moment, I'm helping my little sister choose a shuttlecock to play with later. We are side by side, looking forward to the festival activities. My phone rings suddenly. It's my friend Lily. She asks, 'What are you doing right now?' I explain that I'm at the market and will call her back after we finish shopping. The market is busy with people rushing around, but we're not in a hurry. We want to enjoy every moment of this special day.",
+  "passageZh": "这是一个明亮的周六早晨，我和家人在中心市场。市场色彩斑斓，许多人正在购买端午节装饰品。我妈妈正在欣赏一些漂亮的龙画，而爸爸正在和一位乘客谈论节日赛龙舟。此刻，我正帮助小妹妹挑选一个羽毛球，准备稍后玩耍。我们并肩站在一起，期待着节日活动。我的电话突然响了，是我的朋友莉莉。她问：'你现在在做什么？'我解释说我在市场，购物后会给她回电话。市场人来人往，很忙碌，但我们并不匆忙。我们想享受这个特殊日子的每一刻。",
+  "questions": [
+   {
+    "stem": "Where is the writer at the moment?",
+    "options": [
+     "at the central market",
+     "at the park",
+     "at home",
+     "at the school hall"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第一段明确指出'It's a bright Saturday morning and I'm at the central market with my family'"
+   },
+   {
+    "stem": "What is the writer's mother doing?",
+    "options": [
+     "buying a shuttlecock",
+     "talking to a passenger",
+     "calling back a friend",
+     "looking at dragon paintings"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第二句提到'My mother is looking at some beautiful paintings of dragons'"
+   },
+   {
+    "stem": "Who calls the writer?",
+    "options": [
+     "her friend Lily",
+     "her little sister",
+     "her father",
+     "her mother"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第三段提到'It's my friend Lily. She asks, \"What are you doing right now?\"'"
+   },
+   {
+    "stem": "What does the writer plan to do after shopping?",
+    "options": [
+     "call Lily back",
+     "play shuttlecock",
+     "go home",
+     "watch races on TV"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第三段最后一句提到'I explain that I'm at the market and will call her back after we finish shopping'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 5 Here and Now",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Mountain Weather Adventure",
+  "passage": "Last weekend, Tom and his family went hiking in the mountains. At the start, the weather was perfect with blue skies and sunshine. Although they felt tired after climbing for two hours, they were in high spirits. Suddenly, grey clouds appeared at the top of the mountain. It began to rain heavily, so they found a rest area to take shelter. Because of the bad weather, they couldn't reach the peak as planned. However, Tom felt lucky to experience such magical mountain weather. At the end of the day, even though their clothes were wet, they made good progress and enjoyed the adventure.",
+  "passageZh": "上周末，汤姆和他的家人去山里远足。开始时天气完美，天空湛蓝阳光明媚。虽然爬了两小时后他们感到疲惫，但情绪高涨。突然，灰色的云出现在山顶。开始下大雨，所以他们找到一个休息区躲避。因为天气不好，他们无法按计划到达山顶。然而，汤姆觉得自己很幸运能体验到这样神奇的山区天气。那天结束时，尽管衣服湿了，但他们取得了很好的进展并享受了这次冒险。",
+  "questions": [
+   {
+    "stem": "What was the weather like at the beginning of the hike?",
+    "options": [
+     "Rainy and cold",
+     "Windy and cloudy",
+     "Foggy and grey",
+     "Sunny with blue skies"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'At the start, the weather was perfect with blue skies and sunshine'"
+   },
+   {
+    "stem": "Why did Tom and his family stop climbing?",
+    "options": [
+     "They reached the peak",
+     "They were too tired",
+     "It started raining heavily",
+     "They found a better path"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确说明'Suddenly, grey clouds appeared... It began to rain heavily, so they found a rest area'"
+   },
+   {
+    "stem": "How did Tom feel about the mountain weather experience?",
+    "options": [
+     "Angry and frustrated",
+     "Scared and worried",
+     "Lucky and excited",
+     "Disappointed and sad"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文直接提到'Tom felt lucky to experience such magical mountain weather'"
+   },
+   {
+    "stem": "What happened at the end of the day?",
+    "options": [
+     "They reached the mountain peak",
+     "They decided to climb again next week",
+     "They returned home early",
+     "They made good progress despite wet clothes"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确指出'At the end of the day, even though their clothes were wet, they made good progress'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 6 Rain or Shine",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "难忘的博物馆之旅",
+  "passage": "Last Friday, our class went on a school trip to the science museum. We explored different exhibitions and learned many interesting things. There was a special space exhibition with robots that could talk and answer questions. I certainly enjoyed seeing those machines work. Later, we visited a wastewater plant near the museum. We saw how they remove germs from water through different steps with special machines. It was amazing to see the whole process from dirty water to clean water. Finally, our teacher asked us to write a diary entry about what we saw and learned. I filled my notebook with notes and drawings. It was a day to remember!",
+  "passageZh": "上周五，我们班级去科学博物馆进行了一次学校旅行。我们探索了不同的展览，学到了很多有趣的东西。有一个特别的太空展览，里面有能够说话和回答问题的机器人。我肯定很喜欢看那些机器人的运作。后来，我们参观了博物馆附近的一个污水处理厂。我们看到了他们如何通过特殊的机器和不同的步骤去除水中的微生物。看到从脏水到净水的整个过程真是太神奇了。最后，老师要求我们写一篇日记，记录我们看到和学到的东西。我用笔记和图画填满了我的笔记本。这是难忘的一天！",
+  "questions": [
+   {
+    "stem": "Where did the class go on their school trip?",
+    "options": [
+     "A zoo",
+     "A science museum",
+     "A factory",
+     "A wastewater plant"
+    ],
+    "answerIndex": 1,
+    "explanation": "短文第一句明确提到班级去了科学博物馆。"
+   },
+   {
+    "stem": "What did the students see at the space exhibition?",
+    "options": [
+     "Old paintings",
+     "Musical instruments",
+     "Talking robots",
+     "Fresh vegetables"
+    ],
+    "answerIndex": 2,
+    "explanation": "短文第二段提到太空展览中有能够说话和回答问题的机器人。"
+   },
+   {
+    "stem": "What did the students learn about at the wastewater plant?",
+    "options": [
+     "How to grow plants",
+     "How to remove germs from water",
+     "How to make robots",
+     "How to record sounds"
+    ],
+    "answerIndex": 1,
+    "explanation": "短文第三段提到学生们在污水处理厂学习了如何去除水中的微生物。"
+   },
+   {
+    "stem": "What did the teacher ask the students to do after the trip?",
+    "options": [
+     "Write a diary entry",
+     "Create a video",
+     "Draw pictures",
+     "Make a model"
+    ],
+    "answerIndex": 0,
+    "explanation": "短文最后一句提到老师要求学生们写一篇日记记录所见所闻。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 7 A Day to Remember",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "The Emperor's New Clothes",
+  "passage": "Once upon a time, there was an emperor who loved beautiful clothes. He spent all his money on new outfits and forgot about his kingdom. Two artists came to the city and pretended to make special clothes only for him. 'Did you hear about the emperor's new clothes?' people asked each other. 'Yes, I did. They are magical!' others replied. The emperor was afraid at first, but he decided to visit the artists. They showed him an empty net and praised the invisible clothes. The emperor pretended to see the beautiful clothes and walked through the city in his underwear. Everyone laughed at him except one little child who said, 'But he has nothing on!'",
+  "passageZh": "从前，有一位皇帝非常喜欢漂亮的衣服。他把所有的钱都花在新衣服上，忘记了王国的事。两个艺术家来到城里，假装为他制作特殊的衣服。'你听说皇帝的新衣服了吗？'人们互相询问。'是的，我听说了。它们是神奇的！'其他人回答。起初皇帝很害怕，但他决定去见艺术家。他们向他展示了一张空网，称赞那些看不见的衣服。皇帝假装看到了美丽的衣服，穿着内衣在城里走动。所有人都嘲笑他，除了一个小孩说：'但他什么都没穿！'",
+  "questions": [
+   {
+    "stem": "What did the emperor love more than anything?",
+    "options": [
+     "His kingdom",
+     "Beautiful clothes",
+     "The people",
+     "The artists"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'He spent all his money on new outfits'，表明皇帝最爱漂亮衣服。"
+   },
+   {
+    "stem": "How did the emperor feel when he first heard about the artists?",
+    "options": [
+     "Afraid",
+     "Happy",
+     "Excited",
+     "Angry"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文直接指出'The emperor was afraid at first'，明确表达了皇帝最初的感觉。"
+   },
+   {
+    "stem": "What did the artists show the emperor?",
+    "options": [
+     "Real clothes",
+     "Nothing",
+     "A box",
+     "A net"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'They showed him an empty net'，明确说明艺术家展示的是一张网。"
+   },
+   {
+    "stem": "Who said the emperor had nothing on?",
+    "options": [
+     "A little child",
+     "The emperor",
+     "The artists",
+     "The officials"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确指出'everyone laughed at him except one little child who said, 'But he has nothing on!''，说明是小孩说出了真相。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 8 Once upon a Time",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "云南假期之旅",
+  "passage": "Last summer, I went on holiday to Yunnan with my family. We stayed in a comfortable hotel near the countryside. One morning, we visited a famous palace in the city center. The palace was beautiful, with colorful artwork on the walls. During our trip, we also saw some deer in the forest near our hotel. I took many photos of them in the sun. In the afternoon, we walked through a large square and enjoyed the peaceful atmosphere. I even tried playing an accordion that a street musician was playing. It was not easy, but I had fun trying something new. The holiday was probably the best one I've ever had because I got to experience both nature and culture.",
+  "passageZh": "去年夏天，我和家人一起去了云南度假。我们住在乡下附近的一家舒适的旅馆里。一天早上，我们参观了市中心的一座著名宫殿。宫殿很漂亮，墙上挂着色彩缤纷的艺术品。旅行期间，我们还看到了旅馆附近森林里的一些鹿。我在阳光下给它们拍了很多照片。下午，我们穿过一个大型广场，享受着宁静的氛围。我还尝试弹奏了一位街头音乐家演奏的手风琴。这并不容易，但我尝试新事物玩得很开心。这次假期可能是我经历过的最好的假期，因为我既能体验自然又能感受文化。",
+  "questions": [
+   {
+    "stem": "Where did the writer go on holiday?",
+    "options": [
+     "Beijing",
+     "Tibet",
+     "Yunnan",
+     "Shanghai"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第一段明确提到'Last summer, I went on holiday to Yunnan with my family'"
+   },
+   {
+    "stem": "What did the writer see in the forest near the hotel?",
+    "options": [
+     "Palaces",
+     "Deer",
+     "Metro stations",
+     "Rainbows"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第二段提到'We also saw some deer in the forest near our hotel'"
+   },
+   {
+    "stem": "What did the writer try to play in the square?",
+    "options": [
+     "A violin",
+     "A guitar",
+     "A piano",
+     "An accordion"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第二段提到'I even tried playing an accordion that a street musician was playing'"
+   },
+   {
+    "stem": "How did the writer feel about the holiday?",
+    "options": [
+     "Bored and tired",
+     "Excited and peaceful",
+     "Forgetful and worried",
+     "Sick and uncomfortable"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句提到'I had fun trying something new'和'enjoyed the peaceful atmosphere'，表明作者感到兴奋和宁静"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 1 Happy Holiday",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "新家的第一天",
+  "passage": "Last weekend, my family moved to a new apartment in our community. It was a long journey from our old home, but we felt joy when we arrived. My bedroom was almost empty, so I decided to decorate it with photos from my old room. 'Could you please help me hang up these pictures?' I asked my mum. 'Sure,' she replied. We spent the afternoon packing up my things and arranging furniture. On the balcony, my dad and I put some flowers on the table to add color to our new living room. 'Ah, this looks familiar already,' I said with a smile. By evening, our new home felt comfortable and warm.",
+  "passageZh": "上周末，我们全家搬到了社区的一个新公寓。从旧家搬来是一段漫长的旅程，但到达时我们感到很开心。我的卧室几乎是空的，所以我决定用旧房间的照片来装饰它。'你能帮我挂这些照片吗？'我问妈妈。'当然，'她回答。我们花了一下午打包我的东西和摆放家具。在阳台上，爸爸和我把一些花放在桌上，为我们的新客厅增添色彩。'啊，这看起来已经有点熟悉了，'我笑着说。到了晚上，我们的新家感觉舒适又温暖。",
+  "questions": [
+   {
+    "stem": "How did the family feel when they arrived at the new apartment?",
+    "options": [
+     "nervous",
+     "joyful",
+     "tired",
+     "excited"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'we felt joy when we arrived'，表示家人到达时感到快乐。"
+   },
+   {
+    "stem": "What did the family do on the balcony?",
+    "options": [
+     "packed luggage",
+     "watched a movie",
+     "cleaned up",
+     "put flowers"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'On the balcony, my dad and I put some flowers on the table'，说明他们在阳台上放了花。"
+   },
+   {
+    "stem": "What did the speaker ask his mum to help with?",
+    "options": [
+     "go shopping",
+     "sweep the floor",
+     "pack up things",
+     "hang up photos"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'Could you please help me hang up these pictures?'，表明 speaker 请妈妈帮忙挂照片。"
+   },
+   {
+    "stem": "How did the speaker feel about the new home by the end of the day?",
+    "options": [
+     "uncomfortable",
+     "warm and comfortable",
+     "familiar",
+     "empty"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'By evening, our new home felt comfortable and warm'，表明 speaker 感到新家温暖舒适。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 2 Home Sweet Home",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "不同但友好的新朋友",
+  "passage": "Last Monday, I met a new student named Tom at school. We were alone in the classroom when he accidentally knocked over my books. I was a bit angry at first, but then I noticed his honest expression. Tom is hard-working and outgoing, with a great sense of humour. Besides, we have many interests in common, like reading novels and playing the flute. The teacher asked us to compare our daily routines. I found that although we come from different backgrounds, we care about similar things. By the end of the day, we became good friends. I expect our friendship will grow stronger as we get to know each other better.",
+  "passageZh": "上周一，我在学校认识了一个名叫汤姆的新同学。当我们独自在教室时，他不小心撞倒了我的书。起初我有点生气，但我注意到了他坦诚的表情。汤姆勤奋且外向，很有幽默感。此外，我们有许多共同的爱好，比如读小说和吹长笛。老师让我们比较日常作息。我发现尽管我们来自不同的背景，但关心的事情相似。到那天结束时，我们成了好朋友。我期待随着我们更了解彼此，我们的友谊会更加深厚。",
+  "questions": [
+   {
+    "stem": "How did the writer feel when Tom knocked over his books?",
+    "options": [
+     "angry",
+     "surprised",
+     "nervous",
+     "excited"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'I was a bit angry at first'，表明作者起初感到生气。"
+   },
+   {
+    "stem": "What do the writer and Tom have in common?",
+    "options": [
+     "playing sports",
+     "reading novels",
+     "drawing pictures",
+     "listening to music"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文指出'we have many interests in common, like reading novels'，说明他们共同喜欢读小说。"
+   },
+   {
+    "stem": "What is Tom's personality like?",
+    "options": [
+     "honest and humorous",
+     "hard-working and outgoing",
+     "lazy and quiet",
+     "shy and serious"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文描述'Tom is hard-working and outgoing, with a great sense of humour'，表明汤姆勤奋且外向。"
+   },
+   {
+    "stem": "What does the writer expect about their friendship?",
+    "options": [
+     "It will become boring",
+     "It will grow stronger",
+     "It will remain the same",
+     "It will end soon"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'I expect our friendship will grow stronger as we get to know each other better'，表明作者期待友谊会更加深厚。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 3 Same or Different?",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "大自然的奇妙",
+  "passage": "Last Sunday, I visited the nature museum with my classmates. It was amazing to see so many plants and animals there. The African elephant caught my attention immediately because it is the biggest land animal in the world. Actually, I believe the most interesting animal was the cheetah, which runs the fastest among all land animals. In the plant section, bamboo appeared to be very useful. For this reason, I think bamboo is perhaps the most useful plant in the world. The museum also had a special area showing how plants and animals are connected in an ecosystem. I learned that bees help with pollination by carrying pollen from one flower to another. It was a wonderful day that made me understand the importance of nature.",
+  "passageZh": "上周日，我和同学们参观了自然博物馆。那里有如此多的动植物，真是太神奇了。非洲象立刻吸引了我的注意力，因为它是世界上最大的陆地动物。实际上，我认为最有趣的动物是猎豹，它是所有陆地动物中跑得最快的。在植物展区，竹子似乎非常有用。因此，我认为竹子或许是世界上最有用的植物。博物馆还有一个特别区域展示了植物和动物在生态系统中是如何相互联系的。我了解到蜜蜂通过将花粉从一朵花传到另一朵花来帮助授粉。这是美好的一天，让我理解了自然的重要性。",
+  "questions": [
+   {
+    "stem": "Where did the writer go last Sunday?",
+    "options": [
+     "A nature museum",
+     "A zoo",
+     "A park",
+     "A school"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第一句明确提到'I visited the nature museum with my classmates'。"
+   },
+   {
+    "stem": "Which animal is the biggest land animal according to the passage?",
+    "options": [
+     "The African elephant",
+     "The frog",
+     "The blue whale",
+     "The cheetah"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第二句提到'The African elephant caught my attention immediately because it is the biggest land animal in the world'。"
+   },
+   {
+    "stem": "What does the writer think is the most useful plant?",
+    "options": [
+     "Moss",
+     "Lotus",
+     "Bamboo",
+     "Ginkgo"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第四句提到'I think bamboo is perhaps the most useful plant in the world'。"
+   },
+   {
+    "stem": "How do bees help plants according to the passage?",
+    "options": [
+     "By making honey",
+     "By carrying pollen",
+     "By building nests",
+     "By eating pests"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句提到'I learned that bees help with pollination by carrying pollen from one flower to another'。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 4 Amazing Plants and Animals",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "圣诞烘焙回忆",
+  "passage": "Last Christmas, I decided to bake a special cake for my family. According to my grandma's recipe, I needed flour, butter, cheese, and cinnamon. I mixed these ingredients in a big bowl. At least two hours passed before I finished preparing the mixture. Then I put it in the oven and waited. What an amazing smell filled the kitchen! When I took the cake out, I cut it into pieces. One by one, my family tried it and said it was delicious. This memory makes me happy because baking brings us together.",
+  "passageZh": "去年圣诞节，我决定为家人烤一个特别的蛋糕。根据奶奶的食谱，我需要面粉、黄油、奶酪和肉桂皮。我把这些食材在一个大碗里混合。至少过了两个小时我才完成混合物的准备。然后我把混合物放进烤箱等待。多么美妙的味道充满了厨房！当我把蛋糕拿出来时，我把它切成小块。我的家人一个接一个地品尝，都说很美味。这个回忆让我很开心，因为烘焙让我们聚在一起。",
+  "questions": [
+   {
+    "stem": "What did the writer bake for Christmas?",
+    "options": [
+     "Mashed potatoes",
+     "Hot and sour soup",
+     "Cookies",
+     "A special cake"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'I decided to bake a special cake for my family'"
+   },
+   {
+    "stem": "How did the writer feel about the baking experience?",
+    "options": [
+     "Happy",
+     "Tired",
+     "Nervous",
+     "Worried"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文最后一句明确说明'This memory makes me happy'"
+   },
+   {
+    "stem": "What did the family do after trying the cake?",
+    "options": [
+     "Went boating",
+     "Cleaned the kitchen",
+     "Left immediately",
+     "Asked for more"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'One by one, my family tried it and said it was delicious'表明他们喜欢并可能想要更多"
+   },
+   {
+    "stem": "What made the kitchen smell good?",
+    "options": [
+     "The oven",
+     "The cinnamon",
+     "The cheese",
+     "The butter"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文提到'What an amazing smell filled the kitchen!'紧接着'I put it in the oven'表明是烤箱中的蛋糕使厨房有好闻的味道"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 5 What a Delicious Meal!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Tom's Future Plan",
+  "passage": "Tom is a fifteen-year-old student who is always energetic and organized. He has been thinking about his future career recently. Last week, he attended a career talk at school where different professionals introduced their jobs. Tom found out that he wants to be an engineer like his father. His father designs bridges and buildings, and Tom admires his work. 'What do you want to be in the future?' Tom often asks himself. 'I want to be an engineer,' he answers confidently. Tom knows he needs to work hard, especially in maths and science. He is going to keep on studying these subjects and read more books about engineering. He also plans to join the school's science club to learn more about technology. Tom believes that with careful planning and hard work, he will be able to achieve his dream.",
+  "passageZh": "汤姆是一个十五岁的学生，总是充满活力且有条理。最近，他一直在思考自己的未来职业。上周，他参加了学校的一场职业讲座，不同行业的专业人士介绍了他们的工作。汤姆发现他想成为一名工程师，就像他的父亲一样。他的父亲设计桥梁和建筑，汤姆很钦佩他的工作。'你将来想成为什么？'汤姆经常问自己。'我想成为一名工程师，'他自信地回答。汤姆知道他需要努力学习，特别是在数学和科学方面。他打算继续学习这些科目，阅读更多关于工程学的书籍。他还计划加入学校的科学俱乐部，学习更多关于技术的知识。汤姆相信，通过仔细规划和努力工作，他能够实现自己的梦想。",
+  "questions": [
+   {
+    "stem": "What does Tom want to be in the future?",
+    "options": [
+     "a director",
+     "a designer",
+     "a businessman",
+     "an engineer"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到Tom想成为一名工程师，如'Tom found out that he wants to be an engineer like his father'"
+   },
+   {
+    "stem": "How does Tom feel about his future plan?",
+    "options": [
+     "tired",
+     "worried",
+     "nervous",
+     "confident"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文中Tom回答自己的问题时使用了'confidently'一词，表明他对自己的计划充满信心"
+   },
+   {
+    "stem": "What subjects is Tom going to focus on?",
+    "options": [
+     "literature and art",
+     "music and fashion",
+     "maths and science",
+     "history and geography"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确指出Tom需要努力学习数学和科学，如'Tom knows he needs to work hard, especially in maths and science'"
+   },
+   {
+    "stem": "What club is Tom planning to join?",
+    "options": [
+     "literature club",
+     "sports club",
+     "music club",
+     "science club"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文中提到Tom计划加入学校的科学俱乐部，如'He also plans to join the school's science club'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 6 Plan for Yourself",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "未来梦想家",
+  "passage": "Last week, our school had a special guest visit. Mr. Johnson, a famous futurist, came to talk about what the future might be like. He mentioned that in the future, people might live to be over 100 years old thanks to medical advances. 'Will most people live in outer space?' someone asked. 'No, they won't,' Mr. Johnson answered, 'but cities will become more efficient with better technology.'\n\nDuring the Q&A session, I challenged him about the future of education. 'What will happen to traditional schools?' I questioned. He smiled and said, 'Education will depend more on creativity and emotional intelligence than just memorization.' His words made me think about my own future. I hope I can become an expert in medical research to help find cures for diseases like cancer. With hard work, I believe dreams can come true.",
+  "passageZh": "上周，我们学校有一位特别的客人来访。约翰逊先生，一位著名的未来学家，来谈论未来可能是什么样子。他提到，未来人们可能活到100岁以上，这得益于医学的进步。'大多数人会住在外太空吗？'有人问。'不，他们不会，'约翰逊先生回答，'但城市会变得更高效，拥有更好的技术。'\n\n在问答环节，我向他挑战关于教育的未来。'传统学校会发生什么？'我问道。他微笑着说，'教育将更多地取决于创造力和情绪智力，而不仅仅是记忆。'他的话让我思考我自己的未来。我希望我能成为医学研究专家，帮助找到像癌症这样的疾病的治愈方法。通过努力工作，我相信梦想可以实现。",
+  "questions": [
+   {
+    "stem": "Who was the guest speaker at the school?",
+    "options": [
+     "A futurist",
+     "A pilot",
+     "A chief scientist",
+     "A doctor"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第一段明确提到Mr. Johnson是a famous futurist。"
+   },
+   {
+    "stem": "What did Mr. Johnson say about people's future lifespan?",
+    "options": [
+     "People will live to be 120",
+     "People will live to be over 100",
+     "People will live to be 90",
+     "People will live to be 80"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第一段提到Mr. Johnson said people might live to be over 100 years old。"
+   },
+   {
+    "stem": "What did the student ask about education?",
+    "options": [
+     "Will education depend on technology",
+     "Will schools disappear",
+     "Will people learn from home",
+     "What will happen to traditional schools"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第二段明确提到I questioned, 'What will happen to traditional schools?'"
+   },
+   {
+    "stem": "What is the student's dream career?",
+    "options": [
+     "To become a musician",
+     "To become a teacher",
+     "To become an expert in medical research",
+     "To become a pilot"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文最后一段提到I hope I can become an expert in medical research。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 7 When Tomorrow Comes",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "化解友谊危机",
+  "passage": "Last week, I had a big argument with my best friend Lily over a misunderstanding. We were both nervous and didn't talk for three days. Finally, I decided to pay attention to my feelings and write her a letter. If you want to solve the problem, a face-to-face talk usually works the best, but I was too nervous to meet in person. In my letter, I carefully explained my side of the story and apologized for my impolite words. The next day, Lily called me and said she received my message. We agreed to meet at the school hall after class. When we saw each other face to face, we both felt calm again. We made up and promised to communicate better in the future. This experience taught me that communication can benefit our relationships if we stay calm and express ourselves clearly.",
+  "passageZh": "上周，我和我最好的朋友莉莉因为一场误会而大吵了一架。我们俩都很紧张，三天没说话。最后，我决定关注自己的感受，给她写了一封信。如果你想解决问题，面对面的谈话通常最有效，但我太紧张了，无法亲自见面。在信中，我仔细解释了我的故事并为我不礼貌的话道歉。第二天，莉莉给我打电话说她收到了我的信息。我们约定放学后在学校的礼堂见面。当我们面对面相见时，我们都再次感到平静。我们言归于好，并承诺将来更好地沟通。这段经历教会了我，如果我们保持冷静并清晰表达自己，沟通会对我们的关系有益。",
+  "questions": [
+   {
+    "stem": "How did the writer feel after arguing with Lily?",
+    "options": [
+     "angry and disappointed",
+     "excited and happy",
+     "calm and relaxed",
+     "nervous and worried"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'We were both nervous and didn't talk for three days'"
+   },
+   {
+    "stem": "What did the writer do to solve the problem with Lily?",
+    "options": [
+     "met her in person immediately",
+     "asked a teacher for help",
+     "ignored her for a week",
+     "dropped her a line"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'I decided to pay attention to my feelings and write her a letter'，对应'drop sb a line'的用法"
+   },
+   {
+    "stem": "Where did the writer and Lily finally meet?",
+    "options": [
+     "at a local cafe",
+     "at the school hall",
+     "at the school library",
+     "in the classroom"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'We agreed to meet at the school hall after class'"
+   },
+   {
+    "stem": "What did the writer learn from this experience?",
+    "options": [
+     "face-to-face talks never work",
+     "communication can benefit relationships",
+     "arguments are always bad",
+     "writing letters is better than talking"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句明确提到'This experience taught me that communication can benefit our relationships'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 8 Let's Communicate!",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "滑冰的勇气",
+  "passage": "Last weekend, I went to the sports centre to try ice-skating for the first time. I was scared of falling, but my friend encouraged me to give it a go. The instructor told me not to give up so easily when I struggled to stand on the ice. After several attempts, I managed to skate a little. It was quite an achievement for me! I used to fear failure, but now I understand that trying new things helps me grow. The instructor's inspiration pushed me to keep going, and I'm happy I didn't give up. Ice-skating has become my new hobby to relax after school.",
+  "passageZh": "上周末，我第一次去滑冰中心尝试滑冰。我害怕摔倒，但我的朋友鼓励我试一试。当我努力想在冰上站立却失败时，教练告诉我不要轻易放弃。经过几次尝试，我终于滑了一小段。对我来说，这相当是一项成就！我过去害怕失败，但现在我明白尝试新事物能帮助我成长。教练的鼓舞鞭策我继续前进，我很高兴我没有放弃。滑冰已经成为我放学后放松的新爱好。",
+  "questions": [
+   {
+    "stem": "Where did the writer go last weekend?",
+    "options": [
+     "To the sports centre",
+     "To the cinema",
+     "To the school hall",
+     "To the library"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第一句明确提到'I went to the sports centre to try ice-skating for the first time'"
+   },
+   {
+    "stem": "How did the writer feel about ice-skating at first?",
+    "options": [
+     "Bored",
+     "Excited",
+     "Scared",
+     "Confident"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文第二句明确提到'I was scared of falling'"
+   },
+   {
+    "stem": "What did the instructor tell the writer?",
+    "options": [
+     "To skate faster",
+     "To buy better equipment",
+     "To try another sport",
+     "Not to give up easily"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第三句明确提到'The instructor told me not to give up so easily'"
+   },
+   {
+    "stem": "What has ice-skating become for the writer?",
+    "options": [
+     "A competition",
+     "A school activity",
+     "A daily routine",
+     "A new hobby to relax"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文最后一句明确提到'Ice-skating has become my new hobby to relax after school'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 1 Time to Relax",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "A Painful Day at School",
+  "passage": "Last Monday, Tom woke up with a terrible headache and stomach ache. He felt so badly that he could barely eat breakfast. His mother checked him and said, 'You might have the flu. You should see the doctor.' At school, Tom told his teacher, 'What's wrong? I feel terrible today.' His teacher noticed Tom's pale face and immediately called the school nurse. The nurse checked his temperature and found he had a fever. Luckily, the nurse gave him some first aid and called his parents. From now on, Tom promised to be more careful about his health and avoid eating too much junk food.",
+  "passageZh": "上周一，汤姆醒来时感到头痛和胃痛非常严重。他感觉非常糟糕，几乎吃不下早餐。妈妈检查了他后说：'你可能得了流感。你应该去看医生。'在学校，汤姆告诉老师：'怎么了？我今天感觉很难受。'老师注意到汤姆苍白的脸，立即叫了学校的护士。护士量了他的体温，发现他发烧了。幸运的是，护士给他做了急救并联系了他的父母。从现在起，汤姆承诺会更加注意健康，避免吃太多垃圾食品。",
+  "questions": [
+   {
+    "stem": "What was wrong with Tom when he woke up last Monday?",
+    "options": [
+     "He was allergic to breakfast",
+     "He had a headache and stomach ache",
+     "He had a fever and cough",
+     "He hurt himself while falling off his bike"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第一句明确提到汤姆醒来时感到头痛和胃痛。"
+   },
+   {
+    "stem": "What did Tom's mother suggest he should do?",
+    "options": [
+     "See the doctor",
+     "Get an X-ray",
+     "Use a mask",
+     "Eat more soft food"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第二句提到汤姆妈妈说'你应该去看医生'。"
+   },
+   {
+    "stem": "What did the nurse do for Tom at school?",
+    "options": [
+     "Called his parents after checking him",
+     "Gave him medicine for his toothache",
+     "Put a bandage on his bruised knee",
+     "Told him to avoid eating out"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文最后一段提到护士给他做了急救并联系了他的父母。"
+   },
+   {
+    "stem": "What did Tom promise to do from now on?",
+    "options": [
+     "Use an extinguisher when cooking",
+     "Avoid crossing the street",
+     "Eat more fried food",
+     "Be more careful about his health"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文最后一句提到汤姆承诺会更加注意健康。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 2 Stay Healthy",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "化解矛盾",
+  "passage": "Last week, I had a problem with my classmate Tom. He was a bit hard on me during our group project, which made me feel angry and hurtful. Even though I wanted to clear the air, I was afraid to talk to him. On Friday, our coach advised me to deal with the issue directly. So I decided to apologize first. Surprisingly, Tom was all smiles when I spoke to him. He said he had been stressed about his family problems and didn't mean to be rude. We both felt joyful after talking everything through. From time to time, we still have small disagreements, but we've learned to forgive each other and control our emotions better now.",
+  "passageZh": "上周，我和我的同学汤姆有个问题。在小组项目中，他对我有点儿苛刻，这让我感到愤怒和受伤。尽管我想尽释前嫌，但我害怕和他谈话。周五，我们的教练建议我直接处理这个问题。所以我决定先道歉。令人惊讶的是，当我跟汤姆说话时，他笑容满面。他说他一直为家庭问题感到压力，并非有意粗鲁。交谈之后，我们都感到高兴。我们偶尔还会有小的分歧，但现在我们已经学会了互相原谅，并能更好地控制自己的情绪。",
+  "questions": [
+   {
+    "stem": "How did the writer feel about Tom's behavior during the group project?",
+    "options": [
+     "angry and hurtful",
+     "calm",
+     "joyful",
+     "excited"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'which made me feel angry and hurtful'，表明作者对汤姆的行为感到愤怒和受伤。"
+   },
+   {
+    "stem": "What did the coach advise the writer to do?",
+    "options": [
+     "deal with the issue directly",
+     "apologize to Tom",
+     "forgive Tom immediately",
+     "avoid talking to Tom"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文中教练建议'deal with the issue directly'，即直接处理这个问题。"
+   },
+   {
+    "stem": "How did Tom react when the writer apologized?",
+    "options": [
+     "he was all smiles",
+     "he ignored the writer",
+     "he got angry",
+     "he felt upset"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确提到'Tom was all smiles when I spoke to him'，表明汤姆道歉时笑容满面。"
+   },
+   {
+    "stem": "What did the writer and Tom learn to do after their conversation?",
+    "options": [
+     "to avoid working together",
+     "to forgive each other and control emotions",
+     "to feel blue",
+     "to compete better"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句提到'we've learned to forgive each other and control our emotions better now'，表明他们学会了互相原谅和控制情绪。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 3 Growing Up",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "大自然的奇迹探索",
+  "passage": "Tom, a curious young explorer, had always dreamed of discovering natural wonders. Last summer, he traveled to the northeastern coast to explore the mysterious depths of the ocean. With his determination, he measured the depth bit by bit using special equipment. He discovered that the deepest point was located below the surface, reaching about 11,000 metres. The conditions were challenging, but his ambition to explore kept him alive and focused. 'What makes deep-sea creatures so special?' he wondered. Some animals were blind, yet they could 'see' as well as others using special abilities. This incredible discovery showed him how amazing nature is, and he promised to continue his exploration at all costs.",
+  "passageZh": "汤姆，一个好奇的年轻探险家，一直梦想着发现大自然的奇迹。去年夏天，他前往东北海岸探索海洋的神秘深度。凭借他的决心，他一点一点地使用特殊设备测量深度。他发现最深点位于表面下方，深度约为11,000米。环境很具挑战性，但他探索的抱负使他保持活力和专注。'深海生物如此特别的原因是什么？'他想知道。有些动物是盲的，但它们能够像其他生物一样'看见'。这一令人难以置信的发现向他展示了自然是多么神奇，他承诺不惜任何代价继续他的探索。",
+  "questions": [
+   {
+    "stem": "Where did Tom travel to explore natural wonders?",
+    "options": [
+     "Mount Qomolangma",
+     "the northeastern coast",
+     "the Mariana Trench",
+     "the Sahara Desert"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确提到'traveled to the northeastern coast to explore the mysterious depths of the ocean'"
+   },
+   {
+    "stem": "What challenge did Tom face during his exploration?",
+    "options": [
+     "deep sea conditions",
+     "lack of equipment",
+     "extreme heat",
+     "dangerous animals"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文提到'The conditions were challenging'，指代探索过程中的深海环境挑战"
+   },
+   {
+    "stem": "What special ability did some deep-sea animals have?",
+    "options": [
+     "they could communicate with humans",
+     "they could change their appearance",
+     "they could see in complete darkness",
+     "they could breathe underwater"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'Some animals were blind, yet they could 'see' as well as others'，表明它们能在完全黑暗中'看见'"
+   },
+   {
+    "stem": "What was Tom's promise after his discovery?",
+    "options": [
+     "to protect the ocean environment",
+     "to continue his exploration at all costs",
+     "to become a professional diver",
+     "to write a book about his findings"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后明确提到'he promised to continue his exploration at all costs'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 4 The Wonders of Nature",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "暴风雨中的救援",
+  "passage": "Last Saturday, I was visiting my grandparents in their neighbourhood when a heavy rainstorm suddenly hit. The rain was pouring down so hard that floodwater began to rise quickly on the streets. As soon as I noticed the danger, I called the firefighters for help. While we were waiting, I saw a schoolgirl struggling in the floodwater near her home. Without hesitation, I jumped in and rescued her just before the water reached her roof. By the time the firefighters arrived, we were both out of breath but safe. The girl's relatives came to thank me, and I felt like a hero. This experience taught me the importance of being prepared for natural disasters.",
+  "passageZh": "上周六，我正在祖父母家所在的街区拜访时，突然遭遇了一场大暴雨。雨下得非常大，洪水很快开始在街道上涨。我一注意到危险，就立即叫了消防员来帮忙。在等待期间，我看到一个学校女孩在她家附近的洪水中挣扎。我毫不犹豫地跳进去，在水淹到她屋顶前救了她。等到消防员到达时，我们都上气不接下气，但安全了。女孩的亲戚前来感谢我，我感觉自己像个英雄。这次经历教会了我为自然灾害做准备的重要性。",
+  "questions": [
+   {
+    "stem": "Where was the writer when the rainstorm started?",
+    "options": [
+     "In the city centre",
+     "At home",
+     "At school",
+     "In the neighbourhood"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第一段明确提到'Last Saturday, I was visiting my grandparents in their neighbourhood when a heavy rainstorm suddenly hit'，说明作者当时在祖父母家所在的街区。"
+   },
+   {
+    "stem": "What did the writer do after seeing the schoolgirl in danger?",
+    "options": [
+     "Called the firefighters",
+     "Made preparations for rescue",
+     "Warned her relatives",
+     "Jumped into the water"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第三段提到'Without hesitation, I jumped in and rescued her'，说明作者看到女孩有危险后直接跳入水中救援。"
+   },
+   {
+    "stem": "How did the writer feel after rescuing the girl?",
+    "options": [
+     "Angry at the situation",
+     "Tired and scared",
+     "Worried about the rain",
+     "Out of breath but safe"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第四段明确提到'By the time the firefighters arrived, we were both out of breath but safe'，描述了作者当时的感受。"
+   },
+   {
+    "stem": "What did the writer learn from this experience?",
+    "options": [
+     "How to swim fast",
+     "How to call firefighters",
+     "The importance of preparation",
+     "The dangers of rainstorms"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文最后一句'This experience taught me the importance of being prepared for natural disasters'直接点明了作者从这次经历中学到的东西。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 5 Nature's Temper",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "文化差异的体验",
+  "passage": "Last summer, I had an interesting cultural exchange with an Indian student named Priya. When we first met, I bowed to her as a greeting. Priya looked confused and said, 'In India, we usually just say hello or shake hands.' I was embarrassed because I thought bowing was proper. Priya explained that bowing is too formal for casual meetings in her culture. We then talked about different customs. She told me that in India, people often eat curry with their hands, while I use chopsticks. I found these cultural differences fascinating but sometimes confusing. Priya taught me how to use chopsticks correctly, and I showed her how to bow properly. By the end of our meeting, we got along well and learned from each other. We both agreed that understanding different cultures can go a long way in making friends.",
+  "passageZh": "去年夏天，我有一位名叫普丽娅的印度学生进行了一次有趣的文化交流。当我们初次见面时，我向她鞠躬致意。普丽娅看起来很困惑，说：'在印度，我们通常只是说你好或握手。'我感到很尴尬，因为我认为鞠躬是合适的。普丽娅解释说，在她的文化中，鞠躬对于非正式的会面太过正式。然后我们讨论了不同的习俗。她告诉我，在印度，人们经常用手吃咖喱，而我用筷子。我发现这些文化差异很有趣但有时令人困惑。普丽娅教我如何正确使用筷子，而我向她展示了如何正确鞠躬。在我们会面的结束时，我们相处得很好，并互相学习。我们都认为，理解不同的文化在交朋友方面大有帮助。",
+  "questions": [
+   {
+    "stem": "How did the writer feel when Priya looked confused at his bow?",
+    "options": [
+     "surprised",
+     "angry",
+     "embarrassed",
+     "excited"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确提到'I was embarrassed because I thought bowing was proper'，表明作者感到尴尬。"
+   },
+   {
+    "stem": "What custom did Priya explain about greetings in India?",
+    "options": [
+     "people use formal language",
+     "people kiss cheeks",
+     "people bow to teachers",
+     "people say hello or shake hands"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文中Priya说：'In India, we usually just say hello or shake hands'，这是印度问候的方式。"
+   },
+   {
+    "stem": "What did the writer teach Priya during their cultural exchange?",
+    "options": [
+     "how to bow properly",
+     "how to eat curry",
+     "how to wear a blouse",
+     "how to use chopsticks"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文提到'I showed her how to bow properly'，表明作者教普丽娅如何正确鞠躬。"
+   },
+   {
+    "stem": "What did both the writer and Priya agree about cultural differences?",
+    "options": [
+     "they are embarrassing",
+     "they are confusing",
+     "they are improper",
+     "they can help make friends"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确指出'We both agreed that understanding different cultures can go a long way in making friends'，表明他们一致认为文化差异有助于交友。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 6 Crossing Cultures",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "图书馆的冒险之旅",
+  "passage": "Last Friday, our class had a special reading activity in the school library. I was looking for a good read for my book report when I met our librarian, Ms. Wang. She recommended Alice's Adventures in Wonderland, a famous fantasy novel. 'Have you decided on a book for your report?' she asked with a gentle smile. I nodded and replied, 'Yes, I have. I've just borrowed it from the library.' As I was reading, I got lost in the wonderful world of Wonderland, where Alice met strange characters and experienced amazing adventures. The story has a perfect build-up leading to an exciting climax. I consider this book one of the most inspiring literary works I've ever read. My friend Tom has never heard of this book before, but after I told him about it, he became very interested and decided to read it too.",
+  "passageZh": "上周五，我们班在学校图书馆举办了一次特别的阅读活动。我正在为我的读书报告寻找一本好书时，遇到了我们的图书管理员王女士。她向我推荐了《爱丽丝梦游仙境》，这是一本著名的幻想小说。'你决定好读书报告要读的书了吗？'她温柔地微笑着问道。我点点头回答：'是的，我已经决定了。我刚从图书馆借了这本书。'当我阅读时，我完全沉浸在奇妙的爱丽丝仙境世界中，在那里爱丽丝遇到了奇怪的角色并经历了令人惊叹的冒险。这个故事有完美的铺垫，引向一个激动人心的高潮。我认为这本书是我读过的最具启发性的文学作品之一。我的朋友汤姆以前从未听说过这本书，但在我告诉他之后，他变得非常感兴趣，并决定也去读一读。",
+  "questions": [
+   {
+    "stem": "Where did the reading activity take place?",
+    "options": [
+     "At home",
+     "In the classroom",
+     "In the school hall",
+     "In the library"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第一句明确提到活动是在学校图书馆举行的。"
+   },
+   {
+    "stem": "What kind of book did the librarian recommend?",
+    "options": [
+     "An adventure book",
+     "A historical novel",
+     "A fantasy novel",
+     "A detective story"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文中提到图书管理员推荐的是《爱丽丝梦游仙境》，并明确指出这是一本著名的幻想小说(fantasy novel)。"
+   },
+   {
+    "stem": "How did the writer feel about the book?",
+    "options": [
+     "Inspired",
+     "Tired",
+     "Confused",
+     "Bored"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确表示'I consider this book one of the most inspiring literary works'，说明作者感到被这本书所启发。"
+   },
+   {
+    "stem": "What happened to Tom after hearing about the book?",
+    "options": [
+     "He already read it",
+     "He didn't believe it",
+     "He borrowed it immediately",
+     "He became interested"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'after I told him about it, he became very interested and decided to read it too'，表明汤姆在听说这本书后变得很感兴趣。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 7 A Good Read",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "Volunteer Experience",
+  "passage": "I have been a volunteer at the local animal shelter for three months. Every weekend, I help take care of the dogs there. Some of them were found on the streets and are still getting used to people. My most important task is to walk the dogs and clean their cages. The shelter needs donations to buy food and medicine for these animals. Last month, we organized a charity event to collect pocket money from visitors. Most of all, I enjoy seeing the dogs become more active and friendly. One of the dogs, a brown one named Max, used to bark all the time. Now he loves to play with people. I feel happy knowing my small effort can make a difference in their lives.",
+  "passageZh": "我在当地动物收容所做志愿者已经三个月了。每个周末，我都帮忙照顾那里的狗。有些狗是在街上被发现的，还在适应人类。我最重要的任务是遛狗和清理它们的笼子。收容所需要捐赠来购买这些动物的食物和药品。上个月，我们组织了一场慈善活动，向访客收集零花钱。最重要的是，我喜欢看到狗变得更活跃和友好。其中一只棕色的狗叫Max，以前总是叫个不停。现在他喜欢和人一起玩。我很高兴知道我的小小努力能改变它们的生活。",
+  "questions": [
+   {
+    "stem": "How long has the writer been volunteering at the animal shelter?",
+    "options": [
+     "Since last summer",
+     "Since last year",
+     "For a few weeks",
+     "For three months"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第一句明确提到'I have been a volunteer at the local animal shelter for three months'"
+   },
+   {
+    "stem": "What is the writer's most important task at the shelter?",
+    "options": [
+     "Walking dogs and cleaning cages",
+     "Organizing charity events",
+     "Collecting donations",
+     "Feeding the animals"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文第三句明确提到'My most important task is to walk the dogs and clean their cages'"
+   },
+   {
+    "stem": "How does the writer feel about volunteering?",
+    "options": [
+     "Confused and uncertain",
+     "Worried and stressed",
+     "Tired and bored",
+     "Happy and satisfied"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文最后一句明确提到'I feel happy knowing my small effort can make a difference in their lives'"
+   },
+   {
+    "stem": "What happened to Max, the brown dog?",
+    "options": [
+     "He became more friendly",
+     "He was adopted by a visitor",
+     "He got sick and needed medicine",
+     "He ran away from the shelter"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文倒数第二句明确提到'Now he loves to play with people'表明Max变得更友善"
+   }
+  ],
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "肯尼亚的村庄变化",
+  "passage": "My grandfather, a Kenyan farmer, has lived in his village for over 60 years. Twenty years ago, he became good friends with a manager who visited the village for business. They haven't seen each other for ages! The manager recently returned and was amazed by the changes. The village now has a new hospital, which used to be a small building. Many young people used to work in big cities, but now more have come back to live and work here. The government has built a new highway linking the village to the capital. Digital payment systems have made business transactions convenient. My grandfather's farm has also changed - he now uses high-tech greenhouses to grow corn instead of traditional farmland. The manager commented that these changes have greatly improved life in the village.",
+  "passageZh": "我的祖父是一位肯尼亚农民，已经在他的村庄生活了60多年。20年前，他认识了一位来村里做生意的经理，他们成为了好朋友。他们已经很多年没有见面了！最近这位经理回来了，对村庄的变化感到惊讶。村里现在有了一家新医院，过去那只是一座小建筑。许多年轻人过去在大城市工作，但现在更多人已经回来在这里生活和工作。政府修建了一条连接村庄和首都的新公路。电子支付系统使商业交易变得方便。我祖父的农场也发生了变化——他现在使用高科技温室种植玉米，而不是传统的耕地。经理评论说这些变化极大地改善了村庄的生活。",
+  "questions": [
+   {
+    "stem": "What did the manager think about the village changes?",
+    "options": [
+     "They greatly improved life",
+     "They were unnecessary",
+     "They destroyed traditions",
+     "They were too expensive"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文最后一句提到经理评论这些变化极大地改善了村庄的生活。"
+   },
+   {
+    "stem": "What has changed on my grandfather's farm?",
+    "options": [
+     "He uses traditional methods",
+     "He stopped farming",
+     "He moved to the capital",
+     "He grows corn in greenhouses"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到祖父现在使用高科技温室种植玉米，而不是传统的耕地。"
+   },
+   {
+    "stem": "How long have the friends not seen each other?",
+    "options": [
+     "For 20 years",
+     "For a few months",
+     "For many years",
+     "Since last year"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确提到他们已经很多年没有见面了。"
+   },
+   {
+    "stem": "What convenience has been introduced in the village?",
+    "options": [
+     "More hospitals",
+     "Digital payment systems",
+     "Bigger houses",
+     "New schools"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文提到电子支付系统使商业交易变得方便。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 1 The Changing World",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "贝聿铭的建筑传奇",
+  "passage": "I. M. Pei was a world-famous British architect who created many amazing buildings around the globe. Born in China during the 20th century, he later moved to the United States where he established his own design company. Pei's work is known for its perfect balance between modern styles and traditional elements. Above all, what makes him truly admirable is his courage to try new ideas while respecting history.\n\nOne of his most famous projects is the glass pyramid at the Louvre Museum in Paris. It was difficult for many people to accept such a modern design next to the historic palace at first. However, Pei believed that good design could connect different centuries. Today, millions of visitors admire his creation every year. Pei once said that architecture should serve mankind and continue to inspire future generations. His buildings will live on as testaments to his vision and talent.",
+  "passageZh": "贝聿铭是一位世界著名的英国建筑师，在全球设计了众多令人惊叹的建筑。他出生于20世纪的中国，后来移居美国并建立了自己的设计公司。贝聿铭的作品以其现代风格与传统元素的完美平衡而闻名。最重要的是，他真正令人钦佩的是他有勇气尝试新想法的同时尊重历史。\n\n他最著名的项目之一是巴黎卢浮宫的玻璃金字塔。起初，许多人很难接受这种现代设计紧邻历史宫殿。然而，贝聿铭相信好的设计可以连接不同的世纪。如今，每年有数百万游客欣赏他的作品。贝聿铭曾经说过，建筑应该为人类服务，并继续激励后代。他的建筑将继续作为他远见和才能的见证而存在。",
+  "questions": [
+   {
+    "stem": "Where did I. M. Pei establish his design company?",
+    "options": [
+     "China",
+     "The United States",
+     "Britain",
+     "France"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文提到'he later moved to the United States where he established his own design company'。"
+   },
+   {
+    "stem": "What is Pei's work known for?",
+    "options": [
+     "Using only traditional materials",
+     "Connecting modern styles with traditional elements",
+     "Creating very tall buildings",
+     "Building only in Europe"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文明确指出'Pei's work is known for its perfect balance between modern styles and traditional elements'。"
+   },
+   {
+    "stem": "How did people initially react to the glass pyramid at the Louvre?",
+    "options": [
+     "They loved it immediately",
+     "They wanted it removed",
+     "They didn't notice it",
+     "They thought it was too modern"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'It was difficult for many people to accept such a modern design next to the historic palace at first'。"
+   },
+   {
+    "stem": "What did Pei believe about architecture according to the passage?",
+    "options": [
+     "It should only be made of glass",
+     "It should be built as tall as possible",
+     "It should only follow historical styles",
+     "It should serve mankind and inspire future generations"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文引用了贝聿铭的话'architecture should serve mankind and continue to inspire future generations'。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 2 Inspiring People",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "智能学习方法",
+  "passage": "Li Hua, a ninth-grade student, was struggling with his English studies recently. He found it difficult to remember new words and improve his pronunciation. His English teacher suggested that he try some smart learning methods. In addition to using traditional textbooks, Li Hua started using e-books and podcasts to listen to native speakers. He created flashcards to help him build up his vocabulary step by step. Every evening, he would spend 30 minutes reading English magazines aloud to improve his pronunciation. Li Hua also discovered that looking up new words in an online dictionary was more efficient than using a printed one. His teacher gave him helpful feedback on his progress. After two months of actively trying these new methods, Li Hua's English skills improved significantly. He believes that finding enjoyable ways to learn is the key to success.",
+  "passageZh": "李华，一名九年级学生，最近在英语学习上遇到了困难。他发现很难记住新单词并提高发音。他的英语老师建议他尝试一些智能学习方法。除了使用传统教科书外，李华开始使用电子书和播客来听母语者说话。他制作了闪卡来逐步增加词汇量。每天晚上，他会花30分钟大声朗读英语杂志以提高发音。李华还发现，在网上查字典比使用纸质字典更有效率。老师对他的进步给予了有用的反馈。在积极尝试这些新方法两个月后，李华的英语技能显著提高。他认为找到有趣的学习方式是成功的关键。",
+  "questions": [
+   {
+    "stem": "What was Li Hua's main problem with English?",
+    "options": [
+     "He was too busy with schoolwork",
+     "He couldn't remember new words",
+     "He didn't have enough textbooks",
+     "He didn't like his teacher"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文第一段明确提到'He found it difficult to remember new words'"
+   },
+   {
+    "stem": "Which method did Li Hua find more efficient?",
+    "options": [
+     "Looking up words online",
+     "Listening to podcasts",
+     "Using printed dictionaries",
+     "Reading magazines aloud"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确指出'looking up new words in an online dictionary was more efficient'"
+   },
+   {
+    "stem": "How long did Li Hua spend reading English magazines every evening?",
+    "options": [
+     "60 minutes",
+     "15 minutes",
+     "30 minutes",
+     "45 minutes"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'he would spend 30 minutes reading English magazines aloud'"
+   },
+   {
+    "stem": "What does Li Hua believe is the key to learning success?",
+    "options": [
+     "Memorizing grammar rules",
+     "Spending more time at school",
+     "Finding enjoyable ways to learn",
+     "Using many textbooks"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文最后一句明确表明'finding enjoyable ways to learn is the key to success'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "记忆的挑战",
+  "passage": "Last week, I attended a lecture about memory at the mall. The speaker, a grown-up scientist, discussed how our brain works to keep information. He said that in my case, I might have anxiety when trying to memorize too many things at once. I don't understand why it happens to me, but I often mix up addresses and phone numbers. He suggested dividing study materials into smaller parts to make it more effective. For example, instead of memorizing a long list of words, we can divide them into groups. This method can boost our long-term memory. I tried it with my English vocabulary and found it really helpful. Now I can keep these words in mind better than before.",
+  "passageZh": "上周，我在购物中心参加了一场关于记忆的讲座。演讲者是一位成年科学家，讨论了我们大脑如何保存信息。他说就我的情况而言，当我试图一次性记住太多东西时可能会感到焦虑。我不明白为什么会发生在我身上，但我经常混淆地址和电话号码。他建议将学习材料分成小部分，使其更有效。例如，与其记住一长串单词，我们可以将它们分组。这种方法可以促进我们的长期记忆。我将其用于英语词汇，发现真的很有帮助。现在我能更好地记住这些单词了。",
+  "questions": [
+   {
+    "stem": "Where did the writer attend the lecture?",
+    "options": [
+     "At the library",
+     "At school",
+     "At home",
+     "At the mall"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文第一段明确提到'I attended a lecture about memory at the mall'。"
+   },
+   {
+    "stem": "What problem does the writer have with memory?",
+    "options": [
+     "Forgetting names",
+     "Losing keys",
+     "Missing appointments",
+     "Mixing up addresses"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'I often mix up addresses and phone numbers'，明确指出了记忆问题。"
+   },
+   {
+    "stem": "What method does the scientist suggest for better memory?",
+    "options": [
+     "Dividing study materials",
+     "Getting more sleep",
+     "Writing notes",
+     "Using flashcards"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确指出'He suggested dividing study materials into smaller parts to make it more effective'。"
+   },
+   {
+    "stem": "How does the writer feel about the new memory method?",
+    "options": [
+     "Helpful",
+     "Skeptical",
+     "Confused",
+     "Difficult"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文提到'I tried it with my English vocabulary and found it really helpful'，直接表达了感受。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "发明改变生活",
+  "passage": "Li Hua, a 15-year-old student from eastern China, has always been looking to find ways to make life easier. Last year, he invented a special device that helps people with frozen hands. The device is connected to a small camera, which can take pictures of the hands to check their condition. Li Hua used cheap materials like plastic and fibre to create it, making it affordable for most people. His invention gradually gained attention from local companies. One officer even visited his school to see the device in action. Li Hua's creation led to an opportunity to present his idea at a science fair. He said, 'The device itself can be improved, but I'm happy it helps people now.' Later on, he plans to add more features to make it more ideal for daily use.",
+  "passageZh": "李华，一名来自中国东部15岁的学生，一直试图找到让生活更简单的方法。去年，他发明了一种帮助冻伤手部的特殊装置。这个装置连接了一个小相机，可以拍摄手部照片来检查状况。李华使用塑料和纤维等廉价材料制造了它，使大多数人都买得起。他的发明逐渐引起了当地公司的关注。一位官员甚至参观了他的学校，亲眼目睹了该装置的运作。李华的创造让他有机会在科学展上展示他的想法。他说：'这个装置本身还可以改进，但我很高兴它现在能帮助人们。'之后，他计划添加更多功能，使其更适合日常使用。",
+  "questions": [
+   {
+    "stem": "What is Li Hua's invention mainly used for?",
+    "options": [
+     "Presenting ideas at science fairs",
+     "Taking pictures with a camera",
+     "Making plastic and fibre materials",
+     "Helping people with frozen hands"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到Li Hua发明了一种'special device that helps people with frozen hands'。"
+   },
+   {
+    "stem": "How did Li Hua make his invention affordable?",
+    "options": [
+     "By using expensive materials",
+     "By using cheap materials like plastic and fibre",
+     "By selling it to officers",
+     "By getting money from companies"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文指出Li Hua'used cheap materials like plastic and fibre to create it, making it affordable for most people'。"
+   },
+   {
+    "stem": "What happened after Li Hua's invention gained attention?",
+    "options": [
+     "He made it more expensive",
+     "He stopped working on it",
+     "He was visited by a local officer",
+     "He started a company"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确提到'One officer even visited his school to see the device in action'。"
+   },
+   {
+    "stem": "What are Li Hua's future plans for his invention?",
+    "options": [
+     "To add more features for daily use",
+     "To make it more expensive",
+     "To sell it to companies only",
+     "To stop developing it"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文说明Li Hua plans'to add more features to make it more ideal for daily use'。"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "火星探索任务",
+  "passage": "As a young astronaut, I have always been fascinated by Mars. Last month, I had the chance to join a manned mission to the red planet. The spacecraft was crowded with equipment and supplies for our exploration. On board, we worked together to operate the rover and survey the Martian surface. The geology of Mars is mysterious and full of surprises. Every night, I would look at the stars and wonder if there are other human beings beyond our solar system. Sometimes, I couldn't fall asleep because of the excitement of our mission. It is believed that our understanding of the universe will be greatly improved through this journey. Our main goal is to find a new home for human beings in case Earth becomes too crowded.",
+  "passageZh": "作为一名年轻的宇航员，我一直对火星着迷。上个月，我有机会参加一次前往红色星球的载人任务。宇宙飞船上挤满了我们探索所需的设备和物资。在船上，我们合作操作探测器并绘制火星表面图。火星的地质充满神秘和惊喜。每天晚上，我都会仰望星空，想知道太阳系之外是否还有其他人类。有时，我因为任务太兴奋而无法入睡。人们相信，通过这次旅程，我们对宇宙的理解将大大提高。我们的主要目标是为人类寻找一个新家园，以防地球变得过于拥挤。",
+  "questions": [
+   {
+    "stem": "Why couldn't the astronaut fall asleep during the mission?",
+    "options": [
+     "Because the spacecraft was too crowded",
+     "Because they were worried about other human beings",
+     "Because of the mysterious geology of Mars",
+     "Because of the excitement of the mission"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文明确提到'Sometimes, I couldn't fall asleep because of the excitement of our mission'"
+   },
+   {
+    "stem": "What was the main goal of the mission to Mars?",
+    "options": [
+     "To find a new home for human beings",
+     "To operate the rover on the surface",
+     "To find other human beings",
+     "To explore the mysterious geology"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文最后一句明确提到'Our main goal is to find a new home for human beings'"
+   },
+   {
+    "stem": "What did the astronaut do every night on the spacecraft?",
+    "options": [
+     "Worked with other astronauts",
+     "Operated the rover",
+     "Looked at the stars",
+     "Published survey results"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'Every night, I would look at the stars and wonder if there are other human beings'"
+   },
+   {
+    "stem": "How did the astronauts work together during the mission?",
+    "options": [
+     "By cooperating to operate equipment",
+     "By canceling some activities",
+     "By sleeping in shifts",
+     "By publishing their findings"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文提到'we worked together to operate the rover and survey the Martian surface'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "音乐之旅",
+  "passage": "Last weekend, I attended a music festival in our city. As a music lover, I was excited to see different performances. The first piece I heard was classical music played by a talented pianist. Her fingers moved flowing across the keyboard, creating beautiful sounds. I love traditional music that tells a story, and this piece definitely did that. Later, there was a jazz performance with an electric guitar. The performer was so gifted that he could make the guitar sound like it was singing. I also enjoyed some folk music with poetic lyrics that made everyone want to dance to the rhythm. The festival showed me how music can bring people together without looking down on any style. It was a golden experience that I will never forget.",
+  "passageZh": "上周末，我参加了我们城市的一个音乐节。作为一个音乐爱好者，我很兴奋能观看不同的表演。我听的第一首曲子是一位有才华的钢琴家演奏的古典音乐。她的手指在电子琴上流畅地移动，创造出美妙的旋律。我喜欢讲述故事的传统音乐，这首曲子确实做到了这一点。后来，有一场爵士乐表演，配有电吉他。这位演奏者非常有天赋，他能使吉他听起来像在唱歌。我还喜欢一些带有诗意歌词的民间音乐，让每个人都想随着节奏跳舞。这个音乐节向我展示了音乐如何将人们聚集在一起，而不轻视任何风格。这是一次金色的体验，我将永远不会忘记。",
+  "questions": [
+   {
+    "stem": "What kind of music did the pianist perform at the festival?",
+    "options": [
+     "Folk music",
+     "Jazz music",
+     "Classical music",
+     "Pop music"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文明确提到'The first piece I heard was classical music played by a talented pianist'"
+   },
+   {
+    "stem": "How did the performer play the electric guitar?",
+    "options": [
+     "Very loudly",
+     "With flowing fingers",
+     "Very slowly",
+     "Like it was singing"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文指出'The performer was so gifted that he could make the guitar sound like it was singing'"
+   },
+   {
+    "stem": "What did the writer think about different styles of music at the festival?",
+    "options": [
+     "Only classical music was good",
+     "Folk music was the best",
+     "All styles were fair and square",
+     "Some styles were better than others"
+    ],
+    "answerIndex": 2,
+    "explanation": "原文提到'It showed me how music can bring people together without looking down on any style'，表明作者认为各种音乐风格都是平等的"
+   },
+   {
+    "stem": "What did the writer enjoy about the folk music performance?",
+    "options": [
+     "The poetic lyrics",
+     "The keyboard playing",
+     "The electric guitar",
+     "The classical style"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确说明'I also enjoyed some folk music with poetic lyrics that made everyone want to dance to the rhythm'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "source": "人教版"
+ },
+ {
+  "articleNo": 1,
+  "title": "校园运动会",
+  "passage": "The annual sports meet was approaching, and our class was preparing for the 4 × 100 m relay. Wang Yaming and Adam were both quite fast runners, and either of them could be the final choice for the last leg. I had been practicing handoffs with the baton every day after school, hoping to catch up with the other teams. The crowd would cheer loudly when our runners competed against others. During the competition, I watched in wonder as Adam made up ground on the runner from Class Three. Neither Wang Yaming nor I had expected such a dramatic finish. When Adam crossed the finish line first, our class erupted with pride. The baton symbolized more than just a game—it represented our team's harmony and spirit.",
+  "passageZh": "年度运动会即将到来，我们班正在准备4×100米接力赛。王亚明和亚当都跑得很快，他们两人中任何一个都可以成为最后一棒的选择。我每天放学后都在练习接力棒交接，希望能赶上其他队伍。当我们的选手与其他班级竞争时，人群会大声欢呼。比赛期间，我惊奇地看着亚当追上了三班的选手。王亚明和我都没有想到会有如此激动人心的结局。当亚当第一个冲过终点线时，我们班爆发出自豪的欢呼声。接力棒不仅仅代表一场比赛——它象征着我们团队的和谐与精神。",
+  "questions": [
+   {
+    "stem": "What was the writer practicing for after school?",
+    "options": [
+     "boxing",
+     "bouldering",
+     "figure skating",
+     "handoffs with the baton"
+    ],
+    "answerIndex": 3,
+    "explanation": "原文提到'I had been practicing handoffs with the baton every day after school'"
+   },
+   {
+    "stem": "How did the writer feel when Adam finished first?",
+    "options": [
+     "proud",
+     "surprised",
+     "nervous",
+     "bored"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文明确指出'our class erupted with pride'，表明作者感到自豪"
+   },
+   {
+    "stem": "What does the baton represent according to the writer?",
+    "options": [
+     "a gold medal",
+     "team's harmony and spirit",
+     "a ceremony",
+     "a competition"
+    ],
+    "answerIndex": 1,
+    "explanation": "原文最后一句明确指出'it represented our team's harmony and spirit'"
+   },
+   {
+    "stem": "Who could be the final choice for the last leg of the relay?",
+    "options": [
+     "either Wang Yaming or Adam",
+     "Wang Yaming only",
+     "neither of them",
+     "Adam only"
+    ],
+    "answerIndex": 0,
+    "explanation": "原文提到'either of them could be the final choice for the last leg'"
+   }
+  ],
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "source": "人教版"
  }
 ]
