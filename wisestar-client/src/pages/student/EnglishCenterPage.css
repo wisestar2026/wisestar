@@ -224,6 +224,21 @@
   font-size: calc(20 * var(--page-u));
   color: #43647a;
 }
+.eng-grammar-option-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(26 * var(--page-u));
+  height: calc(26 * var(--page-u));
+  margin-right: calc(6 * var(--page-u));
+  border-radius: 50%;
+  background: #eaf2f8;
+  color: #3f7fa6;
+  font-size: calc(16 * var(--page-u));
+  font-weight: 700;
+  vertical-align: middle;
+}
+.eng-grammar-option.is-answer .eng-grammar-option-letter { background: #c9ecd8; color: #1c6b45; }
 .eng-grammar-option.is-answer { background: #e8f8ee; border-color: #9ddcb5; color: #1c6b45; font-weight: 700; }
 .eng-grammar-answer { margin-top: calc(8 * var(--page-u)); font-size: calc(20 * var(--page-u)); color: #1c6b45; line-height: 1.7; }
 .eng-grammar-examples { margin: calc(12 * var(--page-u)) 0 0 calc(36 * var(--page-u)); }
@@ -768,7 +783,8 @@ input.eng-dictation-field:focus {
   padding: calc(2 * var(--page-u)) calc(8 * var(--page-u));
   box-shadow: 0 calc(4 * var(--page-u)) calc(10 * var(--page-u)) rgba(255, 122, 89, 0.4);
 }
-.eng-detail { flex: 1; min-width: 0; display: flex; }
+/* 右侧纸面高度跟随内容：不再被左侧长单元列表拉伸，避免进度条与入口卡之间出现大片空白 */
+.eng-detail { flex: 1; min-width: 0; display: flex; align-self: flex-start; }
 .eng-detail-card {
   flex: 1;
   display: flex;
@@ -829,13 +845,13 @@ input.eng-dictation-field:focus {
 .eng-progress-item .eng-stat-label { font-size: calc(18 * var(--page-u)); }
 .eng-progress-item .eng-stat-bar { height: calc(9 * var(--page-u)); margin-top: calc(6 * var(--page-u)); }
 
-/* 四张模块入口大卡（底部对齐，撑满容器） */
+/* 模块入口卡紧贴进度条；空白留给页面底部，不再夹在两张卡之间 */
 .eng-mod-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: calc(14 * var(--page-u));
-  margin-top: auto;
-  padding-top: calc(20 * var(--page-u));
+  margin-top: calc(24 * var(--page-u));
+  padding-top: 0;
 }
 .eng-mod-card {
   border: none;
@@ -914,6 +930,7 @@ input.eng-dictation-field:focus {
 @media (max-width: 760px) {
   .eng-page { width: 100%; padding: calc(16 * var(--page-u)) calc(14 * var(--page-u)) calc(80 * var(--page-u)); }
   .eng-master { flex-direction: column; }
+  .eng-detail { align-self: stretch; }
   .eng-aside { width: 100%; }
   .eng-aside-list { flex-direction: row; flex-wrap: wrap; }
   .eng-aside-item { flex: 1 1 30%; }

@@ -56,6 +56,9 @@ function answerText(answer) {
   return String(answer);
 }
 
+/** 选项序号字母，供题干选项与答案对照 */
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 /** 讲解段落按换行拆分为多段，避免长文本挤成一块 */
 function splitParagraphs(text) {
   return String(text || '')
@@ -263,6 +266,8 @@ export default function EnglishGrammarLearnPage() {
                         <ol>
                           {exercises.map((ex, i) => {
                             const options = Array.isArray(ex?.options) ? ex.options : [];
+                            const answer = answerText(ex?.answer);
+                            const answerIndex = options.findIndex((option) => String(option) === answer);
                             return (
                               <li key={`${item.id || idx}-qs-${i}`}>
                                 <div className="eng-grammar-q">{ex?.q || ex?.stem || ''}</div>
@@ -272,16 +277,21 @@ export default function EnglishGrammarLearnPage() {
                                       <span
                                         key={`${item.id || idx}-opt-${i}-${oi}`}
                                         className={`eng-grammar-option${
-                                          answerText(ex?.answer) === String(option) ? ' is-answer' : ''
+                                          answer === String(option) ? ' is-answer' : ''
                                         }`}
                                       >
+                                        <span className="eng-grammar-option-letter">
+                                          {OPTION_LETTERS[oi] || oi + 1}
+                                        </span>
                                         {option}
                                       </span>
                                     ))}
                                   </div>
                                 )}
                                 <div className="eng-grammar-answer">
-                                  答案：{answerText(ex?.answer) || '见解析'}
+                                  答案：
+                                  {answerIndex >= 0 ? `${OPTION_LETTERS[answerIndex] || answerIndex + 1}. ` : ''}
+                                  {answer || '见解析'}
                                   {ex?.explanation && <span>　解析：{ex.explanation}</span>}
                                 </div>
                               </li>

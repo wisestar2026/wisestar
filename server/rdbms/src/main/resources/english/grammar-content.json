@@ -1,0 +1,416 @@
+{
+ "rows": [
+  {
+   "id": "erjgr7a0401",
+   "title": "Simple present tense (be)",
+   "content": "一般现在时用 be 动词表示现在的状态、身份或特征。主语是 I 时用 am，you/we/they 或复数名词用 are，he/she/it 或单数名词用 is；否定在 be 后加 not，疑问把 be 提到句首。注意 be 动词和实义动词不能同时出现在一个简单句中。",
+   "structure": "主语 + am/is/are + 表语；否定：主语 + am/is/are + not + 表语；疑问：Am/Is/Are + 主语 + 表语？",
+   "oldTitle": "Simple present tense (be)"
+  },
+  {
+   "id": "erjgr7a0402",
+   "title": "Subject pronouns (I, you, he, she, it, we, they)",
+   "content": "人称代词主格在句中作主语，说明动作是谁发出的。I 永远大写；you 单复数同形；he/she/it 分别指代男性、女性和事物；we/they 表示复数。作主语时要用主格，不能换成 me/him 等宾格。",
+   "structure": "I / you / he / she / it / we / they + 谓语动词",
+   "oldTitle": "Subject pronouns (I, you, he, she, it, we, they)"
+  },
+  {
+   "id": "erjgr7a0501",
+   "title": "Simple present tense (do)",
+   "content": "一般现在时用实义动词表示经常性、习惯性的动作或客观事实。主语为第三人称单数时动词加 -s/-es，其余用动词原形；否定用 don't/doesn't + 动词原形，疑问用 Do/Does 开头。助动词出现后，后面的动词要恢复原形。",
+   "structure": "主语 + 动词原形/动词三单；否定：don't/doesn't + 动词原形；疑问：Do/Does + 主语 + 动词原形？",
+   "oldTitle": "Simple present tense (do)"
+  },
+  {
+   "id": "erjgr7a0502",
+   "title": "Possessive ('s)",
+   "content": "名词所有格 's 表示“……的”，多用于有生命的人或动物。单数名词直接加 's；以 s 结尾的复数名词只加 '；表示两人共同拥有时只在最后一个名词后加 's。",
+   "structure": "名词 + 's + 名词（Jim's book）；以 s 结尾的复数名词 + '（students' books）",
+   "oldTitle": "Possessive ('s)"
+  },
+  {
+   "id": "erjgr7a0601",
+   "title": "There be structure",
+   "content": "There be 结构表示“某处有某物”，be 动词的形式由后面的名词决定：单数或不可数名词用 is，复数名词用 are。否定在 be 后加 not，疑问把 be 提前；多个名词并列时遵循“就近原则”，与最靠近的名词保持一致。",
+   "structure": "There is/are + 名词 + 地点；否定：There isn't/aren't + 名词 + 地点；疑问：Is/Are there + 名词 + 地点？",
+   "oldTitle": "There be structure"
+  },
+  {
+   "id": "erjgr7a0602",
+   "title": "Prepositions of position (in front of, behind, between, next to, across from)",
+   "content": "方位介词说明人或物之间的位置关系。in front of 表示“在……前面”，behind 表示“在……后面”，between 表示“在两者之间”，next to 表示“紧挨着”，across from 表示“在……对面”。注意 between 常与 and 搭配。",
+   "structure": "名词 + be + 方位介词短语（The bank is next to the park.）",
+   "oldTitle": "Prepositions of position (in front of, behind, between, next to, across from)"
+  },
+  {
+   "id": "erjgr7a0701",
+   "title": "Conjunctions (and, but, because)",
+   "content": "连词用来连接词、短语或句子。and 表示并列或递进，but 表示转折，because 表示原因并回答 why。because 引导原因状语从句，不能和 so 在同一个句子中同时使用。",
+   "structure": "句子 + and/but + 句子；主句 + because + 原因从句",
+   "oldTitle": "Conjunctions (and, but, because)"
+  },
+  {
+   "id": "erjgr7a0801",
+   "title": "Modal verb for ability (can)",
+   "content": "can 表示能力，意为“能、会”。can 是情态动词，后面直接跟动词原形，没有人称和数的变化；否定形式为 can't，疑问把 can 提到主语前。",
+   "structure": "主语 + can/can't + 动词原形；Can + 主语 + 动词原形？",
+   "oldTitle": "Modal verb for ability (can)"
+  },
+  {
+   "id": "erjgr7a0901",
+   "title": "Time expressions",
+   "content": "时间表达用于说明动作发生的时间。常用介词：at 用于具体时刻，on 用于具体某一天，in 用于月份、季节、年份或一天中的上午/下午/晚上。提问具体时刻用 What time，提问时间范围用 When。",
+   "structure": "at + 时刻；on + 具体日期/星期；in + 月份/季节/年份；What time/When + 一般疑问句？",
+   "oldTitle": "Time expressionsWh- questions (what time, when, what)"
+  },
+  {
+   "id": "erjgr7a1001",
+   "title": "Ordinal numbers",
+   "content": "序数词表示顺序，常与 the 连用。多数序数词在基数词后加 -th；first、second、third 为不规则形式；以 -ty 结尾的基数词变序数词时把 y 变 ie 再加 -th。日期中的“几号”用序数词。",
+   "structure": "the + 序数词 + 名词（the first day）；on + the + 序数词 + of + 月份",
+   "oldTitle": "Ordinal numbersWh- questions review"
+  },
+  {
+   "id": "erjgr7b0101",
+   "title": "Wh- questions",
+   "content": "wh- 疑问句用来询问具体信息，疑问词包括 what、who、where、when、why、how 等。疑问词放在句首，后面用一般疑问句语序；疑问词本身作主语时不再倒装。回答时要提供具体信息，不能用 yes/no。",
+   "structure": "Wh- + 助动词/be/情态动词 + 主语 + 其他？（Who + 谓语 + 其他？）",
+   "oldTitle": "Wh- questions"
+  },
+  {
+   "id": "erjgr7b0102",
+   "title": "Adjectives",
+   "content": "形容词用来描述人或事物的性质、状态，常放在名词前作定语，或放在 be、look、feel 等连系动词后作表语。形容词没有数和格的变化；多个形容词修饰名词时，一般按“观点—大小—形状—颜色—来源—材料”的顺序排列。",
+   "structure": "形容词 + 名词；主语 + be/look/feel + 形容词",
+   "oldTitle": "Adjectives"
+  },
+  {
+   "id": "erjgr7b0103",
+   "title": "Plurals",
+   "content": "可数名词的复数形式表示两个或两个以上的人或物。规则变化一般加 -s；以 s、x、ch、sh 结尾加 -es；辅音字母 + y 结尾变 y 为 i 再加 -es；部分名词有不规则复数，如 man→men、child→children、mouse→mice。",
+   "structure": "名词 + -s/-es；不规则：man→men, child→children, foot→feet",
+   "oldTitle": "Plurals"
+  },
+  {
+   "id": "erjgr7b0201",
+   "title": "Imperatives",
+   "content": "祈使句用来表示命令、请求、建议或提醒，主语 you 通常省略，句首用动词原形。否定祈使句在动词前加 Don't；为使语气礼貌，可在句首或句尾加 please。",
+   "structure": "动词原形 + 其他（Please sit down.）；否定：Don't + 动词原形 + 其他",
+   "oldTitle": "Imperatives"
+  },
+  {
+   "id": "erjgr7b0202",
+   "title": "Modal verbs (can, have to, must)",
+   "content": "情态动词表示能力、义务或必要性。can 表示能力或允许；have to 表示客观上“不得不”；must 表示说话人主观认为“必须”。情态动词后接动词原形，have to 有人称和时态变化（has to、had to）。",
+   "structure": "主语 + can/have to/must + 动词原形；否定：can't / don't have to / mustn't + 动词原形",
+   "oldTitle": "Modal verbs (can, have to, must)"
+  },
+  {
+   "id": "erjgr7b0301",
+   "title": "Possessive pronouns",
+   "content": "物主代词分形容词性和名词性两种。形容词性物主代词（my、your、his 等）后面必须接名词；名词性物主代词（mine、yours、his 等）相当于“形容词性物主代词 + 名词”，后面不再接名词。",
+   "structure": "形容词性：my/your/his/her/our/their + 名词；名词性：mine/yours/his/hers/ours/theirs（单独使用）",
+   "oldTitle": "Possessive pronouns"
+  },
+  {
+   "id": "erjgr7b0302",
+   "title": "Adverbs of frequency",
+   "content": "频度副词表示动作发生的频率，常见的有 always、usually、often、sometimes、seldom、never。它们通常放在实义动词之前、be 动词之后；表示确切频率时也可用 once a week 等短语，一般放在句末。",
+   "structure": "主语 + 频度副词 + 实义动词；主语 + be + 频度副词；once/twice a week 放句末",
+   "oldTitle": "Adverbs of frequency"
+  },
+  {
+   "id": "erjgr7b0401",
+   "title": "Alternative questions",
+   "content": "选择疑问句提供两个或多个选项让对方选择，用 or 连接。朗读时 or 前面的选项用升调，最后一个选项用降调；回答时不能用 yes/no，而要直接选择其中一个选项。",
+   "structure": "一般疑问句 + A or B? / 特殊疑问句 + A or B?",
+   "oldTitle": "Alternative questions"
+  },
+  {
+   "id": "erjgr7b0402",
+   "title": "Countable and uncountable nouns",
+   "content": "可数名词有单复数形式，可与 a/an 或数词连用；不可数名词一般没有复数形式，不能直接用 a/an 修饰，表示数量时常借助量词短语，如 a glass of water、two pieces of bread。",
+   "structure": "可数：a/an + 单数名词；数词 + 复数名词。不可数：量词 + of + 不可数名词",
+   "oldTitle": "Countable and uncountable nouns"
+  },
+  {
+   "id": "erjgr7b0501",
+   "title": "Present continuous tense (1)",
+   "content": "现在进行时表示此刻正在进行的动作，或当前一段时间内持续的状态。结构为 be（am/is/are）+ 动词 -ing 形式；否定在 be 后加 not，疑问把 be 提前。常与 now、look、listen 等提示词连用。",
+   "structure": "主语 + am/is/are + 动词-ing；否定：am/is/are + not + 动词-ing；疑问：Am/Is/Are + 主语 + 动词-ing？",
+   "oldTitle": "Present continuous tense (1)"
+  },
+  {
+   "id": "erjgr7b0601",
+   "title": "Present continuous tense (2)",
+   "content": "现在进行时还可表示已经安排好的近期计划，常与 tomorrow、next week 等将来时间连用。动词变 -ing 时注意：一般直接加 -ing；以不发音 e 结尾去 e 加 -ing；重读闭音节末尾只有一个辅音字母时双写该字母再加 -ing。",
+   "structure": "主语 + am/is/are + 动词-ing + 将来时间状语",
+   "oldTitle": "Present continuous tense (2)"
+  },
+  {
+   "id": "erjgr7b0701",
+   "title": "Simple past tense (1)",
+   "content": "一般过去时表示过去某个时间发生的动作或存在的状态。规则动词在词尾加 -ed，不规则动词需单独记忆；否定和疑问借助 did，此时实义动词恢复原形。常与 yesterday、last week、ago 等时间状语连用。",
+   "structure": "主语 + 动词过去式；否定：didn't + 动词原形；疑问：Did + 主语 + 动词原形？",
+   "oldTitle": "Simple past tense (1)"
+  },
+  {
+   "id": "erjgr7b0801",
+   "title": "Simple past tense (2)",
+   "content": "一般过去时叙述过去发生并已结束的事情，常用于故事、日记和经历描述。be 动词的过去式为 was/were：I/he/she/it 用 was，you/we/they 用 were；否定在 was/were 后加 not，疑问把 was/were 提前。",
+   "structure": "主语 + was/were + 表语；否定：wasn't/weren't；疑问：Was/Were + 主语 + 表语？",
+   "oldTitle": "Simple past tense (2)"
+  },
+  {
+   "id": "erjgr9a0101",
+   "title": "Compare simple past tense and present perfect tense",
+   "content": "一般过去时强调过去某个时间发生的动作，常与 yesterday、last week、ago 等明确过去时间连用；现在完成时强调过去动作对现在的影响，或动作持续到现在，不能与明确的过去时间连用。判断时先看时间状语，再看是否强调“与现在的联系”。",
+   "structure": "一般过去时：主语 + 动词过去式 + 过去时间；现在完成时：主语 + have/has + 过去分词（+ already/yet/since/for）",
+   "oldTitle": "Compare simple past tense and present perfect tense"
+  },
+  {
+   "id": "erjgr9a0201",
+   "title": "It is / was ... (of / for sb) to do ...",
+   "content": "It is/was + 形容词 + of/for sb + to do sth 结构中，it 是形式主语，真正的主语是后面的不定式。形容词描述人的品质（kind、nice、clever）时用 of；描述事情的性质（important、difficult、easy）时用 for。",
+   "structure": "It is/was + 形容词 + of/for + sb + to do sth",
+   "oldTitle": "It is / was ... (of / for sb) to do ..."
+  },
+  {
+   "id": "erjgr9a0202",
+   "title": "It is / was ... that ...",
+   "content": "It is/was ... that ... 可构成强调句，用来强调句子的主语、宾语或状语。去掉 It is/was 和 that 后，剩余部分仍能组成完整句子；强调人时 that 也可换成 who。注意与主语从句、定语从句区分。",
+   "structure": "It is/was + 被强调部分 + that/who + 其他",
+   "oldTitle": "It is / was ... that ..."
+  },
+  {
+   "id": "erjgr9a0301",
+   "title": "Object clauses with that, if, and whether",
+   "content": "宾语从句在句中作宾语，常用 that、if、whether 引导。that 无实际意义，口语中常省略；if/whether 表示“是否”，从句要用陈述语序。主句是过去时，从句谓语通常相应改为过去时态。",
+   "structure": "主句 + that/if/whether + 主语 + 谓语 + 其他（陈述语序）",
+   "oldTitle": "Object clauses with that, if, and whether"
+  },
+  {
+   "id": "erjgr9a0401",
+   "title": "Object clauses with question words",
+   "content": "由疑问词引导的宾语从句用陈述语序，即“疑问词 + 主语 + 谓语”，不能再用疑问句倒装。疑问词包括 what、who、where、when、why、how 等；主句为过去时，从句时态通常也要相应变化。",
+   "structure": "主句 + 疑问词 + 主语 + 谓语 + 其他（陈述语序）",
+   "oldTitle": "Object clauses with question words"
+  },
+  {
+   "id": "erjgr9a0501",
+   "title": "Passive voice in the simple present and past tenses",
+   "content": "被动语态表示主语是动作的承受者。一般现在时的被动语态为 am/is/are + 过去分词；一般过去时的被动语态为 was/were + 过去分词。动作的执行者可用 by 引出，不明显时可省略。",
+   "structure": "主语 + am/is/are + 过去分词（+ by sb）；主语 + was/were + 过去分词（+ by sb）",
+   "oldTitle": "Passive voice in the simple present and past tenses"
+  },
+  {
+   "id": "erjgr9a0601",
+   "title": "Passive voice in the simple future tense",
+   "content": "一般将来时的被动语态表示将来会被执行的动作，结构为 will be + 过去分词。否定在 will 后加 not，疑问把 will 提到主语前；必要时可用 by 引出动作执行者。",
+   "structure": "主语 + will be + 过去分词（+ by sb）；否定：won't be + 过去分词",
+   "oldTitle": "Passive voice in the simple future tense"
+  },
+  {
+   "id": "erjgr9a0701",
+   "title": "Relative clauses with that, which, and who",
+   "content": "定语从句用来修饰名词或代词，被修饰的词叫先行词。先行词指人时用 who/that，指物时用 which/that；关系代词在从句中作主语或宾语，作宾语时可省略。从句应紧跟在先行词之后。",
+   "structure": "先行词 + who/which/that + 从句（作宾语时关系代词可省略）",
+   "oldTitle": "Relative clauses with that, which, and who"
+  },
+  {
+   "id": "erjgr9a0801",
+   "title": "Subject-verb agreement",
+   "content": "主谓一致指谓语动词在人称和数上与主语保持一致。主语为第三人称单数时，一般现在时的谓语动词加 -s/-es；主语为复数或 I/you/we/they 时用原形。注意由 and 连接的主语、集合名词以及 there be 结构的就近原则。",
+   "structure": "单数主语 + 谓语三单形式；复数主语 + 谓语原形；There is + 单数/不可数，There are + 复数",
+   "oldTitle": "Subject-verb agreement"
+  },
+  {
+   "id": "erjgr8a0101",
+   "title": "Indefinite pronouns",
+   "content": "不定代词表示不确定的人、事物或地点，常见的有 someone、anyone、everyone、no one 以及 something、anything、everything、nothing 等。作主语时谓语动词用单数；形容词修饰不定代词时要后置，如 something interesting。",
+   "structure": "some/any/every/no + one/body/thing；不定代词 + 形容词（something new）",
+   "oldTitle": "Indefinite pronouns"
+  },
+  {
+   "id": "erjgr8a0102",
+   "title": "a review of the simple past tense",
+   "content": "复习一般过去时：它表示过去发生的动作或状态，动词用过去式。规则动词加 -ed，不规则动词需记忆；否定用 didn't + 动词原形，疑问用 Did 开头。注意与现在完成时区分：一般过去时强调过去的时间，现在完成时强调对现在的影响。",
+   "structure": "主语 + 动词过去式；didn't + 动词原形；Did + 主语 + 动词原形？",
+   "oldTitle": "a review of the simple past tense"
+  },
+  {
+   "id": "erjgr8a0201",
+   "title": "Can / Could for polite requests and permission",
+   "content": "can 和 could 都可用来礼貌地请求或征求许可。could 比 can 更委婉，但不表示过去时；肯定回答常用 Sure./Of course./Yes, you can.，否定回答常用 Sorry, I'm afraid not.。could 用于请求时，回答仍可用 can。",
+   "structure": "Can/Could + I/you + 动词原形 + 其他？（Could you please...?）",
+   "oldTitle": "Can / Could for polite requests and permission"
+  },
+  {
+   "id": "erjgr8a0301",
+   "title": "Comparatives with -(i)er and more",
+   "content": "比较级用于比较两个人或事物。单音节和部分双音节形容词一般加 -er，多音节形容词前加 more；以不发音 e 结尾加 -r，辅音字母 + y 结尾变 y 为 i 再加 -er，重读闭音节双写末尾辅音字母再加 -er。比较级常与 than 连用。",
+   "structure": "A + 形容词比较级 + than + B（taller than / more beautiful than）",
+   "oldTitle": "Comparatives with -(i)er and more"
+  },
+  {
+   "id": "erjgr8a0302",
+   "title": "as ... as",
+   "content": "as ... as 表示“和……一样”，中间用形容词或副词原级。否定形式 not as ... as 表示“不如……”。使用时两个 as 之间不能再用比较级。",
+   "structure": "A + be/实义动词 + as + 形容词/副词原级 + as + B",
+   "oldTitle": "as ... as"
+  },
+  {
+   "id": "erjgr8a0401",
+   "title": "Superlatives with -(i)est and most",
+   "content": "最高级用于三者或三者以上的比较，表示“最……”。单音节和部分双音节形容词加 -est，多音节形容词前加 most；最高级前通常加 the，并常与 in/of 短语说明范围。",
+   "structure": "主语 + be + the + 形容词最高级 + in/of + 范围（the tallest in the class）",
+   "oldTitle": "Superlatives with -(i)est and most"
+  },
+  {
+   "id": "erjgr8a0501",
+   "title": "Exclamatory sentences",
+   "content": "感叹句用来表达强烈的感情。what 引导的感叹句强调名词，结构为 What + (a/an) + 形容词 + 名词 + 主语 + 谓语！how 引导的感叹句强调形容词、副词或动词，结构为 How + 形容词/副词 + 主语 + 谓语！",
+   "structure": "What + (a/an) + 形容词 + 名词 + 主语 + 谓语！/ How + 形容词/副词 + 主语 + 谓语！",
+   "oldTitle": "Exclamatory sentences"
+  },
+  {
+   "id": "erjgr8a0502",
+   "title": "countable / uncountable nouns",
+   "content": "可数名词有单复数形式，可与 a/an 或数词连用；不可数名词一般没有复数形式，不能直接用 a/an 修饰，表示数量时常借助量词短语，如 a glass of water、two pieces of bread。",
+   "structure": "可数：a/an + 单数名词；数词 + 复数名词。不可数：量词 + of + 不可数名词",
+   "oldTitle": "countable / uncountable nouns"
+  },
+  {
+   "id": "erjgr8a0601",
+   "title": "Future with be going to",
+   "content": "be going to 表示打算、计划做某事，或根据现有迹象预测将要发生的事。结构为 am/is/are going to + 动词原形；否定在 be 后加 not，疑问把 be 提前。",
+   "structure": "主语 + am/is/are + going to + 动词原形；否定：be + not + going to + 动词原形",
+   "oldTitle": "Future with be going to"
+  },
+  {
+   "id": "erjgr8a0602",
+   "title": "infinitives as objects",
+   "content": "动词不定式（to + 动词原形）可以在句中作宾语，常跟在 want、hope、plan、decide、learn 等动词后。否定形式为 not to do；部分动词后也可接动名词，需按固定搭配记忆。",
+   "structure": "主语 + want/hope/plan/decide + to + 动词原形（+ 其他）",
+   "oldTitle": "infinitives as objects"
+  },
+  {
+   "id": "erjgr8a0701",
+   "title": "Simple future tense (will)",
+   "content": "一般将来时表示将来发生的动作或存在的状态。will + 动词原形用于临时决定、预测或承诺，没有人称变化；否定用 won't，疑问把 will 提到主语前。常与 tomorrow、next week、in the future 等连用。",
+   "structure": "主语 + will + 动词原形；否定：won't + 动词原形；疑问：Will + 主语 + 动词原形？",
+   "oldTitle": "Simple future tense (will)"
+  },
+  {
+   "id": "erjgr8a0801",
+   "title": "Zero and first conditionals",
+   "content": "零条件句表示普遍真理或必然结果，结构为 if + 一般现在时，主句用一般现在时。第一条件句表示将来可能发生的情况，结构为 if + 一般现在时，主句用 will + 动词原形；主句和从句的位置可以互换。",
+   "structure": "If + 一般现在时，主语 + 一般现在时（零条件）；If + 一般现在时，主语 + will + 动词原形（第一条件）",
+   "oldTitle": "Zero and first conditionals"
+  },
+  {
+   "id": "erjgr8b0101",
+   "title": "Infinitives as adverbials and object complements",
+   "content": "不定式除作宾语外，还可作目的状语，表示“为了……”；也可作宾语补足语，放在 ask、tell、want、would like 等动词的宾语后，说明宾语要做的动作。否定形式为 not to do。",
+   "structure": "目的：主语 + 谓语 + 其他 + to do；宾补：动词 + 宾语 + to do（ask sb to do sth）",
+   "oldTitle": "Infinitives as adverbials and object complements"
+  },
+  {
+   "id": "erjgr8b0201",
+   "title": "Modal verbs for advice (should, could)",
+   "content": "should 表示“应该”，用于提出建议或忠告；could 表示“可以”，语气更委婉，也可用于提建议。两者都是情态动词，后接动词原形；否定形式分别为 shouldn't 和 couldn't。",
+   "structure": "主语 + should/could + 动词原形；否定：shouldn't/couldn't + 动词原形",
+   "oldTitle": "Modal verbs for advice (should, could)"
+  },
+  {
+   "id": "erjgr8b0202",
+   "title": "Reflexive pronouns",
+   "content": "反身代词表示“某人自己”，包括 myself、yourself、himself、herself、itself、ourselves、yourselves、themselves。反身代词可作宾语、表语或同位语；常用搭配有 enjoy oneself、help oneself、by oneself 等。",
+   "structure": "主语 + 动词 + 反身代词（enjoy oneself / by oneself）",
+   "oldTitle": "Reflexive pronouns"
+  },
+  {
+   "id": "erjgr8b0301",
+   "title": "Conjunctions (although, until, so that)",
+   "content": "although 表示“虽然、尽管”，引导让步状语从句，不能与 but 同时使用；until 表示“直到……为止”，常用于 not...until 结构；so that 表示“以便、为了”，引导目的状语从句。",
+   "structure": "Although + 从句，主句；主句 + until + 时间；主句 + so that + 目的从句",
+   "oldTitle": "Conjunctions (although, until, so that)"
+  },
+  {
+   "id": "erjgr8b0401",
+   "title": "Comparative and superlative adjectives / adverbs (review)",
+   "content": "复习形容词和副词的比较级、最高级。比较级用于两者比较，常与 than 连用；最高级用于三者及以上比较，前面通常加 the。规则变化分 -er/-est 和 more/most 两类，另有一些不规则形式，如 good→better→best、badly→worse→worst。",
+   "structure": "比较级：A + 比较级 + than + B；最高级：A + the + 最高级 + in/of + 范围",
+   "oldTitle": "Comparative and superlative adjectives / adverbs (review)"
+  },
+  {
+   "id": "erjgr8b0402",
+   "title": "Large numbers",
+   "content": "英语大数字按三位一组读写，常用单位有 hundred（百）、thousand（千）、million（百万）、billion（十亿）。百、千、百万前有具体数字时一般不加 -s；表示不确定数量时可用 hundreds of、thousands of。",
+   "structure": "数字 + hundred/thousand/million/billion（+ and + 末两位）；hundreds/thousands of + 复数名词",
+   "oldTitle": "Large numbers"
+  },
+  {
+   "id": "erjgr8b0501",
+   "title": "Past continuous tense",
+   "content": "过去进行时表示过去某一时刻或某段时间正在进行的动作。结构为 was/were + 动词 -ing；常与 at that time、at eight yesterday、when/while 引导的时间状语连用。when 后的动作常为短暂动作，while 后常接持续性动作。",
+   "structure": "主语 + was/were + 动词-ing；否定：wasn't/weren't + 动词-ing；疑问：Was/Were + 主语 + 动词-ing？",
+   "oldTitle": "Past continuous tense"
+  },
+  {
+   "id": "erjgr8b0601",
+   "title": "Conjunctions (so ... that, unless, as soon as)",
+   "content": "so ... that 表示“如此……以至于”，so 后接形容词或副词；unless 表示“除非、如果不”，相当于 if...not；as soon as 表示“一……就……”，引导时间状语从句，主句常用一般将来时，从句用一般现在时。",
+   "structure": "so + 形容词/副词 + that + 结果从句；unless + 条件从句；as soon as + 从句，主句",
+   "oldTitle": "Conjunctions (so ... that, unless, as soon as)"
+  },
+  {
+   "id": "erjgr8b0701",
+   "title": "Present perfect tense (already, yet, never, ever, just)",
+   "content": "现在完成时表示过去发生的动作对现在造成的影响，或到现在为止的经历。结构为 have/has + 过去分词；already 多用于肯定句，yet 多用于否定句和疑问句，never/ever 表示经历，just 表示“刚刚”。",
+   "structure": "主语 + have/has + 过去分词（+ already/yet/never/ever/just）",
+   "oldTitle": "Present perfect tense (already, yet, never, ever, just)"
+  },
+  {
+   "id": "erjgr8b0801",
+   "title": "Present perfect tense (since, for)",
+   "content": "现在完成时常与 since 和 for 连用，表示动作从过去持续到现在。since 后接时间点（如 since 2020、since last year），for 后接时间段（如 for three years）；此时谓语动词要用延续性动词。",
+   "structure": "主语 + have/has + 过去分词 + since + 时间点 / for + 时间段",
+   "oldTitle": "Present perfect tense (since, for)"
+  }
+ ],
+ "newRows": [
+  {
+   "id": "erjgr7a0902",
+   "title": "Wh- questions (what time, when, what)",
+   "content": "特殊疑问句以疑问词开头，用来询问具体信息。what time 问具体时刻，when 问时间范围，what 问事物或内容。疑问词后接一般疑问句语序，即“疑问词 + 助动词/be + 主语 + 其他”。回答时要给出具体信息。",
+   "structure": "What time / When / What + be/助动词 + 主语 + 其他？",
+   "textbook": "[{\"en\": \"do you usually get up?\", \"zh\": \"你通常几点起床？\", \"source\": \"人教版 七年级上册 Unit 6 A Day in the Life\"}]",
+   "samples": "[{\"en\": \"I usually get up at 6:30 a.m.\", \"zh\": \"我通常在早上6:30起床。\", \"note\": \"\"}, {\"en\": \"does Tom usually go to bed?\", \"zh\": \"汤姆通常几点上床睡觉？\", \"note\": \"\"}, {\"en\": \"He usually goes to bed at 9:30 p.m.\", \"zh\": \"他通常晚上9:30睡觉。\", \"note\": \"\"}]",
+   "examples": "[{\"en\": \"do you usually get up?\", \"zh\": \"你通常几点起床？\"}, {\"en\": \"I usually get up at 6:30 a.m.\", \"zh\": \"我通常在早上6:30起床。\"}, {\"en\": \"does Tom usually go to bed?\", \"zh\": \"汤姆通常几点上床睡觉？\"}, {\"en\": \"He usually goes to bed at 9:30 p.m.\", \"zh\": \"他通常晚上9:30睡觉。\"}, {\"en\": \"do they go to the music club?\", \"zh\": \"他们去音乐俱乐部吗？\"}, {\"en\": \"They go on Monday afternoons.\", \"zh\": \"他们周一下午去。\"}, {\"en\": \"do you do after dinner?\", \"zh\": \"你晚饭后做什么？\"}, {\"en\": \"Sometimes I read books or do my homework.\", \"zh\": \"有时候我会看书或做作业。\"}, {\"en\": \"does Peter do before breakfast?\", \"zh\": \"Peter在早餐前做什么？\"}, {\"en\": \"He brushes his teeth and takes a shower.\", \"zh\": \"他刷牙并洗澡。\"}]",
+   "exercises": "[{\"type\": \"choice\", \"q\": \"下列哪一句表示“你通常几点起床”？\", \"options\": [\"do you usually get up?\", \"I usually get up at 6:30 a.m.\", \"He usually goes to bed at 9:30 p.m.\", \"does Tom usually go to bed?\"], \"answer\": \"do you usually get up?\", \"explanation\": \"课本原句：do you usually get up?\"}, {\"type\": \"build\", \"q\": \"连词成句： get / do / you / up / ? / usually\", \"answer\": \"do you usually get up?\", \"explanation\": \"按正确语序连成句子。\"}, {\"type\": \"choice\", \"q\": \"下列哪一句表示“我通常在早上6:30起床”？\", \"options\": [\"I usually get up at 6:30 a.m.\", \"does Tom usually go to bed?\", \"do you usually get up?\", \"He usually goes to bed at 9:30 p.m.\"], \"answer\": \"I usually get up at 6:30 a.m.\", \"explanation\": \"课本原句：I usually get up at 6:30 a.m.\"}]",
+   "version": "人教版",
+   "grade": "七年级",
+   "term": "上册",
+   "unit": "Unit 6 A Day in the Life",
+   "section": "语法",
+   "sort": 2
+  },
+  {
+   "id": "erjgr7a1002",
+   "title": "Wh- questions review",
+   "content": "特殊疑问句由疑问词加一般疑问句语序构成，回答时不能用 yes/no，而要给出具体信息。要根据询问对象选择疑问词：what 问事物，who 问人，where 问地点，when 问时间，why 问原因，how 问方式或程度。",
+   "structure": "疑问词 + be/助动词/情态动词 + 主语 + 其他？",
+   "textbook": "[{\"en\": \"When is your birthday?\", \"zh\": \"你的生日是什么时候？\", \"source\": \"人教版 七年级上册 Unit 7 Happy Birthday!\"}]",
+   "samples": "[{\"en\": \"It's on 2nd August.\", \"zh\": \"是在8月2日。\", \"note\": \"\"}, {\"en\": \"How old are you?\", \"zh\": \"请问您高寿？\", \"note\": \"\"}, {\"en\": \"What do you want to do on her birthday?\", \"zh\": \"你想在她生日那天做什么？\", \"note\": \"\"}]",
+   "examples": "[{\"en\": \"When is your birthday?\", \"zh\": \"你的生日是什么时候？\"}, {\"en\": \"It's on 2nd August.\", \"zh\": \"是在8月2日。\"}, {\"en\": \"How old are you?\", \"zh\": \"请问您高寿？\"}, {\"en\": \"What do you want to do on her birthday?\", \"zh\": \"你想在她生日那天做什么？\"}, {\"en\": \"I want to sing a song for her.\", \"zh\": \"我想为她唱首歌。\"}, {\"en\": \"How much are those oranges?\", \"zh\": \"那些橙子多少钱？\"}, {\"en\": \"Six yuan a kilo.\", \"zh\": \"六元一斤。\"}, {\"en\": \"How many kilos do you want?\", \"zh\": \"您想要多少公斤？\"}, {\"en\": \"I want five kilos.\", \"zh\": \"我要五公斤。\"}]",
+   "exercises": "[{\"type\": \"choice\", \"q\": \"下列哪一句表示“你的生日是什么时候”？\", \"options\": [\"How old are you?\", \"It's on 2nd August.\", \"When is your birthday?\", \"What do you want to do on her birthday?\"], \"answer\": \"When is your birthday?\", \"explanation\": \"课本原句：When is your birthday?\"}, {\"type\": \"build\", \"q\": \"连词成句： is / your / ? / birthday / When\", \"answer\": \"When is your birthday?\", \"explanation\": \"按正确语序连成句子。\"}, {\"type\": \"choice\", \"q\": \"下列哪一句表示“是在8月2日”？\", \"options\": [\"What do you want to do on her birthday?\", \"How old are you?\", \"When is your birthday?\", \"It's on 2nd August.\"], \"answer\": \"It's on 2nd August.\", \"explanation\": \"课本原句：It's on 2nd August.\"}]",
+   "version": "人教版",
+   "grade": "七年级",
+   "term": "上册",
+   "unit": "Unit 7 Happy Birthday!",
+   "section": "语法",
+   "sort": 2
+  }
+ ]
+}

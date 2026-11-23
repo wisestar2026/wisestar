@@ -3,7 +3,7 @@
  *
  * 功能:
  *   1. 订单分页列表（按学员姓名搜索、按状态筛选）
- *   2. 创建订单：选择学员 + 学科多选 + 年级多选 + 上下册多选 + 教材版本单选 + 账号时长
+ *   2. 创建订单：选择学员 + 学科多选 + 年级多选 + 上下册多选 + 教材版本（必选）+ 账号时长
  *      （学科数据来自知识管理 /api/subject/list；年级/册别/教材版本/时长单位为前端常量；
  *       服务端按学科×年级×册别笛卡尔积展开写入权限表并计算有效期）
  *   3. 作废/删除订单（作废后学员对应权限失效）
@@ -35,7 +35,7 @@ const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五�
   .map((g) => ({ value: g, label: g }));
 
 // 教材版本（前端常量：固定枚举）
-const VERSION_OPTIONS = ['人教版', '苏教版', '北师大版', '外研版']
+const VERSION_OPTIONS = ['人教版', '外研版', '苏教版', '北师大版']
   .map((v) => ({ value: v, label: v }));
 
 // 册别（前端常量：上册/下册，可多选）
@@ -265,8 +265,11 @@ export default function OrderManagePage() {
           >
             <Select mode="multiple" placeholder="可多选" options={TERM_OPTIONS} />
           </Form.Item>
-          <Form.Item name="version" label="教材版本">
-            <Select allowClear placeholder="选填" options={VERSION_OPTIONS} />
+          <Form.Item
+            name="version" label="教材版本" rules={[{ required: true, message: '请选择教材版本' }]}
+            extra="英语 3-6 年级选外研版，7-9 年级选人教版；学员端只会看到订单授权的版本"
+          >
+            <Select placeholder="请选择" options={VERSION_OPTIONS} />
           </Form.Item>
           <Form.Item
             label="账号时长" required

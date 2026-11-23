@@ -227,6 +227,9 @@ public class OrderServiceImpl extends BaseService<StudentOrderMapper, StudentOrd
 		if (CollectionUtils.isEmpty(request.getGrades())) {
 			throw new ValidationException("请至少选择一个年级");
 		}
+		if (!StringUtils.hasText(request.getVersion())) {
+			throw new ValidationException("请选择教材版本");
+		}
 		if (request.getDuration() == null || request.getDuration() <= 0) {
 			throw new ValidationException("账号时长必须大于 0");
 		}
