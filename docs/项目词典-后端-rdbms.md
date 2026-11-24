@@ -77,6 +77,46 @@
 - 方法:
   - `public void run(ApplicationArguments args)`
 
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishWordSectionSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishWordSectionSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(4), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  人教版单词分节初始化器。>40 词的单元按 id 顺序每节约 30 词切「重点词汇（1/2/3）」，中文数字旧名迁移为阿拉伯数字（否则按 section 排序会得到「一、三、二」）；已被管理端手工维护的小节不覆盖。
+- 注入/字段: EnglishWordMapper wordMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishGrammarContentSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishGrammarContentSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(5), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  人教版语法讲解初始化器。读取 classpath:english/grammar-content.json，`rows` 只替换仍为占位内容（含「主题：」或 `structure == title`）的讲解与结构公式，管理端手工修改不会被重置；`newRows` 按原行维度补入拆分出的新语法点（含 Starter 单元），不存在才插入。
+- 注入/字段: EnglishGrammarMapper grammarMapper, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishSentenceSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishSentenceSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(6), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  人教版句库初始化器。读取 classpath:english/unit-sentences.json（5 册 1117 句，正文可读句口径），按「版本+年级+册别+单元+英文」幂等插入并补缺失中文；清单内单元清掉旧种子中不在清单的表格碎片/杜撰句，未出现的单元保持原样。`is_deleted` 带 `@TableLogic`，旧实现残留行查询不可见但占用主键，插入遇 `DuplicateKeyException` 时换 `-2/-3` 后缀重试。
+- 注入/字段: EnglishSentenceMapper sentenceMapper, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
+### `rdbms/src/main/java/cn/wisestar/server/core/EnglishProperNounSeeder.java`
+- 包: `cn.wisestar.server.core`
+- 类型: `class EnglishProperNounSeeder implements ApplicationRunner`
+- 注解: @Component, @Order(7), @RequiredArgsConstructor, @Slf4j
+- **类说明**：
+  人教版专有名词初始化器。读取 classpath:english/proper-nouns.json（231 条），按「版本+年级+册别+单元+拼写」幂等补入教材附录专有名词（id 前缀 `erjwp`），已存在则跳过。
+- 注入/字段: EnglishWordMapper wordMapper, ObjectMapper objectMapper
+- 方法:
+  - `public void run(ApplicationArguments args)`
+
 ### `rdbms/src/main/java/cn/wisestar/server/core/mybatis/MybatisPlugConfig.java`
 - 包: `cn.wisestar.server.core.mybatis`
 - 类型: `class MybatisPlugConfig`
