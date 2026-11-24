@@ -379,8 +379,7 @@
 
 /* 阅读理解专注模式：隐藏底部导航与悬浮入口，压缩内容区上下留白 */
 .sll-focus-read .sll-tabbar,
-.sll-focus-read .sll-back-float,
-.sll-focus-read .shp-ai-btn { display: none; }
+.sll-focus-read .sll-back-float { display: none; }
 .sll-focus-read .sll-main { padding: calc(8 * var(--page-u)) calc(24 * var(--page-u)) calc(10 * var(--page-u)); }
 
 /* ============================================================
@@ -519,31 +518,6 @@
   font-weight: 700;
   color: #fff;
 }
-
-/* 右下角悬浮 AI 按钮 */
-.shp-ai-btn {
-  position: fixed;
-  right: calc(26 * var(--page-u));
-  bottom: calc(26 * var(--page-u));
-  z-index: 10;
-  width: calc(92 * var(--page-u));
-  height: calc(92 * var(--page-u));
-  border-radius: 50%;
-  border: calc(3 * var(--page-u)) solid #fff;
-  background: linear-gradient(160deg, #4fc3f7 0%, #1976d2 100%);
-  box-shadow: 0 calc(8 * var(--page-u)) calc(20 * var(--page-u)) rgba(25, 118, 210, 0.45);
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(2 * var(--page-u));
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.shp-ai-btn:hover { transform: scale(1.06); }
-.shp-ai-line1 { font-size: calc(14 * var(--page-u)); font-weight: 600; }
-.shp-ai-line2 { font-size: calc(16 * var(--page-u)); font-weight: 800; }
 
 /* 左下角悬浮「返回上一级」（学员端二级页通用；首页不渲染） */
 .sll-back-float {

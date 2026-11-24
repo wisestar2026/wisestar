@@ -357,11 +357,6 @@ export default function StudentLayout() {
         </button>
       )}
 
-      {/* ---- 右下角悬浮 AI 按钮 ---- */}
-      <button className="shp-ai-btn" onClick={() => message.info('小鲸向导即将上线')}>
-        <span className="shp-ai-line1">问一问</span>
-        <span className="shp-ai-line2">问小鲸</span>
-      </button>
     </div>
   );
 }

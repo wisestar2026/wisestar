@@ -174,8 +174,15 @@ export default function EnglishGrammarLearnPage() {
               {list.map((item, idx) => {
                 const samples = parseList(item.samples);
                 const examples = samples.length > 0 ? samples : parseList(item.examples);
+                // 例句按句子长度从短到长排列，形成「由浅入深」的观察顺序
+                const orderedExamples = [...examples].sort(
+                  (a, b) => exampleText(a).length - exampleText(b).length,
+                );
                 const textbook = parseList(item.textbook);
-                const exercises = parseList(item.exercises).slice(0, 3);
+                // 例题只保留选择题，避免非选择题混入造成「同一内容换题型重复考」
+                const exercises = parseList(item.exercises)
+                  .filter((ex) => Array.isArray(ex?.options) && ex.options.length > 0)
+                  .slice(0, 3);
                 const contentParagraphs = splitParagraphs(item.content)
                   .filter((line) => line !== (item.title || '').trim());
                 return (
@@ -185,24 +192,9 @@ export default function EnglishGrammarLearnPage() {
                       <span className="eng-grammar-title">{item.title}</span>
                     </div>
 
-                    {contentParagraphs.length > 0 && (
-                      <div className="eng-grammar-content">
-                        {contentParagraphs.map((line, i) => (
-                          <p key={`${item.id || idx}-p-${i}`}>{line}</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {item.structure && (
-                      <div className="eng-grammar-block eng-grammar-structure">
-                        <div className="eng-grammar-examples-label">结构</div>
-                        <div className="eng-grammar-structure-text">{item.structure}</div>
-                      </div>
-                    )}
-
                     {textbook.length > 0 && (
                       <div className="eng-grammar-block">
-                        <div className="eng-grammar-examples-label">课本原文</div>
+                        <div className="eng-grammar-examples-label">① 先观察 · 课本原句</div>
                         <ul className="eng-grammar-textbook">
                           {textbook.map((line, i) => {
                             const en = exampleText(line);
@@ -230,11 +222,29 @@ export default function EnglishGrammarLearnPage() {
                       </div>
                     )}
 
-                    {examples.length > 0 && (
+                    {item.structure && (
+                      <div className="eng-grammar-block eng-grammar-structure">
+                        <div className="eng-grammar-examples-label">② 找规律 · 句子是怎么搭起来的</div>
+                        <div className="eng-grammar-structure-text">{item.structure}</div>
+                      </div>
+                    )}
+
+                    {contentParagraphs.length > 0 && (
+                      <div className="eng-grammar-block eng-grammar-rule">
+                        <div className="eng-grammar-examples-label">③ 规律小结</div>
+                        <div className="eng-grammar-content">
+                          {contentParagraphs.map((line, i) => (
+                            <p key={`${item.id || idx}-p-${i}`}>{line}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {orderedExamples.length > 0 && (
                       <div className="eng-grammar-examples">
-                        <div className="eng-grammar-examples-label">例句</div>
+                        <div className="eng-grammar-examples-label">④ 试着读 · 例句由短到长</div>
                         <ul>
-                          {examples.map((ex, i) => {
+                          {orderedExamples.map((ex, i) => {
                             const en = exampleText(ex);
                             const zh = exampleZh(ex);
                             const note = typeof ex === 'object' && ex ? (ex.note || ex.explanation || '') : '';
@@ -262,7 +272,7 @@ export default function EnglishGrammarLearnPage() {
 
                     {exercises.length > 0 && (
                       <div className="eng-grammar-block eng-grammar-exercises">
-                        <div className="eng-grammar-examples-label">例题</div>
+                        <div className="eng-grammar-examples-label">⑤ 小挑战 · 选一选</div>
                         <ol>
                           {exercises.map((ex, i) => {
                             const options = Array.isArray(ex?.options) ? ex.options : [];

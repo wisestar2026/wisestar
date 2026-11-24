@@ -38,6 +38,7 @@ import {
   getEnglishDrillWords,
   getEnglishDrillCompleted,
   getEnglishPracticeSummary,
+  getEnglishWordBook,
 } from '../../api/englishStudent';
 import WordDrillModal from './WordDrillModal';
 import EnglishPracticeHistoryModal from '../../components/student/EnglishPracticeHistoryModal';
@@ -70,6 +71,8 @@ export default function EnglishCenterPage() {
   const [reviewCount, setReviewCount] = useState(0);
   const [drillWords, setDrillWords] = useState([]);
   const [drillOpen, setDrillOpen] = useState(false);
+  // 强制巩固的干扰项池：当前单元词库，保证「看英文选中文」始终能凑出四选一
+  const [drillPool, setDrillPool] = useState([]);
   // 阅读理解 / 单元练习的历史最好成绩（按当前单元）
   const [readingSummary, setReadingSummary] = useState(null);
   const [unitSummary, setUnitSummary] = useState(null);
@@ -133,6 +136,27 @@ export default function EnglishCenterPage() {
       cancelled = true;
     };
   }, [userId]);
+
+  // 强制巩固的干扰项池：随当前单元刷新，供「看英文选中文」凑齐四个不重复释义
+  useEffect(() => {
+    if (!activeUnit) {
+      setDrillPool([]);
+      return undefined;
+    }
+    let cancelled = false;
+    getEnglishWordBook({ version, grade, term, unit: activeUnit, current: 1, pageSize: 300 })
+      .then((res) => {
+        if (cancelled) return;
+        const payload = res?.data;
+        setDrillPool(payload?.list || (Array.isArray(payload) ? payload : []));
+      })
+      .catch(() => {
+        if (!cancelled) setDrillPool([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUnit, version, grade, term]);
 
   // 切换单元后刷新阅读理解 / 单元练习的最高分与练习次数
   useEffect(() => {
@@ -395,7 +419,7 @@ export default function EnglishCenterPage() {
         </div>
       )}
 
-      <WordDrillModal open={drillOpen} words={drillWords} onFinish={finishDrill} />
+      <WordDrillModal open={drillOpen} words={drillWords} pool={drillPool} onFinish={finishDrill} />
 
       <EnglishPracticeHistoryModal
         open={historyModal.open}

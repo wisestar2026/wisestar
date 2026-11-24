@@ -10514,5 +10514,5163 @@
     "zh": ""
    }
   ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 1 Hello!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "I'm fine, thank you.",
+    "zh": "我很好，谢谢你。"
+   },
+   {
+    "en": "Nice to meet you too.",
+    "zh": "我也很高兴见到你。"
+   },
+   {
+    "en": "How do you spell your name?",
+    "zh": "你的名字怎么拼写？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 2 Keep Tidy!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Some books are in the box.",
+    "zh": "一些书在盒子里。"
+   },
+   {
+    "en": "Mum, I can't find my new cap.",
+    "zh": "妈妈，我找不到我的新帽子了。"
+   },
+   {
+    "en": "What colour is it?",
+    "zh": "它是什么颜色的？"
+   },
+   {
+    "en": "Is it in your schoolbag?",
+    "zh": "它在你的书包里吗？"
+   },
+   {
+    "en": "Oh, it's under your desk.",
+    "zh": "哦，它在你的书桌下面。"
+   },
+   {
+    "en": "Keep your room tidy, Ella.",
+    "zh": "埃拉，保持你的房间整洁。"
+   },
+   {
+    "en": "I can't find my new glasses.",
+    "zh": "我找不到我的新眼镜了。"
+   },
+   {
+    "en": "Do you see them, Emma?",
+    "zh": "艾玛，你看见它们了吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 2 Keep Tidy!",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "What colour are they, Dad?",
+    "zh": "爸爸，它们是什么颜色的？"
+   },
+   {
+    "en": "Oh, Dad, they're on your head!",
+    "zh": "哦，爸爸，它们在你的头上！"
+   },
+   {
+    "en": "Oh, thank you, Emma!",
+    "zh": "哦，谢谢你，艾玛！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 3 Welcome!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What's this?",
+    "zh": "这是什么？"
+   },
+   {
+    "en": "What's that?",
+    "zh": "那是什么？"
+   },
+   {
+    "en": "What are these?",
+    "zh": "这些是什么？"
+   },
+   {
+    "en": "What are those?",
+    "zh": "那些是什么？"
+   },
+   {
+    "en": "Do you see that house?",
+    "zh": "你看见那座房子了吗？"
+   },
+   {
+    "en": "That's my uncle's home.",
+    "zh": "那是我叔叔的家。"
+   },
+   {
+    "en": "It's beautiful.",
+    "zh": "它很漂亮。"
+   },
+   {
+    "en": "Do you like my uncle's farm?",
+    "zh": "你喜欢我叔叔的农场吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Starter Unit 3 Welcome!",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "There are many animals in the yard.",
+    "zh": "院子里有许多动物。"
+   },
+   {
+    "en": "How many geese are there?",
+    "zh": "那里有多少只鹅？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 1 You and Me",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Yes, I am.",
+    "zh": "是的，我是。"
+   },
+   {
+    "en": "Yes, they are.",
+    "zh": "是的，他们在。"
+   },
+   {
+    "en": "This is my new classmate, Peter.",
+    "zh": "这是我的新同学，彼得。"
+   },
+   {
+    "en": "Nice to meet you.",
+    "zh": "很高兴见到你。"
+   },
+   {
+    "en": "I'm 13 years old.",
+    "zh": "我十三岁。"
+   },
+   {
+    "en": "I'm from Chengdu, China.",
+    "zh": "我来自中国成都。"
+   },
+   {
+    "en": "My favourite animal is the panda.",
+    "zh": "我最喜欢的动物是熊猫。"
+   },
+   {
+    "en": "She likes Chinese food.",
+    "zh": "她喜欢中国食物。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 1 You and Me",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Her favourite food is Mapo tofu.",
+    "zh": "她最喜欢的食物是麻婆豆腐。"
+   },
+   {
+    "en": "Do you want to be my friend?",
+    "zh": "你想成为我的朋友吗？"
+   },
+   {
+    "en": "Would you like to be my friend?",
+    "zh": "你愿意成为我的朋友吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 2 We're Family!",
+  "title": "课文跟读（1）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 1,
+  "lines": [
+   {
+    "en": "Teng Fei and his grandpa play ping-pong every week.",
+    "zh": "腾飞和爷爷每周都打乒乓球。"
+   },
+   {
+    "en": "Teng Fei's grandpa loves sport.",
+    "zh": "腾飞的爷爷喜欢运动。"
+   },
+   {
+    "en": "They have some nice ping-pong bats.",
+    "zh": "他们有一些很不错的乒乓球拍。"
+   },
+   {
+    "en": "Teng Fei's father has many books.",
+    "zh": "腾飞的父亲有很多书。"
+   },
+   {
+    "en": "Do you play the piano?",
+    "zh": "你会弹钢琴吗？"
+   },
+   {
+    "en": "Does your father spend a lot of time reading?",
+    "zh": "你父亲花很多时间读书吗？"
+   },
+   {
+    "en": "This is my ping-pong bat.",
+    "zh": "这是我的乒乓球拍。"
+   },
+   {
+    "en": "Do you often play ping-pong together?",
+    "zh": "你们经常一起打乒乓球吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 2 We're Family!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Yes, we play every day.",
+    "zh": "是的，我们每天都打。"
+   },
+   {
+    "en": "Are these your books?",
+    "zh": "这些是你的书吗？"
+   },
+   {
+    "en": "No, they're my father's.",
+    "zh": "不，它们是我父亲的。"
+   },
+   {
+    "en": "He spends a lot of time reading.",
+    "zh": "他花很多时间读书。"
+   },
+   {
+    "en": "It's my mother's piano.",
+    "zh": "这是我妈妈的钢琴。"
+   },
+   {
+    "en": "She can play it very well!",
+    "zh": "她弹得非常好！"
+   },
+   {
+    "en": "I love my big family.",
+    "zh": "我爱我的大家庭。"
+   },
+   {
+    "en": "This is my dad, Fred.",
+    "zh": "这是我爸爸，弗雷德。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 2 We're Family!",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "He often plays tennis with me.",
+    "zh": "他经常和我打网球。"
+   },
+   {
+    "en": "She always reads with me at night.",
+    "zh": "她总是在晚上陪我读书。"
+   },
+   {
+    "en": "We are very different, but we have a lot of fun together.",
+    "zh": "我们很不一样，但在一起很开心。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 3 My School",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Yes, there is.",
+    "zh": "是的，有。"
+   },
+   {
+    "en": "No, there aren't.",
+    "zh": "不，没有。"
+   },
+   {
+    "en": "What's your new classroom like, Peter?",
+    "zh": "彼得，你的新教室是什么样的？"
+   },
+   {
+    "en": "It's large.",
+    "zh": "它很大。"
+   },
+   {
+    "en": "There are 40 student desks in the room.",
+    "zh": "教室里有四十张学生课桌。"
+   },
+   {
+    "en": "Where do you sit?",
+    "zh": "你坐在哪里？"
+   },
+   {
+    "en": "What's special in your classroom?",
+    "zh": "你的教室里有什么特别的东西？"
+   },
+   {
+    "en": "My new school is great!",
+    "zh": "我的新学校很棒！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 3 My School",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "It's very beautiful.",
+    "zh": "它非常漂亮。"
+   },
+   {
+    "en": "There are many modern buildings.",
+    "zh": "那里有许多现代化的建筑。"
+   },
+   {
+    "en": "There's a large sports field next to the teachers' building.",
+    "zh": "教师楼旁边有一个大运动场。"
+   },
+   {
+    "en": "The classroom building is behind the sports field.",
+    "zh": "教学楼在运动场后面。"
+   },
+   {
+    "en": "I sit next to my best friend, Han Lin.",
+    "zh": "我坐在我最好的朋友韩林旁边。"
+   },
+   {
+    "en": "The dining hall is across from the sports field.",
+    "zh": "食堂在运动场对面。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 4 My Favourite Subject",
+  "title": "课文跟读（1）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 1,
+  "lines": [
+   {
+    "en": "What's your next class?",
+    "zh": "你的下一节课是什么？"
+   },
+   {
+    "en": "It's my favourite subject.",
+    "zh": "那是我最喜欢的科目。"
+   },
+   {
+    "en": "Why do you like it?",
+    "zh": "你为什么喜欢它？"
+   },
+   {
+    "en": "It's interesting to learn about the past.",
+    "zh": "了解过去很有趣。"
+   },
+   {
+    "en": "What's your favourite subject, Meimei?",
+    "zh": "梅梅，你最喜欢的科目是什么？"
+   },
+   {
+    "en": "My favourite subject is English.",
+    "zh": "我最喜欢的科目是英语。"
+   },
+   {
+    "en": "My English teacher is really nice.",
+    "zh": "我的英语老师非常好。"
+   },
+   {
+    "en": "How about you, Binbin?",
+    "zh": "彬彬，你呢？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 4 My Favourite Subject",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "I like all the subjects, but my favourite is maths.",
+    "zh": "我喜欢所有科目，但我最喜欢数学。"
+   },
+   {
+    "en": "Because I'm good with numbers.",
+    "zh": "因为我擅长数字。"
+   },
+   {
+    "en": "Can you help me with this subject?",
+    "zh": "你能帮我学这门科目吗？"
+   },
+   {
+    "en": "Hey, look at the time.",
+    "zh": "嘿，看看时间。"
+   },
+   {
+    "en": "Let's go to class!",
+    "zh": "我们去上课吧！"
+   },
+   {
+    "en": "My favourite subject is music because the class is fun.",
+    "zh": "我最喜欢的科目是音乐，因为这门课很有趣。"
+   },
+   {
+    "en": "We learn a lot of new songs.",
+    "zh": "我们学很多新歌。"
+   },
+   {
+    "en": "Music always makes me happy.",
+    "zh": "音乐总是让我开心。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 4 My Favourite Subject",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "My music teacher is excellent.",
+    "zh": "我的音乐老师非常优秀。"
+   },
+   {
+    "en": "I want to be a singer in the future.",
+    "zh": "我将来想成为一名歌手。"
+   },
+   {
+    "en": "What do you study?",
+    "zh": "你学习哪些科目？"
+   },
+   {
+    "en": "I want to be a scientist in the future.",
+    "zh": "我将来想成为一名科学家。"
+   },
+   {
+    "en": "Maths is very useful in our life.",
+    "zh": "数学在我们的生活中非常有用。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 5 Fun Clubs",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Yes, I can.",
+    "zh": "是的，我会。"
+   },
+   {
+    "en": "No, he can't.",
+    "zh": "不，他不会。"
+   },
+   {
+    "en": "What club do you want to join?",
+    "zh": "你想加入什么俱乐部？"
+   },
+   {
+    "en": "Here's some good news!",
+    "zh": "这里有一些好消息！"
+   },
+   {
+    "en": "Our school wants to start a music club.",
+    "zh": "我们学校想成立一个音乐俱乐部。"
+   },
+   {
+    "en": "Do you want to join?",
+    "zh": "你想加入吗？"
+   },
+   {
+    "en": "I can play the guitar.",
+    "zh": "我会弹吉他。"
+   },
+   {
+    "en": "But I can't play any musical instruments.",
+    "zh": "但我不会演奏任何乐器。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 5 Fun Clubs",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "You can sing well.",
+    "zh": "你唱歌很好。"
+   },
+   {
+    "en": "She can play the violin, right?",
+    "zh": "她会拉小提琴，对吧？"
+   },
+   {
+    "en": "What instruments can you play, Teng Fei?",
+    "zh": "腾飞，你会演奏什么乐器？"
+   },
+   {
+    "en": "I can play the drums.",
+    "zh": "我会打鼓。"
+   },
+   {
+    "en": "Let's go to the music room after school!",
+    "zh": "放学后我们去音乐教室吧！"
+   },
+   {
+    "en": "I'm good at telling stories.",
+    "zh": "我擅长讲故事。"
+   },
+   {
+    "en": "I often act out stories with my brother at home.",
+    "zh": "我经常和弟弟在家表演故事。"
+   },
+   {
+    "en": "I'm interested in nature.",
+    "zh": "我对自然感兴趣。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 5 Fun Clubs",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "I love hiking, and I can read maps.",
+    "zh": "我喜欢徒步，而且我会看地图。"
+   },
+   {
+    "en": "I can't cook, but I love great food.",
+    "zh": "我不会做饭，但我喜欢美食。"
+   },
+   {
+    "en": "I want to cook for my family.",
+    "zh": "我想为家人做饭。"
+   },
+   {
+    "en": "Do you like reading?",
+    "zh": "你喜欢阅读吗？"
+   },
+   {
+    "en": "Join our book club!",
+    "zh": "加入我们的读书俱乐部吧！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 6 A Day in the Life",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What time do you usually get up?",
+    "zh": "你通常几点起床？"
+   },
+   {
+    "en": "What time does Tom usually go to bed?",
+    "zh": "汤姆通常几点睡觉？"
+   },
+   {
+    "en": "When do they go to the music club?",
+    "zh": "他们什么时候去音乐俱乐部？"
+   },
+   {
+    "en": "What do you do after dinner?",
+    "zh": "你晚饭后做什么？"
+   },
+   {
+    "en": "What does Peter do before breakfast?",
+    "zh": "彼得早饭前做什么？"
+   },
+   {
+    "en": "My name is Timo Halla.",
+    "zh": "我叫蒂莫·哈拉。"
+   },
+   {
+    "en": "I live with my parents in Helsinki, Finland.",
+    "zh": "我和父母住在芬兰赫尔辛基。"
+   },
+   {
+    "en": "I usually get up at 7:40.",
+    "zh": "我通常七点四十起床。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 6 A Day in the Life",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I often listen to the news or music.",
+    "zh": "我经常听新闻或音乐。"
+   },
+   {
+    "en": "After breakfast, I walk to school.",
+    "zh": "早饭后，我步行去学校。"
+   },
+   {
+    "en": "It's only a 10-minute walk.",
+    "zh": "步行只要十分钟。"
+   },
+   {
+    "en": "My school begins at 9:00.",
+    "zh": "我的学校九点开始上课。"
+   },
+   {
+    "en": "There are 18 students in my class.",
+    "zh": "我们班有十八名学生。"
+   },
+   {
+    "en": "I usually get home around 4:00.",
+    "zh": "我通常四点左右到家。"
+   },
+   {
+    "en": "I often have dinner at 6:00.",
+    "zh": "我经常六点吃晚饭。"
+   },
+   {
+    "en": "I read with my parents for an hour.",
+    "zh": "我和父母一起读一小时书。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 6 A Day in the Life",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "At 9:30, it's time for me to go to bed.",
+    "zh": "九点半，我该睡觉了。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 7 Happy Birthday!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "I'm 12.",
+    "zh": "我十二岁。"
+   },
+   {
+    "en": "It's Ella and Emma's birthday soon.",
+    "zh": "埃拉和艾玛的生日快到了。"
+   },
+   {
+    "en": "How about a surprise party for them?",
+    "zh": "给她们办一个惊喜派对吧？"
+   },
+   {
+    "en": "We have a sale today.",
+    "zh": "我们今天有促销。"
+   },
+   {
+    "en": "It's 85 yuan, and it comes with some candles.",
+    "zh": "它八十五元，还附带一些蜡烛。"
+   },
+   {
+    "en": "My birthday is on 13th June.",
+    "zh": "我的生日是六月十三日。"
+   },
+   {
+    "en": "I always eat birthday noodles with eggs.",
+    "zh": "我总是吃加鸡蛋的生日面。"
+   },
+   {
+    "en": "Long noodles are a symbol of long life.",
+    "zh": "长长的面条是长寿的象征。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "上册",
+  "unit": "Unit 7 Happy Birthday!",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I like taking photos because they help me remember fun times.",
+    "zh": "我喜欢拍照，因为照片能帮我记住快乐时光。"
+   },
+   {
+    "en": "I want to plant a small tree for my 14th birthday.",
+    "zh": "我想为我的十四岁生日种一棵小树。"
+   },
+   {
+    "en": "I usually have a party with my friends to celebrate.",
+    "zh": "我通常和朋友办派对来庆祝。"
+   },
+   {
+    "en": "My mother always makes my favourite chocolate cake.",
+    "zh": "我妈妈总是做我最爱的巧克力蛋糕。"
+   },
+   {
+    "en": "I make a wish and blow out the candles.",
+    "zh": "我许愿并吹灭蜡烛。"
+   },
+   {
+    "en": "Happy birthday!",
+    "zh": "生日快乐！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 1 Animal Friends",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "The penguin is my favourite animal.",
+    "zh": "企鹅是我最喜欢的动物。"
+   },
+   {
+    "en": "What's your favourite animal, Fu Xing?",
+    "zh": "福星，你最喜欢的动物是什么？"
+   },
+   {
+    "en": "I like penguins too.",
+    "zh": "我也喜欢企鹅。"
+   },
+   {
+    "en": "Why do you like them so much?",
+    "zh": "你为什么这么喜欢它们？"
+   },
+   {
+    "en": "Yes, they look lovely.",
+    "zh": "是的，它们看起来很可爱。"
+   },
+   {
+    "en": "Let's go and see them.",
+    "zh": "我们去看看它们吧。"
+   },
+   {
+    "en": "They can't fly like other birds, but they can swim fast.",
+    "zh": "它们不能像其他鸟一样飞，但它们能游得很快。"
+   },
+   {
+    "en": "I like how they walk.",
+    "zh": "我喜欢它们走路的样子。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 1 Animal Friends",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Where are they from?",
+    "zh": "它们来自哪里？"
+   },
+   {
+    "en": "It's very cold there, so they often stand close together.",
+    "zh": "那里非常冷，所以它们经常紧挨着站在一起。"
+   },
+   {
+    "en": "It helps them keep warm.",
+    "zh": "这能帮助它们保暖。"
+   },
+   {
+    "en": "What do they eat?",
+    "zh": "它们吃什么？"
+   },
+   {
+    "en": "Fish and small sea animals, I think.",
+    "zh": "我想是鱼和小型海洋动物。"
+   },
+   {
+    "en": "Don't give them your sandwich!",
+    "zh": "不要把你的三明治给它们！"
+   },
+   {
+    "en": "It's not good for them.",
+    "zh": "这对它们不好。"
+   },
+   {
+    "en": "Do you like giraffes?",
+    "zh": "你喜欢长颈鹿吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 1 Animal Friends",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "They have long necks.",
+    "zh": "它们有长长的脖子。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 2 No Rules, No Order",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "It's my first day here.",
+    "zh": "这是我在这里的第一天。"
+   },
+   {
+    "en": "It's nice to meet you, Tom!",
+    "zh": "很高兴见到你，汤姆！"
+   },
+   {
+    "en": "Well, I can't find my pencil box.",
+    "zh": "嗯，我找不到我的铅笔盒了。"
+   },
+   {
+    "en": "I think it's in my locker.",
+    "zh": "我想它在我的储物柜里。"
+   },
+   {
+    "en": "Here, I can lend you my pen.",
+    "zh": "给，我可以把笔借给你。"
+   },
+   {
+    "en": "Would you like a sweet?",
+    "zh": "你想吃颗糖吗？"
+   },
+   {
+    "en": "We can't eat snacks in class.",
+    "zh": "我们不能在课堂上吃零食。"
+   },
+   {
+    "en": "Can we eat fruit?",
+    "zh": "我们可以吃水果吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 2 No Rules, No Order",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I have to answer my phone.",
+    "zh": "我得接电话。"
+   },
+   {
+    "en": "But we can't bring our mobile phones to class.",
+    "zh": "但是我们不能把手机带到课堂上。"
+   },
+   {
+    "en": "We have to turn them off and keep them in our lockers.",
+    "zh": "我们必须关机并把它们放在储物柜里。"
+   },
+   {
+    "en": "Thanks for telling me, Anne.",
+    "zh": "谢谢你告诉我，安妮。"
+   },
+   {
+    "en": "Don't litter.",
+    "zh": "不要乱扔垃圾。"
+   },
+   {
+    "en": "Don't run in the classroom.",
+    "zh": "不要在教室里跑。"
+   },
+   {
+    "en": "You mustn't litter.",
+    "zh": "你不能乱扔垃圾。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 3 Keep Fit",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "There is a bat here.",
+    "zh": "这里有一根球棒。"
+   },
+   {
+    "en": "Is this your bat?",
+    "zh": "这是你的球棒吗？"
+   },
+   {
+    "en": "No, it isn't mine.",
+    "zh": "不，它不是我的。"
+   },
+   {
+    "en": "Oh yes, it's mine.",
+    "zh": "哦，是的，它是我的。"
+   },
+   {
+    "en": "Do you play often?",
+    "zh": "你经常打吗？"
+   },
+   {
+    "en": "Yes, and sometimes more!",
+    "zh": "是的，有时更多！"
+   },
+   {
+    "en": "Well, practice makes perfect.",
+    "zh": "嗯，熟能生巧。"
+   },
+   {
+    "en": "How often do you play, Jim?",
+    "zh": "吉姆，你多久打一次？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 3 Keep Fit",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I seldom do, but I often play badminton.",
+    "zh": "我很少打，但我经常打羽毛球。"
+   },
+   {
+    "en": "I play badminton with Ella.",
+    "zh": "我和埃拉一起打羽毛球。"
+   },
+   {
+    "en": "We should all play doubles sometime!",
+    "zh": "我们改天应该一起打双打！"
+   },
+   {
+    "en": "I hardly ever play it.",
+    "zh": "我几乎从不踢。"
+   },
+   {
+    "en": "What sport do you do?",
+    "zh": "你做什么运动？"
+   },
+   {
+    "en": "How often do you do it?",
+    "zh": "你多久做一次？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 4 Eat Well",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What would you like to order?",
+    "zh": "你想点些什么？"
+   },
+   {
+    "en": "What about Gongbao chicken?",
+    "zh": "宫保鸡丁怎么样？"
+   },
+   {
+    "en": "We often have it in America, but it may taste different here.",
+    "zh": "我们在美国经常吃，但这里的味道可能不一样。"
+   },
+   {
+    "en": "I'd like to try it.",
+    "zh": "我想尝尝。"
+   },
+   {
+    "en": "Do you have anything with tofu?",
+    "zh": "你们有带豆腐的菜吗？"
+   },
+   {
+    "en": "Would you like a hot tofu dish or a cold one?",
+    "zh": "你想要热豆腐还是凉豆腐？"
+   },
+   {
+    "en": "A hot tofu dish, please.",
+    "zh": "请来一道热豆腐。"
+   },
+   {
+    "en": "We have Mapo tofu.",
+    "zh": "我们有麻婆豆腐。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 4 Eat Well",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Would you like that?",
+    "zh": "你想要那个吗？"
+   },
+   {
+    "en": "We should also order some vegetables.",
+    "zh": "我们还应该点些蔬菜。"
+   },
+   {
+    "en": "How about a chicken and cabbage salad?",
+    "zh": "鸡肉卷心菜沙拉怎么样？"
+   },
+   {
+    "en": "Can we order soup too?",
+    "zh": "我们还可以点汤吗？"
+   },
+   {
+    "en": "Which soup would you like, chicken or fish?",
+    "zh": "你想喝哪种汤，鸡汤还是鱼汤？"
+   },
+   {
+    "en": "Now, would you like rice or noodles?",
+    "zh": "现在，你想要米饭还是面条？"
+   },
+   {
+    "en": "Healthy eating means eating healthy food and having good eating habits.",
+    "zh": "健康饮食意味着吃健康的食物并养成良好的饮食习惯。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 5 Here and Now",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "We're having a holiday here.",
+    "zh": "我们在这里度假。"
+   },
+   {
+    "en": "Hao Yi and I are making zongzi!",
+    "zh": "浩一和我正在包粽子！"
+   },
+   {
+    "en": "Are you making them for the Dragon Boat Festival?",
+    "zh": "你们是为端午节包的吗？"
+   },
+   {
+    "en": "What are you doing?",
+    "zh": "你在做什么？"
+   },
+   {
+    "en": "I'm washing the car right now.",
+    "zh": "我现在正在洗车。"
+   },
+   {
+    "en": "Is Mum there too?",
+    "zh": "妈妈也在那里吗？"
+   },
+   {
+    "en": "Yes, her cold is gone.",
+    "zh": "是的，她的感冒好了。"
+   },
+   {
+    "en": "It's great to hear your voice!",
+    "zh": "听到你的声音真好！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 5 Here and Now",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I'm happy you're feeling better!",
+    "zh": "我很高兴你感觉好些了！"
+   },
+   {
+    "en": "Are you having fun in China?",
+    "zh": "你在中国玩得开心吗？"
+   },
+   {
+    "en": "Hao Yi and I are making zongzi and watching dragon boat races on TV.",
+    "zh": "浩一和我正在包粽子，还在电视上看龙舟比赛。"
+   },
+   {
+    "en": "Oh, I have to go now.",
+    "zh": "哦，我得走了。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 6 Rain or Shine",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "How's your holiday going?",
+    "zh": "你的假期过得怎么样？"
+   },
+   {
+    "en": "I'm at a beach in Sanya!",
+    "zh": "我在三亚的海滩上！"
+   },
+   {
+    "en": "What's the weather like there?",
+    "zh": "那里的天气怎么样？"
+   },
+   {
+    "en": "I'm sunbathing at the moment!",
+    "zh": "我现在正在晒太阳！"
+   },
+   {
+    "en": "My brother John's here too.",
+    "zh": "我弟弟约翰也在这里。"
+   },
+   {
+    "en": "Oh, what's he doing?",
+    "zh": "哦，他在做什么？"
+   },
+   {
+    "en": "How's the weather in Stockholm?",
+    "zh": "斯德哥尔摩的天气怎么样？"
+   },
+   {
+    "en": "Oh, that's really cold!",
+    "zh": "哦，那真的很冷！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 6 Rain or Shine",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Well, we usually stay in when it snows, but now we're outside.",
+    "zh": "嗯，下雪时我们通常待在家里，但现在我们在外面。"
+   },
+   {
+    "en": "Hey, come and visit us some day!",
+    "zh": "嘿，改天来看看我们吧！"
+   },
+   {
+    "en": "What's the weather like today?",
+    "zh": "今天天气怎么样？"
+   },
+   {
+    "en": "It's windy and warm.",
+    "zh": "天气有风而且温暖。"
+   },
+   {
+    "en": "Let's fly a kite.",
+    "zh": "我们去放风筝吧。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 7 A Day to Remember",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "How was your school trip to the wastewater plant?",
+    "zh": "你们去污水处理厂的学校旅行怎么样？"
+   },
+   {
+    "en": "It was really interesting!",
+    "zh": "真的很有趣！"
+   },
+   {
+    "en": "What did you see?",
+    "zh": "你们看到了什么？"
+   },
+   {
+    "en": "First, water from our homes goes into the plant.",
+    "zh": "首先，我们家里的水进入处理厂。"
+   },
+   {
+    "en": "Well, machines remove germs and other things from the water.",
+    "zh": "嗯，机器把细菌和其他东西从水中去除。"
+   },
+   {
+    "en": "It takes a few more steps after that before the water becomes clean again.",
+    "zh": "之后还要经过几个步骤，水才会重新变干净。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 8 Once upon a Time",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "A fisherman saw something surprising in his net.",
+    "zh": "一个渔夫在他的网里看到了令人惊讶的东西。"
+   },
+   {
+    "en": "What's this shiny thing?",
+    "zh": "这个闪闪发光的东西是什么？"
+   },
+   {
+    "en": "Oh, it's a bottle!",
+    "zh": "哦，是一个瓶子！"
+   },
+   {
+    "en": "I wonder what's inside.",
+    "zh": "我想知道里面是什么。"
+   },
+   {
+    "en": "The fisherman opened the bottle.",
+    "zh": "渔夫打开了瓶子。"
+   },
+   {
+    "en": "There was once a fisherman who lived in a small house by the sea with his wife.",
+    "zh": "从前有一个渔夫，和妻子住在海边的一所小房子里。"
+   },
+   {
+    "en": "One day, something very special happened.",
+    "zh": "有一天，发生了一件非常特别的事。"
+   },
+   {
+    "en": "I caught a little golden fish.",
+    "zh": "我捕到了一条小金鱼。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 8 Once upon a Time",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "It promised me whatever I wanted if I set it free.",
+    "zh": "如果我放了它，它答应给我想要的一切。"
+   },
+   {
+    "en": "At last, fortune smiles upon us!",
+    "zh": "终于，好运向我们微笑了！"
+   },
+   {
+    "en": "What did you wish for?",
+    "zh": "你许了什么愿？"
+   },
+   {
+    "en": "I felt sorry for the fish, so I just put it back into the sea.",
+    "zh": "我为那条鱼感到难过，所以就把它放回了海里。"
+   },
+   {
+    "en": "His wife was very angry and made him find the fish.",
+    "zh": "他的妻子非常生气，让他去找那条鱼。"
+   },
+   {
+    "en": "Little golden fish, are you there?",
+    "zh": "小金鱼，你在吗？"
+   },
+   {
+    "en": "My wife was very angry because I didn't make a wish.",
+    "zh": "我妻子非常生气，因为我没有许愿。"
+   },
+   {
+    "en": "We need a new pot.",
+    "zh": "我们需要一个新锅。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 8 Once upon a Time",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Please give us one!",
+    "zh": "请给我们一个吧！"
+   },
+   {
+    "en": "The golden fish said yes, and it went back into the water.",
+    "zh": "金鱼答应了，然后回到了水里。"
+   },
+   {
+    "en": "Back home, the fisherman found a new pot outside the house.",
+    "zh": "回到家，渔夫发现屋外有一个新锅。"
+   },
+   {
+    "en": "Can't you see we need a new house instead?",
+    "zh": "难道你看不出我们需要一栋新房子吗？"
+   },
+   {
+    "en": "Go back again and ask for one!",
+    "zh": "再回去要一栋！"
+   },
+   {
+    "en": "Hello again, kind fisherman.",
+    "zh": "又见面了，善良的渔夫。"
+   },
+   {
+    "en": "My wife wants a new house!",
+    "zh": "我妻子想要一栋新房子！"
+   },
+   {
+    "en": "Again, the golden fish granted his wish.",
+    "zh": "金鱼又一次实现了他的愿望。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "七年级",
+  "term": "下册",
+  "unit": "Unit 8 Once upon a Time",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "The house is nice, but I want to be rich too!",
+    "zh": "房子不错，但我也想变得富有！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 1 Happy Holiday",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "How was your holiday?",
+    "zh": "你的假期怎么样？"
+   },
+   {
+    "en": "I went to Yunnan with my family.",
+    "zh": "我和家人去了云南。"
+   },
+   {
+    "en": "We stayed in the old town for a few days, and we enjoyed it very much.",
+    "zh": "我们在古城住了几天，玩得非常开心。"
+   },
+   {
+    "en": "Did you visit Yulong Mountain?",
+    "zh": "你们去玉龙雪山了吗？"
+   },
+   {
+    "en": "It just took my breath away.",
+    "zh": "它简直让我叹为观止。"
+   },
+   {
+    "en": "I didn't go anywhere special, but I tried something new.",
+    "zh": "我没有去什么特别的地方，但我尝试了新事物。"
+   },
+   {
+    "en": "I worked as a tour guide at a museum.",
+    "zh": "我在博物馆当导游。"
+   },
+   {
+    "en": "I just stayed at home to read, play games, and relax, but it was still fun.",
+    "zh": "我只是待在家里读书、玩游戏、放松，但仍然很开心。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 1 Happy Holiday",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "We took a lot of great photos there.",
+    "zh": "我们在那里拍了很多很棒的照片。"
+   },
+   {
+    "en": "The landscape there was amazing.",
+    "zh": "那里的风景美极了。"
+   },
+   {
+    "en": "Today was our first day visiting Moscow.",
+    "zh": "今天是我们游览莫斯科的第一天。"
+   },
+   {
+    "en": "In the morning, we went to the Victory Museum.",
+    "zh": "上午，我们去了胜利博物馆。"
+   },
+   {
+    "en": "We should not forget that war is terrible and peace does not come easily.",
+    "zh": "我们不应忘记战争是可怕的，和平来之不易。"
+   },
+   {
+    "en": "In the afternoon, we arrived at a school and met a group of Russian students.",
+    "zh": "下午，我们到达一所学校，见到了一群俄罗斯学生。"
+   },
+   {
+    "en": "It was such a good experience!",
+    "zh": "这真是一次很棒的经历！"
+   },
+   {
+    "en": "The most important part of a holiday is to rest your mind and body.",
+    "zh": "假期最重要的部分是让身心得到休息。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 2 Home Sweet Home",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "OK, Mum. I'll do it at once.",
+    "zh": "好的，妈妈。我马上做。"
+   },
+   {
+    "en": "Sure. No problem!",
+    "zh": "当然。没问题！"
+   },
+   {
+    "en": "I'd like to clean the windows.",
+    "zh": "我想擦窗户。"
+   },
+   {
+    "en": "Grandpa and Grandma are visiting us this weekend!",
+    "zh": "爷爷奶奶这个周末要来看我们！"
+   },
+   {
+    "en": "I can't wait to show them our new house!",
+    "zh": "我迫不及待想给他们看我们的新房子！"
+   },
+   {
+    "en": "But their room is already clean!",
+    "zh": "但他们的房间已经很干净了！"
+   },
+   {
+    "en": "Well, it's not grandma clean yet!",
+    "zh": "嗯，还没达到奶奶要求的干净程度！"
+   },
+   {
+    "en": "Grandpa likes reading books in front of the window.",
+    "zh": "爷爷喜欢在窗前读书。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 2 Home Sweet Home",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Mum, could you take me to the flower shop later?",
+    "zh": "妈妈，你晚点能带我去花店吗？"
+   },
+   {
+    "en": "Let's go after lunch.",
+    "zh": "我们午饭后去吧。"
+   },
+   {
+    "en": "Dad, could you please give me a lift to the shop this afternoon?",
+    "zh": "爸爸，今天下午你能开车送我去商店吗？"
+   },
+   {
+    "en": "Sorry, but I have to work from home all day.",
+    "zh": "对不起，但我得整天在家工作。"
+   },
+   {
+    "en": "Helen, can I borrow your chess set?",
+    "zh": "海伦，我可以借你的棋吗？"
+   },
+   {
+    "en": "Home is a place of love.",
+    "zh": "家是充满爱的地方。"
+   },
+   {
+    "en": "It always welcomes me with open arms.",
+    "zh": "它总是张开双臂欢迎我。"
+   },
+   {
+    "en": "We got up very early in the morning to catch the train.",
+    "zh": "我们一大早就起床去赶火车。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 2 Home Sweet Home",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "At the end of the road, I saw Grandpa and my little cousin standing in the cold wind waiting for us.",
+    "zh": "在路的尽头，我看见爷爷和小表弟站在寒风中等着我们。"
+   },
+   {
+    "en": "Grandma, my aunt, and my uncle were busy cooking dinner in the kitchen.",
+    "zh": "奶奶、姑姑和叔叔正在厨房忙着做晚饭。"
+   },
+   {
+    "en": "When dinner was ready, I asked, Can I help?",
+    "zh": "晚饭做好时，我问：“我能帮忙吗？”"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 3 Same or Different?",
+  "title": "课文跟读（1）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 1,
+  "lines": [
+   {
+    "en": "Congratulations on winning the prize at the school music festival!",
+    "zh": "恭喜你们在学校音乐节获奖！"
+   },
+   {
+    "en": "You attended the festival last year and this year.",
+    "zh": "你们去年和今年都参加了音乐节。"
+   },
+   {
+    "en": "How is this year different?",
+    "zh": "今年有什么不同？"
+   },
+   {
+    "en": "There are more students and more bands this year.",
+    "zh": "今年有更多学生和更多乐队。"
+   },
+   {
+    "en": "As twins, you look very similar.",
+    "zh": "作为双胞胎，你们看起来非常像。"
+   },
+   {
+    "en": "How are you different?",
+    "zh": "你们有什么不同？"
+   },
+   {
+    "en": "And she is funnier than me.",
+    "zh": "而且她比我更风趣。"
+   },
+   {
+    "en": "I work as hard as her!",
+    "zh": "我和她一样努力！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 3 Same or Different?",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Besides that, how do you spend your spare time?",
+    "zh": "除此之外，你们空闲时间做什么？"
+   },
+   {
+    "en": "You see, we're different in many ways, but together, we make a great team!",
+    "zh": "你看，我们有很多不同，但在一起就是一个很棒的团队！"
+   },
+   {
+    "en": "Thanks for talking with me.",
+    "zh": "谢谢你接受我的采访。"
+   },
+   {
+    "en": "Some people think that friends should be alike, but others think that friends should be different.",
+    "zh": "有些人认为朋友应该相似，另一些人认为朋友应该不同。"
+   },
+   {
+    "en": "I think a good friend is like a mirror.",
+    "zh": "我认为好朋友就像一面镜子。"
+   },
+   {
+    "en": "We often hang out together because we have similar hobbies and interests.",
+    "zh": "我们经常一起玩，因为我们有相似的爱好和兴趣。"
+   },
+   {
+    "en": "He plays badminton better than I do, so he always wins our matches.",
+    "zh": "他羽毛球打得比我好，所以他总是赢我。"
+   },
+   {
+    "en": "Because of that, I try harder when I practise, and now I'm getting better at badminton.",
+    "zh": "因此，我练习时更加努力，现在我的羽毛球也越打越好了。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 3 Same or Different?",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "We often share interesting books with each other.",
+    "zh": "我们经常互相分享有趣的书。"
+   },
+   {
+    "en": "I don't agree.",
+    "zh": "我不同意。"
+   },
+   {
+    "en": "For me, friends who are different make me better.",
+    "zh": "对我来说，不同的朋友让我变得更好。"
+   },
+   {
+    "en": "I think we should respect each other's differences and learn from each other.",
+    "zh": "我认为我们应该尊重彼此的差异，互相学习。"
+   },
+   {
+    "en": "She has a great sense of humour too.",
+    "zh": "她也很有幽默感。"
+   },
+   {
+    "en": "Thanks to her, I am becoming more outgoing.",
+    "zh": "多亏了她，我变得越来越外向。"
+   },
+   {
+    "en": "I am glad to have an honest friend.",
+    "zh": "我很高兴有一个诚实的朋友。"
+   },
+   {
+    "en": "She helps me see the silver lining in difficult situations.",
+    "zh": "她帮助我在困境中看到好的一面。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 4 Amazing Plants and Animals",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Oh, what's that, Chen Jie?",
+    "zh": "哦，陈洁，那是什么？"
+   },
+   {
+    "en": "It's a folding fan.",
+    "zh": "是一把折扇。"
+   },
+   {
+    "en": "It has a painting of bamboo on it.",
+    "zh": "上面画着竹子。"
+   },
+   {
+    "en": "Bamboo is one of the most popular subjects in Chinese paintings.",
+    "zh": "竹子是中国画中最受欢迎的主题之一。"
+   },
+   {
+    "en": "It's a symbol of goodness in Chinese culture.",
+    "zh": "它是中国文化中善良的象征。"
+   },
+   {
+    "en": "So, where did you get that fan?",
+    "zh": "那么，你在哪里买到那把扇子的？"
+   },
+   {
+    "en": "I learnt lots of interesting things when I was there.",
+    "zh": "我在那里学到了很多有趣的东西。"
+   },
+   {
+    "en": "Well, bamboo is one of the fastest-growing plants.",
+    "zh": "嗯，竹子是生长最快的植物之一。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 4 Amazing Plants and Animals",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Some bamboo can grow almost one metre in one day.",
+    "zh": "有些竹子一天能长近一米。"
+   },
+   {
+    "en": "People can use it to build houses and make tools and instruments.",
+    "zh": "人们可以用它建房，制作工具和乐器。"
+   },
+   {
+    "en": "I remember pandas love to eat bamboo too, right?",
+    "zh": "我记得熊猫也爱吃竹子，对吧？"
+   },
+   {
+    "en": "Bamboo is important to many animals.",
+    "zh": "竹子对许多动物都很重要。"
+   },
+   {
+    "en": "We should protect plants and animals.",
+    "zh": "我们应该保护植物和动物。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 5 What a Delicious Meal!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Hey Teng Fei, can you teach me how to cook a popular Chinese dish?",
+    "zh": "嘿，腾飞，你能教我做一道受欢迎的中国菜吗？"
+   },
+   {
+    "en": "How about stir-fried eggs and tomatoes?",
+    "zh": "西红柿炒鸡蛋怎么样？"
+   },
+   {
+    "en": "How do we make it?",
+    "zh": "我们怎么做？"
+   },
+   {
+    "en": "How many tomatoes and eggs do we need?",
+    "zh": "我们需要几个西红柿和几个鸡蛋？"
+   },
+   {
+    "en": "What should we do with the tomatoes and eggs?",
+    "zh": "我们该怎么处理西红柿和鸡蛋？"
+   },
+   {
+    "en": "First, cut the tomatoes into small pieces.",
+    "zh": "首先，把西红柿切成小块。"
+   },
+   {
+    "en": "Next, mix the eggs in a bowl.",
+    "zh": "接着，在碗里把鸡蛋打散。"
+   },
+   {
+    "en": "Stir-fry for one minute.",
+    "zh": "翻炒一分钟。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 5 What a Delicious Meal!",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Next, cook the tomatoes in the pan until they're soft.",
+    "zh": "接着，在锅里炒西红柿直到变软。"
+   },
+   {
+    "en": "Finally, put the eggs back into the pan and mix them with the tomatoes.",
+    "zh": "最后，把鸡蛋倒回锅里，和西红柿一起翻炒。"
+   },
+   {
+    "en": "Wow, it looks so good!",
+    "zh": "哇，看起来真不错！"
+   },
+   {
+    "en": "What an amazing smell!",
+    "zh": "多么美妙的气味啊！"
+   },
+   {
+    "en": "What a mess!",
+    "zh": "真是一团糟！"
+   },
+   {
+    "en": "We need some oil and salt.",
+    "zh": "我们需要一些油和盐。"
+   },
+   {
+    "en": "Add a little sugar if you like.",
+    "zh": "如果你喜欢，可以加一点糖。"
+   },
+   {
+    "en": "This dish is easy to make and tastes great.",
+    "zh": "这道菜做起来简单，味道也很好。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 6 Plan for Yourself",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What are you reading, Fu Xing?",
+    "zh": "福星，你在读什么？"
+   },
+   {
+    "en": "It's a book of essays by a famous writer.",
+    "zh": "是一本著名作家的散文集。"
+   },
+   {
+    "en": "Wow, now I know why you're so good at writing.",
+    "zh": "哇，现在我知道你为什么这么擅长写作了。"
+   },
+   {
+    "en": "You know, I want to be a writer when I'm older.",
+    "zh": "你知道，我长大后想成为一名作家。"
+   },
+   {
+    "en": "I'm going to read more classics.",
+    "zh": "我打算多读经典作品。"
+   },
+   {
+    "en": "And also, I'm going to keep on writing.",
+    "zh": "而且，我打算坚持写作。"
+   },
+   {
+    "en": "I think you're going to be a great writer.",
+    "zh": "我觉得你会成为一名伟大的作家。"
+   },
+   {
+    "en": "What about you, Adam?",
+    "zh": "亚当，你呢？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 6 Plan for Yourself",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "What do you want to be when you're older?",
+    "zh": "你长大后想做什么？"
+   },
+   {
+    "en": "Not everyone knows what they want to be.",
+    "zh": "不是每个人都知道自己想做什么。"
+   },
+   {
+    "en": "Just make sure you try your best at school.",
+    "zh": "只要确保在学校尽最大努力就好。"
+   },
+   {
+    "en": "I'm going to study hard and never give up.",
+    "zh": "我打算努力学习，永不放弃。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 7 When Tomorrow Comes",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "More people will live to be over 100 years old.",
+    "zh": "更多人会活到一百岁以上。"
+   },
+   {
+    "en": "I'm watching a video about future predictions.",
+    "zh": "我正在看一个关于未来预测的视频。"
+   },
+   {
+    "en": "So, what will the future be like?",
+    "zh": "那么，未来会是什么样？"
+   },
+   {
+    "en": "The transport system will be more efficient.",
+    "zh": "交通系统会更高效。"
+   },
+   {
+    "en": "Students probably won't go to a school in the future.",
+    "zh": "将来学生可能不用去学校。"
+   },
+   {
+    "en": "They will study at home or any place they want.",
+    "zh": "他们会在家或任何他们想的地方学习。"
+   },
+   {
+    "en": "But I really like going to school!",
+    "zh": "但我真的很喜欢去学校！"
+   },
+   {
+    "en": "Machines will tell us how to solve small health problems before they become bigger.",
+    "zh": "机器会在小健康问题变严重之前告诉我们如何解决。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 7 When Tomorrow Comes",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Some may even live to be 150.",
+    "zh": "有些人甚至可能活到一百五十岁。"
+   },
+   {
+    "en": "So, as a futurist, can you tell us how life will be different in 50 years?",
+    "zh": "那么，作为未来学家，您能告诉我们五十年后生活会有何不同吗？"
+   },
+   {
+    "en": "Robots will work everywhere.",
+    "zh": "机器人将在各处工作。"
+   },
+   {
+    "en": "Robots will make our life easier.",
+    "zh": "机器人会让我们的生活更方便。"
+   },
+   {
+    "en": "They will do almost all our housework.",
+    "zh": "它们会做我们几乎所有的家务。"
+   },
+   {
+    "en": "They will also help save lives when disasters and emergencies happen.",
+    "zh": "在灾难和紧急情况发生时，它们还会帮助拯救生命。"
+   },
+   {
+    "en": "Some jobs today will disappear in the coming years.",
+    "zh": "如今的一些工作在未来几年会消失。"
+   },
+   {
+    "en": "There will be more challenging jobs in the future, such as space pilots and AI experts.",
+    "zh": "未来会有更具挑战性的工作，比如太空飞行员和人工智能专家。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 7 When Tomorrow Comes",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Do you think robots will replace humans one day?",
+    "zh": "你认为机器人有一天会取代人类吗？"
+   },
+   {
+    "en": "AI will not replace humans for these things.",
+    "zh": "人工智能在这些方面不会取代人类。"
+   },
+   {
+    "en": "It will certainly change how we work, study, and live.",
+    "zh": "它肯定会改变我们的工作、学习和生活方式。"
+   },
+   {
+    "en": "Today's choices will influence your future.",
+    "zh": "今天的选择会影响你的未来。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 8 Let's Communicate!",
+  "title": "课文跟读（1）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 1,
+  "lines": [
+   {
+    "en": "If you want to solve the problem, a face-to-face talk usually works the best.",
+    "zh": "如果你想解决问题，面对面交谈通常效果最好。"
+   },
+   {
+    "en": "Texting can make things worse if you're not careful with your words.",
+    "zh": "如果你措辞不谨慎，发短信可能会让事情更糟。"
+   },
+   {
+    "en": "If you stay calm and say sorry, it will help.",
+    "zh": "如果你保持冷静并道歉，会有帮助。"
+   },
+   {
+    "en": "If I go there, I will try all the delicious local food.",
+    "zh": "如果我去那里，我会尝遍所有美味的当地食物。"
+   },
+   {
+    "en": "Professor, thanks for the helpful speech on communication.",
+    "zh": "教授，感谢您关于沟通的有益演讲。"
+   },
+   {
+    "en": "I have a question.",
+    "zh": "我有一个问题。"
+   },
+   {
+    "en": "Sometimes my friends and I argue but don't know how to make up.",
+    "zh": "有时我和朋友会争吵，但不知道如何和好。"
+   },
+   {
+    "en": "What's the best way to communicate in this situation?",
+    "zh": "在这种情况下，最好的沟通方式是什么？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 8 Let's Communicate!",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "I understand, but meeting in person is not always easy.",
+    "zh": "我明白，但见面并不总是容易。"
+   },
+   {
+    "en": "If you can't meet, calling is better than texting.",
+    "zh": "如果你们不能见面，打电话比发短信好。"
+   },
+   {
+    "en": "Some of you may prefer texting, but be careful with your words.",
+    "zh": "你们中有些人可能更喜欢发短信，但要注意措辞。"
+   },
+   {
+    "en": "But what if we argue more over the phone?",
+    "zh": "但如果我们打电话时吵得更厉害怎么办？"
+   },
+   {
+    "en": "If it is still hard to talk, write a letter.",
+    "zh": "如果还是很难开口，就写一封信。"
+   },
+   {
+    "en": "Meet when you're both ready.",
+    "zh": "等双方都准备好时再见面。"
+   },
+   {
+    "en": "I'll call and try to meet.",
+    "zh": "我会打电话，并试着见面。"
+   },
+   {
+    "en": "Because friendship is important.",
+    "zh": "因为友谊很重要。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "上册",
+  "unit": "Unit 8 Let's Communicate!",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Thanks for the advice!",
+    "zh": "谢谢你的建议！"
+   },
+   {
+    "en": "Good communication starts with listening.",
+    "zh": "良好的沟通从倾听开始。"
+   },
+   {
+    "en": "Body language can also help us communicate.",
+    "zh": "肢体语言也能帮助我们交流。"
+   },
+   {
+    "en": "We should talk about our feelings honestly.",
+    "zh": "我们应该坦诚地谈论自己的感受。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 1 Time to Relax",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What are you up to?",
+    "zh": "你在忙什么？"
+   },
+   {
+    "en": "What are you writing?",
+    "zh": "你在写什么？"
+   },
+   {
+    "en": "It's a poem by Li Bai.",
+    "zh": "是一首李白的诗。"
+   },
+   {
+    "en": "My grandmother taught me how to write it.",
+    "zh": "我奶奶教我写的。"
+   },
+   {
+    "en": "I like watching you write like that.",
+    "zh": "我喜欢看你那样写字。"
+   },
+   {
+    "en": "But it looks difficult.",
+    "zh": "但看起来很难。"
+   },
+   {
+    "en": "Well, the first step is always the hardest.",
+    "zh": "万事开头难。"
+   },
+   {
+    "en": "When I started to do calligraphy, I spent hours practising single strokes.",
+    "zh": "我开始练书法时，花了好几个小时练基本笔画。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 1 Time to Relax",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I know how that feels!",
+    "zh": "我懂那种感觉！"
+   },
+   {
+    "en": "My dad's teaching me to play the guitar.",
+    "zh": "我爸爸在教我弹吉他。"
+   },
+   {
+    "en": "It's difficult, but he always encourages me not to give up.",
+    "zh": "这很难，但他总是鼓励我不要放弃。"
+   },
+   {
+    "en": "Now I do calligraphy to relax.",
+    "zh": "现在我练书法来放松。"
+   },
+   {
+    "en": "I even like how the ink smells!",
+    "zh": "我甚至喜欢墨水的味道！"
+   },
+   {
+    "en": "Why did you choose to play the guitar?",
+    "zh": "你为什么选择弹吉他？"
+   },
+   {
+    "en": "I think playing the guitar is cool.",
+    "zh": "我觉得弹吉他很酷。"
+   },
+   {
+    "en": "Will you teach me to write a poem?",
+    "zh": "你能教我写诗吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 1 Time to Relax",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "I can teach you to play a song in return.",
+    "zh": "作为回报，我可以教你弹一首歌。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 2 Stay Healthy",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Take a seat, Helen.",
+    "zh": "请坐，海伦。"
+   },
+   {
+    "en": "How are you feeling?",
+    "zh": "你感觉怎么样？"
+   },
+   {
+    "en": "I have a runny nose and a fever.",
+    "zh": "我流鼻涕还发烧。"
+   },
+   {
+    "en": "Oh, it's quite high.",
+    "zh": "哦，烧得挺高的。"
+   },
+   {
+    "en": "Yes, it started yesterday.",
+    "zh": "是的，昨天开始的。"
+   },
+   {
+    "en": "I felt so cold, and I didn't have much energy.",
+    "zh": "我觉得很冷，也没什么力气。"
+   },
+   {
+    "en": "When I tried to get out of bed, I almost fell and hurt myself.",
+    "zh": "我试着下床时差点摔倒伤到自己。"
+   },
+   {
+    "en": "My throat hurts too.",
+    "zh": "我喉咙也疼。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 2 Stay Healthy",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Yes, the back of your throat looks very red.",
+    "zh": "是的，你喉咙后部看起来很红。"
+   },
+   {
+    "en": "We'll need to do a test, but I believe you have the flu.",
+    "zh": "我们需要做个检查，但我认为你得了流感。"
+   },
+   {
+    "en": "What should I do, Doctor?",
+    "zh": "医生，我该怎么办？"
+   },
+   {
+    "en": "You should take some medicine and drink enough water.",
+    "zh": "你应该吃点药，多喝水。"
+   },
+   {
+    "en": "Can I go to school tomorrow?",
+    "zh": "我明天能去上学吗？"
+   },
+   {
+    "en": "No, you should rest at home.",
+    "zh": "不行，你应该在家休息。"
+   },
+   {
+    "en": "When you're outside, please wear a mask.",
+    "zh": "出门时请戴口罩。"
+   },
+   {
+    "en": "It stops us from passing the flu virus to others easily.",
+    "zh": "它能防止我们轻易把流感病毒传给别人。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 2 Stay Healthy",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "And remember, your health is in your hands.",
+    "zh": "记住，健康掌握在你自己手中。"
+   },
+   {
+    "en": "If you take good care of yourself, you'll get better soon.",
+    "zh": "如果你好好照顾自己，很快就会好起来。"
+   },
+   {
+    "en": "Thank you, Dr Cooper.",
+    "zh": "谢谢你，库珀医生。"
+   },
+   {
+    "en": "I feel much better now.",
+    "zh": "我现在感觉好多了。"
+   },
+   {
+    "en": "What happened just now?",
+    "zh": "刚才发生了什么？"
+   },
+   {
+    "en": "Well, I ate something at my friend's place, and then I started to feel strange.",
+    "zh": "嗯，我在朋友家吃了点东西，然后开始感觉不对劲。"
+   },
+   {
+    "en": "Do you know what you are allergic to?",
+    "zh": "你知道自己对什么过敏吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 3 Growing Up",
+  "title": "课文跟读（1）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 1,
+  "lines": [
+   {
+    "en": "Well, my parents aren't happy with my grades.",
+    "zh": "嗯，我父母对我的成绩不满意。"
+   },
+   {
+    "en": "Weren't they pretty good this term?",
+    "zh": "这学期不是挺好吗？"
+   },
+   {
+    "en": "Yeah, but my parents have very high standards.",
+    "zh": "是啊，但我父母标准很高。"
+   },
+   {
+    "en": "I'm sorry to hear that.",
+    "zh": "听到这个我很难过。"
+   },
+   {
+    "en": "But look on the bright side.",
+    "zh": "但往好的方面看。"
+   },
+   {
+    "en": "I'm sure your parents just want you to do well, although they may not show it.",
+    "zh": "我相信你父母只是想让你做好，尽管他们可能不表现出来。"
+   },
+   {
+    "en": "I know my parents love me, but sometimes I think they love Kate more.",
+    "zh": "我知道父母爱我，但有时我觉得他们更爱凯特。"
+   },
+   {
+    "en": "Why don't you talk to them?",
+    "zh": "你为什么不和他们谈谈？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 3 Growing Up",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Until you talk to them, they might not know how you feel.",
+    "zh": "在你们交谈之前，他们可能不知道你的感受。"
+   },
+   {
+    "en": "I'm afraid I'll cry if we talk.",
+    "zh": "我怕一谈就会哭。"
+   },
+   {
+    "en": "How about writing them a letter so that you can get your message across clearly?",
+    "zh": "写封信给他们，把你的意思表达清楚怎么样？"
+   },
+   {
+    "en": "Oh, that's a good idea.",
+    "zh": "哦，这是个好主意。"
+   },
+   {
+    "en": "Writing things down can also make you feel better.",
+    "zh": "把事情写下来也能让你感觉好一些。"
+   },
+   {
+    "en": "Just talking to you makes me feel better already!",
+    "zh": "只是和你聊聊我就感觉好多了！"
+   },
+   {
+    "en": "You should speak to a person you trust about it.",
+    "zh": "你应该和你信任的人谈谈这件事。"
+   },
+   {
+    "en": "Although people might hurt you sometimes, it doesn't always mean that they did it on purpose.",
+    "zh": "尽管人们有时会伤害你，但这并不总意味着他们是故意的。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 3 Growing Up",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Talk to your loved ones whenever you feel good or bad so that you can double your joy and cut your problems in half.",
+    "zh": "无论心情好坏都和亲人聊聊，这样快乐会加倍，烦恼会减半。"
+   },
+   {
+    "en": "You won't understand why she got upset until you put yourself in her shoes.",
+    "zh": "除非你设身处地为她着想，否则你不会理解她为什么难过。"
+   },
+   {
+    "en": "There are many things you can do when you feel stressed.",
+    "zh": "感到压力时，你可以做很多事情。"
+   },
+   {
+    "en": "First, you can take a break from what you are doing.",
+    "zh": "首先，你可以暂时停下正在做的事。"
+   },
+   {
+    "en": "This will help you clear your mind.",
+    "zh": "这能帮助你理清思绪。"
+   },
+   {
+    "en": "You can listen to music or go for a walk.",
+    "zh": "你可以听音乐或去散步。"
+   },
+   {
+    "en": "Next, share your problems with someone you trust instead of shutting yourself away.",
+    "zh": "其次，和你信任的人分享你的问题，不要把自己封闭起来。"
+   },
+   {
+    "en": "Finally, remember to take care of yourself.",
+    "zh": "最后，记得照顾好自己。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 3 Growing Up",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Although it is normal to get mad at others from time to time, we should always try our best to control our anger instead of expressing it in bad ways.",
+    "zh": "虽然偶尔对别人发火很正常，但我们应该尽力控制愤怒，不要用糟糕的方式表达。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 4 The Wonders of Nature",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "How was your trip?",
+    "zh": "你的旅行怎么样？"
+   },
+   {
+    "en": "We saw the Hukou Waterfall on the Yellow River.",
+    "zh": "我们看了黄河上的壶口瀑布。"
+   },
+   {
+    "en": "Is that the longest river in China?",
+    "zh": "那是中国最长的河吗？"
+   },
+   {
+    "en": "No, the Yangtze River is the longest river in China.",
+    "zh": "不，长江是中国最长的河。"
+   },
+   {
+    "en": "It travels the farthest and is about 6,300 kilometres long.",
+    "zh": "它流得最远，长约六千三百公里。"
+   },
+   {
+    "en": "The Yellow River is 5,464 kilometres long and is the second longest.",
+    "zh": "黄河长五千四百六十四公里，是第二长河。"
+   },
+   {
+    "en": "By the way, do you know why it's called the Yellow River?",
+    "zh": "顺便问一下，你知道它为什么叫黄河吗？"
+   },
+   {
+    "en": "Some parts of the river carry brown and yellow earth.",
+    "zh": "这条河的一些河段携带褐黄色的泥土。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 4 The Wonders of Nature",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I like learning about rivers.",
+    "zh": "我喜欢了解河流。"
+   },
+   {
+    "en": "My favourite is the Nile.",
+    "zh": "我最喜欢尼罗河。"
+   },
+   {
+    "en": "Did you know it's the longest river in the world?",
+    "zh": "你知道它是世界上最长的河吗？"
+   },
+   {
+    "en": "It's very important in Egypt's history.",
+    "zh": "它在埃及历史上非常重要。"
+   },
+   {
+    "en": "Both the Nile and the Yellow River helped ancient civilizations to develop.",
+    "zh": "尼罗河和黄河都帮助了古代文明的发展。"
+   },
+   {
+    "en": "And they're still very important today.",
+    "zh": "它们今天仍然非常重要。"
+   },
+   {
+    "en": "In China, we even call the Yellow River our mother river!",
+    "zh": "在中国，我们甚至把黄河称为母亲河！"
+   },
+   {
+    "en": "We should protect them at all costs.",
+    "zh": "我们应该不惜一切代价保护它们。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 4 The Wonders of Nature",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Could you tell me more about China, Yaming?",
+    "zh": "亚明，你能多告诉我一些关于中国的事吗？"
+   },
+   {
+    "en": "What would you like to know?",
+    "zh": "你想知道什么？"
+   },
+   {
+    "en": "What's the biggest desert in China?",
+    "zh": "中国最大的沙漠是什么？"
+   },
+   {
+    "en": "It's the Taklimakan Desert.",
+    "zh": "是塔克拉玛干沙漠。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 5 Nature's Temper",
+  "title": "课文跟读（1）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 1,
+  "lines": [
+   {
+    "en": "Did your family have any trouble during the typhoon?",
+    "zh": "台风期间你家遇到麻烦了吗？"
+   },
+   {
+    "en": "Yes, it was awful.",
+    "zh": "是的，太糟糕了。"
+   },
+   {
+    "en": "I'm sorry to hear that.",
+    "zh": "听到这个我很难过。"
+   },
+   {
+    "en": "Did you know that a typhoon was coming?",
+    "zh": "你知道台风要来吗？"
+   },
+   {
+    "en": "But it was worse than we expected.",
+    "zh": "但比我们预想的更糟。"
+   },
+   {
+    "en": "We were driving home from our relatives' house when the strong winds started.",
+    "zh": "我们从亲戚家开车回家时，强风开始了。"
+   },
+   {
+    "en": "It's dangerous to travel during a typhoon.",
+    "zh": "台风期间出行很危险。"
+   },
+   {
+    "en": "It was raining hard while we were driving back.",
+    "zh": "我们开车回来时雨下得很大。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 5 Nature's Temper",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "We almost got into an accident when a truck nearly hit us.",
+    "zh": "一辆卡车差点撞上我们，我们差点出事故。"
+   },
+   {
+    "en": "Oh dear, I'm glad you were safe!",
+    "zh": "天哪，我很高兴你们平安无事！"
+   },
+   {
+    "en": "Yes, but when we got home later, we found water everywhere.",
+    "zh": "是的，但后来到家时，我们发现到处都是水。"
+   },
+   {
+    "en": "The house looked awful!",
+    "zh": "房子看起来糟透了！"
+   },
+   {
+    "en": "Luckily, we covered our windows and moved our things off the floor before the typhoon started.",
+    "zh": "幸运的是，台风来之前我们封好了窗户，把东西从地板上搬开了。"
+   },
+   {
+    "en": "We stored food and water too.",
+    "zh": "我们还储存了食物和水。"
+   },
+   {
+    "en": "There are very strong winds and heavy rain during a typhoon.",
+    "zh": "台风期间有非常强的风和大雨。"
+   },
+   {
+    "en": "Sometimes there are tall waves and the areas near the coast get flooded.",
+    "zh": "有时会有巨浪，沿海地区会被淹。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 5 Nature's Temper",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "The reporter advised people to be careful and pay attention to the weather reports.",
+    "zh": "记者建议人们小心并关注天气预报。"
+   },
+   {
+    "en": "What were you doing while it was snowing heavily?",
+    "zh": "大雪时你在做什么？"
+   },
+   {
+    "en": "I was travelling on the train then.",
+    "zh": "那时我在坐火车。"
+   },
+   {
+    "en": "What were your family doing when the typhoon hit?",
+    "zh": "台风来袭时你的家人在做什么？"
+   },
+   {
+    "en": "My children and I were reading together.",
+    "zh": "我和孩子们在一起读书。"
+   },
+   {
+    "en": "When my neighbour called, my family were having dinner.",
+    "zh": "邻居打电话时，我家人正在吃晚饭。"
+   },
+   {
+    "en": "While we were driving home, the strong winds started.",
+    "zh": "我们开车回家时，强风开始了。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 6 Crossing Cultures",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "I'm having dinner at my friend's house tonight.",
+    "zh": "我今晚在朋友家吃晚饭。"
+   },
+   {
+    "en": "But English table manners are so confusing that I'm a little worried.",
+    "zh": "但英国餐桌礼仪太让人困惑了，我有点担心。"
+   },
+   {
+    "en": "Well, I'm from London.",
+    "zh": "嗯，我来自伦敦。"
+   },
+   {
+    "en": "Well, first, should I bring something?",
+    "zh": "那么，首先，我应该带点什么吗？"
+   },
+   {
+    "en": "And remember to wait for the host to start before you eat.",
+    "zh": "记住等主人先动筷再吃。"
+   },
+   {
+    "en": "Could you tell me the proper way to use a knife and fork too?",
+    "zh": "你也能告诉我正确使用刀叉的方法吗？"
+   },
+   {
+    "en": "Just hold the knife in your right hand, and the fork in your left.",
+    "zh": "右手拿刀，左手拿叉。"
+   },
+   {
+    "en": "If you get confused, watch what everyone else does.",
+    "zh": "如果困惑，就看看别人怎么做。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 6 Crossing Cultures",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "After the meal, thank the host and say that everything was delicious.",
+    "zh": "饭后感谢主人，并说一切都很美味。"
+   },
+   {
+    "en": "How's life in France?",
+    "zh": "在法国生活怎么样？"
+   },
+   {
+    "en": "People will usually offer you some tea or fruit when you visit them.",
+    "zh": "人们拜访你时通常会请你喝茶或吃水果。"
+   },
+   {
+    "en": "It is rude to give or take things with your left hand.",
+    "zh": "用左手递东西或接东西是不礼貌的。"
+   },
+   {
+    "en": "Do not stand up to reach for food.",
+    "zh": "不要站起来伸手够食物。"
+   },
+   {
+    "en": "Ask others to pass you the dish.",
+    "zh": "请别人把菜递给你。"
+   },
+   {
+    "en": "Could you give me some advice on table manners?",
+    "zh": "你能给我一些餐桌礼仪方面的建议吗？"
+   },
+   {
+    "en": "Do you know what culture shock is?",
+    "zh": "你知道什么是文化冲击吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 6 Crossing Cultures",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "You may feel it when you experience a new culture.",
+    "zh": "当你体验一种新文化时，你可能会感受到它。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 7 A Good Read",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What have you read recently, Fu Xing?",
+    "zh": "福星，你最近读了什么？"
+   },
+   {
+    "en": "I've just finished Alice's Adventures in Wonderland by Lewis Carroll.",
+    "zh": "我刚读完刘易斯·卡罗尔的《爱丽丝梦游仙境》。"
+   },
+   {
+    "en": "It's a fantasy classic about a girl who gets lost in a magical world.",
+    "zh": "它是一部关于女孩迷失在魔法世界的奇幻经典。"
+   },
+   {
+    "en": "Have you ever read it, Peter?",
+    "zh": "彼得，你读过吗？"
+   },
+   {
+    "en": "I've never read it, but I've watched the movie.",
+    "zh": "我从没读过，但我看过电影。"
+   },
+   {
+    "en": "I've always preferred the book to the movie.",
+    "zh": "我一直更喜欢书而不是电影。"
+   },
+   {
+    "en": "What's your favourite part of the book?",
+    "zh": "你最喜欢书的哪一部分？"
+   },
+   {
+    "en": "Do you remember when Alice finds a tiny door?",
+    "zh": "你记得爱丽丝发现一扇小门的时候吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 7 A Good Read",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Yes, then she eats a magic cake and grows bigger!",
+    "zh": "记得，然后她吃了魔法蛋糕变大了！"
+   },
+   {
+    "en": "I guess you really love this book!",
+    "zh": "我猜你真的很喜欢这本书！"
+   },
+   {
+    "en": "I've always loved reading fantasy books.",
+    "zh": "我一直喜欢读奇幻书。"
+   },
+   {
+    "en": "And this story is about growing up.",
+    "zh": "这个故事是关于成长的。"
+   },
+   {
+    "en": "I find it interesting.",
+    "zh": "我觉得很有趣。"
+   },
+   {
+    "en": "It's such a simple story, but you can learn a lot from it!",
+    "zh": "故事很简单，但你能从中学到很多！"
+   },
+   {
+    "en": "Yes, I've chosen The Little Match Girl.",
+    "zh": "是的，我选了《卖火柴的小女孩》。"
+   },
+   {
+    "en": "It's such a sad story, but I love it.",
+    "zh": "故事很悲伤，但我很喜欢。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 7 A Good Read",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "I've started writing my report.",
+    "zh": "我已经开始写报告了。"
+   },
+   {
+    "en": "This book has taught me not to give up or doubt myself.",
+    "zh": "这本书教会我不要放弃，也不要怀疑自己。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What are your plans for the summer vacation?",
+    "zh": "你暑假有什么计划？"
+   },
+   {
+    "en": "I think I'll do some volunteer work at a nursing home with my youth group.",
+    "zh": "我想和青年团去养老院做志愿者。"
+   },
+   {
+    "en": "I've been a volunteer there since last year.",
+    "zh": "我从去年起就在那里做志愿者。"
+   },
+   {
+    "en": "What do you do?",
+    "zh": "你做什么？"
+   },
+   {
+    "en": "I exercise with the elderly to help them stay active.",
+    "zh": "我和老人一起锻炼，帮助他们保持活力。"
+   },
+   {
+    "en": "Sometimes I play Chinese chess with them.",
+    "zh": "有时我和他们下象棋。"
+   },
+   {
+    "en": "I've even taught some of them how to use a mobile phone.",
+    "zh": "我甚至教过一些老人使用手机。"
+   },
+   {
+    "en": "Do their families visit them often?",
+    "zh": "他们的家人常来看他们吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Some do, but not all.",
+    "zh": "有些人来，但不是全部。"
+   },
+   {
+    "en": "Many elderly people are very lonely.",
+    "zh": "许多老人非常孤独。"
+   },
+   {
+    "en": "That makes me sad.",
+    "zh": "这让我很难过。"
+   },
+   {
+    "en": "We'll all be old one day too.",
+    "zh": "我们有一天也会变老。"
+   },
+   {
+    "en": "It's important to care for the elderly.",
+    "zh": "关心老人很重要。"
+   },
+   {
+    "en": "You know, they actually have so many interesting life stories and experiences to share with us.",
+    "zh": "你知道，他们其实有很多有趣的人生故事和经历可以和我们分享。"
+   },
+   {
+    "en": "Can I join your group of volunteers?",
+    "zh": "我能加入你们的志愿者团队吗？"
+   },
+   {
+    "en": "I'd love to help.",
+    "zh": "我很乐意帮忙。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "It's fun to volunteer together.",
+    "zh": "一起做志愿者很有趣。"
+   },
+   {
+    "en": "Nils, we're going out.",
+    "zh": "尼尔斯，我们要出门了。"
+   },
+   {
+    "en": "Make sure you study, and don't be mean to the farm animals.",
+    "zh": "一定要学习，不要对农场动物刻薄。"
+   },
+   {
+    "en": "I haven't been mean to the animals in ages.",
+    "zh": "我很久没对动物刻薄了。"
+   },
+   {
+    "en": "Yesterday you pulled the cat's tail.",
+    "zh": "昨天你拉了猫的尾巴。"
+   },
+   {
+    "en": "And you ran after the hens.",
+    "zh": "你还追着母鸡跑。"
+   },
+   {
+    "en": "And we've just caught you throwing shoes at the cow.",
+    "zh": "我们刚抓到你朝奶牛扔鞋。"
+   },
+   {
+    "en": "Reading is so boring!",
+    "zh": "读书真无聊！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "I haven't had any fun for so long.",
+    "zh": "我很久没开心过了。"
+   },
+   {
+    "en": "I wish something would happen.",
+    "zh": "我希望发生点什么事。"
+   },
+   {
+    "en": "I'm going to catch it!",
+    "zh": "我要抓住它！"
+   },
+   {
+    "en": "I'll give you an old coin.",
+    "zh": "我给你一枚旧硬币。"
+   },
+   {
+    "en": "What else have you got?",
+    "zh": "你还有什么？"
+   },
+   {
+    "en": "I could let you go.",
+    "zh": "我可以放你走。"
+   },
+   {
+    "en": "But actually, I don't think I will.",
+    "zh": "但实际上，我觉得我不会。"
+   },
+   {
+    "en": "Where has that elf gone?",
+    "zh": "那个精灵去哪儿了？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "And why has the desk got bigger?",
+    "zh": "为什么桌子变大了？"
+   },
+   {
+    "en": "Wow, the animals have grown bigger too.",
+    "zh": "哇，动物也变大了。"
+   },
+   {
+    "en": "We haven't got bigger, Nils.",
+    "zh": "我们没有变大，尼尔斯。"
+   },
+   {
+    "en": "You're smaller than us now, actually.",
+    "zh": "实际上，你现在比我们小。"
+   },
+   {
+    "en": "You've been mean to us, Nils.",
+    "zh": "你一直对我们很刻薄，尼尔斯。"
+   },
+   {
+    "en": "And now you're going to pay the price.",
+    "zh": "现在你要付出代价了。"
+   },
+   {
+    "en": "Oh, I'm really sorry about all that.",
+    "zh": "哦，我对这一切真的很抱歉。"
+   },
+   {
+    "en": "But look, could you help me find that elf?",
+    "zh": "但你看，你能帮我找到那个精灵吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "八年级",
+  "term": "下册",
+  "unit": "Unit 8 Making a Difference",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "I need him to turn me back into a boy.",
+    "zh": "我需要他把我变回男孩。"
+   },
+   {
+    "en": "That's right!",
+    "zh": "没错！"
+   },
+   {
+    "en": "They actually have so many interesting life stories and experiences to share with us.",
+    "zh": "他们其实有很多有趣的人生故事和经历可以和我们分享。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 1 The Changing World",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "How has life changed in your hometown over the last 20 years?",
+    "zh": "过去二十年你家乡的生活发生了怎样的变化？"
+   },
+   {
+    "en": "Oh, it has changed quite a lot!",
+    "zh": "哦，变化很大！"
+   },
+   {
+    "en": "Many young people used to work in big cities.",
+    "zh": "许多年轻人过去在大城市工作。"
+   },
+   {
+    "en": "Have there been any other changes?",
+    "zh": "还有其他变化吗？"
+   },
+   {
+    "en": "Yes, we've changed the way we farm.",
+    "zh": "是的，我们改变了耕作方式。"
+   },
+   {
+    "en": "I used to grow a few vegetables on a small farm to sell at the local market.",
+    "zh": "我过去在小农场种些蔬菜，拿到当地市场卖。"
+   },
+   {
+    "en": "Now, I have large, high-tech greenhouses.",
+    "zh": "现在，我有了大型高科技温室。"
+   },
+   {
+    "en": "There, I grow tons of fruit and vegetables, and sell them in large cities.",
+    "zh": "在那里，我种大量水果和蔬菜，卖到大城市。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 1 The Changing World",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Wow, the new highway and railway must have helped a lot!",
+    "zh": "哇，新公路和铁路一定帮了大忙！"
+   },
+   {
+    "en": "Our village has become a tourist attraction.",
+    "zh": "我们村已经成了旅游景点。"
+   },
+   {
+    "en": "We can now sell local products to tourists.",
+    "zh": "我们现在可以把当地产品卖给游客。"
+   },
+   {
+    "en": "We also sell products online to people all over China.",
+    "zh": "我们还把产品网上卖给全国各地的人。"
+   },
+   {
+    "en": "Have these changes greatly improved your lives?",
+    "zh": "这些变化大大改善了你们的生活吗？"
+   },
+   {
+    "en": "We now have new houses.",
+    "zh": "我们现在有了新房子。"
+   },
+   {
+    "en": "And our village has just built a new hospital and a library.",
+    "zh": "我们村刚建了一所新医院和一座图书馆。"
+   },
+   {
+    "en": "Together you are building a new socialist village.",
+    "zh": "你们正在共同建设社会主义新农村。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 1 The Changing World",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "In the past, it was difficult to travel in Guizhou.",
+    "zh": "过去，在贵州出行很困难。"
+   },
+   {
+    "en": "In many places, there used to be no bridges to cross mountains and rivers, and most roads were just dirt tracks.",
+    "zh": "许多地方过去没有桥跨越山河，大多数路只是土路。"
+   },
+   {
+    "en": "The government has built thousands of kilometres of highways, railways, and wide roads.",
+    "zh": "政府修建了数千公里的公路、铁路和宽阔道路。"
+   },
+   {
+    "en": "A journey that used to take a day now takes only a few hours.",
+    "zh": "过去要一天的旅程现在只需几个小时。"
+   },
+   {
+    "en": "My primary school was near my home, so I used to walk to school with my parents.",
+    "zh": "我的小学离家近，所以我过去和父母走路去上学。"
+   },
+   {
+    "en": "My family used to live in a small flat, but now we have moved to a much larger one.",
+    "zh": "我家过去住小公寓，但现在搬到了大得多的房子。"
+   },
+   {
+    "en": "The way I study is also different.",
+    "zh": "我的学习方式也不同了。"
+   },
+   {
+    "en": "I have become more confident in my studies and often attend group discussions.",
+    "zh": "我在学习上变得更自信，经常参加小组讨论。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 2 Inspiring People",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Who is the person you admire the most?",
+    "zh": "你最钦佩的人是谁？"
+   },
+   {
+    "en": "My favourite person is I. M. Pei.",
+    "zh": "我最喜欢的人是贝聿铭。"
+   },
+   {
+    "en": "Did he design the glass pyramid at the Louvre Museum?",
+    "zh": "卢浮宫的玻璃金字塔是他设计的吗？"
+   },
+   {
+    "en": "It was very creative of him to design it.",
+    "zh": "他设计它非常有创意。"
+   },
+   {
+    "en": "The Suzhou Museum is also one of his amazing designs.",
+    "zh": "苏州博物馆也是他令人惊叹的设计之一。"
+   },
+   {
+    "en": "He created a beautiful balance between the East and the West.",
+    "zh": "他在东西方之间创造了美妙的平衡。"
+   },
+   {
+    "en": "Wow, you really know a lot about him!",
+    "zh": "哇，你真的很了解他！"
+   },
+   {
+    "en": "I read books and reports about him.",
+    "zh": "我读过关于他的书和报道。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 2 Inspiring People",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "I want to be a creative person like him.",
+    "zh": "我想成为像他一样有创造力的人。"
+   },
+   {
+    "en": "What about you, Chen Jie?",
+    "zh": "你呢，陈洁？"
+   },
+   {
+    "en": "Wang Yaping, of course, China's first woman to walk in space.",
+    "zh": "当然是王亚平，中国第一位太空行走的女性。"
+   },
+   {
+    "en": "She is full of courage and wisdom.",
+    "zh": "她充满勇气和智慧。"
+   },
+   {
+    "en": "She was also the first woman to teach a live class from space.",
+    "zh": "她还是第一位从太空直播授课的女性。"
+   },
+   {
+    "en": "What about you, Adam?",
+    "zh": "你呢，亚当？"
+   },
+   {
+    "en": "Who do you look up to?",
+    "zh": "你敬仰谁？"
+   },
+   {
+    "en": "My biggest inspiration is not a famous person.",
+    "zh": "我最大的灵感来源不是名人。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 2 Inspiring People",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "It's really very nice of him to support and encourage my exchange study here.",
+    "zh": "他支持并鼓励我在这里交换学习，真是太好了。"
+   },
+   {
+    "en": "Professor Gui's childhood dream of becoming a space scientist came true through his efforts and hard work.",
+    "zh": "桂教授成为太空科学家的童年梦想通过努力和勤奋实现了。"
+   },
+   {
+    "en": "It is important to read about great people and learn from their stories.",
+    "zh": "阅读伟人的事迹并向他们学习很重要。"
+   },
+   {
+    "en": "Recently, I read about Zhang Qian, the pioneer of the famous Silk Road.",
+    "zh": "最近，我读了关于著名丝绸之路开拓者张骞的事迹。"
+   },
+   {
+    "en": "In order to help defeat his enemies, Emperor Wu of the Han Dynasty sent Zhang Qian to find the Yuezhi people.",
+    "zh": "为了帮助击败敌人，汉武帝派张骞去寻找大月氏人。"
+   },
+   {
+    "en": "Unfortunately, Zhang Qian was caught by the enemy.",
+    "zh": "不幸的是，张骞被敌人抓住了。"
+   },
+   {
+    "en": "However, around 10 years later, he got a chance to run away, and he finally succeeded in finding the Yuezhi people.",
+    "zh": "然而大约十年后，他找到机会逃走，最终成功找到了大月氏人。"
+   },
+   {
+    "en": "Stories like this give us power and inspiration.",
+    "zh": "这样的故事给我们力量和启发。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 2 Inspiring People",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "On 25 September 2017, the scientific world was shaken by the news that Chinese professor Zhong Yang had died in a car accident.",
+    "zh": "2017年9月25日，中国教授钟扬因车祸去世的消息震动了科学界。"
+   },
+   {
+    "en": "The well-respected biologist had spent his whole life researching plants and seeds.",
+    "zh": "这位备受尊敬的生物学家毕生研究植物和种子。"
+   },
+   {
+    "en": "Over the years, he collected many important seeds for China's seed banks.",
+    "zh": "多年来，他为中国的种子库收集了许多重要种子。"
+   },
+   {
+    "en": "Zhong Yang was born in 1964.",
+    "zh": "钟扬出生于1964年。"
+   },
+   {
+    "en": "When he was young, he showed a deep love for and a curiosity about the things he studied.",
+    "zh": "他年轻时对所研究的事物表现出深深的热爱和好奇。"
+   },
+   {
+    "en": "He was an excellent student, entering university at the early age of 15.",
+    "zh": "他是个优秀学生，十五岁就上了大学。"
+   },
+   {
+    "en": "It is important for seed banks to include many different kinds of seeds.",
+    "zh": "种子库包含许多不同种类的种子很重要。"
+   },
+   {
+    "en": "When Zhong Yang discovered that there was not enough research on the seeds from Xizang, he went there to collect seeds himself.",
+    "zh": "当钟扬发现对西藏种子的研究不足时，他亲自去那里收集种子。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 2 Inspiring People",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "He sometimes fell sick, but he always continued with his work.",
+    "zh": "他有时生病，但总是继续工作。"
+   },
+   {
+    "en": "Zhong Yang knew it was better to include more people when doing important work.",
+    "zh": "钟扬知道做重要工作时最好让更多人参与。"
+   },
+   {
+    "en": "Together, he and his team collected more than 40 million seeds from over 1,000 types of plants.",
+    "zh": "他和团队一起从一千多种植物中收集了四千多万颗种子。"
+   },
+   {
+    "en": "His love for his job and research lives on in his students.",
+    "zh": "他对工作和研究的热爱在学生身上延续。"
+   },
+   {
+    "en": "My students will continue on the road of scientific exploration, and the seeds we have collected may grow hundreds of years from now.",
+    "zh": "我的学生将继续科学探索之路，我们收集的种子或许几百年后会长成。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Hi, this is Ella's podcast.",
+    "zh": "大家好，这是艾拉的播客。"
+   },
+   {
+    "en": "Today's guest is Binbin.",
+    "zh": "今天的嘉宾是彬彬。"
+   },
+   {
+    "en": "He's going to give us some ideas for learning English.",
+    "zh": "他要给我们一些学英语的建议。"
+   },
+   {
+    "en": "Thanks for having me!",
+    "zh": "谢谢邀请我！"
+   },
+   {
+    "en": "For learning English, I think first you need to become an active learner.",
+    "zh": "学英语，我认为首先你要成为主动学习者。"
+   },
+   {
+    "en": "What do you mean by that?",
+    "zh": "你这是什么意思？"
+   },
+   {
+    "en": "Well, because I want to speak English well, I practise English all the time.",
+    "zh": "嗯，因为我想说好英语，所以我一直练习。"
+   },
+   {
+    "en": "Oh, you must spend a lot of time studying!",
+    "zh": "哦，你一定花很多时间学习！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Well, it doesn't mean you have to study all the time.",
+    "zh": "嗯，这并不意味着你必须一直学习。"
+   },
+   {
+    "en": "You need to spend time using the language.",
+    "zh": "你需要花时间使用这门语言。"
+   },
+   {
+    "en": "For example, I speak English with friends.",
+    "zh": "例如，我和朋友说英语。"
+   },
+   {
+    "en": "I repeat the dialogues from the films I like.",
+    "zh": "我重复我喜欢电影里的对话。"
+   },
+   {
+    "en": "I read English books, and sometimes I write my diary in English.",
+    "zh": "我读英文书，有时用英语写日记。"
+   },
+   {
+    "en": "I guess you really enjoy learning.",
+    "zh": "我猜你真的很享受学习。"
+   },
+   {
+    "en": "But you see, I started out at zero and came across problems.",
+    "zh": "但你看，我从零开始，也遇到过问题。"
+   },
+   {
+    "en": "I mean, you just have to take things step by step.",
+    "zh": "我的意思是，你只要一步一步来。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Start simple and build up.",
+    "zh": "从简单开始，逐步提高。"
+   },
+   {
+    "en": "I wonder if you could help me.",
+    "zh": "我想知道你能否帮我。"
+   },
+   {
+    "en": "I want to know if you read English books outside class.",
+    "zh": "我想知道你是否在课外读英文书。"
+   },
+   {
+    "en": "Everyone has the ability to learn.",
+    "zh": "每个人都有学习能力。"
+   },
+   {
+    "en": "Experts on the science of learning will tell you that anyone can become a successful learner.",
+    "zh": "学习科学专家会告诉你，任何人都能成为成功的学习者。"
+   },
+   {
+    "en": "However, many students do not realize this, and they have trouble learning.",
+    "zh": "然而，许多学生没有意识到这一点，学习有困难。"
+   },
+   {
+    "en": "Studies show that the first key to becoming a successful learner is to have a growth mindset.",
+    "zh": "研究表明，成为成功学习者的第一个关键是拥有成长型思维。"
+   },
+   {
+    "en": "This means, in part, believing in yourself.",
+    "zh": "这在一定程度上意味着相信自己。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "It also means setting goals, taking action, and meeting challenges.",
+    "zh": "还意味着设定目标、采取行动、迎接挑战。"
+   },
+   {
+    "en": "People with a growth mindset see mistakes as chances for learning, as they teach us how to improve.",
+    "zh": "有成长型思维的人把错误看作学习的机会，因为错误教我们如何改进。"
+   },
+   {
+    "en": "Research also shows that practice is important for learning.",
+    "zh": "研究还表明练习对学习很重要。"
+   },
+   {
+    "en": "The more we practise, the better we learn.",
+    "zh": "练得越多，学得越好。"
+   },
+   {
+    "en": "We learn best by practising new and difficult things.",
+    "zh": "我们通过练习新的、困难的事情学得最好。"
+   },
+   {
+    "en": "Sometimes it is also important to get guidance from a teacher or a coach.",
+    "zh": "有时从老师或教练那里获得指导也很重要。"
+   },
+   {
+    "en": "They can show us the right way to practise and give us important feedback and advice.",
+    "zh": "他们能告诉我们正确的练习方法，并给予重要反馈和建议。"
+   },
+   {
+    "en": "In addition, studies show that students learn more when they hang out with other students who are serious about study.",
+    "zh": "此外，研究表明，学生和认真学习的同学在一起会学到更多。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "Successful learners also use the best learning materials they can find.",
+    "zh": "成功的学习者还会使用能找到的最好的学习材料。"
+   },
+   {
+    "en": "Since there are so many learning materials on the internet, it is important to think carefully and choose wisely what and how you study.",
+    "zh": "既然网上有那么多学习材料，认真思考并明智选择学什么、怎么学就很重要。"
+   },
+   {
+    "en": "Finally, successful learners see learning as part of daily life.",
+    "zh": "最后，成功的学习者把学习看作日常生活的一部分。"
+   },
+   {
+    "en": "As you continue on your learning journey, you should try to walk at your own speed and enjoy the trip.",
+    "zh": "在学习的旅途中，你应该按自己的速度前进，享受旅程。"
+   },
+   {
+    "en": "Never lose heart.",
+    "zh": "永远不要灰心。"
+   },
+   {
+    "en": "According to some experts, teaching others is a good method to learn actively.",
+    "zh": "据一些专家说，教别人是主动学习的好方法。"
+   },
+   {
+    "en": "My love of books comes from my mother.",
+    "zh": "我对书的热爱来自我母亲。"
+   },
+   {
+    "en": "Because of her, our home is full of books on different subjects.",
+    "zh": "因为她，我们家里满是各种学科的书。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 3 Smart Learning",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "When I was a child, my mother used to sit me on her knee, tell me stories, and teach me how to read.",
+    "zh": "小时候，母亲常把我抱在膝上，给我讲故事，教我读书。"
+   },
+   {
+    "en": "Reading opened up new worlds and allowed me to discover new things for myself.",
+    "zh": "阅读打开了新世界，让我自己去发现新事物。"
+   },
+   {
+    "en": "I think that reading is great fun.",
+    "zh": "我觉得阅读很有趣。"
+   },
+   {
+    "en": "I believe that reading has helped me a lot with my schoolwork and made me more confident about my future.",
+    "zh": "我相信阅读对我的学业帮助很大，也让我对未来更自信。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Why do you look worried, Rick?",
+    "zh": "里克，你为什么看起来很担心？"
+   },
+   {
+    "en": "Yesterday I visited my grandma, but she kept calling me Johnny.",
+    "zh": "昨天我去看奶奶，但她一直叫我约翰尼。"
+   },
+   {
+    "en": "And then she told me not to eat the cookies because she was saving them for her grandson.",
+    "zh": "然后她告诉我别吃饼干，因为她要留给孙子。"
+   },
+   {
+    "en": "Well, that's not a good sign.",
+    "zh": "嗯，这不是好兆头。"
+   },
+   {
+    "en": "My parents are taking her to hospital tomorrow.",
+    "zh": "我父母明天带她去医院。"
+   },
+   {
+    "en": "Follow what the doctor says.",
+    "zh": "听医生的话。"
+   },
+   {
+    "en": "She may need special care.",
+    "zh": "她可能需要特殊照顾。"
+   },
+   {
+    "en": "I just feel so sad.",
+    "zh": "我只是感到很难过。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Well, you know how some people's memory gets worse as they get older.",
+    "zh": "嗯，你知道有些人的记忆力会随年龄增长而变差。"
+   },
+   {
+    "en": "It happened to my grandpa too.",
+    "zh": "我爷爷也是这样。"
+   },
+   {
+    "en": "We used to fly kites in the park.",
+    "zh": "我们过去常在公园放风筝。"
+   },
+   {
+    "en": "But now he forgets how to reach the park.",
+    "zh": "但现在他忘了怎么去公园。"
+   },
+   {
+    "en": "So, I walk him there every weekend.",
+    "zh": "所以，我每个周末陪他走到那里。"
+   },
+   {
+    "en": "Instead of what he forgets, I keep in mind what he remembers.",
+    "zh": "我记住他记得的事情，而不是他忘记的事情。"
+   },
+   {
+    "en": "In your case, your grandma still remembers that you love cookies!",
+    "zh": "在你的情况里，你奶奶还记得你爱饼干！"
+   },
+   {
+    "en": "Would you like to improve your memory?",
+    "zh": "你想提高记忆力吗？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "To start with, it is important to understand how memory works.",
+    "zh": "首先，了解记忆如何运作很重要。"
+   },
+   {
+    "en": "Short-term memory helps you remember things that you may only need for a short time, like phone numbers when you need to make a phone call.",
+    "zh": "短期记忆帮助你记住短时间内需要的信息，比如打电话时的电话号码。"
+   },
+   {
+    "en": "Long-term memory is the ability to remember things for days, years, or even a lifetime.",
+    "zh": "长期记忆是记住数天、数年甚至一生的事情的能力。"
+   },
+   {
+    "en": "So the real question is: How do you make sure what you learn enters your long-term memory?",
+    "zh": "所以真正的问题是：如何确保你学的东西进入长期记忆？"
+   },
+   {
+    "en": "First, pay attention.",
+    "zh": "首先，集中注意力。"
+   },
+   {
+    "en": "However, you might fail to remember all the details.",
+    "zh": "然而，你可能记不住所有细节。"
+   },
+   {
+    "en": "So, try taking notes by writing down key points.",
+    "zh": "所以，试着记下要点。"
+   },
+   {
+    "en": "After all, it is easier to remember a summary than every word in a passage.",
+    "zh": "毕竟，记住摘要比记住文章中的每个字更容易。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "Second, use it or lose it.",
+    "zh": "其次，用进废退。"
+   },
+   {
+    "en": "The more you review what you learn, the more likely you will remember it.",
+    "zh": "复习得越多，记住的可能性越大。"
+   },
+   {
+    "en": "However, you should not wear out your brain.",
+    "zh": "然而，你不应该让大脑过度疲劳。"
+   },
+   {
+    "en": "Try studying for 40 minutes, and then take a break.",
+    "zh": "试着学习四十分钟，然后休息一下。"
+   },
+   {
+    "en": "You can also review information by discussing it with others or by teaching others.",
+    "zh": "你也可以通过与他人讨论或教别人来复习。"
+   },
+   {
+    "en": "A third way is to make use of your senses.",
+    "zh": "第三种方法是利用你的感官。"
+   },
+   {
+    "en": "Create images by using tables, graphs, and mind maps to organize information.",
+    "zh": "用表格、图表和思维导图组织信息，创造图像。"
+   },
+   {
+    "en": "Sleep well.",
+    "zh": "睡好觉。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "While you sleep, your brain organizes your memories.",
+    "zh": "睡觉时，大脑会整理记忆。"
+   },
+   {
+    "en": "Healthy food and drink will help your brain work much better.",
+    "zh": "健康的饮食会让你的大脑运转得更好。"
+   },
+   {
+    "en": "Your brain needs food like an engine needs fuel.",
+    "zh": "大脑需要食物，就像发动机需要燃料。"
+   },
+   {
+    "en": "Exercise can also reduce stress and anxiety.",
+    "zh": "锻炼还能减轻压力和焦虑。"
+   },
+   {
+    "en": "A healthy and active body boosts both your memory and your mind.",
+    "zh": "健康活跃的身体能提升记忆力和思维。"
+   },
+   {
+    "en": "Try some different methods to see which ones work best for you.",
+    "zh": "尝试不同的方法，看看哪种最适合你。"
+   },
+   {
+    "en": "You are sure to improve your memory!",
+    "zh": "你一定能提高记忆力！"
+   },
+   {
+    "en": "In the past, I always felt stressed when I had to give a speech.",
+    "zh": "过去，我不得不用英语演讲时总是感到紧张。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 4 Our Memory",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "I used to spend lots of time trying to memorize my speech, but I still forgot some parts.",
+    "zh": "我过去花很多时间背演讲，但仍会忘掉一些部分。"
+   },
+   {
+    "en": "I learnt how to create a speech outline.",
+    "zh": "我学会了列演讲提纲。"
+   },
+   {
+    "en": "Instead of trying to remember every word of my speech, I remembered the key words first.",
+    "zh": "我不再试图记住演讲的每个字，而是先记住关键词。"
+   },
+   {
+    "en": "Another method is to divide the speech into short sections.",
+    "zh": "另一种方法是把演讲分成短段落。"
+   },
+   {
+    "en": "Finally, a friend told me that I should have confidence in myself.",
+    "zh": "最后，一个朋友告诉我应该对自己有信心。"
+   },
+   {
+    "en": "There is no one-size-fits-all method.",
+    "zh": "没有放之四海而皆准的方法。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What do you think is the most useful invention of all time, Peter?",
+    "zh": "彼得，你认为有史以来最有用的发明是什么？"
+   },
+   {
+    "en": "It has to be the radio.",
+    "zh": "一定是收音机。"
+   },
+   {
+    "en": "Before the radio was invented, information travelled very slowly.",
+    "zh": "收音机发明之前，信息传播非常慢。"
+   },
+   {
+    "en": "The world was made much smaller by the radio.",
+    "zh": "收音机让世界变小了很多。"
+   },
+   {
+    "en": "Suddenly, news could be spread around the world in seconds.",
+    "zh": "突然间，新闻可以在几秒钟内传遍世界。"
+   },
+   {
+    "en": "Who was the inventor?",
+    "zh": "发明者是谁？"
+   },
+   {
+    "en": "An Italian inventor called Guglielmo Marconi.",
+    "zh": "一位名叫古列尔莫·马可尼的意大利发明家。"
+   },
+   {
+    "en": "He developed the idea in the 1890s.",
+    "zh": "他在十九世纪九十年代发展了这个想法。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "In 1901, a radio message was sent across the Atlantic Ocean for the first time.",
+    "zh": "1901年，无线电信息首次跨越大西洋发送。"
+   },
+   {
+    "en": "That was quite a distance at that time.",
+    "zh": "在当时这是一段相当远的距离。"
+   },
+   {
+    "en": "And because of the radio, some other important inventions were developed as well.",
+    "zh": "因为收音机，其他一些重要发明也发展起来。"
+   },
+   {
+    "en": "It also had a big effect on music.",
+    "zh": "它也对音乐产生了很大影响。"
+   },
+   {
+    "en": "The radio made it much easier for people to enjoy music from artists around the world.",
+    "zh": "收音机让人们更容易欣赏世界各地艺术家的音乐。"
+   },
+   {
+    "en": "Can you imagine a world without books, newspapers, or magazines?",
+    "zh": "你能想象没有书、报纸或杂志的世界吗？"
+   },
+   {
+    "en": "All of these things depend on one invention—papermaking.",
+    "zh": "所有这些都依赖于一项发明——造纸术。"
+   },
+   {
+    "en": "It, more than any other invention, was responsible for the rapid spread of information that shaped our modern world.",
+    "zh": "它比任何其他发明都更能促成信息的迅速传播，塑造了我们的现代世界。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "In ancient China, many different materials were used to write on, such as animal bones, bronze ware, stones, wood, bamboo, and even silk.",
+    "zh": "在古代中国，人们用许多不同的材料书写，如动物骨头、青铜器、石头、木头、竹子和丝绸。"
+   },
+   {
+    "en": "However, all of these materials were either difficult to use and store, or very expensive.",
+    "zh": "然而，这些材料要么难以使用和储存，要么非常昂贵。"
+   },
+   {
+    "en": "As the head officer of the palace workshop for the emperor in the Eastern Han Dynasty, Cai Lun became interested in trying to solve the problem.",
+    "zh": "作为东汉宫廷作坊的主管官员，蔡伦对解决这个问题产生了兴趣。"
+   },
+   {
+    "en": "In the first step of Cai Lun's experiment, all the ingredients were mixed and boiled in water.",
+    "zh": "在蔡伦实验的第一步，所有原料被混合并在水中煮沸。"
+   },
+   {
+    "en": "Then, this material was beaten, cut up, and mixed with water again.",
+    "zh": "然后，这种材料被捣碎、切碎，再次与水混合。"
+   },
+   {
+    "en": "Next, the liquid was poured over a bamboo screen, leaving just the fibre.",
+    "zh": "接着，液体被倒在竹帘上，只留下纤维。"
+   },
+   {
+    "en": "Finally, this fibre was dried and pressed to form paper.",
+    "zh": "最后，这些纤维被晾干压制成纸。"
+   },
+   {
+    "en": "To everyone's surprise, this paper was soft, light, easy to make and use, and most importantly, cheap.",
+    "zh": "令所有人惊讶的是，这种纸柔软、轻便、易于制作和使用，最重要的是便宜。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "Later on, the papermaking technique not only speeded up the development of Chinese culture, but also changed civilizations around the world.",
+    "zh": "后来，造纸术不仅加速了中国文化的发展，也改变了世界各地的文明。"
+   },
+   {
+    "en": "It first spread to China's neighbouring countries and finally reached Europe through Arab countries in the 12th century.",
+    "zh": "它首先传到中国邻国，最终在十二世纪通过阿拉伯国家传到欧洲。"
+   },
+   {
+    "en": "Did you know that an accident led to the invention of sticky notes?",
+    "zh": "你知道便利贴的发明源于一次意外吗？"
+   },
+   {
+    "en": "In 1968, a scientist named Spencer Silver was trying to make a strong glue.",
+    "zh": "1968年，一位名叫斯宾塞·西尔弗的科学家试图制造强力胶。"
+   },
+   {
+    "en": "Instead, he produced a glue that was really weak.",
+    "zh": "结果，他做出了一种很弱的胶。"
+   },
+   {
+    "en": "It could stick things, but it could be removed very easily.",
+    "zh": "它可以粘东西，但很容易取下。"
+   },
+   {
+    "en": "Then he remembered Silver's glue.",
+    "zh": "然后他想起了西尔弗的胶。"
+   },
+   {
+    "en": "With the glue, the paper stayed in the songbook, but it could later be removed.",
+    "zh": "用这种胶，纸能留在歌本上，但之后可以取下。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "They gradually became popular and now are widely used all over the world.",
+    "zh": "它们逐渐流行起来，现在全世界广泛使用。"
+   },
+   {
+    "en": "The invention of the plane has greatly changed the world.",
+    "zh": "飞机的发明极大地改变了世界。"
+   },
+   {
+    "en": "However, it seems that its inventors, Orville Wright and Wilbur Wright, were not looking to change the world at all.",
+    "zh": "然而，它的发明者奥维尔·莱特和威尔伯·莱特似乎根本没想到要改变世界。"
+   },
+   {
+    "en": "Rather, they just wanted to fly like birds.",
+    "zh": "他们只是想像鸟一样飞翔。"
+   },
+   {
+    "en": "To solve the problem of heavier-than-air flight, the Wright brothers began working with gliders.",
+    "zh": "为了解决比空气重的飞行问题，莱特兄弟开始研究滑翔机。"
+   },
+   {
+    "en": "The first was how to get the glider into the air.",
+    "zh": "第一个挑战是如何让滑翔机升空。"
+   },
+   {
+    "en": "The second was how to control it once it was flying.",
+    "zh": "第二个挑战是飞行后如何控制它。"
+   },
+   {
+    "en": "For both problems, they found their solutions by looking at how birds flew.",
+    "zh": "对于这两个问题，他们都通过观察鸟类飞行找到了解决办法。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 5 Power of Ideas",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "The invention of the plane has made our travels around the world much easier and faster.",
+    "zh": "飞机的发明使我们的环球旅行更容易、更快捷。"
+   },
+   {
+    "en": "As a result, communication among people in different countries is now much easier, and the world has become a much smaller place.",
+    "zh": "因此，不同国家的人们交流更容易了，世界也变得更小了。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "Our question today is: Why do we explore space?",
+    "zh": "我们今天的问题是：我们为什么探索太空？"
+   },
+   {
+    "en": "Let's talk to space scientist Dr Yang.",
+    "zh": "让我们和太空科学家杨博士谈谈。"
+   },
+   {
+    "en": "Thank you very much.",
+    "zh": "非常感谢。"
+   },
+   {
+    "en": "Well, there are three good reasons to explore space.",
+    "zh": "嗯，探索太空有三个好理由。"
+   },
+   {
+    "en": "First, to improve our knowledge of Earth and its place in the universe.",
+    "zh": "第一，增进我们对地球及其在宇宙中位置的认识。"
+   },
+   {
+    "en": "Could you explain that a bit more?",
+    "zh": "你能再解释一下吗？"
+   },
+   {
+    "en": "The study of other planets helps us better understand Earth's geology, history, and relationship with other planets.",
+    "zh": "研究其他行星有助于我们更好地理解地球的地质、历史以及与其他行星的关系。"
+   },
+   {
+    "en": "Second, technology developed for space can benefit us here on Earth.",
+    "zh": "第二，为太空开发的技术可以造福地球上的我们。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Could you give our listeners an example?",
+    "zh": "你能给听众举个例子吗？"
+   },
+   {
+    "en": "Some satellites, for example, help us deal with problems caused by climate change.",
+    "zh": "例如，一些卫星帮助我们应对气候变化带来的问题。"
+   },
+   {
+    "en": "Yes, that's very useful.",
+    "zh": "是的，那非常有用。"
+   },
+   {
+    "en": "And the third reason?",
+    "zh": "第三个理由呢？"
+   },
+   {
+    "en": "Well, at some point in the far future, we may find new resources in outer space.",
+    "zh": "嗯，在遥远的未来某个时候，我们可能会在外太空找到新资源。"
+   },
+   {
+    "en": "It might sound crazy, but our Earth may run out of resources.",
+    "zh": "听起来可能疯狂，但我们的地球可能会耗尽资源。"
+   },
+   {
+    "en": "In that case, a new home for us human beings will be needed.",
+    "zh": "那样的话，我们人类将需要一个新家园。"
+   },
+   {
+    "en": "Maybe Mars will be turned into our new home in the future.",
+    "zh": "也许未来火星会被改造成我们的新家园。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "For a long time, scientists have known that the universe is filled with stars.",
+    "zh": "长期以来，科学家们知道宇宙中充满恒星。"
+   },
+   {
+    "en": "In more recent times, however, thousands of exoplanets have also been discovered.",
+    "zh": "然而近年来，也发现了数千颗系外行星。"
+   },
+   {
+    "en": "These are planets that move around stars—just like in our own solar system.",
+    "zh": "这些是围绕恒星运动的行星，就像我们自己的太阳系一样。"
+   },
+   {
+    "en": "So far, more than 5,000 exoplanets have been known to us, and as technology improves, many more will be found.",
+    "zh": "到目前为止，我们已知超过五千颗系外行星，随着技术进步，还会发现更多。"
+   },
+   {
+    "en": "Since the beginning of human history, people have looked up at the stars and wondered what they were like.",
+    "zh": "自人类历史开始以来，人们就仰望星空，想知道它们是什么样子。"
+   },
+   {
+    "en": "Many ancient cultures believed that these points of light were from gods or other mysterious worlds.",
+    "zh": "许多古代文化认为这些光点来自神或其他神秘世界。"
+   },
+   {
+    "en": "However, as science and technology developed, we learnt the truth about stars.",
+    "zh": "然而，随着科学技术的发展，我们了解了恒星的真相。"
+   },
+   {
+    "en": "They are real places like our own sun, and they are farther away than anyone imagined.",
+    "zh": "它们是像我们太阳一样的真实地方，而且比任何人想象的都远。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "The man-made object which has travelled farthest from Earth is Voyager 1.",
+    "zh": "距离地球最远的人造物体是旅行者一号。"
+   },
+   {
+    "en": "This spacecraft was launched in 1977.",
+    "zh": "这艘飞船于1977年发射。"
+   },
+   {
+    "en": "In case Voyager 1 is found by alien life, a special record with sounds and pictures from Earth is carried on board.",
+    "zh": "以防旅行者一号被外星生命发现，船上携带了一张带有地球声音和图片的特殊唱片。"
+   },
+   {
+    "en": "It shows who we are and where we are from.",
+    "zh": "它展示了我们是谁，我们来自哪里。"
+   },
+   {
+    "en": "Time is a big problem.",
+    "zh": "时间是个大问题。"
+   },
+   {
+    "en": "At present, even a journey to the planet Mars will take around six to nine months.",
+    "zh": "目前，即使去火星的旅程也需要大约六到九个月。"
+   },
+   {
+    "en": "What will the astronauts eat and drink during this period?",
+    "zh": "宇航员在这期间吃什么、喝什么？"
+   },
+   {
+    "en": "And how about their health and safety?",
+    "zh": "他们的健康和安全怎么办？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "Scientists, however, believe that visiting the stars is not a completely wild dream.",
+    "zh": "然而，科学家相信访问恒星并非完全疯狂的梦想。"
+   },
+   {
+    "en": "One idea is to have the astronauts sleep during their journey, like some animals do in winter.",
+    "zh": "一个想法是让宇航员在旅途中睡觉，就像一些动物冬眠一样。"
+   },
+   {
+    "en": "Another is to develop much faster spacecraft.",
+    "zh": "另一个是开发更快的飞船。"
+   },
+   {
+    "en": "While this is not possible right now, with nations and scientists cooperating with one another, there is hope that the necessary technology will be developed.",
+    "zh": "虽然现在不可能，但随着各国和科学家相互合作，有希望开发出必要的技术。"
+   },
+   {
+    "en": "Humans have photographed other galaxies, set foot on the moon, and even successfully landed rovers on Mars.",
+    "zh": "人类拍摄了其他星系，踏上了月球，甚至成功把火星车送上火星。"
+   },
+   {
+    "en": "It seems likely that one day we will reach the stars.",
+    "zh": "看来有一天我们会抵达恒星。"
+   },
+   {
+    "en": "My space dream is that one day a research station will be built on the moon.",
+    "zh": "我的太空梦想是有一天在月球上建一座研究站。"
+   },
+   {
+    "en": "First, it will be a good place for scientists to cooperate and do space research together.",
+    "zh": "首先，它将是科学家合作进行太空研究的好地方。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 6 Beyond Earth",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "New technologies can be developed, tested, and operated there.",
+    "zh": "新技术可以在那里开发、测试和运行。"
+   },
+   {
+    "en": "Second, more resources will be found.",
+    "zh": "第二，会发现更多资源。"
+   },
+   {
+    "en": "Third, people may live and work there.",
+    "zh": "第三，人们可能在那里生活和工作。"
+   },
+   {
+    "en": "Tourists will also be able to visit.",
+    "zh": "游客也能参观。"
+   },
+   {
+    "en": "I hope that one day we humans can spend holidays in space and explore the universe.",
+    "zh": "我希望有一天我们人类能在太空度假，探索宇宙。"
+   },
+   {
+    "en": "Humans have achieved many things that were once only dreams.",
+    "zh": "人类已经实现了许多曾经只是梦想的事情。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "That was a great concert!",
+    "zh": "那场音乐会真棒！"
+   },
+   {
+    "en": "Which performance did you like the best, Jack?",
+    "zh": "杰克，你最喜欢哪个表演？"
+   },
+   {
+    "en": "I thought Horse Racing was especially good.",
+    "zh": "我觉得《赛马》特别好。"
+   },
+   {
+    "en": "It really gave me the feeling of a horse race.",
+    "zh": "它真的给了我赛马的感觉。"
+   },
+   {
+    "en": "I love music which is energetic!",
+    "zh": "我喜欢充满活力的音乐！"
+   },
+   {
+    "en": "Their use of the keyboard and erhu made me imagine horses running down a track.",
+    "zh": "他们对键盘和二胡的运用让我想象马在赛道上奔跑。"
+   },
+   {
+    "en": "Yes, but for me, I really like music which is full of joy and celebration, such as Dance of the Golden Snake.",
+    "zh": "是的，但对我来说，我真的很喜欢充满欢乐和庆典气氛的音乐，比如《金蛇狂舞》。"
+   },
+   {
+    "en": "The use of the erhu, pipa, and drums was exciting, but I prefer music that touches me—that's why I liked Butterfly Lovers more.",
+    "zh": "二胡、琵琶和鼓的运用很激动人心，但我更喜欢打动我的音乐，所以我更喜欢《梁祝》。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "The music tells a sad and romantic story.",
+    "zh": "这音乐讲述了一个悲伤而浪漫的故事。"
+   },
+   {
+    "en": "Yeah, and it's interesting that the performers used both Chinese and Western instruments.",
+    "zh": "是啊，有趣的是表演者同时使用了中西乐器。"
+   },
+   {
+    "en": "I've never heard the erhu played together with the violin.",
+    "zh": "我从没听过二胡和小提琴一起演奏。"
+   },
+   {
+    "en": "I also liked Voices of Spring.",
+    "zh": "我也喜欢《春之声》。"
+   },
+   {
+    "en": "I never realized that you could dance to it!",
+    "zh": "我从没意识到可以跟着它跳舞！"
+   },
+   {
+    "en": "I love traditional music that tells a story.",
+    "zh": "我喜欢讲述故事的传统音乐。"
+   },
+   {
+    "en": "I prefer music that is full of joy and celebration.",
+    "zh": "我更喜欢充满欢乐和庆典气氛的音乐。"
+   },
+   {
+    "en": "I like musicians who are creative.",
+    "zh": "我喜欢有创造力的音乐家。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Recently, he decided to share his music with others.",
+    "zh": "最近，他决定与他人分享他的音乐。"
+   },
+   {
+    "en": "Every weekend, he goes to a home for the elderly to play the piano.",
+    "zh": "每个周末，他去养老院弹钢琴。"
+   },
+   {
+    "en": "People there used to play chess or watch TV after dinner.",
+    "zh": "那里的人过去晚饭后下棋或看电视。"
+   },
+   {
+    "en": "They love music that touches their hearts and makes them smile.",
+    "zh": "他们喜欢触动心灵、让他们微笑的音乐。"
+   },
+   {
+    "en": "When the great composer Robert Schumann first heard a work which was written by young Chopin, he said, Hats off, gentlemen! A genius!",
+    "zh": "当伟大的作曲家罗伯特·舒曼第一次听到年轻的肖邦的作品时，他说：“先生们，脱帽致敬！天才！”"
+   },
+   {
+    "en": "Frédéric Chopin is considered one of the greatest musicians in history.",
+    "zh": "弗雷德里克·肖邦被认为是历史上最伟大的音乐家之一。"
+   },
+   {
+    "en": "During his short lifetime, he was celebrated as one of the world's greatest pianists—even though he only gave around 30 concerts!",
+    "zh": "在他短暂的一生中，他被誉为世界上最伟大的钢琴家之一，尽管他只举办了大约三十场音乐会！"
+   },
+   {
+    "en": "He was also a gifted composer who left behind more than 200 musical works.",
+    "zh": "他也是一位有天赋的作曲家，留下了两百多部作品。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "Chopin was born in a village in Poland.",
+    "zh": "肖邦出生在波兰的一个村庄。"
+   },
+   {
+    "en": "He didn't attend music school until he was 16, but soon outdid his teachers.",
+    "zh": "他直到十六岁才上音乐学校，但很快超过了老师。"
+   },
+   {
+    "en": "Chopin was not only a great pianist, but also a respected piano teacher.",
+    "zh": "肖邦不仅是伟大的钢琴家，也是受人尊敬的钢琴老师。"
+   },
+   {
+    "en": "He often told his students, Put all your soul into it! Play the way you feel!",
+    "zh": "他常对学生说：“把全部灵魂投入进去！按你的感受演奏！”"
+   },
+   {
+    "en": "Polish folk music was a kind of music that some people looked down on at the time—it was seen as too simple and common.",
+    "zh": "波兰民间音乐在当时被一些人看不起，被认为太简单、太普通。"
+   },
+   {
+    "en": "But it became an important characteristic of Chopin's music.",
+    "zh": "但它成了肖邦音乐的重要特征。"
+   },
+   {
+    "en": "His use of Polish folk music caused people to see it as a valuable art form.",
+    "zh": "他对波兰民间音乐的运用让人们把它视为有价值的艺术形式。"
+   },
+   {
+    "en": "His music also helped build a nation which was divided up by other countries.",
+    "zh": "他的音乐也帮助建设了一个被其他国家瓜分的民族。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "Chopin's music encouraged his people and helped them keep going through years of difficulty.",
+    "zh": "肖邦的音乐鼓舞了他的人民，帮助他们度过艰难岁月。"
+   },
+   {
+    "en": "Today, the Polish people proudly think of Poland as the country of Chopin.",
+    "zh": "今天，波兰人自豪地把波兰视为肖邦的国度。"
+   },
+   {
+    "en": "When Chopin died from ill health at 39, thousands of people travelled from faraway countries to attend his funeral.",
+    "zh": "肖邦三十九岁因病去世时，成千上万的人从遥远的国家赶来参加他的葬礼。"
+   },
+   {
+    "en": "Today, people around the world still listen to his moving and often sad music.",
+    "zh": "今天，世界各地的人们仍在聆听他动人而常常忧伤的音乐。"
+   },
+   {
+    "en": "Boya was a musician.",
+    "zh": "伯牙是一位音乐家。"
+   },
+   {
+    "en": "He played the guqin with all his heart, but it was only fully understood by his friend Zhong Ziqi.",
+    "zh": "他全心弹奏古琴，但只有他的朋友钟子期完全理解。"
+   },
+   {
+    "en": "The rhythm is so powerful! It reminds me of high mountains!",
+    "zh": "这节奏多么有力！它让我想起高山！"
+   },
+   {
+    "en": "It sounds like flowing water!",
+    "zh": "听起来像流水！"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "What a friend! You always understand my music!",
+    "zh": "多么好的朋友！你总是理解我的音乐！"
+   },
+   {
+    "en": "After Ziqi passed away, Boya was so sad that he broke his musical instrument into pieces.",
+    "zh": "子期去世后，伯牙悲痛欲绝，把乐器摔成了碎片。"
+   },
+   {
+    "en": "The story shows the Chinese ideal of friendship.",
+    "zh": "这个故事展现了中国人的友谊理想。"
+   },
+   {
+    "en": "The present that changed my life was the guitar my father bought me for my eighth birthday.",
+    "zh": "改变我生活的礼物是父亲在我八岁生日时给我买的吉他。"
+   },
+   {
+    "en": "I spent the next several months learning to play the guitar.",
+    "zh": "接下来的几个月，我一直在学弹吉他。"
+   },
+   {
+    "en": "I often sat next to my father while he showed me how to play a song.",
+    "zh": "父亲教我弹歌时，我常坐在他旁边。"
+   },
+   {
+    "en": "Then I went to my room and practised until my fingers hurt.",
+    "zh": "然后我回房间练习，直到手指疼。"
+   },
+   {
+    "en": "I had a lot of trouble at first.",
+    "zh": "一开始我遇到很多困难。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 7 Feel the Rhythm",
+  "title": "课文跟读（8）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 8,
+  "lines": [
+   {
+    "en": "But gradually, I became good at playing the guitar.",
+    "zh": "但渐渐地，我吉他弹得好了。"
+   },
+   {
+    "en": "At first, I was too shy to play in front of people.",
+    "zh": "起初，我太害羞，不敢在人前弹奏。"
+   },
+   {
+    "en": "Then I realized that I enjoyed music more when I shared it with others.",
+    "zh": "后来我意识到，与他人分享音乐时我更享受。"
+   },
+   {
+    "en": "Music makes me happy when I am feeling sad, and it relaxes me when I am stressed.",
+    "zh": "音乐在我悲伤时让我快乐，在我紧张时让我放松。"
+   },
+   {
+    "en": "It will always be part of my life.",
+    "zh": "它将永远是我生活的一部分。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "title": "课文跟读（2）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 2,
+  "lines": [
+   {
+    "en": "What event would you like to watch?",
+    "zh": "你想看什么项目？"
+   },
+   {
+    "en": "Ski jumping is at the top of my list.",
+    "zh": "跳台滑雪是我的首选。"
+   },
+   {
+    "en": "I just love seeing the athletes fly through the air!",
+    "zh": "我就是喜欢看运动员在空中飞翔！"
+   },
+   {
+    "en": "It's not easy to do what they do.",
+    "zh": "做到他们那样不容易。"
+   },
+   {
+    "en": "My parents and I also enjoy watching figure skating.",
+    "zh": "我和父母也喜欢看花样滑冰。"
+   },
+   {
+    "en": "I'm always amazed by their strength and technique.",
+    "zh": "我总是惊叹于他们的力量和技巧。"
+   },
+   {
+    "en": "Like you, my family watch sports together, especially speed skating.",
+    "zh": "和你一样，我家人一起看体育比赛，尤其是速滑。"
+   },
+   {
+    "en": "What about the Summer Games?",
+    "zh": "夏季奥运会呢？"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "title": "课文跟读（3）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 3,
+  "lines": [
+   {
+    "en": "Do you have a favourite event?",
+    "zh": "你有最喜欢的项目吗？"
+   },
+   {
+    "en": "I especially like the men's swimming.",
+    "zh": "我特别喜欢男子游泳。"
+   },
+   {
+    "en": "You must be a good swimmer.",
+    "zh": "你一定是个游泳好手。"
+   },
+   {
+    "en": "Not really, but I love watching it anyway.",
+    "zh": "不完全是，但我还是很喜欢看。"
+   },
+   {
+    "en": "For me, the swimming events are so exciting because swimmers often win by just 0.01 seconds.",
+    "zh": "对我来说，游泳比赛很刺激，因为选手常常只赢零点零一秒。"
+   },
+   {
+    "en": "My family also watch team sports together, like women's volleyball.",
+    "zh": "我家人也一起看团队项目，比如女排。"
+   },
+   {
+    "en": "That's my mum's favourite.",
+    "zh": "那是我妈妈的最爱。"
+   },
+   {
+    "en": "Oh, don't forget to watch the opening ceremony.",
+    "zh": "哦，别忘了看开幕式。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "title": "课文跟读（4）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 4,
+  "lines": [
+   {
+    "en": "Hey, do you know what sport climbing is?",
+    "zh": "嘿，你知道什么是运动攀岩吗？"
+   },
+   {
+    "en": "Tell me more about it.",
+    "zh": "多告诉我一些。"
+   },
+   {
+    "en": "When runners pass the baton to each other, it is called a relay.",
+    "zh": "跑步者互相传接力棒，这叫接力。"
+   },
+   {
+    "en": "Neither winning nor losing is everything in the Olympics.",
+    "zh": "在奥运会上，胜负不是一切。"
+   },
+   {
+    "en": "It's about doing your best.",
+    "zh": "重要的是尽力而为。"
+   },
+   {
+    "en": "Athletes train for years to try out for the Olympics, and each has a unique story.",
+    "zh": "运动员训练多年以争取参加奥运会，每个人都有一个独特的故事。"
+   },
+   {
+    "en": "Everyone looks forward to the opening ceremony.",
+    "zh": "每个人都期待开幕式。"
+   },
+   {
+    "en": "It is always a great event.",
+    "zh": "它总是一场盛事。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "title": "课文跟读（5）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 5,
+  "lines": [
+   {
+    "en": "Today, I'd like to talk about my favourite sports event.",
+    "zh": "今天，我想谈谈我最喜欢的体育赛事。"
+   },
+   {
+    "en": "They were held in Beijing—the first city ever to host both the Summer and the Winter Olympics.",
+    "zh": "它们在北京举办，北京是首个同时举办夏奥会和冬奥会的城市。"
+   },
+   {
+    "en": "The most recent was the 2022 Winter Olympics.",
+    "zh": "最近的是2022年冬奥会。"
+   },
+   {
+    "en": "A total of nearly 2,900 athletes attended and competed in 109 events in seven Olympic winter sports.",
+    "zh": "共有近两千九百名运动员参加七个冬季大项的一百零九个项目的角逐。"
+   },
+   {
+    "en": "There were many exciting moments.",
+    "zh": "有许多激动人心的时刻。"
+   },
+   {
+    "en": "Nearly the whole world watched the fantastic figure skating and ski jumping competitions.",
+    "zh": "全世界几乎都在观看精彩的花样滑冰和跳台滑雪比赛。"
+   },
+   {
+    "en": "I watched the freestyle skiing, and like everyone else, I fell in love with those brave and talented athletes.",
+    "zh": "我看了自由式滑雪，像其他人一样，我爱上了那些勇敢而有天赋的运动员。"
+   },
+   {
+    "en": "And we shall not forget the amazing achievements in the 2008 Summer Olympics.",
+    "zh": "我们不应忘记2008年夏奥会的惊人成就。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "title": "课文跟读（6）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 6,
+  "lines": [
+   {
+    "en": "I watched in wonder as Usain Bolt smiled his way across the finish line in the 100 metres, setting a new world record.",
+    "zh": "我惊叹地看着尤塞恩·博尔特微笑着冲过百米终点线，创造新的世界纪录。"
+   },
+   {
+    "en": "Then I watched the drama of the shooting event.",
+    "zh": "然后我看了射击项目的戏剧性场面。"
+   },
+   {
+    "en": "Du Li won her second Olympic gold medal, after the first one in 2004.",
+    "zh": "杜丽在2004年首金之后赢得了第二枚奥运金牌。"
+   },
+   {
+    "en": "Both were dramatic come-from-behind victories.",
+    "zh": "两场都是戏剧性的逆转胜利。"
+   },
+   {
+    "en": "Hosting two Olympics brought challenges but also opportunities to Beijing.",
+    "zh": "举办两届奥运会给北京带来了挑战，也带来了机遇。"
+   },
+   {
+    "en": "Both Games showed China's success in its reform and opening-up on the world stage.",
+    "zh": "两届奥运会都在世界舞台上展示了中国改革开放的成功。"
+   },
+   {
+    "en": "China's great achievements have gained worldwide attention.",
+    "zh": "中国的伟大成就引起了全世界的关注。"
+   },
+   {
+    "en": "In both events, many volunteers and citizens helped out.",
+    "zh": "在两届赛事中，许多志愿者和市民提供了帮助。"
+   }
+  ]
+ },
+ {
+  "version": "人教版",
+  "grade": "九年级",
+  "term": "上册",
+  "unit": "Unit 8 More than a Game",
+  "title": "课文跟读（7）",
+  "source": "unit-sentences.json 按课本文句顺序自动补齐",
+  "sort": 7,
+  "lines": [
+   {
+    "en": "They worked with pride to make sure that people from around the world had a pleasant stay.",
+    "zh": "他们自豪地工作，确保来自世界各地的人们过得愉快。"
+   },
+   {
+    "en": "Events like the Olympic Games build bridges between countries and form friendships between people.",
+    "zh": "像奥运会这样的赛事在国家之间架起桥梁，在人们之间建立友谊。"
+   },
+   {
+    "en": "The purpose of the Olympics is to build relationships between people, to celebrate the Olympic spirit, and to bring people together for peace and harmony.",
+    "zh": "奥运会的目的是建立人与人之间的关系，弘扬奥运精神，把人们团结在一起追求和平与和谐。"
+   },
+   {
+    "en": "One World, One Dream.",
+    "zh": "同一个世界，同一个梦想。"
+   },
+   {
+    "en": "Together for a Shared Future.",
+    "zh": "一起向未来。"
+   }
+  ]
  }
 ]

@@ -499,6 +499,8 @@ public class EnglishFusionQuestionFactory {
 		}
 		Set<String> sentenceKeys = new HashSet<>();
 		Set<String> buildAnswers = new HashSet<>();
+		// 已用于语法选择题（挖空）的句子，不再用连词成句等其它题型重复考察
+		Set<String> clozeSentences = new HashSet<>();
 		for (EnglishSentence sentence : sentences) {
 			String normalized = normalizeSentenceKey(sentence.getEn());
 			if (StringUtils.hasText(normalized)) {
@@ -515,10 +517,15 @@ public class EnglishFusionQuestionFactory {
 					}
 					String keyBase = contentKey("grammar", version, grade, term, unit,
 							grammar.getId(), String.valueOf(index++));
+					boolean clozeAdded = false;
 					for (DerivedQuestion question : grammarCloze(keyBase, grade, unit, grammar.getTitle(), sentence)) {
 						if (keys.add(question.key())) {
 							result.add(question);
+							clozeAdded = true;
 						}
+					}
+					if (clozeAdded) {
+						clozeSentences.add(normalizeSentenceKey(sentence));
 					}
 				}
 			}
@@ -531,7 +538,7 @@ public class EnglishFusionQuestionFactory {
 			for (String source : buildSources) {
 				for (String sentence : splitSentences(source)) {
 					if (addGrammarBuild(result, keys, buildAnswers, version, grade, term, unit, grammar,
-							sentence, buildIndex, false, sentenceKeys)) {
+							sentence, buildIndex, false, sentenceKeys, clozeSentences)) {
 						buildIndex++;
 					}
 				}
@@ -540,7 +547,7 @@ public class EnglishFusionQuestionFactory {
 				for (String source : buildSources) {
 					for (String sentence : splitSentences(source)) {
 						if (addGrammarBuild(result, keys, buildAnswers, version, grade, term, unit, grammar,
-								sentence, buildIndex, true, sentenceKeys)) {
+								sentence, buildIndex, true, sentenceKeys, clozeSentences)) {
 							buildIndex++;
 							break;
 						}
@@ -555,7 +562,7 @@ public class EnglishFusionQuestionFactory {
 			int exerciseIndex = 0;
 			for (JsonNode exercise : exercises) {
 				DerivedQuestion question = grammarExercise(version, grade, term, unit, grammar, exercise,
-						exerciseIndex++, sentenceKeys, buildAnswers);
+						exerciseIndex++, sentenceKeys, buildAnswers, clozeSentences);
 				if (question != null && keys.add(question.key())) {
 					result.add(question);
 				}
@@ -567,9 +574,10 @@ public class EnglishFusionQuestionFactory {
 	/** 追加一道语法连词成句；allowSentenceDuplicate=true 仅在例句全部来自课本原句时兜底。 */
 	private boolean addGrammarBuild(List<DerivedQuestion> result, Set<String> keys, Set<String> buildAnswers,
 			String version, String grade, String term, String unit, EnglishGrammar grammar, String sentence,
-			int index, boolean allowSentenceDuplicate, Set<String> sentenceKeys) {
+			int index, boolean allowSentenceDuplicate, Set<String> sentenceKeys, Set<String> clozeSentences) {
 		String normalizedSentence = normalizeSentenceKey(sentence);
-		if (sentence.length() < 4 || (!allowSentenceDuplicate && sentenceKeys.contains(normalizedSentence))
+		if (sentence.length() < 4 || clozeSentences.contains(normalizedSentence)
+				|| (!allowSentenceDuplicate && sentenceKeys.contains(normalizedSentence))
 				|| buildAnswers.contains(normalizedSentence)) {
 			return false;
 		}
@@ -591,7 +599,7 @@ public class EnglishFusionQuestionFactory {
 	/** 把后台配置的语法练习转成题目：有 options 视为选择，否则视为连词成句。 */
 	private DerivedQuestion grammarExercise(String version, String grade, String term, String unit,
 			EnglishGrammar grammar, JsonNode exercise, int index, Set<String> sentenceKeys,
-			Set<String> buildAnswers) {
+			Set<String> buildAnswers, Set<String> clozeSentences) {
 		if (exercise == null || !exercise.isObject()) {
 			return null;
 		}
@@ -614,8 +622,8 @@ public class EnglishFusionQuestionFactory {
 		if (options.isEmpty()) {
 			String sentence = StringUtils.hasText(answer) ? answer : stem;
 			String normalized = normalizeSentenceKey(sentence);
-			if (!StringUtils.hasText(sentence) || sentenceKeys.contains(normalized)
-					|| !buildAnswers.add(normalized)) {
+			if (!StringUtils.hasText(sentence) || clozeSentences.contains(normalized)
+					|| sentenceKeys.contains(normalized) || !buildAnswers.add(normalized)) {
 				return null;
 			}
 			List<String> bank = sentenceWords(sentence);

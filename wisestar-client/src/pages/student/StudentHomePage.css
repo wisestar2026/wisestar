@@ -234,55 +234,67 @@
   50%      { transform: translateY(calc(-3 * var(--page-u))); }
 }
 
-/* ---------- 右侧悬浮卡片：贴在右缘，默认只露图标，点击展开为悬浮窗 ---------- */
+/* ---------- 右侧悬浮入口：贴页面右缘固定，圆角矩形（默认显示图标+标题） ---------- */
 .slh-float {
-  position: absolute;
-  top: calc(14 * var(--page-u));
-  right: calc(2 * var(--page-u));
-  z-index: 30;
-  width: calc(296 * var(--page-u));
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 60;
+  width: calc(300 * var(--page-u));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: calc(12 * var(--page-u));
+  gap: calc(10 * var(--page-u));
   pointer-events: none;
 }
 .slh-float-card {
   pointer-events: auto;
-  width: calc(56 * var(--page-u));
-  border-radius: calc(999 * var(--page-u));
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 249, 255, 0.93) 100%);
+  width: calc(200 * var(--page-u));
+  border-radius: calc(16 * var(--page-u)) 0 0 calc(16 * var(--page-u));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(238, 249, 255, 0.94) 100%);
   border: calc(1 * var(--page-u)) solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 calc(10 * var(--page-u)) calc(26 * var(--page-u)) rgba(64, 140, 190, 0.22), 0 calc(2 * var(--page-u)) calc(6 * var(--page-u)) rgba(64, 140, 190, 0.1);
+  border-right: none;
+  box-shadow: calc(-4 * var(--page-u)) calc(6 * var(--page-u)) calc(20 * var(--page-u)) rgba(64, 140, 190, 0.20);
   backdrop-filter: blur(calc(6 * var(--page-u)));
   overflow: hidden;
-  transition: width 0.25s ease, box-shadow 0.25s, border-radius 0.25s;
+  transition: width 0.25s ease, box-shadow 0.25s, background 0.2s;
 }
-.slh-float-card.is-open { width: calc(296 * var(--page-u)); border-radius: calc(22 * var(--page-u)); }
-.slh-float-card:hover { box-shadow: 0 calc(14 * var(--page-u)) calc(32 * var(--page-u)) rgba(64, 140, 190, 0.28); }
+.slh-float-card:hover { background: #f3fbff; }
+.slh-float-card.is-open {
+  width: calc(300 * var(--page-u));
+  border-radius: calc(20 * var(--page-u)) 0 0 calc(20 * var(--page-u));
+  box-shadow: calc(-8 * var(--page-u)) calc(14 * var(--page-u)) calc(34 * var(--page-u)) rgba(64, 140, 190, 0.30);
+}
 .slh-float-head {
   width: 100%;
-  height: calc(56 * var(--page-u));
+  min-height: calc(50 * var(--page-u));
   border: none;
   background: transparent;
   cursor: pointer;
   font-family: inherit;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: calc(8 * var(--page-u));
-  padding: 0;
+  justify-content: flex-start;
+  gap: calc(9 * var(--page-u));
+  padding: 0 calc(14 * var(--page-u));
 }
 .slh-float-card.is-open .slh-float-head {
   height: auto;
-  justify-content: flex-start;
   padding: calc(14 * var(--page-u)) calc(18 * var(--page-u));
 }
-/* 未展开：只露图标（标题/附加信息/箭头隐藏） */
-.slh-float-card:not(.is-open) .slh-float-title,
+/* 未展开：隐藏附加信息与箭头，保留图标与标题，让入口一眼可辨 */
 .slh-float-card:not(.is-open) .slh-float-extra,
 .slh-float-card:not(.is-open) .slh-float-caret { display: none; }
-.slh-float-title { font-size: calc(14 * var(--page-u)); font-weight: 800; color: #2b4a6b; flex: 1; text-align: left; }
+.slh-float-title {
+  font-size: calc(13 * var(--page-u));
+  font-weight: 800;
+  color: #2b4a6b;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.25;
+}
 .slh-float-extra { font-size: calc(12 * var(--page-u)); font-weight: 700; color: #5b7a99; }
 .slh-float-caret { font-size: calc(12 * var(--page-u)); color: #7aa3c4; }
 .slh-float-body { padding: 0 calc(14 * var(--page-u)) calc(14 * var(--page-u)); }
@@ -356,8 +368,9 @@
   .slh-stage { min-height: calc(380 * var(--page-u)); }
   .slh-start-text { font-size: calc(28 * var(--page-u)); letter-spacing: calc(3 * var(--page-u)); }
   /* 小屏改为常规排布，避免悬浮遮挡；卡片恢复通栏并显示标题 */
-  .slh-float { position: static; width: auto; margin-top: calc(16 * var(--page-u)); align-items: stretch; pointer-events: auto; }
-  .slh-float-card { width: 100%; }
+  .slh-float { position: static; transform: none; top: auto; width: auto; margin-top: calc(16 * var(--page-u)); align-items: stretch; pointer-events: auto; }
+  .slh-float-card,
+  .slh-float-card.is-open { width: 100%; border-radius: calc(18 * var(--page-u)); border-right: calc(1 * var(--page-u)) solid rgba(255, 255, 255, 0.9); }
   .slh-float-card:not(.is-open) .slh-float-head {
     height: auto;
     justify-content: flex-start;

@@ -1,15 +1,15 @@
 /* ============================================================
  * VirtualKeyboard.css - 独立可收起虚拟键盘样式
  * 右下角悬浮开关 + 底部贴边面板（符号 / 字母 / 中文）
- * 层级: 开关 z-index 1200（高于「问小鲸」AI 按钮 z-index 10），面板 1300
- * 右下角堆叠: 问小鲸 bottom 26（92 高）→ 本开关 bottom 132（48 高）→ 举手 bottom 190（64 高）
+ * 层级: 开关 z-index 1200，面板 1300
+ * 右下角堆叠: 本开关 bottom 26（48 高）→ 举手 bottom 84（64 高）
  * ============================================================ */
 
-/* ---------- 右下角悬浮开关（位于 AI 按钮上方、举手按钮下方） ---------- */
+/* ---------- 右下角悬浮开关（位于举手按钮下方） ---------- */
 .vk-toggle {
   position: fixed;
   right: calc(30 * var(--page-u));
-  bottom: calc(132 * var(--page-u));
+  bottom: calc(26 * var(--page-u));
   z-index: 1200;
   display: inline-flex;
   align-items: center;
@@ -157,7 +157,7 @@
 
 @media (max-width: 760px) {
   /* 窄屏时抬高开关，避免与底部导航栏重叠 */
-  .vk-toggle { bottom: calc(104 * var(--page-u)); right: calc(16 * var(--page-u)); height: calc(44 * var(--page-u)); padding: 0 calc(14 * var(--page-u)); font-size: calc(13 * var(--page-u)); }
+  .vk-toggle { bottom: calc(26 * var(--page-u)); right: calc(16 * var(--page-u)); height: calc(44 * var(--page-u)); padding: 0 calc(14 * var(--page-u)); font-size: calc(13 * var(--page-u)); }
   .vk-key { min-width: calc(40 * var(--page-u)); height: calc(42 * var(--page-u)); font-size: calc(17 * var(--page-u)); }
   .vk-group-name { width: calc(40 * var(--page-u)); font-size: calc(12 * var(--page-u)); }
 }

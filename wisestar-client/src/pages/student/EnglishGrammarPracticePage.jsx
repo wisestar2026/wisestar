@@ -67,7 +67,7 @@ export default function EnglishGrammarPracticePage() {
         term,
         unit,
         module: '语法',
-        questionCount: 20,
+        questionCount: 24,
       });
       const list = genRes?.data || [];
       if (list.length === 0) {

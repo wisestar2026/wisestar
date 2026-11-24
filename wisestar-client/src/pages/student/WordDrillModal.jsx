@@ -28,16 +28,14 @@ const MAX_APPEARANCE = 5;
 const FEEDBACK_MS = 900;
 
 /**
- * 按出现次数轮换题型。
- * 配图已并入「看中文选英文」作提示，这里只在三种题型间轮换；
- * 复习巩固本就需要换考法，因此不带 listen（听觉题不适合连续重刷）。
+ * 每日强制复习固定为「看英文选中文」。
+ * 复习巩固统一一种考法，避免同一批词在 meaning/listen 间来回切换干扰记忆。
  */
-function typeAt(seq) {
-  const types = [QUIZ_TYPE.MEANING, QUIZ_TYPE.WORD];
-  return types[seq % types.length];
+function typeAt() {
+  return QUIZ_TYPE.WORD;
 }
 
-export default function WordDrillModal({ open, words, onFinish }) {
+export default function WordDrillModal({ open, words, pool = [], onFinish }) {
   // 弹窗宽度与内部字号跟随学员端缩放；1366 基准 680px，窄屏收在视口内
   const pageScale = usePageUnit();
   const modalWidth = `min(${Math.round(680 * pageScale)}px, calc(100vw - 24px))`;
@@ -83,15 +81,17 @@ export default function WordDrillModal({ open, words, onFinish }) {
   const clearedCount = (words || []).filter((w) => states.current.get(w.id)?.cleared).length;
   const done = open && total > 0 && queue.length === 0;
 
-  // 同批单词不足 4 个时无法出选择题，退化为「认识 / 不认识」自评。
+  // 同批单词不足 4 个时用单元词库补足干扰项，尽量保证「看英文选中文」四选一；
+  // 仍然凑不出 3 个干扰项时退化为「认识 / 不认识」自评。
   // 用 useMemo 固定当前题的选项顺序：仅在切到下一个词/下一遍时重算，
   // 选择后的 verdict 重渲染不会打乱选项（修复选项顺序跳变）。
-  const question = useMemo(
-    () => (current && total >= 4
-      ? buildQuestionForWord(current.word, words, typeAt(current.seq), `${current.seq}-${current.word.id}`)
-      : null),
-    [current, total, words],
-  );
+  const question = useMemo(() => {
+    if (!current) {
+      return null;
+    }
+    const poolForQuestion = [...(words || []), ...(pool || [])];
+    return buildQuestionForWord(current.word, poolForQuestion, typeAt(current.seq), `${current.seq}-${current.word.id}`);
+  }, [current, words, pool]);
   const useJudge = Boolean(current) && !question;
 
   // 换词后自动朗读：巩固环节要求「听到声音再判断」，默认替学员播一次
@@ -259,7 +259,7 @@ export default function WordDrillModal({ open, words, onFinish }) {
     >
       <div className="eng-drill">
         <div className="eng-drill-head">
-          <span className="eng-drill-tip">最近答错 / 复习到期的单词，先练一练再进入单元学习。</span>
+          <span className="eng-drill-tip">最近答错 / 复习到期的单词，看英文选中文，先练一练再进入单元学习。</span>
           <span className="eng-drill-progress-text">已掌握 {clearedCount}/{total}</span>
         </div>
         <Progress percent={total ? Math.round((clearedCount / total) * 100) : 0} showInfo={false} strokeColor="#3aa6dd" />
