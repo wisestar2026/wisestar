@@ -118,6 +118,9 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 
 	private final EnglishVocabScope vocabScope;
 
+	/** 中考真题题库（classpath: english/exam-questions.json）首次加载后缓存。 */
+	private volatile JsonNode examBank;
+
 	@Override
 	public List<StudentQuestionView> generate(EnglishUnitPaperRequest request) {
 		if (request == null || !StringUtils.hasText(request.getUnit())) {
@@ -710,8 +713,121 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 				result.add(derivedQuestion(item, version, grade, term, unit));
 			}
 		}
+		// 追加中考真题题库中命中本单元的题目（来源见 exam-questions.json 的 source 字段）。
+		for (Q exam : loadExamQuestions(version, grade, term, unit)) {
+			if (result.stream().noneMatch(q -> q.tag.getContentKey().equals(exam.tag.getContentKey()))) {
+				result.add(exam);
+			}
+		}
 		return result;
 	}
+
+	/** 读取 exam-questions.json 中命中当前单元的真题，首次访问后缓存。 */
+	private List<Q> loadExamQuestions(String version, String grade, String term, String unit) {
+		JsonNode bank = examBank;
+		if (bank == null) {
+			synchronized (this) {
+				bank = examBank;
+				if (bank == null) {
+					bank = readExamBank();
+					examBank = bank;
+				}
+			}
+		}
+		if (bank == null || !bank.isArray()) {
+			return Collections.emptyList();
+		}
+		List<Q> result = new ArrayList<>();
+		for (JsonNode node : bank) {
+			if (!matches(node.path("version"), version) || !matches(node.path("grade"), grade)
+					|| !matches(node.path("term"), term)) {
+				continue;
+			}
+			if (!containsUnit(node.path("units"), unit)) {
+				continue;
+			}
+			Q q = toExamQuestion(node);
+			if (q != null) {
+				result.add(q);
+			}
+		}
+		return result;
+	}
+
+	private JsonNode readExamBank() {
+		try (java.io.InputStream in = new org.springframework.core.io.ClassPathResource(
+				"english/exam-questions.json").getInputStream()) {
+			return objectMapper.readTree(in);
+		}
+		catch (Exception e) {
+			log.warn("英语真题题库加载失败: {}", e.getMessage());
+			return null;
+		}
+	}
+
+	private boolean matches(JsonNode node, String value) {
+		return !StringUtils.hasText(value) || !node.isTextual() || !StringUtils.hasText(node.asText())
+				|| node.asText().equals(value);
+	}
+
+	private boolean containsUnit(JsonNode units, String unit) {
+		if (!StringUtils.hasText(unit)) {
+			return false;
+		}
+		if (units.isTextual()) {
+			return units.asText().equals(unit);
+		}
+		if (units.isArray()) {
+			for (JsonNode node : units) {
+				if (unit.equals(node.asText())) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private Q toExamQuestion(JsonNode node) {
+		List<String> options = new ArrayList<>();
+		for (JsonNode option : node.path("options")) {
+			options.add(option.asText());
+		}
+		String answer = node.path("answer").asText("");
+		String contentKey = "exam:" + node.path("id").asText();
+		if (options.size() < 2 || !StringUtils.hasText(answer) || !options.contains(answer)) {
+			return null;
+		}
+		String unit = node.path("unit").asText("");
+		if (!StringUtils.hasText(unit) && node.path("units").isArray() && node.path("units").size() > 0) {
+			unit = node.path("units").get(0).asText("");
+		}
+		EnglishContentTag tag = new EnglishContentTag();
+		tag.setContentKey(contentKey);
+		tag.setModule(node.path("module").asText("语法"));
+		tag.setVersion(node.path("version").asText(""));
+		tag.setGrade(node.path("grade").asText(""));
+		tag.setTerm(node.path("term").asText(""));
+		tag.setUnit(unit);
+		tag.setQuestionType("单项选择");
+		tag.setKnowledgePoint(node.path("knowledgePoint").asText(unit + "·真题"));
+		tag.setLanguageSkill(node.path("languageSkill").asText("语法"));
+		tag.setCognitiveLevel(node.path("cognitiveLevel").asText("应用"));
+		tag.setDistractorStrength("无");
+		tag.setDifficultySeed(node.path("difficulty").asText("D2"));
+		tag.setIsExamQuestion(1);
+		Q q = new Q();
+		q.tag = tag;
+		q.module = tag.getModule();
+		String source = node.path("source").asText("");
+		String title = node.path("title").asText("");
+		q.title = StringUtils.hasText(source) ? "【真题】" + source + "\n" + title : "【真题】" + title;
+		q.type = SurveySchema.QuestionType.Radio;
+		q.options = options;
+		q.answer = answer;
+		q.analysis = node.path("analysis").asText("");
+		return q;
+	}
+
 
 	private Q derivedQuestion(EnglishFusionQuestionFactory.DerivedQuestion item, String version, String grade,
 			String term, String unit) {
