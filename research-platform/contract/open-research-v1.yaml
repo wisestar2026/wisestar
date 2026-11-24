@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: 教研平台只读开放接口
+  version: 1.0.0
+  description: |
+    由 AI 自习室（server/api）提供，仅供独立部署的教研平台调用。
+    只读、不新增表、不允许反向写入；新增字段只增不删。
+    服务令牌通过请求头 X-Research-Token 传递，令牌不得暴露到公网。
+servers:
+  - url: http://127.0.0.1:1991
+paths:
+  /open/research/v1/auth/verify:
+    post:
+      summary: 校验账号密码并返回角色编码
+      security:
+        - ServiceToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+      responses:
+        '200':
+          description: 统一响应；code=200 表示通过，code=1024 账号密码错误，code=4006 无教研权限
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VerifyResult'
+  /open/research/v1/ping:
+    get:
+      summary: 连通性探针
+      security:
+        - ServiceToken: []
+      responses:
+        '200':
+          description: 统一响应，data.ok=true
+components:
+  securitySchemes:
+    ServiceToken:
+      type: apiKey
+      in: header
+      name: X-Research-Token
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+        data:
+          nullable: true
+    VerifyRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    VerifyResult:
+      type: object
+      properties:
+        userId:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        userType:
+          type: string
+          description: SysUser 为系统用户，Student 为学员（教研平台拒绝学员）
+        roleCodes:
+          type: array
+          items:
+            type: string
+          description: admin / principal / teacher / consultant 等角色编码

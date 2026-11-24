@@ -1,0 +1,6 @@
+server/target/
+server/data/
+client/node_modules/
+client/dist/
+client/.env.local
+*.log

@@ -54,6 +54,11 @@ aj:
 api:
   prefix: /api
 
+research:
+  open:
+    # 教研平台服务令牌，生产环境必须通过环境变量 RESEARCH_OPEN_TOKEN 覆盖
+    token: ${RESEARCH_OPEN_TOKEN:dev-research-token}
+
 management:
   endpoints:
     web:

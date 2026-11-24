@@ -1,0 +1,51 @@
+server:
+  port: ${SERVER_PORT:7010}
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: research-server
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/wisestar_research;MODE=MySQL;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;AUTO_SERVER=FALSE}
+    username: ${DB_USER:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+  sql:
+    init:
+      mode: ${SQL_INIT_MODE:always}
+      schema-locations: classpath:db/init-h2.sql
+      continue-on-error: false
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      id-type: assign_id
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+research:
+  auth:
+    # 生产环境必须通过 RESEARCH_JWT_SECRET 覆盖（至少 32 字符）
+    jwt-secret: ${RESEARCH_JWT_SECRET:wisestar-research-dev-secret-key-please-change}
+    token-ttl-hours: ${RESEARCH_TOKEN_TTL_HOURS:168}
+    cookie-name: research-token
+    cookie-path: ${RESEARCH_COOKIE_PATH:/}
+  remote:
+    # AI 自习室只读接口地址；远端不可用时自动降级为仅本地管理员登录
+    base-url: ${OPEN_RESEARCH_BASE_URL:http://127.0.0.1:1991}
+    token: ${RESEARCH_OPEN_TOKEN:dev-research-token}
+    connect-timeout-ms: 1000
+    read-timeout-ms: 3000
+
+logging:
+  level:
+    cn.wisestar.research: info
