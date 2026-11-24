@@ -30,12 +30,14 @@ cd server && ./start-preview.sh
 # 前端
 cd wisestar-client && npm ci && npm run dev
 
-# 教研平台后端（独立 H2，首次启动自动建表，端口 7010）
+# 教研平台后端（独立 H2，首次启动自动建表。7010 仅内部使用，浏览器不直接访问）
 cd research-platform/server && mvn clean package -DskipTests && ./start-preview.sh
 
-# 教研平台前端（端口 3100，/api 反代到 7010）
+# 教研平台前端（3100 仅内部使用；主站 3000 的 /research/ 会反代到它）
 cd research-platform/client && npm install && npm run dev
 ```
+
+- **日常只开一个入口 `http://localhost:3000`**：`/` 主站、`/api` 主站后端、`/research/` 教研前端、`/research/api` 教研后端。3000 的 `vite.config.js` 已配好 `/research/`→3100、`/research/api`→7010，与生产 nginx 一致；`research-platform/client/.env.development`（已提交）固定 `VITE_BASE_PATH=/research/`、`VITE_API_BASE=/research/api`，本地可用 `.env.local`（gitignore）覆盖。只联调主站时可以不启动 7010/3100。
 
 - 教研平台内置管理员 `admin / 123456`；老师账号走 AI 自习室只读校验，学员账号拒绝登录。
 - 只读接口契约唯一真源：`research-platform/contract/open-research-v1.yaml`；服务令牌 `RESEARCH_OPEN_TOKEN`（默认 `dev-research-token`），生产必须覆盖且不得暴露到公网。

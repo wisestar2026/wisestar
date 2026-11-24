@@ -16,8 +16,8 @@ npm install
 npm run dev
 ```
 
-- 前端：http://localhost:3100
-- 后端：http://localhost:7010/api/health
+- **推荐入口（单端口）**：http://localhost:3000/research/ —— 由主站 `wisestar-client`（3000）反代，`/research/api` 同时转发到本服务 7010，与生产 nginx 路径一致。
+- 直连调试：前端 http://localhost:3100/research/、后端 http://localhost:7010/api/health（仅供排障，不要当入口）
 - 内置管理员：`admin / 123456`（远端服务不可用时也能登录）
 - 老师账号：与 AI 自习室同一套账号密码，角色由远端返回的 `admin/principal/teacher/consultant` 映射
 

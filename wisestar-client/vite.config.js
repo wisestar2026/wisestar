@@ -113,9 +113,23 @@ export default defineConfig(({ mode }) => {
       // 允许访问的主机名（安全策略：只允许指定域名访问，防止 DNS 重绑定攻击）
       allowedHosts: ['3000-a81c0562a5b99c55.monkeycode-ai.online', '.monkeycode-ai.online'],
 
-      // API 反向代理
+      // 反向代理：单端口统一入口（3000），把主站、教研平台都收进同一个域名/端口，
+      // 与生产 nginx 的「/api + /research/ + /research/api/」路径反代保持一致。
       proxy: {
-        // 匹配所有 /api 开头的请求
+        // 教研平台后端（必须放在 /research 之前，按前缀匹配）
+        '/research/api': {
+          target: env.RESEARCH_API_TARGET || 'http://localhost:7010',
+          changeOrigin: true,
+          // 去掉 /research 前缀：/research/api/health → 后端 /api/health
+          rewrite: (p) => p.replace(/^\/research/, ''),
+        },
+        // 教研平台前端（开发期转发到 3100，访问 /research/ 即为教研平台）
+        '/research': {
+          target: env.RESEARCH_CLIENT_TARGET || 'http://localhost:3100',
+          changeOrigin: true,
+          ws: true,
+        },
+        // 主站后端
         '/api': {
           // 转发目标：后端 Spring Boot 服务地址
           // 默认 localhost:1991（后端 preview 服务），可通过 .env.local 中 API_TARGET 覆盖
@@ -170,6 +184,15 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',
       allowedHosts: ['.monkeycode-ai.online'],
       proxy: {
+        '/research/api': {
+          target: env.RESEARCH_API_TARGET || 'http://localhost:7010',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/research/, ''),
+        },
+        '/research': {
+          target: env.RESEARCH_CLIENT_TARGET || 'http://localhost:3100',
+          changeOrigin: true,
+        },
         '/api': {
           target: env.API_TARGET || 'http://localhost:1991',
           changeOrigin: true,

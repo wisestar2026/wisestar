@@ -13,7 +13,7 @@
 ## 技术栈与端口
 
 - 后端：Spring Boot 2.7.7 / JDK 17 / MyBatis-Plus 3.5.0 / H2（预览）或 MySQL 8（生产），包名 `cn.wisestar.research`，端口 7010，context-path `/api`
-- 前端：React 19 / antd 6 / Vite 5 / zustand，端口 3100，开发时 `/api` 反代到 7010
+- 前端：React 19 / antd 6 / Vite 5 / zustand，端口 3100，开发时 `/api` 反代到 7010；**推荐从主站 3000 的 `/research/` 进入**（3000 反代 3100 与 `/research/api`→7010），`client/.env.development`（已提交）固定 `VITE_BASE_PATH=/research/`、`VITE_API_BASE=/research/api`，本地可用 `.env.local`（gitignore）覆盖，与生产 nginx 一致
 - 生产路径：`VITE_BASE_PATH=/research/`、API `/research/api`、Cookie `research-token` 且 `Path=/research`
 
 ## 构建与启动
