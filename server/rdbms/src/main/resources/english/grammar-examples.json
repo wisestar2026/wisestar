@@ -1,0 +1,266 @@
+{
+  "rows": [
+    {
+      "id": "erjgr7a0001",
+      "mode": "append",
+      "examples": [
+        { "en": "I am a new student here.", "zh": "我是这里的一名新生。" },
+        { "en": "She is my English teacher.", "zh": "她是我的英语老师。" },
+        { "en": "They are in the same class.", "zh": "他们在同一个班。" },
+        { "en": "We are good friends.", "zh": "我们是好朋友。" }
+      ]
+    },
+    {
+      "id": "erjgr7a0003",
+      "mode": "append",
+      "examples": [
+        { "en": "That is my new bike.", "zh": "那是我的新自行车。" },
+        { "en": "These are my favourite books.", "zh": "这些是我最喜欢的书。" },
+        { "en": "Those are not my shoes.", "zh": "那些不是我的鞋。" },
+        { "en": "How many students are there in your class?", "zh": "你们班有多少名学生？" }
+      ]
+    },
+    {
+      "id": "erjgr7a0701",
+      "mode": "replace",
+      "examples": [
+        { "en": "I like English and I also like music.", "zh": "我喜欢英语，也喜欢音乐。" },
+        { "en": "He is good at maths, but he doesn't like history.", "zh": "他擅长数学，但不喜欢历史。" },
+        { "en": "I like PE because it is fun.", "zh": "我喜欢体育，因为它很有趣。" },
+        { "en": "We have art on Monday and Friday.", "zh": "我们周一和周五有美术课。" },
+        { "en": "She was tired, but she finished her homework.", "zh": "她很累，但还是完成了作业。" },
+        { "en": "I didn't go to school because I was ill.", "zh": "我没去上学，因为我生病了。" }
+      ],
+      "samples": [
+        { "en": "I like English and I also like music.", "zh": "我喜欢英语，也喜欢音乐。", "note": "" },
+        { "en": "He is good at maths, but he doesn't like history.", "zh": "他擅长数学，但不喜欢历史。", "note": "" },
+        { "en": "I like PE because it is fun.", "zh": "我喜欢体育，因为它很有趣。", "note": "" }
+      ],
+      "textbook": [
+        { "en": "I like English and I also like music.", "zh": "我喜欢英语，也喜欢音乐。", "source": "人教版 七年级上册 Unit 4 My Favourite Subject" },
+        { "en": "I like PE because it is fun.", "zh": "我喜欢体育，因为它很有趣。", "source": "人教版 七年级上册 Unit 4 My Favourite Subject" }
+      ],
+      "exercises": [
+        { "type": "choice", "q": "I like apples ___ bananas.", "options": ["and", "but", "because", "or"], "answer": "and", "explanation": "and 表示并列，连接两个并列的宾语。" },
+        { "type": "choice", "q": "He is short ___ he plays basketball well.", "options": ["and", "but", "because", "so"], "answer": "but", "explanation": "前后语义转折，用 but。" },
+        { "type": "choice", "q": "We stayed at home ___ it was raining.", "options": ["and", "but", "because", "or"], "answer": "because", "explanation": "because 引导原因状语从句。" },
+        { "type": "choice", "q": "Tom was late ___ the bus didn't come.", "options": ["and", "but", "because", "or"], "answer": "because", "explanation": "说明迟到的原因，用 because。" },
+        { "type": "choice", "q": "The room is small ___ very clean.", "options": ["and", "but", "because", "or"], "answer": "but", "explanation": "small 与 clean 形成对比，用 but。" },
+        { "type": "choice", "q": "I called him ___ he didn't answer.", "options": ["and", "but", "because", "or"], "answer": "but", "explanation": "前后意思相反，用 but。" },
+        { "type": "choice", "q": "You can have tea ___ coffee.", "options": ["and", "but", "because", "or"], "answer": "or", "explanation": "在两者中选择其一，用 or。" },
+        { "type": "choice", "q": "He didn't go to school ___ he was ill.", "options": ["and", "but", "because", "or"], "answer": "because", "explanation": "because 说明没上学的原因。" },
+        { "type": "choice", "q": "She can sing ___ she can dance.", "options": ["and", "but", "because", "or"], "answer": "and", "explanation": "两个并列的能力，用 and。" },
+        { "type": "choice", "q": "It was cold, ___ we still went out.", "options": ["and", "but", "because", "or"], "answer": "but", "explanation": "天气冷却仍外出，语义转折用 but。" },
+        { "type": "choice", "q": "I like the bag ___ it is too expensive.", "options": ["and", "but", "because", "or"], "answer": "but", "explanation": "喜欢与太贵形成转折，用 but。" },
+        { "type": "choice", "q": "She studied hard ___ she passed the exam.", "options": ["and", "but", "because", "or"], "answer": "and", "explanation": "两个顺承的并列动作，用 and。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0101",
+      "mode": "append",
+      "examples": [
+        { "en": "He has worked in this school for five years.", "zh": "他已经在这所学校工作五年了。" },
+        { "en": "They have just opened a new library.", "zh": "他们刚刚开设了一个新图书馆。" },
+        { "en": "The old bridge was built in 1998.", "zh": "这座老桥建于1998年。" },
+        { "en": "We are proud of our hometown now.", "zh": "我们现在为家乡感到自豪。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0301",
+      "mode": "append",
+      "examples": [
+        { "en": "I don't know whether he will come.", "zh": "我不知道他是否会来。" },
+        { "en": "We hope that you can join us.", "zh": "我们希望你能加入我们。" },
+        { "en": "She asked if the homework was difficult.", "zh": "她问作业是否很难。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0401",
+      "mode": "append",
+      "examples": [
+        { "en": "Can you tell me where the library is?", "zh": "你能告诉我图书馆在哪里吗？" },
+        { "en": "I wonder who the new teacher is.", "zh": "我想知道新老师是谁。" },
+        { "en": "Do you know why he is late?", "zh": "你知道他为什么迟到吗？" },
+        { "en": "Please tell me when the film starts.", "zh": "请告诉我电影什么时候开始。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0501",
+      "mode": "append",
+      "examples": [
+        { "en": "The classroom is cleaned by us every day.", "zh": "教室每天由我们打扫。" },
+        { "en": "These books were written by a famous writer.", "zh": "这些书是一位著名作家写的。" },
+        { "en": "The trees are planted in spring.", "zh": "这些树在春天种下。" },
+        { "en": "The song was sung by a young girl.", "zh": "这首歌由一位年轻女孩演唱。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0601",
+      "mode": "append",
+      "examples": [
+        { "en": "The new school will be opened next month.", "zh": "新学校将于下个月启用。" },
+        { "en": "Many trees will be planted in our city.", "zh": "我们城市将种下许多树。" },
+        { "en": "Our homework will be checked by the teacher.", "zh": "我们的作业将由老师检查。" },
+        { "en": "A new park will be built near my home.", "zh": "我家附近将建一个新公园。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0701",
+      "mode": "append",
+      "examples": [
+        { "en": "The girl who is singing is my sister.", "zh": "正在唱歌的女孩是我妹妹。" },
+        { "en": "This is the book that I want to buy.", "zh": "这就是我想买的那本书。" },
+        { "en": "I have a friend who can speak English well.", "zh": "我有一个英语说得很好的朋友。" },
+        { "en": "The film which we saw was very moving.", "zh": "我们看的那部电影非常感人。" }
+      ]
+    },
+    {
+      "id": "erjgr9a0801",
+      "mode": "append",
+      "examples": [
+        { "en": "The number of students is growing.", "zh": "学生的数量在增长。" },
+        { "en": "A number of books are on the desk.", "zh": "许多书在桌子上。" },
+        { "en": "Each of the boys has a book.", "zh": "每个男孩都有一本书。" },
+        { "en": "There is a pen and two books on the desk.", "zh": "桌上有一支笔和两本书。" }
+      ]
+    },
+    {
+      "id": "erjgr8a0301",
+      "mode": "replace",
+      "examples": [
+        { "en": "Shanghai is bigger than my hometown.", "zh": "上海比我的家乡大。" },
+        { "en": "This book is more interesting than that one.", "zh": "这本书比那本更有趣。" },
+        { "en": "He runs faster than his brother.", "zh": "他跑得比他哥哥快。" },
+        { "en": "My new school is larger and more beautiful than the old one.", "zh": "我的新学校比旧学校更大、更漂亮。" },
+        { "en": "The weather today is colder than yesterday.", "zh": "今天比昨天冷。" },
+        { "en": "English is easier for her than maths.", "zh": "对她来说英语比数学容易。" }
+      ],
+      "samples": [
+        { "en": "Shanghai is bigger than my hometown.", "zh": "上海比我的家乡大。", "note": "" },
+        { "en": "This book is more interesting than that one.", "zh": "这本书比那本更有趣。", "note": "" },
+        { "en": "He runs faster than his brother.", "zh": "他跑得比他哥哥快。", "note": "" }
+      ],
+      "textbook": [
+        { "en": "Shanghai is bigger than my hometown.", "zh": "上海比我的家乡大。", "source": "人教版 八年级上册 Unit 3 Same or Different?" }
+      ],
+      "exercises": [
+        { "type": "choice", "q": "This bag is ___ than that one.", "options": ["heavy", "heavier", "heaviest", "more heavy"], "answer": "heavier", "explanation": "heavy 的比较级是 heavier（变 y 为 i 加 -er）。" },
+        { "type": "choice", "q": "My sister is ___ than me.", "options": ["tall", "taller", "tallest", "more tall"], "answer": "taller", "explanation": "单音节词 tall 加 -er 构成比较级。" },
+        { "type": "choice", "q": "This book is ___ than that one.", "options": ["interesting", "more interesting", "most interesting", "interestinger"], "answer": "more interesting", "explanation": "多音节词用 more + 原级构成比较级。" },
+        { "type": "choice", "q": "He runs ___ than his brother.", "options": ["fast", "faster", "fastest", "more fast"], "answer": "faster", "explanation": "副词 fast 的比较级是 faster。" },
+        { "type": "choice", "q": "Today is ___ than yesterday.", "options": ["cold", "colder", "coldest", "more cold"], "answer": "colder", "explanation": "cold 加 -er 构成比较级。" },
+        { "type": "choice", "q": "This city is ___ than my hometown.", "options": ["big", "bigger", "biggest", "more big"], "answer": "bigger", "explanation": "重读闭音节双写末尾字母再加 -er。" },
+        { "type": "choice", "q": "English is ___ for me than maths.", "options": ["easy", "easier", "easiest", "more easy"], "answer": "easier", "explanation": "easy 变 y 为 i 加 -er。" },
+        { "type": "choice", "q": "Her hair is ___ than mine.", "options": ["long", "longer", "longest", "more long"], "answer": "longer", "explanation": "long 加 -er 构成比较级。" },
+        { "type": "choice", "q": "This film is ___ than the book.", "options": ["exciting", "more exciting", "most exciting", "excitinger"], "answer": "more exciting", "explanation": "多音节词用 more + 原级。" },
+        { "type": "choice", "q": "The weather in spring is ___ than in winter.", "options": ["warm", "warmer", "warmest", "more warm"], "answer": "warmer", "explanation": "warm 加 -er 构成比较级。" },
+        { "type": "choice", "q": "He is ___ than his friend.", "options": ["careful", "more careful", "most careful", "carefuller"], "answer": "more careful", "explanation": "多音节词用 more + 原级。" },
+        { "type": "choice", "q": "My school is ___ than the old one.", "options": ["large", "larger", "largest", "more large"], "answer": "larger", "explanation": "以 e 结尾直接加 -r。" }
+      ]
+    },
+    {
+      "id": "erjgr8a0302",
+      "mode": "replace",
+      "examples": [
+        { "en": "My bag is as heavy as yours.", "zh": "我的包和你的一样重。" },
+        { "en": "She sings as well as her sister.", "zh": "她唱得和她姐姐一样好。" },
+        { "en": "This room is as big as that one.", "zh": "这个房间和那个一样大。" },
+        { "en": "Tom runs as fast as Jack.", "zh": "汤姆跑得和杰克一样快。" },
+        { "en": "The film is not as interesting as the book.", "zh": "这部电影不如书有趣。" },
+        { "en": "He is as tall as his father.", "zh": "他和他爸爸一样高。" }
+      ],
+      "samples": [
+        { "en": "My bag is as heavy as yours.", "zh": "我的包和你的一样重。", "note": "" },
+        { "en": "She sings as well as her sister.", "zh": "她唱得和她姐姐一样好。", "note": "" },
+        { "en": "The film is not as interesting as the book.", "zh": "这部电影不如书有趣。", "note": "" }
+      ],
+      "textbook": [
+        { "en": "My bag is as heavy as yours.", "zh": "我的包和你的一样重。", "source": "人教版 八年级上册 Unit 3 Same or Different?" }
+      ],
+      "exercises": [
+        { "type": "choice", "q": "My bag is as ___ as yours.", "options": ["heavy", "heavier", "heaviest", "more heavy"], "answer": "heavy", "explanation": "as ... as 中间用形容词原级。" },
+        { "type": "choice", "q": "She sings as ___ as her sister.", "options": ["good", "well", "better", "best"], "answer": "well", "explanation": "修饰动词 sings 用副词原级 well。" },
+        { "type": "choice", "q": "This room is as ___ as that one.", "options": ["big", "bigger", "biggest", "more big"], "answer": "big", "explanation": "as ... as 之间用原级 big。" },
+        { "type": "choice", "q": "Tom runs as ___ as Jack.", "options": ["fast", "faster", "fastest", "more fast"], "answer": "fast", "explanation": "as ... as 中间用副词原级 fast。" },
+        { "type": "choice", "q": "The film is not as ___ as the book.", "options": ["interesting", "more interesting", "most interesting", "interestinger"], "answer": "interesting", "explanation": "as ... as 之间用原级 interesting。" },
+        { "type": "choice", "q": "He is as ___ as his father.", "options": ["tall", "taller", "tallest", "more tall"], "answer": "tall", "explanation": "as ... as 之间用原级 tall。" },
+        { "type": "choice", "q": "My bike is as ___ as yours.", "options": ["new", "newer", "newest", "more new"], "answer": "new", "explanation": "as ... as 之间用原级 new。" },
+        { "type": "choice", "q": "She is as ___ as her mother.", "options": ["beautiful", "more beautiful", "most beautiful", "beautifuler"], "answer": "beautiful", "explanation": "as ... as 之间用原级 beautiful。" },
+        { "type": "choice", "q": "This box is as ___ as that one.", "options": ["heavy", "heavier", "heaviest", "more heavy"], "answer": "heavy", "explanation": "as ... as 之间用原级 heavy。" },
+        { "type": "choice", "q": "He speaks English as ___ as a native speaker.", "options": ["fluent", "fluently", "more fluently", "most fluently"], "answer": "fluently", "explanation": "修饰动词 speaks 用副词原级 fluently。" },
+        { "type": "choice", "q": "The test was as ___ as we expected.", "options": ["difficult", "more difficult", "most difficult", "difficultly"], "answer": "difficult", "explanation": "as ... as 之间用原级 difficult。" },
+        { "type": "choice", "q": "My coat is as ___ as yours.", "options": ["warm", "warmer", "warmest", "more warm"], "answer": "warm", "explanation": "as ... as 之间用原级 warm。" }
+      ]
+    },
+    {
+      "id": "erjgr8a0401",
+      "mode": "append",
+      "examples": [
+        { "en": "Mount Qomolangma is the highest mountain in the world.", "zh": "珠穆朗玛峰是世界上最高的山。" },
+        { "en": "This is the most beautiful park in our city.", "zh": "这是我们城市里最美的公园。" },
+        { "en": "She is the youngest student in her class.", "zh": "她是班里最年轻的学生。" }
+      ]
+    },
+    {
+      "id": "erjgr8a0701",
+      "mode": "append",
+      "examples": [
+        { "en": "I will visit my grandma this weekend.", "zh": "这个周末我要去看奶奶。" },
+        { "en": "They will have a party tomorrow.", "zh": "他们明天要举办一个聚会。" }
+      ]
+    },
+    {
+      "id": "erjgr8a0801",
+      "mode": "append",
+      "examples": [
+        { "en": "If it rains tomorrow, we will stay at home.", "zh": "如果明天下雨，我们就待在家里。" },
+        { "en": "You will feel better if you take this medicine.", "zh": "如果你吃了这药，你会好些。" },
+        { "en": "If you heat ice, it melts.", "zh": "如果你给冰加热，它会融化。" }
+      ]
+    },
+    {
+      "id": "erjgr8b0301",
+      "mode": "replace",
+      "examples": [
+        { "en": "Although it was raining, we still went out.", "zh": "虽然在下雨，我们还是出去了。" },
+        { "en": "He kept working until midnight.", "zh": "他一直工作到半夜。" },
+        { "en": "She spoke slowly so that everyone could understand her.", "zh": "她说得很慢，以便每个人都能听懂。" },
+        { "en": "Although she was tired, she finished the work.", "zh": "虽然她很累，还是完成了工作。" },
+        { "en": "Wait here until I come back.", "zh": "在这儿等到我回来。" },
+        { "en": "I got up early so that I could catch the first bus.", "zh": "我起得很早，以便赶上第一班公交车。" }
+      ],
+      "samples": [
+        { "en": "Although it was raining, we still went out.", "zh": "虽然在下雨，我们还是出去了。", "note": "" },
+        { "en": "He kept working until midnight.", "zh": "他一直工作到半夜。", "note": "" },
+        { "en": "She spoke slowly so that everyone could understand her.", "zh": "她说得很慢，以便每个人都能听懂。", "note": "" }
+      ],
+      "textbook": [
+        { "en": "Although it was raining, we still went out.", "zh": "虽然在下雨，我们还是出去了。", "source": "人教版 八年级下册 Unit 3 Growing Up" }
+      ],
+      "exercises": [
+        { "type": "choice", "q": "___ it was raining, we still went out.", "options": ["Although", "Until", "So that", "Because"], "answer": "Although", "explanation": "although 引导让步状语从句，表示虽然。" },
+        { "type": "choice", "q": "He kept working ___ midnight.", "options": ["although", "until", "so that", "because"], "answer": "until", "explanation": "until 表示直到某个时间。" },
+        { "type": "choice", "q": "She spoke slowly ___ everyone could understand.", "options": ["although", "until", "so that", "because"], "answer": "so that", "explanation": "so that 引导目的状语从句。" },
+        { "type": "choice", "q": "___ she was tired, she finished the work.", "options": ["Although", "Until", "So that", "Because"], "answer": "Although", "explanation": "前后让步关系，用 Although。" },
+        { "type": "choice", "q": "Wait here ___ I come back.", "options": ["although", "until", "so that", "because"], "answer": "until", "explanation": "until 表示等到我回来。" },
+        { "type": "choice", "q": "I got up early ___ I could catch the bus.", "options": ["although", "until", "so that", "because"], "answer": "so that", "explanation": "so that 表示目的。" },
+        { "type": "choice", "q": "___ he is young, he knows a lot.", "options": ["Although", "Until", "So that", "Because"], "answer": "Although", "explanation": "让步关系用 Although。" },
+        { "type": "choice", "q": "Don't leave ___ the rain stops.", "options": ["although", "until", "so that", "because"], "answer": "until", "explanation": "until 表示直到雨停。" },
+        { "type": "choice", "q": "He studied hard ___ he could pass the exam.", "options": ["although", "until", "so that", "because"], "answer": "so that", "explanation": "so that 引导目的状语从句。" },
+        { "type": "choice", "q": "___ the weather was bad, they enjoyed the trip.", "options": ["Although", "Until", "So that", "Because"], "answer": "Although", "explanation": "让步关系用 Although。" },
+        { "type": "choice", "q": "She kept silent ___ he finished speaking.", "options": ["although", "until", "so that", "because"], "answer": "until", "explanation": "until 表示直到他把话说完。" },
+        { "type": "choice", "q": "I turned off the TV ___ we could talk.", "options": ["although", "until", "so that", "because"], "answer": "so that", "explanation": "so that 表示目的。" }
+      ]
+    },
+    {
+      "id": "erjgr8b0701",
+      "mode": "append",
+      "examples": [
+        { "en": "I have already finished my homework.", "zh": "我已经完成了作业。" },
+        { "en": "They have never been to Beijing.", "zh": "他们从没去过北京。" },
+        { "en": "She has just cleaned the room.", "zh": "她刚刚打扫了房间。" },
+        { "en": "Have you ever seen this film?", "zh": "你看过这部电影吗？" }
+      ]
+    }
+  ]
+}
