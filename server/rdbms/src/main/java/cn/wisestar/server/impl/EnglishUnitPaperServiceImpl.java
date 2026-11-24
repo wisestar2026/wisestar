@@ -820,7 +820,9 @@ public class EnglishUnitPaperServiceImpl implements EnglishUnitPaperService {
 		q.module = tag.getModule();
 		String source = node.path("source").asText("");
 		String title = node.path("title").asText("");
-		q.title = StringUtils.hasText(source) ? "【真题】" + source + "\n" + title : "【真题】" + title;
+		// 题干前缀如实反映来源：明确标注为模拟卷的不能冒充真题。
+		String label = source.contains("模拟") ? "【中考模拟】" : "【真题】";
+		q.title = StringUtils.hasText(source) ? label + source + "\n" + title : label + title;
 		q.type = SurveySchema.QuestionType.Radio;
 		q.options = options;
 		q.answer = answer;
