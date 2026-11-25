@@ -86,43 +86,92 @@ export default function OnlineChestFloat() {
   const dragRef = useRef(null);
   const movedRef = useRef(false);
   const posRef = useRef(null);
+  // 期望位置（已按当时布局收敛过一次）：布局/字体稳定后用它重新收敛，
+  // 避免挂载瞬间拿到未稳定的导航栏高度把位置压偏。
+  const wantRef = useRef(null);
   const [pos, setPos] = useState(null);
 
+  const EDGE = 8;
+  // 坐标系仍以 .slh-root（绝对定位的包含块）为基准，但移动边界放开到整个
+  // 学员端主页内容区 .sll-main（全页宽），不再限制在居中的中间容器内。
   const clampPos = useCallback((x, y) => {
     const el = wrapRef.current;
     const root = el?.parentElement;
+    const rootRect = root ? root.getBoundingClientRect() : { left: 0, top: 0 };
     const w = el?.offsetWidth || 296;
     const h = el?.offsetHeight || 112;
-    const bw = root?.clientWidth || window.innerWidth;
-    const bh = root?.clientHeight || window.innerHeight;
-    const maxX = Math.max(8, bw - w - 8);
-    const maxY = Math.max(8, bh - h - 8);
-    return { x: Math.min(Math.max(8, x), maxX), y: Math.min(Math.max(8, y), maxY) };
+    const main = el?.closest('.sll-main');
+    const mainRect = main ? main.getBoundingClientRect() : null;
+    if (!mainRect) {
+      const maxX = Math.max(EDGE, window.innerWidth - w - EDGE);
+      const maxY = Math.max(EDGE, window.innerHeight - h - EDGE);
+      return { x: Math.min(Math.max(EDGE, x), maxX), y: Math.min(Math.max(EDGE, y), maxY) };
+    }
+    // 底部避开悬浮导航栏，避免整条被 tabbar 遮挡
+    const tabbar = document.querySelector('.sll-tabbar');
+    const tbTop = tabbar ? tabbar.getBoundingClientRect().top : mainRect.bottom;
+    const bottomLimit = Math.min(mainRect.bottom, tbTop);
+    const minX = mainRect.left + EDGE - rootRect.left;
+    const maxX = mainRect.right - w - EDGE - rootRect.left;
+    const minY = mainRect.top + EDGE - rootRect.top;
+    const maxY = bottomLimit - h - EDGE - rootRect.top;
+    return {
+      x: Math.min(Math.max(minX, x), Math.max(minX, maxX)),
+      y: Math.min(Math.max(minY, y), Math.max(minY, maxY)),
+    };
   }, []);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(POS_KEY);
-      if (!raw) return;
-      const p = JSON.parse(raw);
-      if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) {
-        const safe = clampPos(p.x, p.y);
-        posRef.current = safe;
-        setPos(safe);
-      }
-    } catch { /* 忽略非法记忆值 */ }
+  // 按「期望位置」重新收敛一次（不改写期望值）：布局/字体/导航栏尺寸变化时反复调用都幂等
+  const applyWanted = useCallback(() => {
+    if (!wantRef.current) return;
+    const safe = clampPos(wantRef.current.x, wantRef.current.y);
+    posRef.current = safe;
+    setPos(safe);
   }, [clampPos]);
 
   useEffect(() => {
-    const onResize = () => {
-      if (!posRef.current) return;
-      const next = clampPos(posRef.current.x, posRef.current.y);
-      posRef.current = next;
-      setPos(next);
+    let saved = null;
+    try {
+      const raw = localStorage.getItem(POS_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) saved = p;
+      }
+    } catch { /* 忽略非法记忆值 */ }
+    if (!saved) return undefined;
+    wantRef.current = saved;
+    applyWanted();
+    // 页面入场动画（sll-fade-in 会整体下移 10u）结束后再收敛，避免用动画中的偏移把位置压偏
+    const onAnimEnd = (e) => { if (e.animationName === 'sll-fade-in') applyWanted(); };
+    window.addEventListener('animationend', onAnimEnd, true);
+    // 字体/悬浮导航尺寸稳定后再收敛一次，避免用临时布局把位置压偏
+    let raf = requestAnimationFrame(() => { raf = requestAnimationFrame(applyWanted); });
+    let cancelled = false;
+    if (document.fonts?.ready?.then) {
+      document.fonts.ready.then(() => { if (!cancelled) applyWanted(); }).catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+      window.removeEventListener('animationend', onAnimEnd, true);
+      cancelAnimationFrame(raf);
     };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [clampPos]);
+  }, [applyWanted]);
+
+  useEffect(() => {
+    window.addEventListener('resize', applyWanted);
+    // 导航栏/内容区/首页主容器尺寸或位置变化（字体渲染、数据加载）后重新收敛，保证位置始终在可视范围内
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => applyWanted());
+      [document.querySelector('.sll-main'), document.querySelector('.sll-tabbar'), wrapRef.current?.parentElement]
+        .filter(Boolean)
+        .forEach((t) => ro.observe(t));
+    }
+    return () => {
+      window.removeEventListener('resize', applyWanted);
+      if (ro) ro.disconnect();
+    };
+  }, [applyWanted]);
 
   const onPointerDown = (e) => {
     if (e.button != null && e.button !== 0) return;
@@ -143,6 +192,7 @@ export default function OnlineChestFloat() {
     const root = wrapRef.current?.parentElement;
     const rootRect = root ? root.getBoundingClientRect() : { left: 0, top: 0 };
     const next = clampPos(e.clientX - d.dx - rootRect.left, e.clientY - d.dy - rootRect.top);
+    wantRef.current = next;
     posRef.current = next;
     setPos(next);
   };
