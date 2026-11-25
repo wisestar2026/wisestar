@@ -157,7 +157,12 @@ export default function EnglishPatternScenarioPage() {
   const raiseTurnIndex = (raiseScene?.turns || []).findIndex(isRespondTurn);
   const raiseTurn = raiseTurnIndex >= 0 ? raiseScene.turns[raiseTurnIndex] : null;
   const raiseId = raiseScene ? `pattern:${unit}:${page + 1}` : '';
-  const raiseTitle = raiseScene ? `${raiseScene.title || `情景 ${page + 1}`}：${raiseTurn?.cue || '选出符合情景的句子'}` : '';
+  const raisePrevLine = raiseScene && raiseTurnIndex > 0
+    ? [...raiseScene.turns].slice(0, raiseTurnIndex).reverse().find((t) => t.en)?.en
+    : '';
+  const raiseTitle = raiseScene
+    ? [raiseScene.title || `Scene ${page + 1}`, raisePrevLine].filter(Boolean).join(': ')
+    : '';
   const raiseOptions = raiseTurn?.options || [];
   const raiseQuestion = raiseTurn ? {
     id: raiseId,
@@ -223,10 +228,12 @@ export default function EnglishPatternScenarioPage() {
                 <div className={`sc-line ps-ask${isB ? ' is-b' : ''}`} key={key}>
                   <span className={`sc-speaker ${isB ? 'b' : ''}`}>{turn.speaker || 'A'}</span>
                   <div className="sc-body">
-                    <div className="ps-cue">
-                      <span className="ps-cue-tag">说</span>
-                      {turn.cue || turn.zh || '请选择符合情景的句子'}
-                    </div>
+                    {turn.cue && (
+                      <div className="ps-cue">
+                        <span className="ps-cue-tag">Say</span>
+                        {turn.cue}
+                      </div>
+                    )}
                     <div className="ps-options">
                       {(turn.options || []).map((opt, oi) => {
                         const isAnswer = oi === turn.answerIndex;
@@ -262,7 +269,7 @@ export default function EnglishPatternScenarioPage() {
           </div>
           {submitted && scene.patterns?.length > 0 && (
             <div className="sc-words ps-patterns">
-              <span className="ps-patterns-label">本情景重点句式</span>
+              <span className="ps-patterns-label">Key Patterns</span>
               {scene.patterns.map((p) => <span className="sc-word" key={p}>{p}</span>)}
             </div>
           )}
