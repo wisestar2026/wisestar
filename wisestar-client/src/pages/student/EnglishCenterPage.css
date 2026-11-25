@@ -584,6 +584,17 @@ input.eng-dictation-field:focus {
   color: #d9603a;
   text-align: center;
 }
+/* 强制巩固弹窗内「题目问法 + 单词 + 音标」统一居中；只作用于弹窗，不影响单词练习页 */
+.eng-drill-modal .eng-quiz-badge {
+  display: block;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+.eng-drill-modal .eng-quiz-hint { text-align: center; }
+.eng-drill-modal .eng-quiz-prompt-meaning { text-align: center; }
+.eng-drill-modal .eng-word { text-align: center; }
+.eng-drill-modal .eng-phonetic { text-align: center; }
 .eng-drill-done {
   padding: calc(32 * var(--page-u)) 0 calc(8 * var(--page-u));
   text-align: center;

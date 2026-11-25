@@ -239,17 +239,38 @@ public class EnglishWordServiceImpl implements EnglishWordService {
 		if (userId == null || limit <= 0) {
 			return new ArrayList<>();
 		}
-		// 最近答错（wrongCount>0）或复习到期（nextReviewTime<=now），且尚未熟悉的单词
-		List<EnglishWordBook> books = englishWordBookMapper.selectList(
+		// 第一批：最近答错（wrongCount>0）或复习到期（nextReviewTime<=now），且尚未熟悉的单词，优先复习
+		List<EnglishWordBook> books = new ArrayList<>(englishWordBookMapper.selectList(
 				Wrappers.<EnglishWordBook>lambdaQuery()
 						.eq(EnglishWordBook::getUserId, userId)
 						.lt(EnglishWordBook::getFamiliarity, DRILL_FAMILIARITY_CEILING)
 						.and(w -> w.gt(EnglishWordBook::getWrongCount, 0)
 								.or().le(EnglishWordBook::getNextReviewTime, new java.util.Date()))
 						.orderByDesc(EnglishWordBook::getUpdateAt)
-						.last("LIMIT " + limit));
+						.last("LIMIT " + limit)));
 		if (books.isEmpty()) {
 			return new ArrayList<>();
+		}
+		// 应多尽多：到期/答错不足上限（10）时，用其它尚未熟悉的单词补足，按熟练度低、复习时间早优先。
+		// 仅在已有复习对象时才补，避免「无到期词也强制弹窗」；补足后总数仍不超过 limit。
+		if (books.size() < limit) {
+			List<EnglishWordBook> extra = englishWordBookMapper.selectList(
+					Wrappers.<EnglishWordBook>lambdaQuery()
+							.eq(EnglishWordBook::getUserId, userId)
+							.lt(EnglishWordBook::getFamiliarity, DRILL_FAMILIARITY_CEILING)
+							.orderByAsc(EnglishWordBook::getFamiliarity)
+							.orderByAsc(EnglishWordBook::getNextReviewTime)
+							.last("LIMIT " + (limit * 2)));
+			for (EnglishWordBook candidate : extra) {
+				if (books.size() >= limit) {
+					break;
+				}
+				String candidateId = candidate.getId();
+				boolean exists = books.stream().anyMatch(b -> b.getId().equals(candidateId));
+				if (!exists) {
+					books.add(candidate);
+				}
+			}
 		}
 		List<String> wordIds = books.stream()
 				.map(EnglishWordBook::getWordId)
