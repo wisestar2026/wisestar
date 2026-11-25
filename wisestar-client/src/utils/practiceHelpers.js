@@ -5,6 +5,7 @@
  *   1. extractCorrectAnswers(question): 提取标准答案列表
  *   2. evaluateAnswer(question, userAnswer): 判定学生答案对错（与后端
  *      AnswerServiceImpl.evaluateQuestionCorrect 语义一致，纯前端即时判分用）
+ *   3. isAnsweredAnswer(answer): 判断某题答案是否算「已作答」（套卷答题卡进度用）
  *
  * 判分规则（与后端对齐）:
  *   - 标准答案来源优先级:
@@ -335,4 +336,16 @@ export function calculateScore(items) {
     unjudgedCount,
     accuracy,
   };
+}
+
+/**
+ * 判断某题答案是否算「已作答」：单选/多选有选项、填空/文本有非空内容。
+ * 套卷类答题卡（英语单元练习 / 语法练习 / 学习诊断）用它统计进度与标记题号。
+ */
+export function isAnsweredAnswer(answer) {
+  return Boolean(answer && (
+    (answer.type === 'option' && answer.optionId)
+    || (answer.type === 'options' && answer.optionIds?.length > 0)
+    || (answer.type === 'text' && String(answer.text || '').trim())
+  ));
 }

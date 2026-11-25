@@ -1,0 +1,118 @@
+/* ============================================================
+ * EnglishQuizLayout.css - 英语套卷类练习：左题卡 + 右答题卡
+ * 与数学 qz-shell 版式一致，尺寸统一走 --page-u（由 .eng-stage / .eng-diag-wrap 提供）。
+ * ============================================================ */
+.engq-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(212 * var(--page-u));
+  gap: calc(18 * var(--page-u));
+  align-items: start;
+  width: 100%;
+  max-width: calc(1240 * var(--page-u));
+  margin: 0 auto;
+}
+
+.engq-main { min-width: 0; }
+
+/* 题卡：白底圆角，内部纵向排列「题目 + 底部导航」 */
+.engq-card.engq-card {
+  display: flex;
+  flex-direction: column;
+  padding: calc(24 * var(--page-u)) calc(30 * var(--page-u)) calc(16 * var(--page-u));
+  border: 1px solid #e6eef5;
+  border-radius: calc(18 * var(--page-u));
+  background: #fff;
+  box-shadow: 0 calc(10 * var(--page-u)) calc(30 * var(--page-u)) rgba(31, 127, 190, 0.1);
+}
+.engq-card-body { flex: 1 0 auto; min-width: 0; }
+
+/* 题卡内底部导航：上一题 / 进度 / 下一题 */
+.engq-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(12 * var(--page-u));
+  margin-top: calc(18 * var(--page-u));
+  padding-top: calc(14 * var(--page-u));
+  border-top: 1px dashed #e2eef7;
+}
+.engq-nav-meta {
+  color: #7b95a7;
+  font-size: calc(14 * var(--page-u));
+  white-space: nowrap;
+}
+
+/* 右侧答题卡 */
+.engq-rail {
+  position: sticky;
+  top: calc(16 * var(--page-u));
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--page-u));
+  padding: calc(14 * var(--page-u));
+  border: 1px solid #e2eef7;
+  border-radius: calc(14 * var(--page-u));
+  background: #f7fbfe;
+}
+.engq-rail-title {
+  color: #33556b;
+  font-size: calc(15 * var(--page-u));
+  font-weight: 600;
+}
+.engq-rail-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: calc(6 * var(--page-u));
+}
+.engq-num {
+  height: calc(30 * var(--page-u));
+  padding: 0;
+  border: 1px solid var(--engq-dot, #d5e5f1);
+  border-radius: calc(8 * var(--page-u));
+  background: #fff;
+  color: var(--engq-dot, #47697e);
+  font-size: calc(13 * var(--page-u));
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.engq-num:hover { border-color: #8fc0e6; }
+.engq-num.is-done { background: #e9f4fd; }
+.engq-num.is-current {
+  border-color: var(--engq-dot, #2f8ae0);
+  background: var(--engq-dot, #2f8ae0);
+  color: #fff;
+  box-shadow: 0 calc(4 * var(--page-u)) calc(10 * var(--page-u)) rgba(47, 138, 224, 0.25);
+}
+
+.engq-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(4 * var(--page-u)) calc(10 * var(--page-u));
+  color: #7b95a7;
+  font-size: calc(12 * var(--page-u));
+}
+.engq-legend span { display: inline-flex; align-items: center; gap: calc(4 * var(--page-u)); }
+.engq-dot {
+  width: calc(9 * var(--page-u));
+  height: calc(9 * var(--page-u));
+  border: 1px solid #d5e5f1;
+  border-radius: calc(3 * var(--page-u));
+  background: #fff;
+}
+.engq-dot.is-done { background: #e9f4fd; border-color: #9ed0f5; }
+.engq-dot.is-current { background: #2f8ae0; border-color: #2f8ae0; }
+
+.engq-submit { margin-top: calc(2 * var(--page-u)); }
+
+@media (max-width: 1180px) {
+  .engq-shell { grid-template-columns: minmax(0, 1fr); }
+  .engq-rail { position: static; }
+  .engq-rail-grid { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .engq-card.engq-card { padding: calc(16 * var(--page-u)) calc(16 * var(--page-u)); }
+  .engq-nav { flex-wrap: wrap; }
+  .engq-rail-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}

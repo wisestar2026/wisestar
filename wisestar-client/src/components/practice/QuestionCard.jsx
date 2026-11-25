@@ -66,7 +66,7 @@ const DIFFICULTY_LABELS = {
 
 export default function QuestionCard({
   question, index, total, value, onChange, confirmed, onConfirm, judgeMode,
-  showKeyboard = true, keyboardDefaultTab = 'symbol', compact = false,
+  showKeyboard = true, keyboardDefaultTab = 'symbol', compact = false, wordFill = false,
 }) {
   // 题目 schema（template 内嵌问卷 JSON）
   const schema = question?.template || {};
@@ -160,12 +160,16 @@ export default function QuestionCard({
   const titleBlankCount = (titleText.match(/__[^_]+__/g) || []).length
     || (titleText.match(/_{3,}/g) || []).length;
   const attrBlankCount = Number(attr.blankCount) || 0;
-  // 句子填空按答案单词数拆成多个输入框；题目只有一个空位时，展示层同步展开为逐词空位
+  // 句子填空按答案单词数拆成多个输入框；英语题（wordFill）即使只有一个空位，
+  // 也沿用同一套「透明边框 + 下划线」空位样式，保持英语填空视觉统一。
   const wordBlankCount = qtype === 'FillBlank' ? attrBlankCount : 0;
-  const hasWordSlots = wordBlankCount > 1;
+  const wordSlotCount = qtype === 'FillBlank'
+    ? (wordBlankCount > 1 ? wordBlankCount : (wordFill ? 1 : 0))
+    : 0;
+  const hasWordSlots = wordSlotCount > 0;
   let displayTitleText = titleText;
-  if (hasWordSlots && titleBlankCount === 1) {
-    displayTitleText = titleText.replace(/_{3,}/, Array(wordBlankCount).fill('_____').join(' '));
+  if (wordSlotCount > 1 && titleBlankCount === 1) {
+    displayTitleText = titleText.replace(/_{3,}/, Array(wordSlotCount).fill('_____').join(' '));
   }
   const blankCount = qtype === 'MultipleBlank'
     ? (stdParts.length > 0 ? stdParts.length
@@ -177,7 +181,7 @@ export default function QuestionCard({
   const blankValues = qtype === 'MultipleBlank'
     ? (value?.type === 'text' ? String(value.text || '') : '').split('|')
     : [];
-  const wordValues = Array.from({ length: hasWordSlots ? wordBlankCount : 0 }, (_, i) => {
+  const wordValues = Array.from({ length: wordSlotCount }, (_, i) => {
     const parts = value?.type === 'text' ? String(value.text || '').split(' ') : [];
     return parts[i] || '';
   });
@@ -461,7 +465,7 @@ export default function QuestionCard({
               hasWordSlots ? (
                 <div>
                   <div className="practice-word-slots">
-                    {Array.from({ length: wordBlankCount }).map((_, i) => (
+                    {Array.from({ length: wordSlotCount }).map((_, i) => (
                       <Input
                         key={i}
                         size="large"

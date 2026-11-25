@@ -25,9 +25,10 @@ import { getMyArchive } from '../../api/archive';
 import { getEnglishDiagnosePaper, submitEnglishDiagnose } from '../../api/englishStudent';
 import { getDetectHistory } from '../../api/detect';
 import QuestionCard from '../../components/practice/QuestionCard';
+import EnglishQuizLayout from '../../components/student/EnglishQuizLayout';
 import QuestionPreview from '../../components/practice/QuestionPreview';
 import RichContent from '../../components/common/RichContent';
-import { formatCorrectAnswers } from '../../utils/practiceHelpers';
+import { formatCorrectAnswers, isAnsweredAnswer } from '../../utils/practiceHelpers';
 import './EnglishDiagnosePage.css';
 
 const LEVEL_COLOR = { D1: '#34c759', D2: '#2f8ae0', D3: '#f5a623' };
@@ -170,12 +171,10 @@ export default function EnglishDiagnosePage() {
     section.questions.map((q) => ({ ...q, level: section.level, levelLabel: section.label }))
   )), [sections]);
 
-  const answeredCount = useMemo(() => questions.filter((item) => {
-    const a = answers[item.id];
-    return a && ((a.type === 'option' && a.optionId)
-      || (a.type === 'options' && a.optionIds?.length > 0)
-      || (a.type === 'text' && String(a.text || '').trim()));
-  }).length, [questions, answers]);
+  const answeredCount = useMemo(
+    () => questions.filter((item) => isAnsweredAnswer(answers[item.id])).length,
+    [questions, answers],
+  );
 
   // 开始诊断：组卷
   const handleStart = useCallback(async () => {
@@ -340,29 +339,22 @@ export default function EnglishDiagnosePage() {
           strokeColor="#2f8ae0"
           className="no-print"
         />
-        <div className="eng-diag-nav">
-          {questions.map((item, idx) => {
-            const a = answers[item.id];
-            const done = a && ((a.type === 'option' && a.optionId)
-              || (a.type === 'options' && a.optionIds?.length > 0)
-              || (a.type === 'text' && String(a.text || '').trim()));
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`eng-diag-nav-dot ${idx === current ? 'is-current' : ''} ${done ? 'is-done' : ''}`}
-                style={{ '--dot-color': LEVEL_COLOR[item.level] || '#2f8ae0' }}
-                onClick={() => setCurrent(idx)}
-              >
-                {idx + 1}
-              </button>
-            );
-          })}
-        </div>
         <div className="eng-diag-level-tip" style={{ color: LEVEL_COLOR[q.level] || '#2f8ae0' }}>
           第 {current + 1} 题 · {q.levelLabel || q.level}档
         </div>
-        <div className="eng-diag-question quiz-stage">
+        <EnglishQuizLayout
+          total={questions.length}
+          current={current}
+          onJump={setCurrent}
+          onPrev={() => setCurrent((c) => c - 1)}
+          onNext={() => setCurrent((c) => c + 1)}
+          isAnswered={(idx) => isAnsweredAnswer(answers[questions[idx].id])}
+          answeredCount={answeredCount}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitLabel="交卷生成报告"
+          dotStyle={(idx) => ({ '--engq-dot': LEVEL_COLOR[questions[idx].level] || '#2f8ae0' })}
+        >
           <QuestionCard
             question={{ ...q, template: q.schema }}
             index={current + 1}
@@ -371,25 +363,9 @@ export default function EnglishDiagnosePage() {
             onChange={(v) => handleAnswerChange(q.id, v)}
             judgeMode={false}
             keyboardDefaultTab="letter"
+            wordFill
           />
-        </div>
-        <div className="eng-diag-actions">
-          <Button size="large" disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}>
-            上一题
-          </Button>
-          {current < questions.length - 1 ? (
-            <Button type="primary" size="large" onClick={() => setCurrent((c) => c + 1)}>
-              下一题
-            </Button>
-          ) : (
-            <Button type="primary" size="large" loading={submitting} onClick={handleSubmit}>
-              交卷生成报告
-            </Button>
-          )}
-        </div>
-        <div className="eng-diag-submit-foot">
-          <Button type="link" onClick={handleSubmit} loading={submitting}>提前交卷</Button>
-        </div>
+        </EnglishQuizLayout>
       </div>
     );
   }

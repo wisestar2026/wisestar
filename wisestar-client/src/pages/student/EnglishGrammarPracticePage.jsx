@@ -29,9 +29,10 @@ import {
   submitEnglishUnitPaper,
 } from '../../api/englishStudent';
 import QuestionCard from '../../components/practice/QuestionCard';
+import EnglishQuizLayout from '../../components/student/EnglishQuizLayout';
 import EnglishPracticeResult from '../../components/student/EnglishPracticeResult';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
-import { formatCorrectAnswers } from '../../utils/practiceHelpers';
+import { formatCorrectAnswers, isAnsweredAnswer } from '../../utils/practiceHelpers';
 import './KnowledgeDetectPage.css';
 import './EnglishCenterPage.css';
 
@@ -91,12 +92,7 @@ export default function EnglishGrammarPracticePage() {
   }, [loadPaper]);
 
   const answeredCount = useMemo(
-    () => questions.filter((item) => {
-      const a = answers[item.id];
-      return a && ((a.type === 'option' && a.optionId)
-        || (a.type === 'options' && a.optionIds?.length > 0)
-        || (a.type === 'text' && String(a.text || '').trim()));
-    }).length,
+    () => questions.filter((item) => isAnsweredAnswer(answers[item.id])).length,
     [questions, answers],
   );
 
@@ -178,26 +174,18 @@ export default function EnglishGrammarPracticePage() {
           style={{ marginBottom: 16 }}
         />
 
-        <div className="kd-nav-strip">
-          {questions.map((item, idx) => {
-            const a = answers[item.id];
-            const done = a && ((a.type === 'option' && a.optionId)
-              || (a.type === 'options' && a.optionIds?.length > 0)
-              || (a.type === 'text' && String(a.text || '').trim()));
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`kd-nav-dot ${idx === current ? 'is-current' : ''} ${done ? 'is-done' : ''}`}
-                onClick={() => setCurrent(idx)}
-              >
-                {idx + 1}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="kd-question-box quiz-stage">
+        <EnglishQuizLayout
+          total={questions.length}
+          current={current}
+          onJump={setCurrent}
+          onPrev={() => setCurrent((c) => c - 1)}
+          onNext={() => setCurrent((c) => c + 1)}
+          isAnswered={(idx) => isAnsweredAnswer(answers[questions[idx].id])}
+          answeredCount={answeredCount}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitLabel="交卷查看结果"
+        >
           <QuestionCard
             question={{ ...q, template: q.schema }}
             index={current + 1}
@@ -207,26 +195,9 @@ export default function EnglishGrammarPracticePage() {
             judgeMode={false}
             keyboardDefaultTab="letter"
             compact
+            wordFill
           />
-        </div>
-
-        <div className="kd-answer-actions">
-          <Button size="large" disabled={current === 0} onClick={() => setCurrent((c) => c - 1)}>
-            上一题
-          </Button>
-          {current < questions.length - 1 ? (
-            <Button type="primary" size="large" onClick={() => setCurrent((c) => c + 1)}>
-              下一题
-            </Button>
-          ) : (
-            <Button type="primary" size="large" loading={submitting} onClick={handleSubmit}>
-              交卷查看结果
-            </Button>
-          )}
-        </div>
-        <div className="kd-answer-foot">
-          <Button type="link" onClick={handleSubmit} loading={submitting}>提前交卷</Button>
-        </div>
+        </EnglishQuizLayout>
         <HandRaiseButton
           question={q}
           answer={answers[q.id]}
