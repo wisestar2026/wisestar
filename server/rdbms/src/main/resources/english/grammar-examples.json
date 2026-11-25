@@ -198,7 +198,10 @@
       "examples": [
         { "en": "Mount Qomolangma is the highest mountain in the world.", "zh": "珠穆朗玛峰是世界上最高的山。" },
         { "en": "This is the most beautiful park in our city.", "zh": "这是我们城市里最美的公园。" },
-        { "en": "She is the youngest student in her class.", "zh": "她是班里最年轻的学生。" }
+        { "en": "She is the youngest student in her class.", "zh": "她是班里最年轻的学生。" },
+        { "en": "The Yangtze is the longest river in China.", "zh": "长江是中国最长的河流。" },
+        { "en": "This is the most dangerous animal in the forest.", "zh": "这是森林里最危险的动物。" },
+        { "en": "He is the tallest boy in our class.", "zh": "他是我们班最高的男孩。" }
       ]
     },
     {
@@ -260,6 +263,88 @@
         { "en": "They have never been to Beijing.", "zh": "他们从没去过北京。" },
         { "en": "She has just cleaned the room.", "zh": "她刚刚打扫了房间。" },
         { "en": "Have you ever seen this film?", "zh": "你看过这部电影吗？" }
+      ]
+    },
+    {
+      "id": "erjgr7a1002",
+      "mode": "append",
+      "examples": [
+        { "en": "Who is coming to your birthday party?", "zh": "谁会来参加你的生日聚会？" },
+        { "en": "Where will you have the birthday party?", "zh": "你将在哪里举办生日聚会？" },
+        { "en": "Why are you so happy today?", "zh": "你今天为什么这么开心？" },
+        { "en": "What time does the party start?", "zh": "聚会几点开始？" },
+        { "en": "Whose birthday is it today?", "zh": "今天是谁的生日？" },
+        { "en": "How do you celebrate your birthday?", "zh": "你怎样庆祝你的生日？" },
+        { "en": "When does the birthday party begin?", "zh": "生日聚会什么时候开始？" },
+        { "en": "What present do you want for your birthday?", "zh": "你生日想要什么礼物？" }
+      ]
+    },
+    {
+      "id": "erjgr7b0601",
+      "mode": "append",
+      "examples": [
+        { "en": "The children are playing in the rain.", "zh": "孩子们正在雨中玩耍。" },
+        { "en": "She is reading a book by the window.", "zh": "她正在窗边读书。" },
+        { "en": "We are having a picnic in the park.", "zh": "我们正在公园里野餐。" },
+        { "en": "My father is washing the car outside.", "zh": "我爸爸正在外面洗车。" },
+        { "en": "They are making a snowman in the garden.", "zh": "他们正在花园里堆雪人。" },
+        { "en": "I am writing a letter to my friend.", "zh": "我正在给朋友写信。" },
+        { "en": "The sun is shining again.", "zh": "太阳又出来了。" },
+        { "en": "The students are cleaning the classroom now.", "zh": "学生们现在正在打扫教室。" }
+      ],
+      "exercises": [
+        { "type": "choice", "q": "Look! It ___ now.", "options": ["is raining", "rains", "rained", "rain"], "answer": "is raining", "explanation": "Look! 提示动作正在进行，用现在进行时 be + doing，主语 It 用 is。" },
+        { "type": "choice", "q": "Listen! Someone ___ at the door.", "options": ["is knocking", "knocks", "knocked", "knock"], "answer": "is knocking", "explanation": "Listen! 提示动作正在进行，用现在进行时 be + doing，someone 视为单数用 is。" },
+        { "type": "choice", "q": "The boys ___ football in the playground now.", "options": ["are playing", "is playing", "plays", "played"], "answer": "are playing", "explanation": "now 提示现在进行时，主语 The boys 为复数，用 are + doing。" },
+        { "type": "choice", "q": "My mother ___ dinner in the kitchen at the moment.", "options": ["is cooking", "cooks", "cooked", "cook"], "answer": "is cooking", "explanation": "at the moment 提示现在进行时，主语 My mother 为单数，用 is + doing。" },
+        { "type": "choice", "q": "We ___ for the bus now.", "options": ["are waiting", "is waiting", "waits", "waited"], "answer": "are waiting", "explanation": "now 提示现在进行时，主语 We 用 are + doing。" },
+        { "type": "choice", "q": "What ___ your brother doing right now?", "options": ["is", "are", "am", "was"], "answer": "is", "explanation": "now 提示现在进行时，主语 your brother 为单数，be 动词用 is。" },
+        { "type": "choice", "q": "They ___ a snowman in the yard at the moment.", "options": ["are making", "is making", "makes", "made"], "answer": "are making", "explanation": "at the moment 提示现在进行时，主语 They 用 are + doing。" },
+        { "type": "choice", "q": "Don't make any noise. The baby ___.", "options": ["is sleeping", "sleeps", "slept", "sleep"], "answer": "is sleeping", "explanation": "表示此刻正在进行的动作，用现在进行时 is + doing。" },
+        { "type": "choice", "q": "Listen! The birds ___ in the tree.", "options": ["are singing", "is singing", "sings", "sang"], "answer": "are singing", "explanation": "Listen! 提示现在进行时，主语 The birds 为复数，用 are + doing。" },
+        { "type": "choice", "q": "Look! The girls ___ under the big tree.", "options": ["are dancing", "is dancing", "dances", "danced"], "answer": "are dancing", "explanation": "Look! 提示现在进行时，主语 The girls 为复数，用 are + doing。" }
+      ]
+    },
+    {
+      "id": "erjgr8a0201",
+      "mode": "append",
+      "exercises": [
+        { "type": "choice", "q": "Could you please ___ the floor?", "options": ["sweep", "sweeps", "sweeping", "to sweep"], "answer": "sweep", "explanation": "情态动词 could 后接动词原形。" },
+        { "type": "choice", "q": "Can I ___ some flowers on the table?", "options": ["put", "puts", "putting", "to put"], "answer": "put", "explanation": "情态动词 can 后接动词原形。" },
+        { "type": "choice", "q": "Could you please ___ me with the housework?", "options": ["help", "helps", "helping", "to help"], "answer": "help", "explanation": "情态动词 could 后接动词原形。" },
+        { "type": "choice", "q": "Can we ___ TV after dinner?", "options": ["watch", "watches", "watching", "to watch"], "answer": "watch", "explanation": "情态动词 can 后接动词原形。" },
+        { "type": "choice", "q": "Could I ___ your bike this afternoon?", "options": ["borrow", "borrows", "borrowing", "to borrow"], "answer": "borrow", "explanation": "情态动词 could 后接动词原形。" },
+        { "type": "choice", "q": "Can you ___ down the music, please?", "options": ["turn", "turns", "turning", "to turn"], "answer": "turn", "explanation": "情态动词 can 后接动词原形。" },
+        { "type": "choice", "q": "Could you please ___ the window?", "options": ["open", "opens", "opening", "to open"], "answer": "open", "explanation": "情态动词 could 后接动词原形。" },
+        { "type": "choice", "q": "Can I ___ you a question?", "options": ["ask", "asks", "asking", "to ask"], "answer": "ask", "explanation": "情态动词 can 后接动词原形。" },
+        { "type": "choice", "q": "Could you ___ me the salt?", "options": ["pass", "passes", "passing", "to pass"], "answer": "pass", "explanation": "情态动词 could 后接动词原形。" },
+        { "type": "choice", "q": "Can we ___ a break now?", "options": ["take", "takes", "taking", "to take"], "answer": "take", "explanation": "情态动词 can 后接动词原形。" }
+      ]
+    },
+    {
+      "id": "erjgr8b0501",
+      "mode": "append",
+      "examples": [
+        { "en": "I was reading a book at eight last night.", "zh": "昨晚八点我正在读书。" },
+        { "en": "They were playing football when it began to rain.", "zh": "开始下雨时他们正在踢足球。" },
+        { "en": "She was cooking dinner when the phone rang.", "zh": "电话响时她正在做晚饭。" },
+        { "en": "We were watching TV at that time.", "zh": "那时我们正在看电视。" },
+        { "en": "The baby was sleeping when I got home.", "zh": "我到家时宝宝正在睡觉。" },
+        { "en": "My parents were working in the garden then.", "zh": "那时我父母正在花园里干活。" },
+        { "en": "He was doing his homework at nine last night.", "zh": "昨晚九点他正在做作业。" },
+        { "en": "The students were talking when the teacher came in.", "zh": "老师进来时学生们正在说话。" }
+      ]
+    },
+    {
+      "id": "erjgr8b0601",
+      "mode": "append",
+      "exercises": [
+        { "type": "choice", "q": "He was ___ tired that he fell asleep at once.", "options": ["so", "such", "very", "too"], "answer": "so", "explanation": "so + 形容词 + that 引导结果状语从句。" },
+        { "type": "choice", "q": "You will fail the exam ___ you work harder.", "options": ["unless", "if", "because", "so"], "answer": "unless", "explanation": "unless 表示除非，引导条件状语从句。" },
+        { "type": "choice", "q": "___ I got home, it started to rain.", "options": ["As soon as", "Unless", "So that", "Although"], "answer": "As soon as", "explanation": "as soon as 表示一……就……。" },
+        { "type": "choice", "q": "She spoke ___ quietly that nobody could hear her.", "options": ["so", "such", "too", "very"], "answer": "so", "explanation": "so + 副词 + that 引导结果状语从句。" },
+        { "type": "choice", "q": "We will start the meeting ___ everyone arrives.", "options": ["as soon as", "unless", "so that", "although"], "answer": "as soon as", "explanation": "as soon as 表示一……就……。" },
+        { "type": "choice", "q": "___ you hurry, you will miss the train.", "options": ["Unless", "If", "So", "Although"], "answer": "Unless", "explanation": "unless 表示除非，相当于 if not。" }
       ]
     }
   ]
