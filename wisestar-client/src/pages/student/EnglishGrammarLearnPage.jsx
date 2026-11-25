@@ -12,16 +12,20 @@
  *
  * 数据流:
  *   GET /api/english/student/grammars?version&grade&term&unit → 单元语法
- *   GET /api/student/detect/units?subjectId&grade&term      → 取本单元可用练习题量（仅展示）
+ *   POST /api/english/student/unit-paper (module=语法)        → 取本单元真实语法练习题量（仅展示）
+ *
+ * 注意：练习入口不能用 /student/detect/units 判定。检测树部分年级是外研 Module
+ * （如九年级「Module 1 Wonders of the world」），英语内容包是人教版 Unit
+ * （「Unit 1 The Changing World」），matchDetectUnit 匹配不到会让入口误判为 0 题、
+ * 显示「暂无绑定练习」。题量以真实语法组卷结果为准。
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishGrammars, getEnglishUnits } from '../../api/englishStudent';
-import { getDetectUnits } from '../../api/detect';
-import { matchDetectUnit, speakEnglish } from '../../utils/english';
+import { getEnglishGrammars, getEnglishUnits, getEnglishUnitPaper } from '../../api/englishStudent';
+import { speakEnglish } from '../../utils/english';
 import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 
@@ -110,22 +114,21 @@ export default function EnglishGrammarLearnPage() {
   // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
   const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
 
-  // 仅取本单元可用练习题量用于入口展示；实际作答在独立的语法练习页完成
+  // 仅取本单元真实语法练习题量用于入口展示；实际作答在独立的语法练习页完成。
+  // 以语法组卷结果为准（不再用检测单元匹配，避免九年级 Module/Unit 错配导致误判 0 题）。
   useEffect(() => {
     if (!unit) {
       setQuestionCount(0);
       return undefined;
     }
     let cancelled = false;
-    getDetectUnits({ subjectId: activeSubject || '1003', grade, term })
+    getEnglishUnitPaper({ version, grade, term, unit, module: '语法', questionCount: 24 })
       .then((res) => {
-        if (cancelled) return;
-        const target = matchDetectUnit(res?.data, unit);
-        setQuestionCount(target?.questionCount || 0);
+        if (!cancelled) setQuestionCount((res?.data || []).length);
       })
       .catch(() => { if (!cancelled) setQuestionCount(0); });
     return () => { cancelled = true; };
-  }, [activeSubject, grade, term, unit]);
+  }, [version, grade, term, unit]);
 
   if (loading) {
     return <div className="eng-learn-wrap"><Spin /></div>;
