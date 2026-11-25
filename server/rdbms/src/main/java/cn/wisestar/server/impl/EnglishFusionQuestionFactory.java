@@ -63,7 +63,7 @@ public class EnglishFusionQuestionFactory {
 	private static final Pattern ARTICLE = Pattern.compile("\\b(a|an|the)\\b", Pattern.CASE_INSENSITIVE);
 
 	private static final Pattern PREPOSITION = Pattern.compile(
-			"\\b(next to|behind|under|about|near|from|with|for|in|on|at|by|to)\\b", Pattern.CASE_INSENSITIVE);
+			"\\b(next to|behind|under|about|near|from|with|for|in|on|at|by|to|of)\\b", Pattern.CASE_INSENSITIVE);
 
 	private static final Pattern PRONOUN = Pattern.compile(
 			"\\b(i|you|he|she|it|we|they|my|your|his|her|its|our|their|this|that|these|those)\\b",
@@ -97,15 +97,127 @@ public class EnglishFusionQuestionFactory {
 	private static final Map<String, String> IRREGULAR_THIRD = Map.of(
 			"have", "has", "go", "goes", "do", "does", "be", "is", "say", "says");
 
-	private static final Map<String, String> IRREGULAR_PAST = Map.ofEntries(
-			Map.entry("go", "went"), Map.entry("do", "did"), Map.entry("have", "had"),
-			Map.entry("eat", "ate"), Map.entry("drink", "drank"), Map.entry("come", "came"),
-			Map.entry("see", "saw"), Map.entry("take", "took"), Map.entry("bring", "brought"),
-			Map.entry("buy", "bought"), Map.entry("make", "made"), Map.entry("get", "got"),
-			Map.entry("give", "gave"), Map.entry("write", "wrote"), Map.entry("read", "read"),
-			Map.entry("run", "ran"), Map.entry("swim", "swam"), Map.entry("fly", "flew"),
-			Map.entry("say", "said"), Map.entry("tell", "told"), Map.entry("think", "thought"),
-			Map.entry("find", "found"), Map.entry("wear", "wore"), Map.entry("ride", "rode"));
+	private static final Map<String, String> IRREGULAR_PAST = pairs(
+			"go", "went", "do", "did", "have", "had", "eat", "ate", "drink", "drank",
+			"come", "came", "see", "saw", "take", "took", "bring", "brought", "buy", "bought",
+			"make", "made", "get", "got", "give", "gave", "write", "wrote", "read", "read",
+			"run", "ran", "swim", "swam", "fly", "flew", "say", "said", "tell", "told",
+			"think", "thought", "find", "found", "wear", "wore", "ride", "rode", "become", "became",
+			"begin", "began", "break", "broke", "build", "built", "catch", "caught", "choose", "chose",
+			"cost", "cost", "cut", "cut", "draw", "drew", "drive", "drove", "fall", "fell",
+			"feel", "felt", "fight", "fought", "forget", "forgot", "grow", "grew", "hear", "heard",
+			"hold", "held", "keep", "kept", "know", "knew", "leave", "left", "lend", "lent",
+			"let", "let", "lose", "lost", "meet", "met", "pay", "paid", "put", "put",
+			"send", "sent", "set", "set", "sing", "sang", "sit", "sat", "sleep", "slept",
+			"speak", "spoke", "spend", "spent", "stand", "stood", "steal", "stole", "teach", "taught",
+			"throw", "threw", "understand", "understood", "wake", "woke", "win", "won", "hang", "hung",
+			"hurt", "hurt", "mean", "meant", "rise", "rose", "shake", "shook", "shut", "shut",
+			"spread", "spread", "sell", "sold", "show", "showed", "smell", "smelt", "sweep", "swept",
+			"feed", "fed", "lead", "led", "light", "lit", "seek", "sought", "strike", "struck",
+			"bear", "bore", "beat", "beat", "bind", "bound", "bite", "bit", "blow", "blew",
+			"burn", "burnt", "deal", "dealt", "dig", "dug", "dream", "dreamt", "freeze", "froze",
+			"hide", "hid", "hit", "hit", "kneel", "knelt", "lay", "laid", "quit", "quit",
+			"ring", "rang", "sink", "sank", "slide", "slid", "stick", "stuck", "sting", "stung",
+			"tear", "tore");
+
+	private static final Map<String, String> PAST_PARTICIPLE = pairs(
+			"be", "been", "go", "gone", "do", "done", "have", "had", "eat", "eaten", "drink", "drunk",
+			"come", "come", "see", "seen", "take", "taken", "bring", "brought", "buy", "bought",
+			"make", "made", "get", "got", "give", "given", "write", "written", "read", "read",
+			"run", "run", "swim", "swum", "fly", "flown", "say", "said", "tell", "told",
+			"think", "thought", "find", "found", "wear", "worn", "ride", "ridden", "become", "become",
+			"begin", "begun", "break", "broken", "build", "built", "catch", "caught", "choose", "chosen",
+			"cost", "cost", "cut", "cut", "draw", "drawn", "drive", "driven", "fall", "fallen",
+			"feel", "felt", "fight", "fought", "forget", "forgotten", "grow", "grown", "hear", "heard",
+			"hold", "held", "keep", "kept", "know", "known", "leave", "left", "lend", "lent",
+			"let", "let", "lose", "lost", "meet", "met", "pay", "paid", "put", "put",
+			"send", "sent", "set", "set", "sing", "sung", "sit", "sat", "sleep", "slept",
+			"speak", "spoken", "spend", "spent", "stand", "stood", "steal", "stolen", "teach", "taught",
+			"throw", "thrown", "understand", "understood", "wake", "woken", "win", "won", "hang", "hung",
+			"hurt", "hurt", "mean", "meant", "rise", "risen", "shake", "shaken", "shut", "shut",
+			"spread", "spread", "sell", "sold", "show", "shown", "smell", "smelt", "sweep", "swept",
+			"feed", "fed", "lead", "led", "light", "lit", "seek", "sought", "strike", "struck",
+			"bear", "borne", "beat", "beaten", "bind", "bound", "bite", "bitten", "blow", "blown",
+			"burn", "burnt", "deal", "dealt", "dig", "dug", "dream", "dreamt", "freeze", "frozen",
+			"hide", "hidden", "hit", "hit", "kneel", "knelt", "lay", "laid", "quit", "quit",
+			"ring", "rung", "sink", "sunk", "slide", "slid", "stick", "stuck", "sting", "stung",
+			"tear", "torn");
+
+	private static final Map<String, String> PAST_TO_BASE = reversePast();
+
+	private static final Set<String> PARTICIPLE_TOKENS = new HashSet<>(PAST_PARTICIPLE.values());
+
+	/** 以 -ed 结尾但属于形容词的词，避免被动语态误判。 */
+	private static final Set<String> ED_ADJECTIVES = Set.of("tired", "excited", "interested", "bored",
+			"surprised", "worried", "scared", "pleased", "married", "dressed", "crowded", "talented",
+			"experienced", "retired", "wounded", "aged", "used", "closed", "opened", "finished");
+
+	private static final Pattern MORE_MOST = Pattern.compile("\\b(more|most)\\b", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern RELATIVE = Pattern.compile("\\b(that|which|who|whose|whom)\\b",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern CLAUSE_MARKER = Pattern.compile("\\b(that|if|whether)\\b",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern WH_WORD = Pattern.compile("\\b(what|where|when|who|whose|how|why)\\b",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern CONJUNCTION = Pattern.compile(
+			"\\b(and|but|because|although|though|until|unless|while|so|or|if)\\b", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern ORDINAL = Pattern.compile(
+			"\\b(first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|twentieth)\\b",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern REFLEXIVE = Pattern.compile(
+			"\\b(myself|yourself|himself|herself|itself|ourselves|yourselves|themselves)\\b",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern INDEFINITE = Pattern.compile(
+			"\\b(someone|anyone|everyone|nobody|somebody|anybody|everybody|something|anything|everything|nothing|somewhere|anywhere|everywhere|nowhere)\\b",
+			Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern THAN = Pattern.compile("\\b(than)\\b", Pattern.CASE_INSENSITIVE);
+
+	/** 最高级前的定冠词：the + -est 形容词 / most。 */
+	private static final Pattern SUPERLATIVE_THE = Pattern.compile(
+			"\\b(the)\\s+([A-Za-z]+est|most)\\b", Pattern.CASE_INSENSITIVE);
+
+	/** 以 -est 结尾但并非最高级的常见词，避免误挖 the。 */
+	private static final Set<String> NON_SUPERLATIVE_EST = Set.of("interest", "interests", "honest",
+			"forest", "forests", "harvest", "modest", "contest", "contests", "protest", "protests",
+			"request", "requests", "suggest", "suggests", "arrest", "arrests", "digest", "invest",
+			"invests", "chest", "chests", "vest", "vests", "rest", "rests", "west", "test", "tests",
+			"nest", "nests", "guest", "guests", "earnest");
+
+	private static final Set<String> SUBJECT_PRONOUNS = Set.of("i", "you", "he", "she", "it", "we", "they");
+
+	private static final Pattern NUMERIC_ORDINAL = Pattern.compile(
+			"\\b(\\d+)(?:st|nd|rd|th)\\b", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern OR_WORD = Pattern.compile("\\b(or)\\b", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern AS_SOON_AS = Pattern.compile("\\bas\\s+soon\\s+as\\b", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern EXCLAMATORY = Pattern.compile("^\\s*(what|how)\\b", Pattern.CASE_INSENSITIVE);
+
+	/** 语法模块题量目标：按语法点挖空后，用单元句子补足到该数量。 */
+	private static final int GRAMMAR_CLOZE_TARGET = 24;
+
+	private static Map<String, String> pairs(String... values) {
+		Map<String, String> map = new HashMap<>();
+		for (int i = 0; i + 1 < values.length; i += 2) {
+			map.put(values[i], values[i + 1]);
+		}
+		return Map.copyOf(map);
+	}
+
+	private static Map<String, String> reversePast() {
+		Map<String, String> map = new HashMap<>();
+		IRREGULAR_PAST.forEach((base, past) -> map.putIfAbsent(past, base));
+		return Map.copyOf(map);
+	}
 
 	private final EnglishSentenceMapper sentenceMapper;
 
@@ -501,6 +613,8 @@ public class EnglishFusionQuestionFactory {
 		Set<String> buildAnswers = new HashSet<>();
 		// 已用于语法选择题（挖空）的句子，不再用连词成句等其它题型重复考察
 		Set<String> clozeSentences = new HashSet<>();
+		// 同一单元内不同语法点常共享例句/练习，按题干签名去重，避免同一道题重复出现
+		Set<String> questionSignatures = new HashSet<>();
 		for (EnglishSentence sentence : sentences) {
 			String normalized = normalizeSentenceKey(sentence.getEn());
 			if (StringUtils.hasText(normalized)) {
@@ -509,23 +623,34 @@ public class EnglishFusionQuestionFactory {
 		}
 		for (EnglishGrammar grammar : grammars) {
 			List<String> examples = parseExamples(grammar.getExamples());
+			boolean focusSpecific = isFocusSpecific(grammar.getTitle());
+			List<String> clozeSources = new ArrayList<>(examples);
+			if (focusSpecific) {
+				clozeSources.addAll(parseExamples(grammar.getSamples()));
+				clozeSources.addAll(parseExamples(grammar.getTextbook()));
+			}
+			Set<String> clozeTexts = new HashSet<>();
 			int index = 0;
-			for (String example : examples) {
-				for (String sentence : splitSentences(example)) {
+			for (String example : clozeSources) {
+				for (String sentence : splitGrammarSentences(example)) {
 					if (sentence.length() < 4) {
+						continue;
+					}
+					String normalizedCloze = normalizeSentenceKey(sentence);
+					if (!StringUtils.hasText(normalizedCloze) || !clozeTexts.add(normalizedCloze)) {
 						continue;
 					}
 					String keyBase = contentKey("grammar", version, grade, term, unit,
 							grammar.getId(), String.valueOf(index++));
 					boolean clozeAdded = false;
 					for (DerivedQuestion question : grammarCloze(keyBase, grade, unit, grammar.getTitle(), sentence)) {
-						if (keys.add(question.key())) {
-							result.add(question);
+						if (keys.add(question.key())
+								&& addGrammarQuestion(result, questionSignatures, question)) {
 							clozeAdded = true;
 						}
 					}
 					if (clozeAdded) {
-						clozeSentences.add(normalizeSentenceKey(sentence));
+						clozeSentences.add(normalizedCloze);
 					}
 				}
 			}
@@ -536,7 +661,7 @@ public class EnglishFusionQuestionFactory {
 			int buildIndex = 0;
 			int buildsBefore = result.size();
 			for (String source : buildSources) {
-				for (String sentence : splitSentences(source)) {
+				for (String sentence : splitGrammarSentences(source)) {
 					if (addGrammarBuild(result, keys, buildAnswers, version, grade, term, unit, grammar,
 							sentence, buildIndex, false, sentenceKeys, clozeSentences)) {
 						buildIndex++;
@@ -545,7 +670,7 @@ public class EnglishFusionQuestionFactory {
 			}
 			if (result.size() == buildsBefore) {
 				for (String source : buildSources) {
-					for (String sentence : splitSentences(source)) {
+					for (String sentence : splitGrammarSentences(source)) {
 						if (addGrammarBuild(result, keys, buildAnswers, version, grade, term, unit, grammar,
 								sentence, buildIndex, true, sentenceKeys, clozeSentences)) {
 							buildIndex++;
@@ -564,11 +689,59 @@ public class EnglishFusionQuestionFactory {
 				DerivedQuestion question = grammarExercise(version, grade, term, unit, grammar, exercise,
 						exerciseIndex++, sentenceKeys, buildAnswers, clozeSentences);
 				if (question != null && keys.add(question.key())) {
-					result.add(question);
+					addGrammarQuestion(result, questionSignatures, question);
+				}
+			}
+		}
+		// 按语法点挖空后题量可能不足，用本单元课内句子按同一考点补足，保证 20+ 题。
+		if (result.size() < GRAMMAR_CLOZE_TARGET && grammars.stream()
+				.anyMatch(grammar -> isFocusSpecific(grammar.getTitle()))) {
+			Set<String> topUpSentences = new HashSet<>();
+			for (EnglishSentence sentence : sentences) {
+				if (result.size() >= GRAMMAR_CLOZE_TARGET) {
+					break;
+				}
+				for (String part : splitSentences(sentence.getEn())) {
+					if (result.size() >= GRAMMAR_CLOZE_TARGET) {
+						break;
+					}
+					String normalized = normalizeSentenceKey(part);
+					if (!StringUtils.hasText(normalized) || !topUpSentences.add(normalized)) {
+						continue;
+					}
+					for (EnglishGrammar grammar : grammars) {
+						if (!isFocusSpecific(grammar.getTitle())) {
+							continue;
+						}
+						String keyBase = contentKey("grammar-topup", version, grade, term, unit,
+								sentence.getId(), normalized);
+						for (DerivedQuestion question : grammarCloze(keyBase, grade, unit,
+								grammar.getTitle(), part)) {
+							if (keys.add(question.key())
+									&& addGrammarQuestion(result, questionSignatures, question)) {
+								break;
+							}
+						}
+						if (result.size() >= GRAMMAR_CLOZE_TARGET) {
+							break;
+						}
+					}
 				}
 			}
 		}
 		return result;
+	}
+
+	/** 同一单元内不同语法点可能共享例句/练习，按题干签名去重，避免同题重复出现。 */
+	private boolean addGrammarQuestion(List<DerivedQuestion> result, Set<String> signatures,
+			DerivedQuestion question) {
+		// 题干可能含中文提示，直接按去空白后的标题做签名，不能用 normalizeSentenceKey（会清空中文）
+		String signature = question.type() + "|" + question.title().trim().replaceAll("\\s+", " ");
+		if (!signatures.add(signature)) {
+			return false;
+		}
+		result.add(question);
+		return true;
 	}
 
 	/** 追加一道语法连词成句；allowSentenceDuplicate=true 仅在例句全部来自课本原句时兜底。 */
@@ -733,50 +906,25 @@ public class EnglishFusionQuestionFactory {
 	}
 
 	/**
-	 * 一句语法例句可安全挖多个语法点，最多派生 3 题，避免「语法」模块只有例句条数那么多题。
+	 * 语法题只挖本语法点真正考察的成分：时态挖谓语动词/助动词，被动挖 be，
+	 * 从句挖引导词/关系词，比较级挖 more/most/as，冠词介词代词才挖对应虚词。
+	 * 标题能识别出具体语法点时，不再退化成挖 a/of/your 之类与考点无关的词。
 	 */
 	private List<DerivedQuestion> grammarCloze(String keyBase, String grade, String unit, String grammarTitle,
 			String sentence) {
 		List<DerivedQuestion> result = new ArrayList<>();
-		if (!StringUtils.hasText(grammarTitle)) {
+		if (!StringUtils.hasText(grammarTitle) || !StringUtils.hasText(sentence)) {
 			return result;
 		}
 		String title = grammarTitle.trim();
-		String expanded = expandContractions(sentence);
+		String text = normalizeGrammarText(sentence);
 		String lowerTitle = title.toLowerCase(Locale.ROOT);
-		Target beTarget = findTarget(expanded, BE, "be 动词", List.of("am", "is", "are", "was"), keyBase);
-		Target doTarget = findTarget(expanded, DO, "助动词", List.of("do", "does", "did", "doing"), keyBase);
-		Target modalTarget = findTarget(expanded, MODAL, "情态动词",
-				List.of("can", "should", "must", "will"), keyBase);
-		Target articleTarget = findTarget(expanded, ARTICLE, "冠词",
-				List.of("a", "an", "the", "some"), keyBase);
-		Target prepositionTarget = findTarget(expanded, PREPOSITION, "介词",
-				List.of("in", "on", "at", "for", "with"), keyBase);
-		Target pronounTarget = findTarget(expanded, PRONOUN, "代词",
-				List.of("I", "you", "he", "she", "they"), keyBase);
-		Target verbTarget = (lowerTitle.contains("祈使") || lowerTitle.contains("一般现在时"))
-				? findVerbTarget(expanded, keyBase) : null;
-
-		List<Target> ordered = new ArrayList<>();
-		addTarget(ordered, beTarget, lowerTitle.contains("be"));
-		addTarget(ordered, modalTarget,
-				lowerTitle.contains("情态") || lowerTitle.contains("can") || lowerTitle.contains("should")
-						|| lowerTitle.contains("will"));
-		addTarget(ordered, doTarget,
-				lowerTitle.contains("一般现在时") || lowerTitle.contains("助动词") || lowerTitle.contains("do"));
-		addTarget(ordered, articleTarget, lowerTitle.contains("冠词"));
-		addTarget(ordered, prepositionTarget,
-				lowerTitle.contains("介词") || lowerTitle.contains("方位"));
-		addTarget(ordered, pronounTarget,
-				lowerTitle.contains("代词") || lowerTitle.contains("物主"));
-		addTarget(ordered, verbTarget, lowerTitle.contains("祈使") || lowerTitle.contains("一般现在时"));
-		addTarget(ordered, beTarget, false);
-		addTarget(ordered, doTarget, false);
-		addTarget(ordered, modalTarget, false);
-		addTarget(ordered, articleTarget, false);
-		addTarget(ordered, prepositionTarget, false);
-		addTarget(ordered, pronounTarget, false);
-
+		GrammarFocus focus = detectFocus(lowerTitle);
+		List<Target> ordered = focus == GrammarFocus.GENERIC
+				? legacyTargets(text, lowerTitle, keyBase) : focusTargets(focus, text, keyBase);
+		if (ordered.isEmpty()) {
+			return result;
+		}
 		Set<String> usedTokens = new LinkedHashSet<>();
 		int variant = 0;
 		for (Target target : ordered) {
@@ -787,7 +935,7 @@ public class EnglishFusionQuestionFactory {
 			if (!usedTokens.add(token.toLowerCase(Locale.ROOT))) {
 				continue;
 			}
-			String blanked = blankOut(expanded, token);
+			String blanked = target.blanked() != null ? target.blanked() : blankOut(text, token);
 			if (blanked == null) {
 				continue;
 			}
@@ -809,12 +957,547 @@ public class EnglishFusionQuestionFactory {
 			Collections.shuffle(options, new Random(key.hashCode()));
 			// 题干隐藏语法点，避免直接提示答案；语法点只在交卷后的答案解析中展示
 			String questionTitle = "选正确形式，从选项中选出最合适的单词或语法形态。\n" + blanked;
-			result.add(new DerivedQuestion(key, "语法", unit + "·语法", "语法变形",
-					"语法", "应用", difficulty(blanked, grade, EnglishDifficultyUtil.Demand.APPLICATION, options, token), questionTitle, SurveySchema.QuestionType.Radio,
-					token, null, options, "语法点：" + title + "。结合该语法点判断正确形式。"));
+			result.add(new DerivedQuestion(key, "语法", unit + "·语法", "语法变形", "语法", "应用",
+					difficulty(blanked, grade, EnglishDifficultyUtil.Demand.APPLICATION, options, token),
+					questionTitle, SurveySchema.QuestionType.Radio, token, null, options,
+					"语法点：" + title + "。结合该语法点判断正确形式。"));
 		}
 		return result;
 	}
+
+	/** 未识别出具体语法点时沿用原有虚词挖空，保证老内容包题量不下降。 */
+	private List<Target> legacyTargets(String sentence, String lowerTitle, String key) {
+		Target beTarget = findTarget(sentence, BE, "be 动词", List.of("am", "is", "are", "was"), key);
+		Target doTarget = findTarget(sentence, DO, "助动词", List.of("do", "does", "did", "doing"), key);
+		Target modalTarget = findTarget(sentence, MODAL, "情态动词",
+				List.of("can", "should", "must", "will"), key);
+		Target articleTarget = findTarget(sentence, ARTICLE, "冠词",
+				List.of("a", "an", "the", "some"), key);
+		Target prepositionTarget = findTarget(sentence, PREPOSITION, "介词",
+				List.of("in", "on", "at", "for", "with"), key);
+		Target pronounTarget = findTarget(sentence, PRONOUN, "代词",
+				List.of("I", "you", "he", "she", "they"), key);
+		Target verbTarget = (lowerTitle.contains("祈使") || lowerTitle.contains("一般现在时"))
+				? findVerbTarget(sentence, key) : null;
+		List<Target> ordered = new ArrayList<>();
+		addTarget(ordered, beTarget, lowerTitle.contains("be"));
+		addTarget(ordered, modalTarget,
+				lowerTitle.contains("情态") || lowerTitle.contains("can") || lowerTitle.contains("should")
+						|| lowerTitle.contains("will"));
+		addTarget(ordered, doTarget,
+				lowerTitle.contains("一般现在时") || lowerTitle.contains("助动词") || lowerTitle.contains("do"));
+		addTarget(ordered, articleTarget, lowerTitle.contains("冠词"));
+		addTarget(ordered, prepositionTarget,
+				lowerTitle.contains("介词") || lowerTitle.contains("方位"));
+		addTarget(ordered, pronounTarget,
+				lowerTitle.contains("代词") || lowerTitle.contains("物主"));
+		addTarget(ordered, verbTarget, lowerTitle.contains("祈使") || lowerTitle.contains("一般现在时"));
+		addTarget(ordered, beTarget, false);
+		addTarget(ordered, doTarget, false);
+		addTarget(ordered, modalTarget, false);
+		addTarget(ordered, articleTarget, false);
+		addTarget(ordered, prepositionTarget, false);
+		addTarget(ordered, pronounTarget, false);
+		return ordered;
+	}
+
+	/** 按语法点焦点挑选挖空目标，返回按优先级排序的目标列表。 */
+	private List<Target> focusTargets(GrammarFocus focus, String sentence, String key) {
+		List<Target> list = new ArrayList<>();
+		if (focus == GrammarFocus.BE) {
+			addIfNotNull(list, findTarget(sentence, BE, "be 动词",
+					List.of("am", "is", "are", "was", "were"), key));
+		}
+		else if (focus == GrammarFocus.DO) {
+			addIfNotNull(list, findTarget(sentence, DO, "助动词", List.of("do", "does", "did", "doing"), key));
+			addIfNotNull(list, findVerbTarget(sentence, key));
+		}
+		else if (focus == GrammarFocus.MODAL) {
+			addIfNotNull(list, findTarget(sentence, MODAL, "情态动词",
+					List.of("can", "could", "should", "must", "will", "would"), key));
+		}
+		else if (focus == GrammarFocus.ARTICLE) {
+			addIfNotNull(list, findTarget(sentence, ARTICLE, "冠词", List.of("a", "an", "the", "some"), key));
+		}
+		else if (focus == GrammarFocus.PREPOSITION) {
+			addIfNotNull(list, findTarget(sentence, PREPOSITION, "介词",
+					List.of("in", "on", "at", "for", "with", "of", "to"), key));
+		}
+		else if (focus == GrammarFocus.PRONOUN) {
+			addIfNotNull(list, findTarget(sentence, PRONOUN, "代词",
+					List.of("I", "you", "he", "she", "they", "my", "your", "our", "their"), key));
+		}
+		else if (focus == GrammarFocus.IMPERATIVE) {
+			addIfNotNull(list, findVerbTarget(sentence, key));
+		}
+		else if (focus == GrammarFocus.TENSE_PAST) {
+			addIfNotNull(list, findPastVerbTarget(sentence, key));
+			addIfNotNull(list, findUsedToTarget(sentence, key));
+			addIfNotNull(list, findTarget(sentence, BE, "过去时 be 动词",
+					List.of("was", "were", "am", "is"), key));
+			addIfNotNull(list, findTarget(sentence, DO, "过去时助动词",
+					List.of("did", "do", "does", "doing"), key));
+		}
+		else if (focus == GrammarFocus.TENSE_PERFECT) {
+			addIfNotNull(list, findPerfectAuxTarget(sentence, key));
+			addIfNotNull(list, findParticipleTarget(sentence, key));
+		}
+		else if (focus == GrammarFocus.COMPARE_PAST_PERFECT) {
+			addIfNotNull(list, findPastVerbTarget(sentence, key));
+			addIfNotNull(list, findPerfectAuxTarget(sentence, key));
+			addIfNotNull(list, findParticipleTarget(sentence, key));
+			addIfNotNull(list, findUsedToTarget(sentence, key));
+			addIfNotNull(list, findTarget(sentence, BE, "be 动词",
+					List.of("was", "were", "am", "is"), key));
+		}
+		else if (focus == GrammarFocus.TENSE_CONTINUOUS) {
+			if (containsIngWord(sentence)) {
+				addIfNotNull(list, findTarget(sentence, BE, "进行时 be 动词",
+						List.of("am", "is", "are", "was", "were"), key));
+			}
+		}
+		else if (focus == GrammarFocus.TENSE_FUTURE) {
+			addIfNotNull(list, findTarget(sentence, MODAL, "将来时助动词",
+					List.of("will", "would", "shall", "can"), key));
+			if (sentence.toLowerCase(Locale.ROOT).contains("going to")) {
+				addIfNotNull(list, findTarget(sentence, BE, "be going to 的 be",
+						List.of("am", "is", "are", "was"), key));
+			}
+		}
+		else if (focus == GrammarFocus.PASSIVE) {
+			addIfNotNull(list, findPassiveTarget(sentence, key));
+		}
+		else if (focus == GrammarFocus.COMPARATIVE) {
+			addIfNotNull(list, findTarget(sentence, MORE_MOST, "比较级/最高级",
+					List.of("more", "most", "much", "many"), key));
+			addIfNotNull(list, findSuperlativeTheTarget(sentence));
+			addIfNotNull(list, findTarget(sentence, THAN, "比较级 than",
+					List.of("than", "as", "so", "for"), key));
+			addIfNotNull(list, findAsAsTarget(sentence, key));
+		}
+		else if (focus == GrammarFocus.RELATIVE) {
+			addIfNotNull(list, findTarget(sentence, RELATIVE, "关系代词",
+					List.of("that", "which", "who", "whose"), key));
+		}
+		else if (focus == GrammarFocus.OBJECT_CLAUSE) {
+			addIfNotNull(list, findTarget(sentence, CLAUSE_MARKER, "宾语从句引导词",
+					List.of("that", "if", "whether", "when"), key));
+			addIfNotNull(list, findTarget(sentence, WH_WORD, "疑问词",
+					List.of("what", "where", "when", "how", "who"), key));
+		}
+		else if (focus == GrammarFocus.CONJUNCTION) {
+			addIfNotNull(list, findAsSoonAsTarget(sentence, key));
+			addIfNotNull(list, findTarget(sentence, CONJUNCTION, "连词",
+					List.of("and", "but", "because", "although", "so", "or", "unless", "if"), key));
+		}
+		else if (focus == GrammarFocus.EXCLAMATORY) {
+			addIfNotNull(list, findTarget(sentence, EXCLAMATORY, "感叹句引导词",
+					List.of("what", "how"), key));
+		}
+		else if (focus == GrammarFocus.ORDINAL) {
+			addIfNotNull(list, findTarget(sentence, ORDINAL, "序数词",
+					List.of("first", "second", "third", "fourth", "fifth", "twelfth"), key));
+			addIfNotNull(list, findNumericOrdinalTarget(sentence, key));
+		}
+		else if (focus == GrammarFocus.REFLEXIVE) {
+			addIfNotNull(list, findTarget(sentence, REFLEXIVE, "反身代词",
+					List.of("myself", "yourself", "himself", "herself", "themselves"), key));
+		}
+		else if (focus == GrammarFocus.INDEFINITE) {
+			addIfNotNull(list, findTarget(sentence, INDEFINITE, "不定代词",
+					List.of("someone", "anyone", "everyone", "nobody", "something", "anything",
+							"somewhere", "anywhere", "everywhere", "nowhere"), key));
+		}
+		else if (focus == GrammarFocus.ALTERNATIVE) {
+			addIfNotNull(list, findTarget(sentence, OR_WORD, "选择疑问句 or",
+					List.of("or", "and", "but", "so"), key));
+		}
+		else if (focus == GrammarFocus.WH) {
+			addIfNotNull(list, findTarget(sentence, WH_WORD, "疑问词",
+					List.of("what", "where", "when", "who", "whose", "how", "why"), key));
+		}
+		return list;
+	}
+
+	private void addIfNotNull(List<Target> targets, Target target) {
+		if (target != null) {
+			targets.add(target);
+		}
+	}
+
+	/** 依据标题判断语法点焦点；识别不到时返回 GENERIC，继续沿用虚词挖空。 */
+	private GrammarFocus detectFocus(String title) {
+		if (containsAny(title, "passive", "被动")) {
+			return GrammarFocus.PASSIVE;
+		}
+		if (containsAny(title, "relative clause", "定语从句")) {
+			return GrammarFocus.RELATIVE;
+		}
+		if (containsAny(title, "object clause", "宾语从句")) {
+			return GrammarFocus.OBJECT_CLAUSE;
+		}
+		if (title.contains("past") && title.contains("perfect")) {
+			return GrammarFocus.COMPARE_PAST_PERFECT;
+		}
+		if (containsAny(title, "present perfect", "现在完成")) {
+			return GrammarFocus.TENSE_PERFECT;
+		}
+		if (containsAny(title, "continuous", "进行时", "现在进行", "过去进行")) {
+			return GrammarFocus.TENSE_CONTINUOUS;
+		}
+		if (containsAny(title, "future", "将来", "be going to")) {
+			return GrammarFocus.TENSE_FUTURE;
+		}
+		if (containsAny(title, "past tense", "simple past", "过去时", "过去式")) {
+			return GrammarFocus.TENSE_PAST;
+		}
+		if (containsAny(title, "comparative", "superlative", "比较级", "最高级", "as ... as", "as...as")) {
+			return GrammarFocus.COMPARATIVE;
+		}
+		if (containsAny(title, "exclamatory", "感叹")) {
+			return GrammarFocus.EXCLAMATORY;
+		}
+		if (containsAny(title, "ordinal", "序数")) {
+			return GrammarFocus.ORDINAL;
+		}
+		if (containsAny(title, "reflexive", "反身")) {
+			return GrammarFocus.REFLEXIVE;
+		}
+		if (containsAny(title, "indefinite pronoun", "不定代词")) {
+			return GrammarFocus.INDEFINITE;
+		}
+		if (containsAny(title, "subject-verb agreement", "主谓一致")) {
+			return GrammarFocus.DO;
+		}
+		if (containsAny(title, "alternative question", "选择疑问")) {
+			return GrammarFocus.ALTERNATIVE;
+		}
+		if (containsAny(title, "conjunction", "连词", "conditional", "条件句")) {
+			return GrammarFocus.CONJUNCTION;
+		}
+		if (containsAny(title, "modal", "情态", "can / could", "can/could")) {
+			return GrammarFocus.MODAL;
+		}
+		if (containsAny(title, "simple present tense (be)", "be verb", "there be", "be 动词",
+				"it is / was", "it is/was", "greetings")) {
+			return GrammarFocus.BE;
+		}
+		if (containsAny(title, "simple present tense (do)", "助动词")) {
+			return GrammarFocus.DO;
+		}
+		if (containsAny(title, "article", "冠词")) {
+			return GrammarFocus.ARTICLE;
+		}
+		if (containsAny(title, "preposition", "介词", "time expression", "时间表达")) {
+			return GrammarFocus.PREPOSITION;
+		}
+		if (containsAny(title, "pronoun", "代词", "demonstrative", "指示")) {
+			return GrammarFocus.PRONOUN;
+		}
+		if (containsAny(title, "imperative", "祈使")) {
+			return GrammarFocus.IMPERATIVE;
+		}
+		if (containsAny(title, "wh- question", "wh question", "特殊疑问")) {
+			return GrammarFocus.WH;
+		}
+		return GrammarFocus.GENERIC;
+	}
+
+	private boolean isFocusSpecific(String title) {
+		return StringUtils.hasText(title) && detectFocus(title.toLowerCase(Locale.ROOT)) != GrammarFocus.GENERIC;
+	}
+
+	private boolean containsAny(String text, String... needles) {
+		for (String needle : needles) {
+			if (text.contains(needle)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** 找过去式谓语动词：先查不规则表，再用品动词表的规则过去式反查。 */
+	private Target findPastVerbTarget(String sentence, String key) {
+		Matcher matcher = WORD_TOKEN.matcher(sentence);
+		while (matcher.find()) {
+			String token = matcher.group();
+			String lower = token.toLowerCase(Locale.ROOT);
+			String base = PAST_TO_BASE.get(lower);
+			if (base == null) {
+				for (String candidate : VERBS) {
+					if (past(candidate).equals(lower)) {
+						base = candidate;
+						break;
+					}
+				}
+			}
+			if (base == null) {
+				continue;
+			}
+			List<String> options = new ArrayList<>();
+			options.add(lower);
+			options.add(base);
+			options.add(thirdPerson(base));
+			options.add("has " + pastParticiple(base));
+			options.add(gerund(base));
+			return new Target(token, "动词过去式", uniqueOptions(options));
+		}
+		return null;
+	}
+
+	/** 现在完成时中 have/has 后的过去分词。 */
+	private Target findParticipleTarget(String sentence, String key) {
+		Matcher matcher = Pattern.compile(
+				"\\b(?:have|has)\\s+(?:(?:already|just|never|ever|recently|not)\\s+)*([A-Za-z]+)",
+				Pattern.CASE_INSENSITIVE).matcher(sentence);
+		while (matcher.find()) {
+			String token = matcher.group(1);
+			String lower = token.toLowerCase(Locale.ROOT);
+			String base = PARTICIPLE_TOKENS.contains(lower) ? baseOfParticiple(lower) : null;
+			if (base == null) {
+				continue;
+			}
+			List<String> options = new ArrayList<>();
+			options.add(lower);
+			options.add(base);
+			options.add(past(base));
+			options.add(gerund(base));
+			return new Target(token, "过去分词", uniqueOptions(options));
+		}
+		return null;
+	}
+
+	/**
+	 * 现在完成时助动词：have/has/had 后（可跳过主语代词与副词）必须接过去分词，
+	 * 排除 have to（必须）等情态短语，避免把实义动词 have 当助动词挖掉。
+	 */
+	private Target findPerfectAuxTarget(String sentence, String key) {
+		Matcher matcher = WORD_TOKEN.matcher(sentence);
+		List<String> words = new ArrayList<>();
+		while (matcher.find()) {
+			words.add(matcher.group());
+		}
+		for (int i = 0; i < words.size(); i++) {
+			String lower = words.get(i).toLowerCase(Locale.ROOT);
+			if (!"have".equals(lower) && !"has".equals(lower) && !"had".equals(lower)) {
+				continue;
+			}
+			int next = i + 1;
+			while (next < words.size()) {
+				String word = words.get(next).toLowerCase(Locale.ROOT);
+				if (SUBJECT_PRONOUNS.contains(word) || isAdverb(words.get(next))) {
+					next++;
+					continue;
+				}
+				break;
+			}
+			if (next < words.size() && isParticipleish(words.get(next))) {
+				List<String> options = uniqueOptions(
+						List.of(words.get(i), "have", "has", "had", "having"));
+				return new Target(words.get(i), "现在完成时助动词", options);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 最高级前的定冠词：只挖紧挨 -est/most 的那个 the，
+	 * 避免句首还有 the 时挖错位置；-est 后接非最高级词（interest/forest 等）跳过。
+	 */
+	private Target findSuperlativeTheTarget(String sentence) {
+		Matcher matcher = SUPERLATIVE_THE.matcher(sentence);
+		while (matcher.find()) {
+			String word = matcher.group(2).toLowerCase(Locale.ROOT);
+			if (!"most".equals(word) && NON_SUPERLATIVE_EST.contains(word)) {
+				continue;
+			}
+			String blanked = sentence.substring(0, matcher.start(1)) + "_____"
+					+ sentence.substring(matcher.end(1));
+			return new Target(matcher.group(1), "最高级前的定冠词",
+					List.of("the", "a", "an", "this"), blanked);
+		}
+		return null;
+	}
+
+	/** 数字序数词（如 2nd August），选项用 1st/2nd/3rd/4th 等。 */
+	private Target findNumericOrdinalTarget(String sentence, String key) {
+		Matcher matcher = NUMERIC_ORDINAL.matcher(sentence);
+		if (!matcher.find()) {
+			return null;
+		}
+		String token = matcher.group();
+		List<String> options = uniqueOptions(List.of(token, "1st", "2nd", "3rd", "4th", "5th"));
+		return new Target(token, "数字序数词", options);
+	}
+
+	private String baseOfParticiple(String token) {
+		for (Map.Entry<String, String> entry : PAST_PARTICIPLE.entrySet()) {
+			if (entry.getValue().equals(token)) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
+
+	/** used to + 动词原形，考过去习惯用法的固定短语。 */
+	private Target findUsedToTarget(String sentence, String key) {
+		Matcher matcher = Pattern.compile("\\b(used)\\s+to\\s+[A-Za-z]+", Pattern.CASE_INSENSITIVE)
+				.matcher(sentence);
+		if (matcher.find()) {
+			return new Target(matcher.group(1), "used to 结构",
+					List.of("used", "use", "uses", "using"));
+		}
+		return null;
+	}
+
+	/** 被动语态：be 后接过去分词（跳过 also/just 等副词）。 */
+	private Target findPassiveTarget(String sentence, String key) {
+		Matcher matcher = WORD_TOKEN.matcher(sentence);
+		List<String> words = new ArrayList<>();
+		while (matcher.find()) {
+			words.add(matcher.group());
+		}
+		for (int i = 0; i < words.size() - 1; i++) {
+			String lower = words.get(i).toLowerCase(Locale.ROOT);
+			if (!"am".equals(lower) && !"is".equals(lower) && !"are".equals(lower)
+					&& !"was".equals(lower) && !"were".equals(lower) && !"be".equals(lower)) {
+				continue;
+			}
+			int next = i + 1;
+			while (next < words.size() && isAdverb(words.get(next))) {
+				next++;
+			}
+			if (next >= words.size() || !isParticipleish(words.get(next))) {
+				continue;
+			}
+			return new Target(words.get(i), "被动语态 be 动词",
+					List.of("is", "are", "was", "were", "be"));
+		}
+		return null;
+	}
+
+	private boolean isAdverb(String word) {
+		String lower = word.toLowerCase(Locale.ROOT);
+		return lower.endsWith("ly") || lower.equals("also") || lower.equals("just") || lower.equals("already")
+				|| lower.equals("never") || lower.equals("ever") || lower.equals("not") || lower.equals("still")
+				|| lower.equals("often") || lower.equals("always") || lower.equals("usually")
+				|| lower.equals("sometimes") || lower.equals("recently");
+	}
+
+	private boolean isParticipleish(String word) {
+		String lower = word.toLowerCase(Locale.ROOT);
+		if (ED_ADJECTIVES.contains(lower)) {
+			return false;
+		}
+		if (PARTICIPLE_TOKENS.contains(lower) || PAST_TO_BASE.containsKey(lower)) {
+			return true;
+		}
+		return (lower.endsWith("ed") && lower.length() > 3) || (lower.endsWith("en") && lower.length() > 4);
+	}
+
+	/** as ... as 同级比较，挖第一个 as。 */
+	private Target findAsAsTarget(String sentence, String key) {
+		Matcher matcher = Pattern.compile("\\bas\\b", Pattern.CASE_INSENSITIVE).matcher(sentence);
+		int count = 0;
+		String token = null;
+		while (matcher.find()) {
+			count++;
+			if (token == null) {
+				token = matcher.group();
+			}
+		}
+		if (count >= 2 && token != null) {
+			return new Target(token, "as ... as 结构", List.of("as", "than", "so", "very"));
+		}
+		return null;
+	}
+
+	private Target findAsSoonAsTarget(String sentence, String key) {
+		Matcher matcher = AS_SOON_AS.matcher(sentence);
+		if (matcher.find()) {
+			return new Target(matcher.group(), "连词短语",
+					List.of("as soon as", "as long as", "as well as", "so that"));
+		}
+		return null;
+	}
+
+	private boolean containsIngWord(String sentence) {
+		Matcher matcher = Pattern.compile("\\b[A-Za-z]{2,}ing\\b", Pattern.CASE_INSENSITIVE).matcher(sentence);
+		while (matcher.find()) {
+			String lower = matcher.group().toLowerCase(Locale.ROOT);
+			if (!"thing".equals(lower) && !"things".equals(lower) && !"morning".equals(lower)
+					&& !"evening".equals(lower) && !"during".equals(lower) && !"spring".equals(lower)
+					&& !"bring".equals(lower) && !"brings".equals(lower) && !"sing".equals(lower)
+					&& !"king".equals(lower) && !"ring".equals(lower) && !"wing".equals(lower)
+					&& !"string".equals(lower) && !"building".equals(lower) && !"ceiling".equals(lower)
+					&& !"something".equals(lower) && !"anything".equals(lower)
+					&& !"everything".equals(lower) && !"nothing".equals(lower)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<String> uniqueOptions(List<String> values) {
+		List<String> unique = new ArrayList<>();
+		for (String value : values) {
+			if (StringUtils.hasText(value) && !unique.contains(value)) {
+				unique.add(value);
+			}
+		}
+		return unique;
+	}
+
+	private String pastParticiple(String base) {
+		String lower = base.toLowerCase(Locale.ROOT);
+		String participle = PAST_PARTICIPLE.get(lower);
+		return participle != null ? participle : past(lower);
+	}
+
+	/** 统一展开缩写，便于挖 be/have/will；不展开含义歧义的 ’s。 */
+	private String normalizeGrammarText(String sentence) {
+		if (!StringUtils.hasText(sentence)) {
+			return sentence;
+		}
+		String text = sentence.trim()
+				.replace("won’t", "will not").replace("won't", "will not")
+				.replace("can’t", "can not").replace("can't", "can not")
+				.replace("shan’t", "shall not").replace("shan't", "shall not");
+		text = text.replaceAll("(?i)\\b([A-Za-z]+)n[’']t\\b", "$1 not");
+		text = text.replace("’ve", " have").replace("'ve", " have")
+				.replace("’re", " are").replace("'re", " are")
+				.replace("’ll", " will").replace("'ll", " will")
+				.replace("’m", " am").replace("'m", " am");
+		return text.replaceAll("\\s+", " ").trim();
+	}
+
+	/**
+	 * 语法例句切句：单词语义并列（that / which、if / whether）只保留第一个，
+	 * 整句并列（Yes, I have. / No, I haven’t.）拆成两句；括号只去符号保留内容；
+	 * 含「=」的释义行直接丢弃，避免派生出残缺题。
+	 */
+	private List<String> splitGrammarSentences(String en) {
+		List<String> result = new ArrayList<>();
+		if (!StringUtils.hasText(en) || en.contains("=") || en.contains("→")) {
+			return result;
+		}
+		String text = en.trim().replaceAll(
+				"(?<![A-Za-z])([A-Za-z][A-Za-z'’\\-]*)\\s+/\\s+([A-Za-z][A-Za-z'’\\-]*)(?![A-Za-z])", "$1");
+		text = text.replace("(", " ").replace(")", " ");
+		// 省略号占位（如「of ... to」）不是句末，替换为单字符避免被按句号切成残句
+		text = text.replace("...", "…");
+		for (String part : text.split("\\s+/\\s+")) {
+			for (String sentence : part.split("(?<=[.!?])\\s+")) {
+				String value = sentence.trim().replaceAll("\\s+", " ");
+				if (!StringUtils.hasText(value) || value.split("\\s+").length < 3) {
+					continue;
+				}
+				result.add(value);
+			}
+		}
+		return result;
+	}
+
 
 	private void addTarget(List<Target> targets, Target target, boolean priority) {
 		if (target == null) {
@@ -1167,6 +1850,15 @@ public class EnglishFusionQuestionFactory {
 		}
 	}
 
+	private enum GrammarFocus {
+
+		GENERIC, BE, DO, MODAL, ARTICLE, PREPOSITION, PRONOUN, IMPERATIVE,
+		TENSE_PAST, TENSE_PERFECT, TENSE_CONTINUOUS, TENSE_FUTURE, COMPARE_PAST_PERFECT,
+		PASSIVE, COMPARATIVE, RELATIVE, OBJECT_CLAUSE, CONJUNCTION, ALTERNATIVE, EXCLAMATORY,
+		ORDINAL, REFLEXIVE, INDEFINITE, WH
+
+	}
+
 	private static class Target {
 
 		private final String token;
@@ -1175,10 +1867,17 @@ public class EnglishFusionQuestionFactory {
 
 		private final List<String> options;
 
+		private final String blanked;
+
 		Target(String token, String label, List<String> options) {
+			this(token, label, options, null);
+		}
+
+		Target(String token, String label, List<String> options, String blanked) {
 			this.token = token;
 			this.label = label;
 			this.options = options;
+			this.blanked = blanked;
 		}
 
 		String token() {
@@ -1191,6 +1890,10 @@ public class EnglishFusionQuestionFactory {
 
 		List<String> options() {
 			return options;
+		}
+
+		String blanked() {
+			return blanked;
 		}
 	}
 }
