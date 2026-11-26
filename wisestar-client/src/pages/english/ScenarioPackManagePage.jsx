@@ -3,7 +3,7 @@
  *
  * 功能（URL: /english/scenario-pack，权限复用 english:word:ai）:
  *   1. 选择 版本/年级/册别/单元，按单元生成单词情景 + 句式情景预览
- *      （单元单词每 8 个一组、句式每 6 个一组自动分组，逐组调用 AI，不落库）
+ *      （单元单词按 section 均分 4–8 段、每段 6–10 词，句式每 6 个一组，逐组调用 AI，不落库）
  *   2. 预览确认后保存固化（同 版本+年级+册别+单元 覆盖）
  *   3. 支持「批量生成整册」：载入该册所有可用单元，逐个生成并固化，逐单元反馈成败
  *   4. 历史内容包：筛选/详情查看/删除
@@ -24,9 +24,8 @@ import {
   generateScenarioPack, saveScenarioPack, listScenarioPacks,
   getScenarioPackDetail, deleteScenarioPack, listScenarioPackUnits,
 } from '../../api/scenarioPack';
+import { ENGLISH_VERSIONS as VERSIONS, gradeOptionsOfVersion } from '../../utils/englishOptions';
 
-const VERSIONS = ['人教版', '苏教版', '北师大版', '外研版'];
-const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 const TERMS = ['上册', '下册'];
 const FALLBACK_UNITS = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6', 'Unit 7', 'Unit 8'];
 
@@ -405,7 +404,7 @@ export default function ScenarioPackManagePage() {
             style={{ width: 120 }}
             value={grade || undefined}
             onChange={(v) => setGrade(v || '')}
-            options={GRADES.map((v) => ({ value: v, label: v }))}
+            options={gradeOptionsOfVersion(version)}
           />
           <Select
             placeholder="册别"
@@ -444,7 +443,7 @@ export default function ScenarioPackManagePage() {
         <Alert
           type="info"
           showIcon
-          title="系统会把该单元单词每 8 个一组、重点句式每 6 个一组自动分组，逐组调用 AI 生成情景对话。生成内容先预览确认，再保存固化；学员端将只读取已固化内容（按组合并展示），不再实时生成。"
+          title="系统会把该单元单词按小节均分 4–8 段（每段 6–10 词，每段一个完整 A/B 剧情对话）、重点句式每 6 个一组自动分组，逐组调用 AI 生成。生成内容先预览确认，再保存固化；学员端将只读取已固化内容（按组合并展示），不再实时生成。"
         />
 
         {/* 批量进度 */}
@@ -503,7 +502,7 @@ export default function ScenarioPackManagePage() {
             style={{ width: 110 }}
             value={grade || undefined}
             onChange={(v) => { setGrade(v || ''); setPage(1); setTimeout(() => loadList(1, pageSize), 0); }}
-            options={GRADES.map((v) => ({ value: v, label: v }))}
+            options={gradeOptionsOfVersion(version)}
           />
           <Select
             placeholder="册别筛选"

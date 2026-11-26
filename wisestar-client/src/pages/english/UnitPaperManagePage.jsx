@@ -18,6 +18,7 @@ import { Button, Card, Empty, Select, Space, Spin, Tag, Typography, message } fr
 import { PrinterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { getDetectUnits, generateDetectPaper } from '../../api/detect';
 import RichContent from '../../components/common/RichContent';
+import { ENGLISH_GRADES } from '../../utils/englishOptions';
 import './UnitPaperManagePage.css';
 
 const { Text } = Typography;
@@ -25,7 +26,7 @@ const { Text } = Typography;
 /** 英语学科 ID */
 const ENGLISH_SUBJECT_ID = '1003';
 
-const GRADES = ['三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
+const GRADES = ENGLISH_GRADES;
 const TERMS = ['上册', '下册'];
 const COUNTS = [10, 15, 20, 36];
 

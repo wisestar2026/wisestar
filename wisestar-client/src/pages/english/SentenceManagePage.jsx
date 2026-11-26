@@ -25,12 +25,14 @@ import {
 import { usePermission } from '../../utils/usePermission';
 import { speakEnglish } from '../../utils/english';
 import { getSections } from '../../api/englishAdmin';
+import {
+  ENGLISH_VERSION_OPTIONS as VERSION_OPTIONS,
+  gradeOptionsOfVersion,
+} from '../../utils/englishOptions';
 
 const API_BASE = '/api/english/sentence';
 const { Title } = Typography;
 
-const VERSION_OPTIONS = ['人教版', '苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
-const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'].map((g) => ({ value: g, label: g }));
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 export default function SentenceManagePage() {
@@ -272,7 +274,7 @@ export default function SentenceManagePage() {
 
       <Space wrap style={{ marginBottom: 16 }}>
         <Select placeholder="教材版本" allowClear style={{ width: 120 }} value={version || undefined} onChange={setVersion} options={VERSION_OPTIONS} />
-        <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade || undefined} onChange={setGrade} options={GRADE_OPTIONS} />
+        <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade || undefined} onChange={setGrade} options={gradeOptionsOfVersion(version)} />
         <Select placeholder="册别" allowClear style={{ width: 90 }} value={term || undefined} onChange={setTerm} options={TERM_OPTIONS} />
         <Input placeholder="单元" allowClear style={{ width: 160 }} value={unit} onChange={(e) => setUnit(e.target.value)} />
         <Input placeholder="小节" allowClear style={{ width: 120 }} value={section} onChange={(e) => setSection(e.target.value)} onPressEnter={loadList} />
@@ -321,7 +323,7 @@ export default function SentenceManagePage() {
               <Select options={VERSION_OPTIONS} />
             </Form.Item>
             <Form.Item name="grade" label="年级">
-              <Select options={GRADE_OPTIONS} />
+              <Select options={gradeOptionsOfVersion(watchedVersion)} />
             </Form.Item>
             <Form.Item name="term" label="册别">
               <Select options={TERM_OPTIONS} />

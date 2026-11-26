@@ -116,7 +116,8 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 			scenarios = normalizeScenarios(parseRawJson(raw), meanings, allowed);
 		}
 		// 只有首轮被闸门拦下（场景/台词/空位不足）时才做二次校对，避免每单元都翻倍耗时
-		if (!scenarios.isEmpty() && needsRepair(parseRawJson(raw), scenarios)) {
+		int minBlanks = Math.min(8, Math.max(1, allowed.size()));
+		if (!scenarios.isEmpty() && needsRepair(parseRawJson(raw), scenarios, minBlanks)) {
 			List<EnglishScenarioView> repaired = normalizeScenarios(
 					parseRawJson(repairChat(grade, unit, raw)), meanings, allowed);
 			if (repaired.size() >= scenarios.size()) {
@@ -132,7 +133,7 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	/**
 	 * 判断首轮结果是否需要二次校对：有场景/台词被闸门丢弃、或空位少于 3 个。
 	 */
-	private boolean needsRepair(JsonNode root, List<EnglishScenarioView> accepted) {
+	private boolean needsRepair(JsonNode root, List<EnglishScenarioView> accepted, int minBlanks) {
 		JsonNode rawScenarios = firstNode(root, SCENARIO_ARRAY_KEYS);
 		if (rawScenarios == null || !rawScenarios.isArray() || rawScenarios.size() > accepted.size()) {
 			return true;
@@ -146,7 +147,7 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 			for (EnglishScenarioLine line : lines) {
 				blanks += line.getAnswers() == null ? 0 : line.getAnswers().size();
 			}
-			if (blanks < 3) {
+			if (blanks < minBlanks) {
 				return true;
 			}
 		}
@@ -191,8 +192,7 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	}
 
 	private String callChat(String grade, String unit, List<EnglishScenarioWord> words) {
-		int scenarioCount = words.size() >= 9 ? 4 : 3;
-		return postChat(buildUserPrompt(grade, unit, words, scenarioCount), 0.3);
+		return postChat(buildUserPrompt(grade, unit, words), 0.3);
 	}
 
 	/**
@@ -271,9 +271,9 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 	/**
 	 * 构建请求 AI 生成情景对话的用户提示词。
 	 */
-	private String buildUserPrompt(String grade, String unit, List<EnglishScenarioWord> words, int scenarioCount) {
+	private String buildUserPrompt(String grade, String unit, List<EnglishScenarioWord> words) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("请基于以下英语单元单词，编写 ").append(scenarioCount).append(" 个贴近生活的情景对话：\n");
+		sb.append("请基于以下英语单元单词，编写 1 个有完整情节的英语情景对话（A、B 两个角色）：\n");
 		sb.append("年级：").append(grade).append("\n");
 		sb.append("单元：").append(unit).append("\n");
 		List<String> targets = new ArrayList<>();
@@ -292,26 +292,24 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 			targets.addAll(optional);
 			optional.clear();
 		}
-		sb.append("本组重点考查单词（组内多个对话合起来覆盖全部，单个对话只需自然用到 3-5 个）：")
+		sb.append("本情景必须考到的全部目标单词（共 ").append(targets.size()).append(" 个，每个至少挖 1 个空）：")
 				.append(String.join("、", targets));
 		if (!optional.isEmpty()) {
-			sb.append("\n本组也会自然出现的功能词（只用于把句子说通顺，不要为了考查而强行挖空）：")
-					.append(String.join("、", optional));
+			sb.append("\n这些功能词可自然出现，不必刻意挖空：").append(String.join("、", optional));
 		}
-		sb.append("\n\n要求：\n");
-		sb.append("1) 每个对话 6-10 轮，两个角色 A、B 交替你一言我一语，场景生活化、前后连贯，能读出完整的小情节；\n");
-		sb.append("2) 先写出完整、语法正确的英文句，再把本行要考查的 1 个目标词用 [[word]] 包裹；不要使用 ___；\n");
-		sb.append("3) [[...]] 里的词必须逐字来自上面的重点考查单词；一行最多标记 1 个；没有目标词的行不要加任何标记；\n");
-		sb.append("4) 每个对话只挖 3-5 个空，其余台词必须是完整的自然英文；组内多个对话合起来覆盖本组单词；\n");
-		sb.append("5) 挖空的那句要写成该词最常见、最像课本例句的句子（先想好搭配再写整句），"
-				+ "某个词在当前情节里放不进去就换一个词，禁止为了塞词而硬造句子；\n");
-		sb.append("5) 禁止生造词形（memorys、kisss、hanged、feeded、tooths、diarys、dishs、encourageing 等一律禁止），"
-				+ "必须使用正确拼写和正确词形；\n");
-		sb.append("6) 主谓一致、时态一致、冠词与单复数正确；禁止让 themselves/severally 这类词充当主语或生硬作表语；\n");
-		sb.append("7) 禁止连续重复词（a a / the the / is is / can can / to to 等）；同一个词不要在同一行标记两次；\n");
-		sb.append("8) 每行都必须是课本水平、通顺自然的英文，句子成分完整，不得出现残句或答非所问；\n");
-		sb.append("9) zh 是该行英文的自然中文翻译，不得出现 [[ ]] 标记，也不得夹带英文单词；\n");
-		sb.append("10) answers 可以留空，系统会根据 [[...]] 自动生成。");
+		sb.append("\n\n写作要求：\n");
+		sb.append("1) 只写 1 个情景，8-14 轮 A、B 交替，有起因、经过、结尾，是一段连贯的小故事或真实生活片段；"
+				+ "严禁写成 “What's the English for …?” / “It's ….” 这类单词问答；\n");
+		sb.append("2) 必须覆盖上面的全部目标单词，每个词至少挖 1 个空；一行的英文里最多标 1 个目标词，用 [[word]] 包裹；"
+				+ "没有目标词的行写完整、自然的英文，不要为了凑数硬加空；\n");
+		sb.append("3) [[...]] 里的词必须逐字来自目标单词表，拼写正确，可按语法需要变化时态/单复数，禁止生造词形"
+				+ "（memorys、kisss、hanged、feeded、tooths、diarys、dishs、encourageing 等一律禁止）；\n");
+		sb.append("4) 目标词放进它天然、常见的搭配里；实在放不进去就换一个目标词或换一种表达，禁止硬塞成病句；\n");
+		sb.append("5) 主谓一致、时态一致、冠词与单复数正确；禁止 a a / the the / is is / can can 这类连续重复；"
+				+ "同一个词不要在同一行标记两次；\n");
+		sb.append("6) 每一行都必须是通顺、完整、符合该年级水平的英文，不得出现残句或答非所问；\n");
+		sb.append("7) zh 是该行英文自然、完整的中文翻译，不得出现 [[ ]] 标记，也不得夹带英文单词；\n");
+		sb.append("8) words 字段列出本情景实际考到的全部单词；answers 留空，系统会根据 [[...]] 自动生成；输出 1 个情景的合法 JSON。");
 		return sb.toString();
 	}
 
@@ -400,6 +398,10 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 						marker.appendTail(sb);
 						en = sb.toString();
 					}
+					// 模型偶尔多写一个括号（如 [[railway]]] 或 [[railway]），清掉残留的方括号
+					if (en.indexOf('[') >= 0 || en.indexOf(']') >= 0) {
+						en = en.replace("[", " ").replace("]", " ").replaceAll("\\s{2,}", " ").trim();
+					}
 					if (BLANK_SUFFIX.matcher(en).find()) {
 						// 标记替换后空位直接跟字母（___s / ___ed）会被拼成错误词形，整行丢弃
 						continue;
@@ -441,8 +443,8 @@ public class EnglishScenarioServiceImpl implements EnglishScenarioService {
 					}
 
 					EnglishScenarioLine line = new EnglishScenarioLine();
-					String speaker = firstString(rawLine, "speaker", "role", "who", "name");
-					line.setSpeaker((speaker == null || speaker.trim().isEmpty()) ? (idx % 2 == 0 ? "A" : "B") : speaker.trim());
+					// 模型给的 speaker 经常连排或从 B 开始，统一按顺序强制 A/B 交替
+					line.setSpeaker(idx % 2 == 0 ? "A" : "B");
 					line.setEn(en);
 					line.setZh(repairChinese(
 							nullToEmpty(firstString(rawLine, "zh", "cn", "chinese", "translation")), meanings));

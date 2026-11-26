@@ -31,6 +31,18 @@ public interface EnglishScenarioPackService {
 	EnglishScenarioPackView generate(String version, String grade, String term, String unit);
 
 	/**
+	 * 按单元生成情景内容包预览，可选择只生成单词情景。
+	 *
+	 * @param version  教材版本
+	 * @param grade    年级
+	 * @param term     学期/册别
+	 * @param unit     单元
+	 * @param wordOnly true 时只生成单词情景，跳过句式情景（用于批量重做单词剧情，避免额外 AI 调用）
+	 * @return 预览内容包（无 id）
+	 */
+	EnglishScenarioPackView generate(String version, String grade, String term, String unit, boolean wordOnly);
+
+	/**
 	 * 只重新生成已固化内容包的句式情景，保留单词情景与阅读理解缓存。
 	 *
 	 * @param version 教材版本

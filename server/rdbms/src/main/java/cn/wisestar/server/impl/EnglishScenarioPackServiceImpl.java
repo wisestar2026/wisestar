@@ -50,9 +50,6 @@ import java.util.stream.Collectors;
 @Service
 public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackService {
 
-	/** 单词情景分组大小 */
-	private static final int WORD_GROUP_SIZE = 8;
-
 	/** 句式情景分组大小 */
 	private static final int PATTERN_GROUP_SIZE = 6;
 
@@ -78,6 +75,11 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 
 	@Override
 	public EnglishScenarioPackView generate(String version, String grade, String term, String unit) {
+		return generate(version, grade, term, unit, false);
+	}
+
+	@Override
+	public EnglishScenarioPackView generate(String version, String grade, String term, String unit, boolean wordOnly) {
 		requireNotBlank(version, "教材版本");
 		requireNotBlank(grade, "年级");
 		requireNotBlank(term, "册别");
@@ -88,7 +90,8 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 				.eq(EnglishWord::getGrade, grade)
 				.eq(EnglishWord::getTerm, term)
 				.eq(EnglishWord::getUnit, unit)
-				.orderByAsc(EnglishWord::getSpell));
+				.orderByAsc(EnglishWord::getSection)
+				.orderByAsc(EnglishWord::getId));
 		List<EnglishSentence> sentences = sentenceMapper.selectList(Wrappers.<EnglishSentence>lambdaQuery()
 				.eq(EnglishSentence::getVersion, version)
 				.eq(EnglishSentence::getGrade, grade)
@@ -102,11 +105,11 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		view.setTerm(term);
 		view.setUnit(unit);
 
-		// 单词情景：分组后逐组生成，按组序号合并
+		// 单词情景：按 4-8 个情景规划分组，每组 6-10 个词、生成 1 段剧情对话
 		ArrayNode wordGroups = objectMapper.createArrayNode();
 		int wordScenarioTotal = 0;
 		int wordGroupNo = 1;
-		for (List<EnglishWord> chunk : partition(words, WORD_GROUP_SIZE)) {
+		for (List<EnglishWord> chunk : planWordChunks(words)) {
 			List<EnglishScenarioWord> input = chunk.stream()
 					.map(w -> new EnglishScenarioWord(w.getSpell(), w.getMeaning()))
 					.collect(Collectors.toList());
@@ -126,10 +129,12 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 		view.setWordContent(writeGroups(wordGroups));
 		view.setWordCount(wordScenarioTotal);
 
-		// 句式情景：全单元共生成 10 个情景，按组均分后逐组生成
-		PatternDraft patternDraft = buildPatternDraft(grade, unit, sentences);
-		view.setPatternContent(patternDraft.content);
-		view.setPatternCount(patternDraft.count);
+		if (!wordOnly) {
+			// 句式情景：全单元共生成 10 个情景，按组均分后逐组生成
+			PatternDraft patternDraft = buildPatternDraft(grade, unit, sentences);
+			view.setPatternContent(patternDraft.content);
+			view.setPatternCount(patternDraft.count);
+		}
 
 		return view;
 	}
@@ -550,6 +555,32 @@ public class EnglishScenarioPackServiceImpl implements EnglishScenarioPackServic
 			this.count = count;
 		}
 
+	}
+
+	/**
+	 * 把单元单词均匀切成 4-8 组，每组 6-10 个词，每组生成 1 段剧情对话。
+	 *
+	 * <p>单词总量不足 24 个时，无法在不拆出 1-5 个词的小组的前提下凑满 4 组，
+	 * 此时按每段不超过 10 个词的上限尽量少分几组，保证每个情景的词汇密度。</p>
+	 */
+	private static List<List<EnglishWord>> planWordChunks(List<EnglishWord> words) {
+		List<List<EnglishWord>> result = new ArrayList<>();
+		if (words == null || words.isEmpty()) {
+			return result;
+		}
+		int total = words.size();
+		int sceneCount = (int) Math.ceil(total / 10.0);
+		sceneCount = Math.min(8, Math.max(4, sceneCount));
+		sceneCount = Math.min(sceneCount, Math.max(1, total / 6));
+		int base = total / sceneCount;
+		int remainder = total % sceneCount;
+		int cursor = 0;
+		for (int i = 0; i < sceneCount; i++) {
+			int size = base + (i < remainder ? 1 : 0);
+			result.add(new ArrayList<>(words.subList(cursor, cursor + size)));
+			cursor += size;
+		}
+		return result;
 	}
 
 	private static <T> List<List<T>> partition(List<T> list, int size) {

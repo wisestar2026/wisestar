@@ -24,9 +24,8 @@ import {
   generateSentencePack, saveSentencePack, listSentencePacks,
   getSentencePackDetail, deleteSentencePack, listSentencePackUnits, recalibrateSentencePacks,
 } from '../../api/sentencePack';
+import { ENGLISH_VERSIONS as VERSIONS, gradeOptionsOfVersion } from '../../utils/englishOptions';
 
-const VERSIONS = ['人教版', '苏教版', '北师大版', '外研版'];
-const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 const TERMS = ['上册', '下册'];
 const FALLBACK_UNITS = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6', 'Unit 7', 'Unit 8'];
 
@@ -367,7 +366,7 @@ export default function SentencePackManagePage() {
             style={{ width: 120 }}
             value={grade || undefined}
             onChange={(v) => setGrade(v || '')}
-            options={GRADES.map((v) => ({ value: v, label: v }))}
+            options={gradeOptionsOfVersion(version)}
           />
           <Select
             placeholder="册别"
@@ -472,7 +471,7 @@ export default function SentencePackManagePage() {
             style={{ width: 110 }}
             value={grade || undefined}
             onChange={(v) => { setGrade(v || ''); setPage(1); setTimeout(() => loadList(1, pageSize), 0); }}
-            options={GRADES.map((v) => ({ value: v, label: v }))}
+            options={gradeOptionsOfVersion(version)}
           />
           <Select
             placeholder="册别筛选"

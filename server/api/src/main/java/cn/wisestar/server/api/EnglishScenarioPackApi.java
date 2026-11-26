@@ -38,8 +38,9 @@ public class EnglishScenarioPackApi {
 			@RequestParam String version,
 			@RequestParam String grade,
 			@RequestParam String term,
-			@RequestParam String unit) {
-		return scenarioPackService.generate(version, grade, term, unit);
+			@RequestParam String unit,
+			@RequestParam(defaultValue = "false") boolean wordOnly) {
+		return scenarioPackService.generate(version, grade, term, unit, wordOnly);
 	}
 
 	/**

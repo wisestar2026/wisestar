@@ -27,9 +27,8 @@ import {
   DeleteOutlined, ReloadOutlined,
 } from '@ant-design/icons';
 import request from '../../api/request';
+import { ENGLISH_VERSIONS as VERSIONS, gradeOptionsOfVersion } from '../../utils/englishOptions';
 
-const VERSIONS = ['人教版', '苏教版', '北师大版', '外研版'];
-const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'];
 const UNITS = ['Unit 1', 'Unit 2', 'Unit 3', 'Unit 4', 'Unit 5', 'Unit 6', 'Unit 7', 'Unit 8'];
 
 const { Paragraph, Text } = Typography;
@@ -366,7 +365,7 @@ export default function WordAiManagePage() {
             style={{ width: 120 }}
             value={grade || undefined}
             onChange={(v) => setGrade(v || '')}
-            options={GRADES.map((v) => ({ value: v, label: v }))}
+            options={gradeOptionsOfVersion(version)}
           />
           <Select
             placeholder="单元"
@@ -465,7 +464,7 @@ export default function WordAiManagePage() {
               setPage(next);
               setTimeout(() => loadList(next, pageSize, true), 0);
             }}
-            options={GRADES.map((v) => ({ value: v, label: v }))}
+            options={gradeOptionsOfVersion(version)}
           />
           <Select
             placeholder="单元筛选"

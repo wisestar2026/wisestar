@@ -23,6 +23,10 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined, DownloadOut
 import { usePermission } from '../../utils/usePermission';
 import { getSections, fillDictionary } from '../../api/englishAdmin';
 import { speakEnglish } from '../../utils/english';
+import {
+  ENGLISH_VERSION_OPTIONS,
+  gradeOptionsOfVersion,
+} from '../../utils/englishOptions';
 
 const API_BASE = '/api/english/word-manager';
 
@@ -344,23 +348,8 @@ export default function WordManagePage() {
 
       {/* 筛选栏 */}
       <Space wrap style={{ marginBottom: 16 }}>
-        <Select placeholder="教材版本" allowClear style={{ width: 120 }} value={version} onChange={setVersion} options={[
-          { value: '人教版', label: '人教版' },
-          { value: '苏教版', label: '苏教版' },
-          { value: '北师大版', label: '北师大版' },
-          { value: '外研版', label: '外研版' },
-        ]} />
-        <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade} onChange={setGrade} options={[
-          { value: '一年级', label: '一年级' },
-          { value: '二年级', label: '二年级' },
-          { value: '三年级', label: '三年级' },
-          { value: '四年级', label: '四年级' },
-          { value: '五年级', label: '五年级' },
-          { value: '六年级', label: '六年级' },
-          { value: '七年级', label: '七年级' },
-          { value: '八年级', label: '八年级' },
-          { value: '九年级', label: '九年级' },
-        ]} />
+        <Select placeholder="教材版本" allowClear style={{ width: 120 }} value={version} onChange={setVersion} options={ENGLISH_VERSION_OPTIONS} />
+        <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade} onChange={setGrade} options={gradeOptionsOfVersion(version)} />
         <Select placeholder="册别" allowClear style={{ width: 90 }} value={term} onChange={setTerm} options={[
           { value: '上册', label: '上册' },
           { value: '下册', label: '下册' },
@@ -430,25 +419,10 @@ export default function WordManagePage() {
           </Form.Item>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 16 }}>
             <Form.Item name="version" label="版本">
-              <Select options={[
-                { value: '人教版', label: '人教版' },
-                { value: '苏教版', label: '苏教版' },
-                { value: '北师大版', label: '北师大版' },
-                { value: '外研版', label: '外研版' },
-              ]} />
+              <Select options={ENGLISH_VERSION_OPTIONS} />
             </Form.Item>
             <Form.Item name="grade" label="年级">
-              <Select options={[
-                { value: '一年级', label: '一年级' },
-                { value: '二年级', label: '二年级' },
-                { value: '三年级', label: '三年级' },
-                { value: '四年级', label: '四年级' },
-                { value: '五年级', label: '五年级' },
-                { value: '六年级', label: '六年级' },
-                { value: '七年级', label: '七年级' },
-                { value: '八年级', label: '八年级' },
-                { value: '九年级', label: '九年级' },
-              ]} />
+              <Select options={gradeOptionsOfVersion(watchedVersion)} />
             </Form.Item>
             <Form.Item name="term" label="册别">
               <Select allowClear options={[

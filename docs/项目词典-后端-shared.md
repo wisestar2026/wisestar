@@ -3173,6 +3173,8 @@
 - 方法:
   - `EnglishScenarioPackView generate(String version, String grade, String term, String unit)`
     按单元生成情景内容包预览（分组调用 AI，不落库）。
+  - `EnglishScenarioPackView generate(String version, String grade, String term, String unit, boolean wordOnly)`
+    同上；`wordOnly=true` 只生成单词情景、跳过句式情景（用于批量重做单词剧情，减少 AI 调用）。
   - `EnglishScenarioPackView savePack(EnglishScenarioPackView pack)`
     保存情景内容包（同 版本+年级+册别+单元 覆盖更新）。
   - `PaginationResponse<EnglishScenarioPackView> listPacks(EnglishScenarioPackQuery query)`
@@ -3192,10 +3194,10 @@
 - 包: `cn.wisestar.server.service`
 - 类型: `interface EnglishScenarioService`
 - **类说明**：
-  英语情景对话生成服务（按分组子集生成，供内容包预生成调用）：依据给定的一组单元单词调用系统 AI 生成若干生活情景对话并把目标单词挖空，结果不落库，由调用方（情景内容包服务）负责分组编排与固化。
+  英语情景对话生成服务（按分组子集生成，供内容包预生成调用）：依据给定的一组单元单词（通常 6–10 个）调用系统 AI 生成 1 段完整 A/B 剧情对话并把目标单词逐词挖空，结果不落库，由调用方（情景内容包服务）负责分组编排与固化。
 - 方法:
   - `List<EnglishScenarioView> generateFromWords(String grade, String unit, List<EnglishScenarioWord> words)`
-    按一组单词生成情景对话练习（3-4 个场景），无可用单词时返回空列表。
+    按一组单词生成 1 段情景对话（模型可能返回多个，按质量闸门过滤），无可用单词时返回空列表。
 
 ### `shared/src/main/java/cn/wisestar/server/service/EnglishSentencePackService.java`
 - 包: `cn.wisestar.server.service`

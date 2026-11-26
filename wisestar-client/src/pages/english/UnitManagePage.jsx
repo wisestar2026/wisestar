@@ -21,12 +21,14 @@ import { useEffect, useState } from 'react';
 import { Table, Space, Button, Input, Select, Modal, Form, message, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { usePermission } from '../../utils/usePermission';
+import {
+  ENGLISH_VERSION_OPTIONS as VERSION_OPTIONS,
+  gradeOptionsOfVersion,
+} from '../../utils/englishOptions';
 
 const API_BASE = '/api/english/unit';
 const { Title } = Typography;
 
-const VERSION_OPTIONS = ['人教版', '苏教版', '北师大版', '外研版'].map((v) => ({ value: v, label: v }));
-const GRADE_OPTIONS = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'].map((g) => ({ value: g, label: g }));
 const TERM_OPTIONS = ['上册', '下册'].map((t) => ({ value: t, label: t }));
 
 export default function UnitManagePage() {
@@ -45,6 +47,7 @@ export default function UnitManagePage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
+  const formVersion = Form.useWatch('version', form);
 
   const loadList = () => {
     setLoading(true);
@@ -165,7 +168,7 @@ export default function UnitManagePage() {
 
       <Space wrap style={{ marginBottom: 16 }}>
         <Select placeholder="教材版本" allowClear style={{ width: 120 }} value={version || undefined} onChange={setVersion} options={VERSION_OPTIONS} />
-        <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade || undefined} onChange={setGrade} options={GRADE_OPTIONS} />
+        <Select placeholder="年级" allowClear style={{ width: 100 }} value={grade || undefined} onChange={setGrade} options={gradeOptionsOfVersion(version)} />
         <Select placeholder="册别" allowClear style={{ width: 90 }} value={term || undefined} onChange={setTerm} options={TERM_OPTIONS} />
         <Input placeholder="单元" allowClear style={{ width: 160 }} value={unit} onChange={(e) => setUnit(e.target.value)} onPressEnter={loadList} />
         <Button type="primary" onClick={loadList}>查询</Button>
@@ -201,7 +204,7 @@ export default function UnitManagePage() {
             <Select options={VERSION_OPTIONS} />
           </Form.Item>
           <Form.Item name="grade" label="年级" rules={[{ required: true, message: '请选择年级' }]}>
-            <Select options={GRADE_OPTIONS} />
+            <Select options={gradeOptionsOfVersion(formVersion)} />
           </Form.Item>
           <Form.Item name="term" label="册别" rules={[{ required: true, message: '请选择册别' }]}>
             <Select options={TERM_OPTIONS} />
