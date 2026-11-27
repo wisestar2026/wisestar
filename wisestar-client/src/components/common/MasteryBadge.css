@@ -1,0 +1,9 @@
+/* 掌握度徽章：固定方形 + contain，保证六档位在同行内不改变行高 */
+.mastery-badge {
+  display: inline-block;
+  flex-shrink: 0;
+  object-fit: contain;
+  vertical-align: middle;
+  user-select: none;
+  -webkit-user-drag: none;
+}

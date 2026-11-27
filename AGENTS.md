@@ -85,6 +85,7 @@ cd research-platform/client && npm install && npm run dev
 - 英语套卷练习（单元练习 `EnglishUnitPracticePage` / 语法练习 `EnglishGrammarPracticePage` / 学习诊断 `EnglishDiagnosePage`）自第 270 节起统一走 `components/student/EnglishQuizLayout`：`.engq-shell` 网格「左题卡 `.engq-card` + 右答题卡 `.engq-rail`」，与数学 `qz-shell` 同构；题卡底部放「上一题 / 进度 / 下一题」，右栏题号答题卡放「交卷」按钮（诊断页题号保留 D1/D2/D3 档位色，用 `dotStyle` 写 `--engq-dot`）。不要再把题号点放回题卡上方或在卡外单独放交卷按钮；≤1180px 单列、答题卡置底。
 - 英语填空统一「透明边框 + 浅色下划线」样式：`QuestionCard` 传 `wordFill` 时，单空也按 `.practice-word-slot` 渲染（与多空一致）；数学等其它学科不传该参数，保持单输入框。套卷「已作答」判定统一用 `utils/practiceHelpers.js#isAnsweredAnswer`。
 - 学习/练习类页面（`/student/study`、`knowledge`、`wrong`、`detect`、`diagnose`、`english/*`）不渲染 `sll-tabbar`，`StudentLayout` 会给 `.sll-main` 追加 `sll-main--no-tab`，把为悬浮导航预留的底部留白（`clamp(96u,9vw,150u)`）回收为 `24u`；新增隐藏导航的页面时复用该 class，别再让页面底部空出一大截。
+- 掌握度五颗星自 2026-11 起统一换成 `components/common/MasteryBadge` 七档徽章（`public/student-assets/mastery/mastery-{0,20,40,60,80,100}.webp`，源图已裁棋盘格、单张约 11KB；另加 `mastery-none.webp` 灰色「未学」档，仅进度恰为 0 时使用；档位与名称唯一来源 `utils/mastery.js`：未学 0%、入门 1–19%、及格 20–39%、掌握 40–59%、熟练 60–79%、变通 80–99%、优秀 100%）：章节头徽章固定在卡片右侧、60u（≤1200px 窄栏回落 42u，不再紧跟章节名），小节行 60u（与右侧文字评级同取小节进度，避免星级按通关正确率、文字按进度两套口径）、英语学习中心 68u、单元侧栏徽章固定在按钮右侧 60u、小节通关结果 128u；数学研习页与英语学习中心顶部用 `components/common/MasteryLegend` 展示七档图例；数学章节列表取消内层固定高度滚动，章节随页面整体滚动；不要再新增星星组件或用 ⭐/☆ 文本画星级。
 - 学员端学习/练习类页面（`/student/study`、`knowledge`、`wrong`、`detect`、`diagnose`、`english/*`）隐藏悬浮底部导航 `sll-tabbar`（`StudentLayout` 按路径前缀判断），避免压住题卡与选项；首页、档案、商城、个人中心保留。
 
 ## 数据库约定

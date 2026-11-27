@@ -2,6 +2,10 @@
  * StudyPage.css - 学海研习主页面（三栏悬浮卡片布局）样式
  * ============================================================ */
 
+.study-page-wrap {
+  width: 100%;
+}
+
 .study-page {
   display: grid;
   /* 左栏固定 400，中栏最多 768（640 加长 1/5，空间不足时收缩），右栏 260；整组相对全局居中 */
@@ -17,9 +21,6 @@
   padding: calc(18 * var(--page-u)) calc(14 * var(--page-u));
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - calc(200 * var(--page-u)));
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 .study-left-title {
   display: flex;
@@ -44,9 +45,6 @@
   display: flex;
   flex-direction: column;
   gap: calc(10 * var(--page-u));
-  height: calc(650 * var(--page-u));
-  overflow-y: auto;
-  scrollbar-width: thin;
 }
 
 /* 章节卡片 */
@@ -75,18 +73,29 @@
 }
 .study-chapter-info { flex: 1; min-width: 0; }
 .study-chapter-name {
+  display: flex;
+  align-items: center;
+  gap: calc(6 * var(--page-u));
+  min-width: 0;
   font-size: calc(21 * var(--page-u));
   font-weight: 800;
   color: #2b4a6b;
+}
+.study-chapter-title-text {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.study-chapter-badge {
+  flex: 0 0 auto;
+  margin-left: calc(10 * var(--page-u));
+}
 .study-chapter-sub {
-  margin-top: calc(2 * var(--page-u));
-  font-size: calc(21 * var(--page-u));
-  font-weight: 800;
-  color: #2b4a6b;
+  margin-top: calc(3 * var(--page-u));
+  font-size: calc(16 * var(--page-u));
+  font-weight: 600;
+  color: #6b8aa6;
 }
 .study-chapter-progress {
   margin-top: calc(5 * var(--page-u));
@@ -216,8 +225,7 @@
 .study-kp-act.green  { background: #4caf50; }
 .study-kp-act.purple { background: #8e5cf0; }
 .study-kp.locked { opacity: 0.55; cursor: not-allowed; }
-.study-kp-stars { letter-spacing: calc(1 * var(--page-u)); }
-.star-rating { display: inline-flex; gap: calc(1 * var(--page-u)); line-height: 1; white-space: nowrap; }
+.study-kp-badge { flex: 0 0 auto; }
 .study-kp-stat.pct b { color: #2196f3; }
 .study-kp-pass {
   font-size: calc(19.5 * var(--page-u)); font-weight: 700; color: #2e7d32;
@@ -315,7 +323,7 @@
   font-weight: 800;
   color: #2b4a6b;
 }
-.study-sec-title .study-kp-stars { flex-shrink: 0; }
+.study-sec-title .study-kp-badge { flex-shrink: 0; }
 .study-sec-name {
   flex: 0 1 auto;
   min-width: 0;
@@ -334,6 +342,12 @@
 .study-sec-imp.key    { color: #e8720c; background: #fff3e6; border-color: #ffd6ab; }
 .study-sec-imp.minor  { color: #b8860b; background: #fff9e6; border-color: #ffe9a8; }
 .study-sec-imp.normal { color: #7b93a8; background: #f1f5f9; border-color: #e2e8f0; }
+.study-sec-level {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(8 * var(--page-u));
+  flex-shrink: 0;
+}
 .study-sec-mastery {
   flex-shrink: 0;
   font-size: calc(19.5 * var(--page-u));
@@ -737,4 +751,8 @@
 @media (max-width: 1000px) {
   .study-page { grid-template-columns: 1fr; }
   .study-left, .study-center { max-height: none; }
+}
+/* 窄屏左栏只有 300u，双倍徽章会挤掉章节名，收回到 42u 保证标题可读 */
+@media (max-width: 1200px) {
+  .study-chapter-badge { max-width: calc(42 * var(--page-u)); max-height: calc(42 * var(--page-u)); }
 }

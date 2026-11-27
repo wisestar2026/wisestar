@@ -24,6 +24,8 @@ import WrongBookPanel from '../../components/student/WrongBookPanel';
 import HandRaiseButton from '../../components/student/HandRaiseButton';
 import RichContent from '../../components/common/RichContent';
 import IconTile from '../../components/common/IconTile';
+import MasteryBadge from '../../components/common/MasteryBadge';
+import { usePageUnit } from '../../utils/pageScale';
 import './KnowledgePage.css';
 
 // 专项练习可选题型（与后端 questionTypes 对齐）
@@ -69,6 +71,7 @@ function normBlank(s) {
 // 四种模式 tab 配置
 // 预习讲解内容（按知识点生成 mock 要点）
 export default function KnowledgePage() {
+  const pageScale = usePageUnit();
   const [searchParams] = useSearchParams();
   const tab = searchParams.get('tab') || 'preview';
   const sectionId = searchParams.get('sectionId'); // 小节练习入口
@@ -1023,11 +1026,11 @@ export default function KnowledgePage() {
                                       <div className={`trial-result-title ${realResult.passed ? 'pass' : 'fail'}`}>
                                         {realResult.passed ? '🎉 通关成功' : '💪 本次未通关'}
                                       </div>
-                                      <div className="trial-stars">
-                                        {'⭐'.repeat(realResult.stars || 0)}{'☆'.repeat(5 - (realResult.stars || 0))}
+                                      <div className="trial-mastery">
+                                        <MasteryBadge value={realResult.rate ?? 0} size={Math.round(128 * pageScale)} />
                                       </div>
                                       <div className="trial-result-meta">
-                                        正确率 {realResult.rate ?? 0}% · 通关线 {realResult.passRate ?? 80}% · 历史最佳 {realResult.bestRate ?? 0}%（{realResult.bestStars ?? 0} 星）
+                                        正确率 {realResult.rate ?? 0}% · 通关线 {realResult.passRate ?? 80}% · 历史最佳 {realResult.bestRate ?? 0}%
                                       </div>
                                       <div className="trial-result-tags">
                                         {realResult.firstPass && <span className="trial-tag first">首次通关</span>}

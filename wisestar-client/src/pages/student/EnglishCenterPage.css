@@ -117,7 +117,8 @@
 .eng-stat { flex: 1; }
 .eng-unit-mastery { display: flex; align-items: center; gap: calc(6 * var(--page-u)); margin-top: calc(10 * var(--page-u)); }
 .eng-unit-mastery-label { font-size: calc(18 * var(--page-u)); color: #5b7f92; white-space: nowrap; }
-.eng-unit-mastery-stars { line-height: 1; }
+.eng-unit-mastery-badge { flex: 0 0 auto; }
+.eng-aside-mastery-badge { flex: 0 0 auto; }
 .eng-unit-mastery-val { font-size: calc(18 * var(--page-u)); font-weight: 800; color: #2e9e5b; margin-left: auto; }
 .eng-stat-label { font-size: calc(18 * var(--page-u)); color: #5b7f92; display: flex; align-items: baseline; gap: calc(10 * var(--page-u)); }
 .eng-stat-label span:last-child { font-weight: 800; color: #1d6d99; }
@@ -734,10 +735,13 @@ input.eng-dictation-field:focus {
 .eng-aside-list { display: flex; flex-direction: column; gap: calc(10 * var(--page-u)); flex: 1; }
 .eng-aside-item {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--page-u));
   border: none;
   background: #ffffff;
   border-radius: calc(16 * var(--page-u));
-  padding: calc(12 * var(--page-u)) calc(10 * var(--page-u)) calc(10 * var(--page-u));
+  padding: calc(12 * var(--page-u)) calc(12 * var(--page-u)) calc(10 * var(--page-u));
   font-size: calc(19 * var(--page-u));
   line-height: 1.35;
   font-weight: 800;
@@ -752,14 +756,12 @@ input.eng-dictation-field:focus {
   color: #fff;
   box-shadow: 0 calc(8 * var(--page-u)) calc(18 * var(--page-u)) rgba(75, 183, 232, 0.35);
 }
+.eng-aside-main { flex: 1; min-width: 0; }
 .eng-aside-name { display: block; line-height: 1.35; word-break: break-word; }
-/* 单元达成进度（星级 + 百分比 + 细进度条，口径同数学章节学习完成度） */
+/* 单元达成进度（百分比 + 细进度条，徽章单独固定在右侧） */
 .eng-aside-progress {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: calc(4 * var(--page-u)) calc(6 * var(--page-u));
   margin-top: calc(6 * var(--page-u));
   line-height: 1;
 }

@@ -473,7 +473,7 @@
 .trial-result-title { font-size: calc(20 * var(--page-u)); font-weight: 800; }
 .trial-result-title.pass { color: #2e7d32; }
 .trial-result-title.fail { color: #e65100; }
-.trial-stars { font-size: calc(20 * var(--page-u)); letter-spacing: calc(2 * var(--page-u)); margin-top: calc(6 * var(--page-u)); }
+.trial-mastery { display: flex; justify-content: center; margin-top: calc(8 * var(--page-u)); }
 .trial-result-meta { margin-top: calc(6 * var(--page-u)); font-size: calc(13 * var(--page-u)); color: #607d8b; }
 .trial-result-tags { display: flex; gap: calc(8 * var(--page-u)); justify-content: center; margin-top: calc(8 * var(--page-u)); flex-wrap: wrap; }
 .trial-tag { font-size: calc(12 * var(--page-u)); padding: calc(2 * var(--page-u)) calc(10 * var(--page-u)); border-radius: calc(999 * var(--page-u)); }

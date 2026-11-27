@@ -20,7 +20,9 @@ import { message } from 'antd';
 import useStudentStore, { SUBJECTS, masteryLevel } from '../../stores/useStudentStore';
 import { getStudySections, uploadActivity, getStudentStats } from '../../api/student';
 import IconTile from '../../components/common/IconTile';
-import StarRating from '../../components/common/StarRating';
+import MasteryBadge from '../../components/common/MasteryBadge';
+import MasteryLegend from '../../components/common/MasteryLegend';
+import { masteryTier } from '../../utils/mastery';
 import { IMPORTANCE_META } from '../../utils/importance';
 import { usePageUnit } from '../../utils/pageScale';
 import './StudyPage.css';
@@ -36,11 +38,10 @@ const ACTION_BUTTONS = [
 // 章节图标底座循环色调（让左栏章节有层次、不单调）
 const CHAPTER_TONES = ['blue', 'orange', 'green', 'purple', 'teal', 'pink'];
 
-// 小节「掌握情况」文字挡位：未练习（0%）显示「陌生」，其余沿用掌握度评级
+// 小节「掌握情况」文字挡位：与顶部勋章图例同源（未学/入门/及格/掌握/熟练/变通/优秀）
 const sectionMastery = (pct) => {
-  const p = Number(pct) || 0;
-  if (p <= 0) return { label: '陌生', color: '#94a3b8' };
-  return masteryLevel(p);
+  const tier = masteryTier(pct);
+  return { label: tier.label, color: tier.color };
 };
 
 export default function StudyPage() {
@@ -267,7 +268,9 @@ export default function StudyPage() {
   };
 
   return (
-    <div className="sll-page-enter study-page">
+    <div className="sll-page-enter study-page-wrap">
+      <MasteryLegend />
+      <div className="study-page">
       {/* ---- 左栏: 章节学海洲岛导航 ---- */}
       <aside className="sll-card study-left">
         <div className="study-left-title">
@@ -290,8 +293,7 @@ export default function StudyPage() {
                   <IconTile emoji={ch.icon || '📖'} tone={CHAPTER_TONES[ci % CHAPTER_TONES.length]} size="md" />
                   <div className="study-chapter-info">
                     <div className="study-chapter-name">
-                      {ch.name}
-                      {realMode && <StarRating value={ch.progress || 0} size={Math.round(13 * pageScale)} className="study-chapter-stars" />}
+                      <span className="study-chapter-title-text">{ch.name}</span>
                     </div>
                     {realMode ? (
                       <div className="study-chapter-sub">
@@ -303,6 +305,13 @@ export default function StudyPage() {
                       </div>
                     )}
                   </div>
+                  {realMode && (
+                    <MasteryBadge
+                      value={ch.progress || 0}
+                      size={Math.round(60 * pageScale)}
+                      className="study-chapter-badge"
+                    />
+                  )}
                   {!realMode && <span className="study-chapter-pct">{ch.progress}%</span>}
                   <span className={`study-chapter-arrow ${active ? 'open' : ''}`}>▾</span>
                 </div>
@@ -480,10 +489,8 @@ export default function StudyPage() {
                 activeSections.map((sec) => {
                   const locked = !!sec.locked;
                   const questionCount = sec.questionCount ?? 0;
-                  const correctCount = sec.correctCount ?? 0;
                   const answeredCount = sec.answeredCount ?? 0;
-                  // 星星沿用「通关进度」口径：已答对的不同题目数 / 该小节题量
-                  const passRate = questionCount > 0 ? Math.round((correctCount / questionCount) * 100) : 0;
+                  // 徽章与右侧文字评级同口径：小节进度（0-100），避免星星（通关正确率）与文字评级互相打架
                   const secProgress = sec.progress ?? 0;
                   const lv = sectionMastery(secProgress);
                   const imp = IMPORTANCE_META[sec.importance];
@@ -514,8 +521,14 @@ export default function StudyPage() {
                           <div className="study-sec-title">
                             <span className="study-sec-name">{sec.name}</span>
                             {imp && <span className={`study-sec-imp ${sec.importance}`}>{imp.label}</span>}
-                            <StarRating value={passRate} size={Math.round(17 * pageScale)} className="study-kp-stars" />
-                            <span className="study-sec-mastery" style={{ color: lv.color }}>{lv.label}</span>
+                            <span className="study-sec-level">
+                              <MasteryBadge
+                                value={secProgress}
+                                size={Math.round(60 * pageScale)}
+                                className="study-kp-badge"
+                              />
+                              <span className="study-sec-mastery" style={{ color: lv.color }}>{lv.label}</span>
+                            </span>
                           </div>
                           <div className="study-sec-qstat">已完成 <b>{answeredCount}</b>/{questionCount} 题</div>
                         </div>
@@ -679,6 +692,7 @@ export default function StudyPage() {
           <div className="study-ai-text">{advice.text}</div>
         </div>
       </aside>
+      </div>
     </div>
   );
 }

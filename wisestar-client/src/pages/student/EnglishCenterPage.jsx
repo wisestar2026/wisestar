@@ -31,7 +31,8 @@ import {
 } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
-import StarRating from '../../components/common/StarRating';
+import MasteryBadge from '../../components/common/MasteryBadge';
+import MasteryLegend from '../../components/common/MasteryLegend';
 import {
   getEnglishUnits,
   getEnglishReviewCandidates,
@@ -62,7 +63,7 @@ export default function EnglishCenterPage() {
   // 册别由首页统一选择，本页只读展示（不可切换）
   const term = useStudentStore((s) => s.term);
   const userId = useUserStore((s) => s.user?.userId ?? s.user?.id);
-  // rem 试点：块级尺寸交给 CSS 的 --page-u，SVG 星星按同一比例缩放
+  // rem 试点：块级尺寸交给 CSS 的 --page-u，徽章等内联图标按同一比例缩放
   const pageUnitScale = usePageUnit();
 
   const [units, setUnits] = useState([]);
@@ -243,6 +244,8 @@ export default function EnglishCenterPage() {
         </div>
       )}
 
+      {active && <MasteryLegend />}
+
       {active && (
         <div className="eng-master" style={{ marginTop: 20 }}>
           <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={selectUnit} />
@@ -268,10 +271,10 @@ export default function EnglishCenterPage() {
 
               <div className="eng-mastery-row">
                 <span className="eng-mastery-label">熟练度</span>
-                <StarRating
+                <MasteryBadge
                   value={active.mastery || 0}
-                  size={Math.round(26 * pageUnitScale)}
-                  className="eng-unit-mastery-stars"
+                  size={Math.round(68 * pageUnitScale)}
+                  className="eng-unit-mastery-badge"
                 />
                 <span className="eng-mastery-val">{active.mastery || 0}%</span>
               </div>

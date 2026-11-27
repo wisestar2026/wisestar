@@ -1,0 +1,71 @@
+/* 掌握度勋章等级标识：页面顶部横向说明条，尺寸随 --page-u 缩放 */
+.mastery-legend {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: calc(16 * var(--page-u));
+  padding: calc(14 * var(--page-u)) calc(22 * var(--page-u)) calc(12 * var(--page-u));
+  border-radius: calc(20 * var(--page-u));
+  border: calc(1 * var(--page-u)) solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(236, 248, 255, 0.86) 100%);
+  box-shadow: 0 calc(12 * var(--page-u)) calc(28 * var(--page-u)) rgba(23, 107, 158, 0.12);
+}
+
+.mastery-legend-head {
+  display: flex;
+  align-items: baseline;
+  gap: calc(12 * var(--page-u));
+  margin-bottom: calc(8 * var(--page-u));
+  padding: 0 calc(4 * var(--page-u));
+}
+
+.mastery-legend-title {
+  font-size: calc(22 * var(--page-u));
+  font-weight: 800;
+  color: #1d6d99;
+  letter-spacing: calc(1 * var(--page-u));
+}
+
+.mastery-legend-sub {
+  font-size: calc(15 * var(--page-u));
+  font-weight: 600;
+  color: #6b8aa6;
+}
+
+.mastery-legend-list {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(8 * var(--page-u));
+  flex-wrap: wrap;
+}
+
+.mastery-legend-item {
+  flex: 1 1 0;
+  min-width: calc(74 * var(--page-u));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(5 * var(--page-u));
+}
+
+.mastery-legend-pill {
+  min-width: calc(58 * var(--page-u));
+  padding: calc(1 * var(--page-u)) calc(10 * var(--page-u));
+  border-radius: calc(999 * var(--page-u));
+  color: #fff;
+  font-size: calc(15 * var(--page-u));
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.mastery-legend-range {
+  font-size: calc(13 * var(--page-u));
+  font-weight: 700;
+  color: #7b93a8;
+}
+
+@media (max-width: 760px) {
+  .mastery-legend-list { justify-content: flex-start; }
+  .mastery-legend-item { flex: 0 0 calc(74 * var(--page-u)); }
+}
