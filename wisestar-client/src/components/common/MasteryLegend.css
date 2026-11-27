@@ -69,3 +69,34 @@
   .mastery-legend-list { justify-content: flex-start; }
   .mastery-legend-item { flex: 0 0 calc(74 * var(--page-u)); }
 }
+
+/* 紧凑版：英语学习中心等需要「单屏不滚动」的页面，压缩图例高度 */
+.mastery-legend--compact {
+  margin-bottom: calc(10 * var(--page-u));
+  padding: calc(8 * var(--page-u)) calc(16 * var(--page-u)) calc(6 * var(--page-u));
+  border-radius: calc(16 * var(--page-u));
+}
+.mastery-legend--compact .mastery-legend-head {
+  margin-bottom: calc(4 * var(--page-u));
+  gap: calc(8 * var(--page-u));
+}
+.mastery-legend--compact .mastery-legend-title {
+  font-size: calc(17 * var(--page-u));
+  letter-spacing: calc(0.5 * var(--page-u));
+}
+.mastery-legend--compact .mastery-legend-sub {
+  font-size: calc(12 * var(--page-u));
+}
+.mastery-legend--compact .mastery-legend-item {
+  gap: calc(2 * var(--page-u));
+  min-width: calc(60 * var(--page-u));
+}
+.mastery-legend--compact .mastery-legend-pill {
+  min-width: calc(46 * var(--page-u));
+  padding: calc(0 * var(--page-u)) calc(8 * var(--page-u));
+  font-size: calc(12 * var(--page-u));
+  line-height: 1.35;
+}
+.mastery-legend--compact .mastery-legend-range {
+  font-size: calc(11 * var(--page-u));
+}

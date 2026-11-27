@@ -58,6 +58,8 @@ export default function StudentLayout() {
   const { logout } = useUserStore();
   // 阅读理解进入专注模式：收起底部导航与悬浮按钮，把可用高度让给短文/题目容器
   const readingFocus = location.pathname.startsWith('/student/english/reading');
+  // 英语学习中心锁定为一屏：整页不滚动，左侧单元栏在栏内自行滚动
+  const englishCenterFit = location.pathname === '/student/english';
 
   // 挂载时加载学员有效权限与真实学科（订单授予范围）
   useEffect(() => {
@@ -206,7 +208,7 @@ export default function StudentLayout() {
   ];
 
   return (
-    <div className={`sll-page${readingFocus ? ' sll-focus-read' : ''}`}>
+    <div className={`sll-page${readingFocus ? ' sll-focus-read' : ''}${englishCenterFit ? ' sll-fit' : ''}`}>
       {/* 背景装饰: 海面波浪 + 云朵 */}
       <div className="sll-wave sll-wave-back" />
       <div className="sll-wave sll-wave-front" />

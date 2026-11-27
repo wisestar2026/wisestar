@@ -207,7 +207,7 @@ export default function EnglishCenterPage() {
   };
 
   return (
-    <div className="eng-page eng-page--aside">
+    <div className="eng-page eng-page--aside eng-center">
       <div className="eng-hero">
         <div>
           <div className="eng-hero-eyebrow">海洋智学 · 英语学习航线</div>
@@ -244,10 +244,10 @@ export default function EnglishCenterPage() {
         </div>
       )}
 
-      {active && <MasteryLegend />}
+      {active && <MasteryLegend compact />}
 
       {active && (
-        <div className="eng-master" style={{ marginTop: 20 }}>
+        <div className="eng-master eng-center-master">
           <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={selectUnit} />
 
           <div className="eng-detail">
