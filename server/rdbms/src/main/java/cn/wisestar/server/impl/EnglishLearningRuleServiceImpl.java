@@ -433,16 +433,18 @@ public class EnglishLearningRuleServiceImpl implements EnglishLearningRuleServic
 		view.setReviewDueWord(dueWord);
 		view.setReviewDueSentence(dueSentence);
 		view.setReviewDueGrammar(dueGrammar);
-		view.setSentencePassRate(sentencePassRate(userId, version, grade, term, unit));
+		int sentenceMastered = countSentenceMastered(userId, version, grade, term, unit);
+		view.setSentenceMastered(sentenceMastered);
+		view.setSentencePassRate(EnglishStateRule.percent(sentenceMastered, view.getSentenceCount()));
 		return view;
 	}
 
 	/**
-	 * 句式通关率：句子本熟练度 >= 3 的比例。
+	 * 句式掌握数：句子本记忆熟练度 >= 3 且累计正确率 >= 80% 的句子数。
 	 *
-	 * <p>句式按单元整体判定，不再细分小节；分子只统计已进入句子本的句子。</p>
+	 * <p>与单词掌握同一套「双证据」口径；句式按单元整体判定，不再细分小节。</p>
 	 */
-	private Integer sentencePassRate(String userId, String version, String grade, String term, String unit) {
+	private int countSentenceMastered(String userId, String version, String grade, String term, String unit) {
 		List<EnglishSentence> sentences = sentenceMapper.selectList(Wrappers.<EnglishSentence>lambdaQuery()
 				.eq(EnglishSentence::getVersion, version)
 				.eq(EnglishSentence::getGrade, grade)
@@ -455,15 +457,15 @@ public class EnglishLearningRuleServiceImpl implements EnglishLearningRuleServic
 		for (EnglishSentence sentence : sentences) {
 			ids.add(sentence.getId());
 		}
-		int passed = 0;
+		int mastered = 0;
 		for (EnglishSentenceBook book : sentenceBookMapper.selectList(Wrappers.<EnglishSentenceBook>lambdaQuery()
 				.eq(EnglishSentenceBook::getUserId, userId)
 				.in(EnglishSentenceBook::getSentenceId, ids))) {
-			if (nz(book.getFamiliarity()) >= 3) {
-				passed++;
+			if (EnglishMastery.sentenceLevel(book) == EnglishMastery.LEVEL_MASTERED) {
+				mastered++;
 			}
 		}
-		return EnglishStateRule.percent(passed, sentences.size());
+		return mastered;
 	}
 
 	private void collectWordCandidates(String userId, String version, String grade, String term, String unit,

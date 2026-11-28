@@ -34,6 +34,9 @@ public class EnglishUnitProgressView {
 	/** 已学习句子数（熟练度 >= 1） */
 	private Integer sentenceFinished;
 
+	/** 已掌握句子数（记忆熟练度 >= 3 且累计正确率 >= 80%） */
+	private Integer sentenceMastered;
+
 	/** 已学习语法点数（熟练度 >= 1） */
 	private Integer grammarFinished;
 
@@ -55,7 +58,7 @@ public class EnglishUnitProgressView {
 	/** 单词小节通关率（已通关小节 / 小节总数，百分比） */
 	private Integer wordPassRate;
 
-	/** 句式通关率（已通关句子 / 句子总数，百分比） */
+	/** 句式掌握率（已掌握句子 / 句子总数，百分比） */
 	private Integer sentencePassRate;
 
 	/** 待复习单词数 */

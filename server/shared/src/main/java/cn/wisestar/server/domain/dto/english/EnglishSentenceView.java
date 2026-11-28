@@ -64,4 +64,10 @@ public class EnglishSentenceView {
 	/** 掌握三态中文标签：熟练 / 一般 / 陌生 */
 	private String masteryStateLabel;
 
+	/** 掌握等级：0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握（与单词同一「双证据」口径） */
+	private Integer masteryLevel;
+
+	/** 掌握等级中文标签：未掌握 / 待巩固 / 熟悉 / 掌握 */
+	private String masteryLabel;
+
 }

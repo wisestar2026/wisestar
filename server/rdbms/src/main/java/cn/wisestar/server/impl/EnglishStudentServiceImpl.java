@@ -176,6 +176,7 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 			}
 
 			int sentenceFinished = 0;
+			int sentenceMastered = 0;
 			for (EnglishSentenceBook book : sentenceBooks) {
 				if (!unit.getUnit().equals(sentenceUnitById.get(book.getSentenceId()))) {
 					continue;
@@ -184,6 +185,9 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				familiaritySum += Math.min(Math.max(familiarity, 0), 4);
 				if (familiarity >= 1) {
 					sentenceFinished++;
+				}
+				if (EnglishMastery.sentenceLevel(book) == EnglishMastery.LEVEL_MASTERED) {
+					sentenceMastered++;
 				}
 			}
 
@@ -235,6 +239,10 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 				view.setWordPassRate(0);
 			}
 			view.setSentenceFinished(sentenceFinished);
+			view.setSentenceMastered(sentenceMastered);
+			int sentenceCount = unit.getSentenceCount() == null ? 0 : unit.getSentenceCount();
+			view.setSentencePassRate(sentenceCount == 0 ? 0
+					: (int) Math.round(sentenceMastered * 100.0 / sentenceCount));
 			view.setGrammarFinished(grammarFinished);
 			view.setMastery(mastery);
 			view.setReviewDue(candidates.size());
@@ -1108,6 +1116,9 @@ public class EnglishStudentServiceImpl implements EnglishStudentService {
 					: state.getState();
 			v.setMasteryState(stateValue);
 			v.setMasteryStateLabel(EnglishMastery.stateLabel(stateValue));
+			int masteryLevel = EnglishMastery.sentenceLevel(book);
+			v.setMasteryLevel(masteryLevel);
+			v.setMasteryLabel(EnglishMastery.label(masteryLevel));
 			List<String> used = usedAngles.get(v.getId());
 			v.setAngleUsed(used == null ? java.util.Collections.emptyList() : used);
 			List<String> correct = correctAngles.get(v.getId());

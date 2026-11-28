@@ -20,7 +20,8 @@ import { usePageUnit } from '../../utils/pageScale';
 
 export default function EnglishUnitAside({ units = [], activeUnit, onSelect, title = '单元', compact = false }) {
   const pageUnitScale = usePageUnit();
-  const badgeSize = Math.round((compact ? 34 : 60) * pageUnitScale);
+  // 单元选择栏勋章缩小为原来的 75%（60u→45u，compact 34u→26u）
+  const badgeSize = Math.round((compact ? 26 : 45) * pageUnitScale);
   return (
     <aside className={`eng-aside${compact ? ' eng-aside--compact' : ''}`}>
       <div className="eng-aside-title">{title}</div>

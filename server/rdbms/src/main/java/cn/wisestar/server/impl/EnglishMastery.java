@@ -1,16 +1,19 @@
 package cn.wisestar.server.impl;
 
+import cn.wisestar.server.domain.model.EnglishSentenceBook;
 import cn.wisestar.server.domain.model.EnglishWordBook;
 
 /**
- * 英语单词掌握度派生规则。
+ * 英语单词 / 句子掌握度派生规则。
  *
- * <p>掌握度不落库，读取时由单词本的三类证据计算：</p>
+ * <p>掌握度不落库，读取时由知识点本的三类证据计算：</p>
  * <ul>
  *   <li>曝光：familiarity >= 1（学习环节点过「认识」）</li>
- *   <li>练习：练习/巩固的首答正确率（重做与学习环节点击不计入）</li>
- *   <li>运用：场景对话命中该词（当前版本未归因，见开发维护日志）</li>
+ *   <li>练习：练习/巩固的答题正确率（单词取首答，重做与学习环节点击不计入）</li>
+ *   <li>运用：场景对话命中该知识点（当前版本未归因，见开发维护日志）</li>
  * </ul>
+ *
+ * <p>单词与句子采用同一套「双证据」口径：记忆稳定度（familiarity）与正确率同时达标。</p>
  *
  * <p>状态：0 未掌握（无任何记录）、1 待巩固、2 熟悉、3 掌握。</p>
  *
@@ -102,6 +105,33 @@ public final class EnglishMastery {
 	}
 
 	/**
+	 * 计算句子掌握度等级，与单词同一套「双证据」口径。
+	 *
+	 * <p>句子本没有首答统计，正确率取累计答对 /（答对 + 答错）。</p>
+	 *
+	 * @param book 句子本记录，可为空
+	 * @return 0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握
+	 */
+	public static int sentenceLevel(EnglishSentenceBook book) {
+		if (book == null) {
+			return LEVEL_NONE;
+		}
+		int familiarity = intValue(book.getFamiliarity());
+		int total = intValue(book.getCorrectCount()) + intValue(book.getWrongCount());
+		if (total <= 0) {
+			return familiarity > 0 ? LEVEL_WEAK : LEVEL_NONE;
+		}
+		int rate = answerRate(book);
+		if (rate >= MASTERED_RATE && familiarity >= 3) {
+			return LEVEL_MASTERED;
+		}
+		if (rate >= FAMILIAR_RATE && familiarity >= 2) {
+			return LEVEL_FAMILIAR;
+		}
+		return LEVEL_WEAK;
+	}
+
+	/**
 	 * 掌握度中文标签。
 	 *
 	 * @param level 掌握度等级
@@ -148,6 +178,25 @@ public final class EnglishMastery {
 		}
 		int correct = Math.min(intValue(book.getQuizFirstCorrect()), total);
 		return (int) Math.round(correct * 100.0 / total);
+	}
+
+	/**
+	 * 句子累计答题正确率（百分比，无答题记录返回 0）。
+	 *
+	 * <p>句子本没有首答字段，这里取累计答对 /（答对 + 答错）。</p>
+	 *
+	 * @param book 句子本记录
+	 * @return 0~100
+	 */
+	public static int answerRate(EnglishSentenceBook book) {
+		if (book == null) {
+			return 0;
+		}
+		int total = intValue(book.getCorrectCount()) + intValue(book.getWrongCount());
+		if (total <= 0) {
+			return 0;
+		}
+		return (int) Math.round(intValue(book.getCorrectCount()) * 100.0 / total);
 	}
 
 	/**

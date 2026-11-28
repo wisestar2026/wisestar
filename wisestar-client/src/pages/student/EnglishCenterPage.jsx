@@ -351,7 +351,11 @@ export default function EnglishCenterPage() {
                   >
                     <span className="eng-mod-icon"><MessageOutlined /></span>
                     <span className="eng-mod-title">句式通关<em>{percent(active.sentenceFinished, active.sentenceCount)}%</em></span>
-                    <span className="eng-mod-sub">连词成句 · 情景</span>
+                    <span className="eng-mod-sub">
+                      {active.sentenceMastered != null
+                        ? `掌握 ${active.sentenceMastered}/${active.sentenceCount || 0}`
+                        : '连词成句 · 情景'}
+                    </span>
                     <span className="eng-mod-track"><i style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} /></span>
                   </button>
                   <button

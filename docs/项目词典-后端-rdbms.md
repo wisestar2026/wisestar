@@ -1247,13 +1247,16 @@
 - 包: `cn.wisestar.server.impl`
 - 类型: `final class EnglishMastery`
 - **类说明**：
-  单词掌握度派生规则（不落库）。等级：0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握；
-  掌握要求首答正确率 >= 80% 且 familiarity >= 3，熟悉要求 >= 60% 且 familiarity >= 2；
-  仅有历史点击、无首答统计的数据按「待巩固」兼容。
+  单词 / 句子掌握度派生规则（不落库）。等级：0 未掌握 / 1 待巩固 / 2 熟悉 / 3 掌握；
+  两者统一采用「双证据」：掌握要求正确率 >= 80% 且 familiarity >= 3，熟悉要求 >= 60% 且 familiarity >= 2。
+  单词正确率取首答（`firstCorrectRate`），句子本无首答字段，取累计 `correctCount/(correctCount+wrongCount)`（`answerRate`）；
+  仅有历史点击、无答题统计的数据按「待巩固」兼容。
 - 方法:
   - `public static int level(EnglishWordBook book)`
+  - `public static int sentenceLevel(EnglishSentenceBook book)`
   - `public static String label(int level)`
   - `public static int firstCorrectRate(EnglishWordBook book)`
+  - `public static int answerRate(EnglishSentenceBook book)`
   - `public static int intValue(Integer value)`
 - 常量: LEVEL_NONE/LEVEL_WEAK/LEVEL_FAMILIAR/LEVEL_MASTERED、FAMILIAR_RATE(60)、MASTERED_RATE(80)、UNIT_PASS_RATE(80)、UNIT_WEAK_RATE(10)
 
@@ -1262,7 +1265,7 @@
 - 类型: `class EnglishLearningRuleServiceImpl implements EnglishLearningRuleService`
 - 注解: @Slf4j, @Service, @RequiredArgsConstructor
 - **类说明**：
-  英语学习规则服务实现：把「分阶段通关 / 薄弱攻克 / 复习派生」的可判定口径收敛到一处，学员端页面只消费本服务结果，不再各自计算阈值。`loadStates`/`angleUsed`/`angleCorrect` 批量取数避免逐条查库；`angleCorrect` 只取 `t_memory_review_log` 中 `correct=1` 的角度，供句式通关圆环按答对计数（`angleUsed` 含答错角度，不能用于进度）；`recordAnswer` 更新三态、连续正确/错误、输出题达标与阶段计数（仅首次作答计数）；`sectionProgress` 按小节汇总三阶完成与三态分布；`reviewCandidates` 按单元收敛候选（`unit` 为空时覆盖全册，单元集合由单词/句子/语法内容表推导，不依赖 `t_english_unit` 目录表）；`unitPass` 输出小节/单元通关判定；`wordPassSummary` 供列表页批量回填。阈值取自 `EnglishMastery` 与 `EnglishPassRule`，判定口径见 `EnglishStateRule`。
+  英语学习规则服务实现：把「分阶段通关 / 薄弱攻克 / 复习派生」的可判定口径收敛到一处，学员端页面只消费本服务结果，不再各自计算阈值。`loadStates`/`angleUsed`/`angleCorrect` 批量取数避免逐条查库；`angleCorrect` 只取 `t_memory_review_log` 中 `correct=1` 的角度，供句式通关圆环按答对计数（`angleUsed` 含答错角度，不能用于进度）；`recordAnswer` 更新三态、连续正确/错误、输出题达标与阶段计数（仅首次作答计数）；`sectionProgress` 按小节汇总三阶完成与三态分布；`reviewCandidates` 按单元收敛候选（`unit` 为空时覆盖全册，单元集合由单词/句子/语法内容表推导，不依赖 `t_english_unit` 目录表）；`unitPass` 输出小节/单元通关判定（句式掌握数由 `countSentenceMastered` 按 `EnglishMastery.sentenceLevel` 统计，与单词同一双证据口径）；`wordPassSummary` 供列表页批量回填。阈值取自 `EnglishMastery` 与 `EnglishPassRule`，判定口径见 `EnglishStateRule`。
 - 方法:
   - `public Map<String, EnglishLearningStateView> loadStates(String userId, List<String> modules)`
     批次加载三个模块学习状态，键为 `module|knowledgeId`。

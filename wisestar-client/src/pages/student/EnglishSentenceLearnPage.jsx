@@ -174,8 +174,8 @@ export default function EnglishSentenceLearnPage() {
   /** 该题型答对过的句子数（后端按 memory_review_log 回填 angleCorrect） */
   const angleCount = (angle) => sentences.filter((s) => (s.angleCorrect || []).includes(angle)).length;
 
-  /** 情景对话整组提交只留正确率，按 useRate 折算句子数 */
-  const scenarioDone = Math.round(((unitPass?.sentencePassRate || 0) / 100) * sentences.length);
+  /** 情景对话整组提交只留正确率，没有逐句角度记录，按已熟练（familiarity>=3）句数折算 */
+  const scenarioDone = sentences.filter((s) => (s.familiarity || 0) >= 3).length;
 
   /** 四选一题型至少需要 1 个正确项 + 3 个干扰项，本单元去重后不足 4 句时置灰 */
   const distinctEn = new Set(sentences.map((s) => String(s.en || '').trim()).filter(Boolean));
@@ -307,7 +307,7 @@ export default function EnglishSentenceLearnPage() {
 
                   {unitPass?.sentencePassRate != null && (
                     <div className="eng-stage-hint">
-                      句子练习达标率 {unitPass.sentencePassRate}%（句子熟练度 ≥ 3 的比例），
+                      句子掌握率 {unitPass.sentencePassRate}%（记忆熟练度 ≥ 3 且累计正确率 ≥ 80%），
                       四个阶段全部达标后本单元句式通关
                     </div>
                   )}
