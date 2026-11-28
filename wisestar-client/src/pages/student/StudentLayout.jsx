@@ -56,8 +56,10 @@ export default function StudentLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useUserStore();
+  // 归一化路径：去掉末尾斜杠，避免 /student/ 之类被误判为二级页（导致首页控件被置灰）
+  const pathname = location.pathname.replace(/\/+$/, '') || '/';
   // 阅读理解进入专注模式：收起底部导航与悬浮按钮，把可用高度让给短文/题目容器
-  const readingFocus = location.pathname.startsWith('/student/english/reading');
+  const readingFocus = pathname.startsWith('/student/english/reading');
 
   // 挂载时加载学员有效权限与真实学科（订单授予范围）
   useEffect(() => {
@@ -157,12 +159,12 @@ export default function StudentLayout() {
     '/student/english',
   ];
   const hideTabbar = HIDE_TABBAR_PREFIXES.some(
-    (prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`),
-  ) && location.pathname !== '/student/english'; // 学习中心保留底部导航；其下的练习子页仍沉浸作答
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  ) && pathname !== '/student/english'; // 学习中心保留底部导航；其下的练习子页仍沉浸作答
 
   // 仅在学员端首页可切换学科/年级/册别；其余页面这些控件只读（置灰展示当前值，不可操作）。
   // 教材版本不在锁定范围内，保持可切换。
-  const isHomePage = location.pathname === '/student';
+  const isHomePage = pathname === '/student';
   const lockContext = !isHomePage;
 
   // 切换学科后整页刷新：让各页数据与入口按新学科重建（避免只改文案、变化不明显）。
@@ -334,8 +336,8 @@ export default function StudentLayout() {
       {!hideTabbar && (
         <nav className="sll-tabbar">
           {tabs.map((t) => {
-            const active = t.match.includes(location.pathname)
-              || (t.path === '/student' && location.pathname.startsWith('/student/knowledge'));
+            const active = t.match.includes(pathname)
+              || (t.path === '/student' && pathname.startsWith('/student/knowledge'));
             return (
               <button
                 key={t.path}
@@ -351,8 +353,8 @@ export default function StudentLayout() {
       )}
 
       {/* ---- 左下角悬浮「返回上一级」：按信息架构回父级页面（非浏览器 history），首页不显示 ---- */}
-      {location.pathname !== '/student' && (
-        <button className="sll-back-float" onClick={() => navigate(resolveParentPath(location.pathname))} title="返回上一级">
+      {pathname !== '/student' && (
+        <button className="sll-back-float" onClick={() => navigate(resolveParentPath(pathname))} title="返回上一级">
           <ArrowLeftOutlined /> 返回上一级
         </button>
       )}

@@ -88,15 +88,15 @@
 /* 列内圆环统一尺寸：不受「首环放大」影响，三列看起来一样大 */
 .eng-sentence-col-body .eng-ring-frame,
 .eng-sentence-col-body .eng-ring-lg .eng-ring-frame {
-  width: clamp(calc(112 * var(--page-u)), 8.4vw, calc(150 * var(--page-u)));
+  width: clamp(calc(148 * var(--page-u)), 9.8vw, calc(176 * var(--page-u)));
 }
 /* 列内文案随环径轻微缩放，保证三列字数不同的题型都不溢出 */
 .eng-sentence-col-body .eng-ring-text b {
-  font-size: clamp(calc(14 * var(--page-u)), 1.05vw, calc(17 * var(--page-u)));
+  font-size: clamp(calc(15 * var(--page-u)), 1.1vw, calc(18 * var(--page-u)));
 }
 
 /* 宽屏：列间浅色竖虚线用伪元素画，保证三列内容区等宽 */
-@media (min-width: 1281px) {
+@media (min-width: 901px) {
   .eng-sentence-col { position: relative; }
   .eng-sentence-col + .eng-sentence-col::before {
     content: '';
@@ -108,8 +108,8 @@
   }
 }
 
-/* 窄屏：三列纵向堆叠，竖虚线改上边框 */
-@media (max-width: 1280px) {
+/* 窄屏（手机/竖屏平板）：三列纵向堆叠，竖虚线改上边框 */
+@media (max-width: 900px) {
   .eng-sentence-stages {
     grid-template-columns: minmax(0, 1fr);
     /* 共享骨架在窄屏用 justify-items:center 居中圆环，本页有整行标题矩形，需拉满 */

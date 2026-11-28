@@ -210,11 +210,11 @@
 .eng-ring-frame {
   position: relative;
   display: block;
-  width: clamp(calc(108 * var(--page-u)), 8.6vw, calc(148 * var(--page-u)));
+  width: clamp(calc(126 * var(--page-u)), 9.8vw, calc(172 * var(--page-u)));
   aspect-ratio: 1;
 }
 /* 主环节点（每段的第一环）放大一档，形成视觉重心 */
-.eng-ring-lg .eng-ring-frame { width: clamp(calc(128 * var(--page-u)), 10.4vw, calc(180 * var(--page-u))); }
+.eng-ring-lg .eng-ring-frame { width: clamp(calc(150 * var(--page-u)), 11.8vw, calc(206 * var(--page-u))); }
 .eng-ring-frame svg {
   width: 100%;
   height: 100%;
@@ -253,7 +253,7 @@
   align-items: center;
   justify-content: center;
   gap: calc(2 * var(--page-u));
-  padding: 0 calc(14 * var(--page-u));
+  padding: 0 19%;
   text-align: center;
   pointer-events: none;
 }
@@ -305,10 +305,10 @@
   }
 }
 
-/* 901~1280（笔记本常态宽度）：保持三列，但收紧箭头与主环，避免互相压住 */
+/* 901~1280（笔记本常态宽度）：保持三列，箭头适度收紧，圆环仍保持可读尺寸 */
 @media (min-width: 901px) and (max-width: 1280px) {
   .eng-word-stages { gap: calc(10 * var(--page-u)); }
-  .eng-word-col { gap: calc(20 * var(--page-u)); padding: calc(4 * var(--page-u)) calc(6 * var(--page-u)); }
+  .eng-word-col { gap: calc(18 * var(--page-u)); padding: calc(4 * var(--page-u)) calc(6 * var(--page-u)); }
   .eng-word-col-practice,
   .eng-word-col-use,
   .eng-word-col-scenario {
@@ -319,8 +319,8 @@
     padding: calc(9 * var(--page-u)) calc(10 * var(--page-u)) calc(9 * var(--page-u)) calc(16 * var(--page-u));
     font-size: calc(15 * var(--page-u));
   }
-  .eng-ring-lg .eng-ring-frame { width: clamp(calc(104 * var(--page-u)), 7.4vw, calc(124 * var(--page-u))); }
-  .eng-ring-frame { width: clamp(calc(88 * var(--page-u)), 6.2vw, calc(108 * var(--page-u))); }
+  .eng-ring-lg .eng-ring-frame { width: clamp(calc(168 * var(--page-u)), 10.8vw, calc(196 * var(--page-u))); }
+  .eng-ring-frame { width: clamp(calc(148 * var(--page-u)), 9.8vw, calc(176 * var(--page-u))); }
 }
 
 @media (max-width: 760px) {
@@ -336,12 +336,11 @@
   .eng-word-legend-tip { display: none; }
 }
 
-/* 侧栏占位后的中等宽度：收窄流程箭头与主环，避免三列圆环互相压住 */
+/* 侧栏占位后的中等宽度：收窄流程箭头，圆环沿用上方主尺寸，避免被压小 */
 @media (min-width: 1281px) and (max-width: 1600px) {
   .eng-arrow {
     padding: calc(10 * var(--page-u)) calc(14 * var(--page-u)) calc(10 * var(--page-u)) calc(22 * var(--page-u));
     font-size: calc(18 * var(--page-u));
   }
-  .eng-ring-lg .eng-ring-frame { width: clamp(calc(116 * var(--page-u)), 8.8vw, calc(132 * var(--page-u))); }
 }
 
