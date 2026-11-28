@@ -17,7 +17,7 @@
  *   GET /api/english/word/drill → 待巩固单词（强制巩固弹窗）
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { message } from 'antd';
 import {
@@ -31,7 +31,6 @@ import {
 } from '@ant-design/icons';
 import useStudentStore from '../../stores/useStudentStore';
 import useUserStore from '../../stores/useUserStore';
-import MasteryBadge from '../../components/common/MasteryBadge';
 import MasteryLegend from '../../components/common/MasteryLegend';
 import {
   getEnglishUnits,
@@ -44,7 +43,6 @@ import {
 import WordDrillModal from './WordDrillModal';
 import EnglishPracticeHistoryModal from '../../components/student/EnglishPracticeHistoryModal';
 import EnglishUnitAside from './EnglishUnitAside';
-import { usePageUnit } from '../../utils/pageScale';
 import './EnglishCenterPage.css';
 
 const TERMS = ['上册', '下册'];
@@ -63,9 +61,6 @@ export default function EnglishCenterPage() {
   // 册别由首页统一选择，本页只读展示（不可切换）
   const term = useStudentStore((s) => s.term);
   const userId = useUserStore((s) => s.user?.userId ?? s.user?.id);
-  // rem 试点：块级尺寸交给 CSS 的 --page-u，徽章等内联图标按同一比例缩放
-  const pageUnitScale = usePageUnit();
-
   const [units, setUnits] = useState([]);
   const [activeUnit, setActiveUnit] = useState('');
   const [loading, setLoading] = useState(false);
@@ -200,6 +195,35 @@ export default function EnglishCenterPage() {
 
   const active = units.find((u) => u.unit === activeUnit) || units[0];
 
+  // 左单元栏高度对齐右侧详情卡：列表超出时在栏内滚动，避免左栏把整页撑长。
+  // 宽屏才启用（窄屏 .eng-master 已改为上下堆叠）。
+  const masterRef = useRef(null);
+  useLayoutEffect(() => {
+    const master = masterRef.current;
+    if (!master) return undefined;
+    const aside = master.querySelector('.eng-aside');
+    const detail = master.querySelector('.eng-detail-card');
+    if (!aside || !detail) return undefined;
+    const sync = () => {
+      if (window.innerWidth <= 760) {
+        aside.style.maxHeight = '';
+        return;
+      }
+      aside.style.maxHeight = `${Math.round(detail.getBoundingClientRect().height)}px`;
+    };
+    sync();
+    let observer;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(sync);
+      observer.observe(detail);
+    }
+    window.addEventListener('resize', sync);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', sync);
+    };
+  }, [activeUnit, units.length]);
+
   // 「查看过往记录」：阻止冒泡，避免同时触发卡片进入练习
   const openHistory = (event, module, title) => {
     event.stopPropagation();
@@ -207,220 +231,218 @@ export default function EnglishCenterPage() {
   };
 
   return (
+    <>
     <div className="eng-page eng-page--aside eng-center">
-      <div className="eng-hero">
-        <div>
-          <div className="eng-hero-eyebrow">海洋智学 · 英语学习航线</div>
-          <div className="eng-hero-title">英语学习中心</div>
-          <div className="eng-hero-sub">
-            {version} · {grade} · 单词 + 句子 + 语法，学练一体，智能复习帮你记得更牢
+        <div className="eng-hero">
+          <div>
+            <div className="eng-hero-eyebrow">海洋智学 · 英语学习航线</div>
+            <div className="eng-hero-title">英语学习中心</div>
+            <div className="eng-hero-sub">
+              {version} · {grade} · 单词 + 句子 + 语法，学练一体，智能复习帮你记得更牢
+            </div>
+          </div>
+          <div className="eng-hero-actions">
+            <div className="eng-term" title="册别由首页选择，此处仅展示">
+              {TERMS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  className={term === t ? 'active' : ''}
+                  disabled
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="eng-review-btn" onClick={() => navigate('/student/english/review')}>
+              <SyncOutlined />
+              智能复习{reviewCount > 0 ? ` · ${reviewCount}` : ''}
+            </button>
           </div>
         </div>
-        <div className="eng-hero-actions">
-          <div className="eng-term" title="册别由首页选择，此处仅展示">
-            {TERMS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={term === t ? 'active' : ''}
-                disabled
-              >
-                {t}
-              </button>
-            ))}
+
+        {!loading && units.length === 0 && (
+          <div className="eng-empty" style={{ marginTop: 20 }}>
+            <div className="eng-empty-emoji">🐚</div>
+            <div className="eng-empty-title">当前学期暂无英语内容</div>
+            <div>换一个版本 / 年级 / 册别，或等待老师录入单元内容</div>
           </div>
-          <button type="button" className="eng-review-btn" onClick={() => navigate('/student/english/review')}>
-            <SyncOutlined />
-            智能复习{reviewCount > 0 ? ` · ${reviewCount}` : ''}
-          </button>
-        </div>
-      </div>
+        )}
 
-      {!loading && units.length === 0 && (
-        <div className="eng-empty" style={{ marginTop: 20 }}>
-          <div className="eng-empty-emoji">🐚</div>
-          <div className="eng-empty-title">当前学期暂无英语内容</div>
-          <div>换一个版本 / 年级 / 册别，或等待老师录入单元内容</div>
-        </div>
-      )}
+        {active && <MasteryLegend compact />}
 
-      {active && <MasteryLegend compact />}
+        {active && (
+          <div className="eng-master" ref={masterRef} style={{ marginTop: 20 }}>
+            <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={selectUnit} />
 
-      {active && (
-        <div className="eng-master eng-center-master">
-          <EnglishUnitAside units={units} activeUnit={active.unit} onSelect={selectUnit} />
+            <div className="eng-detail">
+              <div className="eng-detail-card">
+                <div className="eng-detail-head">
+                  <div className="eng-detail-title">{active.unit}</div>
+                  {active.reviewDue > 0 && (
+                    <button
+                      type="button"
+                      className="eng-review-pill"
+                      onClick={() => navigate('/student/english/review')}
+                    >
+                      复习 {active.reviewDue}
+                    </button>
+                  )}
+                </div>
+                <div className="eng-detail-tip">
+                  本单元共 {active.wordCount || 0} 个单词 · {active.sentenceCount || 0} 个句子 ·
+                  {active.grammarCount || 0} 个语法点，逐个点亮你的通关进度吧
+                </div>
 
-          <div className="eng-detail">
-            <div className="eng-detail-card">
-              <div className="eng-detail-head">
-                <div className="eng-detail-title">{active.unit}</div>
-                {active.reviewDue > 0 && (
+                <div className="eng-mastery-row">
+                  <span className="eng-mastery-label">熟练度</span>
+                  <span className="eng-mastery-val">{active.mastery || 0}%</span>
+                </div>
+
+                <div className="eng-progress-grid">
+                  <div className="eng-progress-item">
+                    <div className="eng-stat-label">
+                      <span>单词</span>
+                      <span>{active.wordFinished || 0}/{active.wordCount || 0}</span>
+                    </div>
+                    <div className="eng-stat-bar">
+                      <span style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} />
+                    </div>
+                  </div>
+                  <div className="eng-progress-item">
+                    <div className="eng-stat-label">
+                      <span>句子</span>
+                      <span>{active.sentenceFinished || 0}/{active.sentenceCount || 0}</span>
+                    </div>
+                    <div className="eng-stat-bar sentence">
+                      <span style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} />
+                    </div>
+                  </div>
+                  <div className="eng-progress-item">
+                    <div className="eng-stat-label">
+                      <span>语法</span>
+                      <span>{active.grammarFinished || 0}/{active.grammarCount || 0}</span>
+                    </div>
+                    <div className="eng-stat-bar grammar">
+                      <span style={{ width: `${percent(active.grammarFinished, active.grammarCount)}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="eng-mod-grid">
                   <button
                     type="button"
-                    className="eng-review-pill"
-                    onClick={() => navigate('/student/english/review')}
+                    className="eng-mod-card eng-mod-word"
+                    onClick={() => go('/student/english/word', active.unit)}
                   >
-                    复习 {active.reviewDue}
+                    <span className="eng-mod-icon"><BookOutlined /></span>
+                    <span className="eng-mod-title">单词通关<em>{percent(active.wordFinished, active.wordCount)}%</em></span>
+                    <span className="eng-mod-sub">
+                      {active.wordMastered != null
+                        ? `掌握 ${active.wordMastered}/${active.wordCount || 0}${active.wordPass ? ' · 已通关' : ''}`
+                        : '拼写 · 音标 · 释义'}
+                    </span>
+                    <span className="eng-mod-track"><i style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} /></span>
                   </button>
-                )}
-              </div>
-              <div className="eng-detail-tip">
-                本单元共 {active.wordCount || 0} 个单词 · {active.sentenceCount || 0} 个句子 ·
-                {active.grammarCount || 0} 个语法点，逐个点亮你的通关进度吧
-              </div>
-
-              <div className="eng-mastery-row">
-                <span className="eng-mastery-label">熟练度</span>
-                <MasteryBadge
-                  value={active.mastery || 0}
-                  size={Math.round(68 * pageUnitScale)}
-                  className="eng-unit-mastery-badge"
-                />
-                <span className="eng-mastery-val">{active.mastery || 0}%</span>
-              </div>
-
-              <div className="eng-progress-grid">
-                <div className="eng-progress-item">
-                  <div className="eng-stat-label">
-                    <span>单词</span>
-                    <span>{active.wordFinished || 0}/{active.wordCount || 0}</span>
-                  </div>
-                  <div className="eng-stat-bar">
-                    <span style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} />
-                  </div>
+                  <button
+                    type="button"
+                    className="eng-mod-card eng-mod-sentence"
+                    onClick={() => go('/student/english/sentence', active.unit)}
+                  >
+                    <span className="eng-mod-icon"><MessageOutlined /></span>
+                    <span className="eng-mod-title">句式通关<em>{percent(active.sentenceFinished, active.sentenceCount)}%</em></span>
+                    <span className="eng-mod-sub">连词成句 · 情景</span>
+                    <span className="eng-mod-track"><i style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} /></span>
+                  </button>
+                  <button
+                    type="button"
+                    className="eng-mod-card eng-mod-grammar"
+                    disabled={!active.grammarCount}
+                    onClick={() => go('/student/english/grammar', active.unit)}
+                  >
+                    <span className="eng-mod-icon"><CompassOutlined /></span>
+                    <span className="eng-mod-title">语法通关<em>{percent(active.grammarFinished, active.grammarCount)}%</em></span>
+                    <span className="eng-mod-sub">规则 · 例句</span>
+                    <span className="eng-mod-track"><i style={{ width: `${percent(active.grammarFinished, active.grammarCount)}%` }} /></span>
+                  </button>
+                  <button
+                    type="button"
+                    className="eng-mod-card eng-mod-reading"
+                    onClick={() => go('/student/english/reading', active.unit)}
+                  >
+                    <span className="eng-mod-icon"><ReadOutlined /></span>
+                    <span className="eng-mod-title">阅读理解</span>
+                    {readingSummary?.attempts > 0 ? (
+                      <>
+                        <span className="eng-mod-sub">
+                          最高 {readingSummary.bestScore} 分 · 已练 {readingSummary.attempts} 次
+                        </span>
+                        <span
+                          className="eng-mod-history"
+                          role="link"
+                          tabIndex={0}
+                          onClick={(event) => openHistory(event, 'reading', '阅读理解')}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              openHistory(event, 'reading', '阅读理解');
+                            }
+                          }}
+                        >
+                          查看过往记录 ›
+                        </span>
+                      </>
+                    ) : (
+                      <span className="eng-mod-sub">短文 · 选择题 · 点击开始</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="eng-mod-card eng-mod-readaloud"
+                    onClick={() => go('/student/english/read-aloud', active.unit)}
+                  >
+                    <span className="eng-mod-icon"><CustomerServiceOutlined /></span>
+                    <span className="eng-mod-title">课本跟读</span>
+                    <span className="eng-mod-sub">听原音 · 录音跟读</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="eng-mod-card eng-mod-unit"
+                    onClick={() => go('/student/english/unit-practice', active.unit)}
+                  >
+                    <span className="eng-mod-icon"><FlagOutlined /></span>
+                    <span className="eng-mod-title">单元练习</span>
+                    {unitSummary?.attempts > 0 ? (
+                      <>
+                        <span className="eng-mod-sub">
+                          最高 {unitSummary.bestScore} 分 · 已练 {unitSummary.attempts} 次
+                        </span>
+                        <span
+                          className="eng-mod-history"
+                          role="link"
+                          tabIndex={0}
+                          onClick={(event) => openHistory(event, 'unit', '单元练习')}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              openHistory(event, 'unit', '单元练习');
+                            }
+                          }}
+                        >
+                          查看过往记录 ›
+                        </span>
+                      </>
+                    ) : (
+                      <span className="eng-mod-sub">本单元综合题 · 点击开始</span>
+                    )}
+                  </button>
                 </div>
-                <div className="eng-progress-item">
-                  <div className="eng-stat-label">
-                    <span>句子</span>
-                    <span>{active.sentenceFinished || 0}/{active.sentenceCount || 0}</span>
-                  </div>
-                  <div className="eng-stat-bar sentence">
-                    <span style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} />
-                  </div>
-                </div>
-                <div className="eng-progress-item">
-                  <div className="eng-stat-label">
-                    <span>语法</span>
-                    <span>{active.grammarFinished || 0}/{active.grammarCount || 0}</span>
-                  </div>
-                  <div className="eng-stat-bar grammar">
-                    <span style={{ width: `${percent(active.grammarFinished, active.grammarCount)}%` }} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="eng-mod-grid">
-                <button
-                  type="button"
-                  className="eng-mod-card eng-mod-word"
-                  onClick={() => go('/student/english/word', active.unit)}
-                >
-                  <span className="eng-mod-icon"><BookOutlined /></span>
-                  <span className="eng-mod-title">单词通关<em>{percent(active.wordFinished, active.wordCount)}%</em></span>
-                  <span className="eng-mod-sub">
-                    {active.wordMastered != null
-                      ? `掌握 ${active.wordMastered}/${active.wordCount || 0}${active.wordPass ? ' · 已通关' : ''}`
-                      : '拼写 · 音标 · 释义'}
-                  </span>
-                  <span className="eng-mod-track"><i style={{ width: `${percent(active.wordFinished, active.wordCount)}%` }} /></span>
-                </button>
-                <button
-                  type="button"
-                  className="eng-mod-card eng-mod-sentence"
-                  onClick={() => go('/student/english/sentence', active.unit)}
-                >
-                  <span className="eng-mod-icon"><MessageOutlined /></span>
-                  <span className="eng-mod-title">句式通关<em>{percent(active.sentenceFinished, active.sentenceCount)}%</em></span>
-                  <span className="eng-mod-sub">连词成句 · 情景</span>
-                  <span className="eng-mod-track"><i style={{ width: `${percent(active.sentenceFinished, active.sentenceCount)}%` }} /></span>
-                </button>
-                <button
-                  type="button"
-                  className="eng-mod-card eng-mod-grammar"
-                  disabled={!active.grammarCount}
-                  onClick={() => go('/student/english/grammar', active.unit)}
-                >
-                  <span className="eng-mod-icon"><CompassOutlined /></span>
-                  <span className="eng-mod-title">语法通关<em>{percent(active.grammarFinished, active.grammarCount)}%</em></span>
-                  <span className="eng-mod-sub">规则 · 例句</span>
-                  <span className="eng-mod-track"><i style={{ width: `${percent(active.grammarFinished, active.grammarCount)}%` }} /></span>
-                </button>
-                <button
-                  type="button"
-                  className="eng-mod-card eng-mod-reading"
-                  onClick={() => go('/student/english/reading', active.unit)}
-                >
-                  <span className="eng-mod-icon"><ReadOutlined /></span>
-                  <span className="eng-mod-title">阅读理解</span>
-                  {readingSummary?.attempts > 0 ? (
-                    <>
-                      <span className="eng-mod-sub">
-                        最高 {readingSummary.bestScore} 分 · 已练 {readingSummary.attempts} 次
-                      </span>
-                      <span
-                        className="eng-mod-history"
-                        role="link"
-                        tabIndex={0}
-                        onClick={(event) => openHistory(event, 'reading', '阅读理解')}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            openHistory(event, 'reading', '阅读理解');
-                          }
-                        }}
-                      >
-                        查看过往记录 ›
-                      </span>
-                    </>
-                  ) : (
-                    <span className="eng-mod-sub">短文 · 选择题 · 点击开始</span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className="eng-mod-card eng-mod-readaloud"
-                  onClick={() => go('/student/english/read-aloud', active.unit)}
-                >
-                  <span className="eng-mod-icon"><CustomerServiceOutlined /></span>
-                  <span className="eng-mod-title">课本跟读</span>
-                  <span className="eng-mod-sub">听原音 · 录音跟读</span>
-                </button>
-                <button
-                  type="button"
-                  className="eng-mod-card eng-mod-unit"
-                  onClick={() => go('/student/english/unit-practice', active.unit)}
-                >
-                  <span className="eng-mod-icon"><FlagOutlined /></span>
-                  <span className="eng-mod-title">单元练习</span>
-                  {unitSummary?.attempts > 0 ? (
-                    <>
-                      <span className="eng-mod-sub">
-                        最高 {unitSummary.bestScore} 分 · 已练 {unitSummary.attempts} 次
-                      </span>
-                      <span
-                        className="eng-mod-history"
-                        role="link"
-                        tabIndex={0}
-                        onClick={(event) => openHistory(event, 'unit', '单元练习')}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            openHistory(event, 'unit', '单元练习');
-                          }
-                        }}
-                      >
-                        查看过往记录 ›
-                      </span>
-                    </>
-                  ) : (
-                    <span className="eng-mod-sub">本单元综合题 · 点击开始</span>
-                  )}
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+      </div>
 
       <WordDrillModal open={drillOpen} words={drillWords} pool={drillPool} onFinish={finishDrill} />
 
@@ -431,6 +453,6 @@ export default function EnglishCenterPage() {
         title={historyModal.title}
         onCancel={() => setHistoryModal((prev) => ({ ...prev, open: false }))}
       />
-    </div>
+    </>
   );
 }

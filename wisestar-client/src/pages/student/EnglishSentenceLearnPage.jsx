@@ -33,7 +33,6 @@ import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
 import { getEnglishUnits, getEnglishSentences, getEnglishGrammars, getEnglishUnitPass } from '../../api/englishStudent';
 import StageRing from '../../components/student/StageRing';
-import EnglishUnitAside from './EnglishUnitAside';
 import EnglishSentenceExercise from './EnglishSentenceExercise';
 import './EnglishCenterPage.css';
 import './EnglishSentenceLearnPage.css';
@@ -183,8 +182,7 @@ export default function EnglishSentenceLearnPage() {
   const distinctZh = new Set(sentences.map((s) => String(s.zh || '').trim()).filter(Boolean));
   const canChoose = distinctEn.size >= 4 && distinctZh.size >= 4;
 
-  // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
-  const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
+  // 单元导航统一回英语学习中心；本页只保留「返回学习中心」入口
   const backToCenter = () => navigate('/student/english');
 
   /** 进入某题型练习：scenario 走独立页面，其余内联渲染 */
@@ -228,8 +226,6 @@ export default function EnglishSentenceLearnPage() {
     return (
       <div className="eng-page eng-page--aside">
         <div className="eng-master">
-          <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
-
           <div className="eng-detail">
             <div className="eng-detail-card">
               <div className="eng-detail-head eng-word-head">
@@ -342,7 +338,6 @@ export default function EnglishSentenceLearnPage() {
     return (
       <div className="eng-page eng-page--aside">
         <div className="eng-master">
-          <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
           <div className="eng-detail">
             <div className="eng-detail-card">
               <EnglishSentenceExercise

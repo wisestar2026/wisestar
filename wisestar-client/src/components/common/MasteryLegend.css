@@ -70,33 +70,48 @@
   .mastery-legend-item { flex: 0 0 calc(74 * var(--page-u)); }
 }
 
-/* 紧凑版：英语学习中心等需要「单屏不滚动」的页面，压缩图例高度 */
+
+/* 紧凑版：英语学习中心整页缩放到一屏时压成单行细条，把纵向空间留给单元与入口卡 */
 .mastery-legend--compact {
-  margin-bottom: calc(10 * var(--page-u));
-  padding: calc(8 * var(--page-u)) calc(16 * var(--page-u)) calc(6 * var(--page-u));
-  border-radius: calc(16 * var(--page-u));
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--page-u));
+  margin-bottom: calc(8 * var(--page-u));
+  padding: calc(4 * var(--page-u)) calc(14 * var(--page-u));
+  border-radius: calc(14 * var(--page-u));
+  box-shadow: 0 calc(6 * var(--page-u)) calc(14 * var(--page-u)) rgba(23, 107, 158, 0.1);
 }
 .mastery-legend--compact .mastery-legend-head {
-  margin-bottom: calc(4 * var(--page-u));
+  flex: none;
+  margin-bottom: 0;
   gap: calc(8 * var(--page-u));
 }
-.mastery-legend--compact .mastery-legend-title {
-  font-size: calc(17 * var(--page-u));
-  letter-spacing: calc(0.5 * var(--page-u));
-}
-.mastery-legend--compact .mastery-legend-sub {
-  font-size: calc(12 * var(--page-u));
+.mastery-legend--compact .mastery-legend-title { font-size: calc(13 * var(--page-u)); }
+.mastery-legend--compact .mastery-legend-sub { display: none; }
+.mastery-legend--compact .mastery-legend-list {
+  flex: 1;
+  flex-wrap: nowrap;
+  gap: calc(4 * var(--page-u));
+  justify-content: space-between;
 }
 .mastery-legend--compact .mastery-legend-item {
-  gap: calc(2 * var(--page-u));
-  min-width: calc(60 * var(--page-u));
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+  gap: calc(3 * var(--page-u));
 }
 .mastery-legend--compact .mastery-legend-pill {
-  min-width: calc(46 * var(--page-u));
-  padding: calc(0 * var(--page-u)) calc(8 * var(--page-u));
-  font-size: calc(12 * var(--page-u));
-  line-height: 1.35;
+  min-width: 0;
+  padding: calc(0.5 * var(--page-u)) calc(6 * var(--page-u));
+  font-size: calc(11 * var(--page-u));
+  line-height: 1.3;
+  white-space: nowrap;
 }
 .mastery-legend--compact .mastery-legend-range {
-  font-size: calc(11 * var(--page-u));
+  font-size: calc(10 * var(--page-u));
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .mastery-legend--compact .mastery-legend-list { flex-wrap: wrap; }
+  .mastery-legend--compact .mastery-legend-item { flex: 0 0 auto; }
 }

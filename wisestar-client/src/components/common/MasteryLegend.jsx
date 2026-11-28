@@ -12,12 +12,9 @@ import './MasteryLegend.css';
 
 export default function MasteryLegend({ title = '勋章等级标识', compact = false }) {
   const pageUnit = usePageUnit();
-  const badgeSize = Math.round((compact ? 40 : 52) * pageUnit);
+  const badgeSize = Math.round((compact ? 30 : 52) * pageUnit);
   return (
-    <section
-      className={`mastery-legend${compact ? ' mastery-legend--compact' : ''}`}
-      aria-label="掌握度勋章等级标识"
-    >
+    <section className={`mastery-legend${compact ? ' mastery-legend--compact' : ''}`} aria-label="掌握度勋章等级标识">
       <div className="mastery-legend-head">
         <span className="mastery-legend-title">{title}</span>
         <span className="mastery-legend-sub">掌握度越高，勋章等级越高</span>

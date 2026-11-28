@@ -176,8 +176,8 @@
   padding-left: calc(18 * var(--page-u));
 }
 
-/* 窄屏：三列改为上下堆叠，圆环横排（两张通关页共用） */
-@media (max-width: 1280px) {
+/* 窄屏（手机/竖屏平板）：三列改为上下堆叠，圆环横排（两张通关页共用） */
+@media (max-width: 900px) {
   .eng-word-stages {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
@@ -292,8 +292,8 @@
 .eng-arrow-use { background: linear-gradient(135deg, #21cb68, #029c46); }
 .eng-arrow-label { white-space: nowrap; }
 
-/* 窄屏：三列改为上下堆叠，列间箭头失去横向流程语义，直接隐藏 */
-@media (max-width: 1280px) {
+/* 窄屏（手机/竖屏平板）：三列改为上下堆叠，列间箭头失去横向流程语义，直接隐藏 */
+@media (max-width: 900px) {
   .eng-arrow { display: none; }
   .eng-ring-lg .eng-ring-frame { width: clamp(calc(124 * var(--page-u)), 30vw, calc(168 * var(--page-u))); }
   /* 顶部进度行降到标题下一行占满 */
@@ -303,6 +303,24 @@
     flex: 1 0 100%;
     margin-left: 0;
   }
+}
+
+/* 901~1280（笔记本常态宽度）：保持三列，但收紧箭头与主环，避免互相压住 */
+@media (min-width: 901px) and (max-width: 1280px) {
+  .eng-word-stages { gap: calc(10 * var(--page-u)); }
+  .eng-word-col { gap: calc(20 * var(--page-u)); padding: calc(4 * var(--page-u)) calc(6 * var(--page-u)); }
+  .eng-word-col-practice,
+  .eng-word-col-use,
+  .eng-word-col-scenario {
+    margin-left: calc(2 * var(--page-u));
+    padding-left: calc(12 * var(--page-u));
+  }
+  .eng-arrow {
+    padding: calc(9 * var(--page-u)) calc(10 * var(--page-u)) calc(9 * var(--page-u)) calc(16 * var(--page-u));
+    font-size: calc(15 * var(--page-u));
+  }
+  .eng-ring-lg .eng-ring-frame { width: clamp(calc(104 * var(--page-u)), 7.4vw, calc(124 * var(--page-u))); }
+  .eng-ring-frame { width: clamp(calc(88 * var(--page-u)), 6.2vw, calc(108 * var(--page-u))); }
 }
 
 @media (max-width: 760px) {

@@ -18,10 +18,11 @@
 import MasteryBadge from '../../components/common/MasteryBadge';
 import { usePageUnit } from '../../utils/pageScale';
 
-export default function EnglishUnitAside({ units = [], activeUnit, onSelect, title = '单元' }) {
+export default function EnglishUnitAside({ units = [], activeUnit, onSelect, title = '单元', compact = false }) {
   const pageUnitScale = usePageUnit();
+  const badgeSize = Math.round((compact ? 34 : 60) * pageUnitScale);
   return (
-    <aside className="eng-aside">
+    <aside className={`eng-aside${compact ? ' eng-aside--compact' : ''}`}>
       <div className="eng-aside-title">{title}</div>
       <div className="eng-aside-list">
         {units.map((item) => {
@@ -44,7 +45,7 @@ export default function EnglishUnitAside({ units = [], activeUnit, onSelect, tit
                   <span className="eng-aside-fill" style={{ width: `${pct}%` }} />
                 </span>
               </span>
-              <MasteryBadge value={pct} size={Math.round(60 * pageUnitScale)} className="eng-aside-mastery-badge" />
+              <MasteryBadge value={pct} size={badgeSize} className="eng-aside-mastery-badge" />
               {item.reviewDue > 0 && <span className="eng-aside-badge">{item.reviewDue}</span>}
             </button>
           );

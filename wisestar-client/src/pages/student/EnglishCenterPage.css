@@ -11,7 +11,7 @@
   max-width: calc(1360 * var(--page-u));
   min-width: 0;
   margin: 0 auto;
-  padding: calc(16 * var(--page-u)) calc(20 * var(--page-u)) calc(64 * var(--page-u));
+  padding: calc(16 * var(--page-u)) calc(20 * var(--page-u)) calc(20 * var(--page-u));
 }
 
 /* 含左侧单元导航的学习页（.eng-master）整体加宽、单元栏向左扩展，
@@ -729,21 +729,21 @@ input.eng-dictation-field:focus {
   font-weight: 800;
   color: #3d7fa0;
   text-align: center;
-  margin-bottom: calc(12 * var(--page-u));
+  margin-bottom: calc(8 * var(--page-u));
   letter-spacing: calc(2 * var(--page-u));
 }
-.eng-aside-list { display: flex; flex-direction: column; gap: calc(10 * var(--page-u)); flex: 1; }
+.eng-aside-list { display: flex; flex-direction: column; gap: calc(7 * var(--page-u)); flex: 1; }
 .eng-aside-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: calc(10 * var(--page-u));
+  gap: calc(8 * var(--page-u));
   border: none;
   background: #ffffff;
-  border-radius: calc(16 * var(--page-u));
-  padding: calc(12 * var(--page-u)) calc(12 * var(--page-u)) calc(10 * var(--page-u));
-  font-size: calc(19 * var(--page-u));
-  line-height: 1.35;
+  border-radius: calc(14 * var(--page-u));
+  padding: calc(7 * var(--page-u)) calc(11 * var(--page-u)) calc(7 * var(--page-u));
+  font-size: calc(17 * var(--page-u));
+  line-height: 1.22;
   font-weight: 800;
   color: #2b6c8f;
   cursor: pointer;
@@ -757,19 +757,19 @@ input.eng-dictation-field:focus {
   box-shadow: 0 calc(8 * var(--page-u)) calc(18 * var(--page-u)) rgba(75, 183, 232, 0.35);
 }
 .eng-aside-main { flex: 1; min-width: 0; }
-.eng-aside-name { display: block; line-height: 1.35; word-break: break-word; }
+.eng-aside-name { display: block; line-height: 1.22; word-break: break-word; }
 /* 单元达成进度（百分比 + 细进度条，徽章单独固定在右侧） */
 .eng-aside-progress {
   display: flex;
   align-items: center;
-  margin-top: calc(6 * var(--page-u));
+  margin-top: calc(3 * var(--page-u));
   line-height: 1;
 }
-.eng-aside-pct { font-size: calc(15 * var(--page-u)); font-weight: 700; color: #3d7fa0; white-space: nowrap; }
+.eng-aside-pct { font-size: calc(13 * var(--page-u)); font-weight: 700; color: #3d7fa0; white-space: nowrap; }
 .eng-aside-track {
   display: block;
-  height: calc(5 * var(--page-u));
-  margin-top: calc(8 * var(--page-u));
+  height: calc(4 * var(--page-u));
+  margin-top: calc(5 * var(--page-u));
   border-radius: calc(999 * var(--page-u));
   background: rgba(61, 127, 160, 0.16);
   overflow: hidden;
@@ -1856,122 +1856,96 @@ input.eng-dictation-field:focus {
  * ============================================================ */
 
 /* ============================================================
- * 英语学习中心：整页锁定一屏（桌面/平板）
- * - 页面与 .sll-main 高度锁定为视口，整体不滚动
- * - 左侧单元栏过高时在栏内自行滚动
- * - hero / 图例压成细条，右侧模块入口改 3 列 2 行吸收剩余高度
- * 仅作用于 /student/english（.eng-center），不影响单词/句式/语法等子页
+ * 英语学习中心：紧凑固定布局，一屏放下 10 个单元 + 详情卡
+ * 参考小珈AI：固定顶栏 + banner + 左单元目录 + 右详情（3×2 入口卡），
+ * 全部 1× 字号、无整页滚动，页面左右留白、内容居中。
+ * 仅作用于 /student/english（.eng-center），单词/句式/语法子页不受影响。
  * ============================================================ */
 @media (min-width: 761px) {
-  .sll-page.sll-fit { height: 100vh; overflow: hidden; }
-  .sll-page.sll-fit .sll-main { overflow: hidden; }
-
+  /* 学习中心不再锁屏：整页可正常滚动，底部导航常驻。
+     左侧单元栏改为 sticky 悬浮 + 内部上下滚动的高列表（高度随视口，约为原紧凑版 2 倍）。 */
   .sll-main > .eng-center {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding-top: calc(6 * var(--page-u));
-    padding-bottom: calc(10 * var(--page-u));
-  }
-  .eng-center > .eng-hero,
-  .eng-center > .mastery-legend,
-  .eng-center > .eng-empty { flex: none; }
-  .eng-center > .eng-center-master {
-    flex: 1;
-    min-height: 0;
-    margin-top: calc(10 * var(--page-u));
+    width: 100%;
+    max-width: calc(1360 * var(--page-u));
+    margin: 0 auto;
+    padding: 0;
   }
 
   /* hero 压成细条 */
-  .eng-center .eng-hero {
-    padding: calc(8 * var(--page-u)) calc(16 * var(--page-u));
+  .eng-center > .eng-hero {
+    padding: calc(10 * var(--page-u)) calc(18 * var(--page-u));
     border-radius: calc(16 * var(--page-u));
     gap: calc(10 * var(--page-u));
   }
-  .eng-center .eng-hero-eyebrow {
-    margin-bottom: calc(3 * var(--page-u));
-    padding: calc(2 * var(--page-u)) calc(10 * var(--page-u));
-    font-size: calc(13 * var(--page-u));
-    letter-spacing: calc(1 * var(--page-u));
-  }
-  .eng-center .eng-hero-title { font-size: calc(23 * var(--page-u)); }
-  .eng-center .eng-hero-sub { margin-top: calc(2 * var(--page-u)); font-size: calc(14 * var(--page-u)); }
-  .eng-center .eng-review-btn { font-size: calc(15 * var(--page-u)); padding: calc(6 * var(--page-u)) calc(14 * var(--page-u)); }
-  .eng-center .eng-term button { font-size: calc(13 * var(--page-u)); padding: calc(4 * var(--page-u)) calc(11 * var(--page-u)); }
+  .eng-center .eng-hero-title { font-size: calc(24 * var(--page-u)); }
+  .eng-center .eng-hero-eyebrow { font-size: calc(12 * var(--page-u)); margin-bottom: calc(2 * var(--page-u)); padding: calc(1 * var(--page-u)) calc(8 * var(--page-u)); }
+  .eng-center .eng-hero-sub { margin-top: calc(2 * var(--page-u)); font-size: calc(13 * var(--page-u)); }
+  .eng-center .eng-review-btn { font-size: calc(14 * var(--page-u)); padding: calc(6 * var(--page-u)) calc(14 * var(--page-u)); }
+  .eng-center .eng-term button { font-size: calc(13 * var(--page-u)); padding: calc(4 * var(--page-u)) calc(10 * var(--page-u)); }
 
-  /* 单元栏：栏内滚动 */
-  .eng-center-master .eng-aside {
-    min-height: 0;
-    padding: calc(12 * var(--page-u)) calc(8 * var(--page-u));
+  /* 图例单行细条，与上方 hero 留出间隔、不贴边 */
+  .eng-center > .mastery-legend { margin-top: calc(14 * var(--page-u)); margin-bottom: calc(2 * var(--page-u)); }
+
+  /* 主区：与图例留间隔，两栏顶部对齐（左栏 sticky） */
+  .eng-center > .eng-master {
+    margin-top: calc(14 * var(--page-u)) !important;
+    gap: calc(16 * var(--page-u));
+    align-items: flex-start;
   }
-  .eng-center-master .eng-aside-title { margin-bottom: calc(8 * var(--page-u)); }
-  .eng-center-master .eng-aside-list {
-    min-height: 0;
+
+  /* 左单元栏：高度由 JS 对齐右侧详情卡（见 EnglishCenterPage.jsx），
+     单元列表放不下时在栏内滚动，避免把整页撑长。 */
+  .eng-center .eng-aside { align-self: flex-start; min-height: 0; }
+  .eng-center .eng-aside-list {
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding-right: calc(4 * var(--page-u));
-    /* 给左下角悬浮「返回上一级」留出空间，最后一条单元可滚到按钮上方 */
-    padding-bottom: calc(80 * var(--page-u));
+    min-height: 0;
+    padding-right: calc(2 * var(--page-u));
+    scrollbar-width: thin;
+    scrollbar-color: #bfd9e8 transparent;
   }
-  .eng-center-master .eng-aside-list::-webkit-scrollbar { width: calc(6 * var(--page-u)); }
-  .eng-center-master .eng-aside-list::-webkit-scrollbar-thumb {
-    background: rgba(61, 127, 160, 0.32);
-    border-radius: 999px;
+  .eng-center .eng-aside-list::-webkit-scrollbar { width: calc(8 * var(--page-u)); }
+  .eng-center .eng-aside-list::-webkit-scrollbar-thumb {
+    background: #c9deea;
+    border-radius: calc(999 * var(--page-u));
   }
+  .eng-center .eng-aside-list::-webkit-scrollbar-track { background: transparent; }
 
-  /* 右侧详情卡填满高度，模块入口 3 列 2 行吸收剩余高度 */
-  .eng-center-master .eng-detail { align-self: stretch; min-height: 0; }
-  .eng-center-master .eng-detail-card {
-    min-height: 0;
-    height: 100%;
-    padding: calc(14 * var(--page-u)) calc(20 * var(--page-u));
-  }
-  .eng-center-master .eng-detail-head { align-items: center; }
-  .eng-center-master .eng-mastery-row { margin-top: calc(8 * var(--page-u)); }
-  .eng-center-master .eng-mastery-val { font-size: calc(22 * var(--page-u)); }
-  .eng-center-master .eng-progress-grid { margin-top: calc(10 * var(--page-u)); }
-  .eng-center-master .eng-mod-grid {
-    margin-top: calc(12 * var(--page-u));
-    flex: 1;
-    min-height: 0;
+  /* 右详情卡：自然高度，紧凑排版 */
+  .eng-center .eng-detail { align-self: flex-start; min-width: 0; display: flex; }
+  .eng-center .eng-detail-card { padding: calc(16 * var(--page-u)) calc(20 * var(--page-u)); }
+  .eng-center .eng-detail-head { align-items: center; }
+  .eng-center .eng-detail-title { font-size: calc(20 * var(--page-u)); }
+  .eng-center .eng-detail-tip { margin-top: calc(4 * var(--page-u)); font-size: calc(13 * var(--page-u)); }
+  .eng-center .eng-mastery-row { margin-top: calc(10 * var(--page-u)); gap: calc(8 * var(--page-u)); }
+  .eng-center .eng-mastery-label { font-size: calc(15 * var(--page-u)); }
+  .eng-center .eng-mastery-val { font-size: calc(22 * var(--page-u)); }
+  .eng-center .eng-progress-grid { margin-top: calc(10 * var(--page-u)); gap: calc(20 * var(--page-u)); }
+  .eng-center .eng-progress-item .eng-stat-label { font-size: calc(14 * var(--page-u)); }
+  .eng-center .eng-progress-item .eng-stat-bar { height: calc(7 * var(--page-u)); margin-top: calc(4 * var(--page-u)); }
+
+  /* 六张入口卡 3 列 2 行 */
+  .eng-center .eng-mod-grid {
+    margin-top: calc(16 * var(--page-u));
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-auto-rows: minmax(min-content, max-content);
-    align-content: center;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    gap: calc(12 * var(--page-u));
   }
-  .eng-center-master .eng-mod-card {
-    min-height: min-content;
-    padding: calc(10 * var(--page-u)) calc(12 * var(--page-u));
-    justify-content: center;
+  .eng-center .eng-mod-card {
+    padding: calc(16 * var(--page-u)) calc(10 * var(--page-u));
+    border-radius: calc(16 * var(--page-u));
+    gap: calc(4 * var(--page-u));
+    font-size: calc(15 * var(--page-u));
   }
-  .eng-center-master .eng-mod-icon {
+  .eng-center .eng-mod-icon {
     width: calc(34 * var(--page-u));
     height: calc(34 * var(--page-u));
     margin-bottom: calc(2 * var(--page-u));
-    font-size: calc(23 * var(--page-u));
-    border-radius: calc(11 * var(--page-u));
+    font-size: calc(22 * var(--page-u));
+    border-radius: calc(10 * var(--page-u));
   }
-  .eng-center-master .eng-mod-title { font-size: calc(16 * var(--page-u)); }
-  .eng-center-master .eng-mod-card em { font-size: calc(14 * var(--page-u)); }
-  .eng-center-master .eng-mod-sub { font-size: calc(13 * var(--page-u)); }
-  .eng-center-master .eng-mod-history { font-size: calc(13 * var(--page-u)); }
-}
-
-/* 矮屏（≤820 高，常见 720p/768p 笔记本）：隐藏模块卡图标，六张卡压进两行不裁切 */
-@media (min-width: 761px) and (max-height: 820px) {
-  .eng-center-master .eng-mod-icon { display: none; }
-  .eng-center-master .eng-mod-card { padding: calc(8 * var(--page-u)) calc(12 * var(--page-u)); gap: calc(3 * var(--page-u)); }
-  .eng-center-master .eng-mod-title { font-size: calc(15 * var(--page-u)); }
-  .eng-center-master .eng-mod-sub { font-size: calc(12 * var(--page-u)); }
-}
-
-/* 极矮屏（≤740 高）：进一步压缩模块卡间距，保证 1152×720 等也不裁切 */
-@media (min-width: 761px) and (max-height: 740px) {
-  .eng-center-master .eng-mod-grid { gap: calc(6 * var(--page-u)); }
-  .eng-center-master .eng-mod-card { padding: calc(4 * var(--page-u)) calc(10 * var(--page-u)); gap: calc(2 * var(--page-u)); }
-  .eng-center-master .eng-mod-title { font-size: calc(14 * var(--page-u)); line-height: 1.25; }
-  .eng-center-master .eng-mod-sub { font-size: calc(11 * var(--page-u)); line-height: 1.25; }
-  .eng-center-master .eng-mod-history { font-size: calc(11 * var(--page-u)); line-height: 1.25; }
+  .eng-center .eng-mod-title { font-size: calc(16 * var(--page-u)); }
+  .eng-center .eng-mod-card em { font-size: calc(14 * var(--page-u)); }
+  .eng-center .eng-mod-sub { font-size: calc(13 * var(--page-u)); line-height: 1.2; }
+  .eng-center .eng-mod-track { margin-top: calc(4 * var(--page-u)); }
+  .eng-center .eng-mod-history { font-size: calc(13 * var(--page-u)); }
 }

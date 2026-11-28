@@ -288,7 +288,9 @@ export default function EnglishReadingPage() {
     setLastAnswered(0);
     setLastRecord(null);
     startedAtRef.current = Date.now();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+  const hasNext = activeIndex < readings.length - 1;
   const correctCount = questions.reduce(
     (sum, q, index) => sum + (answers[index] === q.answerIndex ? 1 : 0), 0,
   );
@@ -403,18 +405,7 @@ export default function EnglishReadingPage() {
       </div>
 
       {readings.length > 1 && (
-        <div className="eng-read-article-tabs">
-          {readings.map((item, index) => (
-            <button
-              type="button"
-              key={item.title || index}
-              className={`eng-read-article-tab ${index === activeIndex ? 'active' : ''}`}
-              onClick={() => switchArticle(index)}
-            >
-              {index + 1}. {item.title || `第 ${index + 1} 篇`}
-            </button>
-          ))}
-        </div>
+        <div className="eng-read-pager">第 {activeIndex + 1} / {readings.length} 篇 · 做完本篇点「下一篇」继续</div>
       )}
 
       <div className="eng-read-main">
@@ -482,6 +473,11 @@ export default function EnglishReadingPage() {
           <button type="button" className="eng-read-btn" onClick={submit}>提交答案</button>
         ) : (
           <>
+            {hasNext && (
+              <button type="button" className="eng-read-btn" onClick={() => switchArticle(activeIndex + 1)}>
+                下一篇 ›
+              </button>
+            )}
             <button
               type="button"
               className="eng-read-btn"
@@ -499,6 +495,9 @@ export default function EnglishReadingPage() {
             <button type="button" className="eng-read-btn ghost" onClick={openLast}>查看上次作答</button>
             <button type="button" className="eng-read-btn ghost" onClick={() => navigate('/student/english/review')}>去错题本</button>
           </>
+        )}
+        {submitted && !hasNext && readings.length > 1 && (
+          <span className="eng-read-finish-tip">本单元阅读已全部完成</span>
         )}
         <button type="button" className="eng-read-btn ghost" onClick={() => navigate('/student/english')}>返回学习中心</button>
       </div>

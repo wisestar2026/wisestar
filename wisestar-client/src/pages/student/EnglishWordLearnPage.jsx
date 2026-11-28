@@ -37,7 +37,6 @@ import {
 } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
 import StageRing from '../../components/student/StageRing';
-import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 import './EnglishWordLearnPage.css';
 
@@ -292,8 +291,6 @@ export default function EnglishWordLearnPage() {
   const unitProgress = percent(finishedCount, words.length);
   const activeGroup = groups.find((g) => g.section === activeSection) || groups[0] || null;
 
-  // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
-  const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
 
   /** 进入某小节的学习卡片流；section 为空表示整单元 */
   const startLearn = (section) => {
@@ -416,8 +413,6 @@ export default function EnglishWordLearnPage() {
     return (
       <div className="eng-page eng-page--aside">
         <div className="eng-master">
-          <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
-
           <div className="eng-detail">
             <div className="eng-detail-card">
               <div className="eng-detail-head eng-word-head">

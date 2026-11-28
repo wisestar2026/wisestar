@@ -24,9 +24,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Spin, message } from 'antd';
 import useStudentStore from '../../stores/useStudentStore';
-import { getEnglishGrammars, getEnglishUnits, getEnglishUnitPaper } from '../../api/englishStudent';
+import { getEnglishGrammars, getEnglishUnitPaper } from '../../api/englishStudent';
 import { speakEnglish } from '../../utils/english';
-import EnglishUnitAside from './EnglishUnitAside';
 import './EnglishCenterPage.css';
 
 /** 解析后端 JSON 字符串列（examples/exercises），容错为空数组 */
@@ -81,7 +80,6 @@ export default function EnglishGrammarLearnPage() {
   const activeSubject = useStudentStore((s) => s.activeSubject);
 
   const [list, setList] = useState([]);
-  const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   // 本单元可用练习题量（用于练习入口展示，失败静默为 0）
   const [questionCount, setQuestionCount] = useState(0);
@@ -101,18 +99,6 @@ export default function EnglishGrammarLearnPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  // 左侧单元导航：与学习中心 / 单词通关一致的单元列表
-  useEffect(() => {
-    let cancelled = false;
-    getEnglishUnits({ version, grade, term })
-      .then((res) => { if (!cancelled) setUnits(res?.data || []); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, [version, grade, term]);
-
-  // 左侧单元导航：任一单元按钮都回到该单元的英语学习中心主页（单元概览）
-  const goUnit = (next) => navigate(`/student/english?unit=${encodeURIComponent(next)}`);
 
   // 仅取本单元真实语法练习题量用于入口展示；实际作答在独立的语法练习页完成。
   // 以语法组卷结果为准（不再用检测单元匹配，避免九年级 Module/Unit 错配导致误判 0 题）。
@@ -151,8 +137,6 @@ export default function EnglishGrammarLearnPage() {
   return (
     <div className="eng-page eng-page--aside">
       <div className="eng-master">
-        <EnglishUnitAside units={units} activeUnit={unit} onSelect={goUnit} />
-
         <div className="eng-detail">
           <div className="eng-detail-card">
             <div className="eng-detail-head">
